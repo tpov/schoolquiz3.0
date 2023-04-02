@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -38,6 +39,9 @@ class MainActivityViewModel @Inject constructor(
 
     var tpovId = 0
 
+    init {
+        SharedPreferencesManager.initialize(context)
+    }
     fun init() {
         log("fun init()")
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)

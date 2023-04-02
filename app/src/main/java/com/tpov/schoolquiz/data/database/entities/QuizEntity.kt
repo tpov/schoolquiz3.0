@@ -55,7 +55,7 @@ data class QuizEntity(
     )
 }
 
-fun Quiz.toQuizEntity(userName: String, stars: Int, numQ: Int, numHQ: Int, starsAll: Int, rating: Int, picture: String?): QuizEntity {
+fun Quiz.toQuizEntity(stars: Int, picture: String?): QuizEntity {
     return QuizEntity(
         id = idQuiz,
         nameQuiz = nameQuiz,

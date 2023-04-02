@@ -1,7 +1,10 @@
 package com.tpov.schoolquiz.presentation.splashscreen
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
+import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,6 +13,7 @@ import com.tpov.schoolquiz.data.database.entities.ApiQuestion
 import com.tpov.schoolquiz.domain.GetQuestionDayUseCase
 import com.tpov.schoolquiz.domain.InsertApiQuestionListUseCase
 import com.tpov.schoolquiz.domain.UpdateQuestionDayUseCase
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -84,4 +88,5 @@ class SplashScreenViewModel @Inject constructor(
         }
         insertApiQuestion(list)
     }
+
 }

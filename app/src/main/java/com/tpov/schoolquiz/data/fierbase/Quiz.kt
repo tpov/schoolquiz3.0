@@ -8,40 +8,44 @@ import com.google.firebase.database.IgnoreExtraProperties
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 
 @IgnoreExtraProperties
-data class Quiz  constructor(
+data class Quiz (
     var nameQuiz: String = "",
     var idQuiz: Int = -1,
     var tpovId: Int = 0,
     var data: String = "",
     var versionQuiz: Int = -1,
     var picture: String = "123",
-    var event: Int = -1
-)
+    var event: Int = -1,
+    var numQ: Int,
+    var numHQ: Int,
+    var starsAll: Int,
+    var rating: Int,
+    var userName: String,
+) {
+    constructor() : this(
+        "", 0, 0, "", -1, "", -1, 0, 0, 0, 0, ""
+    )
+}
 
 
 fun quizToQuizEntity(
     quiz: Quiz,
-    userName: String,
     stars: Int,
-    numQ: Int,
-    numHQ: Int,
-    starsAll: Int,
-    rating: Int,
     picture: String?
 ): QuizEntity {
     return QuizEntity(
         id = null,
         nameQuiz = quiz.nameQuiz,
-        userName = userName,
+        userName = quiz.userName,
         data = quiz.data,
         stars = stars,
-        numQ = numQ,
-        numHQ = numHQ,
-        starsAll = starsAll,
+        numQ = quiz.numQ,
+        numHQ = quiz.numHQ,
+        starsAll = quiz.starsAll,
         versionQuiz = quiz.versionQuiz,
         picture = picture,
         event = quiz.event,
-        rating = rating,
+        rating = quiz.rating,
         tpovId = quiz.tpovId
     )
 }

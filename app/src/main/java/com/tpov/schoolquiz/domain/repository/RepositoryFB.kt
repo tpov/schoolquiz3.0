@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
+import com.tpov.schoolquiz.data.fierbase.Profile
 import kotlinx.coroutines.flow.Flow
 
 
@@ -78,4 +79,6 @@ interface RepositoryFB {
     fun setProfile(context: Context)
 
     fun setEvent(position: Int)
+
+    fun getUserName(tpovId: Int): Profile
 }

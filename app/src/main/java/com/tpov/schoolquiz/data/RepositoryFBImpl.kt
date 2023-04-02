@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.repository.RepositoryFB
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
@@ -30,6 +31,8 @@ class RepositoryFBImpl @Inject constructor(
 
     var synthLiveData = MutableLiveData<Int>()
     var synth = 0
+    var newVersionQuiz = ArrayList<Int>()
+    var newVersionQuizDetail = ArrayList<Int>()
 
     override fun getValSynth(): MutableLiveData<Int> {
 
@@ -74,34 +77,34 @@ class RepositoryFBImpl @Inject constructor(
         quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuiz8Data onDataChange snapshot = ${snapshot.key}")
-                var quizEntities = mutableListOf<QuizEntity>()
-                var processedCount = 0
-                val currentVersion = getCurrentQuizVersion(context)
+                var quizEntities: QuizEntity
+
                 for (data in snapshot.children) {
                     log("getQuiz8Data onDataChange data = ${data.key}")
                     val quizFB = data.getValue(Quiz::class.java)
+
+                    val currentVersion =
+                        SharedPreferencesManager.getVersionQuiz(quizFB?.versionQuiz.toString())
                     log("getQuiz8Data onDataChange quizFB.versionQuiz = ${quizFB?.versionQuiz}, currentVersion = $currentVersion")
-                    if (quizFB != null && (quizFB.versionQuiz > currentVersion || currentVersion == 0)) {
+                    if (quizFB != null && (quizFB.versionQuiz > currentVersion || currentVersion == -1)) {
+                        newVersionQuiz.add(quizFB.idQuiz)
+                        newVersionQuizDetail.add(quizFB.idQuiz)
                         log("getQuiz8Data onDataChange соблюдение условий версий квиза")
                         savePictureToLocalDirectory(
                             quizFB.picture,
                             context
                         ) { path ->
                             log("getQuiz8Data onDataChange savePictureToLocalDirectory")
-                            quizEntities.add(quizFB.toQuizEntity("", 0, 0, -1, -1, -1, path))
-                            processedCount++
+                            quizEntities = quizFB.toQuizEntity(0, path)
 
-                            log("getQuiz8Data onDataChange processedCount = $processedCount, snapshot.childrenCount = ${snapshot.childrenCount.toInt()}")
-                            if (processedCount == snapshot.childrenCount.toInt()) {
-                                log("getQuiz8Data соблюдение условий")
-                                dao.insertQuizList(quizEntities)
-                                // сохраняем версию квеста в SharedPreferences
-                                val sharedPreferences =
-                                    PreferenceManager.getDefaultSharedPreferences(context)
-                                sharedPreferences.edit().putInt("quiz_version", quizFB.versionQuiz)
-                                    .apply()
-                            }
-
+                            log("getQuiz8Data Добавляем квиз")
+                            if (currentVersion == -1) dao.insertQuiz(quizEntities)
+                            else dao.updateQuiz(quizEntities)
+                            // сохраняем версию квеста в SharedPreferences
+                            SharedPreferencesManager.setVersionQuiz(
+                                snapshot.key ?: "0",
+                                quizFB.versionQuiz
+                            )
                         }
                     }
                 }
@@ -111,13 +114,6 @@ class RepositoryFBImpl @Inject constructor(
                 log("getQuiz8Data error: $error")
             }
         })
-    }
-
-    private fun getCurrentQuizVersion(context: Context): Int {
-
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        log("fun getCurrentQuizVersion ${sharedPreferences.getInt("quiz_version", 0)}")
-        return sharedPreferences.getInt("quiz_version", 0)
     }
 
     fun savePictureToLocalDirectory(
@@ -166,14 +162,13 @@ class RepositoryFBImpl @Inject constructor(
                             context
                         ) { path ->
                             if (path != null) {
-                                if (dao.getQuizById(quizEntity.idQuiz, quizEntity.tpovId).id != quizEntity.idQuiz) quizEntities.add(
+                                if (dao.getQuizById(
+                                        quizEntity.idQuiz,
+                                        quizEntity.tpovId
+                                    ).id != quizEntity.idQuiz
+                                ) quizEntities.add(
                                     quizEntity.toQuizEntity(
-                                        "",
                                         0,
-                                        0,
-                                        -1,
-                                        -1,
-                                        -1,
                                         path
                                     )
                                 )
@@ -204,7 +199,11 @@ class RepositoryFBImpl @Inject constructor(
                 for (data in snapshot.children) {
                     val quizEntity = data.getValue(QuizEntity::class.java)
                     if (quizEntity != null) {
-                        if (dao.getQuizById(quizEntity.id!!, quizEntity.tpovId).id != quizEntity.id) quizEntities.add(quizEntity)
+                        if (dao.getQuizById(
+                                quizEntity.id!!,
+                                quizEntity.tpovId
+                            ).id != quizEntity.id
+                        ) quizEntities.add(quizEntity)
                     }
                 }
                 dao.insertQuizList(quizEntities)
@@ -227,7 +226,11 @@ class RepositoryFBImpl @Inject constructor(
                 for (data in snapshot.children) {
                     val quizEntity = data.getValue(QuizEntity::class.java)
                     if (quizEntity != null) {
-                        if (dao.getQuizById(quizEntity.id!!, quizEntity.tpovId).id != quizEntity.id) quizEntities.add(quizEntity)
+                        if (dao.getQuizById(
+                                quizEntity.id!!,
+                                quizEntity.tpovId
+                            ).id != quizEntity.id
+                        ) quizEntities.add(quizEntity)
                     }
                 }
                 dao.insertQuizList(quizEntities)
@@ -249,7 +252,11 @@ class RepositoryFBImpl @Inject constructor(
                 for (data in snapshot.children) {
                     val quizEntity = data.getValue(QuizEntity::class.java)
                     if (quizEntity != null) {
-                        if (dao.getQuizById(quizEntity.id!!, quizEntity.tpovId).id != quizEntity.id) quizEntities.add(quizEntity)
+                        if (dao.getQuizById(
+                                quizEntity.id!!,
+                                quizEntity.tpovId
+                            ).id != quizEntity.id
+                        ) quizEntities.add(quizEntity)
                     }
 
                 }
@@ -272,7 +279,11 @@ class RepositoryFBImpl @Inject constructor(
                 for (data in snapshot.children) {
                     val quizEntity = data.getValue(QuizEntity::class.java)
                     if (quizEntity != null) {
-                        if (dao.getQuizById(quizEntity.id!!, quizEntity.tpovId).id != quizEntity.id) quizEntities.add(quizEntity)
+                        if (dao.getQuizById(
+                                quizEntity.id!!,
+                                quizEntity.tpovId
+                            ).id != quizEntity.id
+                        ) quizEntities.add(quizEntity)
                     }
                 }
                 dao.insertQuizList(quizEntities)
@@ -292,16 +303,25 @@ class RepositoryFBImpl @Inject constructor(
         quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuiz2Data snapshot: ${snapshot.key}")
-                val quizEntities = mutableListOf<QuizEntity>()
                 for (data in snapshot.children) {
                     log("getQuiz2Data data: ${data.key}")
-                    val quizEntity = data.getValue(QuizEntity::class.java)
-                    if (quizEntity != null) {
+                    val quizEntity = data.getValue(Quiz::class.java)
+
+                    val currentVersion =
+                        SharedPreferencesManager.getVersionQuiz(data.key!!)
+                    if (quizEntity != null && (quizEntity.versionQuiz > currentVersion || currentVersion == -1)) {
+                        newVersionQuiz.add(quizEntity.idQuiz)
+                        newVersionQuizDetail.add(quizEntity.idQuiz)
                         log("getQuiz2Data таблица не пустая, добавляем в список")
-                        if (dao.getQuizById(quizEntity.id!!, quizEntity.tpovId).id != quizEntity.id) quizEntities.add(quizEntity)
+                        if (currentVersion == -1) dao.insertQuiz(quizEntity.toQuizEntity(0, ""))
+                        else dao.updateQuiz(quizEntity.toQuizEntity(0, ""))
+                        SharedPreferencesManager.setVersionQuiz(
+                            snapshot.key ?: "0",
+                            quizEntity.versionQuiz
+                        )
                     }
                 }
-                dao.insertQuizList(quizEntities)
+
                 synthLiveData.value = 8
             }
 
@@ -321,17 +341,26 @@ class RepositoryFBImpl @Inject constructor(
         quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuiz1Data snapshot: ${snapshot.key}")
-                val quizEntities = mutableListOf<QuizEntity>()
                 for (quizList in snapshot.children) {
                     log("getQuiz1Data quizList: ${quizList.key}")
-                    val quizEntity = quizList.getValue(QuizEntity::class.java)
-                    if (quizEntity != null) {
+                    val quizEntity = quizList.getValue(Quiz::class.java)
+
+                    val currentVersion =
+                        SharedPreferencesManager.getVersionQuiz(quizList.key!!)
+                    if (quizEntity != null && (quizEntity.versionQuiz > currentVersion || currentVersion == -1)) {
+                        newVersionQuiz.add(quizEntity.idQuiz)
+                        newVersionQuizDetail.add(quizEntity.idQuiz)
                         log("getQuiz1Data квиз не пустой, добавляем в список")
-                        if (dao.getQuizById(quizEntity.id!!, tpovId).id != quizEntity.id) quizEntities.add(quizEntity)
+                        if (currentVersion == -1) dao.insertQuiz(quizEntity.toQuizEntity(0,""))
+                        else dao.updateQuiz(quizEntity.toQuizEntity(0,""))
+
+                        SharedPreferencesManager.setVersionQuiz(
+                            snapshot.key ?: "0",
+                            quizEntity.versionQuiz
+                        )
                     }
 
                 }
-                dao.insertQuizList(quizEntities)
                 synthLiveData.value = 7
             }
 
@@ -361,19 +390,26 @@ class RepositoryFBImpl @Inject constructor(
                                 log("getQuestion8Data questionSnap: ${questionSnap.key}")
                                 val question = questionSnap.getValue(Question::class.java)
                                 if (question != null) {
-                                    log("getQuestion8Data вопрос не пустой, добавляем в список")
-                                    questionEntities.add(
-                                        QuestionEntity(
-                                            null,
-                                            idQuestionSnap.key?.toInt() ?: 0,
-                                            question.nameQuestion,
-                                            question.answerQuestion,
-                                            question.typeQuestion,
-                                            idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
-                                            question.lvlTranslate
-                                        )
-                                    )
+                                    newVersionQuiz.forEach {
+                                        log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                        if (it == idQuizSnap.key?.toInt()) {
+                                            log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                            questionEntities.add(
+                                                QuestionEntity(
+                                                    null,
+                                                    idQuestionSnap.key?.toInt() ?: 0,
+                                                    question.nameQuestion,
+                                                    question.answerQuestion,
+                                                    question.typeQuestion,
+                                                    idQuizSnap.key?.toInt() ?: -1,
+                                                    languageSnap.key ?: "eu",
+                                                    question.lvlTranslate
+                                                )
+                                            )
+                                            newVersionQuiz.remove(it)
+                                        }
+                                    }
+
                                 }
 
                             }
@@ -402,18 +438,25 @@ class RepositoryFBImpl @Inject constructor(
                             for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
                                 val question = questionSnap.getValue(Question::class.java)
                                 if (question != null) {
-                                    questionEntities.add(
-                                        QuestionEntity(
-                                            null,
-                                            idQuestionSnap.key?.toInt() ?: 0,
-                                            question.nameQuestion,
-                                            question.answerQuestion,
-                                            question.typeQuestion,
-                                            idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
-                                            question.lvlTranslate
-                                        )
-                                    )
+                                    newVersionQuiz.forEach {
+                                        log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                        if (it == idQuizSnap.key?.toInt()) {
+                                            log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                            questionEntities.add(
+                                                QuestionEntity(
+                                                    null,
+                                                    idQuestionSnap.key?.toInt() ?: 0,
+                                                    question.nameQuestion,
+                                                    question.answerQuestion,
+                                                    question.typeQuestion,
+                                                    idQuizSnap.key?.toInt() ?: -1,
+                                                    languageSnap.key ?: "eu",
+                                                    question.lvlTranslate
+                                                )
+                                            )
+                                            newVersionQuiz.remove(it)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -441,18 +484,25 @@ class RepositoryFBImpl @Inject constructor(
                             for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
                                 val question = questionSnap.getValue(Question::class.java)
                                 if (question != null) {
-                                    questionEntities.add(
-                                        QuestionEntity(
-                                            null,
-                                            idQuestionSnap.key?.toInt() ?: 0,
-                                            question.nameQuestion,
-                                            question.answerQuestion,
-                                            question.typeQuestion,
-                                            idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
-                                            question.lvlTranslate
-                                        )
-                                    )
+                                    newVersionQuiz.forEach {
+                                        log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                        if (it == idQuizSnap.key?.toInt()) {
+                                            log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                            questionEntities.add(
+                                                QuestionEntity(
+                                                    null,
+                                                    idQuestionSnap.key?.toInt() ?: 0,
+                                                    question.nameQuestion,
+                                                    question.answerQuestion,
+                                                    question.typeQuestion,
+                                                    idQuizSnap.key?.toInt() ?: -1,
+                                                    languageSnap.key ?: "eu",
+                                                    question.lvlTranslate
+                                                )
+                                            )
+                                            newVersionQuiz.remove(it)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -479,18 +529,25 @@ class RepositoryFBImpl @Inject constructor(
                             for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
                                 val question = questionSnap.getValue(Question::class.java)
                                 if (question != null) {
-                                    questionEntities.add(
-                                        QuestionEntity(
-                                            null,
-                                            idQuestionSnap.key?.toInt() ?: 0,
-                                            question.nameQuestion,
-                                            question.answerQuestion,
-                                            question.typeQuestion,
-                                            idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
-                                            question.lvlTranslate
-                                        )
-                                    )
+                                    newVersionQuiz.forEach {
+                                        log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                        if (it == idQuizSnap.key?.toInt()) {
+                                            log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                            questionEntities.add(
+                                                QuestionEntity(
+                                                    null,
+                                                    idQuestionSnap.key?.toInt() ?: 0,
+                                                    question.nameQuestion,
+                                                    question.answerQuestion,
+                                                    question.typeQuestion,
+                                                    idQuizSnap.key?.toInt() ?: -1,
+                                                    languageSnap.key ?: "eu",
+                                                    question.lvlTranslate
+                                                )
+                                            )
+                                            newVersionQuiz.remove(it)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -518,18 +575,25 @@ class RepositoryFBImpl @Inject constructor(
                             for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
                                 val question = questionSnap.getValue(Question::class.java)
                                 if (question != null) {
-                                    questionEntities.add(
-                                        QuestionEntity(
-                                            null,
-                                            idQuestionSnap.key?.toInt() ?: 0,
-                                            question.nameQuestion,
-                                            question.answerQuestion,
-                                            question.typeQuestion,
-                                            idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
-                                            question.lvlTranslate
-                                        )
-                                    )
+                                    newVersionQuiz.forEach {
+                                        log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                        if (it == idQuizSnap.key?.toInt()) {
+                                            log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                            questionEntities.add(
+                                                QuestionEntity(
+                                                    null,
+                                                    idQuestionSnap.key?.toInt() ?: 0,
+                                                    question.nameQuestion,
+                                                    question.answerQuestion,
+                                                    question.typeQuestion,
+                                                    idQuizSnap.key?.toInt() ?: -1,
+                                                    languageSnap.key ?: "eu",
+                                                    question.lvlTranslate
+                                                )
+                                            )
+                                            newVersionQuiz.remove(it)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -556,18 +620,25 @@ class RepositoryFBImpl @Inject constructor(
                             for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
                                 val question = questionSnap.getValue(Question::class.java)
                                 if (question != null) {
-                                    questionEntities.add(
-                                        QuestionEntity(
-                                            null,
-                                            idQuestionSnap.key?.toInt() ?: 0,
-                                            question.nameQuestion,
-                                            question.answerQuestion,
-                                            question.typeQuestion,
-                                            idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
-                                            question.lvlTranslate
-                                        )
-                                    )
+                                    newVersionQuiz.forEach {
+                                        log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                        if (it == idQuizSnap.key?.toInt()) {
+                                            log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                            questionEntities.add(
+                                                QuestionEntity(
+                                                    null,
+                                                    idQuestionSnap.key?.toInt() ?: 0,
+                                                    question.nameQuestion,
+                                                    question.answerQuestion,
+                                                    question.typeQuestion,
+                                                    idQuizSnap.key?.toInt() ?: -1,
+                                                    languageSnap.key ?: "eu",
+                                                    question.lvlTranslate
+                                                )
+                                            )
+                                            newVersionQuiz.remove(it)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -600,18 +671,25 @@ class RepositoryFBImpl @Inject constructor(
                             val question = languageSnap.getValue(Question::class.java)
                             if (question != null) {
                                 log("getQuestion2Data() квест не пустой, добавляем в список")
-                                questionEntities.add(
-                                    QuestionEntity(
-                                        null,
-                                        idQuestionSnap.key?.toInt() ?: 0,
-                                        question.nameQuestion,
-                                        question.answerQuestion,
-                                        question.typeQuestion,
-                                        idQuizSnap.key?.toInt() ?: -1,
-                                        languageSnap.key ?: "eu",
-                                        question.lvlTranslate
-                                    )
-                                )
+                                newVersionQuiz.forEach {
+                                    log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                    if (it == idQuizSnap.key?.toInt()) {
+                                        log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                        questionEntities.add(
+                                            QuestionEntity(
+                                                null,
+                                                idQuestionSnap.key?.toInt() ?: 0,
+                                                question.nameQuestion,
+                                                question.answerQuestion,
+                                                question.typeQuestion,
+                                                idQuizSnap.key?.toInt() ?: -1,
+                                                languageSnap.key ?: "eu",
+                                                question.lvlTranslate
+                                            )
+                                        )
+                                        newVersionQuiz.remove(it)
+                                    }
+                                }
                             }
                         }
                     }
@@ -644,18 +722,25 @@ class RepositoryFBImpl @Inject constructor(
                             if (question != null) {
 
                                 log("getQuestion1Data() квест не пустой, добавляем в список")
-                                questionEntities.add(
-                                    QuestionEntity(
-                                        null,
-                                        idQuestionSnap.key?.toInt() ?: 0,
-                                        question.nameQuestion,
-                                        question.answerQuestion,
-                                        question.typeQuestion,
-                                        idQuizSnap.key?.toInt() ?: -1,
-                                        languageSnap.key ?: "eu",
-                                        question.lvlTranslate
-                                    )
-                                )
+                                newVersionQuiz.forEach {
+                                    log("getQuestion8Data newVersionQuiz.forEach it: $it == idQuizSnap: ${idQuizSnap.key}")
+                                    if (it == idQuizSnap.key?.toInt()) {
+                                        log("getQuestion8Data вопрос не пустой, добавляем в список")
+                                        questionEntities.add(
+                                            QuestionEntity(
+                                                null,
+                                                idQuestionSnap.key?.toInt() ?: 0,
+                                                question.nameQuestion,
+                                                question.answerQuestion,
+                                                question.typeQuestion,
+                                                idQuizSnap.key?.toInt() ?: -1,
+                                                languageSnap.key ?: "eu",
+                                                question.lvlTranslate
+                                            )
+                                        )
+                                        newVersionQuiz.remove(it)
+                                    }
+                                }
                             }
                         }
                     }
@@ -687,8 +772,15 @@ class RepositoryFBImpl @Inject constructor(
                             val questionDetailEntity =
                                 data.getValue(QuestionDetailEntity::class.java)
                             if (questionDetailEntity != null) {
-                                log("getQuestionDetail1() квест не пустой, добавляем в список")
-                                questionDetailEntities.add(questionDetailEntity)
+                                newVersionQuizDetail.forEach {
+                                    if (it == idQuiz.key?.toInt()) {
+                                        log("getQuestionDetail1() обновляем it: $it")
+                                        questionDetailEntities.add(questionDetailEntity)
+                                        newVersionQuizDetail.remove(it)
+                                    }
+                                }
+
+
                             }
 
                         }
@@ -720,7 +812,13 @@ class RepositoryFBImpl @Inject constructor(
                             idQuiz.getValue(QuestionDetailEntity::class.java)
                         if (questionDetailEntity != null) {
                             log("getQuestionDetail2() квест не пустой, добавляем в список")
-                            questionDetailEntities.add(questionDetailEntity)
+                            newVersionQuizDetail.forEach {
+                                if (it == idQuiz.key?.toInt()) {
+                                    log("getQuestionDetail1() обновляем it: $it")
+                                    questionDetailEntities.add(questionDetailEntity)
+                                    newVersionQuizDetail.remove(it)
+                                }
+                            }
                         }
                     }
 
@@ -747,7 +845,13 @@ class RepositoryFBImpl @Inject constructor(
                         val questionDetailEntity =
                             idQuiz.getValue(QuestionDetailEntity::class.java)
                         if (questionDetailEntity != null) {
-                            questionDetailEntities.add(questionDetailEntity)
+                            newVersionQuizDetail.forEach {
+                                if (it == idQuiz.key?.toInt()) {
+                                    log("getQuestionDetail1() обновляем it: $it")
+                                    questionDetailEntities.add(questionDetailEntity)
+                                    newVersionQuizDetail.remove(it)
+                                }
+                            }
                         }
 
                     }
@@ -773,7 +877,13 @@ class RepositoryFBImpl @Inject constructor(
                         val questionDetailEntity =
                             idQuiz.getValue(QuestionDetailEntity::class.java)
                         if (questionDetailEntity != null) {
-                            questionDetailEntities.add(questionDetailEntity)
+                            newVersionQuizDetail.forEach {
+                                if (it == idQuiz.key?.toInt()) {
+                                    log("getQuestionDetail1() обновляем it: $it")
+                                    questionDetailEntities.add(questionDetailEntity)
+                                    newVersionQuizDetail.remove(it)
+                                }
+                            }
                         }
                     }
                 }
@@ -797,7 +907,13 @@ class RepositoryFBImpl @Inject constructor(
                         val questionDetailEntity =
                             idQuiz.getValue(QuestionDetailEntity::class.java)
                         if (questionDetailEntity != null) {
-                            questionDetailEntities.add(questionDetailEntity)
+                            newVersionQuizDetail.forEach {
+                                if (it == idQuiz.key?.toInt()) {
+                                    log("getQuestionDetail1() обновляем it: $it")
+                                    questionDetailEntities.add(questionDetailEntity)
+                                    newVersionQuizDetail.remove(it)
+                                }
+                            }
                         }
                     }
                 }
@@ -821,7 +937,13 @@ class RepositoryFBImpl @Inject constructor(
                         val questionDetailEntity =
                             idQuiz.getValue(QuestionDetailEntity::class.java)
                         if (questionDetailEntity != null) {
-                            questionDetailEntities.add(questionDetailEntity)
+                            newVersionQuizDetail.forEach {
+                                if (it == idQuiz.key?.toInt()) {
+                                    log("getQuestionDetail1() обновляем it: $it")
+                                    questionDetailEntities.add(questionDetailEntity)
+                                    newVersionQuizDetail.remove(it)
+                                }
+                            }
                         }
                     }
                 }
@@ -845,7 +967,13 @@ class RepositoryFBImpl @Inject constructor(
                         val questionDetailEntity =
                             idQuiz.getValue(QuestionDetailEntity::class.java)
                         if (questionDetailEntity != null) {
-                            questionDetailEntities.add(questionDetailEntity)
+                            newVersionQuizDetail.forEach {
+                                if (it == idQuiz.key?.toInt()) {
+                                    log("getQuestionDetail1() обновляем it: $it")
+                                    questionDetailEntities.add(questionDetailEntity)
+                                    newVersionQuizDetail.remove(it)
+                                }
+                            }
                         }
                     }
                 }
@@ -874,7 +1002,13 @@ class RepositoryFBImpl @Inject constructor(
                             idQuiz.getValue(QuestionDetailEntity::class.java)
                         if (questionDetailEntity != null) {
                             log("getQuestionDetail8() квест не пустой, добавляем в список")
-                            questionDetailEntities.add(questionDetailEntity)
+                            newVersionQuizDetail.forEach {
+                                if (it == idQuiz.key?.toInt()) {
+                                    log("getQuestionDetail1() обновляем it: $it")
+                                    questionDetailEntities.add(questionDetailEntity)
+                                    newVersionQuizDetail.remove(it)
+                                }
+                            }
                         }
                     }
                 }
@@ -1338,9 +1472,9 @@ class RepositoryFBImpl @Inject constructor(
 
 
         } else {
-            log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId" )
+            log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId")
             try {
-                log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId" )
+                log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId")
                 profileRef.child(tpovId.toString()).setValue(profile.toProfile())
                     .addOnSuccessListener {
                         synthLiveData.value = ++synth
@@ -1356,6 +1490,25 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     override fun setEvent(position: Int) {
+    }
+
+    override fun getUserName(tpovId: Int): Profile {
+        log("fun getUserName()")
+        val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
+        var profile = Profile()
+
+        profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                log("getUserName() snapshot: ${snapshot.key}")
+                profile = snapshot.child("$tpovId").getValue(Profile::class.java)!!
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                log("getUserName() ошибка ")
+            }
+
+        })
+        return profile
     }
 
     @OptIn(InternalCoroutinesApi::class)
