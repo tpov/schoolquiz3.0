@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="INFO">
+        <Preference
+            android:icon="@drawable/ic_info"
+            android:title="@string/start_massage_1" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="HOME">
+        <Preference
+            android:icon="@drawable/ic_info_buttom"
+            android:title="@string/start_massage_2" />
+        <Preference
+            android:icon="@drawable/ic_baseline_delete_outline_24"
+            android:title="@string/start_massage_3" />
+        <Preference
+            android:icon="@drawable/ic_share_quiz"
+            android:title="@string/start_massage_4" />
+        <Preference
+            android:icon="@drawable/ic_light_hard"
+            android:title="@string/start_massage_7" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="NEW QUIZ">
+        <Preference
+            android:icon="@drawable/ic_new"
+            android:title="@string/start_massage_5" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="TIMER">
+        <Preference
+            android:icon="@drawable/ic_time"
+            android:title="@string/timer" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Fun game!">
+        <Preference
+            android:icon="@drawable/ic_help"
+            android:title="@string/start_massage_6" />
+    </PreferenceCategory>
+</PreferenceScreen>

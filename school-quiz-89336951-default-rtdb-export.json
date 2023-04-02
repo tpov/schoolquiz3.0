@@ -1,0 +1,29 @@
+{
+  "players": {
+    "idQuiz": 102,
+    "idUser": 15,
+    "listTpovId": {
+      "15o02Qde7vXOyO25MAsGi87B6fG2": 14,
+      "63tsz0McKwftZJvtmAFmqdi3q8x2": 15,
+      "tbyHYFyKdYTlP36AeMZ4Fa8FQax2": 11
+    },
+    "read": false
+  },
+  "quiz2": {
+    "101": {
+      "data": "05:42:52 - 2023/03/26",
+      "event": 2,
+      "id": 101,
+      "nameQuiz": "bcbchcjcjvjv",
+      "numHQ": 0,
+      "numQ": 0,
+      "rating": 0,
+      "showDeleteButton": false,
+      "stars": 0,
+      "starsAll": 0,
+      "tpovId": 0,
+      "userName": "user",
+      "versionQuiz": 0
+    }
+  }
+}

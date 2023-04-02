@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/photo_2023_02_01_15_31_35"
+
+    android:gravity="right">
+    <corners
+        android:radius="25dp" />
+</bitmap>

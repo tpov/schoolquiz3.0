@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="colorFront">#193469</color>
+    <color name="Cyan">#00125A</color>
+
+    <color name="ratingBar">#D6B900</color>
+    <color name="nullColor">#00000000</color>
+    <color name="bHardQuestion">#59FF0000</color>
+    <color name="tvLightQuestion">#167A00</color>
+    <color name="tvHardQuestion">#7A0000</color>
+
+    <color name="splashTextColor">#670000</color>
+    <color name="background_splash_color">#001168</color>
+    <color name="num_chack_norice_red">#BF930000</color>
+    <color name="background_hard_question">#80770000</color>
+    <color name="num_chack_norice_green">#BF0B8700</color>
+    <color name="tv_main_activity">#3C208324</color>
+
+    <color name="backgraund_item_front_activity">#00124F5E</color>
+
+    <color name="design3_main_start">#4C577E</color>
+    <color name="design3_main_end">#242C41</color>
+    <color name="design3_main_middle">#363B5A</color>
+    <color name="design3_top_start">#9485F2</color>
+    <color name="grey">#958FBD</color>
+    <color name="design3_top_end">#5040B8</color>
+    <color name="checked_item_menu">#FFFFFF</color>
+
+</resources>

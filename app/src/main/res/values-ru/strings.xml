@@ -1,0 +1,117 @@
+<resources>
+
+    <string name="question_light2">Тихий океан больше Атлантического океана.</string>
+    <string name="question_light3">Суэцкий канал соединяет Красное море и Индийский океан.</string>
+    <string name="question_light4">Исток реки Нил находится в Египте.</string>
+    <string name="question_light5">Река Амазонка - самая длинная река в Америке.</string>
+    <string name="question_light6">Озеро Байкал - старейшее и самое глубокое пресноводное озеро в мире.</string>
+
+    <string name="question_light7">Самая длинная река в России — Лена.</string>
+    <string name="question_light8">Штаб-квартира ООН находится в Нью-Йорке.</string>
+    <string name="question_light9">Габороне — столица Габона.</string>
+    <string name="question_light10">Сицилию омывает Средиземное море.</string>
+    <string name="question_light11">Столица Ирландии — Дублин.</string>
+    <string name="question_light12">Раньше Париж носил название Лютеция.</string>
+    <string name="question_light13">Атлас – это цепь горных хребтов, расположенная в Европе.</string>
+    <string name="question_light14">В Китае, несмотря на его внушительные размеры, всего один часовой пояс.</string>
+    <string name="question_light15">Пирамиды майя города Чичен-Ица находятся в Перу.</string>
+    <string name="question_light16">Рейкьявик — столица Исландии.</string>
+    <string name="question_light17">Самая холодная точка мира, где постоянно проживают люди, — российское село Оймякон.</string>
+    <string name="question_light18">Украина - самая большая страна, которая полностью находится в Европе.</string>
+    <string name="question_light19">Германская империя - это тоже самое, что и Третий Рейх.</string>
+    <string name="question_light20">Каспийское море - самое солёное озеро в мире.</string>
+
+    <string name="question_hard1">Большенство бельгейцев живут в сельской местности.</string>
+    <string name="question_hard2">В прибалтийских странах ни одна женщина не избиралась на пост президента.</string>
+    <string name="question_hard3">Андорра - единственное княжество в мире.</string>
+    <string name="question_hard4">Название государства Бельгия происходит от названия древнего племени.</string>
+    <string name="question_hard5">Внутри Италии находятся два независимых государства.</string>
+    <string name="question_hard6">В Европе нет стран, которые не имеют выхода к морю.</string>
+    <string name="question_hard7">В Дублине нет ни одного парка.</string>
+    <string name="question_hard8">Сан-Марино претендует на звание старейшого суверенного государства в мире.</string>
+    <string name="question_hard9">Великобритания - единственная европейская страна с левосторонним движением.</string>
+    <string name="question_hard10">В Шотладнии очень жаркий климат.</string>
+    <string name="question_hard11">Самая большая ирландская церковь находится в Дублине.</string>
+    <string name="question_hard12">В парижском Пантеоне не захоронено ни одной женжины.</string>
+    <string name="question_hard13">В Бельгии почти нет никаких фабрик и заводов.</string>
+    <string name="question_hard14">Неаполь - самый большой город в Италии.</string>
+    <string name="question_hard15">В Англии есть город, в названии которого присутсвует воскликательный знак(!).</string>
+    <string name="question_hard16">Швеция - самая маленькая скандинавская страна.</string>
+    <string name="question_hard17">Швейцария не брала участи во второй мировой войне</string>
+    <string name="question_hard18">Раньше корейский полуостров была под контролем Японии</string>
+    <string name="question_hard19">США забрала Аляску войной</string>
+    <string name="question_hard20">Вьетнам победил у войне с США благодаря численности населения</string>
+
+    <string name="true_button">Верно</string>
+    <string name="false_button">Не верно</string>
+    <string name="next_button">След.</string>
+    <string name="pref_button">Пред.</string>
+    <string name="correct_toast">Верно!!</string>
+    <string name="incorrect_toast">Не верно!!</string>
+    <string name="null_toast">Вопросов не осталось</string>
+
+    <string name="load_front_list">Синхронизация встроенных вопросов</string>
+
+    <string name="warning_text">Вы уверены, что хотите это сделать?</string>
+    <string name="show_answer_button">Посмотреть ответ</string>
+    <string name="cheat_button">Чит!</string>
+    <string name="judgment_toast">Вы признаны как читер.</string>
+
+    <string name="title_text">Quiz</string>
+    <string name="menu_home_text">Домой</string>
+    <string name="menu_new">Новые Вопросы</string>
+    <string name="menu_info">Инфо</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="main_title_name">Домой</string>
+    <string name="vandroid">vandroid</string>
+    <string name="name">Имя…</string>
+    <string name="question">Вопрос…</string>
+    <string name="new_question">Имя квеста</string>
+    <string name="end_button">END</string>
+    <string name="hard_question">Сложный вопрос</string>
+    <string name="unswer">Ответ</string>
+    <string name="light_question">Легкий вопрос</string>
+    <string name="clear">ОЧИСТИТЬ</string>
+    <string name="load_geo_quiz">Загрузка GeoQuiz</string>
+    <string name="load_сrime">Загружена незаконченная сессия</string>
+    <string name="go">Начать.</string>
+    <string name="error_load_question">Ошибка загрузки квеста, повторите попытку</string>
+    <string name="nice">Nice</string>
+    <string name="no_nice">No nice</string>
+    <string name="go_hard_question">Вам доступны сложные вопросы</string>
+    <string name="inter_ad_id">ca-app-pub-6279944059986833/5924755266</string>
+    <string name="massage_show_ads">Реклама</string>
+    <string name="time_format_key">time_format_key</string>
+    <string name="chose_time_format">Выбрать формат времени</string>
+    <string name="remove_ads">Убрать рекламу</string>
+    <string name="remove_summary">Убрать рекламу</string>
+    <string name="load_api_question">Load api question</string>
+
+    <string name="start_massage_1">Quiz – представляет собой квест правда–ложь, в котором изначально есть базовые вопросы с возможносью добавлением собственных, отвечая на которых вы зарабатываете очки 1–100.</string>
+    <string name="start_massage_2">После нажати на название квеста вы переходите на этап прохождения, который состоит из 2 частей (легкие вопросы и сложные). Изначально вы проходите легкие вопросы, которыми можно заработать максимум 83,3% (2 звезды), если вы набрали 2 звезды – на очередное прохождение квеста вы будете отвечать на сложные вопросы которыми можно набрать 83,3 – 100 % (2–3 звезды)</string>
+    <string name="start_massage_3">Квесты так же можно удалять - нажатием на мусорный бак, с всплывающим окном с подтверждением а так же возможностю не удалять сами вопросы с базы данных (Советуем ставить галочку - удалить все вопросы)</string>
+    <string name="start_massage_4">Так же квестами можно поделиться, с ответами или без в зависимости поставите ли вы галочку, сложные вопросы будут отмечены знаком - *. (Базовые вопросы не показывают ответы если ими поделитесь)</string>
+    <string name="start_massage_7">Возле кнопки с названием квеста есть индикатор, который указывает на сложность вопросов после её нажатия, у нее может быть 2 состояния, lite question/ hard question. Ниже есть 3 числа, которые показывают: к-во легких вопросов/ сложных/ к-во попыток прохождения. Над звездами есть два показания: левое - это средний процент за все попытки, правое - лучший результат. Звезды показывают лучший результат. Дата - это дата создания квеста, над датой отображено имя лучшего результата, если оно было указано.</string>
+    <string name="start_massage_5">При попытке создания собственного вопроса вам помешает диалоговое окно, в котором вы должны указать название квеста, далее вы указываете сам вопрос, ответ на него, сложность и кнопку next, и заполняете следующий вопрос, и т.д. пока вам не надоест, затем жмете end. Обратите внимание, что end так же записывает вопрос.</string>
+    <string name="timer">Имеет сложную логику, если при запуске приложения отображается отвеченный вопрос - таймер не запускается, если перематывать вопросы и открывается не отвеченный вопрос - таймер запускается, при дальнейшем перематывании вопросов - таймер продолжает считать даже если вы находитесь на отвеченном вопросе, пока дадите ответ на любой из вопросов или таймер не закончится. Если таймер закончится - он отвечает на текущий вопрос случайным образом, если вы находитесь на отвеченном вопросе - отвечает на последний просмотренный не отвеченный вопрос.
+В общем, таймер запускается если вы прочитали не отвеченный вопрос.</string>
+
+    <string name="start_massage_6">В дальшнейшем, будут добавляться различные школьные вопросы, новые возможности. Так же можете поделиться своими вопросами в отзыв, лучшие вопросы возможно будут добавлены в приложение. А так же, можете поддержать автора оценкой 5, или убрать рекламу, и у вас будет все true ^)</string>
+    <string name="FrontActivity_num_chack_norice">Осталось вопросов-дня в оффлайн режиме</string>
+    <string name="tv_auto_update_question">Автообновление вопроса</string>
+    <string name="list_question">Список вопросов</string>
+    <string name="hard_quiz">Hard quiz!</string>
+    <string name="light_quiz">Light quiz!</string>
+    <string name="dialog_text_delete">Delete text?</string>
+    <string name="dialog_short_text_delete">delete</string>
+    <string name="dialog_short_text_share">Share</string>
+    <string name="dialog_text_share">Share text</string>
+    <string name="menu_network">Network</string>
+    <string name="prompt_email">email</string>
+    <string name="prompt_password">password</string>
+    <string name="action_sign_in_short">out email</string>
+    <string name="action_sign_in">Login</string>
+    <string name="action_registration">registration</string>
+    <string name="prompt_name">Your name</string>
+    <string name="prompt_years">Your years</string>
+</resources>

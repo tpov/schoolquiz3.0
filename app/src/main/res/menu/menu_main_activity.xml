@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/item_auto_update_answer"
+        android:title="@string/tv_auto_update_question"
+        app:actionViewClass="android.widget.Switch"
+        android:checked="true"
+        app:showAsAction="withText|always"
+        app:actionLayout="@layout/switch_item" />
+    <item
+        android:id="@+id/item_list_answer"
+        android:title="@string/list_question"
+        app:showAsAction="collapseActionView" />
+
+</menu>

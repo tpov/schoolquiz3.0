@@ -1,0 +1,572 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "0040b022aa75ab4f3a0697dc73a1ad19",
+    "entities": [
+      {
+        "tableName": "table_data",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `idQuiz` INTEGER NOT NULL, `data` TEXT NOT NULL, `codeAnswer` TEXT, `hardQuiz` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "idQuiz",
+            "columnName": "idQuiz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codeAnswer",
+            "columnName": "codeAnswer",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hardQuiz",
+            "columnName": "hardQuiz",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "new_user_table",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `numQuestion` INTEGER NOT NULL, `nameQuestion` TEXT NOT NULL, `answerQuestion` INTEGER NOT NULL, `hardQuestion` INTEGER NOT NULL, `idQuiz` INTEGER NOT NULL, `language` TEXT NOT NULL, `lvlTranslate` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "numQuestion",
+            "columnName": "numQuestion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameQuestion",
+            "columnName": "nameQuestion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "answerQuestion",
+            "columnName": "answerQuestion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hardQuestion",
+            "columnName": "hardQuestion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idQuiz",
+            "columnName": "idQuiz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lvlTranslate",
+            "columnName": "lvlTranslate",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "front_list",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `nameQuiz` TEXT NOT NULL, `user_name` TEXT NOT NULL, `data` TEXT NOT NULL, `stars` INTEGER NOT NULL, `numQ` INTEGER NOT NULL, `numHQ` INTEGER NOT NULL, `starsAll` INTEGER NOT NULL, `versionQuiz` INTEGER NOT NULL, `picture` TEXT, `event` INTEGER NOT NULL, `rating` INTEGER NOT NULL, `showDeleteButton` INTEGER NOT NULL, `tpovId` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "nameQuiz",
+            "columnName": "nameQuiz",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userName",
+            "columnName": "user_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "data",
+            "columnName": "data",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stars",
+            "columnName": "stars",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numQ",
+            "columnName": "numQ",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numHQ",
+            "columnName": "numHQ",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "starsAll",
+            "columnName": "starsAll",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versionQuiz",
+            "columnName": "versionQuiz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "picture",
+            "columnName": "picture",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "event",
+            "columnName": "event",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rating",
+            "columnName": "rating",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showDeleteButton",
+            "columnName": "showDeleteButton",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tpovId",
+            "columnName": "tpovId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "table_generate_question",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `date` TEXT NOT NULL, `question` TEXT NOT NULL, `answer` TEXT NOT NULL, `questionTranslate` TEXT NOT NULL, `answerTranslate` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "question",
+            "columnName": "question",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "answer",
+            "columnName": "answer",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questionTranslate",
+            "columnName": "questionTranslate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "answerTranslate",
+            "columnName": "answerTranslate",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "profiles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT NOT NULL, `name` TEXT NOT NULL, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `timeInGamesAllTime` TEXT NOT NULL, `timeInGamesInQuiz` TEXT NOT NULL, `timeInGamesInChat` TEXT NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsSkillInSeason` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyHeart` INTEGER NOT NULL, `buyGoldHeart` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsSkillInSeason` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `idFirebase` TEXT NOT NULL, `languages` TEXT NOT NULL, `gamer` INTEGER NOT NULL, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tpovId",
+            "columnName": "tpovId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "login",
+            "columnName": "login",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "birthday",
+            "columnName": "birthday",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "datePremium",
+            "columnName": "datePremium",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trophy",
+            "columnName": "trophy",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "friends",
+            "columnName": "friends",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "city",
+            "columnName": "city",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "logo",
+            "columnName": "logo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesAllTime",
+            "columnName": "timeInGamesAllTime",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesInQuiz",
+            "columnName": "timeInGamesInQuiz",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesInChat",
+            "columnName": "timeInGamesInChat",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesSmsPoints",
+            "columnName": "timeInGamesSmsPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pointsGold",
+            "columnName": "pointsGold",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pointsSkill",
+            "columnName": "pointsSkill",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pointsSkillInSeason",
+            "columnName": "pointsSkillInSeason",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pointsNolics",
+            "columnName": "pointsNolics",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "buyHeart",
+            "columnName": "buyHeart",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "buyGoldHeart",
+            "columnName": "buyGoldHeart",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "buyQuizPlace",
+            "columnName": "buyQuizPlace",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "buyTheme",
+            "columnName": "buyTheme",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "buyMusic",
+            "columnName": "buyMusic",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "buyLogo",
+            "columnName": "buyLogo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addPointsGold",
+            "columnName": "addPointsGold",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addPointsSkill",
+            "columnName": "addPointsSkill",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addPointsSkillInSeason",
+            "columnName": "addPointsSkillInSeason",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addPointsNolics",
+            "columnName": "addPointsNolics",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addTrophy",
+            "columnName": "addTrophy",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataCreateAcc",
+            "columnName": "dataCreateAcc",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateSynch",
+            "columnName": "dateSynch",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idFirebase",
+            "columnName": "idFirebase",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "languages",
+            "columnName": "languages",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gamer",
+            "columnName": "gamer",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sponsor",
+            "columnName": "sponsor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tester",
+            "columnName": "tester",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "translater",
+            "columnName": "translater",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "moderator",
+            "columnName": "moderator",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "admin",
+            "columnName": "admin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "developer",
+            "columnName": "developer",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "chat_data",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `time` TEXT NOT NULL, `user` TEXT NOT NULL, `msg` TEXT NOT NULL, `importance` INTEGER NOT NULL, `personalSms` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "time",
+            "columnName": "time",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "user",
+            "columnName": "user",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "msg",
+            "columnName": "msg",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "importance",
+            "columnName": "importance",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "personalSms",
+            "columnName": "personalSms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0040b022aa75ab4f3a0697dc73a1ad19')"
+    ]
+  }
+}

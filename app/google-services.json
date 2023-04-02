@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "762375057396",
+    "project_id": "school-quiz-89336951",
+    "storage_bucket": "school-quiz-89336951.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:762375057396:android:104a8bd0846a921a2893a1",
+        "android_client_info": {
+          "package_name": "com.tpov.schoolquiz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "762375057396-npttuhuls6944uvnqo59563vae339jje.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlxFuYjnOxDRPPdkG0Qr91TmPIUM193cY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "762375057396-npttuhuls6944uvnqo59563vae339jje.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

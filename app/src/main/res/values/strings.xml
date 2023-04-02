@@ -1,0 +1,101 @@
+<resources>
+
+    <string name="true_button">True</string>
+    <string name="false_button">False</string>
+    <string name="next_button">Next</string>
+    <string name="pref_button">Prev</string>
+    <string name="correct_toast">Correct!!</string>
+    <string name="incorrect_toast">Incorrect!!</string>
+    <string name="null_toast">Null questions</string>
+
+    <string name="load_front_list">Synchronized quiz</string>
+
+    <string name="warning_text">Are you sure you want to do this?</string>
+    <string name="show_answer_button">Show Answer</string>
+    <string name="cheat_button">Cheat!</string>
+    <string name="judgment_toast">Cheating is wrong.</string>
+
+    <string name="title_text">Quiz</string>
+    <string name="menu_home_text">Home</string>
+    <string name="menu_new">New quiz</string>
+    <string name="menu_info">Info</string>
+    <string name="menu_settings">Settings</string>
+    <string name="main_title_name">Home</string>
+    <string name="vandroid">vAndroid</string>
+    <string name="name">Name…</string>
+    <string name="question">Question…</string>
+    <string name="new_question">Quiz name</string>
+    <string name="end_button">END</string>
+    <string name="hard_question">Hard question</string>
+    <string name="hard_quiz">Hard quiz!</string>
+    <string name="light_quiz">Light quiz!</string>
+    <string name="unswer">Answer</string>
+    <string name="light_question">Light question</string>
+    <string name="clear">CLEAR</string>
+    <string name="load_geo_quiz">Load GeoQuiz</string>
+    <string name="load_сrime">Unfinished session loaded</string>
+    <string name="go">Go!</string>
+    <string name="error_load_question">Error load question</string>
+    <string name="nice">Nice</string>
+    <string name="no_nice">No nice</string>
+    <string name="go_hard_question">Difficult questions are available to you</string>
+    <string name="inter_ad_id">ca-app-pub-6279944059986833/5924755266</string>
+    <string name="massage_show_ads">ads</string>
+    <string name="time_format_key">time_format_key</string>
+    <string name="chose_time_format">Chose time format</string>
+    <string name="remove_ads">Remove ads</string>
+    <string name="remove_summary">Remove ads</string>
+    <string name="load_api_question">Load api question</string>
+
+    <string name="start_massage_1">Quiz – is a true–false quest, which initially has basic questions with the possibility of adding your own, answering which you earn points 1–100.</string>
+    <string name="start_massage_2">After clicking on the name of the quest, you go to the stage of passing, which consists of 2 parts (easy questions and difficult ones). Initially, you go through easy questions, which can earn a maximum of 83.3% (2 stars), if you score 2 stars – for the next passage of the quest, you will answer difficult questions with which you can score 83.3 – 100% (2–3 stars)</string>
+    <string name="start_massage_3">Quests can also be deleted - by clicking on the trash can, with a pop-up window with confirmation, as well as the ability not to delete the questions themselves from the database (We recommend checking the box - delete all questions)</string>
+    <string name="start_massage_4">You can also share quests, with or without answers, depending on whether you check the box, difficult questions will be marked with a *. (Basic questions do not show answers if you share them)</string>
+    <string name="start_massage_7">Near the button with the name of the quest there is an indicator that indicates the difficulty of the questions after pressing it, it can have 2 states, lite question / hard question. Below there are 3 numbers that show: number of easy questions / difficult / number of attempts to pass. Above the stars there are two indications: the left one is the average percentage for all attempts, the right one is best result. The stars show the best result. Date - this is the date the quest was created, the name of the best result is displayed above the date, if it was specified.</string>
+    <string name="start_massage_5">When you try to create your own question, you will be prevented by a dialog box in which you must specify the name of the quest, then you indicate the question itself, the answer to it, the difficulty and the next button, and fill in the next question, etc. until you get bored, then press end. Note that end also writes a question.</string>
+    <string name="timer">Has a complex logic, if an answered question is displayed when the application starts - the timer does not start, if you rewind questions and an unanswered question opens - the timer starts, with further rewinding of questions - the timer continues to count even if you are on an answered question,
+until you answer any of the questions or the timer runs out. If the timer runs out - it answers the current question randomly, if you are on an answered question - it answers the last viewed unanswered question.
+
+In general, the timer starts if you read an unanswered question.</string>
+    <string name="start_massage_6">In the future, various school questions and new opportunities will be added. You can also share your questions in the review, the best questions will probably be added to the application. And also, you can support the author with a rating of 5, or remove ads, and you will have everything true ^)</string>
+
+    <string name="FrontActivity_num_chack_norice">Remaining questions-days offline</string>
+    <string name="tv_auto_update_question">Question auto-update</string>
+    <string name="list_question">A list of questions</string>
+    <string name="dialog_text_delete">Delete text?</string>
+    <string name="dialog_short_text_delete">delete</string>
+    <string name="dialog_short_text_share">Share</string>
+    <string name="dialog_text_share">Share text</string>
+    <string name="prompt_email">email</string>
+    <string name="prompt_password">password</string>
+    <string name="action_sign_in_short">out email</string>
+    <string name="action_sign_in">Login</string>
+    <string name="action_registration">registration</string>
+    <string name="menu_network">Network</string>
+    <string name="welcome" translatable="false">"Welcome!"</string>
+    <string name="invalid_username" translatable="false">Not a valid username</string>
+    <string name="invalid_password" translatable="false">Password must be >5 characters</string>
+    <string name="login_failed" translatable="false">"Login failed"</string>
+    <string name="prompt_name">Your name</string>
+    <string name="prompt_years">Your birthday</string>
+    <string name="prompt_nickname">Come up with your gaming nickname</string>
+    <string name="prompt_city">Your city</string>
+    <string name="app_name">SchoolQuiz</string>
+    <string name="nav_home">Главные квесты</string>
+    <string name="nav_my_quiz">Мои квесты</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="nav_chat">Чат</string>
+    <string name="nav_enter">Вход</string>
+    <string name="nav_exit">Выход</string>
+    <string name="nav_task">Задачи</string>
+    <string name="nav_profile">Профиль</string>
+    <string name="nav_downloads">Загрузки</string>
+    <string name="nav_global">Общедоступные квесты</string>
+    <string name="nav_news">Новости</string>
+    <string name="nav_leaders">Лидеры</string>
+    <string name="nav_players">Игроки</string>
+    <string name="nav_friends">Друзья</string>
+    <string name="nav_massages">Cообщения</string>
+    <string name="nav_reports">Отчеты</string>
+
+</resources>

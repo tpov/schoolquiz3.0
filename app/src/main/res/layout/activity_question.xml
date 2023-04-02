@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/view_background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="left"
+    android:background="#2261DD"
+    android:foregroundGravity="left"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/question_text_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="50dp"
+        android:background="#3C15881A"
+        android:elevation="-10dp"
+        android:gravity="center"
+        android:padding="20px"
+        android:textColor="#001901"
+        android:textSize="13dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.254"
+        tools:layout_conversion_absoluteHeight="0dp"
+        tools:layout_conversion_absoluteWidth="0dp" />
+
+
+    <Button
+        android:id="@+id/true_button"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_marginBottom="30dp"
+        android:backgroundTint="#4D005508"
+        android:elevation="20dp"
+        android:text="@string/true_button"
+        android:textSize="14dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.90"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_conversion_absoluteHeight="0dp"
+        tools:layout_conversion_absoluteWidth="0dp" />
+
+    <Button
+        android:id="@+id/false_button"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_marginBottom="30dp"
+        android:backgroundTint="#4D911C1C"
+        android:elevation="10dp"
+        android:gravity="center"
+        android:text="@string/false_button"
+        android:textSize="14dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.1"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_conversion_absoluteHeight="0dp"
+        tools:layout_conversion_absoluteWidth="0dp" />
+
+    <Button
+        android:id="@+id/next_button"
+        android:layout_width="35dp"
+        android:layout_height="70dp"
+        android:backgroundTint="#3C225AFF"
+        android:drawableEnd="@drawable/arrow_right"
+        android:drawablePadding="10sp"
+        android:elevation="10dp"
+        android:textSize="14dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pbAnswer"
+        app:layout_constraintVertical_bias="0.21"
+        tools:layout_conversion_absoluteHeight="0dp"
+        tools:layout_conversion_absoluteWidth="0dp" />
+
+    <Button
+        android:id="@+id/pref_button"
+        android:layout_width="35dp"
+        android:layout_height="70dp"
+        android:backgroundTint="#3C225AFF"
+        android:drawableLeft="@drawable/arrow_left"
+        android:elevation="10dp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pbAnswer"
+        app:layout_constraintVertical_bias="0.20999998"
+        tools:layout_conversion_absoluteHeight="0dp"
+        tools:layout_conversion_absoluteWidth="0dp" />
+
+    <TextView
+        android:id="@+id/viewResult"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:background="#33A89B54"
+        android:text="Приятной игры))"
+        android:textSize="14dp"
+        app:layout_constraintBottom_toTopOf="@+id/cheatPointsLife"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_conversion_absoluteHeight="20dp"
+        tools:layout_conversion_absoluteWidth="150dp" />
+
+    <TextView
+        android:id="@+id/cheatPointsLife"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:background="#33A89B54"
+        android:text="Life - 3"
+        android:textSize="14dp"
+        app:layout_constraintBottom_toTopOf="@+id/lastToast"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_conversion_absoluteHeight="20dp"
+        tools:layout_conversion_absoluteWidth="150dp" />
+
+    <TextView
+        android:id="@+id/lastToast"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="16dp"
+        android:background="#33A89B54"
+        android:text="------ "
+        android:textSize="14dp"
+        app:layout_constraintBottom_toTopOf="@+id/true_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_conversion_absoluteHeight="20dp"
+        tools:layout_conversion_absoluteWidth="150dp" />
+
+    <TextView
+        android:id="@+id/vAndroid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/vandroid"
+        android:textSize="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_conversion_absoluteHeight="15dp"
+        tools:layout_conversion_absoluteWidth="300dp" />
+
+    <ProgressBar
+        android:id="@+id/pbAnswer"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvTimer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="#81005FE8"
+        android:text="00:00"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pbAnswer" />
+
+    <TextView
+        android:id="@+id/tv_3_2_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3"
+        android:textColor="#66FF0000"
+        android:textSize="100sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/cheat_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="4dp"
+        android:backgroundTint="#00FFFFFF"
+        app:layout_constraintBottom_toTopOf="@+id/viewResult"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_help" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

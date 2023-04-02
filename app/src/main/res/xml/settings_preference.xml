@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="General">
+        <ListPreference
+            android:defaultValue="hh:mm:ss - yyyy/MM/dd"
+            android:entries="@array/time_format_array"
+            android:entryValues="@array/time_format_values"
+            android:key="@string/time_format_key"
+            app:useSimpleSummaryProvider="true"
+            android:icon="@drawable/ic_time"
+            android:title="@string/chose_time_format" />
+        <Preference
+            android:icon="@drawable/ic_remove"
+            android:summary="@string/remove_summary"
+            android:key="remove_ads_key"
+            android:title="@string/remove_ads" />
+    </PreferenceCategory>
+</PreferenceScreen>
