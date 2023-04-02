@@ -166,7 +166,6 @@ class MainActivity : AppCompatActivity() {
         SetItemMenu.setHomeMenu(binding, fr2)
 
 
-
     }
 
     private fun listenerDrawer() {
@@ -379,6 +378,7 @@ class MainActivity : AppCompatActivity() {
                         log("setButtonNavListener() Аккаунт зареган")
                         Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
                             .show()
+
                         FragmentManager.setFragment(ProfileFragment.newInstance(), this)
                     } else {
 
@@ -396,7 +396,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun log(massage: String) { log(massage, "MainActivity", LOG_ACTIVITY) }
+    fun log(massage: String) {
+        log(massage, "MainActivity", LOG_ACTIVITY)
+    }
 
     companion object {
 

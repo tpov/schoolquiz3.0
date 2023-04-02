@@ -1151,7 +1151,7 @@ class RepositoryFBImpl @Inject constructor(
                                     log("setQuizData() playersRef quizDB event1 id < 100 синхронизируем с сервером")
 
                                     idQuiz++
-                                    var oldId = it.id
+                                    val oldId = it.id
                                     it.id = idQuiz
                                     quizRef1.child("${tpovId}/$idQuiz").setValue(it)
 
@@ -1222,7 +1222,7 @@ class RepositoryFBImpl @Inject constructor(
             var synth2 = 4
             while (synth2 != 5) {
                 synth2 = 5
-                quizDB.forEach {
+                dao.getQuizList(tpovId).forEach {
                     if (it.id!! < 100) synth2 = 4
                 }
             }
@@ -1271,6 +1271,7 @@ class RepositoryFBImpl @Inject constructor(
         val questionRef7 = database.getReference("question7")
         val questionRef8 = database.getReference("question8")
 
+        var i = 0
         question.forEach {
             log(
                 "setQuestionData() перебираем квесты size: ${question.size}, dao.getQuizTpovIdById(it.idQuiz): ${

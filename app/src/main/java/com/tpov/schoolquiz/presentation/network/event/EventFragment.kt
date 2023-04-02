@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
+import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -42,6 +43,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
         val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
         val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        log("fun onViewCreated, tpovId: $tpovId")
 
         lifecycleScope.launch(Dispatchers.IO) {
             eventViewModel.getQuizList()
@@ -75,7 +77,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             this // ваш ListenerEvent
         )
 
-        recyclerView.setAdapter(eventAdapter)
+        recyclerView.adapter = eventAdapter
 
     }
     override fun onCreateView(
@@ -142,5 +144,10 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     companion object {
         @JvmStatic
         fun newInstance() = EventFragment()
+    }
+
+    @OptIn(InternalCoroutinesApi::class)
+    fun log(msg: String) {
+        MainActivity.log(msg, "Event", MainActivity.LOG_FRAGMENT)
     }
 }
