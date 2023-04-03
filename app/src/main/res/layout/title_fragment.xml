@@ -23,8 +23,10 @@
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rcView"
+                android:paddingTop="106dp"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:clipToPadding="false"
                 android:elevation="20dp"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior" />
         </androidx.constraintlayout.widget.ConstraintLayout>

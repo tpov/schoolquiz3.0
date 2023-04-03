@@ -352,8 +352,8 @@ class RepositoryFBImpl @Inject constructor(
                         newVersionQuiz.add(quizEntity.idQuiz)
                         newVersionQuizDetail.add(quizEntity.idQuiz)
                         log("getQuiz1Data квиз не пустой, добавляем в список")
-                        if (currentVersion == -1) dao.insertQuiz(quizEntity.toQuizEntity(0,""))
-                        else dao.updateQuiz(quizEntity.toQuizEntity(0,""))
+                        if (currentVersion == -1) dao.insertQuiz(quizEntity.toQuizEntity(0, ""))
+                        else dao.updateQuiz(quizEntity.toQuizEntity(0, ""))
 
                         SharedPreferencesManager.setVersionQuiz(
                             snapshot.key ?: "0",
@@ -1013,13 +1013,8 @@ class RepositoryFBImpl @Inject constructor(
                         }
                     }
                 }
-                dao.insertQuizDetailList(questionDetailEntities).addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        // Обработка успешного добавления списка в базу данных
-                    } else {
-                        // Обработка ошибки добавления списка в базу данных
-                    }
-                }
+                dao.insertQuizDetailList(questionDetailEntities)
+
             }
 
             override fun onCancelled(error: DatabaseError) {
