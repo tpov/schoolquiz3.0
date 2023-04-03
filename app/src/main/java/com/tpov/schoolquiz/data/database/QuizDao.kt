@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -321,4 +322,4 @@ interface QuizDao {
 }
 
 @OptIn(InternalCoroutinesApi::class)
-fun log(m: String) { MainActivity.log(m, "QuizDao", MainActivity.LOG_DATABASE)}
+fun log(m: String) { Logcat.log(m, "QuizDao", Logcat.LOG_DATABASE)}

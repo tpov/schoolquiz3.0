@@ -8,6 +8,7 @@ object SharedPreferencesManager {
     private lateinit var sharedPreferences: SharedPreferences
 
     fun setVersionQuiz(key: String, value: Int) {
+        log("fun setVersionQuiz key: $key, value: $value")
         if (!::sharedPreferences.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
@@ -17,6 +18,7 @@ object SharedPreferencesManager {
     }
 
     fun getVersionQuiz(key: String): Int {
+        log("fun getVersionQuiz key: $key, value: ${sharedPreferences.getInt(key, -1)}")
         if (!::sharedPreferences.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
@@ -25,5 +27,9 @@ object SharedPreferencesManager {
 
     fun initialize(context: Context) {
         sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    private fun log(msg: String) {
+        Logcat.log(msg, "SharedPreference", Logcat.LOG_FRAGMENT)
     }
 }

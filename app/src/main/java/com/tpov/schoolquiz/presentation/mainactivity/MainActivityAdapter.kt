@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
 import java.util.*
@@ -181,7 +182,7 @@ class MainActivityAdapter(
     class ItemHolder(view: View) : RecyclerView.ViewHolder(view) {
 
         @OptIn(InternalCoroutinesApi::class)
-        fun log(msg: String) { MainActivity.log(msg, "MainActivityAdapter", MainActivity.LOG_ACTIVITY)}
+        fun log(msg: String) { Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)}
         //val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
         private val binding = ActivityMainItemBinding.bind(view)
             val swipeLayout: LinearLayout = itemView.findViewById(R.id.swipe_layout)
@@ -287,5 +288,5 @@ class MainActivityAdapter(
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    fun log(msg: String) { MainActivity.log(msg, "MainActivityAdapter", MainActivity.LOG_ACTIVITY)}
+    fun log(msg: String) { Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)}
 }

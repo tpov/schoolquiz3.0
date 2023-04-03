@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
@@ -80,4 +81,4 @@ class EventViewModel @Inject constructor(
     }
 }
 @OptIn(InternalCoroutinesApi::class)
-fun log(m: String) { MainActivity.log(m, "Event", MainActivity.LOG_VIEW_MODEL)}
+fun log(m: String) { Logcat.log(m, "Event", Logcat.LOG_VIEW_MODEL)}

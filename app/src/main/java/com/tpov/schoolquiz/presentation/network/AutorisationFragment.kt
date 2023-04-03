@@ -12,6 +12,7 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
@@ -107,5 +108,7 @@ class AutorisationFragment : BaseFragment() {
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    fun log(msg: String) {MainActivity.log(msg, "AutorisationFragment", MainActivity.LOG_FRAGMENT)}
+    fun log(msg: String) {
+        Logcat.log(msg, "AutorisationFragment", Logcat.LOG_FRAGMENT)
+    }
 }

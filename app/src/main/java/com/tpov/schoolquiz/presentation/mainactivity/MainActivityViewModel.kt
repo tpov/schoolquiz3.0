@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.Dispatchers
@@ -140,6 +141,6 @@ class MainActivityViewModel @Inject constructor(
     fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(nameQuiz, tpovId)
 
     fun log(massage: String) {
-        MainActivity.log(massage, "MainActivityViewModel", MainActivity.LOG_VIEW_MODEL)
+        Logcat.log(massage, "MainActivityViewModel", Logcat.LOG_VIEW_MODEL)
     }
 }

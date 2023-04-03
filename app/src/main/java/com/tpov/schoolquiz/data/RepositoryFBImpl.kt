@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.repository.RepositoryFB
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.shoppinglist.utils.TimeManager
@@ -1012,7 +1013,12 @@ class RepositoryFBImpl @Inject constructor(
                         }
                     }
                 }
-                dao.insertQuizDetailList(questionDetailEntities)
+                dao.insertQuizDetailList(questionDetailEntities).addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        // Обработка успешного добавления списка в базу данных
+                    } else {
+                        // Обработка ошибки добавления списка в базу данных
+                    }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -1219,11 +1225,14 @@ class RepositoryFBImpl @Inject constructor(
                     log("setQuizData() error: $error")
                 }
             })
-            var synth2 = 4
-            while (synth2 != 5) {
-                synth2 = 5
+
+            var synth2 = true
+            log("setQuizData() dao.getQuizList(tpovId): ${dao.getQuizList(tpovId)}")
+            while (synth2) {
+                synth2 = false
                 dao.getQuizList(tpovId).forEach {
-                    if (it.id!! < 100) synth2 = 4
+                    log("setQuizData() it: $it")
+                    if (it.id!! < 100) synth2 = true
                 }
             }
             synthLiveData.postValue(++synth)
@@ -1514,6 +1523,6 @@ class RepositoryFBImpl @Inject constructor(
 
     @OptIn(InternalCoroutinesApi::class)
     fun log(m: String) {
-        MainActivity.log(m, "RepositoryFB", MainActivity.LOG_FIREBASE)
+        Logcat.log(m, "RepositoryFB", Logcat.LOG_FIREBASE)
     }
 }

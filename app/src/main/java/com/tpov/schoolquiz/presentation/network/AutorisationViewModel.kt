@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -153,6 +154,8 @@ class AutorisationViewModel @Inject constructor(
 
 
     @OptIn(InternalCoroutinesApi::class)
-    fun log(msg: String) {MainActivity.log(msg, "Autorisation", MainActivity.LOG_VIEW_MODEL)}
+    fun log(msg: String) {
+        Logcat.log(msg, "Autorisation", Logcat.LOG_VIEW_MODEL)
+    }
 
 }

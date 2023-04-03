@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
@@ -31,7 +32,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
 
     @OptIn(InternalCoroutinesApi::class)
-    fun log(m: String) { MainActivity.log(m, "Main", MainActivity.LOG_FRAGMENT)}
+    fun log(m: String) { Logcat.log(m, "Main", Logcat.LOG_FRAGMENT)}
     private lateinit var mainViewModel: MainActivityViewModel
     @Inject
     lateinit var viewModelFactory: ViewModelFactory

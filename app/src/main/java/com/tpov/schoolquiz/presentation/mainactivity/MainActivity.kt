@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
 import com.tpov.schoolquiz.presentation.mainactivity.info.InfoActivity
@@ -397,28 +398,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun log(massage: String) {
-        log(massage, "MainActivity", LOG_ACTIVITY)
+        Logcat.log(massage, "MainActivity", Logcat.LOG_ACTIVITY)
     }
 
     companion object {
-
-        fun log(massage: String, className: String, type: Int) {
-            if (type == LOG_ACTIVITY) Log.v("SchoolQuiz3.0 $className", massage)
-            if (type == LOG_VIEW_MODEL) Log.i("SchoolQuiz3.0 $className", massage)
-            if (type == LOG_FIREBASE) Log.d("SchoolQuiz3.0 $className", massage)
-            if (type == LOG_DATABASE) Log.wtf("SchoolQuiz3.0 $className", massage)
-            if (type == LOG_FRAGMENT) Log.w("SchoolQuiz3.0 $className", massage)
-        }
 
         const val NUM_QUESTION_NOT_NUL = "num_question_not_nul"
         const val SHOP_LIST = "shop_list"
         const val REQUEST_CODE_STORAGE_PERMISSION = 1001
 
-        const val LOG_ACTIVITY = 1
-        const val LOG_VIEW_MODEL = 2
-        const val LOG_FIREBASE = 3
-        const val LOG_DATABASE = 4
-        const val LOG_FRAGMENT = 5
     }
 
 

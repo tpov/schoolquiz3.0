@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -92,6 +93,6 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun log(m: String) {
-        MainActivity.log(m, "Profile", MainActivity.LOG_VIEW_MODEL)
+        Logcat.log(m, "Profile", Logcat.LOG_VIEW_MODEL)
     }
 }

@@ -5,6 +5,7 @@ import android.view.Menu
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
+import com.tpov.schoolquiz.presentation.custom.Logcat
 import kotlinx.coroutines.InternalCoroutinesApi
 
 object SetItemMenu {
@@ -409,5 +410,5 @@ object SetItemMenu {
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    fun log(massage: String) { MainActivity.log(massage, "SetItemMenu", MainActivity.LOG_ACTIVITY) }
+    fun log(massage: String) { Logcat.log(massage, "SetItemMenu", Logcat.LOG_ACTIVITY) }
 }
