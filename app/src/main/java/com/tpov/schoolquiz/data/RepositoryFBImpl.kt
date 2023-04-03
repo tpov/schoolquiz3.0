@@ -1019,6 +1019,7 @@ class RepositoryFBImpl @Inject constructor(
                     } else {
                         // Обработка ошибки добавления списка в базу данных
                     }
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
