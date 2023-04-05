@@ -3,11 +3,80 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".presentation.network.profile.ProfileFragment">
 
-    <TextView
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Hello" />
+        android:layout_height="match_parent">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="21dp"
+            android:paddingEnd="21dp"
+            android:orientation="vertical" >
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_profile"
+                android:layout_marginTop="32dp"
+                android:layout_width="match_parent"
+                app:cardCornerRadius="25dp"
+                android:layout_height="150dp" >
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/imb_download"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="0dp"
+                        android:src="@drawable/baseline_download_24" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_tester"
+                android:layout_width="match_parent"
+                android:visibility="gone"
+                app:cardCornerRadius="25dp"
+                android:layout_marginTop="32dp"
+                android:layout_height="150dp" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_moderator"
+                app:cardCornerRadius="25dp"
+                android:layout_width="match_parent"
+                android:visibility="gone"
+                android:layout_marginTop="32dp"
+                android:layout_height="150dp" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_admin"
+                android:layout_width="match_parent"
+                android:visibility="gone"
+                app:cardCornerRadius="25dp"
+                android:layout_marginTop="32dp"
+                android:layout_height="150dp" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_developer"
+                android:layout_width="match_parent"
+                android:visibility="gone"
+                app:cardCornerRadius="25dp"
+                android:layout_marginTop="32dp"
+                android:layout_height="150dp" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_translater"
+                android:layout_width="match_parent"
+                android:visibility="gone"
+                app:cardCornerRadius="25dp"
+                android:layout_marginTop="32dp"
+                android:layout_height="150dp" />
+        </LinearLayout>
+    </ScrollView>
 </FrameLayout>

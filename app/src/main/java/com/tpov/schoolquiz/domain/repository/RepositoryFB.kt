@@ -31,21 +31,21 @@ interface RepositoryFB {
     fun getQuiz1Data(tpovId: Int)
 
 
-    fun getQuestion8Data()
+    fun getQuestion8()
 
-    fun getQuestion7Data()
+    fun getQuestion7()
 
-    fun getQuestion6Data()
+    fun getQuestion6()
 
-    fun getQuestion5Data()
+    fun getQuestion5()
 
     fun getQuestion4Data()
 
-    fun getQuestion3Data()
+    fun getQuestion3()
 
-    fun getQuestion2Data()
+    fun getQuestion2()
 
-    fun getQuestion1Data(tpovId: Int)
+    fun getQuestion1(tpovId: Int)
 
 
     fun getQuestionDetail1(tpovId: Int)

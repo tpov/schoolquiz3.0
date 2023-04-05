@@ -4,29 +4,50 @@ import android.content.Context
 import android.content.SharedPreferences
 
 object SharedPreferencesManager {
-    private const val PREFS_NAME = "version_quiz"
-    private lateinit var sharedPreferences: SharedPreferences
+    private const val PREFS_NAME_QUIZ = "version_quiz"
+    private const val PREFS_NAME_QUESTION = "version_question"
+    private lateinit var sharedPreferencesQuiz: SharedPreferences
+    private lateinit var sharedPreferencesQuestion: SharedPreferences
 
     fun setVersionQuiz(key: String, value: Int) {
         log("fun setVersionQuiz key: $key, value: $value")
-        if (!::sharedPreferences.isInitialized) {
+        if (!::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
-        val editor = sharedPreferences.edit()
+        val editor = sharedPreferencesQuiz.edit()
         editor.putInt(key, value)
         editor.apply()
     }
 
     fun getVersionQuiz(key: String): Int {
-        log("fun getVersionQuiz key: $key, value: ${sharedPreferences.getInt(key, -1)}")
-        if (!::sharedPreferences.isInitialized) {
+        log("fun getVersionQuiz key: $key, value: ${sharedPreferencesQuiz.getInt(key, -1)}")
+        if (!::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
-        return sharedPreferences.getInt(key, -1)
+        return sharedPreferencesQuiz.getInt(key, -1)
+    }
+
+    fun setVersionQuestion(key: String, value: Int) {
+        log("fun setVersionQuiz key: $key, value: $value")
+        if (!::sharedPreferencesQuestion.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        val editor = sharedPreferencesQuestion.edit()
+        editor.putInt(key, value)
+        editor.apply()
+    }
+
+    fun getVersionQuestion(key: String): Int {
+        log("fun getVersionQuiz key: $key, value: ${sharedPreferencesQuestion.getInt(key, -1)}")
+        if (!::sharedPreferencesQuestion.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesQuestion.getInt(key, -1)
     }
 
     fun initialize(context: Context) {
-        sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPreferencesQuiz = context.getSharedPreferences(PREFS_NAME_QUIZ, Context.MODE_PRIVATE)
+        sharedPreferencesQuestion = context.getSharedPreferences(PREFS_NAME_QUESTION, Context.MODE_PRIVATE)
     }
 
     private fun log(msg: String) {

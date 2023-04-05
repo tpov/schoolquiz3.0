@@ -10,7 +10,6 @@ import com.tpov.schoolquiz.data.database.entities.QuizEntity
 @IgnoreExtraProperties
 data class Quiz (
     var nameQuiz: String = "",
-    var idQuiz: Int = -1,
     var tpovId: Int = 0,
     var data: String = "",
     var versionQuiz: Int = -1,
@@ -23,7 +22,7 @@ data class Quiz (
     var userName: String,
 ) {
     constructor() : this(
-        "", 0, 0, "", -1, "", -1, 0, 0, 0, 0, ""
+        "", 0, "", -1, "", -1, 0, 0, 0, 0, ""
     )
 }
 

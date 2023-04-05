@@ -4,5 +4,5 @@ import com.tpov.schoolquiz.domain.repository.RepositoryFB
 import javax.inject.Inject
 
 class GetQuestion3FBUseCase @Inject constructor(private val repositoryFB: RepositoryFB) {
-    operator fun invoke() = repositoryFB.getQuestion3Data()
+    operator fun invoke() = repositoryFB.getQuestion3()
 }
