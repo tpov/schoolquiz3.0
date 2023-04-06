@@ -6,11 +6,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.tpov.schoolquiz.data.RepositoryFBImpl
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.repository.RepositoryFB
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
@@ -53,7 +55,7 @@ class MainActivityViewModel @Inject constructor(
             log("init() launch()")
             if (tpovId == -1) insertProfile()
             getProfileFlowUseCase(tpovId)
-            getQuiz8FBUseCase(context)
+            getQuiz8FBUseCase()
             getQuestionDetail8FBUseCase()
             getQuestion8FBUseCase()
         }
@@ -122,8 +124,8 @@ class MainActivityViewModel @Inject constructor(
 
     fun setQuestionsFB() {
         log("fun setQuestionsFB")
-        setQuestionFBUseCase(tpovId)
-        setQuestionDetailFBUseCase(tpovId)
+        setQuestionFBUseCase()
+        setQuestionDetailFBUseCase()
     }
 
     private fun getQuizList(): LiveData<List<QuizEntity>> {

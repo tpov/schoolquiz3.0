@@ -20,7 +20,6 @@ class ProfileFragment : BaseFragment() {
 
     companion object {
         fun newInstance() = ProfileFragment()
-
     }
 
     @Inject
@@ -60,11 +59,9 @@ class ProfileFragment : BaseFragment() {
         val isExecuted = BooleanArray(8) // создаем массив флагов для каждого числа
         view.findViewById<ImageButton>(R.id.imb_download).setOnClickListener {
             viewModel.getQuizzFB()
-            viewModel.getQuestions1FB()
-            viewModel.getQuestions2FB()
         }
 
-        var osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
+        val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
             log("fun viewModel.getSynth.observe: $number")
             val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
             viewModel.tpovId = sharedPref?.getInt("tpovId", 0) ?: 0

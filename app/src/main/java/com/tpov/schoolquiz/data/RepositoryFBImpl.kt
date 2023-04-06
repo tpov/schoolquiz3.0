@@ -30,11 +30,9 @@ class RepositoryFBImpl @Inject constructor(
     private val application: Application
 ) : RepositoryFB {
 
-    val context = application.baseContext
+    private val context = application.baseContext
     var synthLiveData = MutableLiveData<Int>()
     var synth = 0
-    var newVersionQuiz = ArrayList<Int>()
-    var newVersionQuizDetail = ArrayList<Int>()
 
     override fun getValSynth(): MutableLiveData<Int> {
 
@@ -73,7 +71,6 @@ class RepositoryFBImpl @Inject constructor(
 
     fun savePictureToLocalDirectory(
         pictureString: String,
-        context: Context,
         callback: (path: String?) -> Unit
     ) {
         log("fun savePictureToLocalDirectory()")
@@ -101,13 +98,13 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
-    override fun getQuiz8Data(context: Context) {
+    override fun getQuiz8Data() {
         log("fun getQuiz8Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz8"))
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    override fun getQuiz7Data(context: Context) {
+    override fun getQuiz7Data() {
         log("fun getQuiz7Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz7"))
     }
@@ -115,45 +112,51 @@ class RepositoryFBImpl @Inject constructor(
     private fun getQuiz(
         quizRef: DatabaseReference
     ) {
+        log("fun getQuiz()")
         quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (data in snapshot.children) {
-                    val versionQuiz = SharedPreferencesManager.getVersionQuiz(data.key ?: "-1")
-
+                    val versionQuiz =
+                        SharedPreferencesManager.getVersionQuiz(data.key ?: "-1", context)
                     val quizEntity = data.getValue(Quiz::class.java)
+
+                    log("getQuiz(), data: ${data.key}, versionQuiz: $versionQuiz, quizEntity: $quizEntity")
                     if (quizEntity != null && versionQuiz < quizEntity.versionQuiz) {
                         savePictureToLocalDirectory(
-                            quizEntity.picture,
-                            context
+                            quizEntity.picture
                         ) { path ->
-                            if (path != null) {
-                                if (versionQuiz == -1) dao.insertQuiz(
-                                    quizEntity.toQuizEntity(
-                                        0,
-                                        path,
-                                        data.key!!.toInt()
-                                    )
+                            log("getQuiz() версия квеста меньше - обновляем, или добавляем")
+                            if (versionQuiz == -1) dao.insertQuiz(
+                                quizEntity.toQuizEntity(
+                                    0,
+                                    path ?: "",
+                                    data.key!!.toInt()
                                 )
-                                else dao.updateQuiz(quizEntity.toQuizEntity(0, path, data.key!!.toInt()))
-                                val refQuestion = when (quizEntity.event) {
-                                    2 -> FirebaseDatabase.getInstance().getReference("question2")
-                                    3 -> FirebaseDatabase.getInstance().getReference("question3")
-                                    4 -> FirebaseDatabase.getInstance().getReference("question3")
-                                    5 -> FirebaseDatabase.getInstance().getReference("question3")
-                                    6 -> FirebaseDatabase.getInstance().getReference("question3")
-                                    7 -> FirebaseDatabase.getInstance().getReference("question3")
-                                    8 -> FirebaseDatabase.getInstance().getReference("question3")
-                                    else -> FirebaseDatabase.getInstance()
-                                        .getReference("question1/${quizEntity.tpovId}")
-                                }
-                                getQuestion(refQuestion, data.key!!)
-
-                            } else {
-                                // Обрабатывайте ошибки здесь
+                            )
+                            else dao.updateQuiz(
+                                quizEntity.toQuizEntity(
+                                    0,
+                                    path,
+                                    data.key!!.toInt()
+                                )
+                            )
+                            val refQuestion = when (quizEntity.event) {
+                                2 -> FirebaseDatabase.getInstance().getReference("question2")
+                                3 -> FirebaseDatabase.getInstance().getReference("question3")
+                                4 -> FirebaseDatabase.getInstance().getReference("question3")
+                                5 -> FirebaseDatabase.getInstance().getReference("question3")
+                                6 -> FirebaseDatabase.getInstance().getReference("question3")
+                                7 -> FirebaseDatabase.getInstance().getReference("question3")
+                                8 -> FirebaseDatabase.getInstance().getReference("question3")
+                                else -> FirebaseDatabase.getInstance()
+                                    .getReference("question1/${quizEntity.tpovId}")
                             }
+                            getQuestion(refQuestion, data.key!!)
+
                             SharedPreferencesManager.setVersionQuiz(
                                 data.key!!,
-                                quizEntity.versionQuiz
+                                quizEntity.versionQuiz,
+                                context
                             )
                         }
 
@@ -192,9 +195,14 @@ class RepositoryFBImpl @Inject constructor(
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz2"))
     }
 
-    override fun getQuiz1Data(tpovId: Int) {
+    override fun getQuiz1Data() {
         log("fun getQuiz1Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz1/$tpovId"))
+        getQuiz(FirebaseDatabase.getInstance().getReference("quiz1/${getTpovId()}"))
+    }
+
+    private fun getTpovId(): Int {
+        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        return sharedPref?.getInt("tpovId", 0) ?: 0
     }
 
     override fun getQuestion8() {
@@ -206,32 +214,29 @@ class RepositoryFBImpl @Inject constructor(
     private fun getQuestion(questionRef: DatabaseReference, idQuiz: String) {
         questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                log("getQuestion8Data snapshot: ${snapshot.key}")
-                for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
-                    if (idQuizSnap.key == idQuiz) {
-                        log("getQuestion8Data idQuizSnap: ${idQuizSnap.key}")
-                        for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок idQuiz внутри uid
-                            log("getQuestion8Data idQuestionSnap: ${idQuestionSnap.key}")
-                            for (languageSnap in idQuestionSnap.children) { // перебор всех папок language внутри idQuiz
-                                log("getQuestion8Data languageSnap: ${languageSnap.key}")
-                                for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
-                                    log("getQuestion8Data questionSnap: ${questionSnap.key}")
-                                    val question = questionSnap.getValue(Question::class.java)
-                                    if (question != null) {
-                                        dao.deleteQuestionByIdQuiz(idQuizSnap.key?.toInt() ?: -1)
-                                        dao.insertQuestion(
-                                            QuestionEntity(
-                                                null,
-                                                idQuestionSnap.key?.toInt() ?: 0,
-                                                question.nameQuestion,
-                                                question.answerQuestion,
-                                                question.typeQuestion,
-                                                idQuizSnap.key?.toInt() ?: -1,
-                                                languageSnap.key ?: "eu",
-                                                question.lvlTranslate
-                                            )
+                log("getQuestion8Data idQuizSnap: ${snapshot.key}")
+                for (idQuestionSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
+                    if (idQuestionSnap.key == idQuiz) {
+                        log("getQuestion8Data idQuestionSnap: ${idQuestionSnap.key}")
+                        for (languageSnap in idQuestionSnap.children) { // перебор всех папок language внутри idQuiz
+                            log("getQuestion8Data languageSnap: ${languageSnap.key}")
+                            for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
+                                log("getQuestion8Data questionSnap: ${questionSnap.key}")
+                                val question = questionSnap.getValue(Question::class.java)
+                                if (question != null) {
+                                    dao.deleteQuestionByIdQuiz(idQuestionSnap.key?.toInt() ?: -1)
+                                    dao.insertQuestion(
+                                        QuestionEntity(
+                                            null,
+                                            idQuestionSnap.key?.toInt() ?: 0,
+                                            question.nameQuestion,
+                                            question.answerQuestion,
+                                            question.typeQuestion,
+                                            idQuestionSnap.key?.toInt() ?: -1,
+                                            languageSnap.key ?: "eu",
+                                            question.lvlTranslate
                                         )
-                                    }
+                                    )
                                 }
                             }
                         }
@@ -269,13 +274,15 @@ class RepositoryFBImpl @Inject constructor(
         getQuestion(FirebaseDatabase.getInstance().getReference("question2"), "-1")
     }
 
-    override fun getQuestion1(tpovId: Int) {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question1/$tpovId"), "-1")
+    override fun getQuestion1() {
+        getQuestion(FirebaseDatabase.getInstance().getReference("question1/$${getTpovId()}"), "-1")
     }
 
-    override fun getQuestionDetail1(tpovId: Int) {
+    override fun getQuestionDetail1() {
         log("fun getQuestionDetail1()")
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail1/$tpovId"), "-1")
+        getQuestionDetail(
+            FirebaseDatabase.getInstance().getReference("question_detail1/$${getTpovId()}"), "-1"
+        )
     }
 
     override fun getQuestionDetail2() {
@@ -336,7 +343,7 @@ class RepositoryFBImpl @Inject constructor(
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail8"), "-1")
     }
 
-    override fun getProfile(context: Context) {
+    override fun getProfile() {
         log("fun getProfile()")
         val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
@@ -388,8 +395,9 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override suspend fun setQuizData(tpovId: Int) {
+    override suspend fun setQuizData() {
         log("fun setQuizData()")
+        var tpovId = getTpovId()
         var quizDB = dao.getQuizList(tpovId)
         var idQuiz = 0
 
@@ -480,7 +488,11 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(it)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        it.versionQuiz,
+                                        context
+                                    )
                                 }
 
                             } else if (it.event == 2) {
@@ -507,44 +519,67 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(it)
-                                    dao.deleteQuizById(oldId!!)
-                                    SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
+                                    dao.deleteQuizById(oldId)
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        it.versionQuiz,
+                                        context
+                                    )
 
                                 }
                             } else if (it.event == 3) {
                                 quizRef3.child(it.id.toString())
                                     .setValue(it)
 
-                                SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
-                            }
-                            else if (it.event == 4) {
+                                SharedPreferencesManager.setVersionQuiz(
+                                    idQuiz.toString(),
+                                    it.versionQuiz,
+                                    context
+                                )
+                            } else if (it.event == 4) {
                                 quizRef4.child(it.id.toString())
                                     .setValue(it)
 
-                                SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
-                            }
-                            else if (it.event == 5) {
+                                SharedPreferencesManager.setVersionQuiz(
+                                    idQuiz.toString(),
+                                    it.versionQuiz,
+                                    context
+                                )
+                            } else if (it.event == 5) {
                                 quizRef5.child(it.id.toString())
                                     .setValue(it)
 
-                                SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
-                            }
-                            else if (it.event == 6) {
+                                SharedPreferencesManager.setVersionQuiz(
+                                    idQuiz.toString(),
+                                    it.versionQuiz,
+                                    context
+                                )
+                            } else if (it.event == 6) {
                                 quizRef6.child(it.id.toString())
                                     .setValue(it)
 
-                                SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
-                            }
-                            else if (it.event == 7) {
+                                SharedPreferencesManager.setVersionQuiz(
+                                    idQuiz.toString(),
+                                    it.versionQuiz,
+                                    context
+                                )
+                            } else if (it.event == 7) {
                                 quizRef7.child(it.id.toString())
                                     .setValue(it)
 
-                                SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
-                            }
-                            else if (it.event == 8) {
+                                SharedPreferencesManager.setVersionQuiz(
+                                    idQuiz.toString(),
+                                    it.versionQuiz,
+                                    context
+                                )
+                            } else if (it.event == 8) {
                                 log("setQuizData() event8 просто сохраняем на сервер")
                                 quizRef8.child(it.id.toString()).setValue(it)
-                                SharedPreferencesManager.setVersionQuiz(idQuiz.toString(), it.versionQuiz)
+                                SharedPreferencesManager.setVersionQuiz(
+                                    idQuiz.toString(),
+                                    it.versionQuiz,
+                                    context
+                                )
                             }
 
                         }
@@ -596,7 +631,8 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
-    override fun setQuestionData(tpovId: Int) {
+    override fun setQuestionData() {
+        val tpovId = getTpovId()
 
         log("fun setQuestionData()")
         var question = dao.getQuestionList()
@@ -648,14 +684,14 @@ class RepositoryFBImpl @Inject constructor(
 
     }
 
-    override fun setTpovIdFB(context: Context) {
+    override fun setTpovIdFB() {
 
         log("fun setTpovIdFB()")
         val database = FirebaseDatabase.getInstance()
         val ref = database.getReference("players")
-        var uid = FirebaseAuth.getInstance().uid
+        val uid = FirebaseAuth.getInstance().uid
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        var tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
         log("setTpovIdFB() tpovId = $tpovId")
 
         ref.child("listTpovId/$uid").setValue(tpovId).addOnSuccessListener {
@@ -667,7 +703,7 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
-    override fun getTpovIdFB(context: Context) {
+    override fun getTpovIdFB() {
         synth = 0
         synthLiveData.value = 0
         log("fun getTpovIdFB()")
@@ -701,8 +737,8 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override fun setQuestionDetail(tpovId: Int) {
-
+    override fun setQuestionDetail() {
+        val tpovId = getTpovId()
         log("fun setQuestionDetail()")
 
         var questionDetail = dao.getQuestionDetailList()
@@ -743,7 +779,7 @@ class RepositoryFBImpl @Inject constructor(
 
     }
 
-    override fun setProfile(context: Context) {
+    override fun setProfile() {
         log("fun setProfile()")
         val database = FirebaseDatabase.getInstance()
         val profileRef = database.getReference("Profiles")
@@ -751,8 +787,8 @@ class RepositoryFBImpl @Inject constructor(
         var idUsers = 0
         var oldIdUser = 0
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        var tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
-        var profile = dao.getProfileByTpovId(tpovId)
+        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        val profile = dao.getProfileByTpovId(tpovId)
 
         log("setProfile() tpovId: $tpovId")
         if (tpovId == 0) {
@@ -796,7 +832,7 @@ class RepositoryFBImpl @Inject constructor(
                             putInt("tpovId", idUsers)
                             apply()
                         }
-                        setTpovIdFB(context)
+                        setTpovIdFB()
 
                         log("setProfile() tpovId: $tpovId")
                     }.addOnFailureListener {
@@ -833,7 +869,8 @@ class RepositoryFBImpl @Inject constructor(
     override fun setEvent(position: Int) {
     }
 
-    override fun getUserName(tpovId: Int): Profile {
+    override fun getUserName(): Profile {
+        val tpovId = getTpovId()
         log("fun getUserName()")
         val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
         var profile = Profile()

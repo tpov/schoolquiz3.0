@@ -9,40 +9,30 @@ object SharedPreferencesManager {
     private lateinit var sharedPreferencesQuiz: SharedPreferences
     private lateinit var sharedPreferencesQuestion: SharedPreferences
 
-    fun setVersionQuiz(key: String, value: Int) {
-        log("fun setVersionQuiz key: $key, value: $value")
+    fun setVersionQuiz(key: String, value: Int, context: Context) {
+        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        log("fun getVersionQuiz tpovId: $tpovId")
+        log("fun setVersionQuiz key: $key|$tpovId, value: $value")
+
         if (!::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         val editor = sharedPreferencesQuiz.edit()
-        editor.putInt(key, value)
+        editor.putInt("$key|$tpovId", value)
         editor.apply()
     }
 
-    fun getVersionQuiz(key: String): Int {
-        log("fun getVersionQuiz key: $key, value: ${sharedPreferencesQuiz.getInt(key, -1)}")
+    fun getVersionQuiz(key: String, context: Context): Int {
+        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        log("fun getVersionQuiz tpovId: $tpovId")
+        log("fun getVersionQuiz key: $key|$tpovId, value: ${sharedPreferencesQuiz.getInt("$key|$tpovId", -1)}")
+
         if (!::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
-        return sharedPreferencesQuiz.getInt(key, -1)
-    }
-
-    fun setVersionQuestion(key: String, value: Int) {
-        log("fun setVersionQuiz key: $key, value: $value")
-        if (!::sharedPreferencesQuestion.isInitialized) {
-            throw IllegalStateException("SharedPreferencesManager is not initialized")
-        }
-        val editor = sharedPreferencesQuestion.edit()
-        editor.putInt(key, value)
-        editor.apply()
-    }
-
-    fun getVersionQuestion(key: String): Int {
-        log("fun getVersionQuiz key: $key, value: ${sharedPreferencesQuestion.getInt(key, -1)}")
-        if (!::sharedPreferencesQuestion.isInitialized) {
-            throw IllegalStateException("SharedPreferencesManager is not initialized")
-        }
-        return sharedPreferencesQuestion.getInt(key, -1)
+        return sharedPreferencesQuiz.getInt("$key|$tpovId", -1)
     }
 
     fun initialize(context: Context) {
