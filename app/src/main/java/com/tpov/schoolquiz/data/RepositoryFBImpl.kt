@@ -33,9 +33,10 @@ class RepositoryFBImpl @Inject constructor(
     private val context = application.baseContext
     var synthLiveData = MutableLiveData<Int>()
     var synth = 0
+    var synthGetData = 0
+    var synthSetData = 0
 
     override fun getValSynth(): MutableLiveData<Int> {
-
         log("getValSynth()  ${synthLiveData.value}")
         log("getValSynth()s  $synth")
         return synthLiveData
