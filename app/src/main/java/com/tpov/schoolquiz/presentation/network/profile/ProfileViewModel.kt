@@ -8,7 +8,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,7 +19,6 @@ class ProfileViewModel @Inject constructor(
     private val setQuizDataFBUseCase: SetQuizDataFBUseCase,
     private val setQuestionDetailFBUseCase: SetQuestionDetailFBUseCase,
     private val getProfileFBUseCase: GetProfileFBUseCase,
-    private val context: Context,
     private val getTpovIdFBUseCase: GetTpovIdFBUseCase,
 
     private val getQuestion1FBUseCase: GetQuestion1FBUseCase,
@@ -46,7 +44,7 @@ class ProfileViewModel @Inject constructor(
 
 
     fun getTpovId() {
-        getTpovIdFBUseCase(context)
+        getTpovIdFBUseCase()
     }
 
 
@@ -54,29 +52,29 @@ class ProfileViewModel @Inject constructor(
     fun setQuizFB() {
         log("fun setQuizFB()")
         viewModelScope.launch {
-            setQuizDataFBUseCase(tpovId)
+            setQuizDataFBUseCase()
         }
     }
 
     fun setQuestionsFB() {
         log("fun setQuestionsFB()")
-        setQuestionFBUseCase(tpovId)
-        setQuestionDetailFBUseCase(tpovId)
+        setQuestionFBUseCase()
+        setQuestionDetailFBUseCase()
     }
 
     fun setProfile() {
         log("fun setProfile()")
-        setProfileFBUseCase(context)
+        setProfileFBUseCase()
     }
 
     fun getProfile() {
         log("fun getProfile()")
-        getProfileFBUseCase(context)
+        getProfileFBUseCase()
     }
 
     fun getQuizzFB() {
         log("fun getQuizzFB()")
-        getQuiz1FBUseCase(tpovId)
+        getQuiz1FBUseCase()
         getQuiz2FBUseCase()
     }
 
@@ -88,8 +86,8 @@ class ProfileViewModel @Inject constructor(
 
     fun getQuestions1FB() {
         log("fun getQuestions1FB()")
-        getQuestion1FBUseCase(tpovId)
-        getQuestionDetail1FBUseCase(tpovId)
+        getQuestion1FBUseCase()
+        getQuestionDetail1FBUseCase()
     }
 
     fun log(m: String) {

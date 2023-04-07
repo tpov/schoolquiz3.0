@@ -14,9 +14,9 @@ interface RepositoryFB {
 
     fun getChatData(): Flow<List<ChatEntity>>
 
-    fun getQuiz8Data(context: Context)
+    fun getQuiz8Data()
 
-    fun getQuiz7Data(context: Context)
+    fun getQuiz7Data()
 
     fun getQuiz6Data()
 
@@ -28,27 +28,27 @@ interface RepositoryFB {
 
     fun getQuiz2Data()
 
-    fun getQuiz1Data(tpovId: Int)
+    fun getQuiz1Data()
 
 
-    fun getQuestion8Data()
+    fun getQuestion8()
 
-    fun getQuestion7Data()
+    fun getQuestion7()
 
-    fun getQuestion6Data()
+    fun getQuestion6()
 
-    fun getQuestion5Data()
+    fun getQuestion5()
 
     fun getQuestion4Data()
 
-    fun getQuestion3Data()
+    fun getQuestion3()
 
-    fun getQuestion2Data()
+    fun getQuestion2()
 
-    fun getQuestion1Data(tpovId: Int)
+    fun getQuestion1()
 
 
-    fun getQuestionDetail1(tpovId: Int)
+    fun getQuestionDetail1()
 
     fun getQuestionDetail2()
 
@@ -64,21 +64,22 @@ interface RepositoryFB {
 
     fun getQuestionDetail8()
 
-    fun getProfile(context: Context)
+    fun getProfile()
 
-    suspend fun setQuizData(tpovId: Int)
+    suspend fun setQuizData()
 
-    fun setQuestionData(tpovId: Int)
+    fun setQuestionData()
 
-    fun setTpovIdFB(context: Context)
+    fun setTpovIdFB()
 
-    fun getTpovIdFB( context: Context)
+    fun getTpovIdFB()
 
-    fun setQuestionDetail(tpovId: Int)
+    fun setQuestionDetail()
 
-    fun setProfile(context: Context)
+    fun setProfile()
 
     fun setEvent(position: Int)
 
-    fun getUserName(tpovId: Int): Profile
+    fun getUserName(): Profile
+
 }

@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.di
 
 import android.app.Application
+import android.content.Context
 import com.tpov.schoolquiz.data.RepositoryDBImpl
 import com.tpov.schoolquiz.data.RepositoryFBImpl
 import com.tpov.schoolquiz.data.database.QuizDao

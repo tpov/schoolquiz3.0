@@ -47,7 +47,7 @@ class QuestionViewModel @Inject constructor(
     lateinit var questionListThis: List<QuestionEntity>
     lateinit var questionDetailListThis: List<QuestionDetailEntity>
     lateinit var quizThis: QuizEntity
-    private var tpovId: Int
+    lateinit var tpovId: String
 
 
     private val _shouldCloseLiveData = MutableLiveData<Boolean>()
@@ -59,18 +59,20 @@ class QuestionViewModel @Inject constructor(
     private var _viewResultLiveData = MutableLiveData<String>()
     var viewResultLiveData: LiveData<String> = _viewResultLiveData
 
-    init {
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
-    }
-
     fun synthWithDB(context: Context) {
+        initConst(context)
         getQuestionsList()
-        initVariable(context)
+        initVariable()
     }
 
-    private fun initVariable(context: Context) {
+    private fun initConst(context: Context) {
         this.context = context
+        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        tpovId = (sharedPref?.getInt("tpovId", 0) ?: 0).toString()
+    }
+
+    private fun initVariable() {
+
         Log.d("dwagdkghjkd", "------------------------initVariable() ----------------------")
 
         questionDetailListThis.forEach {
@@ -133,7 +135,7 @@ class QuestionViewModel @Inject constructor(
             this.leftAnswer = getLeftAnswer(questionDetailEntity.codeAnswer)
             this.numQuestion = leftAnswer
             this.idThisQuestionDetail = questionDetailEntity.id!!
-            this.idQuiz = questionDetailEntity.id
+            this.idQuiz = questionDetailEntity.idQuiz
         } catch (e: Exception) {
             errorLoadQuestion(questionDetailEntity)
         }
@@ -173,7 +175,7 @@ class QuestionViewModel @Inject constructor(
             )
         }
         questionDetailListThis = listQuestionDetail
-        quizThis = getQuizUseCase(idQuiz, tpovId)
+        quizThis = getQuizUseCase(idQuiz, tpovId.toInt())
     }
 
 

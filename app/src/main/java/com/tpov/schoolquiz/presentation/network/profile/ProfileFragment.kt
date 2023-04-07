@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.Toast
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
@@ -19,7 +20,6 @@ class ProfileFragment : BaseFragment() {
 
     companion object {
         fun newInstance() = ProfileFragment()
-
     }
 
     @Inject
@@ -57,8 +57,11 @@ class ProfileFragment : BaseFragment() {
         }
 
         val isExecuted = BooleanArray(8) // создаем массив флагов для каждого числа
+        view.findViewById<ImageButton>(R.id.imb_download).setOnClickListener {
+            viewModel.getQuizzFB()
+        }
 
-        var osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
+        val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
             log("fun viewModel.getSynth.observe: $number")
             val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
             viewModel.tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
@@ -93,28 +96,6 @@ class ProfileFragment : BaseFragment() {
                         isExecuted[4] = true
                     }
                 }
-                6 -> {
-                    if (!isExecuted[5]) {
-                        viewModel.getQuizzFB()
-                        isExecuted[5] = true
-                    }
-                }
-                7 -> {
-                    if (!isExecuted[5]) {
-                        viewModel.getQuizzFB()
-                        isExecuted[5] = true
-                    }
-                    if (!isExecuted[6]) {
-                        viewModel.getQuestions1FB()
-                        isExecuted[6] = true
-                    }
-                }
-                8 -> {
-                    if (!isExecuted[7]) {
-                        viewModel.getQuestions2FB()
-                        isExecuted[7] = true
-                    }
-                }
             }
         }
         val referenceValue = Integer.toHexString(System.identityHashCode(osb))
@@ -129,6 +110,4 @@ class ProfileFragment : BaseFragment() {
         component.inject(this)
         super.onAttach(context)
     }
-
-
 }
