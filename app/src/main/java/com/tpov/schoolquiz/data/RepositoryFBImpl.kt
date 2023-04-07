@@ -215,17 +215,17 @@ class RepositoryFBImpl @Inject constructor(
     private fun getQuestion(questionRef: DatabaseReference, idQuiz: String) {
         questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                log("getQuestion8Data idQuizSnap: ${snapshot.key}")
-                for (idQuestionSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
-                    if (idQuestionSnap.key == idQuiz) {
-                        log("getQuestion8Data idQuestionSnap: ${idQuestionSnap.key}")
-                        for (languageSnap in idQuestionSnap.children) { // перебор всех папок language внутри idQuiz
-                            log("getQuestion8Data languageSnap: ${languageSnap.key}")
-                            for (questionSnap in languageSnap.children) { // перебор всех вопросов внутри language
-                                log("getQuestion8Data questionSnap: ${questionSnap.key}")
-                                val question = questionSnap.getValue(Question::class.java)
+                log("getQuestion snapshot: ${snapshot.key}")
+                for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
+                    if (idQuizSnap.key == idQuiz) {
+                        dao.deleteQuestionByIdQuiz(idQuizSnap.key?.toInt() ?: -1)
+                        log("getQuestion idQuizSnap: ${idQuizSnap.key}")
+                        for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
+                            log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
+                            for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
+                                log("getQuestion languageSnap: ${languageSnap.key}")
+                                val question = languageSnap.getValue(Question::class.java)
                                 if (question != null) {
-                                    dao.deleteQuestionByIdQuiz(idQuestionSnap.key?.toInt() ?: -1)
                                     dao.insertQuestion(
                                         QuestionEntity(
                                             null,
@@ -233,7 +233,7 @@ class RepositoryFBImpl @Inject constructor(
                                             question.nameQuestion,
                                             question.answerQuestion,
                                             question.typeQuestion,
-                                            idQuestionSnap.key?.toInt() ?: -1,
+                                            idQuizSnap.key?.toInt() ?: -1,
                                             languageSnap.key ?: "eu",
                                             question.lvlTranslate
                                         )
@@ -745,40 +745,32 @@ class RepositoryFBImpl @Inject constructor(
         var questionDetail = dao.getQuestionDetailList()
 
         val database = FirebaseDatabase.getInstance()
-        val questionDetailRef1 = database.getReference("questionDetail1")
-        val questionDetailRef2 = database.getReference("questionDetail2")
-        val questionDetailRef3 = database.getReference("questionDetail3")
-        val questionDetailRef4 = database.getReference("questionDetail4")
-        val questionDetailRef5 = database.getReference("questionDetail5")
-        val questionDetailRef6 = database.getReference("questionDetail6")
-        val questionDetailRef7 = database.getReference("questionDetail7")
-        val questionDetailRef8 = database.getReference("questionDetail8")
+
+        val questionDetailRefs = arrayOf(
+            database.getReference("questionDetail1/${tpovId}"),
+            database.getReference("questionDetail2"),
+            database.getReference("questionDetail3"),
+            database.getReference("questionDetail4"),
+            database.getReference("questionDetail5"),
+            database.getReference("questionDetail6"),
+            database.getReference("questionDetail7"),
+            database.getReference("questionDetail8")
+        )
 
         questionDetail.forEach {
             if (dao.getQuizTpovIdById(it.idQuiz) == tpovId) {
                 synthLiveData.value = --synth
                 log("setQuestionDetail() найден квест с таким же tpovId, idQuiz: ${it.idQuiz}")
-                if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionDetailRef1.child("${tpovId}/${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 2) questionDetailRef2.child("${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 3) questionDetailRef3.child("${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 4) questionDetailRef4.child("${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 5) questionDetailRef5.child("${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 6) questionDetailRef6.child("${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 7) questionDetailRef7.child("${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 8) questionDetailRef8.child("${it.idQuiz}/${it.id}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                val event = dao.getEventByIdQuiz(it.idQuiz)
+                if (event in 1..8) {
+                    questionDetailRefs[event!! - 1].child("${it.idQuiz}/${questionDetail.size + 1}")
+                        .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                }
             }
         }
         synthLiveData.value = ++synth
-
     }
+
 
     override fun setProfile() {
         log("fun setProfile()")

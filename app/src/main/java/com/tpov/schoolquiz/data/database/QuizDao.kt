@@ -292,7 +292,12 @@ interface QuizDao {
     fun getQuestionDetailByIdQuizDB(id: Int): List<QuestionDetailEntity>
 
     @Query("DELETE FROM new_user_table WHERE idQuiz IS :id")
-    fun deleteQuestionByIdQuiz(id: Int)
+    fun deleteQuestionByIdQuizDB(id: Int)
+
+    fun deleteQuestionByIdQuiz(id: Int) {
+        log("fun deleteQuestionByIdQuiz(), idQuiz: $id")
+        deleteQuestionByIdQuizDB(id)
+    }
 
     @Query("DELETE FROM table_data WHERE idQuiz IS :id")
     fun deleteQuestionDetailByIdQuiz(id: Int)
