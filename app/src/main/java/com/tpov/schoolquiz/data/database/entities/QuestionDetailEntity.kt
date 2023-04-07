@@ -20,5 +20,8 @@ data class QuestionDetailEntity(
     val codeAnswer: String?,
 
     @ColumnInfo(name = "hardQuiz")
-    val hardQuiz: Boolean
+    val hardQuiz: Boolean,
+
+    @ColumnInfo(name = "synthFB")
+    val synthFB: Boolean
 )

@@ -298,7 +298,7 @@ class RepositoryFBImpl @Inject constructor(
                 for (user in snapshot.children) {
                     log("getQuestionDetail2() user: ${user.key}")
                     if (user.key == idQuiz && dao.getQuestionDetailList().size != user.childrenCount.toInt()) {
-                        for (idQuizSnap in user.children) {                                     //
+                        for (idQuizSnap in user.children) {                                             //
                             log("getQuestionDetail2() idQuizSnap: ${idQuizSnap.key}")
                             val questionDetailEntity =
                                 idQuizSnap.getValue(QuestionDetailEntity::class.java)
@@ -660,7 +660,7 @@ class RepositoryFBImpl @Inject constructor(
             if (dao.getQuizTpovIdById(it.idQuiz) == tpovId) {
                 synthLiveData.value = --synth
                 log("setQuestionData() найдет квест который совпадает с tpovId, idQuiz: ${it.idQuiz}")
-                if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.id}/${it.language}")
+                if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.numQuestion}/${it.language}")
                     .setValue(it).addOnSuccessListener {
                         synthLiveData.value = ++synth
                     }
@@ -758,19 +758,20 @@ class RepositoryFBImpl @Inject constructor(
         )
 
         questionDetail.forEach {
-            if (dao.getQuizTpovIdById(it.idQuiz) == tpovId) {
+            if (dao.getQuizTpovIdById(it.idQuiz) == tpovId && !it.synthFB) {
                 synthLiveData.value = --synth
                 log("setQuestionDetail() найден квест с таким же tpovId, idQuiz: ${it.idQuiz}")
                 val event = dao.getEventByIdQuiz(it.idQuiz)
                 if (event in 1..8) {
-                    questionDetailRefs[event!! - 1].child("${it.idQuiz}/${questionDetail.size + 1}")
-                        .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                    questionDetailRefs[event!! - 1].child("${it.idQuiz}").push()
+                        .setValue(it).addOnSuccessListener { _ ->
+                            dao.updateQuizDetail(it.copy(synthFB = true))
+                            synthLiveData.value = ++synth }
                 }
             }
         }
         synthLiveData.value = ++synth
     }
-
 
     override fun setProfile() {
         log("fun setProfile()")

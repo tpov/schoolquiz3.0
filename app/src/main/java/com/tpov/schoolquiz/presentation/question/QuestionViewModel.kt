@@ -106,7 +106,8 @@ class QuestionViewModel @Inject constructor(
                 idQuiz,
                 TimeManager.getCurrentTime(),
                 codeAnswer,
-                hardQuestion
+                hardQuestion,
+                false
             )
         )
 
@@ -219,7 +220,8 @@ class QuestionViewModel @Inject constructor(
                 idQuiz,
                 TimeManager.getCurrentTime(),
                 codeAnswer,
-                hardQuestion
+                hardQuestion,
+                false
             )
         )
 

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "0040b022aa75ab4f3a0697dc73a1ad19",
+    "identityHash": "9930329664483d38dcd1a41b8684a931",
     "entities": [
       {
         "tableName": "table_data",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `idQuiz` INTEGER NOT NULL, `data` TEXT NOT NULL, `codeAnswer` TEXT, `hardQuiz` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `idQuiz` INTEGER NOT NULL, `data` TEXT NOT NULL, `codeAnswer` TEXT, `hardQuiz` INTEGER NOT NULL, `synthFB` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -35,6 +35,12 @@
           {
             "fieldPath": "hardQuiz",
             "columnName": "hardQuiz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "synthFB",
+            "columnName": "synthFB",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -566,7 +572,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0040b022aa75ab4f3a0697dc73a1ad19')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9930329664483d38dcd1a41b8684a931')"
     ]
   }
 }
