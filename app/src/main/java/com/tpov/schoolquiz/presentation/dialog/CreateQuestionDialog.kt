@@ -17,8 +17,6 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
 import com.google.android.material.textfield.TextInputEditText
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.languageid.LanguageIdentification
@@ -29,10 +27,7 @@ import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.CreateQuestionDialogBinding
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import okhttp3.internal.wait
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -288,7 +283,7 @@ class CreateQuestionDialog() : DialogFragment() {
                 )
 
                 question.forEach {
-                    mainActivityViewModel.insertQuestionList(
+                    mainActivityViewModel.insertQuestion(
                         it.copy(
                             idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
                                 nameQuiz

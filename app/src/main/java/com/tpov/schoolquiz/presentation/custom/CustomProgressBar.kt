@@ -67,7 +67,8 @@ class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context,
         rbEvaluation: RatingBar,
         bOk: Button,
         bHelpTranslate: Button,
-        showStars: Boolean
+        showStars: Boolean,
+        event: Int
     ) {
         val animator = ValueAnimator.ofFloat(this.progress, progress)
         animator.duration = duration
@@ -84,18 +85,15 @@ class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context,
             }
 
             override fun onAnimationEnd(animation: Animator) {
-                if (showStars) {
-                    rbEvaluation.visibility = VISIBLE
-                    bOk.visibility = GONE
-                    bHelpTranslate.visibility = GONE
-                    tvEvaluation.visibility = VISIBLE
+                when (event) {
+                    1 -> noShowRating(rbEvaluation, bOk, bHelpTranslate, tvEvaluation)
+                    2, 3, 4 -> showRating(rbEvaluation, bOk, bHelpTranslate, tvEvaluation)
+                    5, 6, 7, 8 -> {
+                        if (showStars) showRating(rbEvaluation, bOk, bHelpTranslate, tvEvaluation)
+                        else noShowRating(rbEvaluation, bOk, bHelpTranslate, tvEvaluation)
+                    }
                 }
-                else {
-                    rbEvaluation.visibility = GONE
-                    bOk.visibility = VISIBLE
-                    bHelpTranslate.visibility = VISIBLE
-                    tvEvaluation.visibility = GONE
-                }
+
                 rbEvaluation.setOnRatingBarChangeListener { ratingBar, rating, fromUser ->
                     bOk.visibility = VISIBLE
                     bHelpTranslate.visibility = VISIBLE
@@ -113,5 +111,29 @@ class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context,
                 // Анимация повторилась
             }
         })
+    }
+
+    private fun showRating(
+        rbEvaluation: RatingBar,
+        bOk: Button,
+        bHelpTranslate: Button,
+        tvEvaluation: TextView
+    ) {
+        rbEvaluation.visibility = VISIBLE
+        bOk.visibility = GONE
+        bHelpTranslate.visibility = GONE
+        tvEvaluation.visibility = VISIBLE
+    }
+
+    private fun noShowRating(
+        rbEvaluation: RatingBar,
+        bOk: Button,
+        bHelpTranslate: Button,
+        tvEvaluation: TextView
+    ) {
+        rbEvaluation.visibility = GONE
+        bOk.visibility = VISIBLE
+        bHelpTranslate.visibility = VISIBLE
+        tvEvaluation.visibility = GONE
     }
 }

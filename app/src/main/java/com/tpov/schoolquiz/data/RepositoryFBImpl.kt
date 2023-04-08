@@ -144,15 +144,30 @@ class RepositoryFBImpl @Inject constructor(
                             val refQuestion = when (quizEntity.event) {
                                 2 -> FirebaseDatabase.getInstance().getReference("question2")
                                 3 -> FirebaseDatabase.getInstance().getReference("question3")
-                                4 -> FirebaseDatabase.getInstance().getReference("question3")
-                                5 -> FirebaseDatabase.getInstance().getReference("question3")
-                                6 -> FirebaseDatabase.getInstance().getReference("question3")
-                                7 -> FirebaseDatabase.getInstance().getReference("question3")
-                                8 -> FirebaseDatabase.getInstance().getReference("question3")
+                                4 -> FirebaseDatabase.getInstance().getReference("question4")
+                                5 -> FirebaseDatabase.getInstance().getReference("question5")
+                                6 -> FirebaseDatabase.getInstance().getReference("question6")
+                                7 -> FirebaseDatabase.getInstance().getReference("question7")
+                                8 -> FirebaseDatabase.getInstance().getReference("question8")
                                 else -> FirebaseDatabase.getInstance()
                                     .getReference("question1/${quizEntity.tpovId}")
                             }
+
+                            val refQuestionDetail = when (quizEntity.event) {
+                                1 -> FirebaseDatabase.getInstance()
+                                    .getReference("question_detail1/${getTpovId()}")
+                                2 -> FirebaseDatabase.getInstance().getReference("question_detail2")
+                                3 -> FirebaseDatabase.getInstance().getReference("question_detail3")
+                                4 -> FirebaseDatabase.getInstance().getReference("question_detail4")
+                                5 -> FirebaseDatabase.getInstance().getReference("question_detail5")
+                                6 -> FirebaseDatabase.getInstance().getReference("question_detail6")
+                                7 -> FirebaseDatabase.getInstance().getReference("question_detail7")
+                                8 -> FirebaseDatabase.getInstance().getReference("question_detail8")
+                                else -> FirebaseDatabase.getInstance()
+                                    .getReference("question_detail1/${getTpovId()}")
+                            }
                             getQuestion(refQuestion, data.key!!)
+                            getQuestionDetail(refQuestionDetail, data.key!!)
 
                             SharedPreferencesManager.setVersionQuiz(
                                 data.key!!,
@@ -298,14 +313,15 @@ class RepositoryFBImpl @Inject constructor(
                 for (user in snapshot.children) {
                     log("getQuestionDetail2() user: ${user.key}")
                     if (user.key == idQuiz && dao.getQuestionDetailList().size != user.childrenCount.toInt()) {
-                        for (idQuizSnap in user.children) {                                     //
+                        dao.deleteQuestionDetailByIdQuiz(idQuiz.toInt())
+                        for (idQuizSnap in user.children) {                                             //
                             log("getQuestionDetail2() idQuizSnap: ${idQuizSnap.key}")
                             val questionDetailEntity =
-                                idQuizSnap.getValue(QuestionDetailEntity::class.java)
+                                idQuizSnap.getValue(QuestionDetail::class.java)
                             if (questionDetailEntity != null) {
                                 log("getQuestionDetail2() квест не пустой, добавляем в список")
-                                dao.deleteQuestionDetailByIdQuiz(questionDetailEntity.idQuiz)
-                                dao.insertQuizDetail(questionDetailEntity)
+
+                                dao.insertQuizDetail(questionDetailEntity.toQuestionDetailEntity(null, idQuiz.toInt(), true))
                             }
                         }
                     }
@@ -400,6 +416,8 @@ class RepositoryFBImpl @Inject constructor(
         log("fun setQuizData()")
         var tpovId = getTpovId()
         var quizDB = dao.getQuizList(tpovId)
+        val quizEventDB = dao.getQuizEvent()
+
         var idQuiz = 0
 
         val database = FirebaseDatabase.getInstance()
@@ -412,7 +430,17 @@ class RepositoryFBImpl @Inject constructor(
         val quizRef7 = database.getReference("quiz7")
         val quizRef8 = database.getReference("quiz8")
 
-        val playersRef = FirebaseDatabase.getInstance().getReference("players")
+        val questionRef1 = database.getReference("question1")
+        val questionRef2 = database.getReference("question2")
+        val questionRef3 = database.getReference("question3")
+        val questionRef4 = database.getReference("question4")
+        val questionRef5 = database.getReference("question5")
+        val questionRef6 = database.getReference("question6")
+        val questionRef7 = database.getReference("question7")
+        val questionRef8 = database.getReference("question8")
+
+        val playersRef = database.getReference("players")
+        val playersQuiz = playersRef.child("quiz")
         // создаем скоуп для запуска корутин
         val coroutineScope = CoroutineScope(Dispatchers.Default)
 
@@ -462,6 +490,83 @@ class RepositoryFBImpl @Inject constructor(
                             playersRef.updateChildren(updates)
                         }
 
+                        quizEventDB.forEach { quiz ->
+                            val quizRatingMap = mapOf(
+                                "rating" to quiz.rating,
+                                "stars" to quiz.stars
+                            )
+                            when (quiz.event) {
+                                1 -> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                }
+                                3-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                4-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                5-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                6-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                7-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                8-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                            }
+                        }
                         quizDB.forEach {
                             log("setQuizData() playersRef quizDB перебираем")
                             if (it.event == 1) {
@@ -660,7 +765,7 @@ class RepositoryFBImpl @Inject constructor(
             if (dao.getQuizTpovIdById(it.idQuiz) == tpovId) {
                 synthLiveData.value = --synth
                 log("setQuestionData() найдет квест который совпадает с tpovId, idQuiz: ${it.idQuiz}")
-                if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.id}/${it.language}")
+                if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.numQuestion}/${it.language}")
                     .setValue(it).addOnSuccessListener {
                         synthLiveData.value = ++synth
                     }
@@ -747,30 +852,32 @@ class RepositoryFBImpl @Inject constructor(
         val database = FirebaseDatabase.getInstance()
 
         val questionDetailRefs = arrayOf(
-            database.getReference("questionDetail1/${tpovId}"),
-            database.getReference("questionDetail2"),
-            database.getReference("questionDetail3"),
-            database.getReference("questionDetail4"),
-            database.getReference("questionDetail5"),
-            database.getReference("questionDetail6"),
-            database.getReference("questionDetail7"),
-            database.getReference("questionDetail8")
+            database.getReference("question_detail1/${tpovId}"),
+            database.getReference("question_detail2"),
+            database.getReference("question_detail3"),
+            database.getReference("question_detail4"),
+            database.getReference("question_detail5"),
+            database.getReference("question_detail6"),
+            database.getReference("question_detail7"),
+            database.getReference("question_detail8")
         )
 
         questionDetail.forEach {
-            if (dao.getQuizTpovIdById(it.idQuiz) == tpovId) {
+            if (dao.getQuizTpovIdById(it.idQuiz) == tpovId && !it.synthFB) {
                 synthLiveData.value = --synth
                 log("setQuestionDetail() найден квест с таким же tpovId, idQuiz: ${it.idQuiz}")
                 val event = dao.getEventByIdQuiz(it.idQuiz)
                 if (event in 1..8) {
-                    questionDetailRefs[event!! - 1].child("${it.idQuiz}/${questionDetail.size + 1}")
-                        .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                    questionDetailRefs[event!! - 1].child("${it.idQuiz}").push()
+                        .setValue(it).addOnSuccessListener { _ ->
+                            dao.updateQuizDetail(it.copy(synthFB = true))
+                            synthLiveData.value = ++synth
+                        }
                 }
             }
         }
         synthLiveData.value = ++synth
     }
-
 
     override fun setProfile() {
         log("fun setProfile()")

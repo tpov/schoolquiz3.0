@@ -102,44 +102,52 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz2Clicked(quizId: Int) {
+        log("fun onQuiz2Clicked")
             val intent = Intent(activity, QuestionActivity::class.java)
             intent.putExtra(QuestionActivity.NAME_USER, "user")
-            intent.putExtra(QuestionActivity.ID_QUIZ, id)
+            intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
             intent.putExtra(QuestionActivity.LIFE, 0)
             intent.putExtra(QuestionActivity.HARD_QUESTION, false)
             startActivity(intent)
     }
 
     override fun onQuiz3Clicked(quizId: Int) {
-
+        log("fun onQuiz3Clicked")
     }
 
     override fun onQuiz4Clicked(quizId: Int) {
 
+        log("fun onQuiz4Clicked")
     }
 
     override fun onTranslate1EventClicked(questionId: Int) {
 
+        log("fun onTranslate1EventClicked")
     }
 
     override fun onTranslate2EventClicked(quizId: Int) {
 
+        log("fun onTranslate2EventClicked")
     }
 
     override fun onTranslateEditQuestionClicked(questionId: Int) {
 
+        log("fun onTranslateEditQuestionClicked")
     }
 
     override fun onModeratorEventClicked(quizId: Int) {
 
+        log("fun onModeratorEventClicked")
     }
 
     override fun onAdminEventClicked(quizId: Int) {
 
+        log("fun onAdminEventClicked")
     }
 
     override fun onDeveloperEventClicked(quizId: Int) {
 
+        log("fun onDeveloperEventClicked")
     }
 
     companion object {

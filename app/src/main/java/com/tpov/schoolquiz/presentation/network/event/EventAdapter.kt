@@ -188,6 +188,7 @@ class EventAdapter(
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         fun bindQuiz2(quiz: QuizEntity) {
+            log("bindQuiz2")
             itemView.findViewById<Button>(R.id.main_title_button).text = quiz.nameQuiz
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<ImageView>(R.id.imv_gradient_light_quiz).visibility = View.VISIBLE
@@ -204,12 +205,14 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindQuiz2 setOnClickListener")
                 listener.onQuiz2Clicked(quiz.id!!)
             }
         }
 
         fun bindQuiz3(quiz: QuizEntity) {
+            log("bindQuiz3")
             itemView.findViewById<Button>(R.id.main_title_button).text = quiz.nameQuiz
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<ImageView>(R.id.imv_gradient_light_quiz).visibility = View.GONE
@@ -225,12 +228,14 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindQuiz3 setOnClickListener")
                 listener.onQuiz3Clicked(quiz.id!!)
             }
         }
 
         fun bindQuiz4(quiz: QuizEntity) {
+            log("bindQuiz4")
             itemView.findViewById<Button>(R.id.main_title_button).text = quiz.nameQuiz
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.VISIBLE
@@ -245,12 +250,14 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindQuiz4 setOnClickListener")
                 listener.onQuiz4Clicked(quiz.id!!)
             }
         }
 
         fun bindTranslate1Event(question: QuestionEntity) {
+            log("bindTranslate1Event")
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<Button>(R.id.main_title_button).text =
                 "${question.language} - lvl:${question.lvlTranslate} \"${question.nameQuestion}\""
@@ -259,12 +266,14 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindTranslate1Event setOnClickListener")
                 listener.onTranslate1EventClicked(question.id!!)
             }
         }
 
         fun bindTranslate2Event(question: QuestionEntity) {
+            log("bindTranslate2Event")
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<Button>(R.id.main_title_button).text =
                 "${question.language} - lvl:${question.lvlTranslate} \"${question.nameQuestion}\""
@@ -273,12 +282,14 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindTranslate2Event setOnClickListener")
                 listener.onTranslate2EventClicked(question.id!!)
             }
         }
 
         fun bindTranslateEditQuestion(question: QuestionEntity) {
+            log("bindTranslateEditQuestion")
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<Button>(R.id.main_title_button).text =
                 "${question.language} - lvl:${question.lvlTranslate} \"${question.nameQuestion}\""
@@ -287,12 +298,14 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindTranslateEditQuestion setOnClickListener")
                 listener.onTranslateEditQuestionClicked(question.id!!)
             }
         }
 
         fun bindModeratorEvent(chat: ChatEntity) {
+            log("bindModeratorEvent")
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<Button>(R.id.main_title_button).text = "${chat.msg}"
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
@@ -300,12 +313,14 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindModeratorEvent setOnClickListener")
                 listener.onModeratorEventClicked(it.id)
             }
         }
 
         fun bindAdminEvent(chat: ChatEntity) {
+            log("bindAdminEvent")
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<Button>(R.id.main_title_button).text = "${chat.msg}"
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
@@ -313,12 +328,14 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindAdminEvent setOnClickListener")
                 listener.onAdminEventClicked(it.id)
             }
         }
 
         fun bindDeveloperEvent(chat: ChatEntity) {
+            log("bindDeveloperEvent")
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<Button>(R.id.main_title_button).text = "${chat.msg}"
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
@@ -326,7 +343,8 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
 
-            itemView.setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+                log("bindDeveloperEvent setOnClickListener")
                 listener.onDeveloperEventClicked(it.id)
             }
         }

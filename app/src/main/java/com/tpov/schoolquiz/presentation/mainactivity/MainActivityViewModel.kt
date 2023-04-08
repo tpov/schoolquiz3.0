@@ -6,13 +6,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.tpov.schoolquiz.data.RepositoryFBImpl
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
-import com.tpov.schoolquiz.domain.repository.RepositoryFB
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
@@ -31,13 +29,14 @@ class MainActivityViewModel @Inject constructor(
     private val getQuestionDetail8FBUseCase: GetQuestionDetail8FBUseCase,
     private val getQuestion8FBUseCase: GetQuestion8FBUseCase,
     private val getIdQuizByNameQuizUseCase: GetIdQuizByNameQuizUseCase,
-    private val insertQuestionListUseCase: InsertQuestionUseCase,
+    private val insertQuestionUseCase: InsertQuestionUseCase,
     private val setQuizFBUseCase: SetQuizDataFBUseCase,
     private val setQuestionFBUseCase: SetQuestionFBUseCase,
     private val setQuestionDetailFBUseCase: SetQuestionDetailFBUseCase,
     private val updateQuizUseCase: UpdateQuizUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
-    private val insertProfileUseCase: InsertProfileUseCase
+    private val insertProfileUseCase: InsertProfileUseCase,
+    private val getQuestionListUseCase: GetQuestionListUseCase
 ) : ViewModel() {
 
     var tpovId = 0
@@ -60,6 +59,14 @@ class MainActivityViewModel @Inject constructor(
             getQuestion8FBUseCase()
         }
     }
+
+    fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
+        log("fun getQuestionListByIdQuiz")
+        log("fun getQuestionListByIdQuiz list: ${getQuestionListUseCase()}")
+        log("fun getQuestionListByIdQuiz list filter: ${getQuestionListUseCase().filter { it.idQuiz == idQuiz }}")
+        return getQuestionListUseCase().filter { it.idQuiz == idQuiz }
+    }
+
 
     private fun insertProfile() {
         log("fun insertProfile()")
@@ -109,17 +116,20 @@ class MainActivityViewModel @Inject constructor(
         insertQuizUseCase(quizEntity)
     }
 
-    fun insertQuestionList(questionEntity: QuestionEntity) {
+    fun insertQuestion(questionEntity: QuestionEntity) {
         log("fun insertQuestionList")
-        insertQuestionListUseCase(questionEntity)
+        insertQuestionUseCase(questionEntity)
     }
 
-    fun updateQuizEvent(quizEntity: QuizEntity) {
+    fun insertQuizEvent(quizEntity: QuizEntity) {
         log("fun updateQuizEvent")
-        if (quizEntity.event == 1) quizEntity.event++
+        if (quizEntity.event == 1) {
+            quizEntity.event++
 
-        log("updateQuizEvent quizEntity.event = ${quizEntity.event}")
-        updateQuizUseCase(quizEntity)
+            log("updateQuizEvent quizEntity.event = ${quizEntity.event}")
+            insertQuiz(quizEntity.copy(id = null))
+        }
+
     }
 
     fun setQuestionsFB() {
@@ -136,7 +146,7 @@ class MainActivityViewModel @Inject constructor(
         return getQuizLiveDataUseCase.getQuizUseCase(tpovId)
     }
 
-    val quizQuizLiveData: LiveData<List<QuizEntity>> = getQuizList()
+    val getQuizLiveData: LiveData<List<QuizEntity>> = getQuizList()
     var getProfileFBLiveData: LiveData<ProfileEntity> =
         getProfileFlowUseCase(this.tpovId).asLiveData()
 
