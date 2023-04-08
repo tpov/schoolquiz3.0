@@ -61,6 +61,7 @@ class QuestionActivity : AppCompatActivity() {
         synthInputData()
         viewModel.synthWithDB(this)
         viewModel.shouldCloseLiveData.observe(this) { if (it) finish() }
+        insertQuestionsNewEvent()
         binding.apply {
             if (viewModel.hardQuestion) {
                 viewBackground.setBackgroundResource(R.color.background_hard_question)
@@ -226,33 +227,39 @@ class QuestionActivity : AppCompatActivity() {
                 if (!viewModel.hardQuestion) {
                     val questionActivityIntent = Intent(this, QuestionListActivity::class.java)
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        ActivityOptions.makeClipRevealAnimation(
-                            View(this),
-                            0,
-                            0,
-                            View(this).width,
-                            View(this).height
-                        )
+                    ActivityOptions.makeClipRevealAnimation(
+                        View(this),
+                        0,
+                        0,
+                        View(this).width,
+                        View(this).height
+                    )
 
-                        questionActivityIntent.putExtra(
-                            EXTRA_CURRENT_INDEX,
-                            viewModel.currentIndex
-                        )   //Output
-                        questionActivityIntent.putExtra(EXTRA_CODE_ANSWER, viewModel.codeAnswer)
-                        questionActivityIntent.putExtra(EXTRA_CODE_ID_USER, viewModel.idQuiz)
-                        startActivityForResult(questionActivityIntent, UPDATE_CURRENT_INDEX)
-                    } else {
-                        questionActivityIntent.putExtra(
-                            EXTRA_UPDATE_CURRENT_INDEX,
-                            viewModel.currentIndex
-                        )   //Output
-                        startActivityForResult(questionActivityIntent, UPDATE_CURRENT_INDEX)
-                    }
+                    questionActivityIntent.putExtra(
+                        EXTRA_CURRENT_INDEX,
+                        viewModel.currentIndex
+                    )   //Output
+                    questionActivityIntent.putExtra(EXTRA_CODE_ANSWER, viewModel.codeAnswer)
+                    questionActivityIntent.putExtra(EXTRA_CODE_ID_USER, viewModel.idQuiz)
+                    startActivityForResult(questionActivityIntent, UPDATE_CURRENT_INDEX)
                 }
             }
         }
         return true
+    }
+
+    private fun insertQuestionsNewEvent() {
+        viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt()).observe(this) { list ->
+            list.forEach { quiz ->
+               if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
+                   viewModel.questionListThis.forEach {
+                       viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
+                   }
+               }
+           }
+        }
+
+
     }
 
     private fun springAnim(next: Boolean) = with(binding) {

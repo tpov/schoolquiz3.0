@@ -2,17 +2,16 @@ package com.tpov.schoolquiz.presentation.dialog
 
 import android.app.Dialog
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.*
-import androidx.annotation.RequiresApi
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.custom.CustomProgressBar
 
 
 class ResultDialog(
+    private var event: Int,
     private var showStars: Int,
     private val stars: Int,
     private val starsPercentAll: Int,
@@ -23,7 +22,6 @@ class ResultDialog(
 
     private var rating = 0
 
-    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.result_dialog)
@@ -50,7 +48,8 @@ class ResultDialog(
                 rbEvaluation,
                 bOk,
                 bHelpTranslate,
-                showStars == 0
+                showStars == 0,
+                event
             )
         }, 1000)
 

@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
+import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
@@ -18,14 +19,18 @@ import javax.inject.Inject
 @InternalCoroutinesApi
 class QuestionViewModel @Inject constructor(
     application: Application,
-    val getQuestionByNameQuizUseCase: GetQuestionListByIdQuiz,
+    val getQuestionByIdQuizUseCase: GetQuestionListByIdQuiz,
     val getQuestionDetailListUseCase: GetQuestionDetailListUseCase,
     val getQuizUseCase: GetQuizByIdUseCase,
     val insertQuestionDetailEntity: InsertInfoQuestionUseCase,
     val updateQuestionDetailUseCase: UpdateQuestionDetailUseCase,
     val updateQuizUseCase: UpdateQuizUseCase,
-    var getIdQuizByNameQuizUseCase: GetIdQuizByNameQuizUseCase,
-    var getNameQuizByIdQuiz: GetNameQuizByIdQuiz
+    val deleteQuizUseCase: DeleteQuizUseCase,
+    val insertQuizUseCase: InsertQuizUseCase,
+    val deleteQuestionByIdQuizUseCase: DeleteQuestionByIdQuizUseCase,
+    val deleteQuestionDetailByIdQuiz: DeleteQuestionDetailByIdQuiz,
+    val insertQuestionUseCase: InsertQuestionUseCase,
+    val getQuizLiveDataUseCase: GetQuizLiveDataUseCase
 ) : AndroidViewModel(application) {
 
     private lateinit var context: Context
@@ -48,7 +53,6 @@ class QuestionViewModel @Inject constructor(
     lateinit var questionDetailListThis: List<QuestionDetailEntity>
     lateinit var quizThis: QuizEntity
     lateinit var tpovId: String
-
 
     private val _shouldCloseLiveData = MutableLiveData<Boolean>()
     val shouldCloseLiveData: LiveData<Boolean> = _shouldCloseLiveData
@@ -73,23 +77,12 @@ class QuestionViewModel @Inject constructor(
 
     private fun initVariable() {
 
-        Log.d("dwagdkghjkd", "------------------------initVariable() ----------------------")
-
         questionDetailListThis.forEach {
-            Log.d("dwagdkghjkd", "questionDetailListThis.forEach")
-            Log.d("dwagdkghjkd", "it.hardQuiz ${it.hardQuiz}")
-            Log.d("dwagdkghjkd", "this.hardQuestion ${this.hardQuestion}")
 
             if (it.hardQuiz == this.hardQuestion) {
-                Log.d("dwagdkghjkd", "it.hardQuiz == this.hardQuestion")
-                Log.d(
-                    "dwagdkghjkd",
-                    "getUpdateAnswer(it.codeAnswer) ${getUpdateAnswer(it.codeAnswer)}"
-                )
                 if (getUpdateAnswer(it.codeAnswer)) initOldQuestionDetail(it)
             }
         }
-
         if (createQuestionDetail) initNewQuestionDetail()
     }
 
@@ -129,7 +122,6 @@ class QuestionViewModel @Inject constructor(
     private fun initOldQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
         createQuestionDetail = false
 
-        Log.d("dwagdkghjkd", "questionDetailEntity $questionDetailEntity")
         try {
             this.codeAnswer = questionDetailEntity.codeAnswer!!
             this.currentIndex = getCurrentIndex(questionDetailEntity.codeAnswer)!!
@@ -161,7 +153,7 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun getQuestionsList() {
-        questionListThis = getQuestionByNameQuizUseCase(idQuiz)
+        questionListThis = getQuestionByIdQuizUseCase(idQuiz)
         var list = mutableListOf<QuestionEntity>()
         questionListThis.forEach {
             if (it.hardQuestion == hardQuestion) list.add(it)
@@ -279,13 +271,10 @@ class QuestionViewModel @Inject constructor(
         var perc = mutableListOf<Int>()
         maxPersent = 0
 
-        Log.d("dwagdkghjkd", "questionDetailListThis ${questionDetailListThis}")
-
         questionDetailListThis.forEach {
             i = 0
             j = 0
             it.codeAnswer?.forEach { item ->
-                Log.d("dwagdkghjkd", "${it.codeAnswer}")
                 if (item == '2') i++
                 j++
             }
@@ -313,6 +302,7 @@ class QuestionViewModel @Inject constructor(
 
     private fun showResultDialog() {
         val resultDialog = ResultDialog(
+            quizThis.event,
             quizThis.rating,
             this.persent,
             this.persentAll,
@@ -328,9 +318,31 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun saveResult(rating: Int) {
-        updateQuizUseCase(quizThis.copy(stars = maxPersent, starsAll = persentAll, rating = rating))
+        when (quizThis.event) {
+            1 -> updateQuizUseCase(quizThis.copy(stars = maxPersent, starsAll = persentAll, rating = rating))
+            2, 3, 4 -> updateEvent(rating)
+        }
+
         someAction()
         Log.d("ku65k", "rating $rating")
+    }
+
+    private fun updateEvent(rating: Int) {
+        deleteQuizUseCase(idQuiz)
+        deleteQuestionByIdQuizUseCase(idQuiz)
+        deleteQuestionDetailByIdQuiz(idQuiz)
+        insertQuizPlayers()
+        if (getRating(rating) != 0) insertQuizUseCase(quizThis.copy(id = null, rating = getRating(rating), starsAll = 0, stars = 0))
+    }
+
+    private fun getRating(rating: Int): Int {
+        log("fun getRating: $rating")
+        return if (rating == 1) 0
+        else quizThis.event + 1
+    }
+
+    private fun insertQuizPlayers() {
+
     }
 
 

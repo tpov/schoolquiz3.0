@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.MainApp
@@ -32,15 +31,19 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
 
     @OptIn(InternalCoroutinesApi::class)
-    fun log(m: String) { Logcat.log(m, "Main", Logcat.LOG_FRAGMENT)}
+    fun log(m: String) {
+        Logcat.log(m, "Main", Logcat.LOG_FRAGMENT)
+    }
+
     private lateinit var mainViewModel: MainActivityViewModel
+
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
     private val component by lazy {
         (requireActivity().application as MainApp).component
     }
 
-    private var quizListArray = ArrayList<QuizEntity>()
+    private var oldIdQuizEvent1 = 0
 
     private lateinit var adapter: MainActivityAdapter
 
@@ -51,6 +54,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         component.inject(this)
         super.onAttach(context)
     }
+
     override fun onClickNew(name: String, stars: Int) {
 
     }
@@ -71,10 +75,12 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         binding.rcView.layoutManager = LinearLayoutManager(activity)
         binding.rcView.adapter = adapter
 
-        mainViewModel.quizQuizLiveData.observe(viewLifecycleOwner) { quizList ->
+        mainViewModel.getQuizLiveData.observe(viewLifecycleOwner) { quizList ->
             log("quizQuizLiveData.observe $quizList")
+            // Фильтруем список, оставляя только элементы с event == 1 или event == 8
+            val filteredQuizList = quizList.filter { it.event == 1 || it.event == 8 }
             // Обновление списка
-            adapter.submitList(quizList)
+            adapter.submitList(filteredQuizList)
         }
 
         //  addItemsToRecyclerView(binding.rcView, mainViewModel.quizQuizLiveData.value!!)
@@ -97,7 +103,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         savedInstanceState: Bundle?
     ): View {
         binding = inflate(inflater, container, false)
-       // binding.swipeRefreshLayout.setOnRefreshListener { reloadData() }
+        // binding.swipeRefreshLayout.setOnRefreshListener { reloadData() }
         return binding.root
     }
 
@@ -105,7 +111,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         // Set the onClickListeners for the edit and delete buttons
 
-        Log.d("ffsefsf", "deleteItem = $id" )
+        Log.d("ffsefsf", "deleteItem = $id")
     }
 
     override fun onClick(id: Int, stars: Int) {
@@ -125,12 +131,28 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         Log.d("daefdhrt", "tpovId2 ${mainViewModel.tpovId}")
         Log.d("gdrgefs", "1 $quizEntity")
-        mainViewModel.updateQuizEvent(quizEntity)
-        mainViewModel.quizQuizLiveData.observe(this) { it ->
-
+        mainViewModel.insertQuizEvent(quizEntity)
+        oldIdQuizEvent1 = quizEntity.id ?: 0
+        mainViewModel.getQuizLiveData.observe(this) { list ->
+            log("getQuizLiveData.observe")
+            list.forEach { quiz ->
+                log("getQuizLiveData.observe question by id: ${mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()}")
+                log("getQuizLiveData.observe question is empty: ${mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)}")
+                log("getQuizLiveData.observe quiz: ${quiz}")
+                if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
+                    mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
+                        mainViewModel.insertQuestion(
+                            it.copy(
+                                id = null,
+                                idQuiz = quiz.id ?: 0
+                            )
+                        )
+                    }
+                }
+            }
             var setQuestion = false
-            if (it.isEmpty()) setQuestion = true
-            it.forEach { item ->
+            if (list.isEmpty()) setQuestion = true
+            list.forEach { item ->
                 if (item.id!! < 100) setQuestion = true
             }
             if (!setQuestion) mainViewModel.setQuestionsFB()
@@ -140,12 +162,13 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun reloadData() {
         activity?.recreate()
     }
+
     fun onDeleteButtonClick() {
         // Код, который будет выполнен при нажатии на кнопку "Удалить"
     }
 
     fun onEditButtonClick() {
-        Log.d("ffsefsf", "deleteItem = $id" )
+        Log.d("ffsefsf", "deleteItem = $id")
     }
 
     companion object {

@@ -416,6 +416,8 @@ class RepositoryFBImpl @Inject constructor(
         log("fun setQuizData()")
         var tpovId = getTpovId()
         var quizDB = dao.getQuizList(tpovId)
+        val quizEventDB = dao.getQuizEvent()
+
         var idQuiz = 0
 
         val database = FirebaseDatabase.getInstance()
@@ -428,7 +430,17 @@ class RepositoryFBImpl @Inject constructor(
         val quizRef7 = database.getReference("quiz7")
         val quizRef8 = database.getReference("quiz8")
 
-        val playersRef = FirebaseDatabase.getInstance().getReference("players")
+        val questionRef1 = database.getReference("question1")
+        val questionRef2 = database.getReference("question2")
+        val questionRef3 = database.getReference("question3")
+        val questionRef4 = database.getReference("question4")
+        val questionRef5 = database.getReference("question5")
+        val questionRef6 = database.getReference("question6")
+        val questionRef7 = database.getReference("question7")
+        val questionRef8 = database.getReference("question8")
+
+        val playersRef = database.getReference("players")
+        val playersQuiz = playersRef.child("quiz")
         // создаем скоуп для запуска корутин
         val coroutineScope = CoroutineScope(Dispatchers.Default)
 
@@ -478,6 +490,83 @@ class RepositoryFBImpl @Inject constructor(
                             playersRef.updateChildren(updates)
                         }
 
+                        quizEventDB.forEach { quiz ->
+                            val quizRatingMap = mapOf(
+                                "rating" to quiz.rating,
+                                "stars" to quiz.stars
+                            )
+                            when (quiz.event) {
+                                1 -> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                }
+                                3-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                4-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                5-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                6-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                7-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                                8-> {
+                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
+                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz)
+                                    dao.deleteQuizById(quiz.id!!)
+                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
+                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                                    }
+                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                                }
+                            }
+                        }
                         quizDB.forEach {
                             log("setQuizData() playersRef quizDB перебираем")
                             if (it.event == 1) {
