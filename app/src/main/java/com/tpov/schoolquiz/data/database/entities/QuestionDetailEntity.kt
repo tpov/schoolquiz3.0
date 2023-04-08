@@ -24,4 +24,13 @@ data class QuestionDetailEntity(
 
     @ColumnInfo(name = "synthFB")
     val synthFB: Boolean
-)
+) {
+    constructor() : this(
+        id = null,
+        idQuiz = -1,
+        data = "",
+        codeAnswer = null,
+        hardQuiz = false,
+        synthFB = false
+    )
+}

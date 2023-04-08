@@ -144,15 +144,30 @@ class RepositoryFBImpl @Inject constructor(
                             val refQuestion = when (quizEntity.event) {
                                 2 -> FirebaseDatabase.getInstance().getReference("question2")
                                 3 -> FirebaseDatabase.getInstance().getReference("question3")
-                                4 -> FirebaseDatabase.getInstance().getReference("question3")
-                                5 -> FirebaseDatabase.getInstance().getReference("question3")
-                                6 -> FirebaseDatabase.getInstance().getReference("question3")
-                                7 -> FirebaseDatabase.getInstance().getReference("question3")
-                                8 -> FirebaseDatabase.getInstance().getReference("question3")
+                                4 -> FirebaseDatabase.getInstance().getReference("question4")
+                                5 -> FirebaseDatabase.getInstance().getReference("question5")
+                                6 -> FirebaseDatabase.getInstance().getReference("question6")
+                                7 -> FirebaseDatabase.getInstance().getReference("question7")
+                                8 -> FirebaseDatabase.getInstance().getReference("question8")
                                 else -> FirebaseDatabase.getInstance()
                                     .getReference("question1/${quizEntity.tpovId}")
                             }
+
+                            val refQuestionDetail = when (quizEntity.event) {
+                                1 -> FirebaseDatabase.getInstance()
+                                    .getReference("question_detail1/${getTpovId()}")
+                                2 -> FirebaseDatabase.getInstance().getReference("question_detail2")
+                                3 -> FirebaseDatabase.getInstance().getReference("question_detail3")
+                                4 -> FirebaseDatabase.getInstance().getReference("question_detail4")
+                                5 -> FirebaseDatabase.getInstance().getReference("question_detail5")
+                                6 -> FirebaseDatabase.getInstance().getReference("question_detail6")
+                                7 -> FirebaseDatabase.getInstance().getReference("question_detail7")
+                                8 -> FirebaseDatabase.getInstance().getReference("question_detail8")
+                                else -> FirebaseDatabase.getInstance()
+                                    .getReference("question_detail1/${getTpovId()}")
+                            }
                             getQuestion(refQuestion, data.key!!)
+                            getQuestionDetail(refQuestionDetail, data.key!!)
 
                             SharedPreferencesManager.setVersionQuiz(
                                 data.key!!,
@@ -298,14 +313,15 @@ class RepositoryFBImpl @Inject constructor(
                 for (user in snapshot.children) {
                     log("getQuestionDetail2() user: ${user.key}")
                     if (user.key == idQuiz && dao.getQuestionDetailList().size != user.childrenCount.toInt()) {
+                        dao.deleteQuestionDetailByIdQuiz(idQuiz.toInt())
                         for (idQuizSnap in user.children) {                                             //
                             log("getQuestionDetail2() idQuizSnap: ${idQuizSnap.key}")
                             val questionDetailEntity =
-                                idQuizSnap.getValue(QuestionDetailEntity::class.java)
+                                idQuizSnap.getValue(QuestionDetail::class.java)
                             if (questionDetailEntity != null) {
                                 log("getQuestionDetail2() квест не пустой, добавляем в список")
-                                dao.deleteQuestionDetailByIdQuiz(questionDetailEntity.idQuiz)
-                                dao.insertQuizDetail(questionDetailEntity)
+
+                                dao.insertQuizDetail(questionDetailEntity.toQuestionDetailEntity(null, idQuiz.toInt(), true))
                             }
                         }
                     }
@@ -747,14 +763,14 @@ class RepositoryFBImpl @Inject constructor(
         val database = FirebaseDatabase.getInstance()
 
         val questionDetailRefs = arrayOf(
-            database.getReference("questionDetail1/${tpovId}"),
-            database.getReference("questionDetail2"),
-            database.getReference("questionDetail3"),
-            database.getReference("questionDetail4"),
-            database.getReference("questionDetail5"),
-            database.getReference("questionDetail6"),
-            database.getReference("questionDetail7"),
-            database.getReference("questionDetail8")
+            database.getReference("question_detail1/${tpovId}"),
+            database.getReference("question_detail2"),
+            database.getReference("question_detail3"),
+            database.getReference("question_detail4"),
+            database.getReference("question_detail5"),
+            database.getReference("question_detail6"),
+            database.getReference("question_detail7"),
+            database.getReference("question_detail8")
         )
 
         questionDetail.forEach {
@@ -766,7 +782,8 @@ class RepositoryFBImpl @Inject constructor(
                     questionDetailRefs[event!! - 1].child("${it.idQuiz}").push()
                         .setValue(it).addOnSuccessListener { _ ->
                             dao.updateQuizDetail(it.copy(synthFB = true))
-                            synthLiveData.value = ++synth }
+                            synthLiveData.value = ++synth
+                        }
                 }
             }
         }
