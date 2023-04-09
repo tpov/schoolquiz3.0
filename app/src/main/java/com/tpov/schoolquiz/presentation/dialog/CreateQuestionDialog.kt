@@ -95,7 +95,7 @@ class CreateQuestionDialog() : DialogFragment() {
                     question.add(
                         QuestionEntity(
                             null,
-                            numQuestion,
+                            numQuestion - 1,
                             nameQuestion,
                             getTextTrue(binding.rbTrue).toBoolean(),
                             getTypeText(binding.rbLightQuestion).toBoolean(),
@@ -106,7 +106,6 @@ class CreateQuestionDialog() : DialogFragment() {
                     )
                 }
 
-                numQuestion++
             } else {
                 nameQuiz = binding.intvQuiz.text.toString()
             }
@@ -162,6 +161,8 @@ class CreateQuestionDialog() : DialogFragment() {
                 tvQuestion2.text =
                     "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
             }
+
+            numQuestion++
         }
 
         binding.tvEnd.setOnClickListener {
@@ -268,7 +269,7 @@ class CreateQuestionDialog() : DialogFragment() {
                     QuizEntity(
                         null,
                         nameQuiz,
-                        mainActivityViewModel.getProfile.name,
+                        mainActivityViewModel.getProfile.name ?: "user",
                         TimeManager.getCurrentTime(),
                         0,
                         0,

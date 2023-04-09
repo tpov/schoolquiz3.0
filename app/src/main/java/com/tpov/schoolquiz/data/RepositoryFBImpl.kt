@@ -588,7 +588,7 @@ class RepositoryFBImpl @Inject constructor(
                         quizDB.forEach { quiz ->
                             val quizRatingMap = mapOf(
                                 "rating" to quiz.rating,
-                                "stars" to quiz.stars
+                                "stars" to quiz.starsAll
                             )
 
                             log("setQuizData() playersRef quizDB перебираем: $quiz")
