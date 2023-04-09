@@ -279,7 +279,7 @@ class RepositoryFBImpl @Inject constructor(
         getQuestion(FirebaseDatabase.getInstance().getReference("question5"), "-1")
     }
 
-    override fun getQuestion4Data() {
+    override fun getQuestion4() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question4"), "-1")
     }
 
@@ -435,6 +435,7 @@ class RepositoryFBImpl @Inject constructor(
         val quizRef8 = database.getReference("quiz8")
         database.getReference("question1")
         database.getReference("question2")
+        val questionRef2 = database.getReference("question3")
         val questionRef3 = database.getReference("question3")
         val questionRef4 = database.getReference("question4")
         val questionRef5 = database.getReference("question5")
@@ -449,60 +450,88 @@ class RepositoryFBImpl @Inject constructor(
                 3 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef3.child(quiz.id.toString())
-                        .setValue(quiz)
+                        .setValue(quiz).addOnSuccessListener {
+                            questionRef2.child("${quiz.id}").removeValue()
+                        }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef3.child("${question.idQuiz}/${question.id}/${question.language}")
+                            .setValue(question).addOnSuccessListener {
+                            questionRef2.child("${question.idQuiz}").removeValue()
+                        }
                     }
                     dao.deleteQuestionByIdQuiz(quiz.id!!)
                 }
                 4 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef4.child(quiz.id.toString())
-                        .setValue(quiz)
+                        .setValue(quiz).addOnSuccessListener {
+                            questionRef3.child("${quiz.id}").removeValue()
+                        }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                        questionRef4.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef4.child("${question.idQuiz}/${question.id}/${question.language}")
+                            .setValue(question).addOnSuccessListener {
+                            questionRef3.child("${question.idQuiz}").removeValue()
+                        }
                     }
                     dao.deleteQuestionByIdQuiz(quiz.id!!)
                 }
                 5 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef5.child(quiz.id.toString())
-                        .setValue(quiz)
+                        .setValue(quiz).addOnSuccessListener {
+                            questionRef4.child("${quiz.id}").removeValue()
+                        }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                        questionRef5.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef5.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                            .addOnSuccessListener {
+                                questionRef4.child("${question.idQuiz}").removeValue()
+                            }
                     }
                     dao.deleteQuestionByIdQuiz(quiz.id!!)
                 }
                 6 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef6.child(quiz.id.toString())
-                        .setValue(quiz)
+                        .setValue(quiz).addOnSuccessListener {
+                            questionRef5.child("${quiz.id}").removeValue()
+                        }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                        questionRef6.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef6.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                            .addOnSuccessListener {
+                                questionRef5.child("${question.idQuiz}").removeValue()
+                            }
                     }
                     dao.deleteQuestionByIdQuiz(quiz.id!!)
                 }
                 7 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef7.child(quiz.id.toString())
-                        .setValue(quiz)
+                        .setValue(quiz).addOnSuccessListener {
+                            questionRef6.child("${quiz.id}").removeValue()
+                        }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                        questionRef7.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef7.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                            .addOnSuccessListener {
+                                questionRef6.child("${question.idQuiz}").removeValue()
+                            }
                     }
                     dao.deleteQuestionByIdQuiz(quiz.id!!)
                 }
                 8 -> {
-
+                            questionRef7.child("${quiz.id}").removeValue()
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef7.child("${question.idQuiz}").removeValue()
+                    }
                 }
             }
         }

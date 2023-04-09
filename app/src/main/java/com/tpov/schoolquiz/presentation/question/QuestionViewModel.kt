@@ -57,9 +57,10 @@ class QuestionViewModel @Inject constructor(
     private val _shouldCloseLiveData = MutableLiveData<Boolean>()
     val shouldCloseLiveData: LiveData<Boolean> = _shouldCloseLiveData
 
-    private fun someAction(){
+    private fun someAction() {
         _shouldCloseLiveData.postValue(true)
     }
+
     private var _viewResultLiveData = MutableLiveData<String>()
     var viewResultLiveData: LiveData<String> = _viewResultLiveData
 
@@ -319,8 +320,15 @@ class QuestionViewModel @Inject constructor(
 
     private fun saveResult(rating: Int) {
         when (quizThis.event) {
-            1 -> updateQuizUseCase(quizThis.copy(stars = maxPersent, starsAll = persentAll, rating = rating))
+            1, 5, 6, 7, 8 -> updateQuizUseCase(
+                quizThis.copy(
+                    stars = maxPersent,
+                    starsAll = persentAll,
+                    rating = rating
+                )
+            )
             2, 3, 4 -> updateEvent(rating)
+
         }
 
         someAction()
@@ -332,7 +340,15 @@ class QuestionViewModel @Inject constructor(
         deleteQuestionByIdQuizUseCase(idQuiz)
         deleteQuestionDetailByIdQuiz(idQuiz)
         insertQuizPlayers()
-        if (getRating(rating) != 0) insertQuizUseCase(quizThis.copy(id = null, event = getRating(rating), rating = rating, starsAll = 0, stars = 0))
+        if (getRating(rating) != 0) insertQuizUseCase(
+            quizThis.copy(
+                id = null,
+                event = getRating(rating),
+                rating = rating,
+                starsAll = 0,
+                stars = 0
+            )
+        )
     }
 
     private fun getRating(rating: Int): Int {

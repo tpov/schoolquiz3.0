@@ -27,6 +27,11 @@ class ProfileViewModel @Inject constructor(
 
     private val getQuestion2FBUseCase: GetQuestion2FBUseCase,
     private val getQuiz2FBUseCase: GetQuiz2FBUseCase,
+    private val getQuiz3FBUseCase: GetQuiz3FBUseCase,
+    private val getQuiz4FBUseCase: GetQuiz4FBUseCase,
+    private val getQuiz5FBUseCase: GetQuiz5FBUseCase,
+    private val getQuiz6FBUseCase: GetQuiz6FBUseCase,
+    private val getQuiz7FBUseCase: GetQuiz7FBUseCase,
     private val getQuestionDetail2FBUseCase: GetQuestionDetail2FBUseCase,
     private val getSynthUseCase: GetSynthUseCase,
     private val setQuizEventUseCase: SetQuizEventUseCase
@@ -81,18 +86,11 @@ class ProfileViewModel @Inject constructor(
         log("fun getQuizzFB()")
         getQuiz1FBUseCase()
         getQuiz2FBUseCase()
-    }
-
-    fun getQuestions2FB() {
-        log("fun getQuestions2FB()")
-        getQuestion2FBUseCase()
-        getQuestionDetail2FBUseCase()
-    }
-
-    fun getQuestions1FB() {
-        log("fun getQuestions1FB()")
-        getQuestion1FBUseCase()
-        getQuestionDetail1FBUseCase()
+        getQuiz3FBUseCase()
+        getQuiz4FBUseCase()
+        getQuiz5FBUseCase()
+        getQuiz6FBUseCase()
+        getQuiz7FBUseCase()
     }
 
     fun log(m: String) {

@@ -71,9 +71,6 @@ class EventViewModel @Inject constructor(
 
     fun getEventDeveloper() {
         log("fun getTranslateList")
-        moderator.add(ChatEntity(0, "fewsfs", "user", "mass", 5, 100))
-        admin.add(ChatEntity(0, "fewsfs", "user", "mass", 5, 100))
-        develop.add(ChatEntity(0, "fewsfs", "user", "mass", 5, 100))
 
         log("getEventDeveloper moderator: $moderator")
         log("getEventDeveloper admin: $admin")
