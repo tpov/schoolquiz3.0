@@ -78,7 +78,7 @@ interface RepositoryFB {
 
     fun setProfile()
 
-    fun setEvent(position: Int)
+    fun setEvent()
 
     fun getUserName(): Profile
 

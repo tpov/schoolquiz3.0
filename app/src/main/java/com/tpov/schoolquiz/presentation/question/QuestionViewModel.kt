@@ -332,7 +332,7 @@ class QuestionViewModel @Inject constructor(
         deleteQuestionByIdQuizUseCase(idQuiz)
         deleteQuestionDetailByIdQuiz(idQuiz)
         insertQuizPlayers()
-        if (getRating(rating) != 0) insertQuizUseCase(quizThis.copy(id = null, rating = getRating(rating), starsAll = 0, stars = 0))
+        if (getRating(rating) != 0) insertQuizUseCase(quizThis.copy(id = null, event = getRating(rating), rating = rating, starsAll = 0, stars = 0))
     }
 
     private fun getRating(rating: Int): Int {

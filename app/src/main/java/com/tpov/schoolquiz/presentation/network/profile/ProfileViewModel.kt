@@ -28,7 +28,8 @@ class ProfileViewModel @Inject constructor(
     private val getQuestion2FBUseCase: GetQuestion2FBUseCase,
     private val getQuiz2FBUseCase: GetQuiz2FBUseCase,
     private val getQuestionDetail2FBUseCase: GetQuestionDetail2FBUseCase,
-    private val getSynthUseCase: GetSynthUseCase
+    private val getSynthUseCase: GetSynthUseCase,
+    private val setQuizEventUseCase: SetQuizEventUseCase
 
 ) : ViewModel() {
 
@@ -47,8 +48,6 @@ class ProfileViewModel @Inject constructor(
         getTpovIdFBUseCase()
     }
 
-
-
     fun setQuizFB() {
         log("fun setQuizFB()")
         viewModelScope.launch {
@@ -56,6 +55,12 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun setEventQuiz() {
+        log("fun setEventQuiz()")
+        viewModelScope.launch {
+            setQuizEventUseCase()
+        }
+    }
     fun setQuestionsFB() {
         log("fun setQuestionsFB()")
         setQuestionFBUseCase()

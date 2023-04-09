@@ -148,6 +148,7 @@ class QuestionActivity : AppCompatActivity() {
                 startTimer()
             } else viewModel.timer?.cancel()
         } catch (e: Exception) {
+
         }
     }
 

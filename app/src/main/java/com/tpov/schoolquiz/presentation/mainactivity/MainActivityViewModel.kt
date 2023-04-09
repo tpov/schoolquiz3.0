@@ -36,7 +36,8 @@ class MainActivityViewModel @Inject constructor(
     private val updateQuizUseCase: UpdateQuizUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val insertProfileUseCase: InsertProfileUseCase,
-    private val getQuestionListUseCase: GetQuestionListUseCase
+    private val getQuestionListUseCase: GetQuestionListUseCase,
+    private val getProfileUseCase: GetProfileUseCase
 ) : ViewModel() {
 
     var tpovId = 0
@@ -149,6 +150,8 @@ class MainActivityViewModel @Inject constructor(
     val getQuizLiveData: LiveData<List<QuizEntity>> = getQuizList()
     var getProfileFBLiveData: LiveData<ProfileEntity> =
         getProfileFlowUseCase(this.tpovId).asLiveData()
+
+    val getProfile = getProfileUseCase(tpovId)
 
     fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(nameQuiz, tpovId)
 
