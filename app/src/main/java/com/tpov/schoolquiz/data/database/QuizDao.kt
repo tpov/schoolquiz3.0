@@ -10,7 +10,6 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 
@@ -210,7 +209,6 @@ interface QuizDao {
         return getProfileByFirebaseIdDB(id)
     }
     fun getChat(): Flow<List<ChatEntity>> {
-        log("fun getChat, return: ${getChatDB().asLiveData().value}")
         return getChatDB()
     }
     fun getEventByIdQuiz(id: Int): Int? {
@@ -273,7 +271,7 @@ interface QuizDao {
     @Query("SELECT * FROM profiles WHERE idFirebase = :id")
     fun getProfileByFirebaseIdDB(id: String): ProfileEntity
 
-    @Query("SELECT * FROM chat_data")
+    @Query("SELECT * FROM chat_data ORDER BY time ASC")
     fun getChatDB(): Flow<List<ChatEntity>>
 
     @Query("SELECT event FROM front_list WHERE id = :id")

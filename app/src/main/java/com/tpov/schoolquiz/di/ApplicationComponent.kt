@@ -4,6 +4,7 @@ import android.app.Application
 import com.tpov.schoolquiz.presentation.mainactivity.FragmentMain
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.presentation.network.AutorisationFragment
+import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
 import com.tpov.schoolquiz.presentation.network.event.EventFragment
 import com.tpov.schoolquiz.presentation.network.event.EventViewModel
@@ -25,7 +26,6 @@ import javax.inject.Singleton
 )
 @InternalCoroutinesApi
 interface ApplicationComponent {
-
     fun inject(activity: QuestionActivity)
 
     fun inject(activity: QuestionListActivity)
@@ -39,6 +39,8 @@ interface ApplicationComponent {
     fun inject(profileFragment: ProfileFragment)
 
     fun inject(autorisationFragment: AutorisationFragment)
+
+     fun inject(chatFragment: ChatFragment)
 
     fun inject(chatViewModel: ChatViewModel)
 

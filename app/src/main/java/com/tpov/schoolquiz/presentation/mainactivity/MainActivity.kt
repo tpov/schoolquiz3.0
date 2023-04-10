@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
 import com.tpov.schoolquiz.presentation.mainactivity.info.InfoActivity
 import com.tpov.schoolquiz.presentation.network.AutorisationFragment
+import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.event.EventFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.settings.SettingsActivity
@@ -180,6 +181,7 @@ class MainActivity : AppCompatActivity() {
             when (menuItem.toString()) {
                 resources.getString(R.string.nav_chat) -> {
 
+                    FragmentManager.setFragment(ChatFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(binding, 3)
                 }
                 resources.getString(R.string.nav_downloads) -> {

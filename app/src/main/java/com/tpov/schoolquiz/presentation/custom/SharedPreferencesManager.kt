@@ -8,7 +8,21 @@ object SharedPreferencesManager {
     private const val PREFS_NAME_QUESTION = "version_question"
     private lateinit var sharedPreferencesQuiz: SharedPreferences
     private lateinit var sharedPreferencesQuestion: SharedPreferences
+    fun setTimeMassage(time: String) {
+        if (!::sharedPreferencesQuiz.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        val editor = sharedPreferencesQuiz.edit()
+        editor.putString("massageTime", time)
+        editor.apply()
+    }
+    fun getTimeMassage(): String {
 
+        if (!::sharedPreferencesQuiz.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesQuiz.getString("massageTime", "00:00") ?: "00:00"
+    }
     fun setVersionQuiz(key: String, value: Int, context: Context) {
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
         val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0

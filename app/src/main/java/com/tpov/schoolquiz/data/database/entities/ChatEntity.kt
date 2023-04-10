@@ -23,4 +23,7 @@ data class ChatEntity(
 
     @ColumnInfo(name = "personalSms")
     val personalSms: Int,
+
+    @ColumnInfo(name = "icon")
+    val icon: String
 )

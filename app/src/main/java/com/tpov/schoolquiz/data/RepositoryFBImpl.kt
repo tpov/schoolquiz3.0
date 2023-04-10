@@ -21,6 +21,9 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.last
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,19 +52,29 @@ class RepositoryFBImpl @Inject constructor(
         log("fun init referenceValue :$referenceValue")
     }
 
-
+    @OptIn(DelicateCoroutinesApi::class)
     override fun getChatData(): Flow<List<ChatEntity>> {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
-        chatRef.addValueEventListener(object : ValueEventListener {
+        chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                // Получаем данные из snapshot и сохраняем их в локальную базу данных
-                for (data in snapshot.children) {
-                    val chatEntity = data.getValue(ChatEntity::class.java)
-                    if (chatEntity != null) {
-                        dao.insertChat(chatEntity)
+                log("getChatData snapshot: $snapshot")
+                GlobalScope.launch {
+                    // Получаем данные из snapshot и сохраняем их в локальную базу данных
+
+                    for (dateSnapshot in snapshot.children) {
+                        log("getChatData dateSnapshot: $dateSnapshot")
+                        for (data in dateSnapshot.children) {
+                            log("getChatData data: $data")
+                            val chat = data.getValue(Chat::class.java)
+log("chat.time: ${chat?.time}")
+log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTimeMassage()}")
+                            if (chat != null && (chat.time > SharedPreferencesManager.getTimeMassage())) {
+                                dao.insertChat(chat.toChatEntity())
+                                SharedPreferencesManager.setTimeMassage(chat.time)
+                            }
+                        }
                     }
                 }
-
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -375,7 +388,7 @@ class RepositoryFBImpl @Inject constructor(
         profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getProfile() snapshot: ${snapshot.key}")
-                var tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+                val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
                 val profile = snapshot.child("$tpovId").getValue(Profile::class.java)
 
                 log("getProfile() tpovId: $tpovId")

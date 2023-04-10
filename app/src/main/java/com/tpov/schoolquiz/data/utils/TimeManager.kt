@@ -11,7 +11,7 @@ object TimeManager {
     fun getCurrentTime(): String{
         Log.d("NewNoteActivity", "getCurrentTime")
 
-        val formatter = SimpleDateFormat("hh:mm:ss - yyyy/MM/dd", Locale.getDefault())
+        val formatter = SimpleDateFormat("HH:mm:ss - dd/MM/yy", Locale.getDefault())
         return formatter.format(Calendar.getInstance().time)
     }
 
