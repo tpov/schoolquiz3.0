@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.data.database.entities
 
+import android.provider.ContactsContract.CommonDataKinds.Nickname
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,6 +11,7 @@ data class ProfileEntity(
     val tpovId: Int,
     val login: String,
     val name: String,
+    val nickname: String,
     val birthday: String,
     val datePremium: String,
     val trophy: String,

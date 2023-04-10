@@ -27,10 +27,13 @@
                 android:id="@+id/messageUserTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textColor="@color/white"
                 android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/messageTimeTextView"
+                android:layout_marginLeft="32dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#999999"
@@ -41,6 +44,7 @@
             android:id="@+id/messageTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/white"
             android:textSize="16sp" />
 
     </LinearLayout>

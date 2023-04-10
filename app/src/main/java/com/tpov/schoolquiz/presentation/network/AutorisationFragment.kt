@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.TextView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
@@ -29,6 +30,7 @@ class AutorisationFragment : BaseFragment() {
     private lateinit var loginButton: Button
     private lateinit var registrationButton: Button
     private lateinit var loadingProgressBar: ProgressBar
+    private lateinit var nickname: TextView
 
     companion object {
         fun newInstance() = AutorisationFragment()
@@ -64,6 +66,7 @@ class AutorisationFragment : BaseFragment() {
         loadingProgressBar = view.findViewById(R.id.loading)
         registrationButton = view.findViewById(R.id.registration)
         loginCity = view.findViewById(R.id.city)
+        nickname = view.findViewById(R.id.nickname)
 
         loginButton.setOnClickListener {
             viewModel.loginAcc(
@@ -79,6 +82,7 @@ class AutorisationFragment : BaseFragment() {
                 passwordEditText.text.toString(),
                 requireContext(),
                 nameEditText.text.toString(),
+                nickname.text.toString(),
                 dateEditText.text.toString(),
                 loginCity.text.toString(),
                 ""

@@ -52,6 +52,7 @@ class AutorisationViewModel @Inject constructor(
         pass: String,
         context: Context,
         name: String,
+        nickname: String,
         date: String,
         city: String,
         languages: String
@@ -79,6 +80,7 @@ class AutorisationViewModel @Inject constructor(
                             0,
                             email,
                             name,
+                            nickname,
                             date,
                             Points(0, 0, 0, 0),
                             "0",

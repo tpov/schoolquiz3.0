@@ -61,7 +61,7 @@ class ChatFragment : BaseFragment() {
                 val currentTime = TimeManager.getCurrentTime()
                 val chatMessage = Chat(
                     time = currentTime,
-                    user = chatViewModel.getProfile(tpovId).name,
+                    user = chatViewModel.getProfile(tpovId).nickname,
                     msg = message,
                     importance = 0,
                     personalSms = 0,
