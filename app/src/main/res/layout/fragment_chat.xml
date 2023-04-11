@@ -6,6 +6,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
         android:layout_width="match_parent"
+        android:paddingTop="106dp"
         android:layout_height="wrap_content"
         android:layout_above="@+id/messageInputLayout" />
 
@@ -19,7 +20,9 @@
         <EditText
             android:id="@+id/messageEditText"
             android:layout_width="0dp"
+            android:textColor="@color/white"
             android:layout_height="wrap_content"
+            android:textColorHint="#AFAFAF"
             android:layout_weight="1"
             android:hint="Type a message" />
 

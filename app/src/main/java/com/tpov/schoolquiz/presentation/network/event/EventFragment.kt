@@ -111,13 +111,27 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             startActivity(intent)
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz3Clicked(quizId: Int) {
         log("fun onQuiz3Clicked")
+        val intent = Intent(activity, QuestionActivity::class.java)
+        intent.putExtra(QuestionActivity.NAME_USER, "user")
+        intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+        intent.putExtra(QuestionActivity.LIFE, 0)
+        intent.putExtra(QuestionActivity.HARD_QUESTION, true)
+        startActivity(intent)
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz4Clicked(quizId: Int) {
 
         log("fun onQuiz4Clicked")
+        val intent = Intent(activity, QuestionActivity::class.java)
+        intent.putExtra(QuestionActivity.NAME_USER, "user")
+        intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+        intent.putExtra(QuestionActivity.LIFE, 0)
+        intent.putExtra(QuestionActivity.HARD_QUESTION, false)
+        startActivity(intent)
     }
 
     override fun onTranslate1EventClicked(questionId: Int) {

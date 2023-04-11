@@ -157,6 +157,7 @@ class QuestionViewModel @Inject constructor(
         questionListThis = getQuestionByIdQuizUseCase(idQuiz)
         var list = mutableListOf<QuestionEntity>()
         questionListThis.forEach {
+            log("getQuestionsList, it.hardQuestion:${it.hardQuestion}, hardQuestion: $hardQuestion")
             if (it.hardQuestion == hardQuestion) list.add(it)
         }
 
