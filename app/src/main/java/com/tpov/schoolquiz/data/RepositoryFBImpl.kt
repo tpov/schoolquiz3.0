@@ -19,6 +19,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,6 +29,7 @@ class RepositoryFBImpl @Inject constructor(
     private val application: Application
 ) : RepositoryFB {
 
+    private lateinit var chatValueEventListener: ValueEventListener
     private val context = application.baseContext
     var synthLiveData = MutableLiveData<Int>()
     var synth = 0
@@ -40,6 +42,51 @@ class RepositoryFBImpl @Inject constructor(
         return synthLiveData
     }
 
+    override fun getTranslateFB(lvlTranslate: Int) {
+        val questionRef3 = FirebaseDatabase.getInstance().getReference("question3")
+        val questionRef4 = FirebaseDatabase.getInstance().getReference("question4")
+        val questionRef5 = FirebaseDatabase.getInstance().getReference("question5")
+        val questionRef6 = FirebaseDatabase.getInstance().getReference("question6")
+        val questionRef7 = FirebaseDatabase.getInstance().getReference("question7")
+        val questionRef8 = FirebaseDatabase.getInstance().getReference("question8")
+
+        questionRef3.limitToLast(1).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                log("getQuestion snapshot: ${snapshot.key}")
+                for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
+                    if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!, getTpovId()) != null){
+                        log("getQuestion idQuizSnap: ${idQuizSnap.key}")
+                        for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
+                            log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
+                            for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
+                                log("getQuestion languageSnap: ${languageSnap.key}")
+                                val question = languageSnap.getValue(Question::class.java)
+                                if (question != null) {
+                                    dao.insertQuestion(
+                                        QuestionEntity(
+                                            null,
+                                            idQuestionSnap.key?.toInt() ?: 0,
+                                            question.nameQuestion,
+                                            question.answerQuestion,
+                                            question.typeQuestion,
+                                            idQuizSnap.key?.toInt() ?: -1,
+                                            languageSnap.key ?: "eu",
+                                            question.lvlTranslate
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                log("getQuestion8Data ошибка: $error")
+            }
+        })
+    }
+
     init {
         val referenceValue = Integer.toHexString(System.identityHashCode(getValSynth()))
 
@@ -50,7 +97,7 @@ class RepositoryFBImpl @Inject constructor(
     override fun getChatData(): Flow<List<ChatEntity>> {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
         val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
-        chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
+        chatValueEventListener = chatRef.limitToLast(10).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getChatData snapshot: $snapshot")
                 GlobalScope.launch {
@@ -61,10 +108,13 @@ class RepositoryFBImpl @Inject constructor(
                         for (data in dateSnapshot.children) {
                             log("getChatData data: $data")
                             val chat = data.getValue(Chat::class.java)
-log("getChatData chat.time: ${chat?.time}")
-log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTimeMassage()}")
                             val date1 = dateFormat.parse(chat?.time.toString())
-                            val date2 = dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+                            var date2: Date? = if (SharedPreferencesManager.getTimeMassage() == "0") {
+                                SharedPreferencesManager.setTimeMassage(TimeManager.getCurrentTime())
+                                dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+                            } else dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+
+                            log("getChatData (date1.after(date2): ${(date1.after(date2))}")
                             if (chat != null && (date1.after(date2))) {
                                 dao.insertChat(chat.toChatEntity())
                                 SharedPreferencesManager.setTimeMassage(chat.time)
@@ -79,6 +129,11 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
             }
         })
         return dao.getChat()
+    }
+
+    override fun removeChatListener() {
+        val chatRef = FirebaseDatabase.getInstance().getReference("chat")
+        chatRef.removeEventListener(chatValueEventListener)
     }
 
     fun savePictureToLocalDirectory(

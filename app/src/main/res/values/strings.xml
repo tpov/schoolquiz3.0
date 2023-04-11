@@ -78,7 +78,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="login_failed" translatable="false">"Login failed"</string>
     <string name="prompt_name">Your name</string>
     <string name="prompt_years">Your birthday</string>
-    <string name="prompt_nickname">Come up with your gaming nickname</string>
+    <string name="prompt_nickname">Nickname</string>
     <string name="prompt_city">Your city</string>
     <string name="app_name">SchoolQuiz</string>
     <string name="nav_home">Главные квесты</string>
@@ -97,5 +97,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="nav_friends">Друзья</string>
     <string name="nav_massages">Cообщения</string>
     <string name="nav_reports">Отчеты</string>
+    <string name="login_mode">login</string>
+    <string name="registration_mode">regestration</string>
 
 </resources>

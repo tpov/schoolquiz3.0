@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.custom
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.tpov.shoppinglist.utils.TimeManager
 
 object SharedPreferencesManager {
     private const val PREFS_NAME_QUIZ = "version_quiz"
@@ -21,7 +22,7 @@ object SharedPreferencesManager {
         if (!::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
-        return sharedPreferencesQuiz.getString("massageTime", "00:00") ?: "00:00"
+        return sharedPreferencesQuiz.getString("massageTime", "0") ?: "0"
     }
     fun setVersionQuiz(key: String, value: Int, context: Context) {
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)

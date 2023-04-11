@@ -10,7 +10,11 @@ interface RepositoryFB {
 
     fun getValSynth(): MutableLiveData<Int>
 
+    fun getTranslateFB(lvlTranslate: Int)
+
     fun getChatData(): Flow<List<ChatEntity>>
+
+    fun removeChatListener()
 
     fun getQuiz8Data()
 

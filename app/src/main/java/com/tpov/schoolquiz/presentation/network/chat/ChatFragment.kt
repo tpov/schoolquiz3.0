@@ -96,13 +96,17 @@ class ChatFragment : BaseFragment() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        chatViewModel.removeChatListener()
+    }
     private fun observeChatData() {
         chatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 val layoutManager = binding.chatRecyclerView.layoutManager as LinearLayoutManager
                 val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
                 // Проверяем, находится ли пользователь ниже 5 последних элементов
-                if (lastVisibleItemPosition >= chatAdapter.itemCount - 6) {
+                if (chatAdapter.itemCount != 0 && lastVisibleItemPosition >= chatAdapter.itemCount - 6) {
                     binding.chatRecyclerView.smoothScrollToPosition(chatAdapter.itemCount - 1)
                 }
             }
@@ -111,11 +115,9 @@ class ChatFragment : BaseFragment() {
         chatViewModel.chatData.observe(viewLifecycleOwner) { chatEntityList ->
             val chatList = convertChatEntityListToChatList(chatEntityList)
             chatAdapter.submitList(chatList)
-            binding.chatRecyclerView.scrollToPosition(chatList.size - 1)
+            if (chatList.isNotEmpty()) binding.chatRecyclerView.scrollToPosition(chatList.size - 1)
         }
     }
-
-
 
     private fun convertChatEntityListToChatList(chatEntityList: List<ChatEntity>): List<Chat> {
         return chatEntityList.map { chatEntity ->

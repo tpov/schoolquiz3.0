@@ -6,11 +6,13 @@ import androidx.lifecycle.asLiveData
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.domain.GetChatUseCase
 import com.tpov.schoolquiz.domain.GetProfileUseCase
+import com.tpov.schoolquiz.domain.RemoveChatListenerChatUseCase
 import javax.inject.Inject
 
 class ChatViewModel @Inject constructor(
     private val getChatDataUseCase: GetChatUseCase,
-    private val getProfileUseCase: GetProfileUseCase
+    private val getProfileUseCase: GetProfileUseCase,
+    val removeChatListener: RemoveChatListenerChatUseCase
 ) : ViewModel() {
 
     val chatData: LiveData<List<ChatEntity>> = getChatDataUseCase.getChatUseCase().asLiveData()
