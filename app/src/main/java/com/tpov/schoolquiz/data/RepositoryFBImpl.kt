@@ -462,15 +462,18 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                         .setValue(quiz).addOnSuccessListener {
                             quizRef2.child("${quiz.id}").removeValue()
                         }
-                    dao.deleteQuizById(quiz.id!!)
-                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef3.child("${question.idQuiz}/${question.id}/${question.language}")
                             .setValue(question).addOnSuccessListener {
                             questionRef2.child("${question.idQuiz}").removeValue()
                         }
                     }
-                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
+
                 }
                 4 -> {
                     log("fun setEvent event: ${quiz.event}")
@@ -478,15 +481,17 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                         .setValue(quiz).addOnSuccessListener {
                             quizRef3.child("${quiz.id}").removeValue()
                         }
-                    dao.deleteQuizById(quiz.id!!)
-                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef4.child("${question.idQuiz}/${question.id}/${question.language}")
                             .setValue(question).addOnSuccessListener {
                             questionRef3.child("${question.idQuiz}").removeValue()
                         }
                     }
-                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
                 }
                 5 -> {
                     log("fun setEvent event: ${quiz.event}")
@@ -494,15 +499,17 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                         .setValue(quiz).addOnSuccessListener {
                             quizRef4.child("${quiz.id}").removeValue()
                         }
-                    dao.deleteQuizById(quiz.id!!)
-                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef5.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
                             .addOnSuccessListener {
                                 questionRef4.child("${question.idQuiz}").removeValue()
                             }
                     }
-                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
                 }
                 6 -> {
                     log("fun setEvent event: ${quiz.event}")
@@ -510,15 +517,17 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                         .setValue(quiz).addOnSuccessListener {
                             quizRef5.child("${quiz.id}").removeValue()
                         }
-                    dao.deleteQuizById(quiz.id!!)
-                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef6.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
                             .addOnSuccessListener {
                                 questionRef5.child("${question.idQuiz}").removeValue()
                             }
                     }
-                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
                 }
                 7 -> {
                     log("fun setEvent event: ${quiz.event}")
@@ -526,15 +535,17 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                         .setValue(quiz).addOnSuccessListener {
                             quizRef6.child("${quiz.id}").removeValue()
                         }
-                    dao.deleteQuizById(quiz.id!!)
-                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef7.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
                             .addOnSuccessListener {
                                 questionRef6.child("${question.idQuiz}").removeValue()
                             }
                     }
-                    dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
                 }
                 8 -> {
                             quizRef7.child("${quiz.id}").removeValue()
@@ -674,7 +685,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                 log("setQuizData() playersRef quizDB event2")
                                 if (quiz.id!! >= 100) {
                                     log("setQuizData() playersRef quizDB id >= 100  event2 просто созраняем на сервер")
-                                    quizRef1.child("${tpovId}/${quiz.id.toString()}")
+                                    quizRef2.child("${tpovId}/${quiz.id.toString()}")
                                         .setValue(quiz).addOnSuccessListener {
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
@@ -728,7 +739,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                    quizRef3.child("$idQuiz").setValue(quiz).addOnSuccessListener {
                                         if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                             .updateChildren(quizRatingMap)
                                     }
@@ -744,11 +755,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
-                                    )
+
                                 }
                             } else if (quiz.event == 4) {
                                 if (quiz.id!! >= 100) {
@@ -769,7 +776,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                    quizRef4.child("$idQuiz").setValue(quiz).addOnSuccessListener {
                                         if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                             .updateChildren(quizRatingMap)
                                     }
@@ -785,11 +792,6 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
-                                    )
                                 }
                             } else if (quiz.event == 5) {
                                 if (quiz.id!! >= 100) {
@@ -810,7 +812,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                    quizRef5.child("$idQuiz").setValue(quiz).addOnSuccessListener {
                                         if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                             .updateChildren(quizRatingMap)
                                     }
@@ -826,11 +828,6 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
-                                    )
                                 }
                             } else if (quiz.event == 6) {
                                 if (quiz.id!! >= 100) {
@@ -851,7 +848,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                    quizRef6.child("$idQuiz").setValue(quiz).addOnSuccessListener {
                                         if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                             .updateChildren(quizRatingMap)
                                     }
@@ -867,11 +864,6 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
-                                    )
                                 }
                             } else if (quiz.event == 7) {
                                 if (quiz.id!! >= 100) {
@@ -892,7 +884,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                    quizRef7.child("$idQuiz").setValue(quiz).addOnSuccessListener {
                                         if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                             .updateChildren(quizRatingMap)
                                     }
@@ -908,11 +900,6 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
-                                    )
                                 }
                             } else if (quiz.event == 8) {
                                 if (quiz.id!! >= 100) {
@@ -933,7 +920,7 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                    quizRef8.child("$idQuiz").setValue(quiz).addOnSuccessListener {
                                         if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                             .updateChildren(quizRatingMap)
                                     }
@@ -949,11 +936,6 @@ log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesM
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
-                                    )
                                 }
                             }
 
