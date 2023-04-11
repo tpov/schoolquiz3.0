@@ -5,11 +5,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.tpov.schoolquiz.data.database.QuizDao
@@ -21,10 +17,8 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.last
 import java.io.File
+import java.text.SimpleDateFormat
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -55,6 +49,7 @@ class RepositoryFBImpl @Inject constructor(
     @OptIn(DelicateCoroutinesApi::class)
     override fun getChatData(): Flow<List<ChatEntity>> {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
+        val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
         chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getChatData snapshot: $snapshot")
@@ -66,9 +61,11 @@ class RepositoryFBImpl @Inject constructor(
                         for (data in dateSnapshot.children) {
                             log("getChatData data: $data")
                             val chat = data.getValue(Chat::class.java)
-log("chat.time: ${chat?.time}")
-log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTimeMassage()}")
-                            if (chat != null && (chat.time > SharedPreferencesManager.getTimeMassage())) {
+log("getChatData chat.time: ${chat?.time}")
+log("getChatData SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTimeMassage()}")
+                            val date1 = dateFormat.parse(chat?.time.toString())
+                            val date2 = dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+                            if (chat != null && (date1.after(date2))) {
                                 dao.insertChat(chat.toChatEntity())
                                 SharedPreferencesManager.setTimeMassage(chat.time)
                             }
@@ -438,17 +435,15 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
         val tpovId = getTpovId()
         val quizEventDB = dao.getQuizEvent()
         val database = FirebaseDatabase.getInstance()
-        database.getReference("quiz1")
-        database.getReference("quiz2")
+
+        val quizRef2 = database.getReference("quiz2")
         val quizRef3 = database.getReference("quiz3")
         val quizRef4 = database.getReference("quiz4")
         val quizRef5 = database.getReference("quiz5")
         val quizRef6 = database.getReference("quiz6")
         val quizRef7 = database.getReference("quiz7")
         val quizRef8 = database.getReference("quiz8")
-        database.getReference("question1")
-        database.getReference("question2")
-        val questionRef2 = database.getReference("question3")
+        val questionRef2 = database.getReference("question2")
         val questionRef3 = database.getReference("question3")
         val questionRef4 = database.getReference("question4")
         val questionRef5 = database.getReference("question5")
@@ -459,12 +454,13 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
         val playersQuiz = playersRef.child("quiz")
 
         for (quiz in quizEventDB) {
+            log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
             when (quiz.event) {
                 3 -> {
-                    log("fun setEvent event: ${quiz.event}")
+                    log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
                     quizRef3.child(quiz.id.toString())
                         .setValue(quiz).addOnSuccessListener {
-                            questionRef2.child("${quiz.id}").removeValue()
+                            quizRef2.child("${quiz.id}").removeValue()
                         }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
@@ -480,7 +476,7 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
                     log("fun setEvent event: ${quiz.event}")
                     quizRef4.child(quiz.id.toString())
                         .setValue(quiz).addOnSuccessListener {
-                            questionRef3.child("${quiz.id}").removeValue()
+                            quizRef3.child("${quiz.id}").removeValue()
                         }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
@@ -496,7 +492,7 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
                     log("fun setEvent event: ${quiz.event}")
                     quizRef5.child(quiz.id.toString())
                         .setValue(quiz).addOnSuccessListener {
-                            questionRef4.child("${quiz.id}").removeValue()
+                            quizRef4.child("${quiz.id}").removeValue()
                         }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
@@ -512,7 +508,7 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
                     log("fun setEvent event: ${quiz.event}")
                     quizRef6.child(quiz.id.toString())
                         .setValue(quiz).addOnSuccessListener {
-                            questionRef5.child("${quiz.id}").removeValue()
+                            quizRef5.child("${quiz.id}").removeValue()
                         }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
@@ -528,7 +524,7 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
                     log("fun setEvent event: ${quiz.event}")
                     quizRef7.child(quiz.id.toString())
                         .setValue(quiz).addOnSuccessListener {
-                            questionRef6.child("${quiz.id}").removeValue()
+                            quizRef6.child("${quiz.id}").removeValue()
                         }
                     dao.deleteQuizById(quiz.id!!)
                     dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
@@ -541,7 +537,7 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
                     dao.deleteQuestionByIdQuiz(quiz.id!!)
                 }
                 8 -> {
-                            questionRef7.child("${quiz.id}").removeValue()
+                            quizRef7.child("${quiz.id}").removeValue()
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef7.child("${question.idQuiz}").removeValue()
                     }
@@ -610,12 +606,12 @@ log("SharedPreferencesManager.getTimeMassage(): ${SharedPreferencesManager.getTi
                                 delay(100) // заменяем Thread.sleep() на delay()
                                 i++
 
-                                if (i == 600) Toast.makeText(
+                                if (i == 300) Toast.makeText(
                                     context,
-                                    "Если сервер не освободится в течении 10 минут - будет совершена принудительная синхронизация, возможно она решит проблему",
+                                    "Если сервер не освободится в течении 3 минут - будет совершена принудительная синхронизация, возможно она решит проблему",
                                     Toast.LENGTH_LONG
                                 ).show()
-                                if (i == 600 * 10) break
+                                if (i == 600 * 3) break
                             }
 
                             val players =

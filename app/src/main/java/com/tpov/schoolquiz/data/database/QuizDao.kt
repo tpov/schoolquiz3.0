@@ -271,7 +271,7 @@ interface QuizDao {
     @Query("SELECT * FROM profiles WHERE idFirebase = :id")
     fun getProfileByFirebaseIdDB(id: String): ProfileEntity
 
-    @Query("SELECT * FROM chat_data ORDER BY time ASC")
+    @Query("SELECT * FROM chat_data ORDER BY id ASC")
     fun getChatDB(): Flow<List<ChatEntity>>
 
     @Query("SELECT event FROM front_list WHERE id = :id")
@@ -304,8 +304,12 @@ interface QuizDao {
     @Query("DELETE FROM chat_data WHERE time LIKE :time")
     fun deleteChat(time: String)
 
+    fun deleteQuizById(id: Int) {
+        log("fun deleteQuizById: id: $id")
+        deleteQuizByIdDB(id)
+    }
     @Query("DELETE FROM front_list WHERE id LIKE :id")
-    fun deleteQuizById(id: Int)
+    fun deleteQuizByIdDB(id: Int)
 
     @Update
     fun updateQuizDetail(questionDetailEntity: QuestionDetailEntity)
