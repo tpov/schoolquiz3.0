@@ -38,13 +38,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/menu_title_activity" />
 
-    <ImageView
-        android:id="@+id/imageView2"
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        app:srcCompat="@drawable/db_design3_background_gradient_main_bottom"
-        app:layout_constraintBottom_toTopOf="@id/bNav"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"

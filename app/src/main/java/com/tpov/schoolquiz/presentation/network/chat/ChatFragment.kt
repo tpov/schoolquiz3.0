@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.log
@@ -96,12 +97,25 @@ class ChatFragment : BaseFragment() {
     }
 
     private fun observeChatData() {
+        chatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                val layoutManager = binding.chatRecyclerView.layoutManager as LinearLayoutManager
+                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
+                // Проверяем, находится ли пользователь ниже 5 последних элементов
+                if (lastVisibleItemPosition >= chatAdapter.itemCount - 6) {
+                    binding.chatRecyclerView.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                }
+            }
+        })
+
         chatViewModel.chatData.observe(viewLifecycleOwner) { chatEntityList ->
             val chatList = convertChatEntityListToChatList(chatEntityList)
             chatAdapter.submitList(chatList)
             binding.chatRecyclerView.scrollToPosition(chatList.size - 1)
         }
     }
+
+
 
     private fun convertChatEntityListToChatList(chatEntityList: List<ChatEntity>): List<Chat> {
         return chatEntityList.map { chatEntity ->

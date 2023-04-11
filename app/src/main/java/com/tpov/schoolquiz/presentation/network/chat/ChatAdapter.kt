@@ -47,4 +47,5 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
             return oldItem == newItem
         }
     }
+
 }

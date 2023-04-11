@@ -114,6 +114,7 @@ class AutorisationViewModel @Inject constructor(
                         log("createAcc даты в текущем профиле нет")
                         val profile = pr.copy(
                             login = email,
+                            nickname = nickname,
                             name = name,
                             birthday = date,
                             city = city,
