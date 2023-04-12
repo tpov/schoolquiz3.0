@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.question
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Build
@@ -60,7 +61,14 @@ class QuestionActivity : AppCompatActivity() {
 
         synthInputData()
         viewModel.synthWithDB(this)
-        viewModel.shouldCloseLiveData.observe(this) { if (it) finish() }
+        viewModel.shouldCloseLiveData.observe(this) { if (it) {
+            val resultIntent = Intent()
+            resultIntent.putExtra("translate", viewModel.resultTranslate)
+            resultIntent.putExtra("idQuiz", viewModel.idQuiz)
+
+            setResult(Activity.RESULT_OK, resultIntent)
+            finish()
+        } }
         insertQuestionsNewEvent()
         binding.apply {
             if (viewModel.hardQuestion) {

@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.presentation.mainactivity
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -7,8 +8,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
@@ -17,6 +20,7 @@ import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
+import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD_QUESTION
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.LIFE
@@ -120,7 +124,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         intent.putExtra(ID_QUIZ, id)
         intent.putExtra(LIFE, 0)
         intent.putExtra(HARD_QUESTION, false)
-        startActivity(intent)
+        startActivityForResult(intent, REQUEST_CODE)
     }
 
     override fun shareItem(id: Int, stars: Int) {
@@ -158,7 +162,18 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             if (!setQuestion) mainViewModel.setQuestionsFB()
         }
     }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
 
+        if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            data?.let {
+                val translate = it.getBooleanExtra("translate", false)
+                val idQuiz = it.getIntExtra("idQuiz",0)
+
+                if (translate) (requireActivity() as MainActivity).replaceFragment(TranslateQuestionFragment.newInstance(idQuiz, null))
+            }
+        }
+    }
     override fun reloadData() {
         activity?.recreate()
     }
@@ -178,5 +193,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         const val CREATE_QUIZ = ""
         const val DELETE_QUIZ = "deleteQuiz"
         const val SHARE_QUIZ = "shareQuiz"
+        const val REQUEST_CODE = 1
     }
 }
