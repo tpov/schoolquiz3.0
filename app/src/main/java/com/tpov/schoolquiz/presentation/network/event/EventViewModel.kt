@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.network.event
 
 import android.content.Context
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
@@ -15,7 +16,8 @@ import javax.inject.Inject
 class EventViewModel @Inject constructor(
     private val getQuizEventUseCase: GetQuizEventUseCase,
     private val getEventTranslateUseCase: GetEventTranslateUseCase,
-    private val getProfileUseCase: GetProfileUseCase
+    private val getProfileUseCase: GetProfileUseCase,
+    private val getQuestionListUseCase: GetQuestionListUseCase
 ) : ViewModel() {
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()
@@ -27,6 +29,17 @@ class EventViewModel @Inject constructor(
     var admin: MutableList<ChatEntity> = arrayListOf()
     var develop: MutableList<ChatEntity> = arrayListOf()
 
+    val questionLiveData: MutableLiveData<List<QuestionEntity>> = MutableLiveData()
+
+    fun loadQuests(idQuiz: Int) {
+        // Здесь загружайте список квестов и устанавливайте значение для questsLiveData
+        questionLiveData.value = getQuestionListUseCase()
+    }
+
+    fun loadQuestion(idQuestion: Int) {
+        // Здесь загружайте вопрос и устанавливайте значение для questionLiveData
+        questionLiveData.value = getQuestionListUseCase()
+    }
 
     fun getQuizList() {
         log("fun getQuizList")

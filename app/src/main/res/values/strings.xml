@@ -99,5 +99,9 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="nav_reports">Отчеты</string>
     <string name="login_mode">login</string>
     <string name="registration_mode">regestration</string>
+    <string name="add_language">Добавить язык</string>
+    <string name="save_translation">Сохранить перевод</string>
+    <string name="translated_question_hint">Перевод</string>
+    <string name="source_question_hint">Название квеста</string>
 
 </resources>

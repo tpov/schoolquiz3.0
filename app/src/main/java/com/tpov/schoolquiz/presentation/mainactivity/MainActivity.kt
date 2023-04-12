@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.firebase.auth.FirebaseAuth
@@ -272,6 +273,15 @@ class MainActivity : AppCompatActivity() {
         if (numQuestionNotDate > 7) textView3.setBackgroundResource(R.color.num_chack_norice_green)
         if (numQuestionNotDate > 8) textView2.setBackgroundResource(R.color.num_chack_norice_green)
         if (numQuestionNotDate > 9) textView.setBackgroundResource(R.color.num_chack_norice_green)
+    }
+
+    fun replaceFragment(fragment: Fragment) {
+        val fragmentManager = supportFragmentManager
+        val transaction = fragmentManager.beginTransaction()
+        transaction.replace(R.id.title_fragment, fragment)
+        transaction.addToBackStack(null)
+        transaction.commit()
+
     }
 
     override fun onRequestPermissionsResult(

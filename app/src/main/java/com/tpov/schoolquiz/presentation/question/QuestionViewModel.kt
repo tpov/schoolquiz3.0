@@ -53,6 +53,7 @@ class QuestionViewModel @Inject constructor(
     lateinit var questionDetailListThis: List<QuestionDetailEntity>
     lateinit var quizThis: QuizEntity
     lateinit var tpovId: String
+    var resultTranslate = true
 
     private val _shouldCloseLiveData = MutableLiveData<Boolean>()
     val shouldCloseLiveData: LiveData<Boolean> = _shouldCloseLiveData

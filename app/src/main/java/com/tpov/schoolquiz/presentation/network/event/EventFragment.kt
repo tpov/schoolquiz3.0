@@ -15,7 +15,6 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -38,7 +37,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
 
         eventViewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
@@ -79,7 +77,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         )
 
         recyclerView.adapter = eventAdapter
-
     }
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -87,10 +84,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         savedInstanceState: Bundle?
     ): View? {
         // раздуваем макет фрагмента
-        val view = inflater.inflate(R.layout.event_fragment, container, false)
-
-
-        return view
+        return inflater.inflate(R.layout.event_fragment, container, false)
     }
 
     @OptIn(InternalCoroutinesApi::class)

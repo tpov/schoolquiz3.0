@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
 import com.tpov.schoolquiz.presentation.network.event.EventFragment
 import com.tpov.schoolquiz.presentation.network.event.EventViewModel
+import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionListActivity
@@ -47,6 +48,8 @@ interface ApplicationComponent {
     fun inject(eventViewModel: EventViewModel)
 
     fun inject(eventFragment: EventFragment)
+
+    fun inject(translateQuestionFragment: TranslateQuestionFragment)
 
 
     @Component.Factory
