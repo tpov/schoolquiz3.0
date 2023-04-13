@@ -9,7 +9,7 @@
         app:showAsAction="always"
         />
 
-    <item android:id="@+id/menu_new_quiz"
+    <item android:id="@+id/menu_adb"
         android:icon="@drawable/ic_new"
         android:title="@string/menu_new"
         app:showAsAction="always"

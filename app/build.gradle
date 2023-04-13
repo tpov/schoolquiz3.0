@@ -137,7 +137,7 @@ dependencies {
         exclude group: "com.google.protobuf", module: "protobuf-java"
     }
     implementation 'com.google.mlkit:language-id:17.0.4'
-
+    implementation 'com.google.android.gms:play-services-ads:20.4.0'
 
 }
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

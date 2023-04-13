@@ -32,6 +32,7 @@ interface ApplicationComponent {
     fun inject(activity: QuestionListActivity)
 
     fun inject(fragment: FragmentMain)
+    fun inject(fragment: ArenaFragment)
 
     fun inject(activity: SplashScreen)
 

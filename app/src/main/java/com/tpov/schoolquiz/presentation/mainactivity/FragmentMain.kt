@@ -79,10 +79,15 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         binding.rcView.layoutManager = LinearLayoutManager(activity)
         binding.rcView.adapter = adapter
 
+        val isMyQuiz = arguments?.getBoolean(ARG_IS_MY_QUIZ, false) ?: false
+
         mainViewModel.getQuizLiveData.observe(viewLifecycleOwner) { quizList ->
             log("quizQuizLiveData.observe $quizList")
-            // Фильтруем список, оставляя только элементы с event == 1 или event == 8
-            val filteredQuizList = quizList.filter { it.event == 1 || it.event == 8 }
+            val filteredQuizList = if (isMyQuiz) {
+                quizList.filter { it.tpovId != mainViewModel.tpovId }
+            } else {
+                quizList.filter { it.tpovId == mainViewModel.tpovId }
+            }
             // Обновление списка
             adapter.submitList(filteredQuizList)
         }
@@ -170,7 +175,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 val translate = it.getBooleanExtra("translate", false)
                 val idQuiz = it.getIntExtra("idQuiz",0)
 
-                if (translate) (requireActivity() as MainActivity).replaceFragment(TranslateQuestionFragment.newInstance(idQuiz, null))
+                if (translate) (requireActivity() as MainActivity).replaceFragment(
+                    TranslateQuestionFragment.newInstance(idQuiz, null))
             }
         }
     }
@@ -185,14 +191,21 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     fun onEditButtonClick() {
         Log.d("ffsefsf", "deleteItem = $id")
     }
-
     companion object {
-        @JvmStatic
-        fun newInstance() = FragmentMain()
 
+        const val ARG_IS_MY_QUIZ = "is_my_quiz"
         const val CREATE_QUIZ = ""
         const val DELETE_QUIZ = "deleteQuiz"
         const val SHARE_QUIZ = "shareQuiz"
         const val REQUEST_CODE = 1
+
+        @JvmStatic
+        fun newInstance(isMyQuiz: Boolean): FragmentMain {
+            val args = Bundle()
+            args.putBoolean(ARG_IS_MY_QUIZ, isMyQuiz)
+            val fragment = FragmentMain()
+            fragment.arguments = args
+            return fragment
+        }
     }
 }

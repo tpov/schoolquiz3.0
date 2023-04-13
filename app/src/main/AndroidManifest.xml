@@ -17,6 +17,7 @@
         android:roundIcon="@mipmap/ic_launcher3"
         android:supportsRtl="true"
         android:theme="@style/Theme.GeoQuiz">
+
         <activity
             android:name="com.tpov.schoolquiz.presentation.mainactivity.MainActivity"/>
         <activity android:name="com.tpov.schoolquiz.presentation.question.QuestionActivity" />
