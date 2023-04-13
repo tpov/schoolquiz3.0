@@ -326,6 +326,24 @@ interface QuizDao {
     @Update
     fun updateQuestion(questionEntity: QuestionEntity)
 
+    @Query("SELECT COUNT(*) FROM table_data")
+    suspend fun getQuestionDetailCount(): Int
+
+    @Query("SELECT COUNT(*) FROM new_user_table")
+    suspend fun getQuestionCount(): Int
+
+    @Query("SELECT COUNT(*) FROM front_list")
+    suspend fun getQuizCount(): Int
+
+    @Query("SELECT COUNT(*) FROM table_generate_question")
+    suspend fun getApiQuestionCount(): Int
+
+    @Query("SELECT COUNT(*) FROM profiles")
+    suspend fun getProfileCount(): Int
+
+    @Query("SELECT COUNT(*) FROM chat_data")
+    suspend fun getChatCount(): Int
+
 }
 
 @OptIn(InternalCoroutinesApi::class)

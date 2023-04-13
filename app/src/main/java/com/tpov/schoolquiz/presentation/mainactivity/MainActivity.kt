@@ -7,14 +7,15 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -24,6 +25,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
 import com.tpov.schoolquiz.presentation.mainactivity.info.InfoActivity
@@ -126,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         numQuestionNotDate = intent.getIntExtra(NUM_QUESTION_NOT_NUL, 0)
 
         FragmentManager.setFragment(FragmentMain.newInstance(false), this)
-        SetItemMenu.setHomeMenu(binding, 1)
+        SetItemMenu.setHomeMenu(binding, 1, this)
 
         loadNumQuestionNotDate()
 
@@ -168,9 +170,13 @@ class MainActivity : AppCompatActivity() {
         val level = 5000 //0..10000
         layerDrawable.findDrawableByLayerId(android.R.id.progress).level = 3000
         layerDrawableGold.findDrawableByLayerId(android.R.id.progress).level = 7000
-        SetItemMenu.setHomeMenu(binding, fr2)
+        SetItemMenu.setHomeMenu(binding, fr2, this)
 
 
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        return super.onPrepareOptionsMenu(menu)
     }
 
     private fun listenerDrawer() {
@@ -178,6 +184,8 @@ class MainActivity : AppCompatActivity() {
         log("fun listenerDrawer()")
 
         binding.navigationView.setNavigationItemSelectedListener { menuItem ->
+
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
             // ваш код обработки нажатия на элемент меню
 
             log("listenerDrawer() menuItem: ${menuItem.toString()}")
@@ -185,59 +193,60 @@ class MainActivity : AppCompatActivity() {
                 resources.getString(R.string.nav_chat) -> {
 
                     FragmentManager.setFragment(ChatFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, 3)
+                    SetItemMenu.setNetworkMenu(binding, 3, this)
                 }
                 resources.getString(R.string.nav_downloads) -> {
-
-                    SetItemMenu.setHomeMenu(binding, 4)
+                    FragmentManager.setFragment(DownloadFragment(), this)
+                    SetItemMenu.setHomeMenu(binding, 4, this) // Используйте подходящий номер пункта меню
                 }
                 resources.getString(R.string.nav_enter) -> {
-                    SetItemMenu.setNetworkMenu(binding, 10)
+                    SetItemMenu.setNetworkMenu(binding, 10, this)
                 }
                 resources.getString(R.string.nav_exit) -> {
 
-                    SetItemMenu.setNetworkMenu(binding, 11)
+                    SetItemMenu.setNetworkMenu(binding, 11, this)
                     FirebaseAuth.getInstance().signOut()
                 }
 
                 resources.getString(R.string.nav_global) -> {
 
-                    SetItemMenu.setNetworkMenu(binding, 8)
+                    SetItemMenu.setNetworkMenu(binding, 8, this)
                 }
 
                 resources.getString(R.string.nav_friends) -> {
-                    SetItemMenu.setNetworkMenu(binding, 9)
+                    SetItemMenu.setNetworkMenu(binding, 9, this)
                 }
 
                 resources.getString(R.string.nav_home) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(false), this)
-                    SetItemMenu.setHomeMenu(binding, 1)
+                    SetItemMenu.setHomeMenu(binding, 1, this)
                 }
 
                 resources.getString(R.string.nav_leaders) -> {
 
 
-                    SetItemMenu.setNetworkMenu(binding, 11)
+                    SetItemMenu.setNetworkMenu(binding, 11, this)
                 }
 
                 resources.getString(R.string.nav_massages) -> {
 
 
-                    SetItemMenu.setNetworkMenu(binding, 5)
+                    SetItemMenu.setNetworkMenu(binding, 5, this)
                 }
                 resources.getString(R.string.nav_my_quiz) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(true), this)
-                    SetItemMenu.setHomeMenu(binding, 2)
+                    SetItemMenu.setHomeMenu(binding, 2, this)
+                    true
                 }
                 resources.getString(R.string.nav_news) -> {
 
 
-                    SetItemMenu.setNetworkMenu(binding, 7)
+                    SetItemMenu.setNetworkMenu(binding, 7, this)
                 }
                 resources.getString(R.string.nav_players) -> {
 
 
-                    SetItemMenu.setNetworkMenu(binding, 6)
+                    SetItemMenu.setNetworkMenu(binding, 6, this)
                 }
                 resources.getString(R.string.nav_reports) -> {
 
@@ -249,8 +258,9 @@ class MainActivity : AppCompatActivity() {
                 resources.getString(R.string.nav_settings) -> {}
             }
 
-            Toast.makeText(this, "menuItem $menuItem", Toast.LENGTH_LONG).show()
+                binding.navigationView.inflateMenu(R.menu.navigation_manu)
             true // не забудьте вернуть значение true, чтобы показать, что событие было обработано
+
         }
     }
 
@@ -321,12 +331,12 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_home -> {
                 if (fr1 != 1) {
-                    SetItemMenu.setHomeMenu(binding, 1)
+                    SetItemMenu.setHomeMenu(binding, 1, this)
                     fr1 = 1
                 }
             }
 
-            R.id.menu_new_quiz -> {
+            R.id.menu_adb -> {
                 if (fr1 != 2) {
 
                     fr1 = 2
@@ -349,7 +359,7 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_network -> {
                 if (fr1 != 5) {
-                    SetItemMenu.setNetworkMenu(binding, 1)
+                    SetItemMenu.setNetworkMenu(binding, 1, this)
                     fr1 = 5
                 }
             }
@@ -368,12 +378,11 @@ class MainActivity : AppCompatActivity() {
 
                     log("setButtonNavListener() menu_home")
                     FragmentManager.setFragment(FragmentMain.newInstance(false), this)
-                    SetItemMenu.setHomeMenu(binding, 1)
+                    SetItemMenu.setHomeMenu(binding, 1, this)
                 }
 
-                R.id.menu_new_quiz -> {
-                    log("setButtonNavListener() menu_new_quiz")
-                    FragmentManager.currentFrag?.onClickNew("", 0)
+                R.id.menu_adb -> {
+                    // вот тут должен быть запуск фрагмента рекламы,
                 }
 
                 R.id.menu_settings -> {
