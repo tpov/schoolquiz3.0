@@ -124,7 +124,9 @@ class MainActivity : AppCompatActivity() {
 
         setButtonNavListener()
         numQuestionNotDate = intent.getIntExtra(NUM_QUESTION_NOT_NUL, 0)
-        FragmentManager.setFragment(FragmentMain.newInstance(), this)
+
+        FragmentManager.setFragment(FragmentMain.newInstance(false), this)
+        SetItemMenu.setHomeMenu(binding, 1)
 
         loadNumQuestionNotDate()
 
@@ -186,7 +188,6 @@ class MainActivity : AppCompatActivity() {
                     SetItemMenu.setNetworkMenu(binding, 3)
                 }
                 resources.getString(R.string.nav_downloads) -> {
-                    FragmentManager.setFragment(FragmentMain.newInstance(), this)
 
                     SetItemMenu.setHomeMenu(binding, 4)
                 }
@@ -198,33 +199,34 @@ class MainActivity : AppCompatActivity() {
                     SetItemMenu.setNetworkMenu(binding, 11)
                     FirebaseAuth.getInstance().signOut()
                 }
+
                 resources.getString(R.string.nav_global) -> {
 
                     SetItemMenu.setNetworkMenu(binding, 8)
                 }
+
                 resources.getString(R.string.nav_friends) -> {
-
-
                     SetItemMenu.setNetworkMenu(binding, 9)
                 }
+
                 resources.getString(R.string.nav_home) -> {
-
-
+                    FragmentManager.setFragment(FragmentMain.newInstance(false), this)
                     SetItemMenu.setHomeMenu(binding, 1)
                 }
+
                 resources.getString(R.string.nav_leaders) -> {
 
 
                     SetItemMenu.setNetworkMenu(binding, 11)
                 }
+
                 resources.getString(R.string.nav_massages) -> {
 
 
                     SetItemMenu.setNetworkMenu(binding, 5)
                 }
                 resources.getString(R.string.nav_my_quiz) -> {
-
-
+                    FragmentManager.setFragment(FragmentMain.newInstance(true), this)
                     SetItemMenu.setHomeMenu(binding, 2)
                 }
                 resources.getString(R.string.nav_news) -> {
@@ -365,7 +367,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.menu_home -> {
 
                     log("setButtonNavListener() menu_home")
-                    FragmentManager.setFragment(FragmentMain.newInstance(), this)
+                    FragmentManager.setFragment(FragmentMain.newInstance(false), this)
+                    SetItemMenu.setHomeMenu(binding, 1)
                 }
 
                 R.id.menu_new_quiz -> {
