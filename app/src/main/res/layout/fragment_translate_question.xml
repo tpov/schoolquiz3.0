@@ -1,57 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewQuestions"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="110dp"
+        android:layout_marginBottom="110dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_weight="1"
+        tools:layout_editor_absoluteX="0dp" />
+
+    <Button
+        android:id="@+id/buttonAddTranslation"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:text="Добавить перевод"
+        android:paddingBottom="16dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@+id/recyclerViewQuestions"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/buttonSave"/>
 
-        <EditText
-            android:id="@+id/source_question"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/source_question_hint"
-            android:inputType="textMultiLine"
-            android:lines="4" />
+    <Button
+        android:id="@+id/buttonSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Сохранить"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@+id/recyclerViewQuestions"
+        app:layout_constraintStart_toEndOf="@+id/buttonAddTranslation"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-        <EditText
-            android:id="@+id/translated_question"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/translated_question_hint"
-            android:inputType="textMultiLine"
-            android:lines="4" />
-
-        <Button
-            android:id="@+id/save_translation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/save_translation" />
-
-        <Button
-            android:id="@+id/add_language_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/add_language" />
-
-        <Spinner
-            android:id="@+id/language_spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_translations"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
-
-    </LinearLayout>
-</ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -19,7 +19,6 @@ import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
-import com.tpov.schoolquiz.presentation.network.event.translation.TranslateQuestionFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 

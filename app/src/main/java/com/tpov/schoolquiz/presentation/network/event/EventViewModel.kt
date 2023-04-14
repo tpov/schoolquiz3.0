@@ -37,6 +37,7 @@ class EventViewModel @Inject constructor(
     }
 
     fun loadQuestion(idQuestion: Int) {
+        log("getQuestionListUseCase() :${getQuestionListUseCase()}")
         // Здесь загружайте вопрос и устанавливайте значение для questionLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
@@ -88,6 +89,10 @@ class EventViewModel @Inject constructor(
         log("getEventDeveloper moderator: $moderator")
         log("getEventDeveloper admin: $admin")
         log("getEventDeveloper develop: $develop")
+    }
+
+    fun saveQuestions(updatedQuestions: List<QuestionEntity>) {
+
     }
 }
 @OptIn(InternalCoroutinesApi::class)

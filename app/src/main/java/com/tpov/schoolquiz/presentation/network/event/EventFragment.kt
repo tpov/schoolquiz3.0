@@ -73,11 +73,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             moderatorEventList,
             adminEventList,
             developerEventList,
-            this // ваш ListenerEvent
+            this
         )
-
         recyclerView.adapter = eventAdapter
     }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

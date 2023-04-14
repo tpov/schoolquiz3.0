@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.presentation.network.AutorisationFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
+import com.tpov.schoolquiz.presentation.network.event.ArenaFragment
 import com.tpov.schoolquiz.presentation.network.event.EventFragment
 import com.tpov.schoolquiz.presentation.network.event.EventViewModel
 import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
@@ -32,6 +33,7 @@ interface ApplicationComponent {
     fun inject(activity: QuestionListActivity)
 
     fun inject(fragment: FragmentMain)
+
     fun inject(fragment: ArenaFragment)
 
     fun inject(activity: SplashScreen)
@@ -42,7 +44,7 @@ interface ApplicationComponent {
 
     fun inject(autorisationFragment: AutorisationFragment)
 
-     fun inject(chatFragment: ChatFragment)
+    fun inject(chatFragment: ChatFragment)
 
     fun inject(chatViewModel: ChatViewModel)
 

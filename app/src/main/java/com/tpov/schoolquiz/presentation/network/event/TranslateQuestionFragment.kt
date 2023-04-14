@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.R
@@ -28,15 +29,8 @@ import javax.inject.Inject
 
 class TranslateQuestionFragment : Fragment() {
 
-    private lateinit var sourceQuestionEditText: EditText
-    private lateinit var translatedQuestionEditText: EditText
-    private lateinit var saveTranslationButton: Button
     private lateinit var binding: FragmentTranslateQuestionBinding
     private lateinit var translationAdapter: TranslationQuestionAdapter
-
-    private lateinit var languageSpinner: Spinner
-    private lateinit var addLanguageButton: Button
-    private val translatedQuestions = mutableMapOf<String, EditText>()
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
@@ -86,105 +80,38 @@ class TranslateQuestionFragment : Fragment() {
 
         val viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
-        translationAdapter = TranslationQuestionAdapter(emptyList())
-        setupLanguageSpinner()
-        if (idQuiz != null && idQuiz != -1) {
-            viewModel.loadQuests(idQuiz)
-            viewModel.questionLiveData.observe(viewLifecycleOwner) { question ->
-                // Здесь обрабатывайте список квестов
-                question.forEach {
-                    val translatedQuestions =
-                        processQuestion(it) // Получите список TranslatedQuestion
-                    translationAdapter.translatedQuestions = translatedQuestions
-                    translationAdapter.notifyDataSetChanged()
-                }
+        val languages = listOf("EN", "RU", "FR") // Замените на список доступных языков
+        translationAdapter = TranslationQuestionAdapter(mutableListOf(), languages)
+        binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerViewQuestions.adapter = translationAdapter
+
+        if (idQuiz != -1) {
+            log("getQuestionListUseCase() fse")
+            viewModel.questionLiveData.observe(viewLifecycleOwner) { questions ->
+
+                log("getQuestionListUseCase() :${questions}")
+                translationAdapter.questions.addAll(questions)
+                translationAdapter.notifyDataSetChanged()
             }
-        } else if (idQuestion != null && idQuestion != -1) {
-            viewModel.loadQuestion(idQuestion)
+            viewModel.loadQuests(idQuiz!!)
+        } else if (idQuestion != -1) {
+            log("getQuestionListUseCase() fse")
             viewModel.questionLiveData.observe(viewLifecycleOwner) { question ->
-                question.forEach {
-                    val translatedQuestions =
-                        processQuestion(it) // Получите список TranslatedQuestion
-                    translationAdapter.translatedQuestions = translatedQuestions
-                    translationAdapter.notifyDataSetChanged()
-                }
+                log("getQuestionListUseCase() :${question}")
+                translationAdapter.questions.addAll(question)
+                translationAdapter.notifyDataSetChanged()
             }
-        }
-    }
-
-    private fun processQuestion(question: QuestionEntity): List<TranslatedQuestion> {
-        val translatedQuestions = mutableListOf<TranslatedQuestion>()
-
-        val questionEntities = listOf(question).filter { it.lvlTranslate > 0 }
-        translatedQuestions.addAll(questionEntities.map { entity ->
-            TranslatedQuestion(
-                entity.id,
-                entity.numQuestion,
-                entity.nameQuestion,
-                entity.answerQuestion,
-                entity.hardQuestion,
-                entity.idQuiz,
-                entity.language,
-                entity.lvlTranslate
-            )
-        })
-
-        return translatedQuestions
-    }
-
-
-    private fun addTranslatedQuestionField() {
-        val selectedLanguage = languageSpinner.selectedItem.toString()
-        if (translatedQuestions.containsKey(selectedLanguage)) {
-            Toast.makeText(
-                requireContext(),
-                "Перевод на этот язык уже добавлен",
-                Toast.LENGTH_SHORT
-            ).show()
-            return
+            viewModel.loadQuestion(idQuestion!!)
         }
 
-        val translatedQuestionEditText = EditText(requireContext())
-        translatedQuestionEditText.layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        translatedQuestionEditText.hint = selectedLanguage
-        translatedQuestionEditText.inputType =
-            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
-        translatedQuestionEditText.setLines(4)
+        binding.buttonAddTranslation.setOnClickListener {
+            log("Add Translation button clicked")
+            translationAdapter.addNewQuestion()
+        }
 
-        (view as? LinearLayout)?.addView(translatedQuestionEditText)
-        translatedQuestions[selectedLanguage] = translatedQuestionEditText
+        binding.buttonSave.setOnClickListener {
+            val updatedQuestions = translationAdapter.getUpdatedQuestions()
+            viewModel.saveQuestions(updatedQuestions)
+        }
     }
-
-    private fun saveTranslatedQuestion(sourceQuestion: String, translatedQuestion: String) {
-        val translations = translatedQuestions.mapValues { it.value.text.toString() }
-
-        // TODO: Реализуйте логику сохранения переведенного вопроса с использованием translations
-    }
-
-    private fun setupLanguageSpinner() {
-        // Получите список поддерживаемых языков
-        val languages = listOf("English", "Spanish", "French", "German") // Замените на список поддерживаемых языков
-
-        // Создайте адаптер для Spinner
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, languages)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-
-        // Привяжите адаптер к Spinner
-        binding.languageSpinner.adapter = adapter
-    }
-
 }
-
-data class TranslatedQuestion(
-    val id: Int?,
-    val numQuestion: Int,
-    val nameQuestion: String,
-    val answerQuestion: Boolean,
-    val hardQuestion: Boolean,
-    val idQuiz: Int,
-    val language: String,
-    val lvlTranslate: Int
-)

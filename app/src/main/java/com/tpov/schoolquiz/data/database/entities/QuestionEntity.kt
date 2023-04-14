@@ -14,7 +14,7 @@ data class QuestionEntity(
     val numQuestion: Int,
 
     @ColumnInfo(name = "nameQuestion")
-    val nameQuestion: String,
+    var nameQuestion: String,
 
     @ColumnInfo(name = "answerQuestion")
     val answerQuestion: Boolean,
@@ -26,8 +26,8 @@ data class QuestionEntity(
     val idQuiz: Int,
 
     @ColumnInfo(name = "language")
-    val language: String,
+    var language: String,
 
     @ColumnInfo(name = "lvlTranslate")
-    val lvlTranslate: Int
+    var lvlTranslate: Int
 )
