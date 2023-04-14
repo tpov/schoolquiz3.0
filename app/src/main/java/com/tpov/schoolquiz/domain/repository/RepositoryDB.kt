@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 // TODO: 25.07.2022 LiveData -> Flow
 interface RepositoryDB {
-
     fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity)
 
     fun insertProfile(profile: ProfileEntity)
@@ -27,6 +26,8 @@ interface RepositoryDB {
     fun getTpovIdByEmail(email: String): Int
 
     fun getProfile(tpovId: Int): ProfileEntity
+
+    fun getAllProfiles(): List<ProfileEntity>
 
     fun getQuizList(tpovId: Int): List<QuizEntity>
 

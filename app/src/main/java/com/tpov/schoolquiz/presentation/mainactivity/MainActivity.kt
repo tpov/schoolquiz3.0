@@ -33,6 +33,7 @@ import com.tpov.schoolquiz.presentation.network.AutorisationFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.event.EventFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
+import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.settings.SettingsActivity
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -241,6 +242,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_players) -> {
+                    FragmentManager.setFragment(UsersFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(binding, 6, this)
                 }
 

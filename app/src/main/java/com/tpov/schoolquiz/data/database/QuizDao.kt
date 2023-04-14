@@ -270,6 +270,8 @@ interface QuizDao {
 
     @Query("SELECT * FROM profiles WHERE idFirebase = :id")
     fun getProfileByFirebaseIdDB(id: String): ProfileEntity
+    @Query("SELECT * FROM profiles")
+    fun getAllProfiles(): List<ProfileEntity>
 
     @Query("SELECT * FROM chat_data ORDER BY id ASC")
     fun getChatDB(): Flow<List<ChatEntity>>

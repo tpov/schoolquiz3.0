@@ -61,6 +61,10 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getProfile(tpovId)
     }
 
+    override fun getAllProfiles(): List<ProfileEntity> {
+        return dao.getAllProfiles()
+    }
+
     override fun getQuizList(tpovId: Int): List<QuizEntity> {
         return dao.getQuizList(tpovId)
     }
