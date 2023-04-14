@@ -34,6 +34,7 @@ import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.event.EventFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.settings.SettingsActivity
+import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -127,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         setButtonNavListener()
         numQuestionNotDate = intent.getIntExtra(NUM_QUESTION_NOT_NUL, 0)
 
-        FragmentManager.setFragment(FragmentMain.newInstance(false), this)
+        FragmentManager.setFragment(FragmentMain.newInstance(8), this)
         SetItemMenu.setHomeMenu(binding, 1, this)
 
         loadNumQuestionNotDate()
@@ -191,25 +192,25 @@ class MainActivity : AppCompatActivity() {
             log("listenerDrawer() menuItem: ${menuItem.toString()}")
             when (menuItem.toString()) {
                 resources.getString(R.string.nav_chat) -> {
-
                     FragmentManager.setFragment(ChatFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(binding, 3, this)
                 }
+
                 resources.getString(R.string.nav_downloads) -> {
                     FragmentManager.setFragment(DownloadFragment(), this)
                     SetItemMenu.setHomeMenu(binding, 4, this) // Используйте подходящий номер пункта меню
                 }
+
                 resources.getString(R.string.nav_enter) -> {
                     SetItemMenu.setNetworkMenu(binding, 10, this)
                 }
-                resources.getString(R.string.nav_exit) -> {
 
+                resources.getString(R.string.nav_exit) -> {
                     SetItemMenu.setNetworkMenu(binding, 11, this)
                     FirebaseAuth.getInstance().signOut()
                 }
 
                 resources.getString(R.string.nav_global) -> {
-
                     SetItemMenu.setNetworkMenu(binding, 8, this)
                 }
 
@@ -218,44 +219,43 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_home) -> {
-                    FragmentManager.setFragment(FragmentMain.newInstance(false), this)
+                    FragmentManager.setFragment(FragmentMain.newInstance(8), this)
                     SetItemMenu.setHomeMenu(binding, 1, this)
                 }
 
                 resources.getString(R.string.nav_leaders) -> {
-
-
                     SetItemMenu.setNetworkMenu(binding, 11, this)
                 }
 
                 resources.getString(R.string.nav_massages) -> {
-
-
                     SetItemMenu.setNetworkMenu(binding, 5, this)
                 }
+
                 resources.getString(R.string.nav_my_quiz) -> {
-                    FragmentManager.setFragment(FragmentMain.newInstance(true), this)
+                    FragmentManager.setFragment(FragmentMain.newInstance(1), this)
                     SetItemMenu.setHomeMenu(binding, 2, this)
-                    true
                 }
+
                 resources.getString(R.string.nav_news) -> {
-
-
                     SetItemMenu.setNetworkMenu(binding, 7, this)
                 }
+
                 resources.getString(R.string.nav_players) -> {
-
-
                     SetItemMenu.setNetworkMenu(binding, 6, this)
                 }
+
                 resources.getString(R.string.nav_reports) -> {
 
-
                 }
+
                 resources.getString(R.string.nav_task) -> {
                     FragmentManager.setFragment(EventFragment.newInstance(), this)
                 }
-                resources.getString(R.string.nav_settings) -> {}
+
+                resources.getString(R.string.nav_settings) -> {
+
+                }
+
             }
 
                 binding.navigationView.inflateMenu(R.menu.navigation_manu)
@@ -377,12 +377,12 @@ class MainActivity : AppCompatActivity() {
                 R.id.menu_home -> {
 
                     log("setButtonNavListener() menu_home")
-                    FragmentManager.setFragment(FragmentMain.newInstance(false), this)
+                    FragmentManager.setFragment(FragmentMain.newInstance(8), this)
                     SetItemMenu.setHomeMenu(binding, 1, this)
                 }
 
                 R.id.menu_adb -> {
-                    // вот тут должен быть запуск фрагмента рекламы,
+                    FragmentManager.setFragment(ShopFragment.newInstance(), this)
                 }
 
                 R.id.menu_settings -> {

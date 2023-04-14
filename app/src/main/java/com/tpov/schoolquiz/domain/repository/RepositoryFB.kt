@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface RepositoryFB {
 
+    fun deleteAllQuiz()
     fun getValSynth(): MutableLiveData<Int>
 
     fun getTranslateFB(lvlTranslate: Int)

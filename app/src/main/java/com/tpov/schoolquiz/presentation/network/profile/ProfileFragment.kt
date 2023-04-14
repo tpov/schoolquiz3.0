@@ -60,6 +60,9 @@ class ProfileFragment : BaseFragment() {
         view.findViewById<ImageButton>(R.id.imb_download).setOnClickListener {
             viewModel.getQuizzFB()
         }
+        view.findViewById<ImageButton>(R.id.imb_delete).setOnClickListener {
+            viewModel.getDeleteAllQuiz()
+        }
 
         val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
             log("fun viewModel.getSynth.observe: $number")

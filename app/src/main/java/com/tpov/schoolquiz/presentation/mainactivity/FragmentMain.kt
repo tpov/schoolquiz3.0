@@ -79,20 +79,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         binding.rcView.layoutManager = LinearLayoutManager(activity)
         binding.rcView.adapter = adapter
 
-        val isMyQuiz = arguments?.getBoolean(ARG_IS_MY_QUIZ, false) ?: false
+        val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
         mainViewModel.getQuizLiveData.observe(viewLifecycleOwner) { quizList ->
-            log("quizQuizLiveData.observe $quizList")
-            val filteredQuizList = if (isMyQuiz) {
-                quizList.filter { it.tpovId != mainViewModel.tpovId }
-            } else {
-                quizList.filter { it.tpovId == mainViewModel.tpovId }
-            }
-            // Обновление списка
-            adapter.submitList(filteredQuizList)
+            adapter.submitList(quizList.filter { it.event == isMyQuiz })
         }
-
-        //  addItemsToRecyclerView(binding.rcView, mainViewModel.quizQuizLiveData.value!!)
 
         val fabAddItem = binding.fabAddItem
         fabAddItem.setOnClickListener {
@@ -200,9 +191,9 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         const val REQUEST_CODE = 1
 
         @JvmStatic
-        fun newInstance(isMyQuiz: Boolean): FragmentMain {
+        fun newInstance(idQuiz: Int): FragmentMain {
             val args = Bundle()
-            args.putBoolean(ARG_IS_MY_QUIZ, isMyQuiz)
+            args.putInt(ARG_IS_MY_QUIZ, idQuiz)
             val fragment = FragmentMain()
             fragment.arguments = args
             return fragment

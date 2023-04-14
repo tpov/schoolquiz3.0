@@ -34,7 +34,8 @@ class ProfileViewModel @Inject constructor(
     private val getQuiz7FBUseCase: GetQuiz7FBUseCase,
     private val getQuestionDetail2FBUseCase: GetQuestionDetail2FBUseCase,
     private val getSynthUseCase: GetSynthUseCase,
-    private val setQuizEventUseCase: SetQuizEventUseCase
+    private val setQuizEventUseCase: SetQuizEventUseCase,
+    private val deleteAllQuizUseCase: DeleteAllQuizUseCase
 
 ) : ViewModel() {
 
@@ -95,5 +96,9 @@ class ProfileViewModel @Inject constructor(
 
     fun log(m: String) {
         Logcat.log(m, "Profile", Logcat.LOG_VIEW_MODEL)
+    }
+
+    fun getDeleteAllQuiz() {
+        deleteAllQuizUseCase()
     }
 }

@@ -21,6 +21,7 @@
             android:id="@+id/imageView2"
             android:layout_width="match_parent"
             android:layout_height="80dp"
+            android:elevation="10dp"
             android:layout_gravity="bottom"
             app:srcCompat="@drawable/db_design3_background_gradient_main_bottom"
             app:layout_constraintBottom_toBottomOf="@id/rcView"/>

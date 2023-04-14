@@ -61,21 +61,22 @@ object SetItemMenu {
                 else -> emptyList()
             }
         } else {
-            log("setNetworkMenu() пользователь зарегестрирован")
             when (fr2) {
-                1 -> listOf(
-                    Pair(R.string.nav_massages, R.drawable.nav_massage),
-                    Pair(R.string.nav_chat, R.drawable.nav_chat),
-                    Pair(R.string.nav_task, R.drawable.nav_task),
-                    Pair(R.string.nav_leaders, R.drawable.nav_leader),
-                    Pair(R.string.nav_players, R.drawable.nav_user),
-                    Pair(R.string.nav_news, R.drawable.ic_new),
-                    Pair(R.string.nav_global, R.drawable.baseline_public_24),
-                    Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
-                    Pair(R.string.nav_enter, R.drawable.nav_add_acc),
-                    Pair(R.string.nav_reports, R.drawable.nav_report),
-                    Pair(R.string.nav_exit, R.drawable.nav_exit)
-                )
+                1 -> {
+                    listOf(
+                        Pair(R.string.nav_massages, R.drawable.nav_massage),
+                        Pair(R.string.nav_chat, R.drawable.nav_chat),
+                        Pair(R.string.nav_task, R.drawable.nav_task),
+                        Pair(R.string.nav_leaders, R.drawable.nav_leader),
+                        Pair(R.string.nav_players, R.drawable.nav_user),
+                        Pair(R.string.nav_news, R.drawable.ic_new),
+                        Pair(R.string.nav_global, R.drawable.baseline_public_24),
+                        Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
+                        Pair(R.string.nav_enter, R.drawable.nav_add_acc),
+                        Pair(R.string.nav_reports, R.drawable.nav_report),
+                        Pair(R.string.nav_exit, R.drawable.nav_exit)
+                    )
+                }
                 2 -> listOf(
                     Pair(R.string.nav_profile, R.drawable.nav_profile),
                     Pair(R.string.nav_chat, R.drawable.nav_chat),
@@ -92,7 +93,7 @@ object SetItemMenu {
                 3 -> listOf(
                     Pair(R.string.nav_profile, R.drawable.nav_profile),
                     Pair(R.string.nav_massages, R.drawable.nav_massage),
-                    Pair(R.string.nav_task, R.drawable.nav_task),
+                    Pair(R.string.nav_chat, R.drawable.nav_chat),
                     Pair(R.string.nav_leaders, R.drawable.nav_leader),
                     Pair(R.string.nav_players, R.drawable.nav_user),
                     Pair(R.string.nav_news, R.drawable.ic_new),
@@ -103,30 +104,30 @@ object SetItemMenu {
                     Pair(R.string.nav_exit, R.drawable.nav_exit)
                 )
                 4 -> listOf(
-                    Pair(R.string.nav_profile, R.drawable.nav_profile),
-                    Pair(R.string.nav_massages, R.drawable.nav_massage),
-                    Pair(R.string.nav_chat, R.drawable.nav_chat),
-                    Pair(R.string.nav_leaders, R.drawable.nav_leader),
+                    Pair(R.string.nav_profile, R.drawable. nav_profile),
+                    Pair(R.string.nav_massages, R.drawable. nav_massage),
+                    Pair(R.string.nav_chat, R.drawable. nav_chat),
+                    Pair(R.string.nav_leaders, R.drawable. nav_leader),
                     Pair(R.string.nav_players, R.drawable.nav_user),
-                    Pair(R.string.nav_news, R.drawable.ic_new),
-                    Pair(R.string.nav_global, R.drawable.baseline_public_24),
-                    Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
-                    Pair(R.string.nav_enter, R.drawable.nav_add_acc),
+                    Pair(R.string.nav_news, R.drawable. ic_new),
+                    Pair(R.string.nav_global, R.drawable. baseline_public_24),
+                    Pair(R.string.nav_friends, R.drawable. ic_baseline_drive_folder_upload_24),
+                    Pair(R.string.nav_enter, R.drawable. nav_add_acc),
                     Pair(R.string.nav_reports, R.drawable.nav_report),
-                    Pair(R.string.nav_exit, R.drawable.nav_exit)
+                    Pair(R.string.nav_exit, R.drawable. nav_exit)
                 )
                 5 -> listOf(
-                    Pair(R.string.nav_profile, R.drawable.nav_profile),
-                    Pair(R.string.nav_massages, R.drawable.nav_massage),
-                    Pair(R.string.nav_chat, R.drawable.nav_chat),
-                    Pair(R.string.nav_task, R.drawable.nav_task),
+                    Pair(R.string.nav_profile, R.drawable. nav_profile),
+                    Pair(R.string.nav_massages, R.drawable. nav_massage),
+                    Pair(R.string.nav_chat, R.drawable. nav_chat),
+                    Pair(R.string.nav_task, R.drawable. nav_task),
                     Pair(R.string.nav_players, R.drawable.nav_user),
-                    Pair(R.string.nav_news, R.drawable.ic_new),
-                    Pair(R.string.nav_global, R.drawable.baseline_public_24),
-                    Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
-                    Pair(R.string.nav_enter, R.drawable.nav_add_acc),
+                    Pair(R.string.nav_news, R.drawable. ic_new),
+                    Pair(R.string.nav_global, R.drawable. baseline_public_24),
+                    Pair(R.string.nav_friends, R.drawable. ic_baseline_drive_folder_upload_24),
+                    Pair(R.string.nav_enter, R.drawable. nav_add_acc),
                     Pair(R.string.nav_reports, R.drawable.nav_report),
-                    Pair(R.string.nav_exit, R.drawable.nav_exit)
+                    Pair(R.string.nav_exit, R.drawable. nav_exit)
                 )
                 6 -> listOf(
                     Pair(R.string.nav_profile, R.drawable.nav_profile),
@@ -148,7 +149,6 @@ object SetItemMenu {
                     Pair(R.string.nav_task, R.drawable.nav_task),
                     Pair(R.string.nav_leaders, R.drawable.nav_leader),
                     Pair(R.string.nav_players, R.drawable.nav_user),
-                    Pair(R.string.nav_news, R.drawable.ic_new),
                     Pair(R.string.nav_global, R.drawable.baseline_public_24),
                     Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
                     Pair(R.string.nav_enter, R.drawable.nav_add_acc),
@@ -164,12 +164,12 @@ object SetItemMenu {
                     Pair(R.string.nav_players, R.drawable.nav_user),
                     Pair(R.string.nav_news, R.drawable.ic_new),
                     Pair(R.string.nav_global, R.drawable.baseline_public_24),
-                    Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
                     Pair(R.string.nav_enter, R.drawable.nav_add_acc),
                     Pair(R.string.nav_reports, R.drawable.nav_report),
                     Pair(R.string.nav_exit, R.drawable.nav_exit)
                 )
                 9 -> listOf(
+                    Pair(R.string.nav_profile, R.drawable.nav_profile),
                     Pair(R.string.nav_massages, R.drawable.nav_massage),
                     Pair(R.string.nav_chat, R.drawable.nav_chat),
                     Pair(R.string.nav_task, R.drawable.nav_task),
@@ -177,12 +177,12 @@ object SetItemMenu {
                     Pair(R.string.nav_players, R.drawable.nav_user),
                     Pair(R.string.nav_news, R.drawable.ic_new),
                     Pair(R.string.nav_global, R.drawable.baseline_public_24),
-                    Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
                     Pair(R.string.nav_enter, R.drawable.nav_add_acc),
                     Pair(R.string.nav_reports, R.drawable.nav_report),
                     Pair(R.string.nav_exit, R.drawable.nav_exit)
                 )
                 10 -> listOf(
+                    Pair(R.string.nav_profile, R.drawable.nav_profile),
                     Pair(R.string.nav_massages, R.drawable.nav_massage),
                     Pair(R.string.nav_chat, R.drawable.nav_chat),
                     Pair(R.string.nav_task, R.drawable.nav_task),
@@ -191,11 +191,11 @@ object SetItemMenu {
                     Pair(R.string.nav_news, R.drawable.ic_new),
                     Pair(R.string.nav_global, R.drawable.baseline_public_24),
                     Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
-                    Pair(R.string.nav_enter, R.drawable.nav_add_acc),
                     Pair(R.string.nav_reports, R.drawable.nav_report),
                     Pair(R.string.nav_exit, R.drawable.nav_exit)
                 )
                 11 -> listOf(
+                    Pair(R.string.nav_profile, R.drawable.nav_profile),
                     Pair(R.string.nav_massages, R.drawable.nav_massage),
                     Pair(R.string.nav_chat, R.drawable.nav_chat),
                     Pair(R.string.nav_task, R.drawable.nav_task),
@@ -205,10 +205,10 @@ object SetItemMenu {
                     Pair(R.string.nav_global, R.drawable.baseline_public_24),
                     Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
                     Pair(R.string.nav_enter, R.drawable.nav_add_acc),
-                    Pair(R.string.nav_reports, R.drawable.nav_report),
                     Pair(R.string.nav_exit, R.drawable.nav_exit)
                 )
                 12 -> listOf(
+                    Pair(R.string.nav_profile, R.drawable.nav_profile),
                     Pair(R.string.nav_massages, R.drawable.nav_massage),
                     Pair(R.string.nav_chat, R.drawable.nav_chat),
                     Pair(R.string.nav_task, R.drawable.nav_task),
@@ -218,8 +218,7 @@ object SetItemMenu {
                     Pair(R.string.nav_global, R.drawable.baseline_public_24),
                     Pair(R.string.nav_friends, R.drawable.ic_baseline_drive_folder_upload_24),
                     Pair(R.string.nav_enter, R.drawable.nav_add_acc),
-                    Pair(R.string.nav_reports, R.drawable.nav_report),
-                    Pair(R.string.nav_exit, R.drawable.nav_exit)
+                    Pair(R.string.nav_reports, R.drawable.nav_report)
                 )
 
                 else -> emptyList()

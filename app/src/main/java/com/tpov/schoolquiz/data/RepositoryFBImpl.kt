@@ -35,6 +35,35 @@ class RepositoryFBImpl @Inject constructor(
     var synth = 0
     var synthGetData = 0
     var synthSetData = 0
+    override fun deleteAllQuiz() {
+        FirebaseDatabase.getInstance().getReference("question1").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question2").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question3").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question4").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question5").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question6").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question7").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question8").setValue(null)
+
+        FirebaseDatabase.getInstance().getReference("quiz1").setValue(null)
+        FirebaseDatabase.getInstance().getReference("quiz2").setValue(null)
+        FirebaseDatabase.getInstance().getReference("quiz3").setValue(null)
+        FirebaseDatabase.getInstance().getReference("quiz4").setValue(null)
+        FirebaseDatabase.getInstance().getReference("quiz5").setValue(null)
+        FirebaseDatabase.getInstance().getReference("quiz6").setValue(null)
+        FirebaseDatabase.getInstance().getReference("quiz7").setValue(null)
+        FirebaseDatabase.getInstance().getReference("quiz8").setValue(null)
+
+        FirebaseDatabase.getInstance().getReference("question_detail1").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question_detail2").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question_detail3").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question_detail4").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question_detail5").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question_detail6").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question_detail7").setValue(null)
+        FirebaseDatabase.getInstance().getReference("question_detail8").setValue(null)
+
+    }
 
     override fun getValSynth(): MutableLiveData<Int> {
         log("getValSynth()  ${synthLiveData.value}")

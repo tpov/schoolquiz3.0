@@ -23,7 +23,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/bug_report/baseline_bug_report_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/shopping_cart/baseline_shopping_cart_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -34,7 +34,7 @@
                         <option name="values">
                           <map>
                             <entry key="color" value="ffea00" />
-                            <entry key="outputName" value="nav_report" />
+                            <entry key="outputName" value="shop" />
                             <entry key="sourceFile" value="F:\Developer\Programmer\Android\SchoolQuiz" />
                           </map>
                         </option>
