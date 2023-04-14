@@ -95,7 +95,7 @@ class CreateQuestionDialog() : DialogFragment() {
                     question.add(
                         QuestionEntity(
                             null,
-                            numQuestion,
+                            numQuestion - 1,
                             nameQuestion,
                             getTextTrue(binding.rbTrue).toBoolean(),
                             getTypeText(binding.rbLightQuestion).toBoolean(),
@@ -105,6 +105,7 @@ class CreateQuestionDialog() : DialogFragment() {
                         )
                     )
                 }
+
             } else {
                 nameQuiz = binding.intvQuiz.text.toString()
             }
@@ -160,6 +161,7 @@ class CreateQuestionDialog() : DialogFragment() {
                 tvQuestion2.text =
                     "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
             }
+
             numQuestion++
         }
 
@@ -199,7 +201,7 @@ class CreateQuestionDialog() : DialogFragment() {
                             getTypeText(binding.rbLightQuestion).toBoolean(),
                             -1,
                             lang,
-                            mainActivityViewModel.getProfileFBLiveData.value?.translater ?: -1
+                            mainActivityViewModel.getProfile.translater
                         )
                     )
                 }
@@ -267,7 +269,7 @@ class CreateQuestionDialog() : DialogFragment() {
                     QuizEntity(
                         null,
                         nameQuiz,
-                        mainActivityViewModel.getProfileFBLiveData.value?.name ?: "user",
+                        mainActivityViewModel.getProfile.name ?: "user",
                         TimeManager.getCurrentTime(),
                         0,
                         0,

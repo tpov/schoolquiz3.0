@@ -8,6 +8,7 @@ data class Profile constructor(
     val tpovId: Int,
     val login: String,
     val name: String,
+    val nickname: String,
     val birthday: String,
     val points: Points,
     val datePremium: String,
@@ -25,6 +26,7 @@ data class Profile constructor(
 ) {
     constructor() : this(
         0,
+        "",
         "",
         "",
         "",
@@ -126,6 +128,7 @@ fun ProfileEntity.toProfile(): Profile {
         tpovId = this.tpovId,
         login = this.login,
         name = this.name,
+        nickname = this.nickname,
         birthday = this.birthday,
         points = Points(
             gold = this.pointsGold,
@@ -216,6 +219,7 @@ fun Profile.toProfileEntity(): ProfileEntity {
         translater = this.qualification.translater,
         moderator = this.qualification.moderator,
         admin = this.qualification.admin,
-        developer = this.qualification.developer
+        developer = this.qualification.developer,
+        nickname = this.nickname
     )
 }

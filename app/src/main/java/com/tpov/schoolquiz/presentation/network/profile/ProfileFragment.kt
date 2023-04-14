@@ -96,6 +96,12 @@ class ProfileFragment : BaseFragment() {
                         isExecuted[4] = true
                     }
                 }
+                6-> {
+                    if (!isExecuted[5]) {
+                        viewModel.setEventQuiz()
+                        isExecuted[5] = true
+                    }
+                }
             }
         }
         val referenceValue = Integer.toHexString(System.identityHashCode(osb))

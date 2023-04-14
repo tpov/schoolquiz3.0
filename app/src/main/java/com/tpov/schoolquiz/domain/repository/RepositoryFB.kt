@@ -1,7 +1,5 @@
 package com.tpov.schoolquiz.domain.repository
 
-import android.content.Context
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.fierbase.Profile
@@ -12,7 +10,11 @@ interface RepositoryFB {
 
     fun getValSynth(): MutableLiveData<Int>
 
+    fun getTranslateFB(lvlTranslate: Int)
+
     fun getChatData(): Flow<List<ChatEntity>>
+
+    fun removeChatListener()
 
     fun getQuiz8Data()
 
@@ -39,7 +41,7 @@ interface RepositoryFB {
 
     fun getQuestion5()
 
-    fun getQuestion4Data()
+    fun getQuestion4()
 
     fun getQuestion3()
 
@@ -78,7 +80,7 @@ interface RepositoryFB {
 
     fun setProfile()
 
-    fun setEvent(position: Int)
+    fun setEvent()
 
     fun getUserName(): Profile
 

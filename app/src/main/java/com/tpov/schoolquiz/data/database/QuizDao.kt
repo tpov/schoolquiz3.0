@@ -10,7 +10,6 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 
@@ -210,7 +209,6 @@ interface QuizDao {
         return getProfileByFirebaseIdDB(id)
     }
     fun getChat(): Flow<List<ChatEntity>> {
-        log("fun getChat, return: ${getChatDB().asLiveData().value}")
         return getChatDB()
     }
     fun getEventByIdQuiz(id: Int): Int? {
@@ -273,7 +271,7 @@ interface QuizDao {
     @Query("SELECT * FROM profiles WHERE idFirebase = :id")
     fun getProfileByFirebaseIdDB(id: String): ProfileEntity
 
-    @Query("SELECT * FROM chat_data")
+    @Query("SELECT * FROM chat_data ORDER BY id ASC")
     fun getChatDB(): Flow<List<ChatEntity>>
 
     @Query("SELECT event FROM front_list WHERE id = :id")
@@ -306,8 +304,12 @@ interface QuizDao {
     @Query("DELETE FROM chat_data WHERE time LIKE :time")
     fun deleteChat(time: String)
 
+    fun deleteQuizById(id: Int) {
+        log("fun deleteQuizById: id: $id")
+        deleteQuizByIdDB(id)
+    }
     @Query("DELETE FROM front_list WHERE id LIKE :id")
-    fun deleteQuizById(id: Int)
+    fun deleteQuizByIdDB(id: Int)
 
     @Update
     fun updateQuizDetail(questionDetailEntity: QuestionDetailEntity)
@@ -323,6 +325,24 @@ interface QuizDao {
 
     @Update
     fun updateQuestion(questionEntity: QuestionEntity)
+
+    @Query("SELECT COUNT(*) FROM table_data")
+    suspend fun getQuestionDetailCount(): Int
+
+    @Query("SELECT COUNT(*) FROM new_user_table")
+    suspend fun getQuestionCount(): Int
+
+    @Query("SELECT COUNT(*) FROM front_list")
+    suspend fun getQuizCount(): Int
+
+    @Query("SELECT COUNT(*) FROM table_generate_question")
+    suspend fun getApiQuestionCount(): Int
+
+    @Query("SELECT COUNT(*) FROM profiles")
+    suspend fun getProfileCount(): Int
+
+    @Query("SELECT COUNT(*) FROM chat_data")
+    suspend fun getChatCount(): Int
 
 }
 

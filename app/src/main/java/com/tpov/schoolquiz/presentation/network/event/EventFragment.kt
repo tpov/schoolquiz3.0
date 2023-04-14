@@ -15,7 +15,6 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -38,7 +37,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
 
         eventViewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
@@ -75,22 +73,18 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             moderatorEventList,
             adminEventList,
             developerEventList,
-            this // ваш ListenerEvent
+            this
         )
-
         recyclerView.adapter = eventAdapter
-
     }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // раздуваем макет фрагмента
-        val view = inflater.inflate(R.layout.event_fragment, container, false)
-
-
-        return view
+        return inflater.inflate(R.layout.event_fragment, container, false)
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -111,13 +105,27 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             startActivity(intent)
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz3Clicked(quizId: Int) {
         log("fun onQuiz3Clicked")
+        val intent = Intent(activity, QuestionActivity::class.java)
+        intent.putExtra(QuestionActivity.NAME_USER, "user")
+        intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+        intent.putExtra(QuestionActivity.LIFE, 0)
+        intent.putExtra(QuestionActivity.HARD_QUESTION, true)
+        startActivity(intent)
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz4Clicked(quizId: Int) {
 
         log("fun onQuiz4Clicked")
+        val intent = Intent(activity, QuestionActivity::class.java)
+        intent.putExtra(QuestionActivity.NAME_USER, "user")
+        intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+        intent.putExtra(QuestionActivity.LIFE, 0)
+        intent.putExtra(QuestionActivity.HARD_QUESTION, false)
+        startActivity(intent)
     }
 
     override fun onTranslate1EventClicked(questionId: Int) {

@@ -2,8 +2,6 @@ package com.tpov.schoolquiz.di
 
 import android.app.Application
 import android.content.Context
-import androidx.lifecycle.ViewModel
-import com.tpov.schoolquiz.di.ViewModelKey
 import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.network.AutorisationViewModel
 import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
@@ -12,6 +10,7 @@ import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
 import com.tpov.schoolquiz.presentation.question.QuestionViewModel
 import com.tpov.schoolquiz.presentation.splashscreen.SplashScreenViewModel
 import dagger.Binds
+import androidx.lifecycle.ViewModel;
 import dagger.Module
 import dagger.multibindings.IntoMap
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -51,7 +50,8 @@ interface ViewModelModule {
     @Binds
     @IntoMap
     @ViewModelKey(ChatViewModel::class)
-    fun bindChatViewModel(viewModel: ChatViewModel): ViewModel @InternalCoroutinesApi
+    fun bindChatViewModel(viewModel: ChatViewModel): ViewModel
+    @InternalCoroutinesApi
     @Binds
     @IntoMap
     @ViewModelKey(EventViewModel::class)

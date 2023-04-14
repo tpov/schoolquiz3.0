@@ -2,13 +2,10 @@ package com.tpov.schoolquiz.data
 
 import android.app.Application
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.tpov.schoolquiz.data.database.QuizDao
@@ -21,6 +18,8 @@ import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,6 +29,7 @@ class RepositoryFBImpl @Inject constructor(
     private val application: Application
 ) : RepositoryFB {
 
+    private lateinit var chatValueEventListener: ValueEventListener
     private val context = application.baseContext
     var synthLiveData = MutableLiveData<Int>()
     var synth = 0
@@ -42,25 +42,86 @@ class RepositoryFBImpl @Inject constructor(
         return synthLiveData
     }
 
+    override fun getTranslateFB(lvlTranslate: Int) {
+        val questionRef3 = FirebaseDatabase.getInstance().getReference("question3")
+        val questionRef4 = FirebaseDatabase.getInstance().getReference("question4")
+        val questionRef5 = FirebaseDatabase.getInstance().getReference("question5")
+        val questionRef6 = FirebaseDatabase.getInstance().getReference("question6")
+        val questionRef7 = FirebaseDatabase.getInstance().getReference("question7")
+        val questionRef8 = FirebaseDatabase.getInstance().getReference("question8")
+
+        questionRef3.limitToLast(1).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                log("getQuestion snapshot: ${snapshot.key}")
+                for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
+                    if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!, getTpovId()) != null){
+                        log("getQuestion idQuizSnap: ${idQuizSnap.key}")
+                        for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
+                            log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
+                            for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
+                                log("getQuestion languageSnap: ${languageSnap.key}")
+                                val question = languageSnap.getValue(Question::class.java)
+                                if (question != null) {
+                                    dao.insertQuestion(
+                                        QuestionEntity(
+                                            null,
+                                            idQuestionSnap.key?.toInt() ?: 0,
+                                            question.nameQuestion,
+                                            question.answerQuestion,
+                                            question.typeQuestion,
+                                            idQuizSnap.key?.toInt() ?: -1,
+                                            languageSnap.key ?: "eu",
+                                            question.lvlTranslate
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                log("getQuestion8Data ошибка: $error")
+            }
+        })
+    }
+
     init {
         val referenceValue = Integer.toHexString(System.identityHashCode(getValSynth()))
 
         log("fun init referenceValue :$referenceValue")
     }
 
-
+    @OptIn(DelicateCoroutinesApi::class)
     override fun getChatData(): Flow<List<ChatEntity>> {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
-        chatRef.addValueEventListener(object : ValueEventListener {
+        val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
+        chatValueEventListener = chatRef.limitToLast(10).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                // Получаем данные из snapshot и сохраняем их в локальную базу данных
-                for (data in snapshot.children) {
-                    val chatEntity = data.getValue(ChatEntity::class.java)
-                    if (chatEntity != null) {
-                        dao.insertChat(chatEntity)
+                log("getChatData snapshot: $snapshot")
+                GlobalScope.launch {
+                    // Получаем данные из snapshot и сохраняем их в локальную базу данных
+
+                    for (dateSnapshot in snapshot.children) {
+                        log("getChatData dateSnapshot: $dateSnapshot")
+                        for (data in dateSnapshot.children) {
+                            log("getChatData data: $data")
+                            val chat = data.getValue(Chat::class.java)
+                            val date1 = dateFormat.parse(chat?.time.toString())
+                            var date2: Date? = if (SharedPreferencesManager.getTimeMassage() == "0") {
+                                SharedPreferencesManager.setTimeMassage(TimeManager.getCurrentTime())
+                                dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+                            } else dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+
+                            log("getChatData (date1.after(date2): ${(date1.after(date2))}")
+                            if (chat != null && (date1.after(date2))) {
+                                dao.insertChat(chat.toChatEntity())
+                                SharedPreferencesManager.setTimeMassage(chat.time)
+                            }
+                        }
                     }
                 }
-
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -68,6 +129,11 @@ class RepositoryFBImpl @Inject constructor(
             }
         })
         return dao.getChat()
+    }
+
+    override fun removeChatListener() {
+        val chatRef = FirebaseDatabase.getInstance().getReference("chat")
+        chatRef.removeEventListener(chatValueEventListener)
     }
 
     fun savePictureToLocalDirectory(
@@ -278,7 +344,7 @@ class RepositoryFBImpl @Inject constructor(
         getQuestion(FirebaseDatabase.getInstance().getReference("question5"), "-1")
     }
 
-    override fun getQuestion4Data() {
+    override fun getQuestion4() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question4"), "-1")
     }
 
@@ -321,7 +387,13 @@ class RepositoryFBImpl @Inject constructor(
                             if (questionDetailEntity != null) {
                                 log("getQuestionDetail2() квест не пустой, добавляем в список")
 
-                                dao.insertQuizDetail(questionDetailEntity.toQuestionDetailEntity(null, idQuiz.toInt(), true))
+                                dao.insertQuizDetail(
+                                    questionDetailEntity.toQuestionDetailEntity(
+                                        null,
+                                        idQuiz.toInt(),
+                                        true
+                                    )
+                                )
                             }
                         }
                     }
@@ -368,7 +440,7 @@ class RepositoryFBImpl @Inject constructor(
         profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getProfile() snapshot: ${snapshot.key}")
-                var tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+                val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
                 val profile = snapshot.child("$tpovId").getValue(Profile::class.java)
 
                 log("getProfile() tpovId: $tpovId")
@@ -412,11 +484,138 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
+    override fun setEvent() {
+        log("fun setEvent")
+
+        val tpovId = getTpovId()
+        val quizEventDB = dao.getQuizEvent()
+        val database = FirebaseDatabase.getInstance()
+
+        val quizRef2 = database.getReference("quiz2")
+        val quizRef3 = database.getReference("quiz3")
+        val quizRef4 = database.getReference("quiz4")
+        val quizRef5 = database.getReference("quiz5")
+        val quizRef6 = database.getReference("quiz6")
+        val quizRef7 = database.getReference("quiz7")
+        val quizRef8 = database.getReference("quiz8")
+        val questionRef2 = database.getReference("question2")
+        val questionRef3 = database.getReference("question3")
+        val questionRef4 = database.getReference("question4")
+        val questionRef5 = database.getReference("question5")
+        val questionRef6 = database.getReference("question6")
+        val questionRef7 = database.getReference("question7")
+        val questionRef8 = database.getReference("question8")
+        val playersRef = database.getReference("players")
+        val playersQuiz = playersRef.child("quiz")
+
+        for (quiz in quizEventDB) {
+            log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
+            when (quiz.event) {
+                3 -> {
+                    log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
+                    quizRef3.child(quiz.id.toString())
+                        .setValue(quiz).addOnSuccessListener {
+                            quizRef2.child("${quiz.id}").removeValue()
+                        }
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef3.child("${question.idQuiz}/${question.id}/${question.language}")
+                            .setValue(question).addOnSuccessListener {
+                            questionRef2.child("${question.idQuiz}").removeValue()
+                        }
+                    }
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
+
+                }
+                4 -> {
+                    log("fun setEvent event: ${quiz.event}")
+                    quizRef4.child(quiz.id.toString())
+                        .setValue(quiz).addOnSuccessListener {
+                            quizRef3.child("${quiz.id}").removeValue()
+                        }
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef4.child("${question.idQuiz}/${question.id}/${question.language}")
+                            .setValue(question).addOnSuccessListener {
+                            questionRef3.child("${question.idQuiz}").removeValue()
+                        }
+                    }
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
+                }
+                5 -> {
+                    log("fun setEvent event: ${quiz.event}")
+                    quizRef5.child(quiz.id.toString())
+                        .setValue(quiz).addOnSuccessListener {
+                            quizRef4.child("${quiz.id}").removeValue()
+                        }
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef5.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                            .addOnSuccessListener {
+                                questionRef4.child("${question.idQuiz}").removeValue()
+                            }
+                    }
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
+                }
+                6 -> {
+                    log("fun setEvent event: ${quiz.event}")
+                    quizRef6.child(quiz.id.toString())
+                        .setValue(quiz).addOnSuccessListener {
+                            quizRef5.child("${quiz.id}").removeValue()
+                        }
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef6.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                            .addOnSuccessListener {
+                                questionRef5.child("${question.idQuiz}").removeValue()
+                            }
+                    }
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
+                }
+                7 -> {
+                    log("fun setEvent event: ${quiz.event}")
+                    quizRef7.child(quiz.id.toString())
+                        .setValue(quiz).addOnSuccessListener {
+                            quizRef6.child("${quiz.id}").removeValue()
+                        }
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef7.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                            .addOnSuccessListener {
+                                questionRef6.child("${question.idQuiz}").removeValue()
+                            }
+                    }
+                    if (quiz.stars != 0) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    }
+                }
+                8 -> {
+                            quizRef7.child("${quiz.id}").removeValue()
+                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
+                        questionRef7.child("${question.idQuiz}").removeValue()
+                    }
+                }
+            }
+        }
+    }
+
     override suspend fun setQuizData() {
         log("fun setQuizData()")
         var tpovId = getTpovId()
-        var quizDB = dao.getQuizList(tpovId)
-        val quizEventDB = dao.getQuizEvent()
+        var quizDB = dao.getQuizEvent()
 
         var idQuiz = 0
 
@@ -430,19 +629,10 @@ class RepositoryFBImpl @Inject constructor(
         val quizRef7 = database.getReference("quiz7")
         val quizRef8 = database.getReference("quiz8")
 
-        val questionRef1 = database.getReference("question1")
-        val questionRef2 = database.getReference("question2")
-        val questionRef3 = database.getReference("question3")
-        val questionRef4 = database.getReference("question4")
-        val questionRef5 = database.getReference("question5")
-        val questionRef6 = database.getReference("question6")
-        val questionRef7 = database.getReference("question7")
-        val questionRef8 = database.getReference("question8")
-
         val playersRef = database.getReference("players")
-        val playersQuiz = playersRef.child("quiz")
         // создаем скоуп для запуска корутин
         val coroutineScope = CoroutineScope(Dispatchers.Default)
+        val playersQuiz = playersRef.child("quiz")
 
 // запускаем корутину
         coroutineScope.launch {
@@ -476,9 +666,18 @@ class RepositoryFBImpl @Inject constructor(
 
                     coroutineScope.launch {
                         if (blockServer) {
+                            var i = 0
                             while (!readValue) {
                                 log("setQuizData() playersRef сервер занят, ждем")
                                 delay(100) // заменяем Thread.sleep() на delay()
+                                i++
+
+                                if (i == 300) Toast.makeText(
+                                    context,
+                                    "Если сервер не освободится в течении 3 минут - будет совершена принудительная синхронизация, возможно она решит проблему",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                if (i == 600 * 3) break
                             }
 
                             val players =
@@ -490,202 +689,309 @@ class RepositoryFBImpl @Inject constructor(
                             playersRef.updateChildren(updates)
                         }
 
-                        quizEventDB.forEach { quiz ->
+                        quizDB.forEach { quiz ->
                             val quizRatingMap = mapOf(
                                 "rating" to quiz.rating,
-                                "stars" to quiz.stars
+                                "stars" to quiz.starsAll
                             )
-                            when (quiz.event) {
-                                1 -> {
-                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
-                                }
-                                3-> {
-                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
-                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz)
-                                    dao.deleteQuizById(quiz.id!!)
-                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
-                                    }
-                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
-                                }
-                                4-> {
-                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
-                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz)
-                                    dao.deleteQuizById(quiz.id!!)
-                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
-                                    }
-                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
-                                }
-                                5-> {
-                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
-                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz)
-                                    dao.deleteQuizById(quiz.id!!)
-                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
-                                    }
-                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
-                                }
-                                6-> {
-                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
-                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz)
-                                    dao.deleteQuizById(quiz.id!!)
-                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
-                                    }
-                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
-                                }
-                                7-> {
-                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
-                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz)
-                                    dao.deleteQuizById(quiz.id!!)
-                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
-                                    }
-                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
-                                }
-                                8-> {
-                                    playersQuiz.child("${quiz.id}/$tpovId").updateChildren(quizRatingMap)
-                                    quizRef3.child("${quiz.tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz)
-                                    dao.deleteQuizById(quiz.id!!)
-                                    dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                                    dao.getQuestionByIdQuiz(quiz.id!!).forEach {
-                                        questionRef3.child("${it.idQuiz}/${it.id}/${it.language}").setValue(it)
-                                    }
-                                    dao.deleteQuestionByIdQuiz(quiz.id!!)
-                                }
-                            }
-                        }
-                        quizDB.forEach {
-                            log("setQuizData() playersRef quizDB перебираем")
-                            if (it.event == 1) {
 
+                            log("setQuizData() playersRef quizDB перебираем: $quiz")
+                            if (quiz.event == 1) {
                                 log("setQuizData() playersRef quizDB event1")
-                                if (it.id!! >= 100) {
+
+                                if (quiz.id!! >= 100) {
                                     log("setQuizData() playersRef quizDB event1 id >= 100 просто созраняем на сервер")
-                                    quizRef1.child("${tpovId}/${it.id.toString()}")
-                                        .setValue(it)
+                                    quizRef1.child("${tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz).addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${quiz.tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
+
                                 } else {
                                     log("setQuizData() playersRef quizDB event1 id < 100 синхронизируем с сервером")
-
                                     idQuiz++
-                                    val oldId = it.id
-                                    it.id = idQuiz
-                                    quizRef1.child("${tpovId}/$idQuiz").setValue(it)
+                                    val oldId = quiz.id
+                                    quiz.id = idQuiz
+                                    quizRef1.child("${tpovId}/$idQuiz").setValue(quiz)
+                                        .addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${quiz.tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
 
                                     dao.getQuestionByIdQuiz(oldId!!).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = it.id!!))
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = it.id!!))
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(it)
+                                    dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
+
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        it.versionQuiz,
+                                        quiz.versionQuiz,
                                         context
                                     )
                                 }
 
-                            } else if (it.event == 2) {
+                            } else if (quiz.event == 2) {
                                 log("setQuizData() playersRef quizDB event2")
-                                if (it.id!! >= 100) {
+                                if (quiz.id!! >= 100) {
                                     log("setQuizData() playersRef quizDB id >= 100  event2 просто созраняем на сервер")
-                                    quizRef1.child("${tpovId}/${it.id.toString()}")
-                                        .setValue(it)
+                                    quizRef2.child("${tpovId}/${quiz.id.toString()}")
+                                        .setValue(quiz).addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
+
+                                } else {
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId)
+                                        .forEach { item ->
+                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                        }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
+
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        quiz.versionQuiz,
+                                        context
+                                    )
+                                }
+
+                            } else if (quiz.event == 3) {
+                                if (quiz.id!! >= 100) {
+                                    quizRef3.child(quiz.id.toString())
+                                        .setValue(quiz).addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
+
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        quiz.versionQuiz,
+                                        context
+                                    )
                                 } else {
 
                                     log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
                                     idQuiz++
-                                    var oldId = it.id!!
-                                    it.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(it)
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef3.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
 
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = it.id!!))
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId)
                                         .forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = it.id!!))
+                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                         }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(it)
+                                    dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        it.versionQuiz,
-                                        context
-                                    )
 
                                 }
-                            } else if (it.event == 3) {
-                                quizRef3.child(it.id.toString())
-                                    .setValue(it)
+                            } else if (quiz.event == 4) {
+                                if (quiz.id!! >= 100) {
+                                    quizRef4.child(quiz.id.toString())
+                                        .setValue(quiz).addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
 
-                                SharedPreferencesManager.setVersionQuiz(
-                                    idQuiz.toString(),
-                                    it.versionQuiz,
-                                    context
-                                )
-                            } else if (it.event == 4) {
-                                quizRef4.child(it.id.toString())
-                                    .setValue(it)
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        quiz.versionQuiz,
+                                        context
+                                    )
+                                } else {
 
-                                SharedPreferencesManager.setVersionQuiz(
-                                    idQuiz.toString(),
-                                    it.versionQuiz,
-                                    context
-                                )
-                            } else if (it.event == 5) {
-                                quizRef5.child(it.id.toString())
-                                    .setValue(it)
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef4.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
 
-                                SharedPreferencesManager.setVersionQuiz(
-                                    idQuiz.toString(),
-                                    it.versionQuiz,
-                                    context
-                                )
-                            } else if (it.event == 6) {
-                                quizRef6.child(it.id.toString())
-                                    .setValue(it)
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId)
+                                        .forEach { item ->
+                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                        }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
+                                }
+                            } else if (quiz.event == 5) {
+                                if (quiz.id!! >= 100) {
+                                    quizRef5.child(quiz.id.toString())
+                                        .setValue(quiz).addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
 
-                                SharedPreferencesManager.setVersionQuiz(
-                                    idQuiz.toString(),
-                                    it.versionQuiz,
-                                    context
-                                )
-                            } else if (it.event == 7) {
-                                quizRef7.child(it.id.toString())
-                                    .setValue(it)
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        quiz.versionQuiz,
+                                        context
+                                    )
+                                } else {
 
-                                SharedPreferencesManager.setVersionQuiz(
-                                    idQuiz.toString(),
-                                    it.versionQuiz,
-                                    context
-                                )
-                            } else if (it.event == 8) {
-                                log("setQuizData() event8 просто сохраняем на сервер")
-                                quizRef8.child(it.id.toString()).setValue(it)
-                                SharedPreferencesManager.setVersionQuiz(
-                                    idQuiz.toString(),
-                                    it.versionQuiz,
-                                    context
-                                )
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef5.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId)
+                                        .forEach { item ->
+                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                        }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
+                                }
+                            } else if (quiz.event == 6) {
+                                if (quiz.id!! >= 100) {
+                                    quizRef6.child(quiz.id.toString())
+                                        .setValue(quiz).addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
+
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        quiz.versionQuiz,
+                                        context
+                                    )
+                                } else {
+
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef6.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId)
+                                        .forEach { item ->
+                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                        }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
+                                }
+                            } else if (quiz.event == 7) {
+                                if (quiz.id!! >= 100) {
+                                    quizRef7.child(quiz.id.toString())
+                                        .setValue(quiz).addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
+
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        quiz.versionQuiz,
+                                        context
+                                    )
+                                } else {
+
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef7.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId)
+                                        .forEach { item ->
+                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                        }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
+                                }
+                            } else if (quiz.event == 8) {
+                                if (quiz.id!! >= 100) {
+                                    log("setQuizData() event8 просто сохраняем на сервер")
+                                    quizRef8.child(quiz.id.toString()).setValue(quiz)
+                                        .addOnSuccessListener {
+                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                .updateChildren(quizRatingMap)
+                                        }
+                                    SharedPreferencesManager.setVersionQuiz(
+                                        idQuiz.toString(),
+                                        quiz.versionQuiz,
+                                        context
+                                    )
+                                } else {
+
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef8.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId)
+                                        .forEach { item ->
+                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                        }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
+                                }
                             }
 
                         }
@@ -762,29 +1068,28 @@ class RepositoryFBImpl @Inject constructor(
                     )
                 }, = tpovid: $tpovId"
             )
-            if (dao.getQuizTpovIdById(it.idQuiz) == tpovId) {
-                synthLiveData.value = --synth
-                log("setQuestionData() найдет квест который совпадает с tpovId, idQuiz: ${it.idQuiz}")
-                if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.numQuestion}/${it.language}")
-                    .setValue(it).addOnSuccessListener {
-                        synthLiveData.value = ++synth
-                    }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 2) questionRef2.child("${it.idQuiz}/${it.id}/${it.language}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 3) questionRef3.child("${it.idQuiz}/${it.id}/${it.language}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 4) questionRef4.child("${it.idQuiz}/${it.id}/${it.language}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 5) questionRef5.child("${it.idQuiz}/${it.id}/${it.language}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 6) questionRef6.child("${it.idQuiz}/${it.id}/${it.language}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 7) questionRef7.child("${it.idQuiz}/${it.id}/${it.language}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-                if (dao.getEventByIdQuiz(it.idQuiz) == 8) questionRef8.child("${it.idQuiz}/${it.id}/${it.language}")
-                    .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            }
+            synthLiveData.value = --synth
+            log("setQuestionData() найдет квест it: ${it}")
+            if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.numQuestion}/${it.language}")
+                .setValue(it).addOnSuccessListener {
+                    synthLiveData.value = ++synth
+                }
+            if (dao.getEventByIdQuiz(it.idQuiz) == 2) questionRef2.child("${it.idQuiz}/${it.id}/${it.language}")
+                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+            if (dao.getEventByIdQuiz(it.idQuiz) == 3) questionRef3.child("${it.idQuiz}/${it.id}/${it.language}")
+                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+            if (dao.getEventByIdQuiz(it.idQuiz) == 4) questionRef4.child("${it.idQuiz}/${it.id}/${it.language}")
+                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+            if (dao.getEventByIdQuiz(it.idQuiz) == 5) questionRef5.child("${it.idQuiz}/${it.id}/${it.language}")
+                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+            if (dao.getEventByIdQuiz(it.idQuiz) == 6) questionRef6.child("${it.idQuiz}/${it.id}/${it.language}")
+                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+            if (dao.getEventByIdQuiz(it.idQuiz) == 7) questionRef7.child("${it.idQuiz}/${it.id}/${it.language}")
+                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+            if (dao.getEventByIdQuiz(it.idQuiz) == 8) questionRef8.child("${it.idQuiz}/${it.id}/${it.language}")
+                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
         }
+
         synthLiveData.value = ++synth
 
 
@@ -964,9 +1269,6 @@ class RepositoryFBImpl @Inject constructor(
             }
 
         }
-    }
-
-    override fun setEvent(position: Int) {
     }
 
     override fun getUserName(): Profile {

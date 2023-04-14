@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/db_design3_main">
 
+
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -15,6 +16,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_gravity="bottom"
+            app:srcCompat="@drawable/db_design3_background_gradient_main_bottom"
+            app:layout_constraintBottom_toBottomOf="@id/rcView"/>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
