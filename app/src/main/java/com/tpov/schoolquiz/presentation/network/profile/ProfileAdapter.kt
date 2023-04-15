@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.presentation.network.profile
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,11 +14,13 @@ import com.github.mikephil.charting.data.RadarDataSet
 import com.github.mikephil.charting.data.RadarEntry
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.shoppinglist.utils.TimeManager
 
 class ProfileAdapter(
-    private val profiles: List<ProfileEntity>
+    private val profiles: List<ProfileEntity>,
+    private val playersEntity: List<PlayersEntity>
 ) : RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder>() {
 
     inner class ProfileViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -47,13 +50,37 @@ class ProfileAdapter(
         else holder.imvPremium.visibility = View.GONE
         holder.tvLanguage.text = profile.languages
         holder.imvTrophy.text = profile.trophy
-        val profiles = listOf(4f, 3f, 2f, 5f, 4f, 3f, 2f)
 
+        val profiles = listOf(
+            playersEntity[0].gamer.toFloat(),
+            playersEntity[0].sponsor.toFloat(),
+            playersEntity[0].translater.toFloat(),
+            playersEntity[0].tester.toFloat(),
+            playersEntity[0].moderator.toFloat(),
+            playersEntity[0].admin.toFloat(),
+            playersEntity[0].developer.toFloat()
+        )
+        val profilesDetail = listOf(
+            playersEntity[0].ratingPlayer.toFloat(),
+            playersEntity[0].ratingAnswer.toFloat(),
+            playersEntity[0].ratingQuiz.toFloat(),
+            playersEntity[0].timeInGamesInChat.toFloat(),
+            playersEntity[0].timeInGamesInQuiz.toFloat(),
+            playersEntity[0].timeInGamesSmsPoints.toFloat(),
+            playersEntity[0].timeInGamesAllTime.toFloat()
+        )
 
         // Настройка RadarChart
         val entries = profiles.map { RadarEntry(it) }
+        val entriesDeltail = profilesDetail.map { RadarEntry(it) }
+
         val radarDataSet = RadarDataSet(entries, "Label")
-        val radarData = RadarData(listOf<IRadarDataSet>(radarDataSet))
+        val radarDataSetDetail = RadarDataSet(entriesDeltail, "Label")
+
+        val radarData = RadarData(listOf(radarDataSet, radarDataSetDetail))
+        radarDataSet.color = Color.BLUE
+        radarDataSetDetail.color = Color.RED
+
         holder.radarChart.data = radarData
         holder.radarChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
         holder.radarChart.invalidate()

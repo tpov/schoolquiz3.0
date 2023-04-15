@@ -41,7 +41,7 @@ class TranslationQuestionAdapter(val questions: MutableList<QuestionEntity>, pri
 
         fun bind(question: QuestionEntity) {
             nameQuestionEditText.setText(question.nameQuestion)
-            lvlTranslateTextView.setText(question.lvlTranslate.toString())
+            lvlTranslateTextView.text = question.lvlTranslate.toString()
 
             val languageAdapter = ArrayAdapter(itemView.context, android.R.layout.simple_spinner_item, languages)
             languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)

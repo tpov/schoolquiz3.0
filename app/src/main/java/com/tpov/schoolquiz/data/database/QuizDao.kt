@@ -1,14 +1,8 @@
 package com.tpov.schoolquiz.data.database
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.asLiveData
 import androidx.room.*
-import com.tpov.schoolquiz.data.database.entities.ApiQuestion
-import com.tpov.schoolquiz.data.database.entities.ChatEntity
-import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
+import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +29,9 @@ interface QuizDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertProfileDB(profile: ProfileEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertPlayersList(playersList: List<PlayersEntity>)
 
     fun insertProfile(profile: ProfileEntity) {
         log("fun insertProfile $profile")
@@ -240,6 +237,12 @@ interface QuizDao {
 
     @Query("SELECT * FROM table_data")
     fun getQuestionDetailListDB(): List<QuestionDetailEntity>
+
+    @Query("SELECT * FROM table_players")
+    fun getPlayersDB(): List<PlayersEntity>
+
+    @Query("SELECT * FROM table_players WHERE id LIKE :tpovId")
+    fun getPlayersDB(tpovId: Int): PlayersEntity
 
     @Query("SELECT * FROM front_list WHERE tpovId LIKE :tpovId")
     fun getQuizLiveDataDB(tpovId: Int): LiveData<List<QuizEntity>>

@@ -32,7 +32,7 @@ class UsersFragment : BaseFragment() {
         recyclerView = view.findViewById(R.id.recycler_view)
         viewModel = ViewModelProvider(requireActivity())[MainActivityViewModel::class.java]
 
-        profileAdapter = ProfileAdapter(viewModel.getAllProfiles())
+        profileAdapter = ProfileAdapter(viewModel.getAllProfiles(), viewModel.getPlayers())
         recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = profileAdapter

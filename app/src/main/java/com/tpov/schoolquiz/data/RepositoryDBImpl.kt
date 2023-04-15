@@ -2,15 +2,12 @@ package com.tpov.schoolquiz.data
 
 import androidx.lifecycle.LiveData
 import com.tpov.schoolquiz.data.database.QuizDao
-import com.tpov.schoolquiz.data.database.entities.ApiQuestion
-import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
+import kotlin.contracts.ReturnsNotNull
 
 
 @InternalCoroutinesApi
@@ -38,7 +35,7 @@ class RepositoryDBImpl @Inject constructor(
     }
 
     override fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
-       return dao.getQuestionDetailListByNameQuiz(nameQuiz)
+        return dao.getQuestionDetailListByNameQuiz(nameQuiz)
     }
 
     override fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>> {
@@ -98,11 +95,20 @@ class RepositoryDBImpl @Inject constructor(
     }
 
     override fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int {
-        return dao.getIdQuizByNameQuiz(nameQuiz, tpovId) ?: dao.getIdQuizByNameQuiz(nameQuiz, 0) ?: 0
+        return dao.getIdQuizByNameQuiz(nameQuiz, tpovId) ?: dao.getIdQuizByNameQuiz(nameQuiz, 0)
+        ?: 0
     }
 
     override fun getNameQuizByIdQuiz(id: Int): String {
         return dao.getNameQuizByIdQuiz(id)!!
+    }
+
+    override fun getPlayersDB(): List<PlayersEntity> {
+        return dao.getPlayersDB()
+    }
+
+    override fun getPlayersDB(tpovId: Int): PlayersEntity {
+        return dao.getPlayersDB(tpovId)
     }
 
     override fun deleteQuestionById(id: Int) {

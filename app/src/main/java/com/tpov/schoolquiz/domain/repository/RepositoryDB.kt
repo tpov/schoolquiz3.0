@@ -51,6 +51,10 @@ interface RepositoryDB {
 
     fun getNameQuizByIdQuiz(id: Int): String
 
+    fun getPlayersDB(): List<PlayersEntity>
+
+    fun getPlayersDB(tpovId: Int): PlayersEntity
+
 
     fun deleteQuestionById(id: Int)
 

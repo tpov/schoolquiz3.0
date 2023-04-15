@@ -71,6 +71,29 @@ class RepositoryFBImpl @Inject constructor(
         return synthLiveData
     }
 
+    override fun getPlayersList() {
+        val playersListRef = FirebaseDatabase.getInstance().getReference("players/playersList")
+        playersListRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val playersList = mutableListOf<PlayersEntity>()
+
+                // Перебираем дочерние элементы и конвертируем их в объекты Player
+                for (playerSnapshot in snapshot.children) {
+                    val player = playerSnapshot.getValue(PlayersEntity::class.java)
+                    if (player != null) {
+                        playersList.add(player.copy(id = snapshot.key?.toInt()))
+                    }
+                }
+
+                dao.insertPlayersList(playersList)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Обработка ошибок
+            }
+        })
+    }
+
     override fun getTranslateFB(lvlTranslate: Int) {
         val questionRef3 = FirebaseDatabase.getInstance().getReference("question3")
         val questionRef4 = FirebaseDatabase.getInstance().getReference("question4")

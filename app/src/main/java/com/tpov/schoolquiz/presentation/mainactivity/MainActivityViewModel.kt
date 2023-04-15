@@ -38,12 +38,15 @@ class MainActivityViewModel @Inject constructor(
     private val insertProfileUseCase: InsertProfileUseCase,
     private val getQuestionListUseCase: GetQuestionListUseCase,
     private val getProfileUseCase: GetProfileUseCase,
-    private val getAllProfilesDBUseCase: GetAllProfilesDBUseCase
+    private val getAllProfilesDBUseCase: GetAllProfilesDBUseCase,
+    private val getPlayersDBUseCase: GetPlayersDBUseCase
 ) : ViewModel() {
 
     var tpovId = 0
 
     fun getAllProfiles() = getAllProfilesDBUseCase()
+    fun getPlayers() = getPlayersDBUseCase()
+
     init {
         SharedPreferencesManager.initialize(context)
     }
