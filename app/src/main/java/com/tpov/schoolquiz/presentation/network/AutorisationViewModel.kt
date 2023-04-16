@@ -89,7 +89,7 @@ class AutorisationViewModel @Inject constructor(
                             "",
                             city,
                             0,
-                            TimeInGames("", "", "0", 0),
+                            TimeInGames(0,0,0, 0),
                             AddPoints(0, 0, 0, 0, ""),
                             Dates(
                                 TimeManager.getCurrentTime(),

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "739888601abcd31ce7069b22c757e4a5",
+    "identityHash": "f7247d5aeb6745f1152974e236af12a5",
     "entities": [
       {
         "tableName": "table_data",
@@ -50,6 +50,116 @@
             "id"
           ],
           "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "table_players",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `gamer` INTEGER NOT NULL, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `timeInGamesAllTime` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `ratingPlayer` INTEGER NOT NULL, `ratingAnswer` INTEGER NOT NULL, `ratingQuiz` INTEGER NOT NULL, `skill` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gamer",
+            "columnName": "gamer",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sponsor",
+            "columnName": "sponsor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tester",
+            "columnName": "tester",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "translater",
+            "columnName": "translater",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "moderator",
+            "columnName": "moderator",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "admin",
+            "columnName": "admin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "developer",
+            "columnName": "developer",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesAllTime",
+            "columnName": "timeInGamesAllTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesInQuiz",
+            "columnName": "timeInGamesInQuiz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesInChat",
+            "columnName": "timeInGamesInChat",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeInGamesSmsPoints",
+            "columnName": "timeInGamesSmsPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ratingPlayer",
+            "columnName": "ratingPlayer",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ratingAnswer",
+            "columnName": "ratingAnswer",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ratingQuiz",
+            "columnName": "ratingQuiz",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skill",
+            "columnName": "skill",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
         },
         "indices": [],
         "foreignKeys": []
@@ -266,7 +376,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT NOT NULL, `name` TEXT NOT NULL, `nickname` TEXT NOT NULL, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `timeInGamesAllTime` TEXT NOT NULL, `timeInGamesInQuiz` TEXT NOT NULL, `timeInGamesInChat` TEXT NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsSkillInSeason` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyHeart` INTEGER NOT NULL, `buyGoldHeart` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsSkillInSeason` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `idFirebase` TEXT NOT NULL, `languages` TEXT NOT NULL, `gamer` INTEGER NOT NULL, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT NOT NULL, `name` TEXT NOT NULL, `nickname` TEXT NOT NULL, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `timeInGamesAllTime` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsSkillInSeason` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyHeart` INTEGER NOT NULL, `buyGoldHeart` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsSkillInSeason` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `idFirebase` TEXT NOT NULL, `languages` TEXT NOT NULL, `gamer` INTEGER NOT NULL, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -337,19 +447,19 @@
           {
             "fieldPath": "timeInGamesAllTime",
             "columnName": "timeInGamesAllTime",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
             "fieldPath": "timeInGamesInQuiz",
             "columnName": "timeInGamesInQuiz",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
             "fieldPath": "timeInGamesInChat",
             "columnName": "timeInGamesInChat",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -584,7 +694,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '739888601abcd31ce7069b22c757e4a5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f7247d5aeb6745f1152974e236af12a5')"
     ]
   }
 }

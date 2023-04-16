@@ -9,7 +9,7 @@ import com.tpov.schoolquiz.data.database.entities.*
 import kotlinx.coroutines.InternalCoroutinesApi
 
 @Database(
-    entities = [QuestionDetailEntity::class, QuestionEntity::class, QuizEntity::class, ApiQuestion::class, ProfileEntity::class, ChatEntity::class],
+    entities = [QuestionDetailEntity::class, PlayersEntity::class, QuestionEntity::class, QuizEntity::class, ApiQuestion::class, ProfileEntity::class, ChatEntity::class],
     version = 1,
     exportSchema = true
 )

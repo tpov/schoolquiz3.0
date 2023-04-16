@@ -52,22 +52,22 @@ class ProfileAdapter(
         holder.imvTrophy.text = profile.trophy
 
         val profiles = listOf(
-            playersEntity[0].gamer.toFloat(),
-            playersEntity[0].sponsor.toFloat(),
-            playersEntity[0].translater.toFloat(),
-            playersEntity[0].tester.toFloat(),
-            playersEntity[0].moderator.toFloat(),
-            playersEntity[0].admin.toFloat(),
-            playersEntity[0].developer.toFloat()
+            playersEntity[position].gamer.toFloat(),
+            playersEntity[position].sponsor.toFloat(),
+            playersEntity[position].translater.toFloat(),
+            playersEntity[position].tester.toFloat(),
+            playersEntity[position].moderator.toFloat(),
+            playersEntity[position].admin.toFloat(),
+            playersEntity[position].developer.toFloat()
         )
         val profilesDetail = listOf(
-            playersEntity[0].ratingPlayer.toFloat(),
-            playersEntity[0].ratingAnswer.toFloat(),
-            playersEntity[0].ratingQuiz.toFloat(),
-            playersEntity[0].timeInGamesInChat.toFloat(),
-            playersEntity[0].timeInGamesInQuiz.toFloat(),
-            playersEntity[0].timeInGamesSmsPoints.toFloat(),
-            playersEntity[0].timeInGamesAllTime.toFloat()
+            playersEntity[position].ratingPlayer.toFloat(),
+            playersEntity[position].ratingAnswer.toFloat(),
+            playersEntity[position].ratingQuiz.toFloat(),
+            playersEntity[position].timeInGamesInChat.toFloat(),
+            playersEntity[position].timeInGamesInQuiz.toFloat(),
+            playersEntity[position].timeInGamesSmsPoints.toFloat(),
+            playersEntity[position].timeInGamesAllTime.toFloat()
         )
 
         // Настройка RadarChart

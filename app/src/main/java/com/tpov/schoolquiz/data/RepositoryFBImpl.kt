@@ -72,19 +72,22 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     override fun getPlayersList() {
-        val playersListRef = FirebaseDatabase.getInstance().getReference("players/playersList")
+        val playersListRef = FirebaseDatabase.getInstance().getReference("players/listPlayers")
         playersListRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val playersList = mutableListOf<PlayersEntity>()
 
-                // Перебираем дочерние элементы и конвертируем их в объекты Player
+                val playersList = mutableListOf<PlayersEntity>()
+                log("getPlayersList snapshot: $snapshot")
                 for (playerSnapshot in snapshot.children) {
-                    val player = playerSnapshot.getValue(PlayersEntity::class.java)
+
+                    log("getPlayersList playerSnapshot: $playerSnapshot")
+                    val player = playerSnapshot.getValue(Players::class.java)
                     if (player != null) {
-                        playersList.add(player.copy(id = snapshot.key?.toInt()))
+                        log("getPlayersList player: $player")
+                        playersList.add(player.toPlayersEntity().copy(id = playerSnapshot.key?.toInt()))
                     }
                 }
-
+                dao.deletePlayersList()
                 dao.insertPlayersList(playersList)
             }
 
@@ -106,7 +109,7 @@ class RepositoryFBImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuestion snapshot: ${snapshot.key}")
                 for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
-                    if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!, getTpovId()) != null){
+                    if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!, getTpovId()) != null) {
                         log("getQuestion idQuizSnap: ${idQuizSnap.key}")
                         for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
                             log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
@@ -149,37 +152,39 @@ class RepositoryFBImpl @Inject constructor(
     override fun getChatData(): Flow<List<ChatEntity>> {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
         val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
-        chatValueEventListener = chatRef.limitToLast(10).addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                log("getChatData snapshot: $snapshot")
-                GlobalScope.launch {
-                    // Получаем данные из snapshot и сохраняем их в локальную базу данных
+        chatValueEventListener =
+            chatRef.limitToLast(10).addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    log("getChatData snapshot: $snapshot")
+                    GlobalScope.launch {
+                        // Получаем данные из snapshot и сохраняем их в локальную базу данных
 
-                    for (dateSnapshot in snapshot.children) {
-                        log("getChatData dateSnapshot: $dateSnapshot")
-                        for (data in dateSnapshot.children) {
-                            log("getChatData data: $data")
-                            val chat = data.getValue(Chat::class.java)
-                            val date1 = dateFormat.parse(chat?.time.toString())
-                            var date2: Date? = if (SharedPreferencesManager.getTimeMassage() == "0") {
-                                SharedPreferencesManager.setTimeMassage(TimeManager.getCurrentTime())
-                                dateFormat.parse(SharedPreferencesManager.getTimeMassage())
-                            } else dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+                        for (dateSnapshot in snapshot.children) {
+                            log("getChatData dateSnapshot: $dateSnapshot")
+                            for (data in dateSnapshot.children) {
+                                log("getChatData data: $data")
+                                val chat = data.getValue(Chat::class.java)
+                                val date1 = dateFormat.parse(chat?.time.toString())
+                                var date2: Date? =
+                                    if (SharedPreferencesManager.getTimeMassage() == "0") {
+                                        SharedPreferencesManager.setTimeMassage(TimeManager.getCurrentTime())
+                                        dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+                                    } else dateFormat.parse(SharedPreferencesManager.getTimeMassage())
 
-                            log("getChatData (date1.after(date2): ${(date1.after(date2))}")
-                            if (chat != null && (date1.after(date2))) {
-                                dao.insertChat(chat.toChatEntity())
-                                SharedPreferencesManager.setTimeMassage(chat.time)
+                                log("getChatData (date1.after(date2): ${(date1.after(date2))}")
+                                if (chat != null && (date1.after(date2))) {
+                                    dao.insertChat(chat.toChatEntity())
+                                    SharedPreferencesManager.setTimeMassage(chat.time)
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                // Обработка ошибок
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    // Обработка ошибок
+                }
+            })
         return dao.getChat()
     }
 
@@ -572,8 +577,8 @@ class RepositoryFBImpl @Inject constructor(
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef3.child("${question.idQuiz}/${question.id}/${question.language}")
                             .setValue(question).addOnSuccessListener {
-                            questionRef2.child("${question.idQuiz}").removeValue()
-                        }
+                                questionRef2.child("${question.idQuiz}").removeValue()
+                            }
                     }
                     if (quiz.stars != 0) {
                         dao.deleteQuizById(quiz.id!!)
@@ -591,8 +596,8 @@ class RepositoryFBImpl @Inject constructor(
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef4.child("${question.idQuiz}/${question.id}/${question.language}")
                             .setValue(question).addOnSuccessListener {
-                            questionRef3.child("${question.idQuiz}").removeValue()
-                        }
+                                questionRef3.child("${question.idQuiz}").removeValue()
+                            }
                     }
                     if (quiz.stars != 0) {
                         dao.deleteQuizById(quiz.id!!)
@@ -607,7 +612,8 @@ class RepositoryFBImpl @Inject constructor(
                             quizRef4.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef5.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                        questionRef5.child("${question.idQuiz}/${question.id}/${question.language}")
+                            .setValue(question)
                             .addOnSuccessListener {
                                 questionRef4.child("${question.idQuiz}").removeValue()
                             }
@@ -625,7 +631,8 @@ class RepositoryFBImpl @Inject constructor(
                             quizRef5.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef6.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                        questionRef6.child("${question.idQuiz}/${question.id}/${question.language}")
+                            .setValue(question)
                             .addOnSuccessListener {
                                 questionRef5.child("${question.idQuiz}").removeValue()
                             }
@@ -643,7 +650,8 @@ class RepositoryFBImpl @Inject constructor(
                             quizRef6.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef7.child("${question.idQuiz}/${question.id}/${question.language}").setValue(question)
+                        questionRef7.child("${question.idQuiz}/${question.id}/${question.language}")
+                            .setValue(question)
                             .addOnSuccessListener {
                                 questionRef6.child("${question.idQuiz}").removeValue()
                             }
@@ -655,7 +663,7 @@ class RepositoryFBImpl @Inject constructor(
                     }
                 }
                 8 -> {
-                            quizRef7.child("${quiz.id}").removeValue()
+                    quizRef7.child("${quiz.id}").removeValue()
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef7.child("${question.idQuiz}").removeValue()
                     }

@@ -37,7 +37,7 @@ data class Profile constructor(
         "",
         "",
         0,
-        TimeInGames("", "", "", 0),
+        TimeInGames(0,0,0, 0),
         AddPoints(0, 0, 0, 0, ""),
         Dates("", ""),
         "",
@@ -64,13 +64,13 @@ data class Qualification(
 
 @IgnoreExtraProperties
 data class TimeInGames(
-    val allTime: String,
-    val timeInQuiz: String,
-    val timeInChat: String,
+    val allTime: Int,
+    val timeInQuiz: Int,
+    val timeInChat: Int,
     val smsPoints: Int
 ) {
     constructor() : this(
-        "", "", "", 0
+        0,0,0, 0
     )
 }
 

@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.data.database.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.tpov.schoolquiz.data.fierbase.Players
 
 @Entity(tableName = "table_players")
 

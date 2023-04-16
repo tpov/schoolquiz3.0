@@ -33,7 +33,6 @@ class MainActivityViewModel @Inject constructor(
     private val setQuizFBUseCase: SetQuizDataFBUseCase,
     private val setQuestionFBUseCase: SetQuestionFBUseCase,
     private val setQuestionDetailFBUseCase: SetQuestionDetailFBUseCase,
-    private val updateQuizUseCase: UpdateQuizUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val insertProfileUseCase: InsertProfileUseCase,
     private val getQuestionListUseCase: GetQuestionListUseCase,
@@ -103,7 +102,7 @@ class MainActivityViewModel @Inject constructor(
             "",
             "",
             0,
-            TimeInGames("", "", "0", 0),
+            TimeInGames(0,0,0, 0),
             AddPoints(0, 0, 0, 0, ""),
             Dates(
                 TimeManager.getCurrentTime(),

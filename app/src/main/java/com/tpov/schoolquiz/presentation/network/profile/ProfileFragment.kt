@@ -90,6 +90,7 @@ class ProfileFragment : BaseFragment() {
                 4 -> {
                     if (!isExecuted[3]) {
                         viewModel.setQuizFB()
+                        viewModel.getPlayersList()
                         isExecuted[3] = true
                     }
                 }

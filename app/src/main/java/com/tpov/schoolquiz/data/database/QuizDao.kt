@@ -33,6 +33,9 @@ interface QuizDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertPlayersList(playersList: List<PlayersEntity>)
 
+    @Query("DELETE FROM table_players")
+    fun deletePlayersList()
+
     fun insertProfile(profile: ProfileEntity) {
         log("fun insertProfile $profile")
         insertProfileDB(profile)
