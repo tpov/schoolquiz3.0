@@ -1,4 +1,24 @@
 <resources>
+    <!-- ... -->
+    <string-array name="nick_colors">
+        <item>Красный</item>
+        <item>Зеленый</item>
+        <item>Синий</item>
+        <item>Желтый</item>
+    </string-array>
+    <string-array name="nick_color_spinner">
+        <item>Красный</item>
+        <item>Зеленый</item>
+        <item>Синий</item>
+        <item>Желтый</item>
+    </string-array>
+
+    <string-array name="languages">
+        <item>Русский</item>
+        <item>Украинский</item>
+        <item>Английский</item>
+        <item>Французкий</item>
+    </string-array>
 
     <string name="true_button">True</string>
     <string name="false_button">False</string>
@@ -104,5 +124,8 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="translated_question_hint">Перевод</string>
     <string name="source_question_hint">Название квеста</string>
     <string name="delete_resource">Удалить</string>
+    <string name="downloads_section">Загрузки</string>
+    <string name="profile_section">Профиль</string>
+    <string name="select_nick_color">Цвет ника</string>
 
 </resources>

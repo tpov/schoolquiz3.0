@@ -2,7 +2,6 @@ package com.tpov.schoolquiz.presentation.mainactivity
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.LayerDrawable
@@ -28,13 +27,13 @@ import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
-import com.tpov.schoolquiz.presentation.mainactivity.info.InfoActivity
+import com.tpov.schoolquiz.presentation.mainactivity.info.InfoFragment
 import com.tpov.schoolquiz.presentation.network.AutorisationFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.event.EventFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
-import com.tpov.schoolquiz.presentation.settings.SettingsActivity
+import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
@@ -255,7 +254,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_settings) -> {
-
+                    FragmentManager.setFragment(SettingsFragment.newInstance(), this)
                 }
 
             }
@@ -389,12 +388,11 @@ class MainActivity : AppCompatActivity() {
 
                 R.id.menu_settings -> {
                     log("setButtonNavListener() menu_settings")
-                    startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                 }
 
                 R.id.menu_info -> {
                     log("setButtonNavListener() menu_info")
-                    startActivity(Intent(this@MainActivity, InfoActivity::class.java))
+                    FragmentManager.setFragment(InfoFragment.newInstance(), this)
                 }
 
                 R.id.menu_network -> {

@@ -32,5 +32,6 @@
     <color name="grey">#958FBD</color>
     <color name="design3_top_end">#5040B8</color>
     <color name="checked_item_menu">#FFFFFF</color>
+    <color name="default_nick_color">#FFFFFF</color>
 
 </resources>
