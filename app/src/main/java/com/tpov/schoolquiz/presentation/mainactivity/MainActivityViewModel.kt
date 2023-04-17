@@ -163,4 +163,8 @@ class MainActivityViewModel @Inject constructor(
     fun log(massage: String) {
         Logcat.log(massage, "MainActivityViewModel", Logcat.LOG_VIEW_MODEL)
     }
+
+    fun deleteQuiz(id: Int) {
+
+    }
 }

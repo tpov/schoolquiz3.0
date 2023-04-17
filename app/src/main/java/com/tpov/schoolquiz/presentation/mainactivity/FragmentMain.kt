@@ -6,11 +6,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
@@ -26,6 +28,9 @@ import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.LIFE
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
+import kotlinx.android.synthetic.main.activity_list_question.recyclerView
+import kotlinx.android.synthetic.main.activity_main_item.view.delete_button_swipe
+import kotlinx.android.synthetic.main.title_fragment.rcView
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -71,7 +76,17 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
         mainViewModel.tpovId = sharedPref?.getInt("tpovId", -1) ?: -1
 
+        adapter = MainActivityAdapter(this, requireContext())
+        binding.rcView.layoutManager = LinearLayoutManager(activity)
+        binding.rcView.adapter = adapter
+        rcView.itemAnimator = RotateInItemAnimator()
+        // Обработка нажатия на кнопку удаления
+        adapter.onDeleteButtonClick = { quizEntity ->
+            // Ваш код для удаления или выполнения других действий с элементом
+            mainViewModel.deleteQuiz(quizEntity.itemId.toInt())
+        }
     }
+
 
     override fun onResume() {
         super.onResume()
