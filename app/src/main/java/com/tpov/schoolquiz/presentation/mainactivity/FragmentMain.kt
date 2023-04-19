@@ -129,7 +129,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         Log.d("ffsefsf", "deleteItem = $id")
     }
 
-    override fun onClick(id: Int, stars: Int) {
+    override fun onClick(id: Int) {
         val intent = Intent(activity, QuestionActivity::class.java)
         intent.putExtra(NAME_USER, "user")
         intent.putExtra(ID_QUIZ, id)
