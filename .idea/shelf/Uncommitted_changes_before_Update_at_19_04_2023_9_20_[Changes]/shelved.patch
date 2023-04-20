@@ -1,0 +1,503 @@
+Index: app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityAdapter.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityAdapter.kt b/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityAdapter.kt
+--- a/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityAdapter.kt	
++++ b/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityAdapter.kt	
+@@ -18,7 +18,6 @@
+ import androidx.recyclerview.widget.RecyclerView
+ import com.tpov.schoolquiz.R
+ import com.tpov.schoolquiz.data.database.entities.QuizEntity
+-import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
+ import com.tpov.schoolquiz.presentation.custom.Logcat
+ import kotlinx.android.synthetic.main.activity_main_item.view.constraint_layout
+ import kotlinx.android.synthetic.main.activity_main_item.view.delete_button_swipe
+@@ -43,6 +42,7 @@
+         super.onAttachedToRecyclerView(recyclerView)
+ 
+         log("fun onAttachedToRecyclerView()")
++        var swipeCompleted = false
+         var animate = false
+         val itemTouchHelperCallback = object : ItemTouchHelper.Callback() {
+             override fun getMovementFlags(
+@@ -71,13 +71,7 @@
+             }
+ 
+             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+-
+                 log("onAttachedToRecyclerView onSwiped()")
+-                val itemView = viewHolder.itemView
+-                val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+-                val position = viewHolder.adapterPosition
+-                // Получаем позицию свайпнутого элемента
+-                notifyItemChanged(position)
+             }
+ 
+             override fun onChildDraw(
+@@ -94,7 +88,7 @@
+                     val width = holder.constraintLayout.width.toFloat()
+                     val maxSwipe = -width * 0.9f // 90% от ширины экрана
+ 
+-                    val swipeSlowdownFactor = 0.5f
++                    val swipeSlowdownFactor = 0.7f
+ 
+                     val adjustedDX = dX * swipeSlowdownFactor
+                     val translationX = if (adjustedDX < 0) max(maxSwipe, adjustedDX) else min(width * 0.2f, adjustedDX)
+@@ -103,7 +97,7 @@
+ 
+                     val showButtonsThreshold = -width * 0.4f // 40% от ширины экрана
+ 
+-                    if (!isCurrentlyActive) {
++                    if (!isCurrentlyActive && !swipeCompleted) {
+                         if (translationX <= showButtonsThreshold) {
+                             if (viewHolder.itemView.delete_button_swipe.visibility != View.VISIBLE) {
+                                 animateButtonsIn(viewHolder)
+@@ -113,6 +107,9 @@
+                                 animateButtonsOut(viewHolder)
+                             }
+                         }
++                        swipeCompleted = true
++                    } else if (!isCurrentlyActive) {
++                        swipeCompleted = false
+                     }
+                 }
+ 
+@@ -137,20 +134,20 @@
+         val editButton = viewHolder.itemView.edit_button_swipe
+         val sendButton = viewHolder.itemView.send_button_swipe
+ 
+-        val buttons = arrayOf(deleteButton, editButton, sendButton)
++        val buttons = arrayOf(editButton, deleteButton, sendButton)
+ 
+         for (i in buttons.indices) {
+             buttons[i].visibility = View.VISIBLE
+             buttons[i].translationX =
+                 viewHolder.itemView.findViewById<RelativeLayout>(R.id.mainLayout).width.toFloat()
+ 
+-            val delay = 500L * i
++            val delay = 100L * i
+ 
+             buttons[i].animate()
+                 .setStartDelay(delay)
+                 .translationX(0f)
+                 .setInterpolator(AccelerateDecelerateInterpolator())
+-                .setDuration(400)
++                .setDuration(200)
+                 .start()
+         }
+ 
+@@ -164,18 +161,18 @@
+         val editButton = viewHolder.itemView.edit_button_swipe
+         val sendButton = viewHolder.itemView.send_button_swipe
+ 
+-        val buttons = arrayOf(deleteButton, editButton, sendButton)
++        val buttons = arrayOf(sendButton, deleteButton, editButton)
+ 
+         for (i in buttons.indices) {
+             buttons[i].translationX = 0f
+ 
+-            val delay = 50L * i
++            val delay = 100L * i
+ 
+             buttons[i].animate()
+                 .translationX(viewHolder.itemView.findViewById<RelativeLayout>(R.id.mainLayout).width.toFloat())
+                 .setInterpolator(AccelerateDecelerateInterpolator())
++                .setStartDelay(delay)
+                 .setDuration(200)
+-                .setStartDelay(delay)
+                 .withEndAction {
+                     buttons[i].visibility = View.GONE
+                 }
+@@ -188,179 +185,193 @@
+     }
+ 
+     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
+-    val view = LayoutInflater.from(parent.context)
+-        .inflate(R.layout.activity_main_item, parent, false)
++        val view = LayoutInflater.from(parent.context)
++            .inflate(R.layout.activity_main_item, parent, false)
+ 
+-    val holder = ItemHolder(view)
++        val holder = ItemHolder(view)
+ 
+-    holder.deleteButton.setOnClickListener {
+-        val position = holder.adapterPosition
+-        if (position != RecyclerView.NO_POSITION) {
+-            listener.deleteItem(position)
+-        }
+-    }
++        holder.deleteButton.setOnClickListener {
++            val position = holder.adapterPosition
++            if (position != RecyclerView.NO_POSITION) {
++                listener.deleteItem(position)
++            }
++        }
+ 
+-    holder.editButton.setOnClickListener {
+-        val position = holder.adapterPosition
+-        if (position != RecyclerView.NO_POSITION) {
+-            // Добавьте здесь ваш код для обработки нажатия на кнопку редактирования
+-        }
+-    }
++        holder.editButton.setOnClickListener {
++            val position = holder.adapterPosition
++            if (position != RecyclerView.NO_POSITION) {
++                // Добавьте здесь ваш код для обработки нажатия на кнопку редактирования
++            }
++        }
+ 
+-    holder.sendButton.setOnClickListener {
+-        val position = holder.adapterPosition
+-        if (position != RecyclerView.NO_POSITION) {
+-            listener.sendItem(getItem(position))
+-        }
+-    }
++        holder.sendButton.setOnClickListener {
++            val position = holder.adapterPosition
++            if (position != RecyclerView.NO_POSITION) {
++                listener.sendItem(getItem(position))
++            }
++        }
+ 
+-    return holder
+-}
++        return holder
++    }
+ 
+ 
+-override fun onBindViewHolder(holder: ItemHolder, position: Int) {
+-    val item = getItem(position)
+-    holder.setData(item, listener, context)
+-    holder.deleteButton.setOnClickListener {
+-        listener.deleteItem(position)
++    override fun onBindViewHolder(holder: ItemHolder, position: Int) {
++        val item = getItem(position)
++        holder.setData(item, listener, context)
++        holder.deleteButton.setOnClickListener {
++            listener.deleteItem(position)
+ 
+-        log("onBindViewHolder deleteItem")
+-        // Обработка нажатия на кнопку удаления
+-    }
+-    holder.editButton.setOnClickListener {
++            log("onBindViewHolder deleteItem")
++            // Обработка нажатия на кнопку удаления
++        }
++        holder.editButton.setOnClickListener {
+ 
+-        log("onBindViewHolder editButton")
+-    }
+-    holder.sendButton.setOnClickListener {
+-        log("onBindViewHolder sendButton")
+-        listener.sendItem(item)
+-    }
+-}
++            log("onBindViewHolder editButton")
++        }
++        holder.sendButton.setOnClickListener {
++            log("onBindViewHolder sendButton")
++            listener.sendItem(item)
++        }
++    }
+ 
+ 
+-class ItemComparator : DiffUtil.ItemCallback<QuizEntity>() {
+-    override fun areItemsTheSame(oldItem: QuizEntity, newItem: QuizEntity): Boolean {
+-        return oldItem.id == newItem.id
+-    }
++    class ItemComparator : DiffUtil.ItemCallback<QuizEntity>() {
++        override fun areItemsTheSame(oldItem: QuizEntity, newItem: QuizEntity): Boolean {
++            return oldItem.id == newItem.id
++        }
+ 
+-    override fun areContentsTheSame(oldItem: QuizEntity, newItem: QuizEntity): Boolean {
+-        return oldItem == newItem
+-    }
+-}
++        override fun areContentsTheSame(oldItem: QuizEntity, newItem: QuizEntity): Boolean {
++            return oldItem == newItem
++        }
++    }
+ 
+-class ItemHolder(view: View) : RecyclerView.ViewHolder(view) {
++    class ItemHolder(view: View) : RecyclerView.ViewHolder(view) {
+ 
+-    @OptIn(InternalCoroutinesApi::class)
+-    fun log(msg: String) {
+-        Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)
+-    }
+-    val constraintLayout: ConstraintLayout = itemView.findViewById(R.id.constraint_layout)
++        @OptIn(InternalCoroutinesApi::class)
++        fun log(msg: String) {
++            Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)
++        }
++
++        val constraintLayout: ConstraintLayout = itemView.findViewById(R.id.constraint_layout)
+ 
+-    //val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
+-    private val binding = ActivityMainItemBinding.bind(view)
+-    val swipeLayout: LinearLayout = itemView.findViewById(R.id.swipe_layout)
+-    val linearLayout: LinearLayout = itemView.findViewById(R.id.linearlayout)
+-    val mainLayout: RelativeLayout = itemView.findViewById(R.id.mainLayout)
+-    val editButton: ImageButton = itemView.findViewById(R.id.edit_button_swipe)
+-    val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
+-    val sendButton: ImageButton = itemView.findViewById(R.id.send_button_swipe)
+-    fun setData(quizEntity: QuizEntity, listener: Listener, context: Context) = with(binding) {
+-        deleteButton.setOnClickListener {
+-            log("onBindViewHolder deleteButton")
+-        }
+-        try {
+-            // Определяем размеры битмапа
+-            val width = 120
+-            val height = 75
++        //val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
++        private val binding = com.tpov.schoolquiz.databinding.ActivityMainItemBinding.bind(view)
++        val swipeLayout: LinearLayout = itemView.findViewById(R.id.swipe_layout)
++        val linearLayout: LinearLayout = itemView.findViewById(R.id.linearlayout)
++        val mainLayout: RelativeLayout = itemView.findViewById(R.id.mainLayout)
++        val editButton: ImageButton = itemView.findViewById(R.id.edit_button_swipe)
++        val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
++        val sendButton: ImageButton = itemView.findViewById(R.id.send_button_swipe)
++
++        fun setData(quizEntity: QuizEntity, listener: Listener, context: Context) = with(binding) {
++            swipeLayout.setOnClickListener {
++
++                log("swipeLayout")
++            }
++            linearLayout.setOnClickListener {
++
++                log("linearLayout")
++            }
++            mainLayout.setOnClickListener {
++
++                log("mainLayout")
++            }
++            deleteButton.setOnClickListener {
++                log("onBindViewHolder deleteButton")
++            }
++            try {
++                // Определяем размеры битмапа
++                val width = 120
++                val height = 75
+ 
+ // Создаем битмап с закругленными углами
+-            val output = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+-            val canvas = Canvas(output)
+-            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+-            val rect = RectF(-25f, 0f, width.toFloat() - 25, height.toFloat())
++                val output = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
++                val canvas = Canvas(output)
++                val paint = Paint(Paint.ANTI_ALIAS_FLAG)
++                val rect = RectF(-25f, 0f, width.toFloat() - 25, height.toFloat())
+ 
+ 
+-            paint.color = Color.WHITE
+-            canvas.drawRoundRect(rect, 25f, 25f, paint)
++                paint.color = Color.WHITE
++                canvas.drawRoundRect(rect, 25f, 25f, paint)
+ 
+ // Создаем битмап из файла
+-            val file = File(context.cacheDir, "${quizEntity.picture}")
+-            val bitmap = BitmapFactory.decodeFile(file.path)
++                val file = File(context.cacheDir, "${quizEntity.picture}")
++                val bitmap = BitmapFactory.decodeFile(file.path)
+ 
+ // Создаем шейдер с битмапом, вырезанным в форме закругленного прямоугольника
+-            val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+-            val matrix = Matrix()
++                val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
++                val matrix = Matrix()
+ 
+-            matrix.setRectToRect(
+-                RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()),
+-                rect,
+-                Matrix.ScaleToFit.FILL
+-            )
+-            shader.setLocalMatrix(matrix)
++                matrix.setRectToRect(
++                    RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()),
++                    rect,
++                    Matrix.ScaleToFit.FILL
++                )
++                shader.setLocalMatrix(matrix)
+ 
+ // Создаем Paint и устанавливаем его шейдер
+-            paint.shader = shader
++                paint.shader = shader
+ 
+ // Отображаем битмап с закругленными углами и картинкой внутри
+-            canvas.drawRoundRect(rect, 25f, 25f, paint)
+-            val drawable = BitmapDrawable(context.resources, output)
+-            imageView.setImageDrawable(drawable)
++                canvas.drawRoundRect(rect, 25f, 25f, paint)
++                val drawable = BitmapDrawable(context.resources, output)
++                imageView.setImageDrawable(drawable)
+ 
+-        } catch (e: Exception) {
++            } catch (e: Exception) {
+ 
+-            log("onBindViewHolder Exception $e")
+-        }
++                log("onBindViewHolder Exception $e")
++            }
+ 
+ 
+-        var goHardQuiz =
+-            "${this.root.context.getString(R.string.go_hard_question)} - ${quizEntity.nameQuiz}"
++            var goHardQuiz =
++                "${this.root.context.getString(R.string.go_hard_question)} - ${quizEntity.nameQuiz}"
+ 
+-        if (quizEntity.stars == MAX_PERCENT) {
+-            Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
+-        }
++            if (quizEntity.stars == MAX_PERCENT) {
++                Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
++            }
+ 
+-        if (quizEntity.stars >= MAX_PERCENT) {
++            if (quizEntity.stars >= MAX_PERCENT) {
+ 
+-        } else if (quizEntity.stars == 120) {
++            } else if (quizEntity.stars == 120) {
+ 
+ 
+-        }
++            }
+ 
+-        if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
+-            (quizEntity.stars.toFloat() / 50)
+-        else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
++            if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
++                (quizEntity.stars.toFloat() / 50)
++            else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
+ 
+-        mainTitleButton.text = quizEntity.nameQuiz
+-        mainTitleButton.setOnClickListener {
+-            listener.onClick(quizEntity.id ?: 0, quizEntity.stars)
+-        }
++            mainTitleButton.text = quizEntity.nameQuiz
++            mainTitleButton.setOnClickListener {
++                listener.onClick(quizEntity.id ?: 0, quizEntity.stars)
++            }
+ 
+-    }
++        }
+ 
+-    companion object {
+-        const val PERCENT_TWO_STARS = 0.83333
+-        const val MAX_PERCENT = 100
++        companion object {
++            const val PERCENT_TWO_STARS = 0.83333
++            const val MAX_PERCENT = 100
+ 
+-        fun create(parent: ViewGroup): ItemHolder {
+-            return ItemHolder(
+-                LayoutInflater.from(parent.context)
+-                    .inflate(R.layout.activity_main_item, parent, false)
+-            )
+-        }
+-    }
+-}
++            fun create(parent: ViewGroup): ItemHolder {
++                return ItemHolder(
++                    LayoutInflater.from(parent.context)
++                        .inflate(R.layout.activity_main_item, parent, false)
++                )
++            }
++        }
++    }
+ 
+-interface Listener {
++    interface Listener {
+ 
+-    fun deleteItem(id: Int)
+-    fun onClick(id: Int, stars: Int)
+-    fun shareItem(id: Int, stars: Int)
+-    fun sendItem(quizEntity: QuizEntity)
+-    fun reloadData()
+-}
++        fun deleteItem(id: Int)
++        fun onClick(id: Int, stars: Int)
++        fun shareItem(id: Int, stars: Int)
++        fun sendItem(quizEntity: QuizEntity)
++        fun reloadData()
++    }
+ 
+-@OptIn(InternalCoroutinesApi::class)
+-fun log(msg: String) {
+-    Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)
+-}
++    @OptIn(InternalCoroutinesApi::class)
++    fun log(msg: String) {
++        Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)
++    }
+ }
+\ No newline at end of file
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	
++++ b/.idea/workspace.xml	
+@@ -15,28 +15,22 @@
+     <option name="autoReloadType" value="NONE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Create setting and info">
+-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/RotateInItemAnimator.kt" afterDir="false" />
++    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Create animation main fragment">
+       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/FragmentMain.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/FragmentMain.kt" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityAdapter.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityViewModel.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main_item.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main_item.xml" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+     <option name="LAST_RESOLUTION" value="IGNORE" />
+   </component>
+-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
++  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[C:\Users\ovasilenko\.android\avd\Pixel_2_API_30.avd]" />
+   <component name="ExternalProjectsData">
+     <projectState path="$PROJECT_DIR$">
+       <ProjectState />
+@@ -65,6 +59,7 @@
+       </map>
+     </option>
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
++    <option name="UPDATE_TYPE" value="REBASE" />
+   </component>
+   <component name="GitSEFilterConfiguration">
+     <file-type-list>
+@@ -97,6 +92,8 @@
+   "keyToString": {
+     "RunOnceActivity.cidr.known.project.marker": "true",
+     "android-custom-viewC:/Users/ovasilenko/.gradle/caches/modules-2/files-2.1/androidx.recyclerview/recyclerview/1.1.0/f2bdf79e1977939817f54a9d3e2f6bc52b63bdd0/recyclerview-1.1.0-sources.jar!/androidx/recyclerview/widget/RecyclerView.java_SELECTED": "RecyclerView",
++    "android-custom-viewE:/SchoolQuiz/app/src/main/java/com/tpov/schoolquiz/presentation/custom/InterceptTouchConstraintLayout.kt_SELECTED": "InterceptTouchConstraintLayout",
++    "android-custom-viewE:/SchoolQuiz/app/src/main/java/com/tpov/schoolquiz/presentation/custom/SwipeRelativeLayout.kt_SELECTED": "SwipeRelativeLayout",
+     "cidr.known.project.marker": "true",
+     "project.structure.last.edited": "SDK Location",
+     "project.structure.proportion": "0.17",
+@@ -372,6 +369,7 @@
+     <MESSAGE value="create main list quiz and home list quiz" />
+     <MESSAGE value="edit merge front fragment - arena fragment" />
+     <MESSAGE value="Create setting and info" />
+-    <option name="LAST_COMMIT_MESSAGE" value="Create setting and info" />
++    <MESSAGE value="Create animation main fragment" />
++    <option name="LAST_COMMIT_MESSAGE" value="Create animation main fragment" />
+   </component>
+ </project>
+\ No newline at end of file
