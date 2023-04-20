@@ -166,13 +166,6 @@
                 android:thumbTint="@color/num_chack_norice_red"
                 android:trackTint="@color/num_chack_norice_green" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1.2"
-                android:orientation="horizontal">
-
-            </LinearLayout>
 
             <ImageView
                 android:id="@+id/imageView"
