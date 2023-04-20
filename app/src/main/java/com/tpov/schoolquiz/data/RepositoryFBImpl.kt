@@ -109,7 +109,7 @@ class RepositoryFBImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuestion snapshot: ${snapshot.key}")
                 for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
-                    if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!, getTpovId()) != null) {
+                    if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!) != null) {
                         log("getQuestion idQuizSnap: ${idQuizSnap.key}")
                         for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
                             log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")

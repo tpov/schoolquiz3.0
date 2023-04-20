@@ -2,8 +2,6 @@ package com.tpov.schoolquiz.presentation.mainactivity
 
 import android.content.Context
 import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
-import android.transition.Transition
 import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
@@ -13,21 +11,16 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.CustomTarget
-import com.squareup.picasso.Picasso
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import jp.wasabeef.picasso.transformations.RoundedCornersTransformation
+import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
-import java.lang.ref.Cleaner.create
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.max
@@ -311,9 +304,8 @@ class MainActivityAdapter(
                     .apply(
                         RequestOptions()
                             .override(widthInPx, heightInPx)
-                            .fitCenter()
                             .transform(
-                                CenterCrop(),
+                                ResizeAndCrop(widthInPx, heightInPx),
                                 GranularRoundedCorners(0f, radinPx.toFloat(), radinPx.toFloat(), 0f)
                             )
                     )
