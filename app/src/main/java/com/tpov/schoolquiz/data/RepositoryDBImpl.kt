@@ -2,12 +2,16 @@ package com.tpov.schoolquiz.data
 
 import androidx.lifecycle.LiveData
 import com.tpov.schoolquiz.data.database.QuizDao
-import com.tpov.schoolquiz.data.database.entities.*
+import com.tpov.schoolquiz.data.database.entities.ApiQuestion
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-import kotlin.contracts.ReturnsNotNull
 
 
 @InternalCoroutinesApi
@@ -78,8 +82,8 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getTranslateEvent()
     }
 
-    override fun getQuizById(id: Int, tpovId: Int): QuizEntity {
-        return dao.getQuizById(id, tpovId)
+    override fun getQuizById(id: Int): QuizEntity {
+        return dao.getQuizById(id)
     }
 
     override fun getQuestionList(): List<QuestionEntity> {

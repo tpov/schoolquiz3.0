@@ -5,11 +5,24 @@ import android.content.Context
 import android.os.CountDownTimer
 import android.util.Log
 import android.widget.Toast
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
+import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
+import com.tpov.schoolquiz.domain.DeleteQuizUseCase
+import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
+import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
+import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
+import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
+import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuizUseCase
+import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
+import com.tpov.schoolquiz.domain.UpdateQuizUseCase
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
@@ -171,7 +184,8 @@ class QuestionViewModel @Inject constructor(
             )
         }
         questionDetailListThis = listQuestionDetail
-        quizThis = getQuizUseCase(idQuiz, tpovId.toInt())
+
+        quizThis = getQuizUseCase(idQuiz)
     }
 
 

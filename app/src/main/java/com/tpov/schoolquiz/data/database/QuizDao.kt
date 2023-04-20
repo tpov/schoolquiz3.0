@@ -176,9 +176,9 @@ interface QuizDao {
         log("fun getListApiQuestion return: ${getListApiQuestionDB()}")
         return getListApiQuestionDB()
     }
-    fun getQuizById(id: Int, tpovId: Int): QuizEntity {
-        log("fun getQuizById, id: $id, tpovId: $tpovId, return: ${getQuizByIdDB(id, tpovId)}")
-        return getQuizByIdDB(id, tpovId)
+    fun getQuizById(id: Int): QuizEntity {
+        log("fun getQuizById, id: $id return: ${getQuizByIdDB(id)}")
+        return getQuizByIdDB(id)
     }
     fun getQuizListIdByTpovId(tpovId: Int): Int {
         log("fun getQuizListIdByTpovId, tpovId: $tpovId, return: ${getQuizListIdByTpovIdDB(tpovId)}")
@@ -255,8 +255,8 @@ interface QuizDao {
     @Query("SELECT * FROM table_generate_question")
     fun getListApiQuestionDB(): List<ApiQuestion>
 
-    @Query("SELECT * FROM front_list WHERE id LIKE :id AND tpovId LIKE :tpovId") // 50/50
-    fun getQuizByIdDB(id: Int, tpovId: Int): QuizEntity
+    @Query("SELECT * FROM front_list WHERE id LIKE :id")
+    fun getQuizByIdDB(id: Int): QuizEntity
 
     @Query("SELECT id FROM front_list WHERE tpovId LIKE :tpovId")
     fun getQuizListIdByTpovIdDB(tpovId: Int): Int

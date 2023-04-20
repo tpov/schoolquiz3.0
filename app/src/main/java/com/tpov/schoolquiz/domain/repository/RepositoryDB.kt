@@ -1,7 +1,12 @@
 package com.tpov.schoolquiz.domain.repository
 
 import androidx.lifecycle.LiveData
-import com.tpov.schoolquiz.data.database.entities.*
+import com.tpov.schoolquiz.data.database.entities.ApiQuestion
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import kotlinx.coroutines.flow.Flow
 
 // TODO: 25.07.2022 LiveData -> Flow
@@ -31,7 +36,7 @@ interface RepositoryDB {
 
     fun getQuizList(tpovId: Int): List<QuizEntity>
 
-    fun getQuizById(id: Int, tpovId: Int): QuizEntity
+    fun getQuizById(id: Int): QuizEntity
 
     fun getQuizEvent(): List<QuizEntity>
 
