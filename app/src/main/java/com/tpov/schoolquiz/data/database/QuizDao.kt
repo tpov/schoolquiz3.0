@@ -249,6 +249,8 @@ interface QuizDao {
 
     @Query("SELECT * FROM front_list WHERE tpovId LIKE :tpovId")
     fun getQuizLiveDataDB(tpovId: Int): LiveData<List<QuizEntity>>
+    @Query("SELECT * FROM front_list")
+    fun getEventLiveDataDB(): LiveData<List<QuizEntity>>
 
     @Query("SELECT * FROM table_generate_question")
     fun getListApiQuestionDB(): List<ApiQuestion>

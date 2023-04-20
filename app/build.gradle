@@ -124,7 +124,6 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
-    implementation 'com.squareup.picasso:picasso:2.71828'
 
     implementation platform('com.google.firebase:firebase-bom:31.2.0')
     implementation 'com.google.firebase:firebase-auth'
@@ -141,6 +140,12 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:20.4.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation "org.jetbrains.kotlin:kotlin-parcelize-runtime:$kotlin_version"
+
+    implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'jp.wasabeef:picasso-transformations:2.4.0'
+    implementation 'com.github.bumptech.glide:glide:4.13.2'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
+    implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
 }
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

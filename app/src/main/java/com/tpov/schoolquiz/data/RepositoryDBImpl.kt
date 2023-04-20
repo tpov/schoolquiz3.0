@@ -42,6 +42,10 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getQuizLiveData(tpovId)
     }
 
+    override fun getEventLiveData(): LiveData<List<QuizEntity>> {
+        return dao.getEventLiveDataDB()
+    }
+
     override fun getQuestionDetailList(): List<QuestionDetailEntity> {
         return dao.getQuestionDetailList()
     }

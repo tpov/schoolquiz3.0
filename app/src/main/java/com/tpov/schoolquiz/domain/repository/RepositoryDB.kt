@@ -39,6 +39,7 @@ interface RepositoryDB {
 
     fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>>
 
+    fun getEventLiveData(): LiveData<List<QuizEntity>>
     fun getQuestionList(): List<QuestionEntity>
 
     fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity>

@@ -38,7 +38,8 @@ class MainActivityViewModel @Inject constructor(
     private val getQuestionListUseCase: GetQuestionListUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val getAllProfilesDBUseCase: GetAllProfilesDBUseCase,
-    private val getPlayersDBUseCase: GetPlayersDBUseCase
+    private val getPlayersDBUseCase: GetPlayersDBUseCase,
+    val getEventLiveDataUseCase: GetEventLiveDataUseCase
 ) : ViewModel() {
 
     var tpovId = 0

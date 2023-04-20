@@ -77,10 +77,6 @@ class EventViewModel @Inject constructor(
                     translate1Question.add(question)
                 }
             }
-
-        log("getTranslateList translateEditQuestion: $translateEditQuestion")
-        log("getTranslateList translate2Question: $translate2Question")
-        log("getTranslateList translate1Question: $translate1Question")
     }
 
     fun getEventDeveloper() {

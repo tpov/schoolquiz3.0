@@ -96,7 +96,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
-        mainViewModel.getQuizLiveData.observe(viewLifecycleOwner) { quizList ->
+        mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             adapter.submitList(quizList.filter { it.event == isMyQuiz })
         }
 

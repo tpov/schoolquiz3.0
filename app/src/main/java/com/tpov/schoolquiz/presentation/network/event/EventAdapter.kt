@@ -197,7 +197,6 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
-            itemView.findViewById<LinearLayout>(R.id.infoQuiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName
@@ -221,7 +220,6 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.GONE
-            itemView.findViewById<LinearLayout>(R.id.infoQuiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName
             itemView.findViewById<TextView>(R.id.tvTime).text = quiz.data
@@ -242,7 +240,6 @@ class EventAdapter(
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
-            itemView.findViewById<LinearLayout>(R.id.infoQuiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName

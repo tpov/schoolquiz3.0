@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.presentation.mainactivity
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
+import android.transition.Transition
 import android.view.*
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
@@ -11,10 +12,18 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomTarget
+import com.squareup.picasso.Picasso
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import jp.wasabeef.picasso.transformations.RoundedCornersTransformation
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
@@ -236,9 +245,6 @@ class MainActivityAdapter(
 
         //val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
         private val binding = ActivityMainItemBinding.bind(view)
-        val swipeLayout: LinearLayout = itemView.findViewById(R.id.swipe_layout)
-        val linearLayout: LinearLayout = itemView.findViewById(R.id.linearlayout)
-        val mainLayout: RelativeLayout = itemView.findViewById(R.id.mainLayout)
         val editButton: ImageButton = itemView.findViewById(R.id.edit_button_swipe)
         val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
         val sendButton: ImageButton = itemView.findViewById(R.id.send_button_swipe)
@@ -259,6 +265,7 @@ class MainActivityAdapter(
                             downX = event.x
                             downY = event.y
                         }
+
                         MotionEvent.ACTION_UP -> {
                             val deltaX = event.x - downX
                             val deltaY = event.y - downY
@@ -282,48 +289,39 @@ class MainActivityAdapter(
 
         fun setData(quizEntity: QuizEntity, listener: Listener, context: Context) = with(binding) {
             try {
-                // Определяем размеры битмапа
-                val width = 120
-                val height = 75
 
-// Создаем битмап с закругленными углами
-                val output = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                val canvas = Canvas(output)
-                val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-                val rect = RectF(-25f, 0f, width.toFloat() - 25, height.toFloat())
-
-
-                paint.color = Color.WHITE
-                canvas.drawRoundRect(rect, 25f, 25f, paint)
-
-// Создаем битмап из файла
                 val file = File(context.cacheDir, "${quizEntity.picture}")
-                val bitmap = BitmapFactory.decodeFile(file.path)
 
-// Создаем шейдер с битмапом, вырезанным в форме закругленного прямоугольника
-                val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-                val matrix = Matrix()
+                fun dpToPx(dp: Int, context: Context): Int {
+                    val density = context.resources.displayMetrics.density
+                    return (dp * density).toInt()
+                }
 
-                matrix.setRectToRect(
-                    RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()),
-                    rect,
-                    Matrix.ScaleToFit.FILL
-                )
-                shader.setLocalMatrix(matrix)
+                val widthInDp = 100
+                val heightInDp = 75
+                val radius = 25
 
-// Создаем Paint и устанавливаем его шейдер
-                paint.shader = shader
+                val widthInPx = dpToPx(widthInDp, context)
+                val heightInPx = dpToPx(heightInDp, context)
+                val radinPx = dpToPx(radius, context)
 
-// Отображаем битмап с закругленными углами и картинкой внутри
-                canvas.drawRoundRect(rect, 25f, 25f, paint)
-                val drawable = BitmapDrawable(context.resources, output)
-                imageView.setImageDrawable(drawable)
+                Glide.with(context)
+                    .asBitmap()
+                    .load(file)
+                    .apply(
+                        RequestOptions()
+                            .override(widthInPx, heightInPx)
+                            .fitCenter()
+                            .transform(
+                                CenterCrop(),
+                                GranularRoundedCorners(0f, radinPx.toFloat(), radinPx.toFloat(), 0f)
+                            )
+                    )
+                    .into(imageView)
 
             } catch (e: Exception) {
-
                 log("onBindViewHolder Exception $e")
             }
-
 
             var goHardQuiz =
                 "${this.root.context.getString(R.string.go_hard_question)} - ${quizEntity.nameQuiz}"
@@ -336,7 +334,6 @@ class MainActivityAdapter(
 
             } else if (quizEntity.stars == 120) {
 
-
             }
 
             if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
@@ -347,7 +344,6 @@ class MainActivityAdapter(
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id ?: 0)
             }
-
         }
 
         companion object {
@@ -361,16 +357,14 @@ class MainActivityAdapter(
                     listener
                 )
             }
-
-    }
+        }
 
         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
             listener.onClick(adapterPosition)
             return true
         }
-
-
     }
+
     interface Listener {
 
         fun deleteItem(id: Int)
