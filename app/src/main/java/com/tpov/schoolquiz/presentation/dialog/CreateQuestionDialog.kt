@@ -29,7 +29,6 @@ import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class CreateQuestionDialog() : DialogFragment() {
@@ -269,8 +268,9 @@ class CreateQuestionDialog() : DialogFragment() {
                     QuizEntity(
                         null,
                         nameQuiz,
-                        mainActivityViewModel.getProfile.name ?: "user",
+                        mainActivityViewModel.getProfile.name,
                         TimeManager.getCurrentTime(),
+                        0,
                         0,
                         0,
                         0,

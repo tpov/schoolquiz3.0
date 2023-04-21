@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
-import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.data.fierbase.Chat
 import com.tpov.schoolquiz.databinding.FragmentChatBinding
 import com.tpov.schoolquiz.presentation.MainApp
@@ -66,7 +65,8 @@ class ChatFragment : BaseFragment() {
                     msg = message,
                     importance = 0,
                     personalSms = 0,
-                    icon = chatViewModel.getProfile(tpovId).logo.toString()
+                    icon = chatViewModel.getProfile(tpovId).logo.toString(),
+                    0
                 )
                 sendMessage(chatMessage)
                 binding.messageEditText.setText("")
@@ -127,7 +127,8 @@ class ChatFragment : BaseFragment() {
                 msg = chatEntity.msg,
                 importance = chatEntity.importance,
                 personalSms = chatEntity.personalSms,
-                icon = chatEntity.icon
+                icon = chatEntity.icon,
+                rating = chatEntity.rating
             )
         }
     }

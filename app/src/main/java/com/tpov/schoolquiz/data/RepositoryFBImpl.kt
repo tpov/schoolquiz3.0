@@ -84,7 +84,9 @@ class RepositoryFBImpl @Inject constructor(
                     val player = playerSnapshot.getValue(Players::class.java)
                     if (player != null) {
                         log("getPlayersList player: $player")
-                        playersList.add(player.toPlayersEntity().copy(id = playerSnapshot.key?.toInt()))
+                        playersList.add(
+                            player.toPlayersEntity().copy(id = playerSnapshot.key?.toInt())
+                        )
                     }
                 }
                 dao.deletePlayersList()
@@ -252,16 +254,12 @@ class RepositoryFBImpl @Inject constructor(
                             log("getQuiz() версия квеста меньше - обновляем, или добавляем")
                             if (versionQuiz == -1) dao.insertQuiz(
                                 quizEntity.toQuizEntity(
-                                    0,
-                                    path ?: "",
-                                    data.key!!.toInt()
+                                    r)path ?: ""
                                 )
                             )
                             else dao.updateQuiz(
                                 quizEntity.toQuizEntity(
-                                    0,
-                                    path,
-                                    data.key!!.toInt()
+                                    path
                                 )
                             )
                             val refQuestion = when (quizEntity.event) {
@@ -279,6 +277,7 @@ class RepositoryFBImpl @Inject constructor(
                             val refQuestionDetail = when (quizEntity.event) {
                                 1 -> FirebaseDatabase.getInstance()
                                     .getReference("question_detail1/${getTpovId()}")
+
                                 2 -> FirebaseDatabase.getInstance().getReference("question_detail2")
                                 3 -> FirebaseDatabase.getInstance().getReference("question_detail3")
                                 4 -> FirebaseDatabase.getInstance().getReference("question_detail4")
@@ -587,6 +586,7 @@ class RepositoryFBImpl @Inject constructor(
                     }
 
                 }
+
                 4 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef4.child(quiz.id.toString())
@@ -605,6 +605,7 @@ class RepositoryFBImpl @Inject constructor(
                         dao.deleteQuestionByIdQuiz(quiz.id!!)
                     }
                 }
+
                 5 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef5.child(quiz.id.toString())
@@ -624,6 +625,7 @@ class RepositoryFBImpl @Inject constructor(
                         dao.deleteQuestionByIdQuiz(quiz.id!!)
                     }
                 }
+
                 6 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef6.child(quiz.id.toString())
@@ -643,6 +645,7 @@ class RepositoryFBImpl @Inject constructor(
                         dao.deleteQuestionByIdQuiz(quiz.id!!)
                     }
                 }
+
                 7 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef7.child(quiz.id.toString())
@@ -662,6 +665,7 @@ class RepositoryFBImpl @Inject constructor(
                         dao.deleteQuestionByIdQuiz(quiz.id!!)
                     }
                 }
+
                 8 -> {
                     quizRef7.child("${quiz.id}").removeValue()
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->

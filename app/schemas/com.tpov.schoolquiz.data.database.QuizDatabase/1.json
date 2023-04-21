@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "f7247d5aeb6745f1152974e236af12a5",
+    "identityHash": "04eabf808ccbc001862c0d6b1d5c0fb7",
     "entities": [
       {
         "tableName": "table_data",
@@ -228,7 +228,7 @@
       },
       {
         "tableName": "front_list",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `nameQuiz` TEXT NOT NULL, `user_name` TEXT NOT NULL, `data` TEXT NOT NULL, `stars` INTEGER NOT NULL, `numQ` INTEGER NOT NULL, `numHQ` INTEGER NOT NULL, `starsAll` INTEGER NOT NULL, `versionQuiz` INTEGER NOT NULL, `picture` TEXT, `event` INTEGER NOT NULL, `rating` INTEGER NOT NULL, `showDeleteButton` INTEGER NOT NULL, `tpovId` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `nameQuiz` TEXT NOT NULL, `user_name` TEXT NOT NULL, `data` TEXT NOT NULL, `stars` INTEGER NOT NULL, `starsPlayer` INTEGER NOT NULL, `numQ` INTEGER NOT NULL, `numHQ` INTEGER NOT NULL, `starsAll` INTEGER NOT NULL, `starsAllPlayer` INTEGER NOT NULL, `versionQuiz` INTEGER NOT NULL, `picture` TEXT, `event` INTEGER NOT NULL, `rating` INTEGER NOT NULL, `ratingPlayer` INTEGER NOT NULL, `showDeleteButton` INTEGER NOT NULL, `tpovId` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -261,6 +261,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "starsPlayer",
+            "columnName": "starsPlayer",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
             "fieldPath": "numQ",
             "columnName": "numQ",
             "affinity": "INTEGER",
@@ -275,6 +281,12 @@
           {
             "fieldPath": "starsAll",
             "columnName": "starsAll",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "starsAllPlayer",
+            "columnName": "starsAllPlayer",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -299,6 +311,12 @@
           {
             "fieldPath": "rating",
             "columnName": "rating",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ratingPlayer",
+            "columnName": "ratingPlayer",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -636,7 +654,7 @@
       },
       {
         "tableName": "chat_data",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `time` TEXT NOT NULL, `user` TEXT NOT NULL, `msg` TEXT NOT NULL, `importance` INTEGER NOT NULL, `personalSms` INTEGER NOT NULL, `icon` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `time` TEXT NOT NULL, `user` TEXT NOT NULL, `msg` TEXT NOT NULL, `importance` INTEGER NOT NULL, `personalSms` INTEGER NOT NULL, `icon` TEXT NOT NULL, `rating` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -679,6 +697,12 @@
             "columnName": "icon",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "rating",
+            "columnName": "rating",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -694,7 +718,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f7247d5aeb6745f1152974e236af12a5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '04eabf808ccbc001862c0d6b1d5c0fb7')"
     ]
   }
 }

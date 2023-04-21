@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.data.fierbase
 
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
 
 data class Chat(
     val time: String,
@@ -9,7 +8,8 @@ data class Chat(
     val msg: String,
     val importance: Int,
     val personalSms: Int,
-    val icon: String
+    val icon: String,
+    val rating: Int
 ) {
     constructor() : this(
         time = "",
@@ -18,6 +18,7 @@ data class Chat(
         importance = 0,
         personalSms = 0,
         icon = "",
+        rating = 0
     )
 }
 
@@ -29,6 +30,7 @@ fun Chat.toChatEntity(): ChatEntity {
         msg = msg,
         importance = importance,
         personalSms = personalSms,
-        icon = icon
+        icon = icon,
+        rating = rating
     )
 }
