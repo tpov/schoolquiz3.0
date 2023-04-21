@@ -254,7 +254,7 @@ class RepositoryFBImpl @Inject constructor(
                             log("getQuiz() версия квеста меньше - обновляем, или добавляем")
                             if (versionQuiz == -1) dao.insertQuiz(
                                 quizEntity.toQuizEntity(
-                                    r)path ?: ""
+                                    path ?: ""
                                 )
                             )
                             else dao.updateQuiz(
