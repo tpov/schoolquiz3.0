@@ -19,6 +19,7 @@ import androidx.dynamicanimation.animation.SpringForce
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.*
 import com.tpov.schoolquiz.data.Services.MusicService
+import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.ActivityQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
@@ -61,20 +62,23 @@ class QuestionActivity : AppCompatActivity() {
 
         synthInputData()
         viewModel.synthWithDB(this)
-        viewModel.shouldCloseLiveData.observe(this) { if (it) {
-            val resultIntent = Intent()
-            resultIntent.putExtra("translate", viewModel.resultTranslate)
-            resultIntent.putExtra("idQuiz", viewModel.idQuiz)
+        viewModel.shouldCloseLiveData.observe(this) {
+            if (it) {
+                val resultIntent = Intent()
+                resultIntent.putExtra("translate", viewModel.resultTranslate)
+                resultIntent.putExtra("idQuiz", viewModel.idQuiz)
 
-            setResult(Activity.RESULT_OK, resultIntent)
-            finish()
-        } }
+                setResult(Activity.RESULT_OK, resultIntent)
+                finish()
+            }
+        }
         insertQuestionsNewEvent()
         binding.apply {
             if (viewModel.hardQuestion) {
                 viewBackground.setBackgroundResource(R.color.background_hard_question)
                 cheatButton.visibility = View.GONE
             }
+
             trueButton.setOnClickListener {
 
 
@@ -83,9 +87,8 @@ class QuestionActivity : AppCompatActivity() {
                 setStateTimer(true)
                 setVisibleButtonsNext()
             }
+
             falseButton.setOnClickListener {
-
-
                 nextButton()
                 viewModel.falseButton()
                 setStateTimer(true)
@@ -117,7 +120,7 @@ class QuestionActivity : AppCompatActivity() {
             }
 
 
-           binding.questionTextView.text =
+            binding.questionTextView.text =
                 viewModel.questionListThis[viewModel.currentIndex].nameQuestion
         }
         actionBarSettings()
@@ -130,6 +133,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.idQuiz = intent.getIntExtra(ID_QUIZ, 0)
         viewModel.life = intent.getIntExtra(LIFE, 0)
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
+        log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, life: ${viewModel.life}, hardQuestion: ${viewModel.hardQuestion}")
     }
 
     private fun prefButton() {
@@ -138,15 +142,11 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun nextButton() {
-        if (viewModel.currentIndex == viewModel.numQuestion - 1 ) springAnim(true)
+        if (viewModel.currentIndex == viewModel.numQuestion - 1) springAnim(true)
         else moveToNext()
     }
 
     private fun setStateTimer(nextQuestion: Boolean) {
-        Log.d("dwagdkghjkd", "viewModel.codeAnswer ${viewModel.codeAnswer}")
-        Log.d("dwagdkghjkd", "viewModel.currentIndex ${viewModel.codeAnswer}")
-
-
         try {
             if (nextQuestion) {
                 if (viewModel.codeAnswer[viewModel.currentIndex + 1] == '0') {
@@ -193,7 +193,6 @@ class QuestionActivity : AppCompatActivity() {
                         setVisibleButtonsNext()
                         viewModel.falseButton()
                     }
-
                 }
             }
             viewModel.timer?.start()
@@ -204,7 +203,6 @@ class QuestionActivity : AppCompatActivity() {
         Log.d("iophkgjfklghjkldr", "currentIndex ${viewModel.currentIndex}")
         Log.d("iophkgjfklghjkldr", "numQuestion ${viewModel.numQuestion}")
 
-
     }
 
     private fun setVisibleButtonsPref() {
@@ -212,7 +210,6 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun visibleCheatButton(it: Boolean) {
-
         binding.cheatButton.isClickable = it
         binding.cheatButton.isEnabled = it
     }
@@ -258,17 +255,16 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun insertQuestionsNewEvent() {
-        viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt()).observe(this) { list ->
-            list.forEach { quiz ->
-               if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
-                   viewModel.questionListThis.forEach {
-                       viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
-                   }
-               }
-           }
-        }
-
-
+        viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt())
+            .observe(this) { list ->
+                list.forEach { quiz ->
+                    if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
+                        viewModel.questionListThis.forEach {
+                            viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
+                        }
+                    }
+                }
+            }
     }
 
     private fun springAnim(next: Boolean) = with(binding) {
@@ -335,7 +331,6 @@ class QuestionActivity : AppCompatActivity() {
                 setStateTimer(false)
                 prefButton()
             }
-
         }
     }
 
@@ -369,8 +364,6 @@ class QuestionActivity : AppCompatActivity() {
                 viewModel.currentIndex = (viewModel.currentIndex - 1) % viewModel.numQuestion!!
                 updateTextQuestion()
 
-
-
                 questionTextView.startAnimation(animPref2)
             }
 
@@ -403,7 +396,6 @@ class QuestionActivity : AppCompatActivity() {
 
         animNext1.setAnimationListener(object : Animation.AnimationListener {
             override fun onAnimationStart(p0: Animation?) {
-
                 //todo сделать все кнопки что-бы нельзя их нажать
             }
 

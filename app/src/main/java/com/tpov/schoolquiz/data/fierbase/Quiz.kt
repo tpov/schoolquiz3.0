@@ -15,22 +15,23 @@ data class Quiz (
     var numHQ: Int,
     var starsAllPlayer: Int,
     var starsPlayer: Int,
-    var rating: Int,
     var ratingPlayer: Int,
     var userName: String,
 ) {
     constructor() : this(
-        "", 0, "", -1, "", -1, 0, 0,0, 0, 0, 0,""
+        "", 0, "", -1, "", -1, 0, 0, 0, 0, 0,""
     )
 }
 
 fun Quiz.toQuizEntity(
+    id: Int,
     stars: Int,
     starsAll: Int,
+    rating: Int,
     picture: String?
 ): QuizEntity {
     return QuizEntity(
-        id = null,
+        id = id,
         nameQuiz = nameQuiz,
         userName = userName,
         data = data,

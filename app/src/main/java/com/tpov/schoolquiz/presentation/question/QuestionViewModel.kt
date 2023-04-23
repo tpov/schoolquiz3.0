@@ -11,18 +11,7 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
-import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
-import com.tpov.schoolquiz.domain.DeleteQuizUseCase
-import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
-import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
-import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
-import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
-import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuizUseCase
-import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
-import com.tpov.schoolquiz.domain.UpdateQuizUseCase
+import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
@@ -67,6 +56,7 @@ class QuestionViewModel @Inject constructor(
     lateinit var quizThis: QuizEntity
     lateinit var tpovId: String
     var resultTranslate = true
+    var persentPlayerAll = 0
 
     private val _shouldCloseLiveData = MutableLiveData<Boolean>()
     val shouldCloseLiveData: LiveData<Boolean> = _shouldCloseLiveData
@@ -107,6 +97,7 @@ class QuestionViewModel @Inject constructor(
         this.currentIndex = 0
         this.leftAnswer = questionListThis.size
         this.numQuestion = questionListThis.size
+        this.persentPlayerAll = getQuizUseCase(idQuiz).starsAllPlayer
 
         insertQuestionDetailEntity(
             QuestionDetailEntity(
@@ -144,6 +135,7 @@ class QuestionViewModel @Inject constructor(
             this.numQuestion = leftAnswer
             this.idThisQuestionDetail = questionDetailEntity.id!!
             this.idQuiz = questionDetailEntity.idQuiz
+            this.persentPlayerAll = getQuizUseCase(idQuiz).starsAllPlayer
         } catch (e: Exception) {
             errorLoadQuestion(questionDetailEntity)
         }
@@ -323,6 +315,7 @@ class QuestionViewModel @Inject constructor(
             quizThis.rating,
             this.persent,
             this.persentAll,
+            this.persentPlayerAll,
             onDismissListener = { rating ->
                 saveResult(rating)
             },

@@ -3,20 +3,13 @@ package com.tpov.schoolquiz.presentation.network.event
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.RatingBar
-import android.widget.Switch
-import android.widget.TextView
+import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.squareup.picasso.Picasso
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import kotlinx.coroutines.delay
 
 class EventAdapter(
     private val quiz2List: List<QuizEntity>,
@@ -195,7 +188,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.GONE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
@@ -218,7 +211,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName
@@ -239,7 +232,7 @@ class EventAdapter(
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName
@@ -261,7 +254,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslate1Event setOnClickListener")
@@ -277,7 +270,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslate2Event setOnClickListener")
@@ -293,7 +286,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslateEditQuestion setOnClickListener")
@@ -308,7 +301,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindModeratorEvent setOnClickListener")
@@ -323,7 +316,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindAdminEvent setOnClickListener")
@@ -338,7 +331,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.s_hardQuiz).visibility = View.GONE
+            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindDeveloperEvent setOnClickListener")

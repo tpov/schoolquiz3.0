@@ -6,14 +6,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
@@ -25,12 +21,10 @@ import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD_QUESTION
-import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.LIFE
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
+import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.LIFE
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
-import kotlinx.android.synthetic.main.activity_list_question.recyclerView
-import kotlinx.android.synthetic.main.activity_main_item.view.delete_button_swipe
-import kotlinx.android.synthetic.main.title_fragment.rcView
+import kotlinx.android.synthetic.main.title_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -76,7 +70,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
         mainViewModel.tpovId = sharedPref?.getInt("tpovId", -1) ?: -1
 
-        adapter = MainActivityAdapter(this, requireContext())
+        adapter = MainActivityAdapter(this, requireContext(), mainViewModel)
         binding.rcView.layoutManager = LinearLayoutManager(activity)
         binding.rcView.adapter = adapter
         rcView.itemAnimator = RotateInItemAnimator()
@@ -85,21 +79,15 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             // Ваш код для удаления или выполнения других действий с элементом
             mainViewModel.deleteQuiz(quizEntity.itemId.toInt())
         }
-    }
-
-
-    override fun onResume() {
-        super.onResume()
-        adapter = MainActivityAdapter(this, requireContext())
-        binding.rcView.layoutManager = LinearLayoutManager(activity)
-        binding.rcView.adapter = adapter
-
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             adapter.submitList(quizList.filter { it.event == isMyQuiz })
         }
+    }
 
+    override fun onResume() {
+        super.onResume()
         val fabAddItem = binding.fabAddItem
         fabAddItem.setOnClickListener {
             // Добавление нового элемента в список
@@ -129,12 +117,12 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         Log.d("ffsefsf", "deleteItem = $id")
     }
 
-    override fun onClick(id: Int) {
+    override fun onClick(id: Int, type: Boolean) {
         val intent = Intent(activity, QuestionActivity::class.java)
         intent.putExtra(NAME_USER, "user")
         intent.putExtra(ID_QUIZ, id)
         intent.putExtra(LIFE, 0)
-        intent.putExtra(HARD_QUESTION, false)
+        intent.putExtra(HARD_QUESTION, type)
         startActivityForResult(intent, REQUEST_CODE)
     }
 

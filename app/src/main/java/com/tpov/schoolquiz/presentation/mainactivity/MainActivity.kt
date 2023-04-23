@@ -2,6 +2,10 @@ package com.tpov.schoolquiz.presentation.mainactivity
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.pm.PackageManager
 import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.LayerDrawable
@@ -10,6 +14,9 @@ import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.animation.LinearInterpolator
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -35,7 +42,8 @@ import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
+import java.text.NumberFormat
 import javax.inject.Inject
 
 /**
@@ -124,7 +132,6 @@ class MainActivity : AppCompatActivity() {
             requestStoragePermission()
         }
 
-
         setButtonNavListener()
         numQuestionNotDate = intent.getIntExtra(NUM_QUESTION_NOT_NUL, 0)
 
@@ -153,7 +160,22 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        binding.tvName.text = ""
+        val textToShow = "${viewModel.getProfile.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
+        showTextWithDelay(binding.tvName, textToShow, 50L)
+
         listenerDrawer()
+        val imvNolics = binding.imvNolics
+        val imvStars = binding.imvStars
+        val imvGold = binding.imvGold
+        val imvPremium = binding.imvPremiun
+        val tvPbLoad = binding.tvPbLoad
+
+        val startValue = 0
+        val targetValue = 1000
+        val animationDuration = 3000L
+
+
         val imageViewGold = binding.pbLifeGold1
         val imageViewLife1 = binding.pbLife1
         val imageViewLife2 = binding.pbLife2
@@ -174,7 +196,108 @@ class MainActivity : AppCompatActivity() {
         SetItemMenu.setHomeMenu(binding, fr2, this)
 
 
+        val yRotateAnimationDuration = 1000
+        val repeatDelay = 6000L // Задержка между повторениями (1 минута)
+        var initialDelay = 1000L // Начальная задержка перед запуском анимации
+        var addInitialDelay = 250L
+
+
+        showTextWithDelay(binding.tvPbLoad, "Соединение с сервером...", 50)
+
+        startAnimationWithRepeat(imvStars, yRotateAnimationDuration, initialDelay, repeatDelay)
+        animateValueFloat(binding.tvStars, 0.0f, 8.5f, animationDuration, initialDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imvNolics, yRotateAnimationDuration, initialDelay, repeatDelay)
+        animateValue(binding.tvNolics, startValue, targetValue, animationDuration, initialDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imageViewLife1, yRotateAnimationDuration, initialDelay, repeatDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imageViewLife2, yRotateAnimationDuration, initialDelay, repeatDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imageViewLife3, yRotateAnimationDuration, initialDelay, repeatDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imageViewLife4, yRotateAnimationDuration, initialDelay, repeatDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imageViewLife5, yRotateAnimationDuration, initialDelay, repeatDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imageViewGold, yRotateAnimationDuration, initialDelay, repeatDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imvGold, yRotateAnimationDuration, initialDelay, repeatDelay)
+        animateValue(binding.tvGold, startValue, 100, animationDuration, initialDelay)
+        initialDelay += addInitialDelay
+
+        startAnimationWithRepeat(imvPremium, yRotateAnimationDuration, initialDelay, repeatDelay)
+        animateValue(binding.tvCountPremiun, startValue, 999, animationDuration, initialDelay)
+        initialDelay += addInitialDelay
+
     }
+
+    private fun animateValue(textView: TextView, startValue: Int, endValue: Int, duration: Long, startDelay: Long) {
+        val valueAnimator = ValueAnimator.ofInt(startValue, endValue).apply {
+            setDuration(duration)
+            setStartDelay(startDelay)
+            interpolator = LinearInterpolator()
+        }
+        valueAnimator.addUpdateListener { animation ->
+            textView.text = NumberFormat.getIntegerInstance().format(animation.animatedValue)
+        }
+        valueAnimator.start()
+    }
+
+    private fun animateValueFloat(textView: TextView, startValue: Float, endValue: Float, duration: Long, startDelay: Long) {
+        val valueAnimator = ValueAnimator.ofFloat(startValue, endValue).apply {
+            setDuration(duration)
+            setStartDelay(startDelay)
+            interpolator = LinearInterpolator()
+        }
+        valueAnimator.addUpdateListener { animation ->
+            textView.text = String.format("%.1f", animation.animatedValue)
+        }
+        valueAnimator.start()
+    }
+
+
+
+    private fun showTextWithDelay(textView: TextView, text: String, delayInMillis: Long) {
+        CoroutineScope(Dispatchers.Main).launch {
+            for (char in text) {
+                textView.append(char.toString())
+                delay(delayInMillis)
+            }
+        }
+    }
+
+    private fun startAnimationWithRepeat(imageView: ImageView, duration: Int, initialDelay: Long, repeatDelay: Long) {
+        val animator = ObjectAnimator.ofFloat(imageView, "rotationY", 0f, 360f).apply {
+            this.duration = duration.toLong()
+        }
+
+        animator.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                animation.removeListener(this)
+                imageView.postDelayed({
+                    animation.addListener(this)
+                    animation.start()
+                }, repeatDelay)
+            }
+        })
+
+        imageView.postDelayed({
+            animator.start()
+        }, initialDelay)
+    }
+
+
+    // Использование функции в вашем коде
+
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         return super.onPrepareOptionsMenu(menu)

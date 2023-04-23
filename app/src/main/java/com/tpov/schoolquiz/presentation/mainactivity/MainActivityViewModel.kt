@@ -17,7 +17,7 @@ import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
-import java.util.Locale
+import java.util.*
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -61,7 +61,6 @@ class MainActivityViewModel @Inject constructor(
             if (tpovId == -1) insertProfile()
             getProfileFlowUseCase(tpovId)
             getQuiz8FBUseCase()
-            getQuestionDetail8FBUseCase()
             getQuestion8FBUseCase()
         }
     }
@@ -167,5 +166,13 @@ class MainActivityViewModel @Inject constructor(
 
     fun deleteQuiz(id: Int) {
 
+    }
+
+    fun getLvlTranslateByQuizId(id: Int): Int {
+        var lvlTranslate = 1000
+        getQuestionListByIdQuiz(id).forEach {
+            if (it.lvlTranslate < lvlTranslate) lvlTranslate = it.lvlTranslate
+        }
+        return  lvlTranslate
     }
 }

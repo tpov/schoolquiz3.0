@@ -19,7 +19,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -244,25 +244,33 @@ class RepositoryFBImpl @Inject constructor(
                 for (data in snapshot.children) {
                     val versionQuiz =
                         SharedPreferencesManager.getVersionQuiz(data.key ?: "-1", context)
-                    val quizEntity = data.getValue(Quiz::class.java)
+                    val quiz = data.getValue(Quiz::class.java)
 
-                    log("getQuiz(), data: ${data.key}, versionQuiz: $versionQuiz, quizEntity: $quizEntity")
-                    if (quizEntity != null && versionQuiz < quizEntity.versionQuiz) {
+                    log("getQuiz(), data: ${data.key}, versionQuiz: $versionQuiz, quizEntity: $quiz")
+                    if (quiz != null && versionQuiz < quiz.versionQuiz) {
                         savePictureToLocalDirectory(
-                            quizEntity.picture
+                            quiz.picture
                         ) { path ->
                             log("getQuiz() версия квеста меньше - обновляем, или добавляем")
                             if (versionQuiz == -1) dao.insertQuiz(
-                                quizEntity.toQuizEntity(
+                                quiz.toQuizEntity(
+                                    data.key!!.toInt(),
+                                    0,
+                                    0,
+                                    0,
                                     path ?: ""
                                 )
                             )
                             else dao.updateQuiz(
-                                quizEntity.toQuizEntity(
+                                quiz.toQuizEntity(
+                                    data.key!!.toInt(),
+                                    0,
+                                    0,
+                                    0,
                                     path
                                 )
                             )
-                            val refQuestion = when (quizEntity.event) {
+                            val refQuestion = when (quiz.event) {
                                 2 -> FirebaseDatabase.getInstance().getReference("question2")
                                 3 -> FirebaseDatabase.getInstance().getReference("question3")
                                 4 -> FirebaseDatabase.getInstance().getReference("question4")
@@ -271,29 +279,29 @@ class RepositoryFBImpl @Inject constructor(
                                 7 -> FirebaseDatabase.getInstance().getReference("question7")
                                 8 -> FirebaseDatabase.getInstance().getReference("question8")
                                 else -> FirebaseDatabase.getInstance()
-                                    .getReference("question1/${quizEntity.tpovId}")
+                                    .getReference("question1/${quiz.tpovId}")
                             }
 
-                            val refQuestionDetail = when (quizEntity.event) {
+                            val refQuestionDetail = when (quiz.event) {
                                 1 -> FirebaseDatabase.getInstance()
                                     .getReference("question_detail1/${getTpovId()}")
 
-                                2 -> FirebaseDatabase.getInstance().getReference("question_detail2")
-                                3 -> FirebaseDatabase.getInstance().getReference("question_detail3")
-                                4 -> FirebaseDatabase.getInstance().getReference("question_detail4")
-                                5 -> FirebaseDatabase.getInstance().getReference("question_detail5")
-                                6 -> FirebaseDatabase.getInstance().getReference("question_detail6")
-                                7 -> FirebaseDatabase.getInstance().getReference("question_detail7")
-                                8 -> FirebaseDatabase.getInstance().getReference("question_detail8")
+                                2 -> FirebaseDatabase.getInstance().getReference("")
+                                3 -> FirebaseDatabase.getInstance().getReference("")
+                                4 -> FirebaseDatabase.getInstance().getReference("")
+                                5 -> FirebaseDatabase.getInstance().getReference("")
+                                6 -> FirebaseDatabase.getInstance().getReference("")
+                                7 -> FirebaseDatabase.getInstance().getReference("")
+                                8 -> FirebaseDatabase.getInstance().getReference("")
                                 else -> FirebaseDatabase.getInstance()
-                                    .getReference("question_detail1/${getTpovId()}")
+                                    .getReference("")
                             }
                             getQuestion(refQuestion, data.key!!)
                             getQuestionDetail(refQuestionDetail, data.key!!)
 
                             SharedPreferencesManager.setVersionQuiz(
                                 data.key!!,
-                                quizEntity.versionQuiz,
+                                quiz.versionQuiz,
                                 context
                             )
                         }

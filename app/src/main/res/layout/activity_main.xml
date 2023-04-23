@@ -169,7 +169,6 @@
                         android:id="@+id/tv_stars"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="7.5"
                         android:textColor="@color/ratingBar"
                         android:textSize="12dp"
                         android:textStyle="bold" />
@@ -193,7 +192,6 @@
                         android:id="@+id/tv_nolics"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1000"
                         android:textColor="@color/grey"
                         android:textSize="12dp"
                         android:textStyle="bold" />
@@ -279,7 +277,6 @@
                         android:id="@+id/tv_gold"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="10"
                         android:textColor="@color/ratingBar"
                         android:textSize="12dp"
                         android:textStyle="bold" />
@@ -305,14 +302,13 @@
                             app:srcCompat="@drawable/baseline_extension_24" />
 
                         <TextView
-                            android:id="@+id/tv_count"
+                            android:id="@+id/tv_count_premiun"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignTop="@id/imv_premiun"
                             android:layout_alignRight="@id/imv_premiun"
                             android:layout_marginTop="8dp"
                             android:layout_marginRight="8dp"
-                            android:text="999"
                             android:textColor="@color/white"
                             android:textSize="10sp" />
 
@@ -331,7 +327,6 @@
                         android:id="@+id/tv_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="TPOV  🥇🥈️🏆🎗️🎃🎄🎁📻🎧🎞️🪙📀💵❤️"
                         android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -346,13 +341,12 @@
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/textView13"
+                    android:id="@+id/tv_pb_load"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="12dp"
                     android:layout_marginTop="12dp"
-                    android:layout_marginRight="12dp"
-                    android:text="Соединение с сервером..." />
+                    android:layout_marginRight="12dp"/>
 
                 <ProgressBar
                     android:id="@+id/progressBar2"

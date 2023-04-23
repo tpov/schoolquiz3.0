@@ -27,9 +27,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 
-class MainActivityAdapter(
+class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
-    private val context: Context
+    private val context: Context,
+    private val viewModel: MainActivityViewModel
 ) :
     ListAdapter<QuizEntity, MainActivityAdapter.ItemHolder>(ItemComparator()) {
     var onDeleteButtonClick: ((RecyclerView.ViewHolder) -> Unit)? = null
@@ -45,7 +46,6 @@ class MainActivityAdapter(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
             ): Int {
-
                 return makeMovementFlags(0, ItemTouchHelper.LEFT)
             }
 
@@ -196,9 +196,10 @@ class MainActivityAdapter(
     }
 
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onBindViewHolder(holder: ItemHolder, position: Int) {
         val item = getItem(position)
-        holder.setData(item, listener, context)
+        holder.setData(item, listener, context, viewModel)
         holder.deleteButton.setOnClickListener {
             listener.deleteItem(position)
 
@@ -241,11 +242,12 @@ class MainActivityAdapter(
         val editButton: ImageButton = itemView.findViewById(R.id.edit_button_swipe)
         val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
         val sendButton: ImageButton = itemView.findViewById(R.id.send_button_swipe)
+        val imvGradLightQuiz: ImageView = itemView.findViewById(R.id.imv_gradient_light_quiz)
+        val imvGradHardQuiz: ImageView = itemView.findViewById(R.id.imv_grafient_hard_quiz)
+        val imvTranslate: ImageView = itemView.findViewById(R.id.imv_translate)
+        val chbTypeQuiz: CheckBox = itemView.findViewById(R.id.chb_type_quiz)
 
         init {
-            itemView.setOnClickListener {
-                listener.onClick(adapterPosition)
-            }
 
             itemView.setOnTouchListener(object : View.OnTouchListener {
                 private val SWIPE_THRESHOLD = 100
@@ -280,7 +282,8 @@ class MainActivityAdapter(
             })
         }
 
-        fun setData(quizEntity: QuizEntity, listener: Listener, context: Context) = with(binding) {
+        @OptIn(InternalCoroutinesApi::class)
+        fun setData(quizEntity: QuizEntity, listener: Listener, context: Context, viewModel: MainActivityViewModel) = with(binding) {
             try {
 
                 val file = File(context.cacheDir, "${quizEntity.picture}")
@@ -323,10 +326,30 @@ class MainActivityAdapter(
             }
 
             if (quizEntity.stars >= MAX_PERCENT) {
-
+                imvGradLightQuiz.visibility = View.VISIBLE
+                imvGradHardQuiz.visibility = View.GONE
+                chbTypeQuiz.visibility = View.VISIBLE
             } else if (quizEntity.stars == 120) {
-
+                chbTypeQuiz.visibility = View.VISIBLE
+                imvGradLightQuiz.visibility = View.GONE
+                imvGradHardQuiz.visibility = View.VISIBLE
+            } else {
+                chbTypeQuiz.visibility = View.GONE
             }
+            imvTranslate.imageAlpha = 128
+
+            var lvlTranslate = 0
+            lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
+            if (adapterPosition == 0) lvlTranslate = 50
+            if (adapterPosition == 1) lvlTranslate = 100
+            if (adapterPosition == 2) lvlTranslate = 150
+            if (adapterPosition == 3) lvlTranslate = 200
+            if (adapterPosition == 4) lvlTranslate = 250
+
+            //imvTranslate
+            if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
+            else imvTranslate.setColorFilter(Color.BLUE)
 
             if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
                 (quizEntity.stars.toFloat() / 50)
@@ -334,7 +357,7 @@ class MainActivityAdapter(
 
             mainTitleButton.text = quizEntity.nameQuiz
             mainTitleButton.setOnClickListener {
-                listener.onClick(quizEntity.id ?: 0)
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
         }
 
@@ -352,7 +375,6 @@ class MainActivityAdapter(
         }
 
         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-            listener.onClick(adapterPosition)
             return true
         }
     }
@@ -360,7 +382,7 @@ class MainActivityAdapter(
     interface Listener {
 
         fun deleteItem(id: Int)
-        fun onClick(id: Int)
+        fun onClick(id: Int, type: Boolean)
         fun shareItem(id: Int, stars: Int)
         fun sendItem(quizEntity: QuizEntity)
         fun reloadData()

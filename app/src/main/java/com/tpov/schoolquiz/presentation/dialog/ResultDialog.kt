@@ -5,7 +5,10 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.widget.*
+import android.widget.Button
+import android.widget.ProgressBar
+import android.widget.RatingBar
+import android.widget.TextView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.custom.CustomProgressBar
 
@@ -15,12 +18,17 @@ class ResultDialog(
     private var showStars: Int,
     private val stars: Int,
     private val starsPercentAll: Int,
+    private val starsPlayersAll: Int,
     private val onDismissListener: ((Int) -> Unit)? = null, // добавлен параметр колбэка для слушания нажатия кнопки OK
     private val onRatingSelected: ((Int) -> Unit)? = null, // определение переменной с значением по умолчанию
     context: Context
 ) : Dialog(context) {
 
     private var rating = 0
+
+    init {
+        setCanceledOnTouchOutside(false)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,7 +46,7 @@ class ResultDialog(
         // Запускаем анимацию заполнения прогресс-бара
         customBar.progress = starsPercentAll / 100.toFloat()
         customBar.leftMarkerPosition = starsPercentAll / 100.toFloat()
-        customBar.rightMarkerPosition = 0.85f
+        customBar.rightMarkerPosition = starsPlayersAll / 100.toFloat()
         Handler(Looper.getMainLooper()).postDelayed({
             customBar.setProgressWithAnimation(
                 stars / 100.toFloat(), 2000,

@@ -276,8 +276,10 @@ class CreateQuestionDialog() : DialogFragment() {
                         0,
                         0,
                         0,
+                        0,
                         null,
                         1,
+                        0,
                         0,
                         false,
                         tpovId ?: 0
