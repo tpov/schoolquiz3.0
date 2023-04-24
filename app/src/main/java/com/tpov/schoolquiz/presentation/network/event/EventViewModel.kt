@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.presentation.network.event
 
-import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
@@ -8,7 +7,6 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -31,7 +29,8 @@ class EventViewModel @Inject constructor(
 
     val questionLiveData: MutableLiveData<List<QuestionEntity>> = MutableLiveData()
 
-    fun loadQuests(idQuiz: Int) {
+    fun loadQuests() {
+        log("loadQuests")
         // Здесь загружайте список квестов и устанавливайте значение для questsLiveData
         questionLiveData.value = getQuestionListUseCase()
     }

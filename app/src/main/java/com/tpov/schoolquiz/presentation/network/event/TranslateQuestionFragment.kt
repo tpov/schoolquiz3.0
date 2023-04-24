@@ -3,27 +3,15 @@ package com.tpov.schoolquiz.presentation.network.event
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
-import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.Spinner
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -86,16 +74,16 @@ class TranslateQuestionFragment : Fragment() {
         binding.recyclerViewQuestions.adapter = translationAdapter
 
         if (idQuiz != -1) {
-            log("getQuestionListUseCase() fse")
+            log("getQuestionListUseCase() idQuiz != -1")
             viewModel.questionLiveData.observe(viewLifecycleOwner) { questions ->
 
                 log("getQuestionListUseCase() :${questions}")
                 translationAdapter.questions.addAll(questions)
                 translationAdapter.notifyDataSetChanged()
             }
-            viewModel.loadQuests(idQuiz!!)
+            viewModel.loadQuests()
         } else if (idQuestion != -1) {
-            log("getQuestionListUseCase() fse")
+            log("getQuestionListUseCase() idQuestion != -1")
             viewModel.questionLiveData.observe(viewLifecycleOwner) { question ->
                 log("getQuestionListUseCase() :${question}")
                 translationAdapter.questions.addAll(question)
