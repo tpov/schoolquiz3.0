@@ -119,7 +119,6 @@ class QuestionActivity : AppCompatActivity() {
                 nextButton()
             }
 
-
             binding.questionTextView.text =
                 viewModel.questionListThis[viewModel.currentIndex].nameQuestion
         }

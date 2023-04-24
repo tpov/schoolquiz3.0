@@ -11,7 +11,18 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
+import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
+import com.tpov.schoolquiz.domain.DeleteQuizUseCase
+import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
+import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
+import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
+import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
+import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuizUseCase
+import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
+import com.tpov.schoolquiz.domain.UpdateQuizUseCase
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
@@ -161,23 +172,32 @@ class QuestionViewModel @Inject constructor(
 
     private fun getQuestionsList() {
         questionListThis = getQuestionByIdQuizUseCase(idQuiz)
+        log(
+            "getQuestionsList, getQuestionByIdQuizUseCase(idQuiz) ${
+                getQuestionByIdQuizUseCase(
+                    idQuiz
+                )
+            }"
+        )
         var list = mutableListOf<QuestionEntity>()
         questionListThis.forEach {
             log("getQuestionsList, it.hardQuestion:${it.hardQuestion}, hardQuestion: $hardQuestion")
             if (it.hardQuestion == hardQuestion) list.add(it)
         }
 
+        log("getQuestionsList, end")
         questionListThis = list
 
         var listQuestionDetail = mutableListOf<QuestionDetailEntity>()
         getQuestionDetailListUseCase().forEach {
-            if (it.idQuiz == this.idQuiz) listQuestionDetail.add(
+            if (it.idQuiz == this.idQuiz && it.hardQuiz == this.hardQuestion) listQuestionDetail.add(
                 it
             )
         }
         questionDetailListThis = listQuestionDetail
 
         quizThis = getQuizUseCase(idQuiz)
+
     }
 
 
@@ -230,6 +250,7 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun setTrueAnswer() {
+        log("setTrueAnswer")
         var codeAnswer = ""
         var i = 0
         repeat(this.codeAnswer.length) {
@@ -237,6 +258,9 @@ class QuestionViewModel @Inject constructor(
             else this.codeAnswer[i]
             i++
         }
+
+        log("setTrueAnswer codeAnswer: ${codeAnswer}")
+        log("setTrueAnswer this.codeAnswer: ${this.codeAnswer}")
         this.codeAnswer = codeAnswer
 
         leftAnswer--
@@ -260,12 +284,9 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun result() {
-
         setPercentResult()
-
         Log.d("iofjerdklgj", "starsPercentAll ${persent}")
         showResultDialog()
-
     }
 
     private fun setPercentResult() {
@@ -280,6 +301,7 @@ class QuestionViewModel @Inject constructor(
         var perc = mutableListOf<Int>()
         maxPersent = 0
 
+        log("questionDetailListThis: $questionDetailListThis")
         questionDetailListThis.forEach {
             i = 0
             j = 0
@@ -328,6 +350,41 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun saveResult(rating: Int) {
+        var perc = mutableListOf<Int>()
+        log("saveResult getQuestionDetailListUseCase(): ${getQuestionDetailListUseCase()}")
+        getQuestionDetailListUseCase().forEach {
+            log("saveResult all detail: ${it}, it.idQuiz: ${it.idQuiz}, this.idQuiz: ${this.idQuiz}")
+
+            var i = 0
+            var j = 0
+            if (it.idQuiz == this.idQuiz) {
+
+                it.codeAnswer?.forEach { item ->
+                    if (item == '2') i++
+                    j++
+                }
+
+                if (!it.hardQuiz) {
+                    if (((100 * i) / j) > maxPersent) maxPersent = ((100 * i) / j)
+                    perc.add(((100 * i) / j))
+                } else {
+                    if ((((100 * i) / j) / 5) + 100 > maxPersent) maxPersent =
+                        (((100 * i) / j) / 5) + 100
+                    perc.add((((100 * i) / j) / 5) + 100)
+                }
+
+                var j = 0
+                var i = 0
+                perc.forEach { itemPerc ->
+                    i += itemPerc
+                }
+                persentAll = i / perc.size
+
+            }
+        }
+
+        log("saveResult $maxPersent")
+
         when (quizThis.event) {
             1, 5, 6, 7, 8 -> updateQuizUseCase(
                 quizThis.copy(
@@ -336,6 +393,7 @@ class QuestionViewModel @Inject constructor(
                     rating = rating
                 )
             )
+
             2, 3, 4 -> updateEvent(rating)
 
         }
@@ -369,7 +427,6 @@ class QuestionViewModel @Inject constructor(
     private fun insertQuizPlayers() {
 
     }
-
 
     fun getCurrentTimer(typeQuestion: Boolean): Int {
         return if (typeQuestion) TIME_HARD_QUESTION

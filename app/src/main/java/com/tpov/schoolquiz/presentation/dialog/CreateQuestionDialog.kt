@@ -331,8 +331,8 @@ class CreateQuestionDialog() : DialogFragment() {
     }
 
     private fun getTypeText(rbLightQuestion: RadioButton): String {
-        return if (rbLightQuestion.isChecked) "light"
-        else "hard"
+        return if (rbLightQuestion.isChecked) "false"
+        else "true"
     }
 
     companion object {

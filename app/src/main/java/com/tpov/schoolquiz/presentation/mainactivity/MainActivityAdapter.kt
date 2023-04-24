@@ -324,27 +324,28 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             if (quizEntity.stars == MAX_PERCENT) {
                 Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
             }
-
+            log("quizEntity.stars = ${quizEntity.stars}")
+            log("quizEntity.stars position = $position")
             if (quizEntity.stars >= MAX_PERCENT) {
+
+                log("quizEntity.stars 1")
                 imvGradLightQuiz.visibility = View.VISIBLE
                 imvGradHardQuiz.visibility = View.GONE
                 chbTypeQuiz.visibility = View.VISIBLE
             } else if (quizEntity.stars == 120) {
+                log("quizEntity.stars 2")
                 chbTypeQuiz.visibility = View.VISIBLE
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.VISIBLE
             } else {
+                log("quizEntity.stars 3")
                 chbTypeQuiz.visibility = View.GONE
+                imvGradLightQuiz.visibility = View.GONE
+                imvGradHardQuiz.visibility = View.GONE
             }
             imvTranslate.imageAlpha = 128
 
-            var lvlTranslate = 0
-            lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
-            if (adapterPosition == 0) lvlTranslate = 50
-            if (adapterPosition == 1) lvlTranslate = 100
-            if (adapterPosition == 2) lvlTranslate = 150
-            if (adapterPosition == 3) lvlTranslate = 200
-            if (adapterPosition == 4) lvlTranslate = 250
+            val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
 
             //imvTranslate
             if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
@@ -357,6 +358,15 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             mainTitleButton.text = quizEntity.nameQuiz
             mainTitleButton.setOnClickListener {
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+            }
+            imvGradHardQuiz.setOnClickListener {
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+            }
+            imvGradLightQuiz.setOnClickListener {
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+            }
+            imvTranslate.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
         }
