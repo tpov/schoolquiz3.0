@@ -48,5 +48,8 @@ data class ProfileEntity(
     val translater: Int,
     val moderator: Int,
     val admin: Int,
-    val developer: Int
+    val developer: Int,
+    val countBox: Int,
+    val timeLastOpenBox: String,
+    val coundDayBox: Int
 )

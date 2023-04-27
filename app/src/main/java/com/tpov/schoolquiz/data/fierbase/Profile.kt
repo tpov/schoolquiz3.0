@@ -22,7 +22,8 @@ data class Profile constructor(
     val dates: Dates,
     val idFirebase: String,
     val languages: String,
-    val qualification: Qualification
+    val qualification: Qualification,
+    val box: Box
 ) {
     constructor() : this(
         0,
@@ -42,10 +43,17 @@ data class Profile constructor(
         Dates("", ""),
         "",
         "",
-        Qualification(0,0,0,0,0,0,0)
+        Qualification(0,0,0,0,0,0,0),
+        Box(0,"0",0)
     )
 }
 
+@IgnoreExtraProperties
+data class Box(
+    val countBox: Int,
+    val timeLastOpenBox: String,
+    val coundDayBox: Int
+)
 
 @IgnoreExtraProperties
 data class Qualification(
@@ -173,7 +181,13 @@ fun ProfileEntity.toProfile(): Profile {
             this.moderator,
             this.admin,
             this.developer
+        ),
+        box = Box(
+            this.countBox,
+            this.timeLastOpenBox,
+            this.coundDayBox
         )
+
     )
 
 }
@@ -220,6 +234,9 @@ fun Profile.toProfileEntity(): ProfileEntity {
         moderator = this.qualification.moderator,
         admin = this.qualification.admin,
         developer = this.qualification.developer,
-        nickname = this.nickname
+        nickname = this.nickname,
+        coundDayBox = this.box.coundDayBox,
+        countBox = this.box.countBox,
+        timeLastOpenBox = this.box.timeLastOpenBox
     )
 }

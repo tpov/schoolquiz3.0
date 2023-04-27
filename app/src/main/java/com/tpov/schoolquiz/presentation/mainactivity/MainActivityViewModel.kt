@@ -110,7 +110,8 @@ class MainActivityViewModel @Inject constructor(
             ),
             "",
             userLanguageCode,
-            Qualification(1, 0, 0,0,0,0,0)
+            Qualification(1, 0, 0,0,0,0,0),
+            Box(0,TimeManager.getCurrentTime(), 0 )
         )
 
         insertProfileUseCase(profile.toProfileEntity())
