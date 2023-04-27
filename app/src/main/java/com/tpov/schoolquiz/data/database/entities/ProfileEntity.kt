@@ -48,5 +48,10 @@ data class ProfileEntity(
     val translater: Int,
     val moderator: Int,
     val admin: Int,
-    val developer: Int
+    val developer: Int,
+
+    val countLife: Int,
+    val count: Int,
+    val countGoldLife: Int,
+    val countGold: Int
 )

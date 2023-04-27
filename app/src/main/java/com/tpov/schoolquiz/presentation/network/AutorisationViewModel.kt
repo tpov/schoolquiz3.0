@@ -5,11 +5,9 @@ import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
@@ -74,7 +72,7 @@ class AutorisationViewModel @Inject constructor(
                     val tpovId = sharedPref?.getInt("tpovId", 0)
 
                     var pr = getProfileUseCase(tpovId ?: 0)
-                    if (pr != null && !pr.dateSynch.isNullOrEmpty()) {
+                    if (pr.dateSynch.isNotEmpty()) {
                         log("createAcc дата в текущем профиле есть")
                         val profile = Profile(
                             0,
@@ -97,7 +95,8 @@ class AutorisationViewModel @Inject constructor(
                             ),
                             auth.currentUser?.uid ?: "",
                             languages,
-                            Qualification(0,0,0,0,0,0,0)
+                            Qualification(0,0,0,0,0,0,0),
+                            Life(1, 300, 0, 0)
                         )
 
                         insertProfile(profile)

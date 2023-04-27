@@ -22,7 +22,8 @@ data class Profile constructor(
     val dates: Dates,
     val idFirebase: String,
     val languages: String,
-    val qualification: Qualification
+    val qualification: Qualification,
+    val life: Life
 ) {
     constructor() : this(
         0,
@@ -42,10 +43,21 @@ data class Profile constructor(
         Dates("", ""),
         "",
         "",
-        Qualification(0,0,0,0,0,0,0)
+        Qualification(0,0,0,0,0,0,0),
+        Life(0,0,0,0)
     )
 }
-
+@IgnoreExtraProperties
+data class Life(
+    val countLife: Int,
+    val count: Int,
+    val countGoldLife: Int,
+    val countGold: Int
+) {
+    constructor() : this(
+        0, 0, 0, 0
+    )
+}
 
 @IgnoreExtraProperties
 data class Qualification(
@@ -127,7 +139,7 @@ fun ProfileEntity.toProfile(): Profile {
     return Profile(
         tpovId = this.tpovId,
         login = this.login,
-        name = this.name,
+        name = this.name ?: "",
         nickname = this.nickname,
         birthday = this.birthday,
         points = Points(
@@ -173,6 +185,12 @@ fun ProfileEntity.toProfile(): Profile {
             this.moderator,
             this.admin,
             this.developer
+        ),
+        life = Life(
+            this.countLife,
+            this.count,
+            this.countGoldLife,
+            this.countGold
         )
     )
 
@@ -220,6 +238,10 @@ fun Profile.toProfileEntity(): ProfileEntity {
         moderator = this.qualification.moderator,
         admin = this.qualification.admin,
         developer = this.qualification.developer,
-        nickname = this.nickname
+        nickname = this.nickname,
+        countGold = this.life.countGold,
+        count = this.life.count,
+        countGoldLife = this.life.countGoldLife,
+        countLife = this.life.countLife
     )
 }

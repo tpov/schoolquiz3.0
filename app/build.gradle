@@ -147,5 +147,7 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
+    implementation 'com.google.code.gson:gson:2.8.9'
+
 }
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

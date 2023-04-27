@@ -5,19 +5,40 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.data.fierbase.*
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.data.fierbase.AddPoints
+import com.tpov.schoolquiz.data.fierbase.Buy
+import com.tpov.schoolquiz.data.fierbase.Dates
+import com.tpov.schoolquiz.data.fierbase.Life
+import com.tpov.schoolquiz.data.fierbase.Points
+import com.tpov.schoolquiz.data.fierbase.Profile
+import com.tpov.schoolquiz.data.fierbase.Qualification
+import com.tpov.schoolquiz.data.fierbase.TimeInGames
+import com.tpov.schoolquiz.data.fierbase.toProfileEntity
+import com.tpov.schoolquiz.domain.GetAllProfilesDBUseCase
+import com.tpov.schoolquiz.domain.GetEventLiveDataUseCase
+import com.tpov.schoolquiz.domain.GetIdQuizByNameQuizUseCase
+import com.tpov.schoolquiz.domain.GetPlayersDBUseCase
+import com.tpov.schoolquiz.domain.GetProfileFlowUseCase
+import com.tpov.schoolquiz.domain.GetProfileUseCase
+import com.tpov.schoolquiz.domain.GetQuestion8FBUseCase
+import com.tpov.schoolquiz.domain.GetQuestionDetail8FBUseCase
+import com.tpov.schoolquiz.domain.GetQuestionListUseCase
+import com.tpov.schoolquiz.domain.GetQuiz8FBUseCase
+import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
+import com.tpov.schoolquiz.domain.InsertProfileUseCase
+import com.tpov.schoolquiz.domain.InsertQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuizUseCase
+import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
+import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
+import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -56,19 +77,14 @@ class MainActivityViewModel @Inject constructor(
         tpovId = sharedPref?.getInt("tpovId", -1) ?: -1
 
         log("init() tpovId = $tpovId")
-        viewModelScope.launch(Dispatchers.IO) {
             log("init() launch()")
             if (tpovId == -1) insertProfile()
             getProfileFlowUseCase(tpovId)
             getQuiz8FBUseCase()
             getQuestion8FBUseCase()
-        }
     }
 
     fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
-        log("fun getQuestionListByIdQuiz")
-        log("fun getQuestionListByIdQuiz list: ${getQuestionListUseCase()}")
-        log("fun getQuestionListByIdQuiz list filter: ${getQuestionListUseCase().filter { it.idQuiz == idQuiz }}")
         return getQuestionListUseCase().filter { it.idQuiz == idQuiz }
     }
 
@@ -110,7 +126,8 @@ class MainActivityViewModel @Inject constructor(
             ),
             "",
             userLanguageCode,
-            Qualification(1, 0, 0,0,0,0,0)
+            Qualification(1, 0, 0,0,0,0,0),
+            Life(1, 300, 0, 0)
         )
 
         insertProfileUseCase(profile.toProfileEntity())
@@ -135,7 +152,6 @@ class MainActivityViewModel @Inject constructor(
             log("updateQuizEvent quizEntity.event = ${quizEntity.event}")
             insertQuiz(quizEntity.copy(id = null))
         }
-
     }
 
     fun setQuestionsFB() {
