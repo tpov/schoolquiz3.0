@@ -322,7 +322,12 @@ interface QuizDao {
     fun deleteQuizByIdDB(id: Int)
 
     @Update
-    fun updateQuizDetail(questionDetailEntity: QuestionDetailEntity)
+    fun updateQuizDetailDB(questionDetailEntity: QuestionDetailEntity)
+
+    fun updateQuizDetail(questionDetailEntity: QuestionDetailEntity) {
+        log("updateQuizDetail questionDetailEntity: $questionDetailEntity")
+        updateQuizDetailDB(questionDetailEntity)
+    }
 
     @Update
     fun updateQuiz(quizEntity: QuizEntity)

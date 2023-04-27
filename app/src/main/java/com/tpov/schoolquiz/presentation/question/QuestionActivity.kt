@@ -146,56 +146,64 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun setStateTimer(nextQuestion: Boolean) {
+
+        log("setStateTimer currentIndex: ${viewModel.codeAnswer[viewModel.currentIndex]}")
+
         try {
             if (nextQuestion) {
+                log("setStateTimer currentIndex + 1: ${viewModel.codeAnswer[viewModel.currentIndex + 1]}")
+
                 if (viewModel.codeAnswer[viewModel.currentIndex + 1] == '0') {
                     startTimer()
                 } else viewModel.timer?.cancel()
-            } else if (viewModel.codeAnswer[viewModel.currentIndex - 1] == '0') {
-                startTimer()
-            } else viewModel.timer?.cancel()
-        } catch (e: Exception) {
 
+            } else {
+                if (viewModel.codeAnswer[viewModel.currentIndex - 1] == '0') {
+
+                    log("setStateTimer currentIndex - 1: ${viewModel.codeAnswer[viewModel.currentIndex - 1]}")
+                    startTimer()
+                } else viewModel.timer?.cancel()
+            }
+        } catch (e: Exception) {
+            viewModel.timer?.cancel()
         }
     }
 
     private fun startTimer() {
         viewModel.timer?.cancel()
-        if (viewModel.hardQuestion) {
-            viewModel.timer = object : CountDownTimer(
-                viewModel.getCurrentTimer(viewModel.hardQuestion) * QuestionViewModel.MILLIS_IN_SECONDS,
-                QuestionViewModel.MILLIS_IN_SECONDS
-            ) {
-                override fun onTick(millisUntilFinished: Long) {
-                    binding.tvTimer.text = viewModel.formatTime(millisUntilFinished)
-                    if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
-                            millisUntilFinished
-                        )[4] == '3'
-                    ) anim321(3) //Анимация для цифры 3
-                    if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
-                            millisUntilFinished
-                        )[4] == '2'
-                    ) anim321(2) //2
-                    if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
-                            millisUntilFinished
-                        )[4] == '1'
-                    ) anim321(1) //1
-                }
+        viewModel.timer = object : CountDownTimer(
+            viewModel.getCurrentTimer(viewModel.hardQuestion) * QuestionViewModel.MILLIS_IN_SECONDS,
+            QuestionViewModel.MILLIS_IN_SECONDS
+        ) {
+            override fun onTick(millisUntilFinished: Long) {
+                binding.tvTimer.text = viewModel.formatTime(millisUntilFinished)
+                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                        millisUntilFinished
+                    )[4] == '3'
+                ) anim321(3) //Анимация для цифры 3
+                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                        millisUntilFinished
+                    )[4] == '2'
+                ) anim321(2) //2
+                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                        millisUntilFinished
+                    )[4] == '1'
+                ) anim321(1) //1
+            }
 
-                override fun onFinish() {
-                    if ((Math.random() * 2).toInt() > 1) {
-                        setStateTimer(true)
-                        setVisibleButtonsNext()
-                        viewModel.trueButton()
-                    } else {
-                        setStateTimer(false)
-                        setVisibleButtonsNext()
-                        viewModel.falseButton()
-                    }
+            override fun onFinish() {
+                if ((Math.random() * 2).toInt() > 1) {
+                    setStateTimer(true)
+                    setVisibleButtonsNext()
+                    viewModel.trueButton()
+                } else {
+                    setStateTimer(false)
+                    setVisibleButtonsNext()
+                    viewModel.falseButton()
                 }
             }
-            viewModel.timer?.start()
         }
+        viewModel.timer?.start()
     }
 
     private fun setVisibleButtonsNext() { //Стоит учитывать, что в момент вызова этой функции пользователь находится все еще на том вопросе
