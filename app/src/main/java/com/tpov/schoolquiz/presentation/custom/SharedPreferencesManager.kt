@@ -2,7 +2,8 @@ package com.tpov.schoolquiz.presentation.custom
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.tpov.shoppinglist.utils.TimeManager
+import com.google.gson.Gson
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 
 object SharedPreferencesManager {
     private const val PREFS_NAME_QUIZ = "version_quiz"
@@ -48,6 +49,30 @@ object SharedPreferencesManager {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesQuiz.getInt("$key|$tpovId", -1)
+    }
+
+    fun setProfile(context: Context, profile: ProfileEntity) {
+        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        val sharedPreferences = context.getSharedPreferences("$tpovId|Profile", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        val gson = Gson()
+        val json = gson.toJson(profile)
+        editor.putString("$tpovId|profile", json)
+        editor.apply()
+    }
+
+    fun getProfile(context: Context): ProfileEntity? {
+        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        val sharedPreferences = context.getSharedPreferences("$tpovId|Profile", Context.MODE_PRIVATE)
+        val gson = Gson()
+        val json = sharedPreferences.getString("$tpovId|profile", null)
+        return if (json != null) {
+            gson.fromJson(json, ProfileEntity::class.java)
+        } else {
+            null
+        }
     }
 
     fun initialize(context: Context) {

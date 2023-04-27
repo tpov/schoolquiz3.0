@@ -51,5 +51,10 @@ data class ProfileEntity(
     val developer: Int,
     val countBox: Int,
     val timeLastOpenBox: String,
-    val coundDayBox: Int
+    val coundDayBox: Int,
+
+    val countLife: Int,
+    val count: Int,
+    val countGoldLife: Int,
+    val countGold: Int
 )

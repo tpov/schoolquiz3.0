@@ -56,19 +56,14 @@ class MainActivityViewModel @Inject constructor(
         tpovId = sharedPref?.getInt("tpovId", -1) ?: -1
 
         log("init() tpovId = $tpovId")
-        viewModelScope.launch(Dispatchers.IO) {
             log("init() launch()")
             if (tpovId == -1) insertProfile()
             getProfileFlowUseCase(tpovId)
             getQuiz8FBUseCase()
             getQuestion8FBUseCase()
-        }
     }
 
     fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
-        log("fun getQuestionListByIdQuiz")
-        log("fun getQuestionListByIdQuiz list: ${getQuestionListUseCase()}")
-        log("fun getQuestionListByIdQuiz list filter: ${getQuestionListUseCase().filter { it.idQuiz == idQuiz }}")
         return getQuestionListUseCase().filter { it.idQuiz == idQuiz }
     }
 
@@ -111,7 +106,8 @@ class MainActivityViewModel @Inject constructor(
             "",
             userLanguageCode,
             Qualification(1, 0, 0,0,0,0,0),
-            Box(0,TimeManager.getCurrentTime(), 0 )
+            Box(0,TimeManager.getCurrentTime(), 0 ),
+            Life(1, 300, 0, 0)
         )
 
         insertProfileUseCase(profile.toProfileEntity())
@@ -136,7 +132,6 @@ class MainActivityViewModel @Inject constructor(
             log("updateQuizEvent quizEntity.event = ${quizEntity.event}")
             insertQuiz(quizEntity.copy(id = null))
         }
-
     }
 
     fun setQuestionsFB() {

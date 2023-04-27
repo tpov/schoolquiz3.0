@@ -7,9 +7,14 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.LayerDrawable
+import android.os.Build
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -18,6 +23,7 @@ import android.view.animation.LinearInterpolator
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -31,6 +37,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -42,6 +49,7 @@ import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
+import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import java.text.NumberFormat
 import javax.inject.Inject
@@ -70,6 +78,7 @@ class MainActivity : AppCompatActivity() {
         (application as MainApp).component
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         component.inject(this)
         super.onCreate(savedInstanceState)
@@ -79,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         log("onCreate()")
         // Remove the action bar
         supportActionBar?.hide()
-
+        viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
         val imageResGold = R.drawable.baseline_favorite_24_gold
         val imageRes = R.drawable.baseline_favorite_24
 
@@ -87,7 +96,23 @@ class MainActivity : AppCompatActivity() {
         val filledDrawableGold = ContextCompat.getDrawable(this, imageResGold)
         val emptyDrawable = ContextCompat.getDrawable(this, R.drawable.baseline_favorite_24_empty)
 
-        val layers = arrayOf(
+        val layers1 = arrayOf(
+            emptyDrawable,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        val layers2 = arrayOf(
+            emptyDrawable,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        val layers3 = arrayOf(
+            emptyDrawable,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        val layers4 = arrayOf(
+            emptyDrawable,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        val layers5 = arrayOf(
             emptyDrawable,
             ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
         )
@@ -95,13 +120,37 @@ class MainActivity : AppCompatActivity() {
             emptyDrawable,
             ClipDrawable(filledDrawableGold, Gravity.LEFT, ClipDrawable.HORIZONTAL)
         )
-        val layerDrawable = LayerDrawable(layers)
+        val layerDrawable1 = LayerDrawable(layers1)
+        val layerDrawable2 = LayerDrawable(layers2)
+        val layerDrawable3 = LayerDrawable(layers3)
+        val layerDrawable4 = LayerDrawable(layers4)
+        val layerDrawable5 = LayerDrawable(layers5)
         val layerDrawableGold = LayerDrawable(layersGold)
 
-        layerDrawable.setDrawableByLayerId(0, emptyDrawable)
+        layerDrawable1.setDrawableByLayerId(0, emptyDrawable)
+        layerDrawable2.setDrawableByLayerId(0, emptyDrawable)
+        layerDrawable3.setDrawableByLayerId(0, emptyDrawable)
+        layerDrawable4.setDrawableByLayerId(0, emptyDrawable)
+        layerDrawable5.setDrawableByLayerId(0, emptyDrawable)
         layerDrawableGold.setDrawableByLayerId(0, emptyDrawable)
 
-        layerDrawable.setDrawableByLayerId(
+        layerDrawable1.setDrawableByLayerId(
+            1,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        layerDrawable2.setDrawableByLayerId(
+            1,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        layerDrawable3.setDrawableByLayerId(
+            1,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        layerDrawable4.setDrawableByLayerId(
+            1,
+            ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        )
+        layerDrawable5.setDrawableByLayerId(
             1,
             ClipDrawable(filledDrawable, Gravity.LEFT, ClipDrawable.HORIZONTAL)
         )
@@ -109,10 +158,25 @@ class MainActivity : AppCompatActivity() {
             1,
             ClipDrawable(filledDrawableGold, Gravity.LEFT, ClipDrawable.HORIZONTAL)
         )
+        val imageViewGold = binding.pbLifeGold1
+        val imageViewLife1 = binding.pbLife1
+        val imageViewLife2 = binding.pbLife2
+        val imageViewLife3 = binding.pbLife3
+        val imageViewLife4 = binding.pbLife4
+        val imageViewLife5 = binding.pbLife5
 
-        layerDrawable.setId(0, android.R.id.background)
+        layerDrawable1.setId(0, android.R.id.background)
+        layerDrawable2.setId(0, android.R.id.background)
+        layerDrawable3.setId(0, android.R.id.background)
+        layerDrawable4.setId(0, android.R.id.background)
+        layerDrawable4.setId(0, android.R.id.background)
+        layerDrawable5.setId(0, android.R.id.background)
         layerDrawableGold.setId(0, android.R.id.background)
-        layerDrawable.setId(1, android.R.id.progress)
+        layerDrawable1.setId(1, android.R.id.progress)
+        layerDrawable2.setId(1, android.R.id.progress)
+        layerDrawable3.setId(1, android.R.id.progress)
+        layerDrawable4.setId(1, android.R.id.progress)
+        layerDrawable5.setId(1, android.R.id.progress)
         layerDrawableGold.setId(1, android.R.id.progress)
 
         if (ContextCompat.checkSelfPermission(
@@ -125,11 +189,141 @@ class MainActivity : AppCompatActivity() {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             // Разрешения уже предоставлены, выполнить нужную функцию
-            viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
+
             viewModel.init()
+
+            binding.tvName.text = ""
+
+            imageViewGold.setImageDrawable(layerDrawableGold)
+            imageViewLife1.setImageDrawable(layerDrawable1)
+            imageViewLife2.setImageDrawable(layerDrawable2)
+            imageViewLife3.setImageDrawable(layerDrawable3)
+            imageViewLife4.setImageDrawable(layerDrawable4)
+            imageViewLife5.setImageDrawable(layerDrawable5)
+
+            SharedPreferencesManager.setProfile(this, viewModel.getProfile)
+
         } else {
             // Разрешения не предоставлены, запросить их
             requestStoragePermission()
+        }
+
+        viewModel.getProfileFBLiveData.observe(this) {
+            var count = it.count
+            layerDrawable1.findDrawableByLayerId(android.R.id.progress).level = count
+            count -= 10000
+            layerDrawable2.findDrawableByLayerId(android.R.id.progress).level = count
+            count -= 10000
+            layerDrawable3.findDrawableByLayerId(android.R.id.progress).level = count
+            count -= 10000
+            layerDrawable4.findDrawableByLayerId(android.R.id.progress).level = count
+            count -= 10000
+            layerDrawable5.findDrawableByLayerId(android.R.id.progress).level = count
+            count -= 10000
+            layerDrawableGold.findDrawableByLayerId(android.R.id.progress).level =
+                viewModel.getProfile.countGold * 10
+
+            if (viewModel.getProfile.countGoldLife == 1) {
+                imageViewGold.visibility = View.VISIBLE
+            } else imageViewGold.visibility = View.GONE
+
+            when (viewModel.getProfile.countLife) {
+                1 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.GONE
+                    imageViewLife3.visibility = View.GONE
+                    imageViewLife4.visibility = View.GONE
+                    imageViewLife5.visibility = View.GONE
+                }
+
+                2 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.GONE
+                    imageViewLife4.visibility = View.GONE
+                    imageViewLife5.visibility = View.GONE
+                }
+
+                3 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.VISIBLE
+                    imageViewLife4.visibility = View.GONE
+                    imageViewLife5.visibility = View.GONE
+                }
+
+                4 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.VISIBLE
+                    imageViewLife4.visibility = View.VISIBLE
+                    imageViewLife5.visibility = View.GONE
+                }
+
+                5 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.VISIBLE
+                    imageViewLife4.visibility = View.VISIBLE
+                    imageViewLife5.visibility = View.VISIBLE
+                }
+            }
+
+            if (SharedPreferencesManager.getProfile(this)?.nickname != it.nickname) {
+                binding.tvName.text = try {
+                    "${viewModel.getProfile.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
+                } catch (e: Exception) {
+                    ""
+                }
+            }
+            if (SharedPreferencesManager.getProfile(this)?.pointsNolics != it.pointsNolics) {
+                val animationDuration = 3000L
+                animateValue(
+                    binding.tvNolics,
+                    SharedPreferencesManager.getProfile(this)?.pointsNolics ?: 0,
+                    it.pointsNolics,
+                    animationDuration,
+                    500
+                )
+            }
+            if (SharedPreferencesManager.getProfile(this)?.pointsGold != it.pointsGold) {
+                val animationDuration = 3000L
+                animateValue(
+                    binding.tvGold,
+                    SharedPreferencesManager.getProfile(this)?.pointsGold ?: 0,
+                    it.pointsGold,
+                    animationDuration,
+                    500
+                )
+            }
+            if (SharedPreferencesManager.getProfile(this)?.pointsSkill != it.pointsSkill) {
+                val animationDuration = 3000L
+                animateValueFloat(
+                    binding.tvStars,
+                    ((SharedPreferencesManager.getProfile(this)?.pointsSkill?.toFloat() ?: 0).toInt() / 1000).toFloat(),
+                    (it.pointsSkill / 1000).toFloat(),
+                    animationDuration,
+                    500
+                )
+            }
+            if (TimeManager.getDaysBetweenDates(
+                    SharedPreferencesManager.getProfile(this)?.datePremium ?: "", it.datePremium
+                ) != 0L
+            ) {
+                val animationDuration = 3000L
+                animateValue(
+                    binding.tvCountPremiun,
+                    TimeManager.getDaysBetweenDates(
+                        SharedPreferencesManager.getProfile(this)?.datePremium ?: "",
+                        TimeManager.getCurrentTime()
+                    ).toInt(),
+                    TimeManager.getDaysBetweenDates(it.datePremium, TimeManager.getCurrentTime())
+                        .toInt(),
+                    animationDuration,
+                    500
+                )
+            }
+            SharedPreferencesManager.setProfile(this, it)
         }
 
         setButtonNavListener()
@@ -160,10 +354,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        binding.tvName.text = ""
-        val textToShow = "${viewModel.getProfile.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
-        showTextWithDelay(binding.tvName, textToShow, 50L)
-
         listenerDrawer()
         val imvNolics = binding.imvNolics
         val imvStars = binding.imvStars
@@ -176,25 +366,8 @@ class MainActivity : AppCompatActivity() {
         val animationDuration = 3000L
 
 
-        val imageViewGold = binding.pbLifeGold1
-        val imageViewLife1 = binding.pbLife1
-        val imageViewLife2 = binding.pbLife2
-        val imageViewLife3 = binding.pbLife3
-        val imageViewLife4 = binding.pbLife4
-        val imageViewLife5 = binding.pbLife5
 
-        imageViewGold.setImageDrawable(layerDrawableGold)
-        //imageViewLife1.setImageDrawable(layerDrawable)
-        //imageViewLife2.setImageDrawable(layerDrawable)
-        //imageViewLife3.setImageDrawable(layerDrawable)
-        //imageViewLife4.setImageDrawable(layerDrawable)
-        imageViewLife5.setImageDrawable(layerDrawable)
-
-        val level = 5000 //0..10000
-        layerDrawable.findDrawableByLayerId(android.R.id.progress).level = 3000
-        layerDrawableGold.findDrawableByLayerId(android.R.id.progress).level = 7000
         SetItemMenu.setHomeMenu(binding, fr2, this)
-
 
         val yRotateAnimationDuration = 1000
         val repeatDelay = 6000L // Задержка между повторениями (1 минута)
@@ -205,26 +378,51 @@ class MainActivity : AppCompatActivity() {
         showTextWithDelay(binding.tvPbLoad, "Соединение с сервером...", 50)
 
         startAnimationWithRepeat(imvStars, yRotateAnimationDuration, initialDelay, repeatDelay)
-        animateValueFloat(binding.tvStars, 0.0f, 8.5f, animationDuration, initialDelay)
+
         initialDelay += addInitialDelay
 
         startAnimationWithRepeat(imvNolics, yRotateAnimationDuration, initialDelay, repeatDelay)
         animateValue(binding.tvNolics, startValue, targetValue, animationDuration, initialDelay)
         initialDelay += addInitialDelay
 
-        startAnimationWithRepeat(imageViewLife1, yRotateAnimationDuration, initialDelay, repeatDelay)
+        startAnimationWithRepeat(
+            imageViewLife1,
+            yRotateAnimationDuration,
+            initialDelay,
+            repeatDelay
+        )
         initialDelay += addInitialDelay
 
-        startAnimationWithRepeat(imageViewLife2, yRotateAnimationDuration, initialDelay, repeatDelay)
+        startAnimationWithRepeat(
+            imageViewLife2,
+            yRotateAnimationDuration,
+            initialDelay,
+            repeatDelay
+        )
         initialDelay += addInitialDelay
 
-        startAnimationWithRepeat(imageViewLife3, yRotateAnimationDuration, initialDelay, repeatDelay)
+        startAnimationWithRepeat(
+            imageViewLife3,
+            yRotateAnimationDuration,
+            initialDelay,
+            repeatDelay
+        )
         initialDelay += addInitialDelay
 
-        startAnimationWithRepeat(imageViewLife4, yRotateAnimationDuration, initialDelay, repeatDelay)
+        startAnimationWithRepeat(
+            imageViewLife4,
+            yRotateAnimationDuration,
+            initialDelay,
+            repeatDelay
+        )
         initialDelay += addInitialDelay
 
-        startAnimationWithRepeat(imageViewLife5, yRotateAnimationDuration, initialDelay, repeatDelay)
+        startAnimationWithRepeat(
+            imageViewLife5,
+            yRotateAnimationDuration,
+            initialDelay,
+            repeatDelay
+        )
         initialDelay += addInitialDelay
 
         startAnimationWithRepeat(imageViewGold, yRotateAnimationDuration, initialDelay, repeatDelay)
@@ -240,7 +438,13 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun animateValue(textView: TextView, startValue: Int, endValue: Int, duration: Long, startDelay: Long) {
+    private fun animateValue(
+        textView: TextView,
+        startValue: Int,
+        endValue: Int,
+        duration: Long,
+        startDelay: Long
+    ) {
         val valueAnimator = ValueAnimator.ofInt(startValue, endValue).apply {
             setDuration(duration)
             setStartDelay(startDelay)
@@ -252,7 +456,13 @@ class MainActivity : AppCompatActivity() {
         valueAnimator.start()
     }
 
-    private fun animateValueFloat(textView: TextView, startValue: Float, endValue: Float, duration: Long, startDelay: Long) {
+    private fun animateValueFloat(
+        textView: TextView,
+        startValue: Float,
+        endValue: Float,
+        duration: Long,
+        startDelay: Long
+    ) {
         val valueAnimator = ValueAnimator.ofFloat(startValue, endValue).apply {
             setDuration(duration)
             setStartDelay(startDelay)
@@ -264,18 +474,39 @@ class MainActivity : AppCompatActivity() {
         valueAnimator.start()
     }
 
-
-
     private fun showTextWithDelay(textView: TextView, text: String, delayInMillis: Long) {
         CoroutineScope(Dispatchers.Main).launch {
+            val spannableText = SpannableStringBuilder()
             for (char in text) {
-                textView.append(char.toString())
+                val start = spannableText.length
+                spannableText.append(char.toString())
+                spannableText.setSpan(
+                    ForegroundColorSpan(Color.WHITE),
+                    start,
+                    start + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                textView.text = spannableText
                 delay(delayInMillis)
+
+                // Возвращаем цвет буквы к исходному (черный в данном случае)
+                spannableText.setSpan(
+                    ForegroundColorSpan(Color.BLACK),
+                    start,
+                    start + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                textView.text = spannableText
             }
         }
     }
 
-    private fun startAnimationWithRepeat(imageView: ImageView, duration: Int, initialDelay: Long, repeatDelay: Long) {
+    private fun startAnimationWithRepeat(
+        imageView: ImageView,
+        duration: Int,
+        initialDelay: Long,
+        repeatDelay: Long
+    ) {
         val animator = ObjectAnimator.ofFloat(imageView, "rotationY", 0f, 360f).apply {
             this.duration = duration.toLong()
         }
@@ -321,7 +552,11 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_downloads) -> {
                     FragmentManager.setFragment(DownloadFragment(), this)
-                    SetItemMenu.setHomeMenu(binding, 4, this) // Используйте подходящий номер пункта меню
+                    SetItemMenu.setHomeMenu(
+                        binding,
+                        4,
+                        this
+                    ) // Используйте подходящий номер пункта меню
                 }
 
                 resources.getString(R.string.nav_enter) -> {
@@ -382,7 +617,7 @@ class MainActivity : AppCompatActivity() {
 
             }
 
-                binding.navigationView.inflateMenu(R.menu.navigation_manu)
+            binding.navigationView.inflateMenu(R.menu.navigation_manu)
             true // не забудьте вернуть значение true, чтобы показать, что событие было обработано
 
         }
