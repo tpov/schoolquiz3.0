@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
@@ -14,9 +13,7 @@ import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -106,8 +103,8 @@ class MainActivityViewModel @Inject constructor(
             "",
             userLanguageCode,
             Qualification(1, 0, 0,0,0,0,0),
-            Box(0,TimeManager.getCurrentTime(), 0 ),
-            Life(1, 300, 0, 0)
+            Life(1, 300, 0, 0),
+            Box(0,TimeManager.getCurrentTime(), 0 )
         )
 
         insertProfileUseCase(profile.toProfileEntity())

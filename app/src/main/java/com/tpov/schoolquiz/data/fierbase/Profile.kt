@@ -256,8 +256,7 @@ fun Profile.toProfileEntity(): ProfileEntity {
         nickname = this.nickname,
         coundDayBox = this.box.coundDayBox,
         countBox = this.box.countBox,
-        timeLastOpenBox = this.box.timeLastOpenBox
-        nickname = this.nickname,
+        timeLastOpenBox = this.box.timeLastOpenBox,
         countGold = this.life.countGold,
         count = this.life.count,
         countGoldLife = this.life.countGoldLife,

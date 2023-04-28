@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "94609a60781e48975bb402847ca0ecc6",
+    "identityHash": "da4f6e910ca598e10e942b9ec66208e7",
     "entities": [
       {
         "tableName": "table_data",
@@ -394,7 +394,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT NOT NULL, `name` TEXT NOT NULL, `nickname` TEXT NOT NULL, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `timeInGamesAllTime` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsSkillInSeason` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyHeart` INTEGER NOT NULL, `buyGoldHeart` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsSkillInSeason` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `idFirebase` TEXT NOT NULL, `languages` TEXT NOT NULL, `gamer` INTEGER NOT NULL, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countLife` INTEGER NOT NULL, `count` INTEGER NOT NULL, `countGoldLife` INTEGER NOT NULL, `countGold` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT NOT NULL, `name` TEXT NOT NULL, `nickname` TEXT NOT NULL, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `timeInGamesAllTime` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsSkillInSeason` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyHeart` INTEGER NOT NULL, `buyGoldHeart` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsSkillInSeason` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `idFirebase` TEXT NOT NULL, `languages` TEXT NOT NULL, `gamer` INTEGER NOT NULL, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT NOT NULL, `coundDayBox` INTEGER NOT NULL, `countLife` INTEGER NOT NULL, `count` INTEGER NOT NULL, `countGoldLife` INTEGER NOT NULL, `countGold` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -643,6 +643,24 @@
             "notNull": true
           },
           {
+            "fieldPath": "countBox",
+            "columnName": "countBox",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeLastOpenBox",
+            "columnName": "timeLastOpenBox",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coundDayBox",
+            "columnName": "coundDayBox",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
             "fieldPath": "countLife",
             "columnName": "countLife",
             "affinity": "INTEGER",
@@ -742,7 +760,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '94609a60781e48975bb402847ca0ecc6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'da4f6e910ca598e10e942b9ec66208e7')"
     ]
   }
 }
