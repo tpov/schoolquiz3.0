@@ -2,9 +2,7 @@ package com.tpov.schoolquiz.presentation.mainactivity
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
+import androidx.lifecycle.*
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
@@ -40,6 +38,18 @@ class MainActivityViewModel @Inject constructor(
 ) : ViewModel() {
 
     var tpovId = 0
+    var oldId = 0
+    val tpovIdLiveData = MutableLiveData<Int>()
+
+    val getProfileFBLiveData: LiveData<ProfileEntity?> = tpovIdLiveData.switchMap { tpovId ->
+        log("getProfileFBLiveData tpovId: $tpovId")
+        getProfileFlowUseCase(tpovId).asLiveData()
+    }
+
+    fun updateTpovId(tpovId: Int) {
+        if (tpovId != oldId) tpovIdLiveData.value = tpovId
+        oldId = tpovId
+    }
 
     fun getAllProfiles() = getAllProfilesDBUseCase()
     fun getPlayers() = getPlayersDBUseCase()
@@ -146,8 +156,6 @@ class MainActivityViewModel @Inject constructor(
     }
 
     val getQuizLiveData: LiveData<List<QuizEntity>> = getQuizList()
-    var getProfileFBLiveData: LiveData<ProfileEntity> =
-        getProfileFlowUseCase(this.tpovId).asLiveData()
 
     val getProfile = getProfileUseCase(tpovId)
 

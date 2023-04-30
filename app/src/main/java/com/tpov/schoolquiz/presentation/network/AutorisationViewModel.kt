@@ -5,11 +5,9 @@ import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
@@ -74,7 +72,13 @@ class AutorisationViewModel @Inject constructor(
                     val tpovId = sharedPref?.getInt("tpovId", 0)
 
                     var pr = getProfileUseCase(tpovId ?: 0)
-                    if (pr.dateSynch.isNotEmpty()) {
+                    if (
+                        try {
+                            pr.dateSynch!!.isEmpty()
+                        } catch (e: java.lang.Exception) {
+                            true
+                        }
+                    ) {
                         log("createAcc дата в текущем профиле есть")
                         val profile = Profile(
                             0,
@@ -89,7 +93,7 @@ class AutorisationViewModel @Inject constructor(
                             "",
                             city,
                             0,
-                            TimeInGames(0,0,0, 0),
+                            TimeInGames(0, 0, 0, 0),
                             AddPoints(0, 0, 0, 0, ""),
                             Dates(
                                 TimeManager.getCurrentTime(),
@@ -97,9 +101,9 @@ class AutorisationViewModel @Inject constructor(
                             ),
                             auth.currentUser?.uid ?: "",
                             languages,
-                            Qualification(0,0,0,0,0,0,0),
+                            Qualification(0, 0, 0, 0, 0, 0, 0),
                             Life(1, 300, 0, 0),
-                            Box(0, TimeManager.getCurrentTime(),0)
+                            Box(0, TimeManager.getCurrentTime(), 0)
                         )
 
                         insertProfile(profile)
@@ -145,7 +149,7 @@ class AutorisationViewModel @Inject constructor(
     private fun setProfileTpovId(id: Int, context: Context) {
         log("fun setProfileTpovId")
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        with (sharedPref.edit()) {
+        with(sharedPref.edit()) {
             putInt("tpovId", id)
             apply()
         }

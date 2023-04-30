@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
@@ -30,19 +31,25 @@ object TimeManager {
             time
         }
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getDaysBetweenDates(dateString1: String, dateString2: String): Long {
+    fun getDaysBetweenDates(dateString1: String, dateString2: String): Long? {
         val formatter = SimpleDateFormat(DEF_TIME_FORMAT, Locale.getDefault())
 
-        // Преобразуйте строки даты в объекты Date
-        val date1 = formatter.parse(dateString1)
-        val date2 = formatter.parse(dateString2)
+        return try {
+            // Преобразуйте строки даты в объекты Date
+            val date1 = formatter.parse(dateString1)
+            val date2 = formatter.parse(dateString2)
 
-        // Преобразуйте объекты Date в объекты LocalDate
-        val localDate1 = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-        val localDate2 = date2.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+            // Преобразуйте объекты Date в объекты LocalDate
+            val localDate1 = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+            val localDate2 = date2.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
 
-        // Вычислите разницу между двумя объектами LocalDate в днях
-        return ChronoUnit.DAYS.between(localDate1, localDate2)
+            // Вычислите разницу между двумя объектами LocalDate в днях
+            ChronoUnit.DAYS.between(localDate1, localDate2)
+        } catch (e: ParseException) {
+            e.printStackTrace()
+            0
+        }
     }
 }

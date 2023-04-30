@@ -12,7 +12,6 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.RadarData
 import com.github.mikephil.charting.data.RadarDataSet
 import com.github.mikephil.charting.data.RadarEntry
-import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
@@ -45,7 +44,7 @@ class ProfileAdapter(
         holder.ivIcon.text = profile.logo.toString()
         holder.tvTpovId.text = profile.tpovId.toString()
         holder.tvNickname.text = profile.nickname
-        if (profile.datePremium > TimeManager.getCurrentTime()) holder.imvPremium.visibility =
+        if ((profile.datePremium ?: "") > TimeManager.getCurrentTime()) holder.imvPremium.visibility =
             View.VISIBLE
         else holder.imvPremium.visibility = View.GONE
         holder.tvLanguage.text = profile.languages

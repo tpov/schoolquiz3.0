@@ -63,12 +63,12 @@ class EventViewModel @Inject constructor(
             .groupBy { it.idQuiz }
             .flatMap { (_, questions) ->
                 questions.filter { question ->
-                    question.language !in getProfileUseCase(tpovId).languages.split("|") ||
-                            question.lvlTranslate < getProfileUseCase(tpovId).translater - 50
+                    question.language !in getProfileUseCase(tpovId).languages!!.split("|") ||
+                            question.lvlTranslate < (getProfileUseCase(tpovId).translater)!! - 50
                 }
             }
             .forEach { question ->
-                if (question.language !in getProfileUseCase(tpovId).languages.split("|")) {
+                if (question.language !in getProfileUseCase(tpovId).languages!!.split("|")) {
                     translateEditQuestion.add(question)
                 } else if (question.lvlTranslate > 200) {
                     translate2Question.add(question)

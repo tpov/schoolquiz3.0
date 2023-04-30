@@ -18,8 +18,7 @@ import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 import javax.inject.Inject
 
 class ChatFragment : BaseFragment() {
@@ -61,7 +60,7 @@ class ChatFragment : BaseFragment() {
                 val currentTime = TimeManager.getCurrentTime()
                 val chatMessage = Chat(
                     time = currentTime,
-                    user = chatViewModel.getProfile(tpovId).nickname,
+                    user = chatViewModel.getProfile(tpovId).nickname ?: "",
                     msg = message,
                     importance = 0,
                     personalSms = 0,

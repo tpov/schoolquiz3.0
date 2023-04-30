@@ -66,7 +66,12 @@ data class Box(
     val countBox: Int,
     val timeLastOpenBox: String,
     val coundDayBox: Int
-)
+) {
+    constructor() : this(
+        0, "", 0
+    )
+}
+
 
 @IgnoreExtraProperties
 data class Qualification(
@@ -146,65 +151,65 @@ data class Dates(
 
 fun ProfileEntity.toProfile(): Profile {
     return Profile(
-        tpovId = this.tpovId,
-        login = this.login,
+        tpovId = this.tpovId!!,
+        login = this.login!!,
         name = this.name ?: "",
-        nickname = this.nickname,
-        birthday = this.birthday,
+        nickname = this.nickname!!,
+        birthday = this.birthday!!,
         points = Points(
-            gold = this.pointsGold,
-            skill = this.pointsSkill,
-            skillInSesone = this.pointsSkillInSeason,
-            nolics = this.pointsNolics
+            gold = this.pointsGold!!,
+            skill = this.pointsSkill!!,
+            skillInSesone = this.pointsSkillInSeason!!,
+            nolics = this.pointsNolics!!
         ),
-        datePremium = this.datePremium,
+        datePremium = this.datePremium!!,
         buy = Buy(
-            heart = this.buyHeart,
-            goldHeart = this.buyGoldHeart,
-            quizPlace = this.buyQuizPlace,
-            theme = this.buyTheme,
-            music = this.buyMusic,
-            logo = this.buyLogo
+            heart = this.buyHeart!!,
+            goldHeart = this.buyGoldHeart!!,
+            quizPlace = this.buyQuizPlace!!,
+            theme = this.buyTheme!!,
+            music = this.buyMusic!!,
+            logo = this.buyLogo!!
         ),
-        trophy = this.trophy,
-        friends = this.friends,
-        city = this.city,
-        logo = this.logo,
+        trophy = this.trophy!!,
+        friends = this.friends!!,
+        city = this.city!!,
+        logo = this.logo!!,
         timeInGames = TimeInGames(
-            allTime = this.timeInGamesAllTime,
-            timeInQuiz = this.timeInGamesInQuiz,
-            timeInChat = this.timeInGamesInChat,
-            smsPoints = this.timeInGamesSmsPoints
+            allTime = this.timeInGamesAllTime!!,
+            timeInQuiz = this.timeInGamesInQuiz!!,
+            timeInChat = this.timeInGamesInChat!!,
+            smsPoints = this.timeInGamesSmsPoints!!
         ),
         addPoints = AddPoints(
-            this.addPointsGold,
-            this.addPointsSkill,
-            this.addPointsSkillInSeason,
-            this.addPointsNolics,
-            this.addTrophy
+            this.addPointsGold!!,
+            this.addPointsSkill!!,
+            this.addPointsSkillInSeason!!,
+            this.addPointsNolics!!,
+            this.addTrophy!!
         ),
-        dates = Dates(this.dataCreateAcc, this.dateSynch),
-        idFirebase = this.idFirebase,
-        languages = this.languages,
+        dates = Dates(this.dataCreateAcc!!, this.dateSynch!!),
+        idFirebase = this.idFirebase!!,
+        languages = this.languages!!,
         qualification = Qualification(
-            this.gamer,
-            this.sponsor,
-            this.tester,
-            this.translater,
-            this.moderator,
-            this.admin,
-            this.developer
+            this.gamer!!,
+            this.sponsor!!,
+            this.tester!!,
+            this.translater!!,
+            this.moderator!!,
+            this.admin!!,
+            this.developer!!
         ),
         life = Life(
-            this.countLife,
-            this.count,
-            this.countGoldLife,
-            this.countGold
+            this.countLife!!,
+            this.count!!,
+            this.countGoldLife!!,
+            this.countGold!!
         ),
         box = Box(
-            this.countBox,
-            this.timeLastOpenBox,
-            this.coundDayBox
+            this.countBox!!,
+            this.timeLastOpenBox!!,
+            this.coundDayBox!!
         )
 
     )

@@ -2,14 +2,14 @@ package com.tpov.schoolquiz.presentation.custom
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.google.gson.Gson
-import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 
 object SharedPreferencesManager {
     private const val PREFS_NAME_QUIZ = "version_quiz"
     private const val PREFS_NAME_QUESTION = "version_question"
+    private const val PREFS_NAME_COUNTS = "profile_counts"
     private lateinit var sharedPreferencesQuiz: SharedPreferences
     private lateinit var sharedPreferencesQuestion: SharedPreferences
+    private lateinit var sharedPreferencesCounts: SharedPreferences
     fun setTimeMassage(time: String) {
         if (!::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
@@ -18,6 +18,7 @@ object SharedPreferencesManager {
         editor.putString("massageTime", time)
         editor.apply()
     }
+
     fun getTimeMassage(): String {
 
         if (!::sharedPreferencesQuiz.isInitialized) {
@@ -25,6 +26,7 @@ object SharedPreferencesManager {
         }
         return sharedPreferencesQuiz.getString("massageTime", "0") ?: "0"
     }
+
     fun setVersionQuiz(key: String, value: Int, context: Context) {
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
         val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
@@ -43,7 +45,14 @@ object SharedPreferencesManager {
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
         val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
         log("fun getVersionQuiz tpovId: $tpovId")
-        log("fun getVersionQuiz key: $key|$tpovId, value: ${sharedPreferencesQuiz.getInt("$key|$tpovId", -1)}")
+        log(
+            "fun getVersionQuiz key: $key|$tpovId, value: ${
+                sharedPreferencesQuiz.getInt(
+                    "$key|$tpovId",
+                    -1
+                )
+            }"
+        )
 
         if (!::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
@@ -51,33 +60,69 @@ object SharedPreferencesManager {
         return sharedPreferencesQuiz.getInt("$key|$tpovId", -1)
     }
 
-    fun setProfile(context: Context, profile: ProfileEntity) {
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
-        val sharedPreferences = context.getSharedPreferences("$tpovId|Profile", Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
-        val gson = Gson()
-        val json = gson.toJson(profile)
-        editor.putString("$tpovId|profile", json)
+    fun setProfile(
+        skill: Int,
+        nolic: Int,
+        gold: Int,
+        premium: String,
+        nick: String
+    ) {
+        log("skill: $skill")
+        log("nolic: $nolic")
+        log("gold: $gold")
+        log("premium: $premium")
+        log("nick: $nick")
+
+        val editor = sharedPreferencesCounts.edit()
+        editor.putInt("countSkill", skill)
+        editor.putInt("countGold", gold)
+        editor.putString("countPremium", premium)
+        editor.putString("countNick", nick)
+        editor.putInt("countNolic", nolic)
         editor.apply()
     }
 
-    fun getProfile(context: Context): ProfileEntity? {
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
-        val sharedPreferences = context.getSharedPreferences("$tpovId|Profile", Context.MODE_PRIVATE)
-        val gson = Gson()
-        val json = sharedPreferences.getString("$tpovId|profile", null)
-        return if (json != null) {
-            gson.fromJson(json, ProfileEntity::class.java)
-        } else {
-            null
+    fun getSkill(): Int {
+        if (!::sharedPreferencesCounts.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
+        return sharedPreferencesCounts.getInt("countSkill", 0)
+    }
+
+    fun getGold(): Int {
+        if (!::sharedPreferencesCounts.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesCounts.getInt("countGold", 0)
+    }
+
+    fun getPremium(): String {
+        if (!::sharedPreferencesCounts.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesCounts.getString("countPremium", "") ?: ""
+    }
+
+    fun getNick(): String {
+        if (!::sharedPreferencesCounts.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesCounts.getString("countNick", "") ?: ""
+    }
+
+    fun getNolic(): Int {
+        if (!::sharedPreferencesCounts.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesCounts.getInt("countNolic", 0)
     }
 
     fun initialize(context: Context) {
         sharedPreferencesQuiz = context.getSharedPreferences(PREFS_NAME_QUIZ, Context.MODE_PRIVATE)
-        sharedPreferencesQuestion = context.getSharedPreferences(PREFS_NAME_QUESTION, Context.MODE_PRIVATE)
+        sharedPreferencesQuestion =
+            context.getSharedPreferences(PREFS_NAME_QUESTION, Context.MODE_PRIVATE)
+        sharedPreferencesCounts =
+            context.getSharedPreferences(PREFS_NAME_COUNTS, Context.MODE_PRIVATE)
     }
 
     private fun log(msg: String) {

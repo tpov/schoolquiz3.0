@@ -6,6 +6,8 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ClipDrawable
@@ -69,6 +71,14 @@ class MainActivity : AppCompatActivity() {
     private var fr1 = 1
     private var fr2 = 1
 
+    private val sharedPreferenceListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+            if (key == "tpovId") {
+                val newTpovId = sharedPreferences.getInt(key, -1)
+                viewModel.updateTpovId(newTpovId)
+            }
+        }
+
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
 
@@ -76,6 +86,12 @@ class MainActivity : AppCompatActivity() {
 
     private val component by lazy {
         (application as MainApp).component
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val sharedPref = this.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        sharedPref.unregisterOnSharedPreferenceChangeListener(sharedPreferenceListener)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -91,6 +107,9 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
         val imageResGold = R.drawable.baseline_favorite_24_gold
         val imageRes = R.drawable.baseline_favorite_24
+
+        val sharedPref = this.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        sharedPref.registerOnSharedPreferenceChangeListener(sharedPreferenceListener)
 
         val filledDrawable = ContextCompat.getDrawable(this, imageRes)
         val filledDrawableGold = ContextCompat.getDrawable(this, imageResGold)
@@ -201,15 +220,16 @@ class MainActivity : AppCompatActivity() {
             imageViewLife4.setImageDrawable(layerDrawable4)
             imageViewLife5.setImageDrawable(layerDrawable5)
 
-            SharedPreferencesManager.setProfile(this, viewModel.getProfile)
-
         } else {
             // Разрешения не предоставлены, запросить их
             requestStoragePermission()
         }
 
+
         viewModel.getProfileFBLiveData.observe(this) {
-            var count = it.count
+            log("it: $it")
+
+            var count = (it?.count ?: 0) * 100
             layerDrawable1.findDrawableByLayerId(android.R.id.progress).level = count
             count -= 10000
             layerDrawable2.findDrawableByLayerId(android.R.id.progress).level = count
@@ -221,14 +241,14 @@ class MainActivity : AppCompatActivity() {
             layerDrawable5.findDrawableByLayerId(android.R.id.progress).level = count
             count -= 10000
             layerDrawableGold.findDrawableByLayerId(android.R.id.progress).level =
-                viewModel.getProfile.countGold * 10
+                (it?.countGold ?: 0) * 100
 
-            if (viewModel.getProfile.countGoldLife == 1) {
+            if (it?.countGoldLife == 1) {
                 imageViewGold.visibility = View.VISIBLE
             } else imageViewGold.visibility = View.GONE
 
-            when (viewModel.getProfile.countLife) {
-                1 -> {
+            when (it?.countLife) {
+                0, 1 -> {
                     imageViewLife1.visibility = View.VISIBLE
                     imageViewLife2.visibility = View.GONE
                     imageViewLife3.visibility = View.GONE
@@ -268,63 +288,70 @@ class MainActivity : AppCompatActivity() {
                     imageViewLife5.visibility = View.VISIBLE
                 }
             }
+            log("SharedPreferencesManager.getNick(): ${SharedPreferencesManager.getNick()}")
+            log("it?.nickname: ${it?.nickname}")
+            if (SharedPreferencesManager.getNick() != it?.nickname) {
 
-            if (SharedPreferencesManager.getProfile(this)?.nickname != it.nickname) {
-                binding.tvName.text = try {
-                    "${viewModel.getProfile.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
-                } catch (e: Exception) {
-                    ""
-                }
-            }
-            if (SharedPreferencesManager.getProfile(this)?.pointsNolics != it.pointsNolics) {
-                val animationDuration = 3000L
-                animateValue(
-                    binding.tvNolics,
-                    SharedPreferencesManager.getProfile(this)?.pointsNolics ?: 0,
-                    it.pointsNolics,
-                    animationDuration,
-                    500
+                showTextWithDelay(
+                    binding.tvName, try {
+                        "${it?.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
+                    } catch (e: Exception) {
+                        ""
+                    }, 50
                 )
-            }
-            if (SharedPreferencesManager.getProfile(this)?.pointsGold != it.pointsGold) {
-                val animationDuration = 3000L
-                animateValue(
-                    binding.tvGold,
-                    SharedPreferencesManager.getProfile(this)?.pointsGold ?: 0,
-                    it.pointsGold,
-                    animationDuration,
-                    500
+
+            } else binding.tvName.text =
+                "${it.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
+
+            val animationDuration = 3000L
+            animateValue(
+                binding.tvNolics,
+                SharedPreferencesManager.getNolic(),
+                it?.pointsNolics ?: 0,
+                animationDuration,
+                500
+            )
+
+            animateValue(
+                binding.tvGold,
+                SharedPreferencesManager.getGold(),
+                it?.pointsGold ?: 0,
+                animationDuration,
+                500
+            )
+
+            animateValueFloat(
+                binding.tvStars,
+                (SharedPreferencesManager.getSkill().toFloat().toInt() / 1000).toFloat(),
+                ((it?.pointsSkill ?: 0) / 1000).toFloat(),
+                animationDuration,
+                500
+            )
+
+            animateValue(
+                binding.tvCountPremiun,
+                TimeManager.getDaysBetweenDates(
+                    SharedPreferencesManager.getPremium(),
+                    TimeManager.getCurrentTime()
+                )?.toInt() ?: 0,
+                TimeManager.getDaysBetweenDates(
+                    it?.datePremium ?: "",
+                    TimeManager.getCurrentTime()
                 )
-            }
-            if (SharedPreferencesManager.getProfile(this)?.pointsSkill != it.pointsSkill) {
-                val animationDuration = 3000L
-                animateValueFloat(
-                    binding.tvStars,
-                    ((SharedPreferencesManager.getProfile(this)?.pointsSkill?.toFloat() ?: 0).toInt() / 1000).toFloat(),
-                    (it.pointsSkill / 1000).toFloat(),
-                    animationDuration,
-                    500
-                )
-            }
-            if (TimeManager.getDaysBetweenDates(
-                    SharedPreferencesManager.getProfile(this)?.datePremium ?: "", it.datePremium
-                ) != 0L
-            ) {
-                val animationDuration = 3000L
-                animateValue(
-                    binding.tvCountPremiun,
-                    TimeManager.getDaysBetweenDates(
-                        SharedPreferencesManager.getProfile(this)?.datePremium ?: "",
-                        TimeManager.getCurrentTime()
-                    ).toInt(),
-                    TimeManager.getDaysBetweenDates(it.datePremium, TimeManager.getCurrentTime())
-                        .toInt(),
-                    animationDuration,
-                    500
-                )
-            }
-            SharedPreferencesManager.setProfile(this, it)
+                    ?.toInt() ?: 0,
+                animationDuration,
+                500
+            )
+            SharedPreferencesManager.setProfile(
+                it?.pointsSkill ?: 0,
+                it?.pointsNolics ?: 0,
+                it?.countGold ?: 0,
+                it?.datePremium ?: "",
+                it?.nickname ?: ""
+            )
         }
+
+
 
         setButtonNavListener()
         numQuestionNotDate = intent.getIntExtra(NUM_QUESTION_NOT_NUL, 0)
@@ -359,13 +386,6 @@ class MainActivity : AppCompatActivity() {
         val imvStars = binding.imvStars
         val imvGold = binding.imvGold
         val imvPremium = binding.imvPremiun
-        val tvPbLoad = binding.tvPbLoad
-
-        val startValue = 0
-        val targetValue = 1000
-        val animationDuration = 3000L
-
-
 
         SetItemMenu.setHomeMenu(binding, fr2, this)
 
@@ -382,7 +402,6 @@ class MainActivity : AppCompatActivity() {
         initialDelay += addInitialDelay
 
         startAnimationWithRepeat(imvNolics, yRotateAnimationDuration, initialDelay, repeatDelay)
-        animateValue(binding.tvNolics, startValue, targetValue, animationDuration, initialDelay)
         initialDelay += addInitialDelay
 
         startAnimationWithRepeat(
@@ -429,13 +448,13 @@ class MainActivity : AppCompatActivity() {
         initialDelay += addInitialDelay
 
         startAnimationWithRepeat(imvGold, yRotateAnimationDuration, initialDelay, repeatDelay)
-        animateValue(binding.tvGold, startValue, 100, animationDuration, initialDelay)
         initialDelay += addInitialDelay
 
         startAnimationWithRepeat(imvPremium, yRotateAnimationDuration, initialDelay, repeatDelay)
-        animateValue(binding.tvCountPremiun, startValue, 999, animationDuration, initialDelay)
         initialDelay += addInitialDelay
 
+
+        viewModel.tpovIdLiveData.value = viewModel.tpovId
     }
 
     private fun animateValue(
