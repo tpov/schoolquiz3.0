@@ -2,17 +2,47 @@ package com.tpov.schoolquiz.presentation.mainactivity
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.switchMap
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.data.fierbase.*
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.data.fierbase.AddPoints
+import com.tpov.schoolquiz.data.fierbase.Box
+import com.tpov.schoolquiz.data.fierbase.Buy
+import com.tpov.schoolquiz.data.fierbase.Dates
+import com.tpov.schoolquiz.data.fierbase.Life
+import com.tpov.schoolquiz.data.fierbase.Points
+import com.tpov.schoolquiz.data.fierbase.Profile
+import com.tpov.schoolquiz.data.fierbase.Qualification
+import com.tpov.schoolquiz.data.fierbase.TimeInGames
+import com.tpov.schoolquiz.data.fierbase.toProfileEntity
+import com.tpov.schoolquiz.domain.GetAllProfilesDBUseCase
+import com.tpov.schoolquiz.domain.GetEventLiveDataUseCase
+import com.tpov.schoolquiz.domain.GetIdQuizByNameQuizUseCase
+import com.tpov.schoolquiz.domain.GetPlayersDBUseCase
+import com.tpov.schoolquiz.domain.GetProfileFlowUseCase
+import com.tpov.schoolquiz.domain.GetProfileUseCase
+import com.tpov.schoolquiz.domain.GetQuestion8FBUseCase
+import com.tpov.schoolquiz.domain.GetQuestionDetail8FBUseCase
+import com.tpov.schoolquiz.domain.GetQuestionListUseCase
+import com.tpov.schoolquiz.domain.GetQuiz8FBUseCase
+import com.tpov.schoolquiz.domain.GetQuizListUseCase
+import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
+import com.tpov.schoolquiz.domain.InsertProfileUseCase
+import com.tpov.schoolquiz.domain.InsertQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuizUseCase
+import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
+import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
+import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -34,6 +64,7 @@ class MainActivityViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
     private val getAllProfilesDBUseCase: GetAllProfilesDBUseCase,
     private val getPlayersDBUseCase: GetPlayersDBUseCase,
+    private val getQuizListUseCase: GetQuizListUseCase,
     val getEventLiveDataUseCase: GetEventLiveDataUseCase
 ) : ViewModel() {
 
@@ -57,17 +88,18 @@ class MainActivityViewModel @Inject constructor(
     init {
         SharedPreferencesManager.initialize(context)
     }
+
     fun init() {
         log("fun init()")
         val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
         tpovId = sharedPref?.getInt("tpovId", -1) ?: -1
 
         log("init() tpovId = $tpovId")
-            log("init() launch()")
-            if (tpovId == -1) insertProfile()
-            getProfileFlowUseCase(tpovId)
-            getQuiz8FBUseCase()
-            getQuestion8FBUseCase()
+        log("init() launch()")
+        if (tpovId == -1) insertProfile()
+        getProfileFlowUseCase(tpovId)
+        getQuiz8FBUseCase()
+        getQuestion8FBUseCase()
     }
 
     fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
@@ -104,7 +136,7 @@ class MainActivityViewModel @Inject constructor(
             "",
             "",
             0,
-            TimeInGames(0,0,0, 0),
+            TimeInGames(0, 0, 0, 0),
             AddPoints(0, 0, 0, 0, ""),
             Dates(
                 TimeManager.getCurrentTime(),
@@ -112,9 +144,9 @@ class MainActivityViewModel @Inject constructor(
             ),
             "",
             userLanguageCode,
-            Qualification(1, 0, 0,0,0,0,0),
+            Qualification(1, 0, 0, 0, 0, 0, 0),
             Life(1, 300, 0, 0),
-            Box(0,TimeManager.getCurrentTime(), 0 )
+            Box(0, TimeManager.getCurrentTime(), 0)
         )
 
         insertProfileUseCase(profile.toProfileEntity())
@@ -159,6 +191,16 @@ class MainActivityViewModel @Inject constructor(
 
     val getProfile = getProfileUseCase(tpovId)
 
+    fun getNewIdQuiz(): Int {
+        var i = 0
+        getQuizListUseCase(tpovId).forEach {
+            if (i <= 100 && i < it.id!!) {
+                i = it.id!!
+            }
+        }
+        return i + 1
+    }
+
     fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(nameQuiz, tpovId)
 
     fun log(massage: String) {
@@ -174,6 +216,6 @@ class MainActivityViewModel @Inject constructor(
         getQuestionListByIdQuiz(id).forEach {
             if (it.lvlTranslate < lvlTranslate) lvlTranslate = it.lvlTranslate
         }
-        return  lvlTranslate
+        return lvlTranslate
     }
 }

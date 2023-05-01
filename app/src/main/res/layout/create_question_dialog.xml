@@ -1,198 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    style="@style/TerminalText"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#00000000"
-    android:elevation="12dp">
+    android:layout_height="match_parent">
 
-
-    <androidx.cardview.widget.CardView
-        style="@style/TerminalText"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#000000"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:orientation="vertical"
+        android:padding="16dp">
 
+        <EditText
+            android:id="@+id/quiz_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Название квеста" />
+
+        <LinearLayout
+            android:id="@+id/questions_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#000000"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
-            <ScrollView
-                android:id="@+id/scroll_view"
+            <Button
+                android:id="@+id/add_question_button"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Добавить вопрос" />
 
-                <LinearLayout
-                    android:id="@+id/layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    app:layout_constraintHeight_max="250dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tv_title"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="terminal tpov1.0" />
-
-                        <TextView
-                            android:id="@+id/tv_load"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="32dp"
-                            android:text="" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tv_quiz"
-                            style="@style/TerminalText"
-                            android:layout_width="500px"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            android:ellipsize="none"
-                            android:text="Name Quizq" />
-
-                        <TextView
-                            android:id="@+id/sumbol_quiz"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            android:text=" -$ " />
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/intv_quiz"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@null"
-                            android:hint="your name quiz"
-                            android:maxLines="1"
-                            android:textCursorDrawable="@drawable/cursor" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-            </ScrollView>
-
-            <LinearLayout
+            <Button
+                android:id="@+id/finish_button"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Завершить" />
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
-
-
-                    <TextView
-                        android:id="@+id/tv_next"
-                        style="@style/TerminalText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingLeft="8dp"
-                        android:text="Next" />
-
-                    <TextView
-                        android:id="@+id/tv_end"
-                        style="@style/TerminalText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingLeft="8dp"
-                        android:text="End" />
-
-                    <TextView
-                        android:id="@+id/tv_clear_question"
-                        style="@style/TerminalText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingLeft="8dp"
-                        android:text="Clear" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
-
-                    <RadioGroup
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:paddingLeft="8dp">
-
-                        <RadioButton
-                            android:id="@+id/rb_true"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="true" />
-
-                        <RadioButton
-                            android:id="@+id/rb_false"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="false" />
-
-                    </RadioGroup>
-
-                    <RadioGroup
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:paddingLeft="8dp">
-
-                        <RadioButton
-                            android:id="@+id/rb_hard_question"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="hard" />
-
-                        <RadioButton
-                            android:id="@+id/rb_light_question"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="light" />
-
-                    </RadioGroup>
-                </LinearLayout>
-            </LinearLayout>
         </LinearLayout>
 
-
-    </androidx.cardview.widget.CardView>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</ScrollView>

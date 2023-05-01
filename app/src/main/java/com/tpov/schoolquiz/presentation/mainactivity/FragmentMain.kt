@@ -15,7 +15,7 @@ import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
+import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialogTerminal
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
@@ -93,8 +93,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             // Добавление нового элемента в список
             val fragmentManager = activity?.supportFragmentManager
             fragmentManager?.let {
-                val dialogFragment: CreateQuestionDialog =
-                    CreateQuestionDialog.newInstance(CreateQuestionDialog.NAME)
+                val dialogFragment: CreateQuestionDialogTerminal =
+                    CreateQuestionDialogTerminal.newInstance(CreateQuestionDialogTerminal.NAME)
                 dialogFragment.show(fragmentManager, "create_question_dialog")
             }
         }
