@@ -15,7 +15,7 @@ import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialogTerminal
+import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
@@ -82,7 +82,12 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
-            adapter.submitList(quizList.filter { it.event == isMyQuiz })
+            adapter.submitList(quizList.filter {
+
+                log("event quizz: it.event ${it.event}")
+                log("event quizz: isMyQuiz $isMyQuiz")
+
+                it.event == isMyQuiz })
         }
     }
 
@@ -93,8 +98,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             // Добавление нового элемента в список
             val fragmentManager = activity?.supportFragmentManager
             fragmentManager?.let {
-                val dialogFragment: CreateQuestionDialogTerminal =
-                    CreateQuestionDialogTerminal.newInstance(CreateQuestionDialogTerminal.NAME)
+                val dialogFragment: CreateQuestionDialog =
+                    CreateQuestionDialog.newInstance(CreateQuestionDialog.NAME)
                 dialogFragment.show(fragmentManager, "create_question_dialog")
             }
         }
@@ -132,8 +137,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
     override fun sendItem(quizEntity: QuizEntity) {
 
-        Log.d("daefdhrt", "tpovId2 ${mainViewModel.tpovId}")
-        Log.d("gdrgefs", "1 $quizEntity")
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
         mainViewModel.getQuizLiveData.observe(this) { list ->

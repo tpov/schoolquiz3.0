@@ -2,8 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingTop="16dp"
+    android:background="@color/design3_main_start"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,6 +16,9 @@
             android:id="@+id/question_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/num_chack_norice_red"
+            android:textSize="18dp"
+            android:textStyle="bold"
             android:text="1." />
 
         <EditText
@@ -22,26 +26,22 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Название вопроса" />
+            android:background="@color/nullColor"
+            android:hint="Название" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <CheckBox
             android:id="@+id/hard_question_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Сложный вопрос" />
+            android:text="Сложный" />
 
-        <TextView
-            android:id="@+id/language_selector"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:text="Язык" />
 
         <RadioGroup
             android:id="@+id/answer_group"
@@ -62,6 +62,23 @@
                 android:text="False" />
         </RadioGroup>
 
+        <TextView
+            android:id="@+id/language_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="italic"
+            android:textColor="@color/white"
+            android:paddingLeft="8dp"
+            android:clickable="true"
+            android:text="Язык" />
+
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/num_chack_norice_red"
+        android:orientation="vertical">
+
+    </LinearLayout>
 </LinearLayout>

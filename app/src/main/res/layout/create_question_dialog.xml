@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/design3_main_start"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -9,9 +10,15 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+
         <EditText
             android:id="@+id/quiz_title"
             android:layout_width="match_parent"
+            android:textColorHint="@color/white"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="18dp"
             android:layout_height="wrap_content"
             android:hint="Название квеста" />
 
@@ -21,26 +28,15 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
 
-        <LinearLayout
+        <Button
+            android:id="@+id/add_question_button"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/add_question_button"
-                android:layout_width="match_parent"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="Добавить вопрос" />
-
-            <Button
-                android:id="@+id/finish_button"
-                android:layout_width="match_parent"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="Завершить" />
-
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingTop="8dp"
+            android:background="@color/design3_main_middle"
+            android:text="Добавить вопрос"
+            android:textColor="@color/white" />
 
     </LinearLayout>
 </ScrollView>

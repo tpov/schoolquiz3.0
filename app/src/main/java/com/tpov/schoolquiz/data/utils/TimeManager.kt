@@ -48,7 +48,6 @@ object TimeManager {
             // Вычислите разницу между двумя объектами LocalDate в днях
             ChronoUnit.DAYS.between(localDate1, localDate2)
         } catch (e: ParseException) {
-            e.printStackTrace()
             0
         }
     }
