@@ -1,11 +1,9 @@
 package com.tpov.schoolquiz.presentation.network
 
 import android.content.Context
-import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,12 +13,12 @@ import android.widget.ProgressBar
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject

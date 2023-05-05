@@ -19,12 +19,12 @@
         android:theme="@style/Theme.GeoQuiz">
 
         <activity
-            android:name="com.tpov.schoolquiz.presentation.mainactivity.MainActivity"/>
+            android:name="com.tpov.schoolquiz.presentation.main.MainActivity"/>
         <activity android:name="com.tpov.schoolquiz.presentation.question.QuestionActivity" />
         <activity android:name="com.tpov.schoolquiz.presentation.question.QuestionListActivity" />
         <activity android:name="com.tpov.schoolquiz.presentation.question.CheatActivity" />
         <activity android:name="com.tpov.schoolquiz.presentation.settings.SettingsActivity" />
-        <activity android:name="com.tpov.schoolquiz.presentation.mainactivity.info.InfoActivity" />
+        <activity android:name="com.tpov.schoolquiz.presentation.main.info.InfoActivity" />
         <activity
             android:name="com.tpov.schoolquiz.presentation.splashscreen.SplashScreen"
             android:exported="true">

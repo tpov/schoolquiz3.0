@@ -1,8 +1,8 @@
 package com.tpov.schoolquiz.di
 
 import android.app.Application
-import com.tpov.schoolquiz.presentation.mainactivity.FragmentMain
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
+import com.tpov.schoolquiz.presentation.main.FragmentMain
+import com.tpov.schoolquiz.presentation.main.MainActivity
 import com.tpov.schoolquiz.presentation.network.AutorisationFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel

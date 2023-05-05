@@ -24,10 +24,10 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.*
 import com.tpov.geoquiz.activity.workers.RefreshDataWorker
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 import com.tpov.schoolquiz.databinding.ActivitySplashScreenBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
+import com.tpov.schoolquiz.presentation.main.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject

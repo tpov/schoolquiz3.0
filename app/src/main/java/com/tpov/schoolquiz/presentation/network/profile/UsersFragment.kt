@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
+import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import kotlinx.coroutines.InternalCoroutinesApi
 
 class UsersFragment : BaseFragment() {

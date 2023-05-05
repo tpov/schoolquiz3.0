@@ -2,10 +2,15 @@ package com.tpov.schoolquiz.presentation.dialog
 
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
@@ -13,7 +18,7 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.custom.Errors.errorGetLvlTranslate
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
+import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.add_question_button
@@ -34,25 +39,52 @@ class CreateQuestionDialog : DialogFragment() {
     private lateinit var dialogView: View
     private lateinit var questionsContainer: LinearLayout
     private var numQuestion = 0
+    private var id = 0
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val id = arguments?.getInt("id") ?: -1
+        this.id = id
+
         val inflater = LayoutInflater.from(requireContext())
         dialogView = inflater.inflate(R.layout.create_question_dialog, null)
         questionsContainer = dialogView.findViewById(R.id.questions_container)
+        mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+            addFilledQuestionItem(questionEntity)
+        }
 
-        dialogView.add_question_button.setOnClickListener {
-            addQuestionItem()
+        val dialogTitle: String
+        val positiveButtonText: String
+        val positiveButtonAction: (DialogInterface, Int) -> Unit
+
+        if (id == -1) {
+            dialogTitle = "Создать вопросы"
+            positiveButtonText = "Завершить"
+            positiveButtonAction = { _, _ -> createQuestions() }
+
+            dialogView.add_question_button.setOnClickListener {
+                addQuestionItem()
+            }
+        } else {
+            dialogTitle = "Обновить вопросы"
+            positiveButtonText = "Сохранить"
+            positiveButtonAction = { _, _ -> createQuestions() }
+
+            dialogView.quiz_title.setText(mainActivityViewModel.getQuizByIdUseCase(id).nameQuiz)
+
+            mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+                addFilledQuestionItem(questionEntity)
+            }
         }
 
         return AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
-            .setTitle("Создать вопросы")
+            .setTitle(dialogTitle)
             .setView(dialogView)
-            .setPositiveButton("Завершить") { _, _ -> createQuestions() }
+            .setPositiveButton(positiveButtonText, positiveButtonAction)
             .setNegativeButton("Отмена") { _, _ -> }
             .create()
     }
-
-    private fun addQuestionItem() {
+    private fun addQuestionItem(): View {
         val inflater = LayoutInflater.from(requireContext())
         val questionItemView = inflater.inflate(R.layout.question_create_item, null)
 
@@ -63,6 +95,37 @@ class CreateQuestionDialog : DialogFragment() {
         numQuestion++
         questionItemView.question_number.text = numQuestion.toString()
         questionsContainer.addView(questionItemView)
+
+        return questionItemView
+    }
+    private fun fillDialogWithData(quizEntity: QuizEntity, questionEntities: List<QuestionEntity>) {
+        // Заполнить поля диалога данными из quizEntity
+        dialogView.quiz_title.setText(quizEntity.nameQuiz)
+
+        // Добавить и заполнить вопросы данными из questionEntities
+        questionEntities.forEach { questionEntity ->
+            addFilledQuestionItem(questionEntity)
+        }
+    }
+
+    private fun addFilledQuestionItem(questionEntity: QuestionEntity): View {
+        val questionItemView = addQuestionItem()
+
+        val questionTitle = questionItemView.findViewById<EditText>(R.id.question_title)
+        val trueButton = questionItemView.findViewById<RadioButton>(R.id.true_button)
+        val hardQuestionCheckbox = questionItemView.findViewById<CheckBox>(R.id.hard_question_checkbox)
+        val languageSelector = questionItemView.findViewById<AppCompatTextView>(R.id.language_selector)
+
+        questionTitle.setText(questionEntity.nameQuestion)
+        trueButton.isChecked = questionEntity.answerQuestion
+        hardQuestionCheckbox.isChecked = questionEntity.hardQuestion
+        languageSelector.text = LanguageUtils.getLanguageFullName(questionEntity.language)
+
+        return questionItemView
+    }
+
+    private fun updateQuestions() {
+
     }
 
     private fun showLanguageDialog(questionItemView: View) {
@@ -150,10 +213,11 @@ class CreateQuestionDialog : DialogFragment() {
     companion object {
         const val NAME = "name"
 
-        fun newInstance(name: String): CreateQuestionDialog {
+        fun newInstance(name: String, id: Int): CreateQuestionDialog {
             val fragment = CreateQuestionDialog()
             val args = Bundle()
-            args.putString("name", name)
+            args.putString(NAME, name)
+            args.putInt("id", id)
             fragment.arguments = args
             return fragment
         }

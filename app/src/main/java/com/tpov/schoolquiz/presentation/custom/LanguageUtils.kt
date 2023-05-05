@@ -17,4 +17,15 @@ object LanguageUtils {
             else -> Locale.getDefault().language
         }
     }
+
+    fun getLanguageFullName(shortCode: String): String {
+        return when (shortCode) {
+            "en" -> "Английский"
+            "ru" -> "Русский"
+            "fr" -> "Французский"
+            "de" -> "Немецкий"
+            "es" -> "Испанский"
+            else -> "Неизвестный язык"
+        }
+    }
 }

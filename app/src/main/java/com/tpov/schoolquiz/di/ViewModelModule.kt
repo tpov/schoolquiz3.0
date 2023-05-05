@@ -2,7 +2,8 @@ package com.tpov.schoolquiz.di
 
 import android.app.Application
 import android.content.Context
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
+import androidx.lifecycle.ViewModel
+import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.network.AutorisationViewModel
 import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
 import com.tpov.schoolquiz.presentation.network.event.EventViewModel
@@ -10,7 +11,6 @@ import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
 import com.tpov.schoolquiz.presentation.question.QuestionViewModel
 import com.tpov.schoolquiz.presentation.splashscreen.SplashScreenViewModel
 import dagger.Binds
-import androidx.lifecycle.ViewModel;
 import dagger.Module
 import dagger.multibindings.IntoMap
 import kotlinx.coroutines.InternalCoroutinesApi

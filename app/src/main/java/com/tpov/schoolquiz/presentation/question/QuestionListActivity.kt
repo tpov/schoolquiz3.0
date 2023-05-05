@@ -11,7 +11,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Quiz
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
+import com.tpov.schoolquiz.presentation.main.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
