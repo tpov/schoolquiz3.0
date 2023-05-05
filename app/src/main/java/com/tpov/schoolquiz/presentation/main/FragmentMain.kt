@@ -142,6 +142,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun sendItem(id: Int) {
         var quizEntity = mainViewModel.getQuizByIdUseCase(id)
 
+        mainViewModel.updateQuizUseCase(quizEntity.copy(showItemMenu = false))
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
         mainViewModel.getQuizLiveData.observe(this) { list ->

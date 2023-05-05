@@ -52,7 +52,7 @@ data class QuizEntity(
     val ratingPlayer: Int,
 
     @ColumnInfo(name = "showDeleteButton")
-    var showDeleteButton: Boolean = false,
+    var showItemMenu: Boolean = false,
 
     @ColumnInfo(name = "tpovId")
     var tpovId: Int

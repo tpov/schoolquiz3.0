@@ -101,10 +101,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         @OptIn(InternalCoroutinesApi::class)
         fun setData(quizEntity: QuizEntity, listener: Listener, context: Context, viewModel: MainActivityViewModel) = with(binding) {
-            constraintLayout.setOnLongClickListener {
-                showPopupMenu(it, quizEntity.id!!)
-                true
-            }
+
+            if (viewModel.getQuizByIdUseCase(adapterPosition).showItemMenu) {
+
+                constraintLayout.setOnLongClickListener {
+                    showPopupMenu(it, quizEntity.id!!)
+                    true
+                }
+            } else constraintLayout.visibility = View.GONE
 
             try {
 

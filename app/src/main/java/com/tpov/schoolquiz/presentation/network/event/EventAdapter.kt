@@ -3,7 +3,13 @@ package com.tpov.schoolquiz.presentation.network.event
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RatingBar
+import android.widget.Switch
+import android.widget.TextView
+import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 import com.tpov.schoolquiz.R
@@ -188,7 +194,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.GONE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
@@ -211,7 +217,7 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName

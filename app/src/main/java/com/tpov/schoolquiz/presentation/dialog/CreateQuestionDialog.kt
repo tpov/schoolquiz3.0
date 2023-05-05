@@ -84,6 +84,7 @@ class CreateQuestionDialog : DialogFragment() {
             .setNegativeButton("Отмена") { _, _ -> }
             .create()
     }
+
     private fun addQuestionItem(): View {
         val inflater = LayoutInflater.from(requireContext())
         val questionItemView = inflater.inflate(R.layout.question_create_item, null)
@@ -98,23 +99,16 @@ class CreateQuestionDialog : DialogFragment() {
 
         return questionItemView
     }
-    private fun fillDialogWithData(quizEntity: QuizEntity, questionEntities: List<QuestionEntity>) {
-        // Заполнить поля диалога данными из quizEntity
-        dialogView.quiz_title.setText(quizEntity.nameQuiz)
-
-        // Добавить и заполнить вопросы данными из questionEntities
-        questionEntities.forEach { questionEntity ->
-            addFilledQuestionItem(questionEntity)
-        }
-    }
 
     private fun addFilledQuestionItem(questionEntity: QuestionEntity): View {
         val questionItemView = addQuestionItem()
 
         val questionTitle = questionItemView.findViewById<EditText>(R.id.question_title)
         val trueButton = questionItemView.findViewById<RadioButton>(R.id.true_button)
-        val hardQuestionCheckbox = questionItemView.findViewById<CheckBox>(R.id.hard_question_checkbox)
-        val languageSelector = questionItemView.findViewById<AppCompatTextView>(R.id.language_selector)
+        val hardQuestionCheckbox =
+            questionItemView.findViewById<CheckBox>(R.id.hard_question_checkbox)
+        val languageSelector =
+            questionItemView.findViewById<AppCompatTextView>(R.id.language_selector)
 
         questionTitle.setText(questionEntity.nameQuestion)
         trueButton.isChecked = questionEntity.answerQuestion
@@ -122,10 +116,6 @@ class CreateQuestionDialog : DialogFragment() {
         languageSelector.text = LanguageUtils.getLanguageFullName(questionEntity.language)
 
         return questionItemView
-    }
-
-    private fun updateQuestions() {
-
     }
 
     private fun showLanguageDialog(questionItemView: View) {
@@ -144,7 +134,9 @@ class CreateQuestionDialog : DialogFragment() {
         var numHQ = 0
         var numLQ = 0
 
-        var idQuiz = mainActivityViewModel.getNewIdQuiz()
+        var idQuiz = if (id == -1) mainActivityViewModel.getNewIdQuiz()
+        else id
+
         log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
         for (i in 0 until questionsContainer.childCount) {
             val questionItemView = questionsContainer.getChildAt(i)
@@ -155,6 +147,7 @@ class CreateQuestionDialog : DialogFragment() {
 
             if (questionHard) numHQ++
             else numLQ++
+
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
             val question = QuestionEntity(
@@ -180,20 +173,31 @@ class CreateQuestionDialog : DialogFragment() {
             idQuiz,
             nameQuiz,
             mainActivityViewModel.getProfile.name!!,
-            currentTime,
-            0,
-            0,
+            if (id == -1) currentTime
+            else (mainActivityViewModel.getQuizByIdUseCase(id).data),
+            if (id == -1) 0
+            else (mainActivityViewModel.getQuizByIdUseCase(id).stars),
+            if (id == -1) 0
+            else (mainActivityViewModel.getQuizByIdUseCase(id).starsPlayer),
             questions.count { !it.hardQuestion },
             questions.count { it.hardQuestion },
-            0,
-            0,
-            0,
-            null,
-            1,
-            0,
-            0,
+            if (id == -1) 0
+            else (mainActivityViewModel.getQuizByIdUseCase(id).starsAll),
+            if (id == -1) 0
+            else (mainActivityViewModel.getQuizByIdUseCase(id).starsAllPlayer),
+            if (id == -1) 0
+            else (mainActivityViewModel.getQuizByIdUseCase(id).versionQuiz + 1),
+            if (id == -1) null
+            else (mainActivityViewModel.getQuizByIdUseCase(id).picture),
+            if (id == -1) 1
+            else (mainActivityViewModel.getQuizByIdUseCase(id).event),
+            if (id == -1) 0
+            else (mainActivityViewModel.getQuizByIdUseCase(id).rating),
+            if (id == -1) 0
+            else (mainActivityViewModel.getQuizByIdUseCase(id).ratingPlayer),
             false,
-            tpovId
+            if (id == -1) tpovId
+            else (mainActivityViewModel.getQuizByIdUseCase(id).tpovId)
         )
 
         // Сохранение quizEntity и questions в базу данных

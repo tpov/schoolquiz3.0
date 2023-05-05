@@ -20,6 +20,8 @@ import com.tpov.schoolquiz.data.fierbase.Profile
 import com.tpov.schoolquiz.data.fierbase.Qualification
 import com.tpov.schoolquiz.data.fierbase.TimeInGames
 import com.tpov.schoolquiz.data.fierbase.toProfileEntity
+import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
+import com.tpov.schoolquiz.domain.DeleteQuizUseCase
 import com.tpov.schoolquiz.domain.GetAllProfilesDBUseCase
 import com.tpov.schoolquiz.domain.GetEventLiveDataUseCase
 import com.tpov.schoolquiz.domain.GetIdQuizByNameQuizUseCase
@@ -39,6 +41,7 @@ import com.tpov.schoolquiz.domain.InsertQuizUseCase
 import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
 import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
 import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
+import com.tpov.schoolquiz.domain.UpdateQuizUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.shoppinglist.utils.TimeManager
@@ -67,7 +70,10 @@ class MainActivityViewModel @Inject constructor(
     private val getPlayersDBUseCase: GetPlayersDBUseCase,
     private val getQuizListUseCase: GetQuizListUseCase,
     val getEventLiveDataUseCase: GetEventLiveDataUseCase,
-    val getQuizByIdUseCase: GetQuizByIdUseCase
+    val getQuizByIdUseCase: GetQuizByIdUseCase,
+    private val deleteQuizByIdUseCase: DeleteQuizUseCase,
+    private val deleteQuestionByIdQuizUseCase: DeleteQuestionByIdQuizUseCase,
+    val updateQuizUseCase: UpdateQuizUseCase
 ) : ViewModel() {
 
     var tpovId = 0
@@ -210,7 +216,8 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun deleteQuiz(id: Int) {
-
+        deleteQuizByIdUseCase(id)
+        deleteQuestionByIdQuizUseCase(id)
     }
 
     fun getLvlTranslateByQuizId(id: Int): Int {
