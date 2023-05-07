@@ -511,7 +511,7 @@ class RepositoryFBImpl @Inject constructor(
 
                 if (profile != null) {
                     log("getProfile() профиль не пустой")
-                    if (dao.getProfileByTpovId(tpovId) == null) {2
+                    if (dao.getProfileByTpovId(tpovId) == null) {
                         log("getProfile() профиль по tpovid пустой, создаем новый")
                         dao.insertProfile(profile.toProfileEntity())
 
