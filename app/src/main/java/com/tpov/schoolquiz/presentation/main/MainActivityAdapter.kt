@@ -102,13 +102,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         @OptIn(InternalCoroutinesApi::class)
         fun setData(quizEntity: QuizEntity, listener: Listener, context: Context, viewModel: MainActivityViewModel) = with(binding) {
 
-            if (viewModel.getQuizByIdUseCase(adapterPosition).showItemMenu) {
-
+            log("")
+            if (viewModel.getQuizById(quizEntity.id!!).showItemMenu) {
                 constraintLayout.setOnLongClickListener {
                     showPopupMenu(it, quizEntity.id!!)
                     true
                 }
-            } else constraintLayout.visibility = View.GONE
+
+            } else constraintLayout.visibility = View.VISIBLE
 
             try {
 
@@ -150,25 +151,29 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             if (quizEntity.stars == MAX_PERCENT) {
                 Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
             }
+
             log("quizEntity.stars = ${quizEntity.stars}")
             log("quizEntity.stars position = $position")
-            if (quizEntity.stars >= MAX_PERCENT) {
 
+            if (quizEntity.stars >= MAX_PERCENT) {
                 log("quizEntity.stars 1")
                 imvGradLightQuiz.visibility = View.VISIBLE
                 imvGradHardQuiz.visibility = View.GONE
                 chbTypeQuiz.visibility = View.VISIBLE
+
             } else if (quizEntity.stars == 120) {
                 log("quizEntity.stars 2")
                 chbTypeQuiz.visibility = View.VISIBLE
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.VISIBLE
+
             } else {
                 log("quizEntity.stars 3")
                 chbTypeQuiz.visibility = View.GONE
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.GONE
             }
+
             imvTranslate.imageAlpha = 128
 
             val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)

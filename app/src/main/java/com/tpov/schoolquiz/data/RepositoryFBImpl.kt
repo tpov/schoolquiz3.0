@@ -533,7 +533,8 @@ class RepositoryFBImpl @Inject constructor(
                                     translater = profile.qualification.translater,
                                     moderator = profile.qualification.moderator,
                                     admin = profile.qualification.admin,
-                                    developer = profile.qualification.developer
+                                    developer = profile.qualification.developer,
+                                    dateSynch = TimeManager.getCurrentTime()
                                 )
                         )
                     }
@@ -543,7 +544,7 @@ class RepositoryFBImpl @Inject constructor(
             }
 
             override fun onCancelled(error: DatabaseError) {
-                log("getProfile() ошибка ")
+                log("getProfile() ошибка: $error")
             }
         })
     }

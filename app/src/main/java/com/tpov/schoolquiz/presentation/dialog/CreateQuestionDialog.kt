@@ -70,7 +70,7 @@ class CreateQuestionDialog : DialogFragment() {
             positiveButtonText = "Сохранить"
             positiveButtonAction = { _, _ -> createQuestions() }
 
-            dialogView.quiz_title.setText(mainActivityViewModel.getQuizByIdUseCase(id).nameQuiz)
+            dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
 
             mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
                 addFilledQuestionItem(questionEntity)
@@ -150,6 +150,11 @@ class CreateQuestionDialog : DialogFragment() {
 
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
+
+            log("tpovId: ${mainActivityViewModel.tpovId}")
+            log("mainActivityViewModel.getProfile: ${mainActivityViewModel.getProfile}")
+            log("mainActivityViewModel.getProfile.translater: ${mainActivityViewModel.getProfile.translater}")
+
             val question = QuestionEntity(
                 null,
                 if (questionHard) numHQ
@@ -174,30 +179,30 @@ class CreateQuestionDialog : DialogFragment() {
             nameQuiz,
             mainActivityViewModel.getProfile.name!!,
             if (id == -1) currentTime
-            else (mainActivityViewModel.getQuizByIdUseCase(id).data),
+            else (mainActivityViewModel.getQuizById(id).data),
             if (id == -1) 0
-            else (mainActivityViewModel.getQuizByIdUseCase(id).stars),
+            else (mainActivityViewModel.getQuizById(id).stars),
             if (id == -1) 0
-            else (mainActivityViewModel.getQuizByIdUseCase(id).starsPlayer),
+            else (mainActivityViewModel.getQuizById(id).starsPlayer),
             questions.count { !it.hardQuestion },
             questions.count { it.hardQuestion },
             if (id == -1) 0
-            else (mainActivityViewModel.getQuizByIdUseCase(id).starsAll),
+            else (mainActivityViewModel.getQuizById(id).starsAll),
             if (id == -1) 0
-            else (mainActivityViewModel.getQuizByIdUseCase(id).starsAllPlayer),
+            else (mainActivityViewModel.getQuizById(id).starsAllPlayer),
             if (id == -1) 0
-            else (mainActivityViewModel.getQuizByIdUseCase(id).versionQuiz + 1),
+            else (mainActivityViewModel.getQuizById(id).versionQuiz + 1),
             if (id == -1) null
-            else (mainActivityViewModel.getQuizByIdUseCase(id).picture),
+            else (mainActivityViewModel.getQuizById(id).picture),
             if (id == -1) 1
-            else (mainActivityViewModel.getQuizByIdUseCase(id).event),
+            else (mainActivityViewModel.getQuizById(id).event),
             if (id == -1) 0
-            else (mainActivityViewModel.getQuizByIdUseCase(id).rating),
+            else (mainActivityViewModel.getQuizById(id).rating),
             if (id == -1) 0
-            else (mainActivityViewModel.getQuizByIdUseCase(id).ratingPlayer),
-            false,
+            else (mainActivityViewModel.getQuizById(id).ratingPlayer),
+            true,
             if (id == -1) tpovId
-            else (mainActivityViewModel.getQuizByIdUseCase(id).tpovId)
+            else (mainActivityViewModel.getQuizById(id).tpovId)
         )
 
         // Сохранение quizEntity и questions в базу данных

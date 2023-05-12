@@ -336,7 +336,12 @@ interface QuizDao {
     fun updateApiQuestion(generateQuestion: ApiQuestion)
 
     @Update
-    fun updateProfiles(profileEntity: ProfileEntity)
+    fun updateProfilesDB(profileEntity: ProfileEntity)
+
+    fun updateProfiles(profileEntity: ProfileEntity) {
+        log("fun update profile: $profileEntity")
+        updateProfilesDB(profileEntity)
+    }
 
     @Update
     fun updateQuestion(questionEntity: QuestionEntity)

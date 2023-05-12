@@ -70,7 +70,7 @@ class MainActivityViewModel @Inject constructor(
     private val getPlayersDBUseCase: GetPlayersDBUseCase,
     private val getQuizListUseCase: GetQuizListUseCase,
     val getEventLiveDataUseCase: GetEventLiveDataUseCase,
-    val getQuizByIdUseCase: GetQuizByIdUseCase,
+    private val getQuizByIdUseCase: GetQuizByIdUseCase,
     private val deleteQuizByIdUseCase: DeleteQuizUseCase,
     private val deleteQuestionByIdQuizUseCase: DeleteQuestionByIdQuizUseCase,
     val updateQuizUseCase: UpdateQuizUseCase
@@ -85,6 +85,10 @@ class MainActivityViewModel @Inject constructor(
         getProfileFlowUseCase(tpovId).asLiveData()
     }
 
+    fun getQuizById(position: Int): QuizEntity {
+        log("getQuizById, position: $position, getQuizByIdUseCase(position): ${getQuizByIdUseCase(position)}")
+        return getQuizByIdUseCase(position)
+    }
     fun updateTpovId(tpovId: Int) {
         if (tpovId != oldId) tpovIdLiveData.value = tpovId
         oldId = tpovId
@@ -197,7 +201,12 @@ class MainActivityViewModel @Inject constructor(
 
     val getQuizLiveData: LiveData<List<QuizEntity>> = getQuizList()
 
-    val getProfile = getProfileUseCase(tpovId)
+    var getProfile = getProfileUseCaseFun(tpovId)
+
+    private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
+        log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
+        return getProfileUseCase(tpovId)
+    }
 
     fun getNewIdQuiz(): Int {
         var i = 0

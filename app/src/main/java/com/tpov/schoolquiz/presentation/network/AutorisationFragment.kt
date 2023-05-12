@@ -39,7 +39,6 @@ class AutorisationFragment : BaseFragment() {
 
     companion object {
         fun newInstance() = AutorisationFragment()
-
     }
 
     @Inject

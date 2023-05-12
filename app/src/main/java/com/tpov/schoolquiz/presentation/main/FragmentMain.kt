@@ -82,6 +82,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         else binding.fabAddItem.visibility = View.GONE
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
+            log("onViewCreated() adapter.submitList: ${quizList.filter { it.event == isMyQuiz}}")
             adapter.submitList(quizList.filter {
 
                 log("event quizz: it.event ${it.event}")
@@ -140,7 +141,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     }
 
     override fun sendItem(id: Int) {
-        var quizEntity = mainViewModel.getQuizByIdUseCase(id)
+        var quizEntity = mainViewModel.getQuizById(id)
 
         mainViewModel.updateQuizUseCase(quizEntity.copy(showItemMenu = false))
         mainViewModel.insertQuizEvent(quizEntity)
