@@ -14,6 +14,8 @@ import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.repository.RepositoryFB
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -243,7 +245,7 @@ class RepositoryFBImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (data in snapshot.children) {
                     val versionQuiz =
-                        SharedPreferencesManager.getVersionQuiz(data.key ?: "-1", context)
+                        SharedPreferencesManager.getVersionQuiz(data.key ?: "-1")
                     val quiz = data.getValue(Quiz::class.java)
 
                     log("getQuiz(), data: ${data.key}, versionQuiz: $versionQuiz, quizEntity: $quiz")
@@ -301,8 +303,7 @@ class RepositoryFBImpl @Inject constructor(
 
                             SharedPreferencesManager.setVersionQuiz(
                                 data.key!!,
-                                quiz.versionQuiz,
-                                context
+                                quiz.versionQuiz
                             )
                         }
 
@@ -344,11 +345,6 @@ class RepositoryFBImpl @Inject constructor(
     override fun getQuiz1Data() {
         log("fun getQuiz1Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz1/${getTpovId()}"))
-    }
-
-    private fun getTpovId(): Int {
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        return sharedPref?.getInt("tpovId", 0) ?: 0
     }
 
     override fun getQuestion8() {
@@ -804,8 +800,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 }
 
@@ -843,8 +838,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 }
 
@@ -858,8 +852,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 } else {
 
@@ -895,8 +888,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 } else {
 
@@ -931,8 +923,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 } else {
 
@@ -967,8 +958,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 } else {
 
@@ -1003,8 +993,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 } else {
 
@@ -1039,8 +1028,7 @@ class RepositoryFBImpl @Inject constructor(
                                         }
                                     SharedPreferencesManager.setVersionQuiz(
                                         idQuiz.toString(),
-                                        quiz.versionQuiz,
-                                        context
+                                        quiz.versionQuiz
                                     )
                                 } else {
 
@@ -1174,11 +1162,9 @@ class RepositoryFBImpl @Inject constructor(
         val database = FirebaseDatabase.getInstance()
         val ref = database.getReference("players")
         val uid = FirebaseAuth.getInstance().uid
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
-        log("setTpovIdFB() tpovId = $tpovId")
+        log("setTpovIdFB() tpovId = ${getTpovId()}")
 
-        ref.child("listTpovId/$uid").setValue(tpovId).addOnSuccessListener {
+        ref.child("listTpovId/$uid").setValue(getTpovId()).addOnSuccessListener {
             log("setTpovIdFB() успех загрузки на сервер")
             synthLiveData.value = ++synth
         }.addOnFailureListener {
@@ -1264,8 +1250,8 @@ class RepositoryFBImpl @Inject constructor(
         val profilesRef = database.getReference("players")
         var idUsers = 0
         var oldIdUser = 0
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+
+        val tpovId = getTpovId()
         val profile = dao.getProfileByTpovId(tpovId)
 
         log("setProfile() tpovId: $tpovId")
@@ -1306,10 +1292,7 @@ class RepositoryFBImpl @Inject constructor(
                             dao.updateQuiz(it.copy(tpovId = idUsers))
                         }
 
-                        with(sharedPref.edit()) {
-                            putInt("tpovId", idUsers)
-                            apply()
-                        }
+                        setTpovId(idUsers)
                         setTpovIdFB()
 
                         log("setProfile() tpovId: $tpovId")

@@ -64,9 +64,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         mainViewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
 
-        val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        mainViewModel.tpovId = sharedPref?.getInt("tpovId", -1) ?: -1
-
         adapter = MainActivityAdapter(this, requireContext(), mainViewModel)
         binding.rcView.layoutManager = LinearLayoutManager(activity)
         binding.rcView.adapter = adapter

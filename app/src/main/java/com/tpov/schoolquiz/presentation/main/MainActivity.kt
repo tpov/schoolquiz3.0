@@ -40,6 +40,7 @@ import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -454,7 +455,7 @@ class MainActivity : AppCompatActivity() {
         initialDelay += addInitialDelay
 
 
-        viewModel.tpovIdLiveData.value = viewModel.tpovId
+        viewModel.tpovIdLiveData.value = getTpovId()
     }
 
     private fun animateValue(

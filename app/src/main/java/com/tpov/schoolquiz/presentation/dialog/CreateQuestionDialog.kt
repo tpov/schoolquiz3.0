@@ -18,16 +18,12 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.custom.Errors.errorGetLvlTranslate
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.android.synthetic.main.create_question_dialog.view.add_question_button
-import kotlinx.android.synthetic.main.create_question_dialog.view.quiz_title
-import kotlinx.android.synthetic.main.question_create_item.view.hard_question_checkbox
-import kotlinx.android.synthetic.main.question_create_item.view.language_selector
-import kotlinx.android.synthetic.main.question_create_item.view.question_number
-import kotlinx.android.synthetic.main.question_create_item.view.question_title
-import kotlinx.android.synthetic.main.question_create_item.view.true_button
+import kotlinx.android.synthetic.main.create_question_dialog.view.*
+import kotlinx.android.synthetic.main.question_create_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 
 class CreateQuestionDialog : DialogFragment() {
@@ -151,7 +147,7 @@ class CreateQuestionDialog : DialogFragment() {
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
 
-            log("tpovId: ${mainActivityViewModel.tpovId}")
+            log("tpovId: ${SharedPreferencesManager.getTpovId()}")
             log("mainActivityViewModel.getProfile: ${mainActivityViewModel.getProfile}")
             log("mainActivityViewModel.getProfile.translater: ${mainActivityViewModel.getProfile.translater}")
 
@@ -164,14 +160,17 @@ class CreateQuestionDialog : DialogFragment() {
                 questionHard,
                 idQuiz,
                 language,
-                mainActivityViewModel.getProfile.translater ?: errorGetLvlTranslate(activity)
+                try {
+                    mainActivityViewModel.getProfile.translater ?: errorGetLvlTranslate(activity)
+                } catch (e: Exception) {
+                    0
+                }
             )
             questions.add(question)
         }
 
         // Создание QuizEntity
         val nameQuiz = dialogView.quiz_title.text.toString()
-        val tpovId = mainActivityViewModel.tpovId
         val currentTime = TimeManager.getCurrentTime()
 
         val quizEntity = QuizEntity(
@@ -201,7 +200,7 @@ class CreateQuestionDialog : DialogFragment() {
             if (id == -1) 0
             else (mainActivityViewModel.getQuizById(id).ratingPlayer),
             true,
-            if (id == -1) tpovId
+            if (id == -1) SharedPreferencesManager.getTpovId()
             else (mainActivityViewModel.getQuizById(id).tpovId)
         )
 
