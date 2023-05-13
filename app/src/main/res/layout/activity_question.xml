@@ -7,47 +7,118 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="left"
-    android:background="#2261DD"
+    android:background="@color/design3_main_middle"
     android:foregroundGravity="left"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/question_text_view"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="50dp"
-        android:layout_marginEnd="50dp"
-        android:background="#3C15881A"
-        android:elevation="-10dp"
-        android:gravity="center"
-        android:padding="20px"
-        android:textColor="#001901"
-        android:textSize="13dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.502"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.254"
-        tools:layout_conversion_absoluteHeight="0dp"
-        tools:layout_conversion_absoluteWidth="0dp" />
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/false_button"
+        app:layout_constraintTop_toBottomOf="@+id/tvTimer"
+        app:layout_constraintVertical_bias="0.36">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:foregroundGravity="center"
+            android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/true_button"
-        android:layout_width="150dp"
-        android:layout_height="100dp"
-        android:layout_marginBottom="30dp"
-        android:backgroundTint="#4D005508"
-        android:elevation="20dp"
-        android:text="@string/true_button"
-        android:textSize="14dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.90"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_conversion_absoluteHeight="0dp"
-        tools:layout_conversion_absoluteWidth="0dp" />
+            <ImageButton
+                android:id="@+id/cheat_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:backgroundTint="#00FFFFFF"
+                app:srcCompat="@drawable/ic_help" />
+
+            <TextView
+                android:id="@+id/viewResult"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:background="#33A89B54"
+                android:text="100%"
+                android:textSize="14dp"/>
+
+            <TextView
+                android:id="@+id/cheatPointsLife"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:background="#33A89B54"
+                android:text="5"
+                android:textSize="14dp" />
+
+            <TextView
+                android:id="@+id/cheatPointsGoldLife"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:background="#33A89B54"
+                android:text="1"
+                android:textSize="14dp" />
+
+            <TextView
+                android:id="@+id/lastToast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:gravity="center"
+                android:background="#33A89B54"
+                android:text="------ "
+                android:textSize="14dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/pref_button"
+                android:layout_width="35dp"
+                android:layout_height="70dp"
+                android:backgroundTint="#3C225AFF"
+                android:drawableLeft="@drawable/arrow_left"
+                android:elevation="10dp"
+                android:gravity="center"
+                tools:layout_conversion_absoluteHeight="0dp"
+                tools:layout_conversion_absoluteWidth="0dp" />
+
+            <TextView
+                android:id="@+id/question_text_view"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:background="#626CBF"
+                android:elevation="-10dp"
+                android:gravity="center"
+                android:padding="20px"
+                android:textColor="#001901"
+                android:textSize="13dp"
+                tools:layout_conversion_absoluteHeight="0dp"
+                tools:layout_conversion_absoluteWidth="0dp" />
+
+            <Button
+                android:id="@+id/next_button"
+                android:layout_width="35dp"
+                android:layout_height="70dp"
+                android:backgroundTint="#3C225AFF"
+                android:drawableEnd="@drawable/arrow_right"
+                android:drawablePadding="10sp"
+                android:elevation="10dp"
+                android:textSize="14dp"
+                tools:layout_conversion_absoluteHeight="0dp"
+                tools:layout_conversion_absoluteWidth="0dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
 
     <Button
         android:id="@+id/false_button"
@@ -67,76 +138,20 @@
         tools:layout_conversion_absoluteWidth="0dp" />
 
     <Button
-        android:id="@+id/next_button"
-        android:layout_width="35dp"
-        android:layout_height="70dp"
-        android:backgroundTint="#3C225AFF"
-        android:drawableEnd="@drawable/arrow_right"
-        android:drawablePadding="10sp"
-        android:elevation="10dp"
+        android:id="@+id/true_button"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_marginBottom="30dp"
+        android:backgroundTint="#4D005508"
+        android:elevation="20dp"
+        android:text="@string/true_button"
         android:textSize="14dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pbAnswer"
-        app:layout_constraintVertical_bias="0.21"
-        tools:layout_conversion_absoluteHeight="0dp"
-        tools:layout_conversion_absoluteWidth="0dp" />
-
-    <Button
-        android:id="@+id/pref_button"
-        android:layout_width="35dp"
-        android:layout_height="70dp"
-        android:backgroundTint="#3C225AFF"
-        android:drawableLeft="@drawable/arrow_left"
-        android:elevation="10dp"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.90"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pbAnswer"
-        app:layout_constraintVertical_bias="0.20999998"
         tools:layout_conversion_absoluteHeight="0dp"
         tools:layout_conversion_absoluteWidth="0dp" />
-
-    <TextView
-        android:id="@+id/viewResult"
-        android:layout_width="130dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:background="#33A89B54"
-        android:text="Приятной игры))"
-        android:textSize="14dp"
-        app:layout_constraintBottom_toTopOf="@+id/cheatPointsLife"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:layout_conversion_absoluteHeight="20dp"
-        tools:layout_conversion_absoluteWidth="150dp" />
-
-    <TextView
-        android:id="@+id/cheatPointsLife"
-        android:layout_width="130dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:background="#33A89B54"
-        android:text="Life - 3"
-        android:textSize="14dp"
-        app:layout_constraintBottom_toTopOf="@+id/lastToast"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:layout_conversion_absoluteHeight="20dp"
-        tools:layout_conversion_absoluteWidth="150dp" />
-
-    <TextView
-        android:id="@+id/lastToast"
-        android:layout_width="130dp"
-        android:layout_height="wrap_content"
-
-        android:layout_marginEnd="4dp"
-        android:layout_marginBottom="16dp"
-        android:background="#33A89B54"
-        android:text="------ "
-        android:textSize="14dp"
-        app:layout_constraintBottom_toTopOf="@+id/true_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:layout_conversion_absoluteHeight="20dp"
-        tools:layout_conversion_absoluteWidth="150dp" />
 
     <TextView
         android:id="@+id/vAndroid"
@@ -156,7 +171,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="50dp"
         android:layout_marginEnd="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -168,7 +183,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:background="#81005FE8"
+        android:background="#6571CF"
         android:text="00:00"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -186,17 +201,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageButton
-        android:id="@+id/cheat_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:layout_marginBottom="4dp"
-        android:backgroundTint="#00FFFFFF"
-        app:layout_constraintBottom_toTopOf="@+id/viewResult"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_help" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

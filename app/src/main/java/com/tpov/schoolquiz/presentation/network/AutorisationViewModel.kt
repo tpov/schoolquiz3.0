@@ -74,12 +74,12 @@ class AutorisationViewModel @Inject constructor(
                     var pr = getProfileUseCase(tpovId ?: 0)
                     if (
                         try {
-                            pr.dateSynch!!.isEmpty()
+                            pr.dateSynch!!.isNotEmpty()
                         } catch (e: java.lang.Exception) {
-                            true
+                            false
                         }
                     ) {
-                        log("createAcc дата в текущем профиле есть")
+                        log("createAcc текущий профиль уже синхронизирован, создаем новый")
                         val profile = Profile(
                             0,
                             email,
@@ -117,7 +117,7 @@ class AutorisationViewModel @Inject constructor(
 
                     } else {
 
-                        log("createAcc даты в текущем профиле нет")
+                        log("createAcc текущий профиль еще не был синхронизирован, используем его")
                         val profile = pr.copy(
                             login = email,
                             nickname = nickname,
