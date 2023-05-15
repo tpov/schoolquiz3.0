@@ -100,7 +100,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             val intent = Intent(activity, QuestionActivity::class.java)
             intent.putExtra(QuestionActivity.NAME_USER, "user")
             intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-            intent.putExtra(QuestionActivity.LIFE, 0)
             intent.putExtra(QuestionActivity.HARD_QUESTION, false)
             startActivity(intent)
     }
@@ -111,7 +110,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         val intent = Intent(activity, QuestionActivity::class.java)
         intent.putExtra(QuestionActivity.NAME_USER, "user")
         intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-        intent.putExtra(QuestionActivity.LIFE, 0)
         intent.putExtra(QuestionActivity.HARD_QUESTION, true)
         startActivity(intent)
     }
@@ -123,7 +121,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         val intent = Intent(activity, QuestionActivity::class.java)
         intent.putExtra(QuestionActivity.NAME_USER, "user")
         intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-        intent.putExtra(QuestionActivity.LIFE, 0)
         intent.putExtra(QuestionActivity.HARD_QUESTION, false)
         startActivity(intent)
     }

@@ -40,7 +40,9 @@ import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -55,6 +57,7 @@ import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import java.text.NumberFormat
+import java.util.*
 import javax.inject.Inject
 
 /**
@@ -106,6 +109,15 @@ class MainActivity : AppCompatActivity() {
         // Remove the action bar
         supportActionBar?.hide()
         viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
+
+        viewModel.init()
+
+        try {
+            setCountStartApp(getCountStartApp() + 1)
+        } catch (e: Exception) {
+            setCountStartApp(1)
+        }
+
         val imageResGold = R.drawable.baseline_favorite_24_gold
         val imageRes = R.drawable.baseline_favorite_24
 
@@ -189,7 +201,6 @@ class MainActivity : AppCompatActivity() {
         layerDrawable2.setId(0, android.R.id.background)
         layerDrawable3.setId(0, android.R.id.background)
         layerDrawable4.setId(0, android.R.id.background)
-        layerDrawable4.setId(0, android.R.id.background)
         layerDrawable5.setId(0, android.R.id.background)
         layerDrawableGold.setId(0, android.R.id.background)
         layerDrawable1.setId(1, android.R.id.progress)
@@ -198,6 +209,13 @@ class MainActivity : AppCompatActivity() {
         layerDrawable4.setId(1, android.R.id.progress)
         layerDrawable5.setId(1, android.R.id.progress)
         layerDrawableGold.setId(1, android.R.id.progress)
+
+        imageViewGold.setImageDrawable(layerDrawableGold)
+        imageViewLife1.setImageDrawable(layerDrawable1)
+        imageViewLife2.setImageDrawable(layerDrawable2)
+        imageViewLife3.setImageDrawable(layerDrawable3)
+        imageViewLife4.setImageDrawable(layerDrawable4)
+        imageViewLife5.setImageDrawable(layerDrawable5)
 
         if (ContextCompat.checkSelfPermission(
                 this,
@@ -209,23 +227,12 @@ class MainActivity : AppCompatActivity() {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             // Разрешения уже предоставлены, выполнить нужную функцию
-
-            viewModel.init()
-
             binding.tvName.text = ""
-
-            imageViewGold.setImageDrawable(layerDrawableGold)
-            imageViewLife1.setImageDrawable(layerDrawable1)
-            imageViewLife2.setImageDrawable(layerDrawable2)
-            imageViewLife3.setImageDrawable(layerDrawable3)
-            imageViewLife4.setImageDrawable(layerDrawable4)
-            imageViewLife5.setImageDrawable(layerDrawable5)
 
         } else {
             // Разрешения не предоставлены, запросить их
             requestStoragePermission()
         }
-
 
         viewModel.getProfileFBLiveData.observe(this) {
             log("it: $it")
@@ -248,45 +255,54 @@ class MainActivity : AppCompatActivity() {
                 imageViewGold.visibility = View.VISIBLE
             } else imageViewGold.visibility = View.GONE
 
-            when (it?.countLife) {
-                0, 1 -> {
-                    imageViewLife1.visibility = View.VISIBLE
-                    imageViewLife2.visibility = View.GONE
-                    imageViewLife3.visibility = View.GONE
-                    imageViewLife4.visibility = View.GONE
-                    imageViewLife5.visibility = View.GONE
-                }
+            if (getCountStartApp() == 1) {
+                imageViewLife1.visibility = View.VISIBLE
+                imageViewLife2.visibility = View.VISIBLE
+                imageViewLife3.visibility = View.VISIBLE
+                imageViewLife4.visibility = View.GONE
+                imageViewLife5.visibility = View.GONE
 
-                2 -> {
-                    imageViewLife1.visibility = View.VISIBLE
-                    imageViewLife2.visibility = View.VISIBLE
-                    imageViewLife3.visibility = View.GONE
-                    imageViewLife4.visibility = View.GONE
-                    imageViewLife5.visibility = View.GONE
-                }
+            } else {
+                when (it?.countLife) {
+                    0, 1 -> {
+                        imageViewLife1.visibility = View.VISIBLE
+                        imageViewLife2.visibility = View.GONE
+                        imageViewLife3.visibility = View.GONE
+                        imageViewLife4.visibility = View.GONE
+                        imageViewLife5.visibility = View.GONE
+                    }
 
-                3 -> {
-                    imageViewLife1.visibility = View.VISIBLE
-                    imageViewLife2.visibility = View.VISIBLE
-                    imageViewLife3.visibility = View.VISIBLE
-                    imageViewLife4.visibility = View.GONE
-                    imageViewLife5.visibility = View.GONE
-                }
+                    2 -> {
+                        imageViewLife1.visibility = View.VISIBLE
+                        imageViewLife2.visibility = View.VISIBLE
+                        imageViewLife3.visibility = View.GONE
+                        imageViewLife4.visibility = View.GONE
+                        imageViewLife5.visibility = View.GONE
+                    }
 
-                4 -> {
-                    imageViewLife1.visibility = View.VISIBLE
-                    imageViewLife2.visibility = View.VISIBLE
-                    imageViewLife3.visibility = View.VISIBLE
-                    imageViewLife4.visibility = View.VISIBLE
-                    imageViewLife5.visibility = View.GONE
-                }
+                    3 -> {
+                        imageViewLife1.visibility = View.VISIBLE
+                        imageViewLife2.visibility = View.VISIBLE
+                        imageViewLife3.visibility = View.VISIBLE
+                        imageViewLife4.visibility = View.GONE
+                        imageViewLife5.visibility = View.GONE
+                    }
 
-                5 -> {
-                    imageViewLife1.visibility = View.VISIBLE
-                    imageViewLife2.visibility = View.VISIBLE
-                    imageViewLife3.visibility = View.VISIBLE
-                    imageViewLife4.visibility = View.VISIBLE
-                    imageViewLife5.visibility = View.VISIBLE
+                    4 -> {
+                        imageViewLife1.visibility = View.VISIBLE
+                        imageViewLife2.visibility = View.VISIBLE
+                        imageViewLife3.visibility = View.VISIBLE
+                        imageViewLife4.visibility = View.VISIBLE
+                        imageViewLife5.visibility = View.GONE
+                    }
+
+                    5 -> {
+                        imageViewLife1.visibility = View.VISIBLE
+                        imageViewLife2.visibility = View.VISIBLE
+                        imageViewLife3.visibility = View.VISIBLE
+                        imageViewLife4.visibility = View.VISIBLE
+                        imageViewLife5.visibility = View.VISIBLE
+                    }
                 }
             }
             log("SharedPreferencesManager.getNick(): ${SharedPreferencesManager.getNick()}")
@@ -352,14 +368,13 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-
-
         setButtonNavListener()
         numQuestionNotDate = intent.getIntExtra(NUM_QUESTION_NOT_NUL, 0)
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
         SetItemMenu.setHomeMenu(binding, 1, this)
 
+        updateProfileCount()
         loadNumQuestionNotDate()
 
         binding.drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
@@ -456,6 +471,78 @@ class MainActivity : AppCompatActivity() {
 
 
         viewModel.tpovIdLiveData.value = getTpovId()
+    }
+
+    private var timer: Timer? = null
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onRestart() {
+        super.onRestart()
+        createTimer()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createTimer() {
+        timer = Timer()
+        val task = object : TimerTask() {
+            override fun run() {
+                updateProfileCount()
+            }
+        }
+        val delay = 0L // Delay before the timer starts executing the task (in milliseconds)
+        val period =
+            60_000L // Interval between consecutive executions of the task (in milliseconds)
+
+        // Schedule the task to run every minute, starting after the specified delay
+        timer?.scheduleAtFixedRate(task, delay, period)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun updateProfileCount() {
+        viewModel.updateProfileUseCase(
+            viewModel.getProfile.copy(
+                count = calcCount(
+                    viewModel.getProfileCount(),
+                    viewModel.getProfileCountLife(),
+                    viewModel.getProfileDateCloseAp()
+                ),
+                dateCloseApp = TimeManager.getCurrentTime()
+            )
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun calcCount(count: Int?, countLife: Int?, dateCloseApp: String?): Int {
+        val countSecTime =
+            TimeManager.getSecondBetweenDates(dateCloseApp ?: "0", TimeManager.getCurrentTime())
+        val calcCount = countSecTime?.times(0.025)
+
+        val calcAllCount = count?.let { calcCount?.plus(it)?.toInt() }
+
+        log("calcAllCount: $calcAllCount")
+        return if (getMaxCount(countLife) < calcAllCount!!) getMaxCount(countLife)
+        else calcAllCount
+
+    }
+
+    private fun getMaxCount(countLife: Int?): Int {
+        return if (getCountStartApp() in 1..2) {
+            300
+        } else when (countLife) {
+            1 -> 100
+            2 -> 200
+            3 -> 300
+            4 -> 400
+            5 -> 500
+            else -> 0
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        timer?.cancel()
+        timer = null
     }
 
     private fun animateValue(

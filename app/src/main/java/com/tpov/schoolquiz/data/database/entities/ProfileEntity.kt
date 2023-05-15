@@ -39,6 +39,7 @@ data class ProfileEntity(
 
     val dataCreateAcc: String?,
     val dateSynch: String?,
+    val dateCloseApp: String?,
     val idFirebase: String?,
     val languages: String?,
 
@@ -56,5 +57,5 @@ data class ProfileEntity(
     val countLife: Int?,
     val count: Int?,
     val countGoldLife: Int?,
-    val countGold: Int?
+    val countGold: Int?,
 )

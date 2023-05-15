@@ -147,10 +147,6 @@ class CreateQuestionDialog : DialogFragment() {
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
 
-            log("tpovId: ${SharedPreferencesManager.getTpovId()}")
-            log("mainActivityViewModel.getProfile: ${mainActivityViewModel.getProfile}")
-            log("mainActivityViewModel.getProfile.translater: ${mainActivityViewModel.getProfile.translater}")
-
             val question = QuestionEntity(
                 null,
                 if (questionHard) numHQ

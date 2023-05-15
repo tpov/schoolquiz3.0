@@ -51,4 +51,19 @@ object TimeManager {
             0
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getSecondBetweenDates(dateString1: String, dateString2: String): Long? {
+        val formatter = SimpleDateFormat(DEF_TIME_FORMAT, Locale.getDefault())
+
+        return try {
+            val date1 = formatter.parse(dateString1)
+            val date2 = formatter.parse(dateString2)
+
+            val millisecondsDiff = date2.time - date1.time
+            millisecondsDiff / 1000
+        } catch (e: ParseException) {
+            0
+        }
+    }
 }

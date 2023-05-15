@@ -8,10 +8,12 @@ object SharedPreferencesManager {
     private const val PREFS_NAME_QUESTION = "version_question"
     private const val PREFS_NAME_COUNTS = "profile_counts"
     private const val PREFS_TPOV_ID = "profile"
+    private const val PREFS_COUNT_START_APP = "count_start_app"
     private lateinit var sharedPreferencesQuiz: SharedPreferences
     private lateinit var sharedPreferencesQuestion: SharedPreferences
     private lateinit var sharedPreferencesCounts: SharedPreferences
     private lateinit var sharedPreferencesTpovId: SharedPreferences
+    private lateinit var sharedPreferencesCountStartApp: SharedPreferences
 
     fun initialize(context: Context) {
         sharedPreferencesQuiz = context.getSharedPreferences(PREFS_NAME_QUIZ, Context.MODE_PRIVATE)
@@ -21,6 +23,8 @@ object SharedPreferencesManager {
             context.getSharedPreferences(PREFS_NAME_COUNTS, Context.MODE_PRIVATE)
         sharedPreferencesTpovId =
             context.getSharedPreferences(PREFS_TPOV_ID, Context.MODE_PRIVATE)
+        sharedPreferencesCountStartApp =
+            context.getSharedPreferences(PREFS_COUNT_START_APP, Context.MODE_PRIVATE)
     }
 
     fun getTpovId(): Int {
@@ -36,6 +40,22 @@ object SharedPreferencesManager {
         }
         val editor = sharedPreferencesTpovId.edit()
         editor.putInt("tpovId", tpovId)
+        editor.apply()
+    }
+
+    fun getCountStartApp(): Int {
+        if (!::sharedPreferencesCountStartApp.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesCountStartApp.getInt("countStartApp", 0)
+    }
+
+    fun setCountStartApp(count: Int) {
+        if (!::sharedPreferencesCountStartApp.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        val editor = sharedPreferencesCountStartApp.edit()
+        editor.putInt("countStartApp", count)
         editor.apply()
     }
 

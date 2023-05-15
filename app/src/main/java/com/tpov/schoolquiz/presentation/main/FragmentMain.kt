@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
@@ -20,7 +21,6 @@ import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD_QUESTION
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
-import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.LIFE
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
 import kotlinx.android.synthetic.main.title_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -79,7 +79,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         else binding.fabAddItem.visibility = View.GONE
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
-            log("onViewCreated() adapter.submitList: ${quizList.filter { it.event == isMyQuiz}}")
+            log("onViewCreated() adapter.submitList: ${quizList.filter { it.event == isMyQuiz }}")
             adapter.submitList(quizList.filter {
 
                 log("event quizz: it.event ${it.event}")
@@ -119,12 +119,19 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     }
 
     override fun onClick(id: Int, type: Boolean) {
-        val intent = Intent(activity, QuestionActivity::class.java)
-        intent.putExtra(NAME_USER, "user")
-        intent.putExtra(ID_QUIZ, id)
-        intent.putExtra(LIFE, 0)
-        intent.putExtra(HARD_QUESTION, type)
-        startActivityForResult(intent, REQUEST_CODE)
+        if (mainViewModel.getProfileCount()!! < 50) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться пол-жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            mainViewModel.updateProfileUseCase(mainViewModel.getProfile.copy(count = mainViewModel.getProfileCount()!! - 50))
+            val intent = Intent(activity, QuestionActivity::class.java)
+            intent.putExtra(NAME_USER, "user")
+            intent.putExtra(ID_QUIZ, id)
+            intent.putExtra(HARD_QUESTION, type)
+            startActivityForResult(intent, REQUEST_CODE)
+        }
     }
 
     override fun editItem(id: Int) {

@@ -3,8 +3,6 @@ package com.tpov.schoolquiz.presentation.network.profile
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -35,15 +33,10 @@ class ProfileViewModel @Inject constructor(
 
 ) : ViewModel() {
 
-    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
-    private val database: FirebaseDatabase by lazy { FirebaseDatabase.getInstance() }
-
     var addQuestion = MutableLiveData<Int>()
     var addInfoQuestion = MutableLiveData<Int>()
     var addQuiz = MutableLiveData<Int>()
     var synth = getSynthUseCase()
-
-    var tpovId = 0
 
 
     fun getTpovId() {

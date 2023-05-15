@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.*
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
@@ -10,6 +9,7 @@ import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.*
@@ -39,7 +39,8 @@ class MainActivityViewModel @Inject constructor(
     private val getQuizByIdUseCase: GetQuizByIdUseCase,
     private val deleteQuizByIdUseCase: DeleteQuizUseCase,
     private val deleteQuestionByIdQuizUseCase: DeleteQuestionByIdQuizUseCase,
-    val updateQuizUseCase: UpdateQuizUseCase
+    val updateQuizUseCase: UpdateQuizUseCase,
+    val updateProfileUseCase: UpdateProfileUseCase
 ) : ViewModel() {
 
     var oldId = 0
@@ -67,10 +68,10 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun init() {
-        log("fun init(), tpovId: ${SharedPreferencesManager.getTpovId()}")
+        log("fun init(), tpovId: ${getTpovId()}")
 
-        if (SharedPreferencesManager.getTpovId() == -1) insertProfile()
-        getProfileFlowUseCase(SharedPreferencesManager.getTpovId())
+        if (getTpovId() == -1) insertProfile()
+        getProfileFlowUseCase(getTpovId())
         getQuiz8FBUseCase()
         getQuestion8FBUseCase()
     }
@@ -85,13 +86,11 @@ class MainActivityViewModel @Inject constructor(
 
         val userLocale: Locale = Locale.getDefault()
         val userLanguageCode: String = userLocale.language
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
 
         SharedPreferencesManager.setTpovId(0)
 
         log("set tpovId = 0")
 
-        Log.d("daefdhrt", "insertProfile tpovId ${SharedPreferencesManager.getTpovId()}")
         val profile = Profile(
             0,
             "",
@@ -149,13 +148,13 @@ class MainActivityViewModel @Inject constructor(
     }
 
     private fun getQuizList(): LiveData<List<QuizEntity>> {
-        log("fun getQuizList tpovId: ${SharedPreferencesManager.getTpovId()}")
-        return getQuizLiveDataUseCase.getQuizUseCase(SharedPreferencesManager.getTpovId())
+        log("fun getQuizList tpovId: ${getTpovId()}")
+        return getQuizLiveDataUseCase.getQuizUseCase(getTpovId())
     }
 
     val getQuizLiveData: LiveData<List<QuizEntity>> = getQuizList()
 
-    var getProfile = getProfileUseCaseFun(SharedPreferencesManager.getTpovId())
+    var getProfile = getProfileUseCaseFun(getTpovId())
 
     private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
         log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
@@ -164,7 +163,7 @@ class MainActivityViewModel @Inject constructor(
 
     fun getNewIdQuiz(): Int {
         var i = 0
-        getQuizListUseCase(SharedPreferencesManager.getTpovId()).forEach {
+        getQuizListUseCase(getTpovId()).forEach {
             if (i <= 100 && i < it.id!!) {
                 i = it.id!!
             }
@@ -173,7 +172,7 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(nameQuiz,
-        SharedPreferencesManager.getTpovId()
+        getTpovId()
     )
 
     fun log(massage: String) {
@@ -191,5 +190,21 @@ class MainActivityViewModel @Inject constructor(
             if (it.lvlTranslate < lvlTranslate) lvlTranslate = it.lvlTranslate
         }
         return lvlTranslate
+    }
+
+    fun getProfileCount(): Int? {
+        val profile = getProfileUseCase(getTpovId())
+        log("getProfileCount(): $profile, ${getTpovId()}")
+        return profile.count
+    }
+
+    fun getProfileCountLife(): Int? {
+        val profile =  getProfileUseCase(getTpovId())
+        return profile.countLife
+    }
+
+    fun getProfileDateCloseAp(): String? {
+        val profile = getProfileUseCase(getTpovId())
+        return profile.dateCloseApp
     }
 }

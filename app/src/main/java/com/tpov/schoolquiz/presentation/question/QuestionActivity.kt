@@ -22,9 +22,11 @@ import com.tpov.schoolquiz.data.Services.MusicService
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.ActivityQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
+import kotlin.math.floor
 
 private const val REQUEST_CODE_CHEAT = 0
 
@@ -75,13 +77,10 @@ class QuestionActivity : AppCompatActivity() {
         insertQuestionsNewEvent()
         binding.apply {
             if (viewModel.hardQuestion) {
-                viewBackground.setBackgroundResource(R.color.background_hard_question)
                 cheatButton.visibility = View.GONE
             }
 
             trueButton.setOnClickListener {
-
-
                 nextButton()
                 viewModel.trueButton()
                 setStateTimer(true)
@@ -125,14 +124,14 @@ class QuestionActivity : AppCompatActivity() {
         actionBarSettings()
         startService(Intent(this, MusicService::class.java))
         startTimer()
+        visibleCheatButton(viewModel.hardQuestion)
     }
 
     private fun synthInputData() {
         viewModel.userName = intent.getStringExtra(NAME_USER) ?: "user"
         viewModel.idQuiz = intent.getIntExtra(ID_QUIZ, 0)
-        viewModel.life = intent.getIntExtra(LIFE, 0)
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
-        log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, life: ${viewModel.life}, hardQuestion: ${viewModel.hardQuestion}")
+        log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
     }
 
     private fun prefButton() {
@@ -207,8 +206,7 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun setVisibleButtonsNext() { //Стоит учитывать, что в момент вызова этой функции пользователь находится все еще на том вопросе
-        Log.d("iophkgjfklghjkldr", "currentIndex ${viewModel.currentIndex}")
-        Log.d("iophkgjfklghjkldr", "numQuestion ${viewModel.numQuestion}")
+
 
     }
 
@@ -321,7 +319,13 @@ class QuestionActivity : AppCompatActivity() {
             return
         }
         if (requestCode == REQUEST_CODE_CHEAT) {
-            if (data.getBooleanExtra(EXTRA_ANSWER_SHOW, false)) viewModel.life - 1
+            if (data.getBooleanExtra(EXTRA_ANSWER_SHOW, false)) viewModel.updateProfileUseCase(
+                viewModel.getProfileUseCase(getTpovId()).copy(
+                    countLife = viewModel.getProfileUseCase(
+                        getTpovId()
+                    ).countLife
+                )
+            )
         } else if (requestCode == UPDATE_CURRENT_INDEX) {
             viewModel.currentIndex = data.getIntExtra(EXTRA_UPDATE_CURRENT_INDEX, 0)
 
@@ -350,8 +354,20 @@ class QuestionActivity : AppCompatActivity() {
 
     //Тут уже обновленные параметры
     fun updateTextQuestion() {
+        updateDataView()
         binding.questionTextView.text =
             viewModel.questionListThis[viewModel.currentIndex].nameQuestion
+    }
+
+    private fun updateDataView() {
+        binding.tvPercent.text = (viewModel.persent).toString()
+        binding.tvPointsLife.text = (floor(
+            viewModel.getProfileUseCase(getTpovId()).count?.toDouble()?.div(1000.0) ?: 0.0
+        )).toInt().toString()
+        binding.tvPointsGoldLife.text = (floor(
+            viewModel.getProfileUseCase(getTpovId()).countGold?.toDouble()?.div(1000.0) ?: 0.0
+        )).toInt().toString()
+
     }
 
     private fun moveToPref() = with(binding) {
@@ -445,7 +461,6 @@ class QuestionActivity : AppCompatActivity() {
     companion object {
         const val ID_QUIZ = "name_question"
         const val NAME_USER = "name_user"
-        const val LIFE = "life"
         const val HARD_QUESTION = "hard_question"
         const val STARS = "stars"
         const val UPDATE_CURRENT_INDEX = 1

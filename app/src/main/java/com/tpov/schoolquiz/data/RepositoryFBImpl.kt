@@ -548,7 +548,6 @@ class RepositoryFBImpl @Inject constructor(
     override fun setEvent() {
         log("fun setEvent")
 
-        val tpovId = getTpovId()
         val quizEventDB = dao.getQuizEvent()
         val database = FirebaseDatabase.getInstance()
 

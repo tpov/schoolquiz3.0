@@ -13,6 +13,7 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -32,7 +33,9 @@ class QuestionViewModel @Inject constructor(
     val deleteQuestionByIdQuizUseCase: DeleteQuestionByIdQuizUseCase,
     val deleteQuestionDetailByIdQuiz: DeleteQuestionDetailByIdQuiz,
     val insertQuestionUseCase: InsertQuestionUseCase,
-    val getQuizLiveDataUseCase: GetQuizLiveDataUseCase
+    val getQuizLiveDataUseCase: GetQuizLiveDataUseCase,
+    val getProfileUseCase: GetProfileUseCase,
+    val updateProfileUseCase: UpdateProfileUseCase
 ) : AndroidViewModel(application) {
 
     private lateinit var context: Context
@@ -46,7 +49,6 @@ class QuestionViewModel @Inject constructor(
     var idQuiz = 0
     var createQuestionDetail = true
     var leftAnswer = 0
-    var life = 0
     var idThisQuestionDetail = 0
     var persent = 0
     var maxPersent = 0
@@ -199,7 +201,9 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun useCheat() {
-        life - 1
+        updateProfileUseCase(getProfileUseCase(getTpovId()).copy(count = getProfileUseCase(getTpovId()).count?.minus(
+            1000
+        )))
     }
 
 

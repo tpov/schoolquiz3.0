@@ -1,13 +1,13 @@
 package com.tpov.schoolquiz.presentation.network.profile
 
 import android.content.Context
-import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
@@ -66,8 +66,6 @@ class ProfileFragment : BaseFragment() {
 
         val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
             log("fun viewModel.getSynth.observe: $number")
-            val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
-            viewModel.tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
             when (number) {
                 1 -> {
                     if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
@@ -111,7 +109,6 @@ class ProfileFragment : BaseFragment() {
         val referenceValue = Integer.toHexString(System.identityHashCode(osb))
         log("fun viewModel.getSynth referenceValue: $referenceValue")
         viewModel.getTpovId()
-
 
     }
 

@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.data.fierbase
 
 import com.google.firebase.database.IgnoreExtraProperties
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.shoppinglist.utils.TimeManager
 
 @IgnoreExtraProperties
 data class Profile constructor(
@@ -265,6 +266,7 @@ fun Profile.toProfileEntity(): ProfileEntity {
         countGold = this.life.countGold,
         count = this.life.count,
         countGoldLife = this.life.countGoldLife,
-        countLife = this.life.countLife
+        countLife = this.life.countLife,
+        dateCloseApp = TimeManager.getCurrentTime()
     )
 }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "df653a82ca0d36acc01dbb8f6f345e68",
+    "identityHash": "ee918fea9fcf55213ad3ced1c4de9e07",
     "entities": [
       {
         "tableName": "table_data",
@@ -321,7 +321,7 @@
             "notNull": true
           },
           {
-            "fieldPath": "showDeleteButton",
+            "fieldPath": "showItemMenu",
             "columnName": "showDeleteButton",
             "affinity": "INTEGER",
             "notNull": true
@@ -394,7 +394,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER, `login` TEXT, `name` TEXT, `nickname` TEXT, `birthday` TEXT, `datePremium` TEXT, `trophy` TEXT, `friends` TEXT, `city` TEXT, `logo` INTEGER, `timeInGamesAllTime` INTEGER, `timeInGamesInQuiz` INTEGER, `timeInGamesInChat` INTEGER, `timeInGamesSmsPoints` INTEGER, `pointsGold` INTEGER, `pointsSkill` INTEGER, `pointsSkillInSeason` INTEGER, `pointsNolics` INTEGER, `buyHeart` INTEGER, `buyGoldHeart` INTEGER, `buyQuizPlace` INTEGER, `buyTheme` TEXT, `buyMusic` TEXT, `buyLogo` TEXT, `addPointsGold` INTEGER, `addPointsSkill` INTEGER, `addPointsSkillInSeason` INTEGER, `addPointsNolics` INTEGER, `addTrophy` TEXT, `dataCreateAcc` TEXT, `dateSynch` TEXT, `idFirebase` TEXT, `languages` TEXT, `gamer` INTEGER, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER, `moderator` INTEGER, `admin` INTEGER, `developer` INTEGER, `countBox` INTEGER, `timeLastOpenBox` TEXT, `coundDayBox` INTEGER, `countLife` INTEGER, `count` INTEGER, `countGoldLife` INTEGER, `countGold` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER, `login` TEXT, `name` TEXT, `nickname` TEXT, `birthday` TEXT, `datePremium` TEXT, `trophy` TEXT, `friends` TEXT, `city` TEXT, `logo` INTEGER, `timeInGamesAllTime` INTEGER, `timeInGamesInQuiz` INTEGER, `timeInGamesInChat` INTEGER, `timeInGamesSmsPoints` INTEGER, `pointsGold` INTEGER, `pointsSkill` INTEGER, `pointsSkillInSeason` INTEGER, `pointsNolics` INTEGER, `buyHeart` INTEGER, `buyGoldHeart` INTEGER, `buyQuizPlace` INTEGER, `buyTheme` TEXT, `buyMusic` TEXT, `buyLogo` TEXT, `addPointsGold` INTEGER, `addPointsSkill` INTEGER, `addPointsSkillInSeason` INTEGER, `addPointsNolics` INTEGER, `addTrophy` TEXT, `dataCreateAcc` TEXT, `dateSynch` TEXT, `dateCloseApp` TEXT, `idFirebase` TEXT, `languages` TEXT, `gamer` INTEGER, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER, `moderator` INTEGER, `admin` INTEGER, `developer` INTEGER, `countBox` INTEGER, `timeLastOpenBox` TEXT, `coundDayBox` INTEGER, `countLife` INTEGER, `count` INTEGER, `countGoldLife` INTEGER, `countGold` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -589,6 +589,12 @@
             "notNull": false
           },
           {
+            "fieldPath": "dateCloseApp",
+            "columnName": "dateCloseApp",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "idFirebase",
             "columnName": "idFirebase",
             "affinity": "TEXT",
@@ -760,7 +766,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'df653a82ca0d36acc01dbb8f6f345e68')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ee918fea9fcf55213ad3ced1c4de9e07')"
     ]
   }
 }
