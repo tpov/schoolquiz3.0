@@ -255,54 +255,45 @@ class MainActivity : AppCompatActivity() {
                 imageViewGold.visibility = View.VISIBLE
             } else imageViewGold.visibility = View.GONE
 
-            if (getCountStartApp() == 1) {
-                imageViewLife1.visibility = View.VISIBLE
-                imageViewLife2.visibility = View.VISIBLE
-                imageViewLife3.visibility = View.VISIBLE
-                imageViewLife4.visibility = View.GONE
-                imageViewLife5.visibility = View.GONE
+            when (it?.countLife) {
+                0, 1 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.GONE
+                    imageViewLife3.visibility = View.GONE
+                    imageViewLife4.visibility = View.GONE
+                    imageViewLife5.visibility = View.GONE
+                }
 
-            } else {
-                when (it?.countLife) {
-                    0, 1 -> {
-                        imageViewLife1.visibility = View.VISIBLE
-                        imageViewLife2.visibility = View.GONE
-                        imageViewLife3.visibility = View.GONE
-                        imageViewLife4.visibility = View.GONE
-                        imageViewLife5.visibility = View.GONE
-                    }
+                2 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.GONE
+                    imageViewLife4.visibility = View.GONE
+                    imageViewLife5.visibility = View.GONE
+                }
 
-                    2 -> {
-                        imageViewLife1.visibility = View.VISIBLE
-                        imageViewLife2.visibility = View.VISIBLE
-                        imageViewLife3.visibility = View.GONE
-                        imageViewLife4.visibility = View.GONE
-                        imageViewLife5.visibility = View.GONE
-                    }
+                3 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.VISIBLE
+                    imageViewLife4.visibility = View.GONE
+                    imageViewLife5.visibility = View.GONE
+                }
 
-                    3 -> {
-                        imageViewLife1.visibility = View.VISIBLE
-                        imageViewLife2.visibility = View.VISIBLE
-                        imageViewLife3.visibility = View.VISIBLE
-                        imageViewLife4.visibility = View.GONE
-                        imageViewLife5.visibility = View.GONE
-                    }
+                4 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.VISIBLE
+                    imageViewLife4.visibility = View.VISIBLE
+                    imageViewLife5.visibility = View.GONE
+                }
 
-                    4 -> {
-                        imageViewLife1.visibility = View.VISIBLE
-                        imageViewLife2.visibility = View.VISIBLE
-                        imageViewLife3.visibility = View.VISIBLE
-                        imageViewLife4.visibility = View.VISIBLE
-                        imageViewLife5.visibility = View.GONE
-                    }
-
-                    5 -> {
-                        imageViewLife1.visibility = View.VISIBLE
-                        imageViewLife2.visibility = View.VISIBLE
-                        imageViewLife3.visibility = View.VISIBLE
-                        imageViewLife4.visibility = View.VISIBLE
-                        imageViewLife5.visibility = View.VISIBLE
-                    }
+                5 -> {
+                    imageViewLife1.visibility = View.VISIBLE
+                    imageViewLife2.visibility = View.VISIBLE
+                    imageViewLife3.visibility = View.VISIBLE
+                    imageViewLife4.visibility = View.VISIBLE
+                    imageViewLife5.visibility = View.VISIBLE
                 }
             }
             log("SharedPreferencesManager.getNick(): ${SharedPreferencesManager.getNick()}")
@@ -489,9 +480,9 @@ class MainActivity : AppCompatActivity() {
                 updateProfileCount()
             }
         }
-        val delay = 0L // Delay before the timer starts executing the task (in milliseconds)
+        val delay = 5000L // Delay before the timer starts executing the task (in milliseconds)
         val period =
-            60_000L // Interval between consecutive executions of the task (in milliseconds)
+            100_000L // Interval between consecutive executions of the task (in milliseconds)
 
         // Schedule the task to run every minute, starting after the specified delay
         timer?.scheduleAtFixedRate(task, delay, period)
@@ -526,9 +517,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getMaxCount(countLife: Int?): Int {
-        return if (getCountStartApp() in 1..2) {
-            300
-        } else when (countLife) {
+        return when (countLife) {
             1 -> 100
             2 -> 200
             3 -> 300

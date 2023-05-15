@@ -10,10 +10,12 @@ import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.CustomProgressBar
 
 
 class ResultDialog(
+    private var hardQuestion: Boolean,
     private var event: Int,
     private var showStars: Int,
     private val stars: Int,
@@ -41,12 +43,15 @@ class ResultDialog(
         val rbEvaluation = findViewById<RatingBar>(R.id.rb_evaluation)
         val bOk = findViewById<Button>(R.id.b_ok)
         val bHelpTranslate = findViewById<Button>(R.id.b_help_translate)
+        val tvNolic = findViewById<TextView>(R.id.tv_nolics)
 
         tvResult.text = "${starsPercentAll}%"
         // Запускаем анимацию заполнения прогресс-бара
         customBar.progress = starsPercentAll / 100.toFloat()
         customBar.leftMarkerPosition = starsPercentAll / 100.toFloat()
         customBar.rightMarkerPosition = starsPlayersAll / 100.toFloat()
+        val coins = CalcValues.getValueNolicForGame(hardQuestion, stars)
+        tvNolic.text = coins.toString()
         Handler(Looper.getMainLooper()).postDelayed({
             customBar.setProgressWithAnimation(
                 stars / 100.toFloat(), 2000,

@@ -119,13 +119,13 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     }
 
     override fun onClick(id: Int, type: Boolean) {
-        if (mainViewModel.getProfileCount()!! < 50) Toast.makeText(
+        if (mainViewModel.getProfileCount()!! < 33) Toast.makeText(
             activity,
             "Недостаточно жизней. На прохождение квеста тратиться пол-жизни",
             Toast.LENGTH_LONG
         ).show()
         else {
-            mainViewModel.updateProfileUseCase(mainViewModel.getProfile.copy(count = mainViewModel.getProfileCount()!! - 50))
+            mainViewModel.updateProfileUseCase(mainViewModel.getProfile.copy(count = mainViewModel.getProfileCount()!! - 33))
             val intent = Intent(activity, QuestionActivity::class.java)
             intent.putExtra(NAME_USER, "user")
             intent.putExtra(ID_QUIZ, id)

@@ -11,8 +11,23 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
+import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
+import com.tpov.schoolquiz.domain.DeleteQuizUseCase
+import com.tpov.schoolquiz.domain.GetProfileUseCase
+import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
+import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
+import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
+import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
+import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuizUseCase
+import com.tpov.schoolquiz.domain.UpdateProfileUseCase
+import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
+import com.tpov.schoolquiz.domain.UpdateQuizUseCase
+import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
@@ -139,7 +154,7 @@ class QuestionViewModel @Inject constructor(
             this.idQuiz = questionDetailEntity.idQuiz
             this.persentPlayerAll = getQuizUseCase(idQuiz).starsAllPlayer
         } catch (e: Exception) {
-            errorLoadQuestion(questionDetailEntity)
+            errorLoadQuestion()
         }
     }
 
@@ -151,7 +166,7 @@ class QuestionViewModel @Inject constructor(
         return null
     }
 
-    private fun errorLoadQuestion(questionDetailEntity: QuestionDetailEntity): String {
+    private fun errorLoadQuestion(): String {
         Toast.makeText(
             getApplication(),
             "Ошибка в базе данных, ждите пока разработчики пофиксят",
@@ -201,9 +216,13 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun useCheat() {
-        updateProfileUseCase(getProfileUseCase(getTpovId()).copy(count = getProfileUseCase(getTpovId()).count?.minus(
-            1000
-        )))
+        updateProfileUseCase(
+            getProfileUseCase(getTpovId()).copy(
+                count = getProfileUseCase(getTpovId()).count?.minus(
+                    1000
+                )
+            )
+        )
     }
 
 
@@ -328,6 +347,7 @@ class QuestionViewModel @Inject constructor(
 
     private fun showResultDialog() {
         val resultDialog = ResultDialog(
+            hardQuestion,
             quizThis.event,
             quizThis.rating,
             this.persent,
@@ -345,6 +365,28 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun saveResult(rating: Int) {
+        log("saveResultawd getProfileUseCase(getTpovId()).copy(pointsNolics = getNolic() + CalcValues.getValueNolicForGame(hardQuestion, rating))")
+        log("saveResultawd: getNolic():${getNolic()}")
+        log(
+            "saveResultawd: ${
+                getProfileUseCase(getTpovId()).copy(
+                    pointsNolics = (getNolic() + CalcValues.getValueNolicForGame(
+                        hardQuestion,
+                        persent
+                    ))
+                )
+            }"
+        )
+        log("saveResultawd: ${CalcValues.getValueNolicForGame(hardQuestion, this.persent)}")
+        updateProfileUseCase(
+            getProfileUseCase(getTpovId()).copy(
+                pointsNolics = (getNolic() + CalcValues.getValueNolicForGame(
+                    hardQuestion,
+                    persent
+                ))
+            )
+        )
+
         var perc = mutableListOf<Int>()
         log("saveResult getQuestionDetailListUseCase(): ${getQuestionDetailListUseCase()}")
         getQuestionDetailListUseCase().forEach {
@@ -447,4 +489,7 @@ class QuestionViewModel @Inject constructor(
             20 //Это нужно что-бы посчитать проценты сложных вопросов
     }
 }
-fun log(m: String) { Logcat.log(m, "Question", Logcat.LOG_VIEW_MODEL)}
+
+fun log(m: String) {
+    Logcat.log(m, "Question", Logcat.LOG_VIEW_MODEL)
+}
