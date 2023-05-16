@@ -200,7 +200,7 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
                             getTypeText(binding.rbLightQuestion).toBoolean(),
                             -1,
                             lang,
-                            mainActivityViewModel.getProfile.translater!!
+                            mainActivityViewModel.getProfile().translater!!
                         )
                     )
                 }
@@ -268,7 +268,7 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
                     QuizEntity(
                         null,
                         nameQuiz,
-                        mainActivityViewModel.getProfile.name!!,
+                        mainActivityViewModel.getProfile().name!!,
                         TimeManager.getCurrentTime(),
                         0,
                         0,

@@ -125,7 +125,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             Toast.LENGTH_LONG
         ).show()
         else {
-            mainViewModel.updateProfileUseCase(mainViewModel.getProfile.copy(count = mainViewModel.getProfileCount()!! - 33))
+            mainViewModel.updateProfileUseCase(mainViewModel.getProfile().copy(count = mainViewModel.getProfileCount()!! - 33))
             val intent = Intent(activity, QuestionActivity::class.java)
             intent.putExtra(NAME_USER, "user")
             intent.putExtra(ID_QUIZ, id)

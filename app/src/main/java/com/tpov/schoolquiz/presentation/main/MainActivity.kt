@@ -43,6 +43,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -96,6 +97,9 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         val sharedPref = this.getSharedPreferences("profile", Context.MODE_PRIVATE)
         sharedPref.unregisterOnSharedPreferenceChangeListener(sharedPreferenceListener)
+
+        timer?.cancel()
+        timer = null
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -357,6 +361,7 @@ class MainActivity : AppCompatActivity() {
                 it?.datePremium ?: "",
                 it?.nickname ?: ""
             )
+            updateProfile = true
         }
 
         setButtonNavListener()
@@ -365,7 +370,6 @@ class MainActivity : AppCompatActivity() {
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
         SetItemMenu.setHomeMenu(binding, 1, this)
 
-        updateProfileCount()
         loadNumQuestionNotDate()
 
         binding.drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
@@ -467,8 +471,8 @@ class MainActivity : AppCompatActivity() {
     private var timer: Timer? = null
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun onRestart() {
-        super.onRestart()
+    override fun onStart() {
+        super.onStart()
         createTimer()
     }
 
@@ -480,7 +484,7 @@ class MainActivity : AppCompatActivity() {
                 updateProfileCount()
             }
         }
-        val delay = 5000L // Delay before the timer starts executing the task (in milliseconds)
+        val delay = 0L // Delay before the timer starts executing the task (in milliseconds)
         val period =
             100_000L // Interval between consecutive executions of the task (in milliseconds)
 
@@ -490,16 +494,23 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount() {
-        viewModel.updateProfileUseCase(
-            viewModel.getProfile.copy(
-                count = calcCount(
-                    viewModel.getProfileCount(),
-                    viewModel.getProfileCountLife(),
-                    viewModel.getProfileDateCloseAp()
-                ),
-                dateCloseApp = TimeManager.getCurrentTime()
+        log("updateProfileCount() getProfileUseCase(): ${viewModel.getProfile().pointsNolics}")
+        if (updateProfile) {
+
+            log("updateProfileCount() getProfileUseCase(): ${viewModel.getProfile().pointsNolics}")
+            viewModel.updateProfileUseCase(
+                viewModel.getProfile().copy(
+                    count = calcCount(
+                        viewModel.getProfileCount(),
+                        viewModel.getProfileCountLife(),
+                        viewModel.getProfileDateCloseAp()
+                    ),
+                    dateCloseApp = TimeManager.getCurrentTime()
+                )
             )
-        )
+
+            log("updateProfileCount() getProfileUseCase(): ${viewModel.getProfile().pointsNolics}")
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -527,12 +538,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-
-        timer?.cancel()
-        timer = null
-    }
 
     private fun animateValue(
         textView: TextView,
@@ -622,10 +627,7 @@ class MainActivity : AppCompatActivity() {
         }, initialDelay)
     }
 
-
     // Использование функции в вашем коде
-
-
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         return super.onPrepareOptionsMenu(menu)
     }
