@@ -330,8 +330,8 @@ class MainActivity : AppCompatActivity() {
 
             animateValueFloat(
                 binding.tvStars,
-                (SharedPreferencesManager.getSkill().toFloat().toInt() / 1000).toFloat(),
-                ((it?.pointsSkill ?: 0) / 1000).toFloat(),
+                (SharedPreferencesManager.getSkill().toFloat().toInt() / 100_000).toFloat(),
+                ((it?.pointsSkill ?: 0) / 100_000).toFloat(),
                 animationDuration,
                 500
             )
@@ -353,7 +353,7 @@ class MainActivity : AppCompatActivity() {
             SharedPreferencesManager.setProfile(
                 it?.pointsSkill ?: 0,
                 it?.pointsNolics ?: 0,
-                it?.countGold ?: 0,
+                it?.pointsGold ?: 0,
                 it?.datePremium ?: "",
                 it?.nickname ?: ""
             )
@@ -365,7 +365,6 @@ class MainActivity : AppCompatActivity() {
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
         SetItemMenu.setHomeMenu(binding, 1, this)
 
-        updateProfileCount()
         loadNumQuestionNotDate()
 
         binding.drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
@@ -462,15 +461,11 @@ class MainActivity : AppCompatActivity() {
 
 
         viewModel.tpovIdLiveData.value = getTpovId()
+
+        createTimer()
     }
 
     private var timer: Timer? = null
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    override fun onRestart() {
-        super.onRestart()
-        createTimer()
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createTimer() {
@@ -480,7 +475,7 @@ class MainActivity : AppCompatActivity() {
                 updateProfileCount()
             }
         }
-        val delay = 5000L // Delay before the timer starts executing the task (in milliseconds)
+        val delay = 1_000L // Delay before the timer starts executing the task (in milliseconds)
         val period =
             100_000L // Interval between consecutive executions of the task (in milliseconds)
 
@@ -490,16 +485,21 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount() {
-        viewModel.updateProfileUseCase(
-            viewModel.getProfile.copy(
-                count = calcCount(
-                    viewModel.getProfileCount(),
-                    viewModel.getProfileCountLife(),
-                    viewModel.getProfileDateCloseAp()
-                ),
-                dateCloseApp = TimeManager.getCurrentTime()
+        try {
+            viewModel.updateProfileUseCase(
+                viewModel.getProfile().copy(
+                    count = calcCount(
+                        viewModel.getProfileCount(),
+                        viewModel.getProfileCountLife(),
+                        viewModel.getProfileDateCloseAp()
+                    ),
+                    dateCloseApp = TimeManager.getCurrentTime()
+                )
             )
-        )
+        } catch (e: Exception) {
+
+        }
+
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -513,7 +513,6 @@ class MainActivity : AppCompatActivity() {
         log("calcAllCount: $calcAllCount")
         return if (getMaxCount(countLife) < calcAllCount!!) getMaxCount(countLife)
         else calcAllCount
-
     }
 
     private fun getMaxCount(countLife: Int?): Int {

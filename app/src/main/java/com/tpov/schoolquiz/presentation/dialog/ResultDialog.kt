@@ -21,8 +21,9 @@ class ResultDialog(
     private val stars: Int,
     private val starsPercentAll: Int,
     private val starsPlayersAll: Int,
-    private val onDismissListener: ((Int) -> Unit)? = null, // добавлен параметр колбэка для слушания нажатия кнопки OK
-    private val onRatingSelected: ((Int) -> Unit)? = null, // определение переменной с значением по умолчанию
+    private val firstQuestionDetail: Boolean,
+    private val onDismissListener: ((Int) -> Unit)? = null, // определение переменной с значением по умолчанию
+    private val onRatingSelected: ((Int) -> Unit)? = null,
     context: Context
 ) : Dialog(context) {
 
@@ -50,7 +51,7 @@ class ResultDialog(
         customBar.progress = starsPercentAll / 100.toFloat()
         customBar.leftMarkerPosition = starsPercentAll / 100.toFloat()
         customBar.rightMarkerPosition = starsPlayersAll / 100.toFloat()
-        val coins = CalcValues.getValueNolicForGame(hardQuestion, stars)
+        val coins = CalcValues.getValueNolicForGame(hardQuestion, stars, event, firstQuestionDetail)
         tvNolic.text = coins.toString()
         Handler(Looper.getMainLooper()).postDelayed({
             customBar.setProgressWithAnimation(

@@ -495,12 +495,11 @@ class RepositoryFBImpl @Inject constructor(
     override fun getProfile() {
         log("fun getProfile()")
         val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
 
         profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getProfile() snapshot: ${snapshot.key}")
-                val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+                val tpovId = getTpovId()
                 val profile = snapshot.child("$tpovId").getValue(Profile::class.java)
 
                 log("getProfile() tpovId: $tpovId")
@@ -509,7 +508,7 @@ class RepositoryFBImpl @Inject constructor(
                     log("getProfile() профиль не пустой")
                     if (dao.getProfileByTpovId(tpovId) == null) {
                         log("getProfile() профиль по tpovid пустой, создаем новый")
-                        dao.insertProfile(profile.toProfileEntity())
+                        dao.insertProfile(profile.toProfileEntity(100, 500))
 
                     } else {
                         log("getProfile() профиль по tpovid найден")
@@ -530,7 +529,9 @@ class RepositoryFBImpl @Inject constructor(
                                     moderator = profile.qualification.moderator,
                                     admin = profile.qualification.admin,
                                     developer = profile.qualification.developer,
-                                    dateSynch = TimeManager.getCurrentTime()
+                                    dateSynch = TimeManager.getCurrentTime(),
+                                    count = dao.getProfileByTpovId(tpovId).count,
+                                    countGold = dao.getProfileByTpovId(tpovId).countGold
                                 )
                         )
                     }
@@ -1163,7 +1164,7 @@ class RepositoryFBImpl @Inject constructor(
         val uid = FirebaseAuth.getInstance().uid
         log("setTpovIdFB() tpovId = ${getTpovId()}")
 
-        ref.child("listTpovId/$uid").setValue(getTpovId()).addOnSuccessListener {
+        ref.child("listTpovId/$uid").setValue(getTpovId().toString()).addOnSuccessListener {
             log("setTpovIdFB() успех загрузки на сервер")
             synthLiveData.value = ++synth
         }.addOnFailureListener {
@@ -1184,14 +1185,11 @@ class RepositoryFBImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getTpovIdFB() snapshot: $snapshot")
 
-                val tpovId: Long =
-                    snapshot.child("listTpovId/$uid").getValue(Long::class.java) ?: 0
+                val tpovId: String =
+                    snapshot.child("listTpovId/$uid").getValue(String::class.java) ?: ""
                 log("getTpovIdFB() tpovId: $tpovId")
                 val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-                with(sharedPref.edit()) {
-                    putInt("tpovId", tpovId.toInt())
-                    apply()
-                }
+                setTpovId(tpovId.toInt())
 
                 log("getTpovIdFB()/ set tpovId: $tpovId")
                 synthLiveData.value = ++synth
@@ -1315,6 +1313,8 @@ class RepositoryFBImpl @Inject constructor(
                 profileRef.child(tpovId.toString()).setValue(profile.toProfile())
                     .addOnSuccessListener {
                         synthLiveData.value = ++synth
+                    }.addOnFailureListener {
+                        log("$it")
                     }
 
                 log("setProfile() id != 0 просто сохраняем на сервер")
@@ -1322,7 +1322,6 @@ class RepositoryFBImpl @Inject constructor(
                 synthLiveData.value = ++synth
                 log("setProfile() id != 0 и в бд пусто, ничего не отправляем")
             }
-
         }
     }
 

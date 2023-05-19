@@ -273,7 +273,7 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun springAnim(next: Boolean) = with(binding) {
-        var START_VELOCITY = if (next) -5000f
+        val START_VELOCITY = if (next) - 5000f
         else 5000f
 
         var springAnimation = SpringAnimation(questionTextView, DynamicAnimation.X)

@@ -157,7 +157,7 @@ class CreateQuestionDialog : DialogFragment() {
                 idQuiz,
                 language,
                 try {
-                    mainActivityViewModel.getProfile.translater ?: errorGetLvlTranslate(activity)
+                    mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(activity)
                 } catch (e: Exception) {
                     0
                 }
@@ -172,7 +172,7 @@ class CreateQuestionDialog : DialogFragment() {
         val quizEntity = QuizEntity(
             idQuiz,
             nameQuiz,
-            mainActivityViewModel.getProfile.name!!,
+            mainActivityViewModel.getProfile().name!!,
             if (id == -1) currentTime
             else (mainActivityViewModel.getQuizById(id).data),
             if (id == -1) 0

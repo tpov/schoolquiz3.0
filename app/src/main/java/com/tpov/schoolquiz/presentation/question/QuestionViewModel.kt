@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.domain.UpdateQuizUseCase
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getSkill
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
@@ -74,6 +75,7 @@ class QuestionViewModel @Inject constructor(
     lateinit var tpovId: String
     var resultTranslate = true
     var persentPlayerAll = 0
+    var firstQuestionDetail = true
 
     private val _shouldCloseLiveData = MutableLiveData<Boolean>()
     val shouldCloseLiveData: LiveData<Boolean> = _shouldCloseLiveData
@@ -93,8 +95,7 @@ class QuestionViewModel @Inject constructor(
 
     private fun initConst(context: Context) {
         this.context = context
-        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        tpovId = (sharedPref?.getInt("tpovId", 0) ?: 0).toString()
+        tpovId = getTpovId().toString()
     }
 
     private fun initVariable() {
@@ -129,6 +130,7 @@ class QuestionViewModel @Inject constructor(
 
         getQuestionDetailListUseCase().forEach {
             if (it.hardQuiz == this.hardQuestion) {
+                firstQuestionDetail = false
                 if (getUpdateAnswer(it.codeAnswer)) this.idThisQuestionDetail = it.id!!
             }
         }
@@ -353,6 +355,7 @@ class QuestionViewModel @Inject constructor(
             this.persent,
             this.persentAll,
             this.persentPlayerAll,
+            this.firstQuestionDetail,
             onDismissListener = { rating ->
                 saveResult(rating)
             },
@@ -372,17 +375,35 @@ class QuestionViewModel @Inject constructor(
                 getProfileUseCase(getTpovId()).copy(
                     pointsNolics = (getNolic() + CalcValues.getValueNolicForGame(
                         hardQuestion,
-                        persent
+                        persent,
+                        quizThis.event,
+                        firstQuestionDetail
                     ))
                 )
             }"
         )
-        log("saveResultawd: ${CalcValues.getValueNolicForGame(hardQuestion, this.persent)}")
+        log(
+            "saveResultawd: ${
+                CalcValues.getValueNolicForGame(
+                    hardQuestion, this.persent,
+                    quizThis.event,
+                    firstQuestionDetail
+                )
+            }"
+        )
         updateProfileUseCase(
             getProfileUseCase(getTpovId()).copy(
                 pointsNolics = (getNolic() + CalcValues.getValueNolicForGame(
                     hardQuestion,
-                    persent
+                    persent,
+                    quizThis.event,
+                    firstQuestionDetail
+                )),
+                pointsSkill = (getSkill() + CalcValues.getValueSkillForFame(
+                    hardQuestion,
+                    persent,
+                    quizThis.event,
+                    firstQuestionDetail
                 ))
             )
         )

@@ -3,11 +3,12 @@ package com.tpov.schoolquiz.presentation.custom
 object CalcValues {
 
     private const val COEF_COIN_HARD_QUIZ = 3
-    private const val COEF_SKILL_NOLIC_FOR_GAME = 100_000
+    private const val COEF_SKILL_NOLIC_FOR_GAME = 1
 
-    fun getValueSkillForFame(hardQuestion: Boolean, result: Int) = getValueNolicForGame(hardQuestion, result) / COEF_SKILL_NOLIC_FOR_GAME
+    fun getValueSkillForFame(hardQuestion: Boolean, result: Int, event: Int, first: Boolean) =
+        getValueNolicForGame(hardQuestion, result, event, first) / COEF_SKILL_NOLIC_FOR_GAME
 
-    fun getValueNolicForGame(hardQuestion: Boolean, result: Int): Int {
+    fun getValueNolicForGame(hardQuestion: Boolean, result: Int, event: Int, first: Boolean): Int {
         var counts = 0
 
         for (i in 0..result) {
@@ -30,7 +31,12 @@ object CalcValues {
             }
         }
 
-        if (result == 100) counts * 2
+        when (event) {
+            1 -> counts /= 10
+            8 -> if (result == 100 && first) counts * 2
+            else -> counts /= 2
+        }
+
         return counts
 
     }

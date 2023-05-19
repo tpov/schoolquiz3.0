@@ -1,8 +1,6 @@
 package com.tpov.schoolquiz.data.fierbase
 
 import com.tpov.schoolquiz.data.database.entities.PlayersEntity
-
-
 data class Players(
     val points: Points2,
     val qualification: Qualification2,

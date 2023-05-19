@@ -6,7 +6,7 @@ import com.tpov.shoppinglist.utils.TimeManager
 
 @IgnoreExtraProperties
 data class Profile constructor(
-    val tpovId: Int,
+    val tpovId: String,
     val login: String,
     val name: String,
     val nickname: String,
@@ -28,7 +28,7 @@ data class Profile constructor(
     val box: Box
 ) {
     constructor() : this(
-        0,
+        0.toString(),
         "",
         "",
         "",
@@ -46,19 +46,17 @@ data class Profile constructor(
         "",
         "",
         Qualification(0,0,0,0,0,0,0),
-        Life(0,0,0,0),
+        Life(0,0),
         Box(0,"0",0)
     )
 }
 @IgnoreExtraProperties
 data class Life(
     val countLife: Int,
-    val count: Int,
     val countGoldLife: Int,
-    val countGold: Int
 ) {
     constructor() : this(
-        0, 0, 0, 0
+        0, 0
     )
 }
 
@@ -152,7 +150,7 @@ data class Dates(
 
 fun ProfileEntity.toProfile(): Profile {
     return Profile(
-        tpovId = this.tpovId!!,
+        tpovId = this.tpovId.toString(),
         login = this.login!!,
         name = this.name ?: "",
         nickname = this.nickname!!,
@@ -203,24 +201,20 @@ fun ProfileEntity.toProfile(): Profile {
         ),
         life = Life(
             this.countLife!!,
-            this.count!!,
             this.countGoldLife!!,
-            this.countGold!!
         ),
         box = Box(
             this.countBox!!,
             this.timeLastOpenBox!!,
             this.coundDayBox!!
         )
-
     )
-
 }
 
-fun Profile.toProfileEntity(): ProfileEntity {
+fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
     return ProfileEntity(
         id = null,
-        tpovId = this.tpovId,
+        tpovId = this.tpovId.toInt(),
         login = this.login,
         name = this.name,
         birthday = this.birthday,
@@ -263,8 +257,8 @@ fun Profile.toProfileEntity(): ProfileEntity {
         coundDayBox = this.box.coundDayBox,
         countBox = this.box.countBox,
         timeLastOpenBox = this.box.timeLastOpenBox,
-        countGold = this.life.countGold,
-        count = this.life.count,
+        countGold = countGold,
+        count = count,
         countGoldLife = this.life.countGoldLife,
         countLife = this.life.countLife,
         dateCloseApp = TimeManager.getCurrentTime()

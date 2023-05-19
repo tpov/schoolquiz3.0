@@ -81,7 +81,7 @@ class AutorisationViewModel @Inject constructor(
                     ) {
                         log("createAcc текущий профиль уже синхронизирован, создаем новый")
                         val profile = Profile(
-                            0,
+                            0.toString(),
                             email,
                             name,
                             nickname,
@@ -102,7 +102,7 @@ class AutorisationViewModel @Inject constructor(
                             auth.currentUser?.uid ?: "",
                             languages,
                             Qualification(0, 0, 0, 0, 0, 0, 0),
-                            Life(1, 300, 0, 0),
+                            Life(1, 0),
                             Box(0, TimeManager.getCurrentTime(), 0)
                         )
 
@@ -158,7 +158,7 @@ class AutorisationViewModel @Inject constructor(
 
     private fun insertProfile(profile: Profile) {
         log("fun insertProfile")
-        insertProfileUseCase(profile.toProfileEntity())
+        insertProfileUseCase(profile.toProfileEntity(0, 100))
     }
 
 
