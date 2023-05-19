@@ -14,6 +14,7 @@ object SharedPreferencesManager {
     private lateinit var sharedPreferencesCounts: SharedPreferences
     private lateinit var sharedPreferencesTpovId: SharedPreferences
     private lateinit var sharedPreferencesCountStartApp: SharedPreferences
+    var updateProfile = true
 
     fun initialize(context: Context) {
         sharedPreferencesQuiz = context.getSharedPreferences(PREFS_NAME_QUIZ, Context.MODE_PRIVATE)

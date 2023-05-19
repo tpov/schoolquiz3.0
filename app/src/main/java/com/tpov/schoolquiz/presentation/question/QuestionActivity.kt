@@ -23,6 +23,7 @@ import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.ActivityQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
@@ -58,6 +59,7 @@ class QuestionActivity : AppCompatActivity() {
         component.inject(this)
         super.onCreate(savedInstanceState)
 
+        updateProfile = false
         setContentView(binding.root)
         viewModel = ViewModelProvider(this, viewModelFactory)[QuestionViewModel::class.java]
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

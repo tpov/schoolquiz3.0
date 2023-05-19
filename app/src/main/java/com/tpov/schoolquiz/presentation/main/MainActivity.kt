@@ -96,6 +96,9 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         val sharedPref = this.getSharedPreferences("profile", Context.MODE_PRIVATE)
         sharedPref.unregisterOnSharedPreferenceChangeListener(sharedPreferenceListener)
+
+        timer?.cancel()
+        timer = null
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -330,8 +333,8 @@ class MainActivity : AppCompatActivity() {
 
             animateValueFloat(
                 binding.tvStars,
-                (SharedPreferencesManager.getSkill().toFloat().toInt() / 100_000).toFloat(),
-                ((it?.pointsSkill ?: 0) / 100_000).toFloat(),
+                (SharedPreferencesManager.getSkill().toFloat().toInt() / 1000).toFloat(),
+                ((it?.pointsSkill ?: 0) / 1000).toFloat(),
                 animationDuration,
                 500
             )
@@ -475,7 +478,7 @@ class MainActivity : AppCompatActivity() {
                 updateProfileCount()
             }
         }
-        val delay = 1_000L // Delay before the timer starts executing the task (in milliseconds)
+        val delay = 0L // Delay before the timer starts executing the task (in milliseconds)
         val period =
             100_000L // Interval between consecutive executions of the task (in milliseconds)
 
@@ -513,6 +516,7 @@ class MainActivity : AppCompatActivity() {
         log("calcAllCount: $calcAllCount")
         return if (getMaxCount(countLife) < calcAllCount!!) getMaxCount(countLife)
         else calcAllCount
+
     }
 
     private fun getMaxCount(countLife: Int?): Int {
@@ -526,12 +530,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-
-        timer?.cancel()
-        timer = null
-    }
 
     private fun animateValue(
         textView: TextView,
@@ -621,10 +619,7 @@ class MainActivity : AppCompatActivity() {
         }, initialDelay)
     }
 
-
     // Использование функции в вашем коде
-
-
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         return super.onPrepareOptionsMenu(menu)
     }
