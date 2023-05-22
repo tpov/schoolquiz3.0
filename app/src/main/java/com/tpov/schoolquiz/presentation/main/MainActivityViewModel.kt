@@ -201,7 +201,8 @@ class MainActivityViewModel @Inject constructor(
     fun getNewIdQuiz(): Int {
         var i = 0
         getQuizListUseCase(getTpovId()).forEach {
-            if (i <= 100 && i < it.id!!) {
+            log("getNewIdQuiz: it: ${it.id}")
+            if (it.id!! in (i + 1)..100) {
                 i = it.id!!
             }
         }

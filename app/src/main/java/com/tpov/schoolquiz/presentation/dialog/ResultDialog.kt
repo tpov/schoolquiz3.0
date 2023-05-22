@@ -10,6 +10,7 @@ import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.CustomProgressBar
 
@@ -24,7 +25,8 @@ class ResultDialog(
     private val firstQuestionDetail: Boolean,
     private val onDismissListener: ((Int) -> Unit)? = null, // определение переменной с значением по умолчанию
     private val onRatingSelected: ((Int) -> Unit)? = null,
-    context: Context
+    context: Context,
+    private val profile: ProfileEntity
 ) : Dialog(context) {
 
     private var rating = 0
@@ -51,7 +53,7 @@ class ResultDialog(
         customBar.progress = starsPercentAll / 100.toFloat()
         customBar.leftMarkerPosition = starsPercentAll / 100.toFloat()
         customBar.rightMarkerPosition = starsPlayersAll / 100.toFloat()
-        val coins = CalcValues.getValueNolicForGame(hardQuestion, stars, event, firstQuestionDetail)
+        val coins = CalcValues.getValueNolicForGame(hardQuestion, stars, event, firstQuestionDetail, profile)
         tvNolic.text = coins.toString()
         Handler(Looper.getMainLooper()).postDelayed({
             customBar.setProgressWithAnimation(

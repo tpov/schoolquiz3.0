@@ -203,7 +203,7 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
-            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+            itemView.findViewById<ImageView>(R.id.imv_gradient_light_quiz).setOnClickListener {
                 log("bindQuiz2 setOnClickListener")
                 listener.onQuiz2Clicked(quiz.id!!)
             }
@@ -225,7 +225,7 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
-            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+            itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).setOnClickListener {
                 log("bindQuiz3 setOnClickListener")
                 listener.onQuiz3Clicked(quiz.id!!)
             }
@@ -238,7 +238,7 @@ class EventAdapter(
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName
@@ -262,7 +262,7 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
-            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+            itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).setOnClickListener {
                 log("bindTranslate1Event setOnClickListener")
                 listener.onTranslate1EventClicked(question.id!!)
             }
@@ -278,7 +278,7 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
-            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
+            itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).setOnClickListener {
                 log("bindTranslate2Event setOnClickListener")
                 listener.onTranslate2EventClicked(question.id!!)
             }

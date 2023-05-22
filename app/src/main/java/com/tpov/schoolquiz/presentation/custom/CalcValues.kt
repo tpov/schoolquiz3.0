@@ -1,14 +1,16 @@
 package com.tpov.schoolquiz.presentation.custom
 
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+
 object CalcValues {
 
     private const val COEF_COIN_HARD_QUIZ = 3
     private const val COEF_SKILL_NOLIC_FOR_GAME = 1
 
-    fun getValueSkillForFame(hardQuestion: Boolean, result: Int, event: Int, first: Boolean) =
-        getValueNolicForGame(hardQuestion, result, event, first) / COEF_SKILL_NOLIC_FOR_GAME
+    fun getValueSkillForFame(hardQuestion: Boolean, result: Int, event: Int, first: Boolean, profile: ProfileEntity) =
+        getValueNolicForGame(hardQuestion, result, event, first, profile) / COEF_SKILL_NOLIC_FOR_GAME
 
-    fun getValueNolicForGame(hardQuestion: Boolean, result: Int, event: Int, first: Boolean): Int {
+    fun getValueNolicForGame(hardQuestion: Boolean, result: Int, event: Int, first: Boolean, profile: ProfileEntity): Int {
         var counts = 0
 
         for (i in 0..result) {
@@ -33,6 +35,12 @@ object CalcValues {
 
         when (event) {
             1 -> counts /= 10
+            2 -> profile.tester?.times(2)
+            3 -> profile.moderator?.times(3)
+            4 -> profile.admin?.times(4)
+            5 -> counts * 1.5
+            6 -> counts * 5
+            7 -> counts * 10
             8 -> if (result == 100 && first) counts * 2
             else -> counts /= 2
         }

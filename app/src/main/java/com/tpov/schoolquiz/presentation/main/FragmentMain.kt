@@ -121,7 +121,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun onClick(id: Int, type: Boolean) {
         if (mainViewModel.getProfileCount()!! < 33) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться пол-жизни",
+            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
             Toast.LENGTH_LONG
         ).show()
         else {

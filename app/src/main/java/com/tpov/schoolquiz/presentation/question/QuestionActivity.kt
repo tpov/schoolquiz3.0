@@ -120,6 +120,9 @@ class QuestionActivity : AppCompatActivity() {
                 nextButton()
             }
 
+            log("DSEFSE, currentIndex: ${viewModel.currentIndex}")
+            log("DSEFSE, nameQuestion: ${viewModel.questionListThis}")
+
             binding.questionTextView.text =
                 viewModel.questionListThis[viewModel.currentIndex].nameQuestion
         }
@@ -266,7 +269,7 @@ class QuestionActivity : AppCompatActivity() {
             .observe(this) { list ->
                 list.forEach { quiz ->
                     if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
-                        viewModel.questionListThis.forEach {
+                        viewModel.getQuestionByIdQuizUseCase(quiz.id!!).forEach {
                             viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
                         }
                     }
