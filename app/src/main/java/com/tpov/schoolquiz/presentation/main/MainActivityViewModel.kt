@@ -86,16 +86,10 @@ class MainActivityViewModel @Inject constructor(
 
     val getProfileFBLiveData: LiveData<ProfileEntity?> = tpovIdLiveData.switchMap { tpovId ->
         log("getProfileFBLiveData tpovId: $tpovId")
-
-        liveData(Dispatchers.IO) {
-            val profileFlow = withContext(Dispatchers.IO) {
-                getProfileFlowUseCase(tpovId)
-            }
-            emitSource(profileFlow.asLiveData())
-        }
+        getProfileFlowUseCase(tpovId).asLiveData()
     }
 
-    suspend fun getQuizById(position: Int): QuizEntity {
+    fun getQuizById(position: Int): QuizEntity {
         log("getQuizById, position: $position, getQuizByIdUseCase(position): ${getQuizByIdUseCase(position)}")
         return getQuizByIdUseCase(position)
     }
@@ -104,14 +98,14 @@ class MainActivityViewModel @Inject constructor(
         oldId = tpovId
     }
 
-    suspend fun getAllProfiles() = getAllProfilesDBUseCase()
-    suspend fun getPlayers() = getPlayersDBUseCase()
+    fun getAllProfiles() = getAllProfilesDBUseCase()
+    fun getPlayers() = getPlayersDBUseCase()
 
     init {
         SharedPreferencesManager.initialize(context)
     }
 
-    suspend fun init() {
+    fun init() {
         log("fun init(), tpovId: ${getTpovId()}")
 
         if (getTpovId() == -1) insertProfile()
@@ -120,12 +114,12 @@ class MainActivityViewModel @Inject constructor(
         getQuestion8FBUseCase()
     }
 
-    suspend fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
+    fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
         return getQuestionListUseCase().filter { it.idQuiz == idQuiz }
     }
 
 
-    private suspend fun insertProfile() {
+    private fun insertProfile() {
         log("fun insertProfile()")
 
         val userLocale: Locale = Locale.getDefault()
@@ -164,18 +158,18 @@ class MainActivityViewModel @Inject constructor(
         insertProfileUseCase(profile.toProfileEntity(0, 100))
     }
 
-    suspend fun insertQuiz(quizEntity: QuizEntity) {
+    fun insertQuiz(quizEntity: QuizEntity) {
 
         log("fun insertQuiz")
         insertQuizUseCase(quizEntity)
     }
 
-    suspend fun insertQuestion(questionEntity: QuestionEntity) {
+    fun insertQuestion(questionEntity: QuestionEntity) {
         log("fun insertQuestionList")
         insertQuestionUseCase(questionEntity)
     }
 
-    suspend fun insertQuizEvent(quizEntity: QuizEntity) {
+    fun insertQuizEvent(quizEntity: QuizEntity) {
         log("fun updateQuizEvent")
         if (quizEntity.event == 1) {
             quizEntity.event++
@@ -185,31 +179,31 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
-    suspend fun setQuestionsFB() {
+    fun setQuestionsFB() {
         log("fun setQuestionsFB")
         setQuestionFBUseCase()
         setQuestionDetailFBUseCase()
     }
 
-    private suspend fun getQuizList(): LiveData<List<QuizEntity>> {
+    private fun getQuizList(): LiveData<List<QuizEntity>> {
         log("fun getQuizList tpovId: ${getTpovId()}")
         return getQuizLiveDataUseCase.getQuizUseCase(getTpovId())
     }
 
-    suspend fun getQuizLiveData(): LiveData<List<QuizEntity>> {
+    fun getQuizLiveData(): LiveData<List<QuizEntity>> {
         return getQuizList()
     }
 
-    suspend fun getProfile(): ProfileEntity {
+    fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
     }
 
-    private suspend fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
+    private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
         log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
         return getProfileUseCase(tpovId)
     }
 
-    suspend fun getNewIdQuiz(): Int {
+    fun getNewIdQuiz(): Int {
         var i = 0
         getQuizListUseCase(getTpovId()).forEach {
             log("getNewIdQuiz: it: ${it.id}")
@@ -220,7 +214,7 @@ class MainActivityViewModel @Inject constructor(
         return i + 1
     }
 
-    suspend fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(nameQuiz,
+    fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(nameQuiz,
         getTpovId()
     )
 
@@ -228,31 +222,30 @@ class MainActivityViewModel @Inject constructor(
         Logcat.log(massage, "MainActivityViewModel", Logcat.LOG_VIEW_MODEL)
     }
 
-    suspend fun deleteQuiz(id: Int) {
+    fun deleteQuiz(id: Int) {
         deleteQuizByIdUseCase(id)
         deleteQuestionByIdQuizUseCase(id)
     }
 
-    suspend fun getLvlTranslateByQuizId(id: Int): Int {
+    fun getLvlTranslateByQuizId(id: Int): Int {
         var lvlTranslate = 1000
         getQuestionListByIdQuiz(id).forEach {
             if (it.lvlTranslate < lvlTranslate) lvlTranslate = it.lvlTranslate
         }
         return lvlTranslate
     }
-
-    suspend fun getProfileCount(): Int? {
+    fun getProfileCount(): Int? {
         val profile = getProfileUseCase(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.count
     }
 
-    suspend fun getProfileCountLife(): Int? {
+    fun getProfileCountLife(): Int? {
         val profile =  getProfileUseCase(getTpovId())
         return profile.countLife
     }
 
-    suspend fun getProfileDateCloseAp(): String? {
+    fun getProfileDateCloseAp(): String? {
         val profile = getProfileUseCase(getTpovId())
         return profile.dateCloseApp
     }

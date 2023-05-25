@@ -5,7 +5,6 @@ import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import javax.inject.Inject
 
 class InsertInfoQuestionUseCase @Inject constructor(private val repositoryDB: RepositoryDB) {
-
-    suspend operator fun invoke(questionDetailEntity: QuestionDetailEntity) =
+    operator fun invoke(questionDetailEntity: QuestionDetailEntity) =
         repositoryDB.insertQuizDetail(questionDetailEntity)
 }

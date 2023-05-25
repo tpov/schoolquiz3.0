@@ -12,11 +12,11 @@ interface RepositoryFB {
 
     fun getValSynth(): MutableLiveData<Int>
 
-    suspend fun getPlayersList()
+    fun getPlayersList()
 
-    suspend fun getTranslateFB()
+    fun getTranslateFB()
 
-    suspend fun getChatData(): Flow<List<ChatEntity>>
+    fun getChatData(): Flow<List<ChatEntity>>
 
     fun removeChatListener()
 
@@ -72,19 +72,19 @@ interface RepositoryFB {
 
     fun getProfile()
 
-    suspend fun setQuizData()
+    fun setQuizData()
 
-    suspend fun setQuestionData()
+    fun setQuestionData()
 
     fun setTpovIdFB()
 
     fun getTpovIdFB()
 
-    suspend fun setQuestionDetail()
+    fun setQuestionDetail()
 
-    suspend fun setProfile()
+    fun setProfile()
 
-    suspend fun setEvent()
+    fun setEvent()
 
     fun getUserName(): Profile
 

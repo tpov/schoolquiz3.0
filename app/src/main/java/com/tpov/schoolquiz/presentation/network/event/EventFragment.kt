@@ -18,10 +18,8 @@ import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
@@ -101,8 +99,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onQuiz2Clicked(quizId: Int) {
         log("fun onQuiz2Clicked")
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
             activity,
             "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
@@ -117,7 +113,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
             intent.putExtra(QuestionActivity.HARD_QUESTION, false)
             startActivity(intent)
-        }}}
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -125,8 +121,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         log("fun onQuiz3Clicked")
         log("fun onQuiz2Clicked")
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
             activity,
             "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
@@ -142,12 +136,10 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             intent.putExtra(QuestionActivity.HARD_QUESTION, true)
             startActivity(intent)
         }
-    }}}
+    }
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz4Clicked(quizId: Int) {
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
 
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
@@ -166,12 +158,10 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             intent.putExtra(QuestionActivity.HARD_QUESTION, false)
             startActivity(intent)
         }
-    }}}
+    }
 
     override fun onTranslate1EventClicked(questionId: Int) {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
             activity,
@@ -183,13 +173,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
             )
             log("fun onTranslate1EventClicked")
-        }}}
+        }
     }
 
     override fun onTranslate2EventClicked(quizId: Int) {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
             activity,
@@ -201,13 +189,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
             )
             log("fun onTranslate2EventClicked")
-        }}}
+        }
     }
 
     override fun onTranslateEditQuestionClicked(questionId: Int) {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
             activity,
@@ -219,13 +205,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
             )
             log("fun onTranslateEditQuestionClicked")
-        }}}
+        }
     }
 
     override fun onModeratorEventClicked(quizId: Int) {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
             activity,
@@ -237,13 +221,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onModeratorEventClicked")
-        }}}
+        }
     }
 
     override fun onAdminEventClicked(quizId: Int) {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
             activity,
@@ -256,12 +238,10 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             )
             log("fun onAdminEventClicked")
         }
-    }}}
+    }
 
     override fun onDeveloperEventClicked(quizId: Int) {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
             activity,
@@ -274,7 +254,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             )
             log("fun onDeveloperEventClicked")
         }
-    }}}
+    }
 
     companion object {
         @JvmStatic

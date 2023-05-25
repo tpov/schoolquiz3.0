@@ -87,16 +87,19 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                         listener.sendItem(id)
                         true
                     }
+
                     R.id.menu_delete -> {
                         // Обработка выбора элемента 2
                         listener.deleteItem(id)
                         true
                     }
+
                     R.id.menu_edit -> {
                         // Обработка выбора элемента 3
                         listener.editItem(id)
                         true
                     }
+
                     else -> false
                 }
             }
@@ -104,19 +107,21 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         }
 
         @OptIn(InternalCoroutinesApi::class)
-        fun setData(quizEntity: QuizEntity, listener: Listener, context: Context, viewModel: MainActivityViewModel) = with(binding) {
+        fun setData(
+            quizEntity: QuizEntity,
+            listener: Listener,
+            context: Context,
+            viewModel: MainActivityViewModel
+        ) = with(binding) {
 
             log("")
-            GlobalScope.launch {
-                withContext(Dispatchers.IO) {
-                    if (viewModel.getQuizById(quizEntity.id!!).showItemMenu) {
-                        constraintLayout.setOnLongClickListener {
-                            showPopupMenu(it, quizEntity.id!!)
-                            true
-                        }
+            if (viewModel.getQuizById(quizEntity.id!!).showItemMenu) {
+                constraintLayout.setOnLongClickListener {
+                    showPopupMenu(it, quizEntity.id!!)
+                    true
+                }
 
-                } else constraintLayout.visibility = View.VISIBLE
-            }}
+            } else constraintLayout.visibility = View.VISIBLE
             try {
 
                 val file = File(context.cacheDir, "${quizEntity.picture}")
@@ -181,14 +186,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }
 
             imvTranslate.imageAlpha = 128
-            GlobalScope.launch {
-                withContext(Dispatchers.IO) {
-                    val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
-                    //imvTranslate
-                    if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
-                    else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
-                    else imvTranslate.setColorFilter(Color.BLUE)
-                }}
+
+            val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
+
+            //imvTranslate
+            if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
+            else imvTranslate.setColorFilter(Color.BLUE)
+
             if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
                 (quizEntity.stars.toFloat() / 50)
             else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)

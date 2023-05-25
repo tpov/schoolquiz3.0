@@ -24,6 +24,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 @Singleton
 class RepositoryFBImpl @Inject constructor(
@@ -101,7 +104,7 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override fun getTranslateFB(lvlTranslate: Int) {
+    override fun getTranslateFB() {
         val questionRef3 = FirebaseDatabase.getInstance().getReference("question3")
         val questionRef4 = FirebaseDatabase.getInstance().getReference("question4")
         val questionRef5 = FirebaseDatabase.getInstance().getReference("question5")
@@ -312,7 +315,7 @@ class RepositoryFBImpl @Inject constructor(
             }
 
             override fun onCancelled(error: DatabaseError) {
-
+                log("getQuiz(), error: $error")
             }
         })
     }
@@ -681,7 +684,7 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
-    override suspend fun setQuizData() {
+    override fun setQuizData() {
         log("fun setQuizData()")
         var tpovId = getTpovId()
         var quizDB = dao.getQuizEvent()
@@ -770,8 +773,8 @@ class RepositoryFBImpl @Inject constructor(
 
                                 if (quiz.id!! >= 100) {
                                     log("setQuizData() playersRef quizDB event1 id >= 100 просто созраняем на сервер")
-                                    quizRef1.child("${tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz).addOnSuccessListener {
+                                    quizRef1.child("${tpovId}/${quiz.id.toString()}").setValue(quiz)
+                                        .addOnSuccessListener {
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${quiz.tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
@@ -1121,7 +1124,6 @@ class RepositoryFBImpl @Inject constructor(
         val questionRef8 = database.getReference("question8")
 
         var i = 0
-
         question.forEach {
             log(
                 "setQuestionData() перебираем квесты size: ${question.size}, dao.getQuizTpovIdById(it.idQuiz): ${
@@ -1259,7 +1261,6 @@ class RepositoryFBImpl @Inject constructor(
 
             profilesRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-
                     log("setProfile() snapshot: ${snapshot.key}")
                     idUsers =
                         ((snapshot.value as Map<*, *>)["idUser"] as Long).toInt() // Получение значения переменной allQuiz

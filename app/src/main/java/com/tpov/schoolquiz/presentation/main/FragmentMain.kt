@@ -150,7 +150,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.updateQuizUseCase(quizEntity.copy(showItemMenu = false))
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
-        mainViewModel.getQuizLiveData.observe(this) { list ->
+        mainViewModel.getQuizLiveData().observe(this) { list ->
             log("getQuizLiveData.observe")
             list.forEach { quiz ->
                 log(
