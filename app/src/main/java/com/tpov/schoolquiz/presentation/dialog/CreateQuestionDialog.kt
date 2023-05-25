@@ -24,7 +24,11 @@ import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CreateQuestionDialog : DialogFragment() {
 
@@ -45,8 +49,12 @@ class CreateQuestionDialog : DialogFragment() {
         val inflater = LayoutInflater.from(requireContext())
         dialogView = inflater.inflate(R.layout.create_question_dialog, null)
         questionsContainer = dialogView.findViewById(R.id.questions_container)
-        mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-            addFilledQuestionItem(questionEntity)
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+                    addFilledQuestionItem(questionEntity)
+                }
+            }
         }
 
         val dialogTitle: String
@@ -66,10 +74,13 @@ class CreateQuestionDialog : DialogFragment() {
             positiveButtonText = "Сохранить"
             positiveButtonAction = { _, _ -> createQuestions() }
 
-            dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
-
-            mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-                addFilledQuestionItem(questionEntity)
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
+                    mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+                        addFilledQuestionItem(questionEntity)
+                    }
+                }
             }
         }
 
@@ -129,11 +140,16 @@ class CreateQuestionDialog : DialogFragment() {
         val questions = mutableListOf<QuestionEntity>()
         var numHQ = 0
         var numLQ = 0
+        var idQuiz = 0
 
-        var idQuiz = if (id == -1) mainActivityViewModel.getNewIdQuiz()
-        else id
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                idQuiz = if (id == -1) mainActivityViewModel.getNewIdQuiz()
+                else id
 
-        log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
+                log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
+            }
+        }
         for (i in 0 until questionsContainer.childCount) {
             val questionItemView = questionsContainer.getChildAt(i)
 
@@ -147,70 +163,82 @@ class CreateQuestionDialog : DialogFragment() {
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
 
-            val question = QuestionEntity(
-                null,
-                if (questionHard) numHQ
-                else numLQ,
-                questionTitle,
-                questionAnswer,
-                questionHard,
-                idQuiz,
-                language,
-                try {
-                    mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(activity)
-                } catch (e: Exception) {
-                    0
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    val question = QuestionEntity(
+                        null,
+                        if (questionHard) numHQ
+                        else numLQ,
+                        questionTitle,
+                        questionAnswer,
+                        questionHard,
+                        idQuiz,
+                        language,
+                        try {
+                            mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(
+                                activity
+                            )
+                        } catch (e: Exception) {
+                            0
+                        }
+
+                    )
+
+                    questions.add(question)
                 }
-            )
-            questions.add(question)
+            }
         }
 
         // Создание QuizEntity
         val nameQuiz = dialogView.quiz_title.text.toString()
         val currentTime = TimeManager.getCurrentTime()
 
-        val quizEntity = QuizEntity(
-            idQuiz,
-            nameQuiz,
-            mainActivityViewModel.getProfile().name ?: "",
-            if (id == -1) currentTime
-            else (mainActivityViewModel.getQuizById(id).data),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).stars),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).starsPlayer),
-            questions.count { !it.hardQuestion },
-            questions.count { it.hardQuestion },
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).starsAll),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).starsAllPlayer),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).versionQuiz + 1),
-            if (id == -1) null
-            else (mainActivityViewModel.getQuizById(id).picture),
-            if (id == -1) 1
-            else (mainActivityViewModel.getQuizById(id).event),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).rating),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).ratingPlayer),
-            true,
-            if (id == -1) SharedPreferencesManager.getTpovId()
-            else (mainActivityViewModel.getQuizById(id).tpovId)
-        )
-
-        // Сохранение quizEntity и questions в базу данных
-        mainActivityViewModel.insertQuiz(quizEntity)
-
-        questions.forEach {
-            mainActivityViewModel.insertQuestion(
-                it.copy(
-                    idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
-                        nameQuiz
-                    )
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                val quizEntity = QuizEntity(
+                    idQuiz,
+                    nameQuiz,
+                    mainActivityViewModel.getProfile().name ?: "",
+                    if (id == -1) currentTime
+                    else (mainActivityViewModel.getQuizById(id).data),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).stars),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).starsPlayer),
+                    questions.count { !it.hardQuestion },
+                    questions.count { it.hardQuestion },
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).starsAll),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).starsAllPlayer),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).versionQuiz + 1),
+                    if (id == -1) null
+                    else (mainActivityViewModel.getQuizById(id).picture),
+                    if (id == -1) 1
+                    else (mainActivityViewModel.getQuizById(id).event),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).rating),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).ratingPlayer),
+                    true,
+                    if (id == -1) SharedPreferencesManager.getTpovId()
+                    else (mainActivityViewModel.getQuizById(id).tpovId)
                 )
-            )
+
+                // Сохранение quizEntity и questions в базу данных
+                mainActivityViewModel.insertQuiz(quizEntity)
+
+                questions.forEach {
+                    mainActivityViewModel.insertQuestion(
+                        it.copy(
+                            idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
+                                nameQuiz
+                            )
+                        )
+                    )
+                }
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,8 +18,10 @@ import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
@@ -97,63 +100,181 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz2Clicked(quizId: Int) {
         log("fun onQuiz2Clicked")
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+            )
             val intent = Intent(activity, QuestionActivity::class.java)
             intent.putExtra(QuestionActivity.NAME_USER, "user")
             intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
             intent.putExtra(QuestionActivity.HARD_QUESTION, false)
             startActivity(intent)
+        }}}
     }
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz3Clicked(quizId: Int) {
         log("fun onQuiz3Clicked")
-        val intent = Intent(activity, QuestionActivity::class.java)
-        intent.putExtra(QuestionActivity.NAME_USER, "user")
-        intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-        intent.putExtra(QuestionActivity.HARD_QUESTION, true)
-        startActivity(intent)
-    }
+        log("fun onQuiz2Clicked")
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+            )
+            val intent = Intent(activity, QuestionActivity::class.java)
+            intent.putExtra(QuestionActivity.NAME_USER, "user")
+            intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+            intent.putExtra(QuestionActivity.HARD_QUESTION, true)
+            startActivity(intent)
+        }
+    }}}
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz4Clicked(quizId: Int) {
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
 
-        log("fun onQuiz4Clicked")
-        val intent = Intent(activity, QuestionActivity::class.java)
-        intent.putExtra(QuestionActivity.NAME_USER, "user")
-        intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-        intent.putExtra(QuestionActivity.HARD_QUESTION, false)
-        startActivity(intent)
-    }
+        log("fun onQuiz2Clicked")
+        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+            )
+            log("fun onQuiz4Clicked")
+            val intent = Intent(activity, QuestionActivity::class.java)
+            intent.putExtra(QuestionActivity.NAME_USER, "user")
+            intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+            intent.putExtra(QuestionActivity.HARD_QUESTION, false)
+            startActivity(intent)
+        }
+    }}}
 
     override fun onTranslate1EventClicked(questionId: Int) {
 
-        log("fun onTranslate1EventClicked")
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        log("fun onQuiz2Clicked")
+        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
+            )
+            log("fun onTranslate1EventClicked")
+        }}}
     }
 
     override fun onTranslate2EventClicked(quizId: Int) {
 
-        log("fun onTranslate2EventClicked")
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        log("fun onQuiz2Clicked")
+        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
+            )
+            log("fun onTranslate2EventClicked")
+        }}}
     }
 
     override fun onTranslateEditQuestionClicked(questionId: Int) {
 
-        log("fun onTranslateEditQuestionClicked")
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        log("fun onQuiz2Clicked")
+        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
+            )
+            log("fun onTranslateEditQuestionClicked")
+        }}}
     }
 
     override fun onModeratorEventClicked(quizId: Int) {
 
-        log("fun onModeratorEventClicked")
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        log("fun onQuiz2Clicked")
+        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+            )
+            log("fun onModeratorEventClicked")
+        }}}
     }
 
     override fun onAdminEventClicked(quizId: Int) {
 
-        log("fun onAdminEventClicked")
-    }
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        log("fun onQuiz2Clicked")
+        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+            )
+            log("fun onAdminEventClicked")
+        }
+    }}}
 
     override fun onDeveloperEventClicked(quizId: Int) {
 
-        log("fun onDeveloperEventClicked")
-    }
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+        log("fun onQuiz2Clicked")
+        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+            activity,
+            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            Toast.LENGTH_LONG
+        ).show()
+        else {
+            eventViewModel.updateProfileUseCase(
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+            )
+            log("fun onDeveloperEventClicked")
+        }
+    }}}
 
     companion object {
         @JvmStatic

@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.*
+import kotlin.math.abs
 
 object TimeManager {
 
@@ -46,7 +47,7 @@ object TimeManager {
             val localDate2 = date2.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
 
             // Вычислите разницу между двумя объектами LocalDate в днях
-            ChronoUnit.DAYS.between(localDate1, localDate2)
+            abs(ChronoUnit.DAYS.between(localDate1, localDate2))
         } catch (e: ParseException) {
             0
         }
@@ -60,7 +61,7 @@ object TimeManager {
             val date1 = formatter.parse(dateString1)
             val date2 = formatter.parse(dateString2)
 
-            val millisecondsDiff = date2.time - date1.time
+            val millisecondsDiff = abs( date2.time - date1.time )
             millisecondsDiff / 1000
         } catch (e: ParseException) {
             0

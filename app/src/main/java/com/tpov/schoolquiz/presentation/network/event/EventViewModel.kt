@@ -3,10 +3,12 @@ package com.tpov.schoolquiz.presentation.network.event
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -15,7 +17,8 @@ class EventViewModel @Inject constructor(
     private val getQuizEventUseCase: GetQuizEventUseCase,
     private val getEventTranslateUseCase: GetEventTranslateUseCase,
     private val getProfileUseCase: GetProfileUseCase,
-    private val getQuestionListUseCase: GetQuestionListUseCase
+    private val getQuestionListUseCase: GetQuestionListUseCase,
+    val updateProfileUseCase: UpdateProfileUseCase
 ) : ViewModel() {
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()
@@ -27,21 +30,29 @@ class EventViewModel @Inject constructor(
     var admin: MutableList<ChatEntity> = arrayListOf()
     var develop: MutableList<ChatEntity> = arrayListOf()
 
-    val questionLiveData: MutableLiveData<List<QuestionEntity>> = MutableLiveData()
+    val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
-    fun loadQuests() {
+    suspend fun getProfile(): ProfileEntity {
+        return getProfileUseCaseFun(SharedPreferencesManager.getTpovId())
+    }
+    private suspend fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
+        log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
+        return getProfileUseCase(tpovId)
+    }
+
+    suspend fun loadQuests() {
         log("loadQuests")
         // Здесь загружайте список квестов и устанавливайте значение для questsLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
 
-    fun loadQuestion(idQuestion: Int) {
+    suspend fun loadQuestion(idQuestion: Int) {
         log("getQuestionListUseCase() :${getQuestionListUseCase()}")
         // Здесь загружайте вопрос и устанавливайте значение для questionLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
 
-    fun getQuizList() {
+    suspend fun getQuizList() {
         log("fun getQuizList")
 
         getQuizEventUseCase().forEach {
@@ -57,12 +68,13 @@ class EventViewModel @Inject constructor(
         log("getQuizList quiz4List: $quiz4List")
     }
 
-    fun getTranslateList(tpovId: Int) {
-        log("fun getTranslateList")
+    suspend fun getTranslateList(tpovId: Int) {
+        log("fun getTranslateList: ${getEventTranslateUseCase()}")
         getEventTranslateUseCase()
             .groupBy { it.idQuiz }
             .flatMap { (_, questions) ->
                 questions.filter { question ->
+                    log("getTranslateList: question.language: ${question.language}, getProfileUseCase(tpovId).languages!!.split(|): ${getProfileUseCase(tpovId).languages!!.split("|")}")
                     question.language !in getProfileUseCase(tpovId).languages!!.split("|") ||
                             question.lvlTranslate < (getProfileUseCase(tpovId).translater)!! - 50
                 }
@@ -77,7 +89,11 @@ class EventViewModel @Inject constructor(
                 }
             }
     }
-
+    suspend fun getProfileCount(): Int? {
+        val profile = getProfileUseCase(SharedPreferencesManager.getTpovId())
+        log("getProfileCount(): $profile, ${SharedPreferencesManager.getTpovId()}")
+        return profile.count
+    }
     fun getEventDeveloper() {
         log("fun getTranslateList")
 

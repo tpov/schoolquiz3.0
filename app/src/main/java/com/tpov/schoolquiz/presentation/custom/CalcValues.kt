@@ -35,10 +35,10 @@ object CalcValues {
 
         when (event) {
             1 -> counts /= 10
-            2 -> profile.tester?.times(2)
-            3 -> profile.moderator?.times(3)
-            4 -> profile.admin?.times(4)
-            5 -> counts * 1.5
+            2 -> counts = profile.tester?.times(2)!!
+            3 -> counts = profile.moderator?.times(3)!!
+            4 -> counts = profile.admin?.times(4)!!
+            5 -> counts
             6 -> counts * 5
             7 -> counts * 10
             8 -> if (result == 100 && first) counts * 2

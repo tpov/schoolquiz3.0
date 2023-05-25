@@ -17,7 +17,11 @@ import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import kotlinx.android.synthetic.main.activity_main_item.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 
@@ -103,14 +107,16 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         fun setData(quizEntity: QuizEntity, listener: Listener, context: Context, viewModel: MainActivityViewModel) = with(binding) {
 
             log("")
-            if (viewModel.getQuizById(quizEntity.id!!).showItemMenu) {
-                constraintLayout.setOnLongClickListener {
-                    showPopupMenu(it, quizEntity.id!!)
-                    true
-                }
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    if (viewModel.getQuizById(quizEntity.id!!).showItemMenu) {
+                        constraintLayout.setOnLongClickListener {
+                            showPopupMenu(it, quizEntity.id!!)
+                            true
+                        }
 
-            } else constraintLayout.visibility = View.VISIBLE
-
+                } else constraintLayout.visibility = View.VISIBLE
+            }}
             try {
 
                 val file = File(context.cacheDir, "${quizEntity.picture}")
@@ -175,14 +181,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }
 
             imvTranslate.imageAlpha = 128
-
-            val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
-
-            //imvTranslate
-            if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
-            else imvTranslate.setColorFilter(Color.BLUE)
-
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
+                    //imvTranslate
+                    if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
+                    else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
+                    else imvTranslate.setColorFilter(Color.BLUE)
+                }}
             if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
                 (quizEntity.stars.toFloat() / 50)
             else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)

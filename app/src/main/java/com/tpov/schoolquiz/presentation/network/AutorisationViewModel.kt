@@ -9,7 +9,11 @@ import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
@@ -61,6 +65,8 @@ class AutorisationViewModel @Inject constructor(
 
             val user = auth.currentUser
             user?.sendEmailVerification()?.addOnCompleteListener { task ->
+                GlobalScope.launch {
+                    withContext(Dispatchers.IO) {
                 log("createAcc отправилось смс на почту")
                 if (task.isSuccessful) {
                     Toast.makeText(
@@ -75,7 +81,7 @@ class AutorisationViewModel @Inject constructor(
                     if (
                         try {
                             pr.dateSynch!!.isNotEmpty()
-                        } catch (e: java.lang.Exception) {
+                        } catch (e: Exception) {
                             false
                         }
                     ) {
@@ -142,6 +148,7 @@ class AutorisationViewModel @Inject constructor(
                         .show()
                 }
             }
+                }}
             //todo start Activity
         }
     }
@@ -158,7 +165,10 @@ class AutorisationViewModel @Inject constructor(
 
     private fun insertProfile(profile: Profile) {
         log("fun insertProfile")
-        insertProfileUseCase(profile.toProfileEntity(0, 100))
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                insertProfileUseCase(profile.toProfileEntity(0, 100))
+            }}
     }
 
 

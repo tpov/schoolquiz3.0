@@ -25,7 +25,11 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.floor
 
@@ -123,8 +127,12 @@ class QuestionActivity : AppCompatActivity() {
             log("DSEFSE, currentIndex: ${viewModel.currentIndex}")
             log("DSEFSE, nameQuestion: ${viewModel.questionListThis}")
 
-            binding.questionTextView.text =
-                viewModel.questionListThis[viewModel.currentIndex].nameQuestion
+            try {
+                binding.questionTextView.text =
+                    viewModel.questionListThis[viewModel.currentIndex].nameQuestion
+            } catch (e: Exception) {
+                Toast.makeText(this@QuestionActivity, "Вопросы не были загружены, возможно произошла ошибка", Toast.LENGTH_LONG).show()
+            }
         }
         actionBarSettings()
         startService(Intent(this, MusicService::class.java))
@@ -265,16 +273,23 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun insertQuestionsNewEvent() {
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
         viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt())
-            .observe(this) { list ->
+            .observe(this@QuestionActivity) { list ->
+
+                GlobalScope.launch {
+                    withContext(Dispatchers.IO) {
                 list.forEach { quiz ->
+
                     if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
                         viewModel.getQuestionByIdQuizUseCase(quiz.id!!).forEach {
                             viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
                         }
                     }
-                }
-            }
+                }}}
+            }}}
     }
 
     private fun springAnim(next: Boolean) = with(binding) {
@@ -324,13 +339,21 @@ class QuestionActivity : AppCompatActivity() {
             return
         }
         if (requestCode == REQUEST_CODE_CHEAT) {
-            if (data.getBooleanExtra(EXTRA_ANSWER_SHOW, false)) viewModel.updateProfileUseCase(
-                viewModel.getProfileUseCase(getTpovId()).copy(
-                    countLife = viewModel.getProfileUseCase(
-                        getTpovId()
-                    ).countLife
-                )
-            )
+
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    if (data.getBooleanExtra(
+                            EXTRA_ANSWER_SHOW,
+                            false
+                        )
+                    ) viewModel.updateProfileUseCase(
+                        viewModel.getProfileUseCase(getTpovId()).copy(
+                            countLife = viewModel.getProfileUseCase(
+                                getTpovId()
+                            ).countLife
+                        )
+                    )
+                }}
         } else if (requestCode == UPDATE_CURRENT_INDEX) {
             viewModel.currentIndex = data.getIntExtra(EXTRA_UPDATE_CURRENT_INDEX, 0)
 
@@ -365,13 +388,18 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun updateDataView() {
-        binding.tvPercent.text = (viewModel.persent).toString()
-        binding.tvPointsLife.text = (floor(
-            viewModel.getProfileUseCase(getTpovId()).count?.toDouble()?.div(1000.0) ?: 0.0
-        )).toInt().toString()
-        binding.tvPointsGoldLife.text = (floor(
-            viewModel.getProfileUseCase(getTpovId()).countGold?.toDouble()?.div(1000.0) ?: 0.0
-        )).toInt().toString()
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                binding.tvPercent.text = (viewModel.persent).toString()
+                binding.tvPointsLife.text = (floor(
+                    viewModel.getProfileUseCase(getTpovId()).count?.toDouble()?.div(1000.0) ?: 0.0
+                )).toInt().toString()
+                binding.tvPointsGoldLife.text = (floor(
+                    viewModel.getProfileUseCase(getTpovId()).countGold?.toDouble()?.div(1000.0)
+                        ?: 0.0
+                )).toInt().toString()
+            }}
 
     }
 
