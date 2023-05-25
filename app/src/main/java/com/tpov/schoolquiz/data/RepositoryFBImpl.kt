@@ -2,7 +2,9 @@ package com.tpov.schoolquiz.data
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -24,9 +26,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 @Singleton
 class RepositoryFBImpl @Inject constructor(
@@ -549,6 +548,7 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun setEvent() {
         log("fun setEvent")
 
@@ -627,7 +627,7 @@ class RepositoryFBImpl @Inject constructor(
                                 questionRef4.child("${question.idQuiz}").removeValue()
                             }
                     }
-                    if (quiz.stars != 0) {
+                    if (TimeManager.getDaysBetweenDates(quiz.data, TimeManager.getCurrentTime())!! > 90) {
                         dao.deleteQuizById(quiz.id!!)
                         dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
                         dao.deleteQuestionByIdQuiz(quiz.id!!)

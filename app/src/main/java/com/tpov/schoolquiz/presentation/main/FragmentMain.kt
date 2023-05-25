@@ -79,14 +79,13 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         else binding.fabAddItem.visibility = View.GONE
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
-            log("onViewCreated() adapter.submitList: ${quizList.filter { it.event == isMyQuiz }}")
-            adapter.submitList(quizList.filter {
-
-                log("event quizz: it.event ${it.event}")
-                log("event quizz: isMyQuiz $isMyQuiz")
-
-                it.event == isMyQuiz
-            })
+            val filteredList = quizList.filter { it.event == isMyQuiz }
+            val sortedList = if (isMyQuiz == 5) {
+                filteredList.sortedBy { it.ratingPlayer }
+            } else {
+                filteredList
+            }
+            adapter.submitList(sortedList)
         }
     }
 
