@@ -15,10 +15,9 @@ class ChatViewModel @Inject constructor(
     val removeChatListener: RemoveChatListenerChatUseCase
 ) : ViewModel() {
 
-    suspend fun chatData(): LiveData<List<ChatEntity>> {
+    fun chatData(): LiveData<List<ChatEntity>> {
         return getChatDataUseCase.getChatUseCase().asLiveData()
     }
 
-    suspend fun getProfile(tpovId: Int) = getProfileUseCase(tpovId)
-
+    fun getProfile(tpovId: Int) = getProfileUseCase(tpovId)
 }

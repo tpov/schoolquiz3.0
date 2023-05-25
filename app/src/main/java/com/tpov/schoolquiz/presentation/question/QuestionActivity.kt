@@ -274,13 +274,9 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun insertQuestionsNewEvent() {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt())
             .observe(this@QuestionActivity) { list ->
 
-                GlobalScope.launch {
-                    withContext(Dispatchers.IO) {
                 list.forEach { quiz ->
 
                     if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
@@ -288,8 +284,8 @@ class QuestionActivity : AppCompatActivity() {
                             viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
                         }
                     }
-                }}}
-            }}}
+                }
+            }
     }
 
     private fun springAnim(next: Boolean) = with(binding) {
@@ -340,8 +336,6 @@ class QuestionActivity : AppCompatActivity() {
         }
         if (requestCode == REQUEST_CODE_CHEAT) {
 
-            GlobalScope.launch {
-                withContext(Dispatchers.IO) {
                     if (data.getBooleanExtra(
                             EXTRA_ANSWER_SHOW,
                             false
@@ -353,7 +347,6 @@ class QuestionActivity : AppCompatActivity() {
                             ).countLife
                         )
                     )
-                }}
         } else if (requestCode == UPDATE_CURRENT_INDEX) {
             viewModel.currentIndex = data.getIntExtra(EXTRA_UPDATE_CURRENT_INDEX, 0)
 
@@ -388,18 +381,13 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun updateDataView() {
-
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                binding.tvPercent.text = (viewModel.persent).toString()
-                binding.tvPointsLife.text = (floor(
-                    viewModel.getProfileUseCase(getTpovId()).count?.toDouble()?.div(1000.0) ?: 0.0
-                )).toInt().toString()
-                binding.tvPointsGoldLife.text = (floor(
-                    viewModel.getProfileUseCase(getTpovId()).countGold?.toDouble()?.div(1000.0)
-                        ?: 0.0
-                )).toInt().toString()
-            }}
+        binding.tvPercent.text = (viewModel.persent).toString()
+        binding.tvPointsLife.text = (floor(
+            viewModel.getProfileUseCase(getTpovId()).count?.toDouble()?.div(1000.0) ?: 0.0
+        )).toInt().toString()
+        binding.tvPointsGoldLife.text = (floor(
+            viewModel.getProfileUseCase(getTpovId()).countGold?.toDouble()?.div(1000.0) ?: 0.0
+        )).toInt().toString()
 
     }
 

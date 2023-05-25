@@ -112,10 +112,9 @@ class MainActivity : AppCompatActivity() {
         // Remove the action bar
         supportActionBar?.hide()
         viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                viewModel.init()
-            }}
+
+        viewModel.init()
+
         try {
             setCountStartApp(getCountStartApp() + 1)
         } catch (e: Exception) {
@@ -490,8 +489,6 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount() {
         try {
-            GlobalScope.launch {
-                withContext(Dispatchers.IO) {
                     viewModel.updateProfileUseCase(
                         viewModel.getProfile().copy(
                             count = calcCount(
@@ -502,8 +499,6 @@ class MainActivity : AppCompatActivity() {
                             dateCloseApp = TimeManager.getCurrentTime()
                         )
                     )
-                }
-            }
         } catch (e: Exception) {
 
         }
@@ -765,10 +760,7 @@ class MainActivity : AppCompatActivity() {
                 // Разрешения получены, выполнить нужную функцию
                 viewModel =
                     ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
-                GlobalScope.launch {
-                    withContext(Dispatchers.IO) {
-                        viewModel.init()
-                    }}
+                viewModel.init()
             } else {
                 // Разрешения не получены, вывести сообщение об ошибке
                 Toast.makeText(

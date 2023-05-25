@@ -24,11 +24,7 @@ import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class CreateQuestionDialog : DialogFragment() {
 
@@ -49,12 +45,8 @@ class CreateQuestionDialog : DialogFragment() {
         val inflater = LayoutInflater.from(requireContext())
         dialogView = inflater.inflate(R.layout.create_question_dialog, null)
         questionsContainer = dialogView.findViewById(R.id.questions_container)
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-                    addFilledQuestionItem(questionEntity)
-                }
-            }
+        mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+            addFilledQuestionItem(questionEntity)
         }
 
         val dialogTitle: String
@@ -74,13 +66,10 @@ class CreateQuestionDialog : DialogFragment() {
             positiveButtonText = "Сохранить"
             positiveButtonAction = { _, _ -> createQuestions() }
 
-            GlobalScope.launch {
-                withContext(Dispatchers.IO) {
-                    dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
-                    mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-                        addFilledQuestionItem(questionEntity)
-                    }
-                }
+            dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
+
+            mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+                addFilledQuestionItem(questionEntity)
             }
         }
 
@@ -140,16 +129,11 @@ class CreateQuestionDialog : DialogFragment() {
         val questions = mutableListOf<QuestionEntity>()
         var numHQ = 0
         var numLQ = 0
-        var idQuiz = 0
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                idQuiz = if (id == -1) mainActivityViewModel.getNewIdQuiz()
-                else id
+        var idQuiz = if (id == -1) mainActivityViewModel.getNewIdQuiz()
+        else id
 
-                log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
-            }
-        }
+        log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
         for (i in 0 until questionsContainer.childCount) {
             val questionItemView = questionsContainer.getChildAt(i)
 
@@ -163,8 +147,6 @@ class CreateQuestionDialog : DialogFragment() {
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
 
-            GlobalScope.launch {
-                withContext(Dispatchers.IO) {
                     val question = QuestionEntity(
                         null,
                         if (questionHard) numHQ
@@ -185,16 +167,12 @@ class CreateQuestionDialog : DialogFragment() {
                     )
 
                     questions.add(question)
-                }
-            }
         }
 
         // Создание QuizEntity
         val nameQuiz = dialogView.quiz_title.text.toString()
         val currentTime = TimeManager.getCurrentTime()
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
                 val quizEntity = QuizEntity(
                     idQuiz,
                     nameQuiz,
@@ -238,8 +216,6 @@ class CreateQuestionDialog : DialogFragment() {
                         )
                     )
                 }
-            }
-        }
     }
 
     companion object {

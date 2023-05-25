@@ -32,27 +32,27 @@ class EventViewModel @Inject constructor(
 
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
-    suspend fun getProfile(): ProfileEntity {
+    fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(SharedPreferencesManager.getTpovId())
     }
-    private suspend fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
+    private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
         log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
         return getProfileUseCase(tpovId)
     }
 
-    suspend fun loadQuests() {
+    fun loadQuests() {
         log("loadQuests")
         // Здесь загружайте список квестов и устанавливайте значение для questsLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
 
-    suspend fun loadQuestion(idQuestion: Int) {
+    fun loadQuestion(idQuestion: Int) {
         log("getQuestionListUseCase() :${getQuestionListUseCase()}")
         // Здесь загружайте вопрос и устанавливайте значение для questionLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
 
-    suspend fun getQuizList() {
+    fun getQuizList() {
         log("fun getQuizList")
 
         getQuizEventUseCase().forEach {
@@ -68,7 +68,7 @@ class EventViewModel @Inject constructor(
         log("getQuizList quiz4List: $quiz4List")
     }
 
-    suspend fun getTranslateList(tpovId: Int) {
+    fun getTranslateList(tpovId: Int) {
         log("fun getTranslateList: ${getEventTranslateUseCase()}")
         getEventTranslateUseCase()
             .groupBy { it.idQuiz }
@@ -89,7 +89,7 @@ class EventViewModel @Inject constructor(
                 }
             }
     }
-    suspend fun getProfileCount(): Int? {
+    fun getProfileCount(): Int? {
         val profile = getProfileUseCase(SharedPreferencesManager.getTpovId())
         log("getProfileCount(): $profile, ${SharedPreferencesManager.getTpovId()}")
         return profile.count

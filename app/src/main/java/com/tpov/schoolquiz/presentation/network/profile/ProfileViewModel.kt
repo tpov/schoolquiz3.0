@@ -3,23 +3,7 @@ package com.tpov.schoolquiz.presentation.network.profile
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tpov.schoolquiz.domain.DeleteAllQuizUseCase
-import com.tpov.schoolquiz.domain.GetPlayersListUseCase
-import com.tpov.schoolquiz.domain.GetProfileFBUseCase
-import com.tpov.schoolquiz.domain.GetQuiz1FBUseCase
-import com.tpov.schoolquiz.domain.GetQuiz2FBUseCase
-import com.tpov.schoolquiz.domain.GetQuiz3FBUseCase
-import com.tpov.schoolquiz.domain.GetQuiz4FBUseCase
-import com.tpov.schoolquiz.domain.GetQuiz5FBUseCase
-import com.tpov.schoolquiz.domain.GetQuiz6FBUseCase
-import com.tpov.schoolquiz.domain.GetQuiz7FBUseCase
-import com.tpov.schoolquiz.domain.GetSynthUseCase
-import com.tpov.schoolquiz.domain.GetTpovIdFBUseCase
-import com.tpov.schoolquiz.domain.SetProfileFBUseCase
-import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
-import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
-import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
-import com.tpov.schoolquiz.domain.SetQuizEventUseCase
+import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -46,7 +30,8 @@ class ProfileViewModel @Inject constructor(
     private val getSynthUseCase: GetSynthUseCase,
     private val setQuizEventUseCase: SetQuizEventUseCase,
     private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
-    private val getPlayersListUseCase: GetPlayersListUseCase
+    private val getTranslateUseCase: GetTranslateUseCase,
+    //private val getPlayersListUseCase: GetPlayersListUseCase
 
 ) : ViewModel() {
 
@@ -67,13 +52,13 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-
     fun setEventQuiz() {
         log("fun setEventQuiz()")
         viewModelScope.launch {
             setQuizEventUseCase()
         }
     }
+
     fun setQuestionsFB() {
         log("fun setQuestionsFB()")
         setQuestionFBUseCase()
@@ -101,10 +86,14 @@ class ProfileViewModel @Inject constructor(
         getQuiz7FBUseCase()
     }
 
+    fun getTranslate() {
+        return getTranslateUseCase()
+    }
     fun getPlayersList() {
         log("getPlayersList()")
-        getPlayersListUseCase()
+        //getPlayersListUseCase()
     }
+
     fun log(m: String) {
         Logcat.log(m, "Profile", Logcat.LOG_VIEW_MODEL)
     }
