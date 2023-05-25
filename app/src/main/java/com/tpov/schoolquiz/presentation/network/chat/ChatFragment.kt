@@ -16,7 +16,11 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -58,6 +62,8 @@ class ChatFragment : BaseFragment() {
             val message = binding.messageEditText.text.toString().trim()
             if (message.isNotEmpty()) {
                 val currentTime = TimeManager.getCurrentTime()
+                GlobalScope.launch {
+                    withContext(Dispatchers.IO) {
                         val chatMessage = Chat(
                             time = currentTime,
                             user = chatViewModel.getProfile(tpovId).nickname ?: "",
@@ -68,6 +74,8 @@ class ChatFragment : BaseFragment() {
                             0
                         )
                         sendMessage(chatMessage)
+                    }
+                }
                 binding.messageEditText.setText("")
             }
         }
@@ -113,11 +121,14 @@ class ChatFragment : BaseFragment() {
                 }
             }
         })
-
-        chatViewModel.chatData().observe(viewLifecycleOwner) { chatEntityList ->
-            val chatList = convertChatEntityListToChatList(chatEntityList)
-            chatAdapter.submitList(chatList)
-            if (chatList.isNotEmpty()) binding.chatRecyclerView.scrollToPosition(chatList.size - 1)
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                chatViewModel.chatData().observe(viewLifecycleOwner) { chatEntityList ->
+                    val chatList = convertChatEntityListToChatList(chatEntityList)
+                    chatAdapter.submitList(chatList)
+                    if (chatList.isNotEmpty()) binding.chatRecyclerView.scrollToPosition(chatList.size - 1)
+                }
+            }
         }
     }
 

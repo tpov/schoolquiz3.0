@@ -23,27 +23,27 @@ import javax.inject.Inject
 class RepositoryDBImpl @Inject constructor(
     private val dao: QuizDao
 ) : RepositoryDB {
-    override fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity) {
+    override suspend fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity) {
         dao.insertQuizDetail(questionDetailEntity)
     }
 
-    override fun insertProfile(profile: ProfileEntity) {
+    override suspend fun insertProfile(profile: ProfileEntity) {
         dao.insertProfile(profile)
     }
 
-    override fun insertQuiz(quizEntity: QuizEntity) {
+    override suspend fun insertQuiz(quizEntity: QuizEntity) {
         dao.insertQuiz(quizEntity)
     }
 
-    override fun insertQuestion(questionEntity: QuestionEntity) {
+    override suspend fun insertQuestion(questionEntity: QuestionEntity) {
         dao.insertQuestion(questionEntity)
     }
 
-    override fun insertListApiQuestion(apiQuestion: List<ApiQuestion>) {
+    override suspend fun insertListApiQuestion(apiQuestion: List<ApiQuestion>) {
         dao.insertListApiQuestion(apiQuestion)
     }
 
-    override fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
+    override suspend fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
         return dao.getQuestionDetailListByNameQuiz(nameQuiz)
     }
 
@@ -55,7 +55,7 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getEventLiveDataDB()
     }
 
-    override fun getQuestionDetailList(): List<QuestionDetailEntity> {
+    override suspend fun getQuestionDetailList(): List<QuestionDetailEntity> {
         return dao.getQuestionDetailList()
     }
 
@@ -64,64 +64,64 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getProfileFlow(tpovId)
     }
 
-    override fun getTpovIdByEmail(email: String): Int {
+    override suspend fun getTpovIdByEmail(email: String): Int {
         return dao.getTpovIdByEmail(email)
     }
 
-    override fun getProfile(tpovId: Int): ProfileEntity {
+    override suspend fun getProfile(tpovId: Int): ProfileEntity {
         return dao.getProfile(tpovId)
     }
 
-    override fun getAllProfiles(): List<ProfileEntity> {
+    override suspend fun getAllProfiles(): List<ProfileEntity> {
         return dao.getAllProfiles()
     }
 
-    override fun getQuizList(tpovId: Int): List<QuizEntity> {
+    override suspend fun getQuizList(tpovId: Int): List<QuizEntity> {
         return dao.getQuizList(tpovId)
     }
 
-    override fun getQuizEvent(): List<QuizEntity> {
+    override suspend fun getQuizEvent(): List<QuizEntity> {
         return dao.getQuizEvent()
     }
 
-    override fun getTranslateEvent(): List<QuestionEntity> {
+    override suspend fun getTranslateEvent(): List<QuestionEntity> {
         return dao.getTranslateEvent()
     }
 
-    override fun getQuizById(id: Int): QuizEntity {
+    override suspend fun getQuizById(id: Int): QuizEntity {
         return dao.getQuizById(id)
     }
 
-    override fun getQuestionList(): List<QuestionEntity> {
+    override suspend fun getQuestionList(): List<QuestionEntity> {
         return dao.getQuestionList()
     }
 
-    override fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity> {
+    override suspend fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity> {
         return dao.getQuestionByIdQuiz(id)
     }
 
-    override fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion> {
+    override suspend fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion> {
         return dao.getListApiQuestionBySystemDate(systemDate)
     }
 
-    override fun getApiQuestionList(): List<ApiQuestion> {
+    override suspend fun getApiQuestionList(): List<ApiQuestion> {
         return dao.getListApiQuestion()
     }
 
-    override fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int {
+    override suspend fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int {
         return dao.getIdQuizByNameQuiz(nameQuiz, tpovId) ?: dao.getIdQuizByNameQuiz(nameQuiz, 0)
         ?: 0
     }
 
-    override fun getNameQuizByIdQuiz(id: Int): String {
+    override suspend fun getNameQuizByIdQuiz(id: Int): String {
         return dao.getNameQuizByIdQuiz(id)!!
     }
 
-    override fun getPlayersDB(): List<PlayersEntity> {
+    override suspend fun getPlayersDB(): List<PlayersEntity> {
         return dao.getPlayersDB()
     }
 
-    override fun getPlayersDB(tpovId: Int): PlayersEntity {
+    override suspend fun getPlayersDB(tpovId: Int): PlayersEntity {
         return dao.getPlayersDB(tpovId)
     }
 

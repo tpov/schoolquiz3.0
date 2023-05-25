@@ -83,6 +83,8 @@ class TranslateQuestionFragment : Fragment() {
             viewModel.questionLiveData.observe(viewLifecycleOwner) { questions ->
 
                 questions?.forEach {
+                    GlobalScope.launch {
+                        withContext(Dispatchers.IO) {
                             val words1 = it.language.split("|")
                                 .toSet() // Преобразование строки it в множество слов
                             val words2 = viewModel.getProfile().languages?.split("|")
@@ -102,17 +104,26 @@ class TranslateQuestionFragment : Fragment() {
                                 "Вы удалось найти вопросы которые вы могли бы перевести",
                                 Toast.LENGTH_LONG
                             ).show()
+                        }
+                    }
+
                 }
 
                 log("getQuestionListUseCase() :${questions}")
             }
 
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
                     viewModel.loadQuests()
+                }
+            }
         } else if (idQuestion != -1) {
             log("getQuestionListUseCase() idQuestion != -1")
             viewModel.questionLiveData.observe(viewLifecycleOwner) { question ->
                 log("getQuestionListUseCase() :${question}")
                 question?.forEach {
+                    GlobalScope.launch {
+                        withContext(Dispatchers.IO) {
                             val words1 = it.language.split("|")
                                 .toSet() // Преобразование строки it в множество слов
                             val words2 = viewModel.getProfile().languages?.split("|")
@@ -132,6 +143,9 @@ class TranslateQuestionFragment : Fragment() {
                                 "Вы удалось найти вопросы которые вы могли бы перевести",
                                 Toast.LENGTH_LONG
                             ).show()
+                        }
+                    }
+
                 }
             }
 

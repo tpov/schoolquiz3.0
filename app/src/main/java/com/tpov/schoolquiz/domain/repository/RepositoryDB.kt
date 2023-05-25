@@ -11,55 +11,55 @@ import kotlinx.coroutines.flow.Flow
 
 // TODO: 25.07.2022 LiveData -> Flow
 interface RepositoryDB {
-    fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity)
+    suspend fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity)
 
-    fun insertProfile(profile: ProfileEntity)
+    suspend fun insertProfile(profile: ProfileEntity)
 
-    fun insertQuiz(quizEntity: QuizEntity)
+    suspend fun insertQuiz(quizEntity: QuizEntity)
 
-    fun insertQuestion(questionEntity: QuestionEntity)
+    suspend fun insertQuestion(questionEntity: QuestionEntity)
 
-    fun insertListApiQuestion(apiQuestion: List<ApiQuestion>)
+    suspend fun insertListApiQuestion(apiQuestion: List<ApiQuestion>)
 
 
-    fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity>
+    suspend fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity>
 
-    fun getQuestionDetailList(): List<QuestionDetailEntity>
+    suspend fun getQuestionDetailList(): List<QuestionDetailEntity>
 
     fun getProfileFlow(tpovId: Int): Flow<ProfileEntity>
 
-    fun getTpovIdByEmail(email: String): Int
+    suspend fun getTpovIdByEmail(email: String): Int
 
-    fun getProfile(tpovId: Int): ProfileEntity
+    suspend fun getProfile(tpovId: Int): ProfileEntity
 
-    fun getAllProfiles(): List<ProfileEntity>
+    suspend fun getAllProfiles(): List<ProfileEntity>
 
-    fun getQuizList(tpovId: Int): List<QuizEntity>
+    suspend fun getQuizList(tpovId: Int): List<QuizEntity>
 
-    fun getQuizById(id: Int): QuizEntity
+    suspend fun getQuizById(id: Int): QuizEntity
 
-    fun getQuizEvent(): List<QuizEntity>
+    suspend fun getQuizEvent(): List<QuizEntity>
 
-    fun getTranslateEvent(): List<QuestionEntity>
+    suspend fun getTranslateEvent(): List<QuestionEntity>
 
     fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>>
 
     fun getEventLiveData(): LiveData<List<QuizEntity>>
-    fun getQuestionList(): List<QuestionEntity>
+    suspend fun getQuestionList(): List<QuestionEntity>
 
-    fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity>
+    suspend fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity>
 
-    fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion>
+    suspend fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion>
 
-    fun getApiQuestionList(): List<ApiQuestion>
+    suspend fun getApiQuestionList(): List<ApiQuestion>
 
-    fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int
+    suspend fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int
 
-    fun getNameQuizByIdQuiz(id: Int): String
+    suspend fun getNameQuizByIdQuiz(id: Int): String
 
-    fun getPlayersDB(): List<PlayersEntity>
+    suspend fun getPlayersDB(): List<PlayersEntity>
 
-    fun getPlayersDB(tpovId: Int): PlayersEntity
+    suspend fun getPlayersDB(tpovId: Int): PlayersEntity
 
 
     fun deleteQuestionById(id: Int)

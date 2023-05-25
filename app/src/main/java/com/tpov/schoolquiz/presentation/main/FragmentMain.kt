@@ -23,7 +23,12 @@ import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
 import kotlinx.android.synthetic.main.title_fragment.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -70,8 +75,13 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         rcView.itemAnimator = RotateInItemAnimator()
         // Обработка нажатия на кнопку удаления
         adapter.onDeleteButtonClick = { quizEntity ->
-            // Ваш код для удаления или выполнения других действий с элементом
-            mainViewModel.deleteQuiz(quizEntity.itemId.toInt())
+
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    // Ваш код для удаления или выполнения других действий с элементом
+                    mainViewModel.deleteQuiz(quizEntity.itemId.toInt())
+                }
+            }
         }
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
@@ -115,22 +125,39 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     }
 
     override fun deleteItem(id: Int) {
-        mainViewModel.deleteQuiz(id)
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                mainViewModel.deleteQuiz(id)
+            }
+        }
     }
 
     override fun onClick(id: Int, type: Boolean) {
-        if (mainViewModel.getProfileCount()!! < 33) Toast.makeText(
-            activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
-            Toast.LENGTH_LONG
-        ).show()
-        else {
-            mainViewModel.updateProfileUseCase(mainViewModel.getProfile().copy(count = mainViewModel.getProfileCount()!! - 33))
-            val intent = Intent(activity, QuestionActivity::class.java)
-            intent.putExtra(NAME_USER, "user")
-            intent.putExtra(ID_QUIZ, id)
-            intent.putExtra(HARD_QUESTION, type)
-            startActivityForResult(intent, REQUEST_CODE)
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                if (mainViewModel.getProfileCount()!! < 33) Toast.makeText(
+                    activity,
+                    "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+                    Toast.LENGTH_LONG
+                ).show()
+                else {
+                    GlobalScope.launch {
+                        withContext(Dispatchers.IO) {
+                            mainViewModel.updateProfileUseCase(
+                                mainViewModel.getProfile()
+                                    .copy(count = mainViewModel.getProfileCount()!! - 33)
+                            )
+                        }
+                    }
+                    val intent = Intent(activity, QuestionActivity::class.java)
+                    intent.putExtra(NAME_USER, "user")
+                    intent.putExtra(ID_QUIZ, id)
+                    intent.putExtra(HARD_QUESTION, type)
+                    startActivityForResult(intent, REQUEST_CODE)
+                }
+            }
         }
     }
 
@@ -144,43 +171,65 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun sendItem(id: Int) {
-        var quizEntity = mainViewModel.getQuizById(id)
 
-        mainViewModel.updateQuizUseCase(quizEntity.copy(showItemMenu = false))
-        mainViewModel.insertQuizEvent(quizEntity)
-        oldIdQuizEvent1 = quizEntity.id ?: 0
-        mainViewModel.getQuizLiveData().observe(this) { list ->
-            log("getQuizLiveData.observe")
-            list.forEach { quiz ->
-                log(
-                    "getQuizLiveData.observe question by id: ${
-                        mainViewModel.getQuestionListByIdQuiz(
-                            quiz.id ?: 0
-                        ).isNullOrEmpty()
-                    }"
-                )
-                log(
-                    "getQuizLiveData.observe question is empty: ${mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)}"
-                )
-                log("getQuizLiveData.observe quiz: ${quiz}")
-                if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
-                    mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
-                        mainViewModel.insertQuestion(
-                            it.copy(
-                                id = null,
-                                idQuiz = quiz.id ?: 0
-                            )
-                        )
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                val quizEntity = mainViewModel.getQuizById(id)
+                mainViewModel.updateQuizUseCase(quizEntity.copy(showItemMenu = false))
+                mainViewModel.insertQuizEvent(quizEntity)
+                oldIdQuizEvent1 = quizEntity.id ?: 0
+            }
+        }
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                mainViewModel.getQuizLiveData().observe(this@FragmentMain) { list ->
+                    log("getQuizLiveData.observe")
+
+                    GlobalScope.launch {
+                        withContext(Dispatchers.IO) {
+                            list.forEach { quiz ->
+
+                                log(
+                                    "getQuizLiveData.observe question by id: ${
+                                        mainViewModel.getQuestionListByIdQuiz(
+                                            quiz.id ?: 0
+                                        ).isNullOrEmpty()
+                                    }"
+                                )
+                                log(
+                                    "getQuizLiveData.observe question is empty: ${
+                                        mainViewModel.getQuestionListByIdQuiz(
+                                            quiz.id ?: 0
+                                        )
+                                    }"
+                                )
+
+                        log("getQuizLiveData.observe quiz: $quiz")
+                        if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
+                            mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
+                                mainViewModel.insertQuestion(
+                                    it.copy(
+                                        id = null,
+                                        idQuiz = quiz.id ?: 0
+                                    )
+                                )
                     }
-                }
+                }}}
             }
             var setQuestion = false
             if (list.isEmpty()) setQuestion = true
             list.forEach { item ->
                 if (item.id!! < 100) setQuestion = true
             }
-            if (!setQuestion) mainViewModel.setQuestionsFB()
+
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    if (!setQuestion) mainViewModel.setQuestionsFB()
+                }
+            }}}
         }
     }
 

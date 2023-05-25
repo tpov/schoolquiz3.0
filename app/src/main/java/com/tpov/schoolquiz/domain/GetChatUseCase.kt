@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class GetChatUseCase @Inject constructor(private val repository: RepositoryFB) {
-    fun getChatUseCase(): Flow<List<ChatEntity>> {
+    suspend fun getChatUseCase(): Flow<List<ChatEntity>> {
         return repository.getChatData()
     }
 }

@@ -4,5 +4,5 @@ import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import javax.inject.Inject
 
 class GetQuizByIdUseCase @Inject constructor(private val repositoryDB: RepositoryDB) {
-    operator fun invoke(idQuiz: Int) = repositoryDB.getQuizById(idQuiz)
+    suspend operator fun invoke(idQuiz: Int) = repositoryDB.getQuizById(idQuiz)
 }

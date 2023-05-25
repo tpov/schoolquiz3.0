@@ -8,15 +8,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
 class AutorisationViewModel @Inject constructor(
-    val insertProfileUseCase: InsertProfileUseCase,
+    private val insertProfileUseCase: InsertProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
     private val getProfileUseCase: GetProfileUseCase
 ) : ViewModel() {
@@ -63,6 +65,8 @@ class AutorisationViewModel @Inject constructor(
 
             val user = auth.currentUser
             user?.sendEmailVerification()?.addOnCompleteListener { task ->
+                GlobalScope.launch {
+                    withContext(Dispatchers.IO) {
                 log("createAcc отправилось смс на почту")
                 if (task.isSuccessful) {
                     Toast.makeText(
@@ -70,7 +74,8 @@ class AutorisationViewModel @Inject constructor(
                         "Verification email sent to ${user.email}",
                         Toast.LENGTH_LONG
                     ).show()
-                    val tpovId = getTpovId()
+                    val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+                    val tpovId = sharedPref?.getInt("tpovId", 0)
 
                     var pr = getProfileUseCase(tpovId ?: 0)
                     if (
@@ -108,7 +113,7 @@ class AutorisationViewModel @Inject constructor(
                         )
 
                         insertProfile(profile)
-                        setProfileTpovId(0)
+                        setProfileTpovId(0, context)
 
                         Toast.makeText(
                             context,
@@ -143,22 +148,33 @@ class AutorisationViewModel @Inject constructor(
                         .show()
                 }
             }
+                }}
+            //todo start Activity
         }
     }
-    //todo start Activity
 
-    private fun setProfileTpovId(id: Int) {
-        setTpovId(id)
+    private fun setProfileTpovId(id: Int, context: Context) {
+        log("fun setProfileTpovId")
+        val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
+        with(sharedPref.edit()) {
+            putInt("tpovId", id)
+            apply()
+        }
         log("setProfileTpovId set tpovId = $id")
     }
 
     private fun insertProfile(profile: Profile) {
         log("fun insertProfile")
-        insertProfileUseCase(profile.toProfileEntity(0, 100))
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                insertProfileUseCase(profile.toProfileEntity(0, 100))
+            }}
     }
+
 
     @OptIn(InternalCoroutinesApi::class)
     fun log(msg: String) {
         Logcat.log(msg, "Autorisation", Logcat.LOG_VIEW_MODEL)
     }
+
 }
