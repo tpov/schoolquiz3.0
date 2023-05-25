@@ -14,7 +14,7 @@ interface RepositoryFB {
 
     fun getPlayersList()
 
-    fun getTranslateFB(lvlTranslate: Int)
+    fun getTranslateFB()
 
     fun getChatData(): Flow<List<ChatEntity>>
 
@@ -72,7 +72,7 @@ interface RepositoryFB {
 
     fun getProfile()
 
-    suspend fun setQuizData()
+    fun setQuizData()
 
     fun setQuestionData()
 

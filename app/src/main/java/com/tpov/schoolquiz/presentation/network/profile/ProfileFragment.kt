@@ -59,6 +59,7 @@ class ProfileFragment : BaseFragment() {
         val isExecuted = BooleanArray(8) // создаем массив флагов для каждого числа
         view.findViewById<ImageButton>(R.id.imb_download).setOnClickListener {
             viewModel.getQuizzFB()
+            viewModel.getTranslate()
         }
         view.findViewById<ImageButton>(R.id.imb_delete).setOnClickListener {
             viewModel.getDeleteAllQuiz()

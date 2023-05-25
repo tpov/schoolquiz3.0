@@ -10,7 +10,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class UsersFragment : BaseFragment() {
 

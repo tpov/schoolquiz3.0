@@ -333,8 +333,8 @@ class MainActivity : AppCompatActivity() {
 
             animateValueFloat(
                 binding.tvStars,
-                (SharedPreferencesManager.getSkill().toFloat().toInt() / 1000).toFloat(),
-                ((it?.pointsSkill ?: 0) / 1000).toFloat(),
+                (SharedPreferencesManager.getSkill().toFloat() / 100_000f),
+                ((it?.pointsSkill?.toFloat())?.div(100_000f))?: 0f,
                 animationDuration,
                 500
             )
@@ -489,16 +489,16 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount() {
         try {
-            viewModel.updateProfileUseCase(
-                viewModel.getProfile().copy(
-                    count = calcCount(
-                        viewModel.getProfileCount(),
-                        viewModel.getProfileCountLife(),
-                        viewModel.getProfileDateCloseAp()
-                    ),
-                    dateCloseApp = TimeManager.getCurrentTime()
-                )
-            )
+                    viewModel.updateProfileUseCase(
+                        viewModel.getProfile().copy(
+                            count = calcCount(
+                                viewModel.getProfileCount(),
+                                viewModel.getProfileCountLife(),
+                                viewModel.getProfileDateCloseAp()
+                            ),
+                            dateCloseApp = TimeManager.getCurrentTime()
+                        )
+                    )
         } catch (e: Exception) {
 
         }
@@ -659,6 +659,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_global) -> {
+                    FragmentManager.setFragment(FragmentMain.newInstance(5), this)
                     SetItemMenu.setNetworkMenu(binding, 8, this)
                 }
 

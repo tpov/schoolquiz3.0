@@ -191,18 +191,18 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
             if (numQuestion != 0) {
                 getLanguage(languageIdentifier, nameQuestion) { lang ->
 
-                    question.add(
-                        QuestionEntity(
-                            null,
-                            numQuestion,
-                            nameQuestion,
-                            getTextTrue(binding.rbTrue).toBoolean(),
-                            getTypeText(binding.rbLightQuestion).toBoolean(),
-                            -1,
-                            lang,
-                            mainActivityViewModel.getProfile().translater!!
-                        )
-                    )
+                            question.add(
+                                QuestionEntity(
+                                    null,
+                                    numQuestion,
+                                    nameQuestion,
+                                    getTextTrue(binding.rbTrue).toBoolean(),
+                                    getTypeText(binding.rbLightQuestion).toBoolean(),
+                                    -1,
+                                    lang,
+                                    mainActivityViewModel.getProfile().translater!!
+                                )
+                            )
                 }
             } else {
                 nameQuiz = binding.intvQuiz.text.toString()
@@ -264,6 +264,7 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
             tvQuestion2 = TextView(context)
             sumbolQuestion2 = TextView(context)
             intvQuestion2 = TextInputEditText(requireContext())
+
                 mainActivityViewModel.insertQuiz(
                     QuizEntity(
                         null,

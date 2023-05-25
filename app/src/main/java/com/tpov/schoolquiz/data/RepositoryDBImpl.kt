@@ -2,11 +2,20 @@ package com.tpov.schoolquiz.data
 
 import androidx.lifecycle.LiveData
 import com.tpov.schoolquiz.data.database.QuizDao
-import com.tpov.schoolquiz.data.database.entities.*
+import com.tpov.schoolquiz.data.database.entities.ApiQuestion
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.domain.repository.RepositoryDB
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 
@@ -51,6 +60,7 @@ class RepositoryDBImpl @Inject constructor(
     }
 
     override fun getProfileFlow(tpovId: Int): Flow<ProfileEntity> {
+
         return dao.getProfileFlow(tpovId)
     }
 
@@ -132,24 +142,45 @@ class RepositoryDBImpl @Inject constructor(
     }
 
     override fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
-        dao.updateQuizDetail(questionDetailEntity)
+
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                dao.updateQuizDetail(questionDetailEntity)
+            }
+        }
     }
 
     override fun updateQuiz(quizEntity: QuizEntity) {
-        dao.updateQuiz(quizEntity)
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                dao.updateQuiz(quizEntity)
+            }
+        }
     }
 
     override fun updateApiQuestion(apiQuestion: ApiQuestion) {
-        dao.updateApiQuestion(apiQuestion)
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                dao.updateApiQuestion(apiQuestion)
+            }
+        }
     }
 
     override fun updateProfile(profile: ProfileEntity) {
 
-        log("updateProfileCount() updateProfile(): ${profile.pointsNolics}")
-        dao.updateProfiles(profile)
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                log("updateProfileCount() updateProfile(): ${profile.pointsNolics}")
+                dao.updateProfiles(profile)
+            }
+        }
     }
 
     override fun updateQuestion(questionEntity: QuestionEntity) {
-        dao.updateQuestion(questionEntity)
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                dao.updateQuestion(questionEntity)
+            }
+        }
     }
 }

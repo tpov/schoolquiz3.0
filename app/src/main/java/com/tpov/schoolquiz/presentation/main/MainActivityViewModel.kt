@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.liveData
 import androidx.lifecycle.switchMap
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
@@ -46,7 +47,9 @@ import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import javax.inject.Inject
 
@@ -187,7 +190,9 @@ class MainActivityViewModel @Inject constructor(
         return getQuizLiveDataUseCase.getQuizUseCase(getTpovId())
     }
 
-    val getQuizLiveData: LiveData<List<QuizEntity>> = getQuizList()
+    fun getQuizLiveData(): LiveData<List<QuizEntity>> {
+        return getQuizList()
+    }
 
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
@@ -229,7 +234,6 @@ class MainActivityViewModel @Inject constructor(
         }
         return lvlTranslate
     }
-
     fun getProfileCount(): Int? {
         val profile = getProfileUseCase(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")

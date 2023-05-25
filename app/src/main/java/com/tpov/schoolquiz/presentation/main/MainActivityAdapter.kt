@@ -17,7 +17,11 @@ import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import kotlinx.android.synthetic.main.activity_main_item.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 
@@ -83,16 +87,19 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                         listener.sendItem(id)
                         true
                     }
+
                     R.id.menu_delete -> {
                         // Обработка выбора элемента 2
                         listener.deleteItem(id)
                         true
                     }
+
                     R.id.menu_edit -> {
                         // Обработка выбора элемента 3
                         listener.editItem(id)
                         true
                     }
+
                     else -> false
                 }
             }
@@ -100,7 +107,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         }
 
         @OptIn(InternalCoroutinesApi::class)
-        fun setData(quizEntity: QuizEntity, listener: Listener, context: Context, viewModel: MainActivityViewModel) = with(binding) {
+        fun setData(
+            quizEntity: QuizEntity,
+            listener: Listener,
+            context: Context,
+            viewModel: MainActivityViewModel
+        ) = with(binding) {
 
             log("")
             if (viewModel.getQuizById(quizEntity.id!!).showItemMenu) {
@@ -110,7 +122,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 }
 
             } else constraintLayout.visibility = View.VISIBLE
-
             try {
 
                 val file = File(context.cacheDir, "${quizEntity.picture}")

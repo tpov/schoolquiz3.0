@@ -58,20 +58,21 @@ class ChatFragment : BaseFragment() {
             val message = binding.messageEditText.text.toString().trim()
             if (message.isNotEmpty()) {
                 val currentTime = TimeManager.getCurrentTime()
-                val chatMessage = Chat(
-                    time = currentTime,
-                    user = chatViewModel.getProfile(tpovId).nickname ?: "",
-                    msg = message,
-                    importance = 0,
-                    personalSms = 0,
-                    icon = chatViewModel.getProfile(tpovId).logo.toString(),
-                    0
-                )
-                sendMessage(chatMessage)
+                        val chatMessage = Chat(
+                            time = currentTime,
+                            user = chatViewModel.getProfile(tpovId).nickname ?: "",
+                            msg = message,
+                            importance = 0,
+                            personalSms = 0,
+                            icon = chatViewModel.getProfile(tpovId).logo.toString(),
+                            0
+                        )
+                        sendMessage(chatMessage)
                 binding.messageEditText.setText("")
             }
         }
     }
+
     @OptIn(InternalCoroutinesApi::class)
     override fun onAttach(context: Context) {
         component.inject(this)
@@ -87,6 +88,7 @@ class ChatFragment : BaseFragment() {
             chatDateRef.child(chatId).setValue(chat)
         }
     }
+
     private fun setupRecyclerView() {
         chatAdapter = ChatAdapter()
         binding.chatRecyclerView.apply {
@@ -99,6 +101,7 @@ class ChatFragment : BaseFragment() {
         super.onStop()
         chatViewModel.removeChatListener()
     }
+
     private fun observeChatData() {
         chatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
@@ -111,7 +114,7 @@ class ChatFragment : BaseFragment() {
             }
         })
 
-        chatViewModel.chatData.observe(viewLifecycleOwner) { chatEntityList ->
+        chatViewModel.chatData().observe(viewLifecycleOwner) { chatEntityList ->
             val chatList = convertChatEntityListToChatList(chatEntityList)
             chatAdapter.submitList(chatList)
             if (chatList.isNotEmpty()) binding.chatRecyclerView.scrollToPosition(chatList.size - 1)

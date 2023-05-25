@@ -6,13 +6,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class TranslateQuestionFragment : Fragment() {
@@ -77,19 +82,64 @@ class TranslateQuestionFragment : Fragment() {
             log("getQuestionListUseCase() idQuiz != -1")
             viewModel.questionLiveData.observe(viewLifecycleOwner) { questions ->
 
+                questions?.forEach {
+                            val words1 = it.language.split("|")
+                                .toSet() // Преобразование строки it в множество слов
+                            val words2 = viewModel.getProfile().languages?.split("|")
+                                ?.toSet() // Преобразование строки it2 в множество слов
+
+                            val commonWords = words1.intersect(
+                                (words2 ?: emptySet()).toSet()
+                            ) // Находим общие слова
+                            val wordsOnlyInIt2 =
+                                words2?.subtract(words1) // Находим слова, которые есть только в it2
+                            if (commonWords.isNotEmpty() && wordsOnlyInIt2?.isNotEmpty() == true) {
+
+                                translationAdapter.questions.add(it)
+                                translationAdapter.notifyDataSetChanged()
+                            } else Toast.makeText(
+                                activity,
+                                "Вы удалось найти вопросы которые вы могли бы перевести",
+                                Toast.LENGTH_LONG
+                            ).show()
+                }
+
                 log("getQuestionListUseCase() :${questions}")
-                translationAdapter.questions.addAll(questions)
-                translationAdapter.notifyDataSetChanged()
             }
-            viewModel.loadQuests()
+
+                    viewModel.loadQuests()
         } else if (idQuestion != -1) {
             log("getQuestionListUseCase() idQuestion != -1")
             viewModel.questionLiveData.observe(viewLifecycleOwner) { question ->
                 log("getQuestionListUseCase() :${question}")
-                translationAdapter.questions.addAll(question)
-                translationAdapter.notifyDataSetChanged()
+                question?.forEach {
+                            val words1 = it.language.split("|")
+                                .toSet() // Преобразование строки it в множество слов
+                            val words2 = viewModel.getProfile().languages?.split("|")
+                                ?.toSet() // Преобразование строки it2 в множество слов
+
+                            val commonWords = words1.intersect(
+                                (words2 ?: emptySet()).toSet()
+                            ) // Находим общие слова
+                            val wordsOnlyInIt2 =
+                                words2?.subtract(words1) // Находим слова, которые есть только в it2
+                            if (commonWords.isNotEmpty() && wordsOnlyInIt2?.isNotEmpty() == true) {
+
+                                translationAdapter.questions.add(it)
+                                translationAdapter.notifyDataSetChanged()
+                            } else Toast.makeText(
+                                activity,
+                                "Вы удалось найти вопросы которые вы могли бы перевести",
+                                Toast.LENGTH_LONG
+                            ).show()
+                }
             }
-            viewModel.loadQuestion(idQuestion!!)
+
+            GlobalScope.launch {
+                withContext(Dispatchers.IO) {
+                    viewModel.loadQuestion(idQuestion!!)
+                }
+            }
         }
 
         binding.buttonAddTranslation.setOnClickListener {

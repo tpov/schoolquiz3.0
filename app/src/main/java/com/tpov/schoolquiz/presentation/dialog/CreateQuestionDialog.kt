@@ -147,71 +147,75 @@ class CreateQuestionDialog : DialogFragment() {
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
 
-            val question = QuestionEntity(
-                null,
-                if (questionHard) numHQ
-                else numLQ,
-                questionTitle,
-                questionAnswer,
-                questionHard,
-                idQuiz,
-                language,
-                try {
-                    mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(activity)
-                } catch (e: Exception) {
-                    0
-                }
-            )
-            questions.add(question)
+                    val question = QuestionEntity(
+                        null,
+                        if (questionHard) numHQ
+                        else numLQ,
+                        questionTitle,
+                        questionAnswer,
+                        questionHard,
+                        idQuiz,
+                        language,
+                        try {
+                            mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(
+                                activity
+                            )
+                        } catch (e: Exception) {
+                            0
+                        }
+
+                    )
+
+                    questions.add(question)
         }
 
         // Создание QuizEntity
         val nameQuiz = dialogView.quiz_title.text.toString()
         val currentTime = TimeManager.getCurrentTime()
 
-        val quizEntity = QuizEntity(
-            idQuiz,
-            nameQuiz,
-            mainActivityViewModel.getProfile().name ?: "",
-            if (id == -1) currentTime
-            else (mainActivityViewModel.getQuizById(id).data),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).stars),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).starsPlayer),
-            questions.count { !it.hardQuestion },
-            questions.count { it.hardQuestion },
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).starsAll),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).starsAllPlayer),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).versionQuiz + 1),
-            if (id == -1) null
-            else (mainActivityViewModel.getQuizById(id).picture),
-            if (id == -1) 1
-            else (mainActivityViewModel.getQuizById(id).event),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).rating),
-            if (id == -1) 0
-            else (mainActivityViewModel.getQuizById(id).ratingPlayer),
-            true,
-            if (id == -1) SharedPreferencesManager.getTpovId()
-            else (mainActivityViewModel.getQuizById(id).tpovId)
-        )
-
-        // Сохранение quizEntity и questions в базу данных
-        mainActivityViewModel.insertQuiz(quizEntity)
-
-        questions.forEach {
-            mainActivityViewModel.insertQuestion(
-                it.copy(
-                    idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
-                        nameQuiz
-                    )
+                val quizEntity = QuizEntity(
+                    idQuiz,
+                    nameQuiz,
+                    mainActivityViewModel.getProfile().name ?: "",
+                    if (id == -1) currentTime
+                    else (mainActivityViewModel.getQuizById(id).data),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).stars),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).starsPlayer),
+                    questions.count { !it.hardQuestion },
+                    questions.count { it.hardQuestion },
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).starsAll),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).starsAllPlayer),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).versionQuiz + 1),
+                    if (id == -1) null
+                    else (mainActivityViewModel.getQuizById(id).picture),
+                    if (id == -1) 1
+                    else (mainActivityViewModel.getQuizById(id).event),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).rating),
+                    if (id == -1) 0
+                    else (mainActivityViewModel.getQuizById(id).ratingPlayer),
+                    true,
+                    if (id == -1) SharedPreferencesManager.getTpovId()
+                    else (mainActivityViewModel.getQuizById(id).tpovId)
                 )
-            )
-        }
+
+                // Сохранение quizEntity и questions в базу данных
+                mainActivityViewModel.insertQuiz(quizEntity)
+
+                questions.forEach {
+                    mainActivityViewModel.insertQuestion(
+                        it.copy(
+                            idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
+                                nameQuiz
+                            )
+                        )
+                    )
+                }
     }
 
     companion object {

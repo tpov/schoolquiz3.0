@@ -33,7 +33,11 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getSkill
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -114,27 +118,33 @@ class QuestionViewModel @Inject constructor(
 
     private fun initNewQuestionDetail() {
 
-        this.codeAnswer = getCodeAnswer(questionListThis.size)
-        this.currentIndex = 0
-        this.leftAnswer = questionListThis.size
-        this.numQuestion = questionListThis.size
-        this.persentPlayerAll = getQuizUseCase(idQuiz).starsAllPlayer
+        GlobalScope.launch {
+            withContext(Dispatchers.IO) {
+                this@QuestionViewModel.codeAnswer = getCodeAnswer(questionListThis.size)
+                this@QuestionViewModel.currentIndex = 0
+                this@QuestionViewModel.leftAnswer = questionListThis.size
+                this@QuestionViewModel.numQuestion = questionListThis.size
 
-        insertQuestionDetailEntity(
-            QuestionDetailEntity(
-                null,
-                idQuiz,
-                TimeManager.getCurrentTime(),
-                codeAnswer,
-                hardQuestion,
-                false
-            )
-        )
+                this@QuestionViewModel.persentPlayerAll = getQuizUseCase(idQuiz).starsAllPlayer
 
-        getQuestionDetailListUseCase().forEach {
-            if (it.hardQuiz == this.hardQuestion) {
-                firstQuestionDetail = false
-                if (getUpdateAnswer(it.codeAnswer)) this.idThisQuestionDetail = it.id!!
+                insertQuestionDetailEntity(
+                    QuestionDetailEntity(
+                        null,
+                        idQuiz,
+                        TimeManager.getCurrentTime(),
+                        codeAnswer,
+                        hardQuestion,
+                        false
+                    )
+                )
+
+                getQuestionDetailListUseCase().forEach {
+                    if (it.hardQuiz == this@QuestionViewModel.hardQuestion) {
+                        firstQuestionDetail = false
+                        if (getUpdateAnswer(it.codeAnswer)) this@QuestionViewModel.idThisQuestionDetail =
+                            it.id!!
+                    }
+                }
             }
         }
     }
@@ -151,13 +161,15 @@ class QuestionViewModel @Inject constructor(
         createQuestionDetail = false
 
         try {
+
             this.codeAnswer = questionDetailEntity.codeAnswer!!
             this.currentIndex = getCurrentIndex(questionDetailEntity.codeAnswer)!!
             this.leftAnswer = getLeftAnswer(questionDetailEntity.codeAnswer)
             this.numQuestion = leftAnswer
             this.idThisQuestionDetail = questionDetailEntity.id!!
             this.idQuiz = questionDetailEntity.idQuiz
-            this.persentPlayerAll = getQuizUseCase(idQuiz).starsAllPlayer
+
+            this@QuestionViewModel.persentPlayerAll = getQuizUseCase(idQuiz).starsAllPlayer
         } catch (e: Exception) {
             errorLoadQuestion()
         }
@@ -182,6 +194,7 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun getQuestionsList() {
+
         questionListThis = getQuestionByIdQuizUseCase(idQuiz)
         log(
             "getQuestionsList, getQuestionByIdQuizUseCase(idQuiz) ${
@@ -207,14 +220,13 @@ class QuestionViewModel @Inject constructor(
         log("DSEFSE, questionListThis: $questionListThis")
         var listQuestionDetail = mutableListOf<QuestionDetailEntity>()
         getQuestionDetailListUseCase().forEach {
-            if (it.idQuiz == this.idQuiz && it.hardQuiz == this.hardQuestion) listQuestionDetail.add(
+            if (it.idQuiz == this@QuestionViewModel.idQuiz && it.hardQuiz == this@QuestionViewModel.hardQuestion) listQuestionDetail.add(
                 it
             )
         }
         questionDetailListThis = listQuestionDetail
 
         quizThis = getQuizUseCase(idQuiz)
-
     }
 
 
@@ -227,6 +239,7 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun useCheat() {
+
         updateProfileUseCase(
             getProfileUseCase(getTpovId()).copy(
                 count = getProfileUseCase(getTpovId()).count?.minus(
@@ -235,7 +248,6 @@ class QuestionViewModel @Inject constructor(
             )
         )
     }
-
 
     fun trueButton() {
         if (questionListThis[currentIndex].answerQuestion) setTrueAnswer()
@@ -362,14 +374,15 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun showResultDialog() {
+
         val resultDialog = ResultDialog(
             hardQuestion,
             quizThis.event,
             quizThis.rating,
-            this.persent,
-            this.persentAll,
-            this.persentPlayerAll,
-            this.firstQuestionDetail,
+            this@QuestionViewModel.persent,
+            this@QuestionViewModel.persentAll,
+            this@QuestionViewModel.persentPlayerAll,
+            this@QuestionViewModel.firstQuestionDetail,
             onDismissListener = { rating ->
                 saveResult(rating)
             },
@@ -377,12 +390,13 @@ class QuestionViewModel @Inject constructor(
                 // Do something when the rating is selected
             },
             context = context, // Pass the context of the activity or fragment
-        profile = getProfileUseCase(getTpovId())
+            profile = getProfileUseCase(getTpovId())
         )
         resultDialog.show()
     }
 
     private fun saveResult(rating: Int) {
+
         log("saveResultawd getProfileUseCase(getTpovId()).copy(pointsNolics = getNolic() + CalcValues.getValueNolicForGame(hardQuestion, rating))")
         log("saveResultawd: getNolic():${getNolic()}")
         log(
@@ -401,7 +415,7 @@ class QuestionViewModel @Inject constructor(
         log(
             "saveResultawd: ${
                 CalcValues.getValueNolicForGame(
-                    hardQuestion, this.persent,
+                    hardQuestion, this@QuestionViewModel.persent,
                     quizThis.event,
                     firstQuestionDetail,
                     getProfileUseCase(getTpovId())
@@ -430,11 +444,11 @@ class QuestionViewModel @Inject constructor(
         var perc = mutableListOf<Int>()
         log("saveResult getQuestionDetailListUseCase(): ${getQuestionDetailListUseCase()}")
         getQuestionDetailListUseCase().forEach {
-            log("saveResult all detail: ${it}, it.idQuiz: ${it.idQuiz}, this.idQuiz: ${this.idQuiz}")
+            log("saveResult all detail: ${it}, it.idQuiz: ${it.idQuiz}, this.idQuiz: ${this@QuestionViewModel.idQuiz}")
 
             var i = 0
             var j = 0
-            if (it.idQuiz == this.idQuiz) {
+            if (it.idQuiz == this@QuestionViewModel.idQuiz) {
 
                 it.codeAnswer?.forEach { item ->
                     if (item == '2') i++
@@ -457,29 +471,30 @@ class QuestionViewModel @Inject constructor(
                 }
                 persentAll = i / perc.size
 
+                log("saveResult $maxPersent")
+
+                when (quizThis.event) {
+                    1, 5, 6, 7, 8 -> updateQuizUseCase(
+                        quizThis.copy(
+                            stars = maxPersent,
+                            starsAll = persentAll,
+                            rating = rating
+                        )
+                    )
+
+                    2, 3, 4 -> updateEvent(rating)
+
+                }
+
+                someAction()
+                Log.d("ku65k", "rating $rating")
             }
         }
-
-        log("saveResult $maxPersent")
-
-        when (quizThis.event) {
-            1, 5, 6, 7, 8 -> updateQuizUseCase(
-                quizThis.copy(
-                    stars = maxPersent,
-                    starsAll = persentAll,
-                    rating = rating
-                )
-            )
-
-            2, 3, 4 -> updateEvent(rating)
-
-        }
-
-        someAction()
-        Log.d("ku65k", "rating $rating")
     }
+
     private fun getNewIdQuiz(): Int {
         var i = 0
+
         getQuizListUseCase(getTpovId()).forEach {
             log("getNewIdQuiz: it: ${it.id}")
             if (it.id!! in (i + 1)..100) {
@@ -488,7 +503,9 @@ class QuestionViewModel @Inject constructor(
         }
         return i + 1
     }
+
     private fun updateEvent(rating: Int) {
+
         newIdQuizVar = getNewIdQuiz()
         if (getRating(rating) != 0) {
             log("DSEFSE, it: quiz")
