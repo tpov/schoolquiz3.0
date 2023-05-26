@@ -704,7 +704,7 @@ class RepositoryFBImpl @Inject constructor(
         val playersQuiz = playersRef.child("quiz")
 
 // запускаем корутину
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.IO) {
             log("setQuizData() launch")
             var readValue = true
             var blockServer = false
@@ -733,7 +733,7 @@ class RepositoryFBImpl @Inject constructor(
                 override fun onDataChange(snapshot: DataSnapshot) {
                     log("setQuizData() playersRef snapshot: $snapshot")
 
-                    coroutineScope.launch {
+                    coroutineScope.launch(Dispatchers.IO) {
                         if (blockServer) {
                             var i = 0
                             while (!readValue) {
@@ -1121,6 +1121,7 @@ class RepositoryFBImpl @Inject constructor(
         val questionRef8 = database.getReference("question8")
 
         var i = 0
+
         question.forEach {
             log(
                 "setQuestionData() перебираем квесты size: ${question.size}, dao.getQuizTpovIdById(it.idQuiz): ${
@@ -1131,23 +1132,25 @@ class RepositoryFBImpl @Inject constructor(
             )
             synthLiveData.value = --synth
             log("setQuestionData() найдет квест it: ${it}")
-            if (dao.getEventByIdQuiz(it.idQuiz) == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.numQuestion}/${it.language}")
+            val eventByIdQuiz = dao.getEventByIdQuiz(it.idQuiz)
+            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener {
                     synthLiveData.value = ++synth
                 }
-            if (dao.getEventByIdQuiz(it.idQuiz) == 2) questionRef2.child("${it.idQuiz}/${it.id}/${it.language}")
+
+            if (eventByIdQuiz == 2) questionRef2.child("${it.idQuiz}/${it.id}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (dao.getEventByIdQuiz(it.idQuiz) == 3) questionRef3.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 3) questionRef3.child("${it.idQuiz}/${it.id}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (dao.getEventByIdQuiz(it.idQuiz) == 4) questionRef4.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 4) questionRef4.child("${it.idQuiz}/${it.id}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (dao.getEventByIdQuiz(it.idQuiz) == 5) questionRef5.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 5) questionRef5.child("${it.idQuiz}/${it.id}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (dao.getEventByIdQuiz(it.idQuiz) == 6) questionRef6.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 6) questionRef6.child("${it.idQuiz}/${it.id}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (dao.getEventByIdQuiz(it.idQuiz) == 7) questionRef7.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 7) questionRef7.child("${it.idQuiz}/${it.id}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (dao.getEventByIdQuiz(it.idQuiz) == 8) questionRef8.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 8) questionRef8.child("${it.idQuiz}/${it.id}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
         }
 

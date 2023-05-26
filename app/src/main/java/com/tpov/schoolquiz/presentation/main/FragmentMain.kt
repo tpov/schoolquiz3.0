@@ -161,11 +161,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     }"
                 )
                 log(
-                    "getQuizLiveData.observe question is empty: ${
-                        mainViewModel.getQuestionListByIdQuiz(
-                            quiz.id ?: 0
-                        )
-                    }"
+                    "getQuizLiveData.observe question is empty: ${mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)}"
                 )
                 log("getQuizLiveData.observe quiz: ${quiz}")
                 if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {

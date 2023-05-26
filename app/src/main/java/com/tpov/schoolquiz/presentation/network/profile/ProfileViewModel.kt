@@ -3,8 +3,25 @@ package com.tpov.schoolquiz.presentation.network.profile
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.DeleteAllQuizUseCase
+import com.tpov.schoolquiz.domain.GetPlayersListUseCase
+import com.tpov.schoolquiz.domain.GetProfileFBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz1FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz2FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz3FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz4FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz5FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz6FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz7FBUseCase
+import com.tpov.schoolquiz.domain.GetSynthUseCase
+import com.tpov.schoolquiz.domain.GetTpovIdFBUseCase
+import com.tpov.schoolquiz.domain.SetProfileFBUseCase
+import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
+import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
+import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
+import com.tpov.schoolquiz.domain.SetQuizEventUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -45,10 +62,11 @@ class ProfileViewModel @Inject constructor(
 
     fun setQuizFB() {
         log("fun setQuizFB()")
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             setQuizDataFBUseCase()
         }
     }
+
 
     fun setEventQuiz() {
         log("fun setEventQuiz()")
