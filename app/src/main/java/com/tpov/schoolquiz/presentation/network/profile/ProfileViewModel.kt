@@ -15,7 +15,6 @@ import com.tpov.schoolquiz.domain.GetQuiz6FBUseCase
 import com.tpov.schoolquiz.domain.GetQuiz7FBUseCase
 import com.tpov.schoolquiz.domain.GetSynthUseCase
 import com.tpov.schoolquiz.domain.GetTpovIdFBUseCase
-import com.tpov.schoolquiz.domain.GetTranslateUseCase
 import com.tpov.schoolquiz.domain.SetProfileFBUseCase
 import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
 import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
@@ -23,10 +22,8 @@ import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
 import com.tpov.schoolquiz.domain.SetQuizEventUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -49,8 +46,7 @@ class ProfileViewModel @Inject constructor(
     private val getSynthUseCase: GetSynthUseCase,
     private val setQuizEventUseCase: SetQuizEventUseCase,
     private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
-    private val getPlayersListUseCase: GetPlayersListUseCase,
-    private val getTranslateUseCase: GetTranslateUseCase
+    private val getPlayersListUseCase: GetPlayersListUseCase
 
 ) : ViewModel() {
 
@@ -66,10 +62,11 @@ class ProfileViewModel @Inject constructor(
 
     fun setQuizFB() {
         log("fun setQuizFB()")
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             setQuizDataFBUseCase()
         }
     }
+
 
     fun setEventQuiz() {
         log("fun setEventQuiz()")
@@ -79,33 +76,19 @@ class ProfileViewModel @Inject constructor(
     }
     fun setQuestionsFB() {
         log("fun setQuestionsFB()")
-
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                setQuestionFBUseCase()
-                setQuestionDetailFBUseCase()
-            }}
+        setQuestionFBUseCase()
+        setQuestionDetailFBUseCase()
     }
 
     fun setProfile() {
         log("fun setProfile()")
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         setProfileFBUseCase()
-    }}}
+    }
 
     fun getProfile() {
         log("fun getProfile()")
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         getProfileFBUseCase()
-    }}}
-
-    fun getTranslateFB() {
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-        getTranslateUseCase()
-    }}}
+    }
 
     fun getQuizzFB() {
         log("fun getQuizzFB()")
@@ -120,10 +103,8 @@ class ProfileViewModel @Inject constructor(
 
     fun getPlayersList() {
         log("getPlayersList()")
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
         getPlayersListUseCase()
-    }}}
+    }
     fun log(m: String) {
         Logcat.log(m, "Profile", Logcat.LOG_VIEW_MODEL)
     }
