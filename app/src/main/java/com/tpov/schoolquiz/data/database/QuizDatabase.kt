@@ -26,7 +26,7 @@ abstract class QuizDatabase : RoomDatabase() {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext, QuizDatabase::class.java, "SchoolQuiz.db"
-                ).fallbackToDestructiveMigration().build()
+                ).fallbackToDestructiveMigration().allowMainThreadQueries().build()
                 INSTANCE = instance
                 instance
             }

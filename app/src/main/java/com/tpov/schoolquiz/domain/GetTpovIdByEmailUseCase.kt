@@ -4,5 +4,5 @@ import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import javax.inject.Inject
 
 class GetTpovIdByEmailUseCase @Inject constructor(private val repository: RepositoryDB) {
-    suspend operator fun invoke(email: String) = repository.getTpovIdByEmail(email)
+    operator fun invoke(email: String) = repository.getTpovIdByEmail(email)
 }
