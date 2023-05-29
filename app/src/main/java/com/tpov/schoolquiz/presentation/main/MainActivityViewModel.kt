@@ -213,18 +213,19 @@ class MainActivityViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     fun synthPrizeBoxDay(profile: ProfileEntity?): Int? {
         log("wdawdwa: $profile")
-        val days = if (TimeManager.getDaysBetweenDates(profile?.timeLastOpenBox!!,
+        val days = if (TimeManager.getDaysBetweenDates(profile?.timeLastOpenBox ?: "",
                 TimeManager.getCurrentTime()
-            ) == 1L && profile.coundDayBox != 10) {
-            profile.coundDayBox?.plus(1) ?: 0
+            ) == 1L && profile?.coundDayBox != 10) {
+            profile?.coundDayBox?.plus(1) ?: 0
         } else if (TimeManager.getDaysBetweenDates(
-                profile.timeLastOpenBox!!,
+                profile?.timeLastOpenBox ?: "",
                 TimeManager.getCurrentTime()
             ) < 1) 0
-        else  profile.coundDayBox
-        updateProfileUseCase(profile.copy(coundDayBox = days, countBox = if (days == 10) profile.countBox?.plus(
+        else  profile?.coundDayBox
+        profile?.copy(coundDayBox = days, countBox = if (days == 10) profile.countBox?.plus(
             1
-        ) else  profile.countBox, timeLastOpenBox = TimeManager.getCurrentTime()))
+        ) else  profile.countBox, timeLastOpenBox = TimeManager.getCurrentTime())
+            ?.let { updateProfileUseCase(it) }
         return days
     }
 
