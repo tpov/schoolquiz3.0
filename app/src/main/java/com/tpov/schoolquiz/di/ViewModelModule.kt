@@ -9,7 +9,6 @@ import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
 import com.tpov.schoolquiz.presentation.network.event.EventViewModel
 import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
 import com.tpov.schoolquiz.presentation.question.QuestionViewModel
-import com.tpov.schoolquiz.presentation.splashscreen.SplashScreenViewModel
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
@@ -31,11 +30,7 @@ interface ViewModelModule {
     @ViewModelKey(MainActivityViewModel::class)
     fun bindMainViewModel(viewModel: MainActivityViewModel): ViewModel
 
-    @InternalCoroutinesApi
-    @Binds
-    @IntoMap
-    @ViewModelKey(SplashScreenViewModel::class)
-    fun bindSplashScreenViewModel(viewModel: SplashScreenViewModel): ViewModel
+
     @InternalCoroutinesApi
     @Binds
     @IntoMap

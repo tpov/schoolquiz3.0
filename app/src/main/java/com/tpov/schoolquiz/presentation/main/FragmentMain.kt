@@ -1,8 +1,10 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.MainApp
@@ -78,6 +81,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         if (isMyQuiz == 1) binding.fabAddItem.visibility = View.VISIBLE
         else binding.fabAddItem.visibility = View.GONE
 
+
+
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             val filteredList = quizList.filter { it.event == isMyQuiz }
             val sortedList = if (isMyQuiz == 5) {
@@ -118,20 +123,56 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     }
 
     override fun onClick(id: Int, type: Boolean) {
-        if (mainViewModel.getProfileCount()!! < 33) Toast.makeText(
-            activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
-            Toast.LENGTH_LONG
-        ).show()
-        else {
-            mainViewModel.updateProfileUseCase(mainViewModel.getProfile().copy(count = mainViewModel.getProfileCount()!! - 33))
-            val intent = Intent(activity, QuestionActivity::class.java)
-            intent.putExtra(NAME_USER, "user")
-            intent.putExtra(ID_QUIZ, id)
-            intent.putExtra(HARD_QUESTION, type)
-            startActivityForResult(intent, REQUEST_CODE)
+        log("onClick mainViewModel.getQuizById(id).event")
+        if (mainViewModel.getProfileCount()!! < 33) {
+            Toast.makeText(
+                activity,
+                "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+                Toast.LENGTH_LONG
+            ).show()
+        } else {
+            if (mainViewModel.getQuizById(id).event == 5) {
+                val alertDialog = AlertDialog.Builder(activity)
+                    .setTitle("Попытка платная")
+                    .setMessage("В целях честной игры снимается плата.")
+                    .setPositiveButton("500 ноликов") { dialog, which ->
+                        mainViewModel.updateProfileUseCase(
+                            mainViewModel.getProfile().copy(count = mainViewModel.getProfileCount()!! - 33, pointsNolics = mainViewModel.getProfileNolic()!! - 500)
+                        )
+                        val intent = Intent(activity, QuestionActivity::class.java)
+                        intent.putExtra(NAME_USER, "user")
+                        intent.putExtra(ID_QUIZ, id)
+                        intent.putExtra(HARD_QUESTION, type)
+                        startActivityForResult(intent, REQUEST_CODE)
+                    }
+                    .setNegativeButton("Отмена", null)
+                    .create()
+
+                alertDialog.setOnShowListener { dialog ->
+                    val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                    val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                    positiveButton.setTextColor(Color.WHITE)
+                    negativeButton.setTextColor(Color.YELLOW)
+
+                    dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                }
+
+                alertDialog.show()
+
+            } else {
+                mainViewModel.updateProfileUseCase(
+                    mainViewModel.getProfile().copy(count = mainViewModel.getProfileCount()!! - 33)
+                )
+                val intent = Intent(activity, QuestionActivity::class.java)
+                intent.putExtra(NAME_USER, "user")
+                intent.putExtra(ID_QUIZ, id)
+                intent.putExtra(HARD_QUESTION, type)
+                startActivityForResult(intent, REQUEST_CODE)
+            }
         }
     }
+
 
     override fun editItem(id: Int) {
         log("editItem: $id")
@@ -192,7 +233,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 val idQuiz = it.getIntExtra("idQuiz", 0)
 
                 if (translate) (requireActivity() as MainActivity).replaceFragment(
-                    TranslateQuestionFragment.newInstance(idQuiz, null)
+                    TranslateQuestionFragment.newInstance(idQuiz)
                 )
             }
         }

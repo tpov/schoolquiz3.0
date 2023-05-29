@@ -8,10 +8,11 @@ data class Question (
     val nameQuestion: String,
     val answerQuestion: Boolean,
     val typeQuestion: Boolean,
-    val lvlTranslate: Int
+    val lvlTranslate: Int,
+    val infoTranslater: String
 ) {
     constructor() : this(
-        "", false, false, 0
+        "", false, false, 0, ""
     )
 }
 
@@ -20,6 +21,7 @@ fun QuestionEntity.toQuestion(): Question {
         nameQuestion = this.nameQuestion,
         answerQuestion = this.answerQuestion,
         typeQuestion = this.hardQuestion,
-        lvlTranslate = this.lvlTranslate
+        lvlTranslate = this.lvlTranslate,
+        infoTranslater = this.infoTranslater
     )
 }

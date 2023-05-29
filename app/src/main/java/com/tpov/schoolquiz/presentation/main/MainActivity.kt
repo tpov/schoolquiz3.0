@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private var iAd: InterstitialAd? = null
-    private var numQuestionNotDate = 0
+    private var numDayPrizeBox = 0
     private lateinit var viewModel: MainActivityViewModel
     private var fr1 = 1
     private var fr2 = 1
@@ -237,6 +237,7 @@ class MainActivity : AppCompatActivity() {
             requestStoragePermission()
         }
 
+        numDayPrizeBox = viewModel.synthPrizeBoxDay(viewModel.getProfile()) ?: 0
         viewModel.getProfileFBLiveData.observe(this) {
             log("it: $it")
 
@@ -363,12 +364,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         setButtonNavListener()
-        numQuestionNotDate = intent.getIntExtra(NUM_QUESTION_NOT_NUL, 0)
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
         SetItemMenu.setHomeMenu(binding, 1, this)
 
-        loadNumQuestionNotDate()
+        loadNumBoxDay()
 
         binding.drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
@@ -723,18 +723,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     //Окраживаем квадратики в красный и зеленый в зависимости сколько осталось запасных вопросов-дня
-    private fun loadNumQuestionNotDate() = with(binding) {
+    private fun loadNumBoxDay() = with(binding) {
 
-        if (numQuestionNotDate > 0) textView10.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 1) textView9.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 2) textView8.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 3) textView7.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 4) textView6.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 5) textView5.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 6) textView4.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 7) textView3.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 8) textView2.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numQuestionNotDate > 9) textView.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 0) textView10.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 1) textView9.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 2) textView8.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 3) textView7.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 4) textView6.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 5) textView5.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 6) textView4.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 7) textView3.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 8) textView2.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 9) textView.setBackgroundResource(R.color.num_chack_norice_green)
     }
 
     fun replaceFragment(fragment: Fragment) {
@@ -876,12 +876,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
 
-        const val NUM_QUESTION_NOT_NUL = "num_question_not_nul"
-        const val SHOP_LIST = "shop_list"
         const val REQUEST_CODE_STORAGE_PERMISSION = 1001
-
     }
-
-
 }
 

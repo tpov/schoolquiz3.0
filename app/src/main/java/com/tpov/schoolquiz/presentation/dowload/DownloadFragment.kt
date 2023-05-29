@@ -85,7 +85,6 @@ class DownloadFragment : BaseFragment() {
             val questionDetailCount = quizDao.getQuestionDetailCount()
             val questionCount = quizDao.getQuestionCount()
             val quizCount = quizDao.getQuizCount()
-            val apiQuestionCount = quizDao.getApiQuestionCount()
             val profileCount = quizDao.getProfileCount()
             val chatCount = quizDao.getChatCount()
 
@@ -93,7 +92,6 @@ class DownloadFragment : BaseFragment() {
             QuestionDetailEntity count: $questionDetailCount
             QuestionEntity count: $questionCount
             QuizEntity count: $quizCount
-            ApiQuestion count: $apiQuestionCount
             ProfileEntity count: $profileCount
             ChatEntity count: $chatCount
         """.trimIndent()

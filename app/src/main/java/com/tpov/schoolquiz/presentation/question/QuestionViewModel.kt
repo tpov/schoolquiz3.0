@@ -11,21 +11,7 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
-import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
-import com.tpov.schoolquiz.domain.DeleteQuizUseCase
-import com.tpov.schoolquiz.domain.GetProfileUseCase
-import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
-import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
-import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
-import com.tpov.schoolquiz.domain.GetQuizListUseCase
-import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
-import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuizUseCase
-import com.tpov.schoolquiz.domain.UpdateProfileUseCase
-import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
-import com.tpov.schoolquiz.domain.UpdateQuizUseCase
+import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -33,11 +19,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getSkill
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -80,19 +62,15 @@ class QuestionViewModel @Inject constructor(
     lateinit var questionDetailListThis: List<QuestionDetailEntity>
     lateinit var quizThis: QuizEntity
     lateinit var tpovId: String
-    var resultTranslate = true
     var persentPlayerAll = 0
     var firstQuestionDetail = true
 
-    private val _shouldCloseLiveData = MutableLiveData<Boolean>()
-    val shouldCloseLiveData: LiveData<Boolean> = _shouldCloseLiveData
+    private val _shouldCloseLiveData = MutableLiveData<Int>()
+    val shouldCloseLiveData: LiveData<Int> = _shouldCloseLiveData
 
-    private fun someAction() {
-        _shouldCloseLiveData.postValue(true)
+    private fun someAction(result: Int) {
+        _shouldCloseLiveData.postValue(result)
     }
-
-    private var _viewResultLiveData = MutableLiveData<String>()
-    var viewResultLiveData: LiveData<String> = _viewResultLiveData
 
     fun synthWithDB(context: Context) {
         initConst(context)
@@ -383,8 +361,8 @@ class QuestionViewModel @Inject constructor(
             this@QuestionViewModel.persentAll,
             this@QuestionViewModel.persentPlayerAll,
             this@QuestionViewModel.firstQuestionDetail,
-            onDismissListener = { rating ->
-                saveResult(rating)
+            onDismissListener = { rating, result ->
+                saveResult(rating, result)
             },
             onRatingSelected = { _ ->
                 // Do something when the rating is selected
@@ -395,7 +373,7 @@ class QuestionViewModel @Inject constructor(
         resultDialog.show()
     }
 
-    private fun saveResult(rating: Int) {
+    private fun saveResult(rating: Int, result: Int) {
 
         log("saveResultawd getProfileUseCase(getTpovId()).copy(pointsNolics = getNolic() + CalcValues.getValueNolicForGame(hardQuestion, rating))")
         log("saveResultawd: getNolic():${getNolic()}")
@@ -486,7 +464,7 @@ class QuestionViewModel @Inject constructor(
 
                 }
 
-                someAction()
+                someAction(result)
                 Log.d("ku65k", "rating $rating")
             }
         }

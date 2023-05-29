@@ -3,12 +3,7 @@ package com.tpov.schoolquiz.presentation.network.event
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.RatingBar
-import android.widget.Switch
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
@@ -203,7 +198,7 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
-            itemView.findViewById<ImageView>(R.id.imv_gradient_light_quiz).setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindQuiz2 setOnClickListener")
                 listener.onQuiz2Clicked(quiz.id!!)
             }
@@ -225,7 +220,7 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
-            itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindQuiz3 setOnClickListener")
                 listener.onQuiz3Clicked(quiz.id!!)
             }
@@ -262,7 +257,7 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
-            itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslate1Event setOnClickListener")
                 listener.onTranslate1EventClicked(question.id!!)
             }
@@ -278,7 +273,7 @@ class EventAdapter(
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
 
-            itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).setOnClickListener {
+            itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslate2Event setOnClickListener")
                 listener.onTranslate2EventClicked(question.id!!)
             }

@@ -25,11 +25,7 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.floor
 
@@ -71,9 +67,9 @@ class QuestionActivity : AppCompatActivity() {
         synthInputData()
         viewModel.synthWithDB(this)
         viewModel.shouldCloseLiveData.observe(this) {
-            if (it) {
+            if (it == RESULT_TRANSLATE || it == RESULT_OK) {
                 val resultIntent = Intent()
-                resultIntent.putExtra("translate", viewModel.resultTranslate)
+                resultIntent.putExtra("translate", it == RESULT_TRANSLATE)
                 resultIntent.putExtra("idQuiz", viewModel.idQuiz)
 
                 setResult(Activity.RESULT_OK, resultIntent)
@@ -485,5 +481,7 @@ class QuestionActivity : AppCompatActivity() {
         const val HARD_QUESTION = "hard_question"
         const val STARS = "stars"
         const val UPDATE_CURRENT_INDEX = 1
+        const val RESULT_TRANSLATE = 2
+        const val RESULT_OK = 1
     }
 }

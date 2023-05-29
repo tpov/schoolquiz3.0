@@ -13,6 +13,8 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.CustomProgressBar
+import com.tpov.schoolquiz.presentation.question.QuestionActivity
+import kotlinx.coroutines.InternalCoroutinesApi
 
 
 class ResultDialog(
@@ -23,7 +25,7 @@ class ResultDialog(
     private val starsPercentAll: Int,
     private val starsPlayersAll: Int,
     private val firstQuestionDetail: Boolean,
-    private val onDismissListener: ((Int) -> Unit)? = null, // определение переменной с значением по умолчанию
+    private val onDismissListener: ((Int, Int) -> Unit)? = null, // определение переменной с значением по умолчанию
     private val onRatingSelected: ((Int) -> Unit)? = null,
     context: Context,
     private val profile: ProfileEntity
@@ -35,6 +37,7 @@ class ResultDialog(
         setCanceledOnTouchOutside(false)
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.result_dialog)
@@ -70,10 +73,14 @@ class ResultDialog(
         }, 1000)
 
         bOk.setOnClickListener {
-            if (showStars == 0) onDismissListener?.invoke(rbEvaluation.progress)
-            else onDismissListener?.invoke(showStars)
+            if (showStars == 0) onDismissListener?.invoke(rbEvaluation.progress, QuestionActivity.RESULT_OK)
+            else onDismissListener?.invoke(showStars, QuestionActivity.RESULT_OK)
 
             dismiss()
+        }
+        bHelpTranslate.setOnClickListener {
+            if (showStars == 0) onDismissListener?.invoke(rbEvaluation.progress, QuestionActivity.RESULT_TRANSLATE)
+            else onDismissListener?.invoke(showStars, QuestionActivity.RESULT_TRANSLATE)
         }
 
     }

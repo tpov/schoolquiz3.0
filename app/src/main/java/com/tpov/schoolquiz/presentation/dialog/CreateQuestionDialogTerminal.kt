@@ -25,8 +25,10 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.CreateQuestionDialogTerminalBinding
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.android.synthetic.main.profile_item.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.*
 
@@ -100,7 +102,8 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
                             getTypeText(binding.rbLightQuestion).toBoolean(),
                             -1,
                             lang,
-                            mainActivityViewModel.getProfileFBLiveData.value?.translater ?: -1
+                            mainActivityViewModel.getProfileFBLiveData.value?.translater ?: -1,
+                            getTpovId().toString()
                         )
                     )
                 }
@@ -200,7 +203,8 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
                                     getTypeText(binding.rbLightQuestion).toBoolean(),
                                     -1,
                                     lang,
-                                    mainActivityViewModel.getProfile().translater!!
+                                    mainActivityViewModel.getProfile().translater!!,
+                                    getTpovId().toString()
                                 )
                             )
                 }

@@ -9,8 +9,8 @@ import com.tpov.schoolquiz.data.database.entities.*
 import kotlinx.coroutines.InternalCoroutinesApi
 
 @Database(
-    entities = [QuestionDetailEntity::class, PlayersEntity::class, QuestionEntity::class, QuizEntity::class, ApiQuestion::class, ProfileEntity::class, ChatEntity::class],
-    version = 1,
+    entities = [QuestionDetailEntity::class, PlayersEntity::class, QuestionEntity::class, QuizEntity::class, ProfileEntity::class, ChatEntity::class],
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

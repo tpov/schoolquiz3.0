@@ -99,14 +99,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onQuiz2Clicked(quizId: Int) {
         log("fun onQuiz2Clicked")
 
-        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
             Toast.LENGTH_LONG
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
             )
             val intent = Intent(activity, QuestionActivity::class.java)
             intent.putExtra(QuestionActivity.NAME_USER, "user")
@@ -121,14 +121,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         log("fun onQuiz3Clicked")
         log("fun onQuiz2Clicked")
 
-        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
             Toast.LENGTH_LONG
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
             )
             val intent = Intent(activity, QuestionActivity::class.java)
             intent.putExtra(QuestionActivity.NAME_USER, "user")
@@ -142,14 +142,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onQuiz4Clicked(quizId: Int) {
 
         log("fun onQuiz2Clicked")
-        if (eventViewModel.getProfileCount()!! < 50) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < 20) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+            "Недостаточно жизней. На прохождение квеста тратиться 20% жизни",
             Toast.LENGTH_LONG
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 20)
             )
             log("fun onQuiz4Clicked")
             val intent = Intent(activity, QuestionActivity::class.java)
@@ -163,14 +163,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onTranslate1EventClicked(questionId: Int) {
 
         log("fun onQuiz2Clicked")
-        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < 10) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
+            "Недостаточно жизней. На прохождение квеста тратиться 10% жизни",
             Toast.LENGTH_LONG
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 10)
             )
             log("fun onTranslate1EventClicked")
         }
@@ -195,14 +195,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onTranslateEditQuestionClicked(questionId: Int) {
 
         log("fun onQuiz2Clicked")
-        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < 10) Toast.makeText(
             activity,
             "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
             Toast.LENGTH_LONG
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
+                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 10)
             )
             log("fun onTranslateEditQuestionClicked")
         }

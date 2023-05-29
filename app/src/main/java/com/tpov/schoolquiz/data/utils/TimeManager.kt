@@ -13,7 +13,7 @@ import kotlin.math.abs
 
 object TimeManager {
 
-    private const val DEF_TIME_FORMAT = "hh:mm:ss - yyyy/MM/dd"
+    private const val DEF_TIME_FORMAT = "HH:mm:ss - dd/MM/yy"
     fun getCurrentTime(): String{
         Log.d("NewNoteActivity", "getCurrentTime")
 
@@ -34,7 +34,7 @@ object TimeManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getDaysBetweenDates(dateString1: String, dateString2: String): Long? {
+    fun getDaysBetweenDates(dateString1: String, dateString2: String): Long {
         val formatter = SimpleDateFormat(DEF_TIME_FORMAT, Locale.getDefault())
 
         return try {
@@ -46,8 +46,11 @@ object TimeManager {
             val localDate1 = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
             val localDate2 = date2.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
 
-            // Вычислите разницу между двумя объектами LocalDate в днях
-            abs(ChronoUnit.DAYS.between(localDate1, localDate2))
+            // Вычислите разницу между двумя объектами LocalDate
+            val daysBetween = ChronoUnit.DAYS.between(localDate1, localDate2)
+            Log.d("daysBetween","daysBetween: $daysBetween")
+            // Верните абсолютное значение разницы в днях
+            abs(daysBetween)
         } catch (e: ParseException) {
             0
         }

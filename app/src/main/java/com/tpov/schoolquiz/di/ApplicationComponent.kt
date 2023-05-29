@@ -12,7 +12,6 @@ import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionListActivity
-import com.tpov.schoolquiz.presentation.splashscreen.SplashScreen
 import dagger.BindsInstance
 import dagger.Component
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -32,8 +31,6 @@ interface ApplicationComponent {
     fun inject(activity: QuestionListActivity)
 
     fun inject(fragment: FragmentMain)
-
-    fun inject(activity: SplashScreen)
 
     fun inject(activity: MainActivity)
 

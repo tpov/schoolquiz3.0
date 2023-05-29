@@ -1,65 +1,54 @@
 package com.tpov.schoolquiz.domain.repository
 
 import androidx.lifecycle.LiveData
-import com.tpov.schoolquiz.data.database.entities.ApiQuestion
-import com.tpov.schoolquiz.data.database.entities.PlayersEntity
-import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.data.database.entities.*
 import kotlinx.coroutines.flow.Flow
 
 // TODO: 25.07.2022 LiveData -> Flow
 interface RepositoryDB {
-    suspend fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity)
+    fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity)
 
-    suspend fun insertProfile(profile: ProfileEntity)
+    fun insertProfile(profile: ProfileEntity)
 
-    suspend fun insertQuiz(quizEntity: QuizEntity)
+    fun insertQuiz(quizEntity: QuizEntity)
 
-    suspend fun insertQuestion(questionEntity: QuestionEntity)
-
-    suspend fun insertListApiQuestion(apiQuestion: List<ApiQuestion>)
+    fun insertQuestion(questionEntity: QuestionEntity)
 
 
-    suspend fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity>
+    fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity>
 
-    suspend fun getQuestionDetailList(): List<QuestionDetailEntity>
+    fun getQuestionDetailList(): List<QuestionDetailEntity>
 
     fun getProfileFlow(tpovId: Int): Flow<ProfileEntity>
 
-    suspend fun getTpovIdByEmail(email: String): Int
+    fun getTpovIdByEmail(email: String): Int
 
-    suspend fun getProfile(tpovId: Int): ProfileEntity
+    fun getProfile(tpovId: Int): ProfileEntity
 
-    suspend fun getAllProfiles(): List<ProfileEntity>
+    fun getAllProfiles(): List<ProfileEntity>
 
-    suspend fun getQuizList(tpovId: Int): List<QuizEntity>
+    fun getQuizList(tpovId: Int): List<QuizEntity>
 
-    suspend fun getQuizById(id: Int): QuizEntity
+    fun getQuizById(id: Int): QuizEntity
 
-    suspend fun getQuizEvent(): List<QuizEntity>
+    fun getQuizEvent(): List<QuizEntity>
 
-    suspend fun getTranslateEvent(): List<QuestionEntity>
+    fun getTranslateEvent(): List<QuestionEntity>
 
     fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>>
 
     fun getEventLiveData(): LiveData<List<QuizEntity>>
-    suspend fun getQuestionList(): List<QuestionEntity>
+    fun getQuestionList(): List<QuestionEntity>
 
-    suspend fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity>
+    fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity>
 
-    suspend fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion>
+    fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int
 
-    suspend fun getApiQuestionList(): List<ApiQuestion>
+    fun getNameQuizByIdQuiz(id: Int): String
 
-    suspend fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int
+    fun getPlayersDB(): List<PlayersEntity>
 
-    suspend fun getNameQuizByIdQuiz(id: Int): String
-
-    suspend fun getPlayersDB(): List<PlayersEntity>
-
-    suspend fun getPlayersDB(tpovId: Int): PlayersEntity
+    fun getPlayersDB(tpovId: Int): PlayersEntity
 
 
     fun deleteQuestionById(id: Int)
@@ -74,8 +63,6 @@ interface RepositoryDB {
     fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity)
 
     fun updateQuiz(quizEntity: QuizEntity)
-
-    fun updateApiQuestion(apiQuestion: ApiQuestion)
 
     fun updateProfile(profile: ProfileEntity)
 

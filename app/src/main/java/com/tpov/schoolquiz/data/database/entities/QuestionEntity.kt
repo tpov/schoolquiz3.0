@@ -29,5 +29,9 @@ data class QuestionEntity(
     var language: String,
 
     @ColumnInfo(name = "lvlTranslate")
-    var lvlTranslate: Int
+    var lvlTranslate: Int,
+
+    @ColumnInfo(name = "infoTranslater")
+    var infoTranslater: String,
+
 )

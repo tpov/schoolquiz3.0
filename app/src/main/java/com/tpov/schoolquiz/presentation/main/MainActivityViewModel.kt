@@ -1,56 +1,20 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.content.Context
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.liveData
-import androidx.lifecycle.switchMap
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.lifecycle.*
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.data.fierbase.AddPoints
-import com.tpov.schoolquiz.data.fierbase.Box
-import com.tpov.schoolquiz.data.fierbase.Buy
-import com.tpov.schoolquiz.data.fierbase.Dates
-import com.tpov.schoolquiz.data.fierbase.Life
-import com.tpov.schoolquiz.data.fierbase.Points
-import com.tpov.schoolquiz.data.fierbase.Profile
-import com.tpov.schoolquiz.data.fierbase.Qualification
-import com.tpov.schoolquiz.data.fierbase.TimeInGames
-import com.tpov.schoolquiz.data.fierbase.toProfileEntity
-import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
-import com.tpov.schoolquiz.domain.DeleteQuizUseCase
-import com.tpov.schoolquiz.domain.GetAllProfilesDBUseCase
-import com.tpov.schoolquiz.domain.GetEventLiveDataUseCase
-import com.tpov.schoolquiz.domain.GetIdQuizByNameQuizUseCase
-import com.tpov.schoolquiz.domain.GetPlayersDBUseCase
-import com.tpov.schoolquiz.domain.GetProfileFlowUseCase
-import com.tpov.schoolquiz.domain.GetProfileUseCase
-import com.tpov.schoolquiz.domain.GetQuestion8FBUseCase
-import com.tpov.schoolquiz.domain.GetQuestionDetail8FBUseCase
-import com.tpov.schoolquiz.domain.GetQuestionListUseCase
-import com.tpov.schoolquiz.domain.GetQuiz8FBUseCase
-import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
-import com.tpov.schoolquiz.domain.GetQuizListUseCase
-import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
-import com.tpov.schoolquiz.domain.InsertProfileUseCase
-import com.tpov.schoolquiz.domain.InsertQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuizUseCase
-import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
-import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
-import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
-import com.tpov.schoolquiz.domain.UpdateProfileUseCase
-import com.tpov.schoolquiz.domain.UpdateQuizUseCase
+import com.tpov.schoolquiz.data.fierbase.*
+import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.withContext
-import java.util.Locale
+import java.util.*
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -238,6 +202,30 @@ class MainActivityViewModel @Inject constructor(
         val profile = getProfileUseCase(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.count
+    }
+
+    fun getProfileNolic(): Int? {
+        val profile = getProfileUseCase(getTpovId())
+
+        return profile.pointsNolics
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun synthPrizeBoxDay(profile: ProfileEntity?): Int? {
+        log("wdawdwa: $profile")
+        val days = if (TimeManager.getDaysBetweenDates(profile?.timeLastOpenBox!!,
+                TimeManager.getCurrentTime()
+            ) == 1L && profile.coundDayBox != 10) {
+            profile.coundDayBox?.plus(1) ?: 0
+        } else if (TimeManager.getDaysBetweenDates(
+                profile.timeLastOpenBox!!,
+                TimeManager.getCurrentTime()
+            ) < 1) 0
+        else  profile.coundDayBox
+        updateProfileUseCase(profile.copy(coundDayBox = days, countBox = if (days == 10) profile.countBox?.plus(
+            1
+        ) else  profile.countBox, timeLastOpenBox = TimeManager.getCurrentTime()))
+        return days
     }
 
     fun getProfileCountLife(): Int? {

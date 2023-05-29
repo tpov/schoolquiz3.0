@@ -12,6 +12,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 
 class TranslationQuestionAdapter(val questions: MutableList<QuestionEntity>, private val languages: List<String>) :
     RecyclerView.Adapter<TranslationQuestionAdapter.QuestionViewHolder>() {
@@ -28,7 +29,7 @@ class TranslationQuestionAdapter(val questions: MutableList<QuestionEntity>, pri
     override fun getItemCount(): Int = questions.size
 
     fun addNewQuestion() {
-        questions.add(QuestionEntity(null, 0, "", false, false, 0, "", 0))
+        questions.add(QuestionEntity(null, 0, "", false, false, 0, "", 0, getTpovId().toString()))
         notifyItemInserted(questions.size - 1)
     }
 

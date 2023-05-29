@@ -11,37 +11,37 @@ import kotlinx.coroutines.flow.Flow
 
 interface QuizDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertQuizDetailDB(note: QuestionDetailEntity)
+    fun insertQuizDetailDB(note: QuestionDetailEntity)
 
-    suspend fun insertQuizDetail(note: QuestionDetailEntity) {
+    fun insertQuizDetail(note: QuestionDetailEntity) {
         log("fun insertQuizDetail $note")
         insertQuizDetailDB(note)
     }
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertQuizDetailListDB(note: List<QuestionDetailEntity>)
+    fun insertQuizDetailListDB(note: List<QuestionDetailEntity>)
 
-    suspend fun insertQuizDetailList(note: List<QuestionDetailEntity>) {
+    fun insertQuizDetailList(note: List<QuestionDetailEntity>) {
         log("fun insertQuizDetailList $note")
         insertQuizDetailListDB(note)
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertProfileDB(profile: ProfileEntity)
+    fun insertProfileDB(profile: ProfileEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPlayersList(playersList: List<PlayersEntity>)
+    fun insertPlayersList(playersList: List<PlayersEntity>)
 
     @Query("DELETE FROM table_players")
-    suspend fun deletePlayersList()
+    fun deletePlayersList()
 
-    suspend fun insertProfile(profile: ProfileEntity) {
+    fun insertProfile(profile: ProfileEntity) {
         log("fun insertProfile $profile")
         insertProfileDB(profile)
     }
 
-    suspend fun insertQuiz(note: QuizEntity) {
+    fun insertQuiz(note: QuizEntity) {
         if (note.id == null) {
             var id = -1
             do {
@@ -56,75 +56,67 @@ interface QuizDao {
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertQuizNewId(note: QuizEntity)
+    fun insertQuizNewId(note: QuizEntity)
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertQuestionDB(name: QuestionEntity)
+    fun insertQuestionDB(name: QuestionEntity)
 
-    suspend fun insertQuestion(note: QuestionEntity) {
+    fun insertQuestion(note: QuestionEntity) {
         log("fun insertQuestion $note")
         insertQuestionDB(note)
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertQuizListDB(note: List<QuizEntity>)
+    fun insertQuizListDB(note: List<QuizEntity>)
 
-    suspend fun insertQuizList(note: List<QuizEntity>) {
+    fun insertQuizList(note: List<QuizEntity>) {
         log("fun insertQuizList $note")
         insertQuizListDB(note)
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertQuestionListDB(name: List<QuestionEntity>)
+    fun insertQuestionListDB(name: List<QuestionEntity>)
 
-    suspend fun insertQuestionList(note: List<QuestionEntity>) {
+    fun insertQuestionList(note: List<QuestionEntity>) {
         log("fun insertQuestionList $note")
         insertQuestionListDB(note)
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertListApiQuestionDB(name: List<ApiQuestion>)
+    fun insertChatDB(chatEntity: ChatEntity)
 
-    suspend fun insertListApiQuestion(note: List<ApiQuestion>) {
-        log("fun insertListApiQuestion $note")
-        insertListApiQuestionDB(note)
-    }
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertChatDB(chatEntity: ChatEntity)
-
-    suspend fun insertChat(chatEntity: ChatEntity) {
+    fun insertChat(chatEntity: ChatEntity) {
         log("fun insertChat $chatEntity")
         insertChatDB(chatEntity)
     }
 
-     fun getProfileFlow(tpovId: Int): Flow<ProfileEntity>  {
+    fun getProfileFlow(tpovId: Int): Flow<ProfileEntity>  {
         log("fun getProfileFlow tpovId: $tpovId, return: ${getProfileByTpovIdDB(tpovId)}")
         return getProfileFlowDB(tpovId)
     }
-    suspend fun getProfile(tpovId: Int): ProfileEntity {
+    fun getProfile(tpovId: Int): ProfileEntity {
         log("fun getProfile tpovId: $tpovId, return: ${getProfileDB(tpovId)}")
         return getProfileDB(tpovId)
     }
-    suspend fun getTpovIdByEmail(email: String): Int {
+    fun getTpovIdByEmail(email: String): Int {
         log("fun getTpovIdByEmail email: $email, return: ${getTpovIdByEmailDB(email)}")
         return getTpovIdByEmailDB(email)
     }
-    suspend fun getProfileByTpovId(tpovId: Int): ProfileEntity {
+    fun getProfileByTpovId(tpovId: Int): ProfileEntity {
         log("fun getProfileByTpovId tpovId: $tpovId, return: ${getProfileByTpovIdDB(tpovId)}")
         return getProfileByTpovIdDB(tpovId)
     }
-    suspend fun getTpovIdByUid(uid: String?): ProfileEntity {
+    fun getTpovIdByUid(uid: String?): ProfileEntity {
         log("fun getTpovIdByUid uid: $uid, return: ${getTpovIdByUidDB(uid)}")
         return getTpovIdByUidDB(uid)
     }
-    suspend fun getQuizList(tpovId: Int): List<QuizEntity> {
+    fun getQuizList(tpovId: Int): List<QuizEntity> {
         log("fun getQuizList tpovId: $tpovId, return: ${getQuizListDB(tpovId)}")
         return getQuizListDB(tpovId)
     }
 
-    suspend fun getTranslateEvent(): List<QuestionEntity> {
+    fun getTranslateEvent(): List<QuestionEntity> {
         log("fun getTranslateEvent return: ${getTranslateEventDB()}")
         return getTranslateEventDB()
     }
@@ -133,16 +125,16 @@ interface QuizDao {
     fun getProfileFlowDB(tpovId: Int): Flow<ProfileEntity>
 
     @Query("SELECT * FROM profiles WHERE tpovId LIKE :tpovId")
-    suspend fun getProfileDB(tpovId: Int): ProfileEntity
+    fun getProfileDB(tpovId: Int): ProfileEntity
 
     @Query("SELECT tpovId FROM profiles WHERE login LIKE :email")
-    suspend fun getTpovIdByEmailDB(email: String): Int
+    fun getTpovIdByEmailDB(email: String): Int
 
     @Query("SELECT * FROM profiles WHERE tpovId LIKE :tpovId")
     fun getProfileByTpovIdDB(tpovId: Int): ProfileEntity
 
     @Query("SELECT * FROM profiles WHERE idFirebase LIKE :uid")
-    suspend fun getTpovIdByUidDB(uid: String?): ProfileEntity
+    fun getTpovIdByUidDB(uid: String?): ProfileEntity
 
     @Query("SELECT * FROM front_list WHERE tpovId LIKE :tpovId")
     fun getQuizListDB(tpovId: Int): List<QuizEntity>
@@ -153,18 +145,18 @@ interface QuizDao {
         FROM front_list
     )
 """)
-    suspend fun getTranslateEventDB(): List<QuestionEntity>
+    fun getTranslateEventDB(): List<QuestionEntity>
 
-    suspend fun getQuizEvent(): List<QuizEntity> {
+    fun getQuizEvent(): List<QuizEntity> {
         log("fun getQuizEvent return: ${getQuizEventDB()}")
         return getQuizEventDB()
     }
 
-    suspend fun getQuestionList(): List<QuestionEntity> {
+    fun getQuestionList(): List<QuestionEntity> {
         log("fun getQuestionList return: ${getQuestionListDB()}")
         return getQuestionListDB()
     }
-    suspend fun getQuestionDetailList(): List<QuestionDetailEntity> {
+    fun getQuestionDetailList(): List<QuestionDetailEntity> {
         log("fun getQuestionDetailList return: ${getQuestionDetailListDB()}")
         return getQuestionDetailListDB()
     }
@@ -172,132 +164,118 @@ interface QuizDao {
         log("fun getQuizLiveData, tpovId: $tpovId, return: ${getQuizListDB(tpovId)}")
         return getQuizLiveDataDB(tpovId)
     }
-    suspend fun getListApiQuestion(): List<ApiQuestion> {
-        log("fun getListApiQuestion return: ${getListApiQuestionDB()}")
-        return getListApiQuestionDB()
-    }
-    suspend fun getQuizById(id: Int): QuizEntity {
+    fun getQuizById(id: Int): QuizEntity {
         log("fun getQuizById, id: $id return: ${getQuizByIdDB(id)}")
         return getQuizByIdDB(id)
     }
-    suspend fun getQuizListIdByTpovId(tpovId: Int): Int {
+    fun getQuizListIdByTpovId(tpovId: Int): Int {
         log("fun getQuizListIdByTpovId, tpovId: $tpovId, return: ${getQuizListIdByTpovIdDB(tpovId)}")
         return getQuizListIdByTpovIdDB(tpovId)
     }
-    suspend fun getQuizTpovIdById(id: Int): Int {
+    fun getQuizTpovIdById(id: Int): Int {
         log("fun getQuizTpovIdById, id: $id, return: ${getQuizTpovIdByIdDB(id)}")
         return getQuizTpovIdByIdDB(id)
     }
-    suspend fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
+    fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
         log("fun getQuestionDetailListByNameQuiz, nameQuiz: $nameQuiz, return: ${getQuestionDetailListByNameQuizDB(nameQuiz)}")
         return getQuestionDetailListByNameQuizDB(nameQuiz)
     }
-    suspend fun getQuestionByIdQuiz(nameQuiz: String): List<QuestionEntity> {
+    fun getQuestionByIdQuiz(nameQuiz: String): List<QuestionEntity> {
         log("fun getQuestionByIdQuiz, nameQuiz: $nameQuiz, return: ${getQuestionByIdQuizDB(nameQuiz)}")
         return getQuestionByIdQuizDB(nameQuiz)
     }
-    suspend fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion> {
-        log("fun getListApiQuestionBySystemDate, systemDate: $systemDate, return: ${getListApiQuestionBySystemDateDB(systemDate)}")
-        return getListApiQuestionBySystemDateDB(systemDate)
-    }
-    suspend fun getAllProfilesList(): ProfileEntity {
+    fun getAllProfilesList(): ProfileEntity {
         log("fun getAllProfilesList, return: ${getAllProfilesListDB()}")
         return getAllProfilesListDB()
     }
-    suspend fun getProfileByFirebaseId(id: String): ProfileEntity {
+    fun getProfileByFirebaseId(id: String): ProfileEntity {
         log("fun getProfileByFirebaseId, id: $id, return: ${getProfileByFirebaseIdDB(id)}")
         return getProfileByFirebaseIdDB(id)
     }
-    suspend fun getChat(): Flow<List<ChatEntity>> {
+    fun getChat(): Flow<List<ChatEntity>> {
         return getChatDB()
     }
-    suspend fun getEventByIdQuiz(id: Int): Int? {
+    fun getEventByIdQuiz(id: Int): Int? {
         log("fun getEventByIdQuiz, id: $id, return: ${getEventByIdQuizDB(id)}")
         return getEventByIdQuizDB(id)
     }
-    suspend fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int? {
+    fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int? {
         log("fun getIdQuizByNameQuiz, nameQuiz: $nameQuiz, tpovId: $tpovId, return: ${getIdQuizByNameQuizDB(nameQuiz, tpovId)}")
         return getIdQuizByNameQuizDB(nameQuiz, tpovId)
     }
-    suspend fun getNameQuizByIdQuiz(id: Int): String? {
+    fun getNameQuizByIdQuiz(id: Int): String? {
         log("fun getNameQuizByIdQuiz, id: $id, return: ${getNameQuizByIdQuizDB(id)}")
         return getNameQuizByIdQuizDB(id)
     }
-    suspend fun getQuestionByIdQuiz(id: Int): List<QuestionEntity> {
+    fun getQuestionByIdQuiz(id: Int): List<QuestionEntity> {
         log("fun getQuestionByIdQuiz, id: $id, return: ${getQuestionByIdQuizDB(id)}")
         return getQuestionByIdQuizDB(id)
     }
-    suspend fun getQuestionDetailByIdQuiz(id: Int): List<QuestionDetailEntity> {
+    fun getQuestionDetailByIdQuiz(id: Int): List<QuestionDetailEntity> {
         log("fun getQuestionDetailByIdQuiz, id: $id, return: ${getQuestionDetailByIdQuizDB(id)}")
         return getQuestionDetailByIdQuizDB(id)
     }
 
     @Query("SELECT * FROM front_list")
-    suspend fun getQuizEventDB(): List<QuizEntity>
+    fun getQuizEventDB(): List<QuizEntity>
 
     @Query("SELECT * FROM new_user_table")
-    suspend fun getQuestionListDB(): List<QuestionEntity>
+    fun getQuestionListDB(): List<QuestionEntity>
 
     @Query("SELECT * FROM table_data")
-    suspend fun getQuestionDetailListDB(): List<QuestionDetailEntity>
+    fun getQuestionDetailListDB(): List<QuestionDetailEntity>
 
     @Query("SELECT * FROM table_players")
-    suspend fun getPlayersDB(): List<PlayersEntity>
+    fun getPlayersDB(): List<PlayersEntity>
 
     @Query("SELECT * FROM table_players WHERE id LIKE :tpovId")
-    suspend fun getPlayersDB(tpovId: Int): PlayersEntity
+    fun getPlayersDB(tpovId: Int): PlayersEntity
 
     @Query("SELECT * FROM front_list WHERE tpovId LIKE :tpovId")
     fun getQuizLiveDataDB(tpovId: Int): LiveData<List<QuizEntity>>
     @Query("SELECT * FROM front_list")
     fun getEventLiveDataDB(): LiveData<List<QuizEntity>>
 
-    @Query("SELECT * FROM table_generate_question")
-    suspend fun getListApiQuestionDB(): List<ApiQuestion>
-
     @Query("SELECT * FROM front_list WHERE id LIKE :id")
-    suspend fun getQuizByIdDB(id: Int): QuizEntity
+    fun getQuizByIdDB(id: Int): QuizEntity
 
     @Query("SELECT id FROM front_list WHERE tpovId LIKE :tpovId")
-    suspend fun getQuizListIdByTpovIdDB(tpovId: Int): Int
+    fun getQuizListIdByTpovIdDB(tpovId: Int): Int
 
     @Query("SELECT tpovId FROM front_list WHERE id LIKE :id")
-    suspend fun getQuizTpovIdByIdDB(id: Int): Int
+    fun getQuizTpovIdByIdDB(id: Int): Int
 
     @Query("SELECT * FROM table_data WHERE idQuiz LIKE :nameQuiz")
-    suspend fun getQuestionDetailListByNameQuizDB(nameQuiz: String): List<QuestionDetailEntity>
+    fun getQuestionDetailListByNameQuizDB(nameQuiz: String): List<QuestionDetailEntity>
 
     @Query("SELECT * FROM new_user_table WHERE idQuiz LIKE :nameQuiz")
-    suspend fun getQuestionByIdQuizDB(nameQuiz: String): List<QuestionEntity>
-
-    @Query("SELECT * FROM table_generate_question WHERE date LIKE :systemDate")
-    suspend fun getListApiQuestionBySystemDateDB(systemDate: String): List<ApiQuestion>
+    fun getQuestionByIdQuizDB(nameQuiz: String): List<QuestionEntity>
 
     @Query("SELECT * FROM profiles")
-    suspend fun getAllProfilesListDB(): ProfileEntity
+    fun getAllProfilesListDB(): ProfileEntity
 
     @Query("SELECT * FROM profiles WHERE idFirebase = :id")
-    suspend fun getProfileByFirebaseIdDB(id: String): ProfileEntity
+    fun getProfileByFirebaseIdDB(id: String): ProfileEntity
     @Query("SELECT * FROM profiles")
-    suspend fun getAllProfiles(): List<ProfileEntity>
+    fun getAllProfiles(): List<ProfileEntity>
 
     @Query("SELECT * FROM chat_data ORDER BY id ASC")
     fun getChatDB(): Flow<List<ChatEntity>>
 
     @Query("SELECT event FROM front_list WHERE id = :id")
-    suspend fun getEventByIdQuizDB(id: Int): Int?
+    fun getEventByIdQuizDB(id: Int): Int?
 
     @Query("SELECT id FROM front_list WHERE nameQuiz = :nameQuiz AND tpovId = :tpovId")
-    suspend fun getIdQuizByNameQuizDB(nameQuiz: String, tpovId: Int): Int?
+    fun getIdQuizByNameQuizDB(nameQuiz: String, tpovId: Int): Int?
 
     @Query("SELECT nameQuiz FROM front_list WHERE id = :id")
-    suspend fun getNameQuizByIdQuizDB(id: Int): String?
+    fun getNameQuizByIdQuizDB(id: Int): String?
 
     @Query("SELECT * FROM new_user_table WHERE idQuiz = :id")
-    suspend fun getQuestionByIdQuizDB(id: Int): List<QuestionEntity>
+    fun getQuestionByIdQuizDB(id: Int): List<QuestionEntity>
 
     @Query("SELECT * FROM table_data WHERE idQuiz = :id")
-    suspend fun getQuestionDetailByIdQuizDB(id: Int): List<QuestionDetailEntity>
+    fun getQuestionDetailByIdQuizDB(id: Int): List<QuestionDetailEntity>
 
     @Query("DELETE FROM new_user_table WHERE idQuiz IS :id")
     fun deleteQuestionByIdQuizDB(id: Int)
@@ -322,29 +300,26 @@ interface QuizDao {
     fun deleteQuizByIdDB(id: Int)
 
     @Update
-    suspend fun updateQuizDetailDB(questionDetailEntity: QuestionDetailEntity)
+    fun updateQuizDetailDB(questionDetailEntity: QuestionDetailEntity)
 
-    suspend fun updateQuizDetail(questionDetailEntity: QuestionDetailEntity) {
+    fun updateQuizDetail(questionDetailEntity: QuestionDetailEntity) {
         log("updateQuizDetail questionDetailEntity: $questionDetailEntity")
         updateQuizDetailDB(questionDetailEntity)
     }
 
     @Update
-    suspend fun updateQuiz(quizEntity: QuizEntity)
+    fun updateQuiz(quizEntity: QuizEntity)
 
     @Update
-    suspend fun updateApiQuestion(generateQuestion: ApiQuestion)
+    fun updateProfilesDB(profileEntity: ProfileEntity)
 
-    @Update
-    suspend fun updateProfilesDB(profileEntity: ProfileEntity)
-
-    suspend fun updateProfiles(profileEntity: ProfileEntity) {
+    fun updateProfiles(profileEntity: ProfileEntity) {
         log("fun update profile: $profileEntity")
         updateProfilesDB(profileEntity)
     }
 
     @Update
-    suspend fun updateQuestion(questionEntity: QuestionEntity)
+    fun updateQuestion(questionEntity: QuestionEntity)
 
     @Query("SELECT COUNT(*) FROM table_data")
     fun getQuestionDetailCount(): Int
@@ -354,9 +329,6 @@ interface QuizDao {
 
     @Query("SELECT COUNT(*) FROM front_list")
     fun getQuizCount(): Int
-
-    @Query("SELECT COUNT(*) FROM table_generate_question")
-    fun getApiQuestionCount(): Int
 
     @Query("SELECT COUNT(*) FROM profiles")
     fun getProfileCount(): Int

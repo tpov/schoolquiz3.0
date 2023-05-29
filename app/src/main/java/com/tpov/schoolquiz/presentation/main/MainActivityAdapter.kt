@@ -16,12 +16,9 @@ import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import kotlinx.android.synthetic.main.activity_main_item.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 
@@ -66,15 +63,9 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         val constraintLayout: ConstraintLayout = itemView.findViewById(R.id.constraint_layout)
 
-        //val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
         private val binding = ActivityMainItemBinding.bind(view)
-        val editButton: ImageButton = itemView.findViewById(R.id.edit_button_swipe)
-        val deleteButton: ImageButton = itemView.findViewById(R.id.delete_button_swipe)
-        val sendButton: ImageButton = itemView.findViewById(R.id.send_button_swipe)
         val imvGradLightQuiz: ImageView = itemView.findViewById(R.id.imv_gradient_light_quiz)
         val imvGradHardQuiz: ImageView = itemView.findViewById(R.id.imv_grafient_hard_quiz)
-        val imvTranslate: ImageView = itemView.findViewById(R.id.imv_translate)
-        val chbTypeQuiz: CheckBox = itemView.findViewById(R.id.chb_type_quiz)
 
         private fun showPopupMenu(view: View, id: Int) {
             val popupMenu = PopupMenu(view.context, view)
@@ -159,12 +150,87 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             var goHardQuiz =
                 "${this.root.context.getString(R.string.go_hard_question)} - ${quizEntity.nameQuiz}"
 
+            if (quizEntity.event == 5) initViewQuiz5(quizEntity, viewModel, listener)
+            else initView(quizEntity, goHardQuiz, viewModel, listener)
+
+        }
+
+        @OptIn(InternalCoroutinesApi::class)
+        private fun ActivityMainItemBinding.initViewQuiz5(
+            quizEntity: QuizEntity,
+            viewModel: MainActivityViewModel,
+            listener: Listener
+        ) {
+            if (quizEntity.stars >= MAX_PERCENT) {
+
+                log("quizEntity.stars 1")
+                imvGradLightQuiz.visibility = View.VISIBLE
+                imvGradHardQuiz.visibility = View.GONE
+
+            } else if (quizEntity.ratingPlayer == 3) {
+
+                log("quizEntity.stars 2")
+                imvGradLightQuiz.visibility = View.GONE
+                imvGradHardQuiz.visibility = View.VISIBLE
+
+            } else if (quizEntity.tpovId == getTpovId()) {
+
+                imvGradLightQuiz.visibility = View.GONE
+                imvGradHardQuiz.visibility = View.GONE
+                imvGradientTranslateQuiz.visibility = View.GONE
+
+            } else {
+
+                log("quizEntity.stars 3")
+                chbTypeQuiz.visibility = View.GONE
+                imvGradLightQuiz.visibility = View.GONE
+                imvGradHardQuiz.visibility = View.GONE
+            }
+
+            chbTypeQuiz.visibility = View.VISIBLE
+            chbTypeQuiz.isChecked = quizEntity.stars >= MAX_PERCENT
+
+            imvTranslate.imageAlpha = 128
+
+            val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
+
+            //imvTranslate
+            if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
+            else imvTranslate.setColorFilter(Color.BLUE)
+
+            ratingBar.rating = quizEntity.ratingPlayer.toFloat() / 100
+
+            mainTitleButton.text = quizEntity.nameQuiz
+            mainTitleButton.setOnClickListener {
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+            }
+            imvGradHardQuiz.setOnClickListener {
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+            }
+            imvGradLightQuiz.setOnClickListener {
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+            }
+            imvTranslate.setOnClickListener {
+                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+            }
+
+            tvName.visibility = View.VISIBLE
+            tvTime.visibility = View.VISIBLE
+            tvName.text = quizEntity.userName
+            tvTime.text = quizEntity.data
+        }
+
+        @OptIn(InternalCoroutinesApi::class)
+        private fun ActivityMainItemBinding.initView(
+            quizEntity: QuizEntity,
+            goHardQuiz: String,
+            viewModel: MainActivityViewModel,
+            listener: Listener
+        ) {
             if (quizEntity.stars == MAX_PERCENT) {
                 Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
             }
-
-            log("quizEntity.stars = ${quizEntity.stars}")
-            log("quizEntity.stars position = $position")
 
             if (quizEntity.stars >= MAX_PERCENT) {
                 log("quizEntity.stars 1")

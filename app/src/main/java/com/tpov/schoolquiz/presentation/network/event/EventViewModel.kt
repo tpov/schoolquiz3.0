@@ -18,7 +18,8 @@ class EventViewModel @Inject constructor(
     private val getEventTranslateUseCase: GetEventTranslateUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val getQuestionListUseCase: GetQuestionListUseCase,
-    val updateProfileUseCase: UpdateProfileUseCase
+    val updateProfileUseCase: UpdateProfileUseCase,
+    val updateQuestionUseCase: UpdateQuestionUseCase
 ) : ViewModel() {
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()
@@ -103,7 +104,9 @@ class EventViewModel @Inject constructor(
     }
 
     fun saveQuestions(updatedQuestions: List<QuestionEntity>) {
-
+        updatedQuestions.forEach {
+            updateQuestionUseCase(it)
+        }
     }
 }
 @OptIn(InternalCoroutinesApi::class)
