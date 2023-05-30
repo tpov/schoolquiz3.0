@@ -4,6 +4,8 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.CheckBox
@@ -13,18 +15,20 @@ import android.widget.RadioButton
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import com.google.mlkit.nl.languageid.LanguageIdentification
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.custom.Errors.errorGetLvlTranslate
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
+import java.util.Locale
 
 class CreateQuestionDialog : DialogFragment() {
 
@@ -110,7 +114,8 @@ class CreateQuestionDialog : DialogFragment() {
                                 val userLocale: Locale = Locale.getDefault()
                                 val userLanguageCode: String = userLocale.language
 
-                                val languageFullName = LanguageUtils.getLanguageFullName(userLanguageCode)
+                                val languageFullName =
+                                    LanguageUtils.getLanguageFullName(userLanguageCode)
                                 questionItemView.language_selector.text = languageFullName
                             } else {
                                 val languageFullName = LanguageUtils.getLanguageFullName(language)
@@ -189,23 +194,25 @@ class CreateQuestionDialog : DialogFragment() {
             val questionLanguage = questionItemView.language_selector.text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
 
-            val question = QuestionEntity(
-                null,
-                if (questionHard) numHQ
-                else numLQ,
-                questionTitle,
-                questionAnswer,
-                questionHard,
-                idQuiz,
-                language,
-                try {
-                    mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(
-                        activity
-                    )
-                } catch (e: Exception) {
-                    0
-                },
-                getTpovId().toString()
+            questions.add(
+                QuestionEntity(
+                    null,
+                    if (questionHard) numHQ
+                    else numLQ,
+                    questionTitle,
+                    questionAnswer,
+                    questionHard,
+                    idQuiz,
+                    language,
+                    try {
+                        mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(
+                            activity
+                        )
+                    } catch (e: Exception) {
+                        0
+                    },
+                    getTpovId().toString()
+                )
             )
         }
 

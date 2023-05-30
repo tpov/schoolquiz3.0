@@ -4,5 +4,5 @@ import com.tpov.schoolquiz.domain.repository.RepositoryFB
 import javax.inject.Inject
 
 class GetPlayersListUseCase @Inject constructor(private val repositoryFB: RepositoryFB) {
-    suspend operator fun invoke() = repositoryFB.getPlayersList()
+    operator fun invoke() = repositoryFB.getPlayersList()
 }

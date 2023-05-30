@@ -127,10 +127,6 @@ class RepositoryDBImpl @Inject constructor(
         dao.updateQuiz(quizEntity)
     }
 
-    override fun updateApiQuestion(apiQuestion: ApiQuestion) {
-        dao.updateApiQuestion(apiQuestion)
-    }
-
     override fun updateProfile(profile: ProfileEntity) {
 
         log("updateProfileCount() updateProfile(): ${profile.pointsNolics}")

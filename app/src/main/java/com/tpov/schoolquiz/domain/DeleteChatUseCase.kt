@@ -4,6 +4,6 @@ import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import javax.inject.Inject
 
 class DeleteChatUseCase @Inject constructor(private val repositoryDB: RepositoryDB) {
-    suspend operator fun invoke(time: String) =
+    operator fun invoke(time: String) =
         repositoryDB.deleteChat(time)
 }

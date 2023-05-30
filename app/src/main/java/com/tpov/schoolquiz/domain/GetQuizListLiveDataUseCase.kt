@@ -6,7 +6,7 @@ import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import javax.inject.Inject
 
 class GetQuizLiveDataUseCase @Inject constructor(private val repositoryDB: RepositoryDB) {
-    suspend fun getQuizUseCase(tpovId: Int): LiveData<List<QuizEntity>> {
+    fun getQuizUseCase(tpovId: Int): LiveData<List<QuizEntity>> {
 
         return repositoryDB.getQuizLiveData(tpovId)
     }

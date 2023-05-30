@@ -20,7 +20,6 @@ class EventViewModel @Inject constructor(
     private val getQuestionListUseCase: GetQuestionListUseCase,
     val updateProfileUseCase: UpdateProfileUseCase,
     val updateQuestionUseCase: UpdateQuestionUseCase
-    private val getQuestionListUseCase: GetQuestionListUseCase,
 ) : ViewModel() {
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()

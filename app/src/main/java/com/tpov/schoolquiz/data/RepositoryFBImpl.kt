@@ -22,6 +22,7 @@ import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.io.File
+import java.lang.Math.abs
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -378,7 +379,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.insertQuestion(
                                         QuestionEntity(
                                             null,
-                                            idQuestionSnap.key?.toInt() ?: 0,
+                                            kotlin.math.abs(idQuestionSnap.key?.toInt() ?: 0),
                                             question.nameQuestion,
                                             question.answerQuestion,
                                             idQuestionSnap.key?.toInt()!! < 0,
@@ -1144,24 +1145,24 @@ class RepositoryFBImpl @Inject constructor(
             synthLiveData.value = --synth
             log("setQuestionData() найдет квест it: ${it}")
             val eventByIdQuiz = dao.getEventByIdQuiz(it.idQuiz)
-            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${it.numQuestion}/${it.language}")
+            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener {
                     synthLiveData.value = ++synth
                 }
 
-            if (eventByIdQuiz == 2) questionRef2.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 2) questionRef2.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (eventByIdQuiz == 3) questionRef3.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 3) questionRef3.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (eventByIdQuiz == 4) questionRef4.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 4) questionRef4.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (eventByIdQuiz == 5) questionRef5.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 5) questionRef5.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (eventByIdQuiz == 6) questionRef6.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 6) questionRef6.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (eventByIdQuiz == 7) questionRef7.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 7) questionRef7.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
-            if (eventByIdQuiz == 8) questionRef8.child("${it.idQuiz}/${it.id}/${it.language}")
+            if (eventByIdQuiz == 8) questionRef8.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
         }
 
