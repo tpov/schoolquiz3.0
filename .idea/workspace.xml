@@ -15,7 +15,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="+">
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Edit Design question activity&#10;Create background image">
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/mipmap-hdpi/back_main.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/mipmap-hdpi/back_question_hard.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/mipmap-hdpi/back_question_light.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" afterDir="false" />
@@ -24,61 +27,27 @@
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_07_04_2023_20_57__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_07_04_2023_20_57__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_04_2023_20_47__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_04_2023_20_47__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_12_04_2023_19_16__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_12_04_2023_19_16__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_04_2023_21_16__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_04_2023_21_16__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_17_04_2023_19_19__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_17_04_2023_19_19__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_21_04_2023_21_14__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_21_04_2023_21_14__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_22_05_2023_20_07__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_22_05_2023_20_07__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_26_05_2023_20_23__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_26_05_2023_20_23__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_1.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_2.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_2.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_22_05_2023_20_07_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_22_05_2023_20_07__Changes_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryDBImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryDBImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryFBImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryFBImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuizDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuizDatabase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteChatUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteChatUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteQuestionByIdQuizUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteQuestionByIdQuizUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteQuestionDetailByIdQuiz.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteQuestionDetailByIdQuiz.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteQuizUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DeleteQuizUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetAllProfilesDBUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetAllProfilesDBUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetChatUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetChatUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetEventTranslateUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetEventTranslateUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetIdQuizByNameQuizUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetIdQuizByNameQuizUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetListApiQuestionBySystemDateUseCase.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetPlayersDBUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetPlayersDBUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetPlayersListUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetPlayersListUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetProfileUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetProfileUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuestionDetailListUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuestionDetailListUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuestionListByIdQuiz.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuestionListByIdQuiz.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuestionListUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuestionListUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizByIdUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizByIdUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizEventUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizEventUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizListLiveDataUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizListLiveDataUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizListUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetQuizListUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetTpovIdByEmailUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/GetTpovIdByEmailUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/InsertProfileUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/InsertProfileUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/InsertQuestionUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/InsertQuestionUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/InsertQuizUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/InsertQuizUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/SetProfileFBUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/SetProfileFBUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/SetQuestionDetailFBUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/SetQuestionDetailFBUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/UpdateQuestionDetailUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/UpdateQuestionDetailUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/UpdateQuestionUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/UpdateQuestionUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/UpdateQuizUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/UpdateQuizUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialog.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialog.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/FragmentMain.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/FragmentMain.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_background_gradient_main_bottom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_background_gradient_main_bottom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/nav_task.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/nav_task.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main_item.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main_item.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_question.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_question.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/title_fragment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/title_fragment.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/mipmap-hdpi/back_main.png" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/mipmap-hdpi/back_chat.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -161,6 +130,11 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "PROJECT_TRUSTED_KEY": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "cidr.known.project.marker": "true",
+    "last_opened_file_path": "E:/SchoolQuiz",
     "project.structure.last.edited": "SDK Location",
     "project.structure.proportion": "0.17",
     "project.structure.side.proportion": "0.0"
@@ -172,6 +146,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\SchoolQuiz\app\src\main\res\mipmap-hdpi" />
       <recent name="D:\SchoolQuiz\app\src\main\java\com\tpov\schoolquiz\domain" />
       <recent name="D:\SchoolQuiz\app\src\main\res\drawable-hdpi" />
       <recent name="D:\SchoolQuiz\app\src\main\res\drawable-xxhdpi" />
@@ -508,7 +483,14 @@
       <option name="project" value="LOCAL" />
       <updated>1685383661332</updated>
     </task>
-    <option name="localTasksCounter" value="36" />
+    <task id="LOCAL-00036" summary="Merge">
+      <created>1685432222909</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1685432222909</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -528,8 +510,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="create chat" />
-    <MESSAGE value="edit sort chat" />
     <MESSAGE value="fix setEvent quiz" />
     <MESSAGE value="edit autoswipe chat" />
     <MESSAGE value="Edit registration fragment (delete to 2 path)" />
@@ -553,7 +533,9 @@
     <MESSAGE value="Edit setQuiz5, sort quiz5" />
     <MESSAGE value="Edit setQuiz5, sort quiz5&#10;Delete question day&#10;Fix time format&#10;Edit translate" />
     <MESSAGE value="Edit setQuiz5, sort quiz5&#10;Delete question day&#10;Fix time format&#10;Edit translate &#10;Add detect language" />
-    <option name="LAST_COMMIT_MESSAGE" value="Edit setQuiz5, sort quiz5&#10;Delete question day&#10;Fix time format&#10;Edit translate &#10;Add detect language" />
+    <MESSAGE value="Merge" />
+    <MESSAGE value="Edit Design question activity&#10;Create background image" />
+    <option name="LAST_COMMIT_MESSAGE" value="Edit Design question activity&#10;Create background image" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

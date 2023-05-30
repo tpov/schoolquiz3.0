@@ -18,11 +18,7 @@ import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import kotlinx.android.synthetic.main.activity_main_item.view.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 
@@ -209,7 +205,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
-            imvGradHardQuiz.setOnClickListener {
+            /*imvGradHardQuiz.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
             imvGradLightQuiz.setOnClickListener {
@@ -217,7 +213,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }
             imvTranslate.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }
+            }*/
 
             tvName.visibility = View.VISIBLE
             tvTime.visibility = View.VISIBLE
@@ -271,7 +267,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             mainTitleButton.text = quizEntity.nameQuiz
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }
+            }/*
             imvGradHardQuiz.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
@@ -280,7 +276,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }
             imvTranslate.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }
+            }*/
         }
 
         companion object {

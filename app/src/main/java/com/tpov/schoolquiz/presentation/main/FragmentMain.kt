@@ -81,8 +81,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         if (isMyQuiz == 1) binding.fabAddItem.visibility = View.VISIBLE
         else binding.fabAddItem.visibility = View.GONE
 
-
-
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             val filteredList = quizList.filter { it.event == isMyQuiz }
             val sortedList = if (isMyQuiz == 5) {

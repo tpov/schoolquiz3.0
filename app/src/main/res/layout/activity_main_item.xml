@@ -138,14 +138,13 @@
 
                 <Button
                     android:id="@+id/main_title_button"
-                    android:layout_width="wrap_content"
+                    android:layout_width="100dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
                     android:background="@null"
+                    android:layout_gravity="center"
                     android:elevation="12dp"
                     android:gravity="center"
                     android:inputType="textAutoCorrect"
-                    android:maxWidth="85dp"
                     android:paddingLeft="16dp"
                     android:text="name quiz"
                     android:textColor="@color/white"

@@ -25,11 +25,9 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.android.synthetic.main.activity_question.tv_next
+import kotlinx.android.synthetic.main.activity_question.tv_pref
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.floor
 
@@ -80,6 +78,7 @@ class QuestionActivity : AppCompatActivity() {
                 finish()
             }
         }
+
         insertQuestionsNewEvent()
         binding.apply {
             if (viewModel.hardQuestion) {
@@ -115,11 +114,11 @@ class QuestionActivity : AppCompatActivity() {
             }
 
 
-            prefButton.setOnClickListener {
+            tv_pref.setOnClickListener {
                 setVisibleButtonsPref()
                 prefButton()
             }
-            nextButton.setOnClickListener {
+            tv_next.setOnClickListener {
                 setVisibleButtonsNext()
                 nextButton()
             }
@@ -145,6 +144,8 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.idQuiz = intent.getIntExtra(ID_QUIZ, 0)
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
+        if (!viewModel.hardQuestion) binding.viewBackground.background = getDrawable(R.mipmap.back_question_light)
+        else binding.viewBackground.background = getDrawable(R.mipmap.back_question_hard)
     }
 
     private fun prefButton() {
@@ -159,7 +160,6 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun setStateTimer(nextQuestion: Boolean) {
 
-        log("setStateTimer currentIndex: ${viewModel.codeAnswer[viewModel.currentIndex]}")
 
         try {
             if (nextQuestion) {
