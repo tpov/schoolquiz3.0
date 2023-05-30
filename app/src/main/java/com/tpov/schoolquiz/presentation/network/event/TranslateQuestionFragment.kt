@@ -102,25 +102,20 @@ class TranslateQuestionFragment : Fragment() {
         }
 
         binding.buttonSave.setOnClickListener {
-            val currentQuestion = questions?.get(questionIndex)
             val updatedQuestions = translationAdapter.getUpdatedQuestions()
             viewModel.saveQuestions(updatedQuestions)
-            translationAdapter.questions.clear()
-            currentQuestion?.let {
-                translationAdapter.questions.add(it)
-                translationAdapter.notifyDataSetChanged()
-            }
             loadNextQuestion()
         }
 
-        // binding.buttonCancel.setOnClickListener {
-        //     requireActivity().supportFragmentManager.beginTransaction().remove(this).commit()
-        // }
+        binding.bCancel.setOnClickListener {
+            requireActivity().supportFragmentManager.beginTransaction().remove(this).commit()
+        }
     }
 
     private fun loadNextQuestion() {
         if (questionIndex < (questions?.size ?: 0)) {
             val nextQuestion = questions?.get(questionIndex)
+            translationAdapter.questions.clear()
             nextQuestion?.let {
                 translationAdapter.questions.add(it)
                 translationAdapter.notifyDataSetChanged()

@@ -22,14 +22,10 @@ import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.io.File
-import java.lang.Math.abs
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 @Singleton
 class RepositoryFBImpl @Inject constructor(
@@ -115,15 +111,23 @@ class RepositoryFBImpl @Inject constructor(
         val questionRef7 = FirebaseDatabase.getInstance().getReference("question7")
         val questionRef8 = FirebaseDatabase.getInstance().getReference("question8")
 
+        val profile = dao.getProfile(getTpovId())
+
         questionRef5.limitToLast(10).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuestion snapshot: ${snapshot.key}")
                 for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
-                    if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!) != null) {
-                        log("getQuestion idQuizSnap: ${idQuizSnap.key}")
-                        for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
-                            log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
-                            for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
+
+                    log("getQuestion idQuizSnap: ${idQuizSnap.key}")
+                    for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
+
+                        log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
+                        for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
+                            if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty() &&
+                                dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty() ||
+                                languageSnap.key?.get(0)!! == '-' &&
+                                profile.translater!! >= 200
+                            ) {
                                 log("getQuestion languageSnap: ${languageSnap.key}")
                                 val question = languageSnap.getValue(Question::class.java)
                                 if (question != null) {
@@ -135,7 +139,7 @@ class RepositoryFBImpl @Inject constructor(
                                             question.answerQuestion,
                                             question.typeQuestion,
                                             idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
+                                            languageSnap.key?.lowercase(Locale.ROOT) ?: "eu",
                                             question.lvlTranslate,
                                             question.infoTranslater
                                         )
@@ -258,7 +262,11 @@ class RepositoryFBImpl @Inject constructor(
 
                     log("getQuiz(), data: ${data.key}, versionQuiz: $versionQuiz, quizEntity: $quiz")
                     if (quiz != null && versionQuiz < quiz.versionQuiz) {
-                        if (quiz.event != 5 || TimeManager.getDaysBetweenDates(quiz.data, TimeManager.getCurrentTime())!! < 90) {
+                        if (quiz.event != 5 || TimeManager.getDaysBetweenDates(
+                                quiz.data,
+                                TimeManager.getCurrentTime()
+                            )!! < 90
+                        ) {
                             savePictureToLocalDirectory(
                                 quiz.picture
                             ) { path ->
@@ -580,6 +588,16 @@ class RepositoryFBImpl @Inject constructor(
         val playersRef = database.getReference("players")
         val playersQuiz = playersRef.child("quiz")
 
+        val profile = dao.getProfile(getTpovId())
+        for (question in dao.getQuestionList()) {
+            if (profile.translater!! > 100) {
+                if (dao.getQuizById(question.idQuiz).nameQuiz.isNullOrEmpty()) {
+                    questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
+                        .setValue(question).addOnSuccessListener { synthLiveData.value = ++synth }
+                }
+            }
+        }
+
         for (quiz in quizEventDB) {
             log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
             when (quiz.event) {
@@ -610,7 +628,7 @@ class RepositoryFBImpl @Inject constructor(
                             quizRef3.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef4.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
+                        questionRef4.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question).addOnSuccessListener {
                                 questionRef3.child("${question.idQuiz}").removeValue()
                             }
@@ -623,23 +641,28 @@ class RepositoryFBImpl @Inject constructor(
                 }
 
                 5 -> {
+
                     log("fun setEvent event: ${quiz.event}")
                     quizRef5.child(quiz.id.toString())
                         .setValue(quiz).addOnSuccessListener {
                             quizRef4.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
+                        questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question)
                             .addOnSuccessListener {
                                 questionRef4.child("${question.idQuiz}").removeValue()
                             }
                     }
                     log("quiz.data: ${quiz.data}, TimeManager.getCurrentTime(): ${TimeManager.getCurrentTime()}")
-                    if (TimeManager.getDaysBetweenDates(quiz.data, TimeManager.getCurrentTime())!! > 90) {
-                       dao.deleteQuizById(quiz.id!!)
-                       dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                       dao.deleteQuestionByIdQuiz(quiz.id!!)
+                    if (TimeManager.getDaysBetweenDates(
+                            quiz.data,
+                            TimeManager.getCurrentTime()
+                        )!! > 90
+                    ) {
+                        dao.deleteQuizById(quiz.id!!)
+                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
+                        dao.deleteQuestionByIdQuiz(quiz.id!!)
                     }
                 }
 
@@ -651,7 +674,7 @@ class RepositoryFBImpl @Inject constructor(
                             quizRef5.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef6.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
+                        questionRef6.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question)
                             .addOnSuccessListener {
                                 questionRef5.child("${question.idQuiz}").removeValue()
@@ -671,7 +694,7 @@ class RepositoryFBImpl @Inject constructor(
                             quizRef6.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef7.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
+                        questionRef7.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question)
                             .addOnSuccessListener {
                                 questionRef6.child("${question.idQuiz}").removeValue()
@@ -685,9 +708,17 @@ class RepositoryFBImpl @Inject constructor(
                 }
 
                 8 -> {
-                    quizRef7.child("${quiz.id}").removeValue()
+                    log("fun setEvent event: ${quiz.event}")
+                    quizRef8.child(quiz.id.toString())
+                        .setValue(quiz).addOnSuccessListener {
+                            quizRef7.child("${quiz.id}").removeValue()
+                        }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef7.child("${question.idQuiz}").removeValue()
+                        questionRef8.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
+                            .setValue(question)
+                            .addOnSuccessListener {
+                                questionRef7.child("${question.idQuiz}").removeValue()
+                            }
                     }
                 }
             }
