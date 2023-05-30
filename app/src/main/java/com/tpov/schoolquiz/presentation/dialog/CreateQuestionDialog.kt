@@ -4,8 +4,6 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.CheckBox
@@ -15,21 +13,18 @@ import android.widget.RadioButton
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
-import com.google.mlkit.nl.languageid.LanguageIdentification
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.custom.Errors.errorGetLvlTranslate
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
-import kotlinx.android.synthetic.main.profile_item.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.InternalCoroutinesApi
 
 class CreateQuestionDialog : DialogFragment() {
 
@@ -212,8 +207,6 @@ class CreateQuestionDialog : DialogFragment() {
                 },
                 getTpovId().toString()
             )
-
-            questions.add(question)
         }
 
         // Создание QuizEntity

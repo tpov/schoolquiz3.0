@@ -5,7 +5,7 @@ import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.domain.repository.RepositoryDB
-import kotlinx.coroutines.*
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -47,7 +47,6 @@ class RepositoryDBImpl @Inject constructor(
     }
 
     override fun getProfileFlow(tpovId: Int): Flow<ProfileEntity> {
-
         return dao.getProfileFlow(tpovId)
     }
 
@@ -121,37 +120,24 @@ class RepositoryDBImpl @Inject constructor(
     }
 
     override fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
-
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                dao.updateQuizDetail(questionDetailEntity)
-            }
-        }
+        dao.updateQuizDetail(questionDetailEntity)
     }
 
     override fun updateQuiz(quizEntity: QuizEntity) {
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                dao.updateQuiz(quizEntity)
-            }
-        }
+        dao.updateQuiz(quizEntity)
+    }
+
+    override fun updateApiQuestion(apiQuestion: ApiQuestion) {
+        dao.updateApiQuestion(apiQuestion)
     }
 
     override fun updateProfile(profile: ProfileEntity) {
 
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                log("updateProfileCount() updateProfile(): ${profile.pointsNolics}")
-                dao.updateProfiles(profile)
-            }
-        }
+        log("updateProfileCount() updateProfile(): ${profile.pointsNolics}")
+        dao.updateProfiles(profile)
     }
 
     override fun updateQuestion(questionEntity: QuestionEntity) {
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) {
-                dao.updateQuestion(questionEntity)
-            }
-        }
+        dao.updateQuestion(questionEntity)
     }
 }
