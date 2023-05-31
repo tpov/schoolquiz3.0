@@ -78,6 +78,9 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
+
+        if (isMyQuiz == 5) binding.fabSearch.visibility = View.VISIBLE
+        else binding.fabSearch.visibility = View.GONE
         if (isMyQuiz == 1) binding.fabAddItem.visibility = View.VISIBLE
         else binding.fabAddItem.visibility = View.GONE
 
@@ -103,6 +106,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     CreateQuestionDialog.newInstance(CreateQuestionDialog.NAME, -1)
                 dialogFragment.show(fragmentManager, "create_question_dialog")
             }
+        }
+
+
+        binding.fabSearch.setOnClickListener {
+            dialogNolics(-1, false, 100)
         }
     }
 
@@ -130,33 +138,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             ).show()
         } else {
             if (mainViewModel.getQuizById(id).event == 5) {
-                val alertDialog = AlertDialog.Builder(activity)
-                    .setTitle("Попытка платная")
-                    .setMessage("В целях честной игры снимается плата.")
-                    .setPositiveButton("500 ноликов") { dialog, which ->
-                        mainViewModel.updateProfileUseCase(
-                            mainViewModel.getProfile().copy(count = mainViewModel.getProfileCount()!! - 33, pointsNolics = mainViewModel.getProfileNolic()!! - 500)
-                        )
-                        val intent = Intent(activity, QuestionActivity::class.java)
-                        intent.putExtra(NAME_USER, "user")
-                        intent.putExtra(ID_QUIZ, id)
-                        intent.putExtra(HARD_QUESTION, type)
-                        startActivityForResult(intent, REQUEST_CODE)
-                    }
-                    .setNegativeButton("Отмена", null)
-                    .create()
-
-                alertDialog.setOnShowListener { dialog ->
-                    val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
-                    val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-                    positiveButton.setTextColor(Color.WHITE)
-                    negativeButton.setTextColor(Color.YELLOW)
-
-                    dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
-                }
-
-                alertDialog.show()
+                dialogNolics(id, type, 500)
 
             } else {
                 mainViewModel.updateProfileUseCase(
@@ -169,6 +151,86 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 startActivityForResult(intent, REQUEST_CODE)
             }
         }
+    }
+
+    private fun FragmentMain.dialogNolics(
+        id: Int,
+        type: Boolean,
+        nolics: Int
+    ) {
+        if (id == -1) {
+
+            val randQuiz =
+                mainViewModel.getQuizList().filter {
+                    it.event == 5
+                }.random()
+
+            val alertDialog = AlertDialog.Builder(activity)
+                .setTitle("Поиск")
+                .setMessage("Пройти рандомный квест из этого списка")
+                .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+
+                    mainViewModel.updateProfileUseCase(
+                        mainViewModel.getProfile().copy(
+                            count = mainViewModel.getProfileCount()!! - 33,
+                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                        )
+                    )
+
+
+                    val intent = Intent(activity, QuestionActivity::class.java)
+                    intent.putExtra(NAME_USER, "user")
+                    intent.putExtra(ID_QUIZ, randQuiz.id)
+                    intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
+                    startActivityForResult(intent, REQUEST_CODE)
+                }
+                .setNegativeButton("Отмена", null)
+                .create()
+
+            alertDialog.setOnShowListener { dialog ->
+                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                positiveButton.setTextColor(Color.WHITE)
+                negativeButton.setTextColor(Color.YELLOW)
+
+                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+            }
+
+            alertDialog.show()
+        } else {
+            val alertDialog = AlertDialog.Builder(activity)
+                .setTitle("Попытка платная")
+                .setMessage("В целях честной игры снимается плата.")
+                .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+                    mainViewModel.updateProfileUseCase(
+                        mainViewModel.getProfile().copy(
+                            count = mainViewModel.getProfileCount()!! - 33,
+                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                        )
+                    )
+                    val intent = Intent(activity, QuestionActivity::class.java)
+                    intent.putExtra(NAME_USER, "user")
+                    intent.putExtra(ID_QUIZ, id)
+                    intent.putExtra(HARD_QUESTION, type)
+                    startActivityForResult(intent, REQUEST_CODE)
+                }
+                .setNegativeButton("Отмена", null)
+                .create()
+
+            alertDialog.setOnShowListener { dialog ->
+                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                positiveButton.setTextColor(Color.WHITE)
+                negativeButton.setTextColor(Color.YELLOW)
+
+                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+            }
+
+            alertDialog.show()
+        }
+
     }
 
 
@@ -199,7 +261,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     }"
                 )
                 log(
-                    "getQuizLiveData.observe question is empty: ${mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)}"
+                    "getQuizLiveData.observe question is empty: ${
+                        mainViewModel.getQuestionListByIdQuiz(
+                            quiz.id ?: 0
+                        )
+                    }"
                 )
                 log("getQuizLiveData.observe quiz: ${quiz}")
                 if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {

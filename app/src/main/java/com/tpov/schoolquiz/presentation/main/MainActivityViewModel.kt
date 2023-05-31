@@ -34,6 +34,7 @@ import com.tpov.schoolquiz.domain.GetQuestionDetail8FBUseCase
 import com.tpov.schoolquiz.domain.GetQuestionListUseCase
 import com.tpov.schoolquiz.domain.GetQuiz8FBUseCase
 import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
+import com.tpov.schoolquiz.domain.GetQuizEventUseCase
 import com.tpov.schoolquiz.domain.GetQuizListUseCase
 import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
 import com.tpov.schoolquiz.domain.InsertProfileUseCase
@@ -77,7 +78,8 @@ class MainActivityViewModel @Inject constructor(
     private val deleteQuizByIdUseCase: DeleteQuizUseCase,
     private val deleteQuestionByIdQuizUseCase: DeleteQuestionByIdQuizUseCase,
     val updateQuizUseCase: UpdateQuizUseCase,
-    val updateProfileUseCase: UpdateProfileUseCase
+    val updateProfileUseCase: UpdateProfileUseCase,
+    private val getQuizEventUseCase: GetQuizEventUseCase
 ) : ViewModel() {
 
     var oldId = 0
@@ -91,6 +93,10 @@ class MainActivityViewModel @Inject constructor(
     fun getQuizById(position: Int): QuizEntity {
         log("getQuizById, position: $position, getQuizByIdUseCase(position): ${getQuizByIdUseCase(position)}")
         return getQuizByIdUseCase(position)
+    }
+
+    fun getQuestionList(): List<QuestionEntity> {
+        return getQuestionListUseCase()
     }
     fun updateTpovId(tpovId: Int) {
         if (tpovId != oldId) tpovIdLiveData.value = tpovId
@@ -184,13 +190,17 @@ class MainActivityViewModel @Inject constructor(
         setQuestionDetailFBUseCase()
     }
 
-    private fun getQuizList(): LiveData<List<QuizEntity>> {
+    fun getQuizListLiveData(): LiveData<List<QuizEntity>> {
         log("fun getQuizList tpovId: ${getTpovId()}")
         return getQuizLiveDataUseCase.getQuizUseCase(getTpovId())
     }
 
     fun getQuizLiveData(): LiveData<List<QuizEntity>> {
-        return getQuizList()
+        return getQuizListLiveData()
+    }
+
+    fun getQuizList(): List<QuizEntity> {
+        return getQuizEventUseCase()
     }
 
     fun getProfile(): ProfileEntity {
@@ -252,7 +262,7 @@ class MainActivityViewModel @Inject constructor(
         val days = if (TimeManager.getDaysBetweenDates(profile?.timeLastOpenBox ?: "",
                 TimeManager.getCurrentTime()
             ) == 1L && profile?.coundDayBox != 10) {
-            profile?.coundDayBox?.plus(1) ?: 0
+            profile?.coundDayBox?.plus(1)!!
         } else if (TimeManager.getDaysBetweenDates(
                 profile?.timeLastOpenBox ?: "",
                 TimeManager.getCurrentTime()

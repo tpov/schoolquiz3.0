@@ -109,49 +109,56 @@ class RepositoryFBImpl @Inject constructor(
         )
 
         val profile = dao.getProfile(getTpovId())
-        questionRefs.forEach {
-            it.limitToLast(30).addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    log("getQuestion snapshot: ${snapshot.key}")
-                    for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
+        if (profile.translater!! > 100) {
+            questionRefs.forEach {
+                it.limitToLast(30).addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        log("getQuestion snapshot: ${snapshot.key}")
+                        for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
 
-                        log("getQuestion idQuizSnap: ${idQuizSnap.key}")
-                        for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
+                            log("getQuestion idQuizSnap: ${idQuizSnap.key}")
+                            for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
 
-                            log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
-                            for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
-                                if (dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty() &&
-                                    dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty() ||
-                                    languageSnap.key?.get(0)!! == '-' &&
-                                    profile.translater!! >= 200
-                                ) {
-                                    log("getQuestion languageSnap: ${languageSnap.key}")
-                                    val question = languageSnap.getValue(Question::class.java)
-                                    if (question != null) {
-                                        dao.insertQuestion(
-                                            QuestionEntity(
-                                                null,
-                                                idQuestionSnap.key?.toInt() ?: 0,
-                                                question.nameQuestion,
-                                                question.answerQuestion,
-                                                question.typeQuestion,
-                                                idQuizSnap.key?.toInt() ?: -1,
-                                                languageSnap.key?.lowercase(Locale.ROOT) ?: "eu",
-                                                question.lvlTranslate,
-                                                question.infoTranslater
+                                log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
+                                for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
+                                    if (try {
+                                            dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty()
+                                        } catch (e: Exception) {
+                                            true
+                                        }
+                                        && dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty() ||
+                                        languageSnap.key?.get(0)!! == '-' &&
+                                        profile.translater!! >= 200
+                                    ) {
+                                        log("getQuestion languageSnap: ${languageSnap.key}")
+                                        val question = languageSnap.getValue(Question::class.java)
+                                        if (question != null) {
+                                            dao.insertQuestion(
+                                                QuestionEntity(
+                                                    null,
+                                                    idQuestionSnap.key?.toInt() ?: 0,
+                                                    question.nameQuestion,
+                                                    question.answerQuestion,
+                                                    question.typeQuestion,
+                                                    idQuizSnap.key?.toInt() ?: -1,
+                                                    languageSnap.key?.lowercase(Locale.ROOT)
+                                                        ?: "eu",
+                                                    question.lvlTranslate,
+                                                    question.infoTranslater
+                                                )
                                             )
-                                        )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                override fun onCancelled(error: DatabaseError) {
-                    log("getQuestion8Data ошибка: $error")
-                }
-            })
+                    override fun onCancelled(error: DatabaseError) {
+                        log("getQuestion8Data ошибка: $error")
+                    }
+                })
+            }
         }
 
     }
@@ -592,7 +599,8 @@ class RepositoryFBImpl @Inject constructor(
             if (profile.translater!! > 100) {
                 if (dao.getQuizById(question.idQuiz).nameQuiz.isNullOrEmpty()) {
                     questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
-                        .setValue(question).addOnSuccessListener { dao.deleteQuestionByIdQuiz(question.idQuiz)}
+                        .setValue(question)
+                        .addOnSuccessListener { dao.deleteQuestionByIdQuiz(question.idQuiz) }
                 }
             }
         }

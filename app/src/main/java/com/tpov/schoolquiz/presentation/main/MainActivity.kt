@@ -361,8 +361,6 @@ class MainActivity : AppCompatActivity() {
                 it?.datePremium ?: "",
                 it?.nickname ?: ""
             )
-
-            loadNumBoxDay()
         }
 
         setButtonNavListener()

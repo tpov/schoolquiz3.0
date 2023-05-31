@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.presentation.network.chat
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -31,6 +33,7 @@ class ChatFragment : BaseFragment() {
         (requireActivity().application as MainApp).component
     }
 
+    private lateinit var message: String
     private lateinit var chatViewModel: ChatViewModel
     private lateinit var chatAdapter: ChatAdapter
     private var _binding: FragmentChatBinding? = null
@@ -116,8 +119,26 @@ class ChatFragment : BaseFragment() {
 
         chatViewModel.chatData().observe(viewLifecycleOwner) { chatEntityList ->
             val chatList = convertChatEntityListToChatList(chatEntityList)
-            chatAdapter.submitList(chatList)
-            if (chatList.isNotEmpty()) binding.chatRecyclerView.scrollToPosition(chatList.size - 1)
+
+            if (chatList.isNotEmpty()) {
+                val lastChat = chatList.last()
+                val lastMessage = lastChat.msg
+
+                // Побуквенное добавление последнего сообщения в список чата в основном потоке
+                val handler = Handler(Looper.getMainLooper())
+                val charList = mutableListOf<Char>()
+                lastMessage.forEachIndexed { index, char ->
+                    charList.add(char)
+                    val updatedChatList = chatList.toMutableList()
+                    updatedChatList[updatedChatList.indexOf(lastChat)] = lastChat.copy(msg = charList.joinToString(""))
+                    handler.postDelayed({
+                        chatAdapter.submitList(updatedChatList.toList())
+                        binding.chatRecyclerView.scrollToPosition(updatedChatList.size - 1)
+                    }, index * 50L) // Пауза между добавлением каждого символа (можно настроить по своему усмотрению)
+                }
+            } else {
+                chatAdapter.submitList(chatList)
+            }
         }
     }
 
