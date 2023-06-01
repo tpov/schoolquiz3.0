@@ -49,7 +49,7 @@ class TranslationQuestionAdapter(val questions: MutableList<QuestionEntity>, pri
             languageSpinner.adapter = languageAdapter
 
             if (question.language.isNotEmpty()) {
-                val languagePosition = languages.indexOf(question.language)
+                val languagePosition = languages.indexOfFirst { it.equals(question.language, ignoreCase = true) }
                 if (languagePosition != -1) {
                     languageSpinner.setSelection(languagePosition)
                 }

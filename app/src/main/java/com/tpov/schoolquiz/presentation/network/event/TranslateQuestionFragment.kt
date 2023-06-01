@@ -13,9 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesShortCodes
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.Locale
+import java.util.*
 import javax.inject.Inject
 
 class TranslateQuestionFragment : Fragment() {
@@ -74,55 +75,40 @@ class TranslateQuestionFragment : Fragment() {
 
         viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
-        val languages = listOf("EN", "RU", "FR") // Замените на список доступных языков
-        translationAdapter = TranslationQuestionAdapter(mutableListOf(), languages)
+        val languages = languagesShortCodes
+        translationAdapter = TranslationQuestionAdapter(mutableListOf(), languages.toList())
         binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewQuestions.adapter = translationAdapter
 
         log("getQuestionListUseCase() idQuiz != -1")
         viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
-            log("iogoiseofk 1, ${receivedQuestions}")
-            receivedQuestions?.forEach {
-                if (it.idQuiz == idQuiz) {
-                    log("iogoiseofk 2, ${it}")
-                    val words1 = it.language
-                    val words2 = viewModel.getProfile().languages?.split("|")
-                        ?.toSet() // Преобразование строки it2 в множество слов
 
-                    val commonWords = words2?.intersect(
-                        words1.map { it.lowercase(Locale.ROOT) }.map {
-                            it.lowercase(
-                                Locale.ROOT
-                            )
-                        }.toSet()
-                    )
+            questions = receivedQuestions?.filter {
+                val words1 = it.language
+                val words2 = viewModel.getProfile().languages?.split("|")
+                    ?.toSet() // Преобразование строки it2 в множество слов
 
-                    log(
-                        "iogoiseofk 3, ${commonWords?.isNotEmpty()}, ${
-                            it.lvlTranslate > (viewModel.getProfile().translater?.plus(
-                                50
-                            ) ?: 100)
-                        }, words1:$words1, words2:$words2"
-                    )
-                    if (commonWords?.isNotEmpty() == true || it.lvlTranslate > (viewModel.getProfile().translater?.plus(
-                            50
-                        ) ?: 100)
-                    ) {
+                val commonWords = words2?.intersect(
+                    words1.map { it.lowercase(Locale.ROOT) }.map {
+                        it.lowercase(
+                            Locale.ROOT
+                        )
+                    }.toSet()
+                )
 
-                        log("iogoiseofk 4, ${it}")
-                        questions = receivedQuestions
-                        loadNextQuestion()
-                    } else {
-                        Toast.makeText(
-                            activity,
-                            "Не удалось найти вопросы, которые можно перевести",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+                it.idQuiz == idQuiz && commonWords?.isNotEmpty() == true || it.lvlTranslate > (viewModel.getProfile().translater?.plus(
+                    50
+                ) ?: 100)
 
-                log("getQuestionListUseCase(): $receivedQuestions")
-
+            }
+            if (questions?.isNotEmpty() == true) {
+                loadNextQuestion()
+            } else {
+                Toast.makeText(
+                    activity,
+                    "Не удалось найти вопросы, которые можно перевести",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
 
