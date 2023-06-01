@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -105,10 +106,21 @@ class EventViewModel @Inject constructor(
     }
 
     fun saveQuestions(updatedQuestions: List<QuestionEntity>) {
+        val questionFirst = updatedQuestions[0]
+
         updatedQuestions.forEach {
-            log("update: $it")
-            insertQuestionUseCase(it)
+            log("update: $it, ${questionFirst}")
+            insertQuestionUseCase(it.copy(
+                numQuestion = questionFirst.numQuestion,
+                answerQuestion = questionFirst.answerQuestion,
+                hardQuestion = questionFirst.hardQuestion,
+                lvlTranslate = getProfileLvlTranslate(),
+                idQuiz = questionFirst.idQuiz
+            ))
         }
+    }
+    private fun getProfileLvlTranslate(): Int {
+        return getProfileUseCase(getTpovId()).translater ?: 0
     }
 }
 @OptIn(InternalCoroutinesApi::class)

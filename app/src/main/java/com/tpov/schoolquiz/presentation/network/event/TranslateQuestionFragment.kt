@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.coroutines.InternalCoroutinesApi
+import java.util.Locale
 import javax.inject.Inject
 
 class TranslateQuestionFragment : Fragment() {
@@ -29,6 +30,9 @@ class TranslateQuestionFragment : Fragment() {
     private val component by lazy {
         (requireActivity().application as MainApp).component
     }
+
+    private lateinit var viewModel: EventViewModel
+    private var idQuiz = 0
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onAttach(context: Context) {
@@ -66,36 +70,63 @@ class TranslateQuestionFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val idQuiz = arguments?.getInt(ARG_ID_QUIZ, -1)
+        idQuiz = arguments?.getInt(ARG_ID_QUIZ, -1) ?: -1
 
-        val viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
+        viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
         val languages = listOf("EN", "RU", "FR") // Замените на список доступных языков
         translationAdapter = TranslationQuestionAdapter(mutableListOf(), languages)
         binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewQuestions.adapter = translationAdapter
 
-        if (idQuiz != -1) {
-            log("getQuestionListUseCase() idQuiz != -1")
-            viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
-                questions = receivedQuestions
+        log("getQuestionListUseCase() idQuiz != -1")
+        viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
+            log("iogoiseofk 1, ${receivedQuestions}")
+            receivedQuestions?.forEach {
+                if (it.idQuiz == idQuiz) {
+                    log("iogoiseofk 2, ${it}")
+                    val words1 = it.language
+                    val words2 = viewModel.getProfile().languages?.split("|")
+                        ?.toSet() // Преобразование строки it2 в множество слов
 
-                if (!receivedQuestions.isNullOrEmpty()) {
-                    loadNextQuestion()
-                } else {
-                    Toast.makeText(
-                        activity,
-                        "Не удалось найти вопросы, которые можно перевести",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    val commonWords = words2?.intersect(
+                        words1.map { it.lowercase(Locale.ROOT) }.map {
+                            it.lowercase(
+                                Locale.ROOT
+                            )
+                        }.toSet()
+                    )
+
+                    log(
+                        "iogoiseofk 3, ${commonWords?.isNotEmpty()}, ${
+                            it.lvlTranslate > (viewModel.getProfile().translater?.plus(
+                                50
+                            ) ?: 100)
+                        }, words1:$words1, words2:$words2"
+                    )
+                    if (commonWords?.isNotEmpty() == true || it.lvlTranslate > (viewModel.getProfile().translater?.plus(
+                            50
+                        ) ?: 100)
+                    ) {
+
+                        log("iogoiseofk 4, ${it}")
+                        questions = receivedQuestions
+                        loadNextQuestion()
+                    } else {
+                        Toast.makeText(
+                            activity,
+                            "Не удалось найти вопросы, которые можно перевести",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
 
                 log("getQuestionListUseCase(): $receivedQuestions")
-            }
 
-            viewModel.loadQuests()
+            }
         }
 
+        viewModel.loadQuests()
         binding.buttonAddTranslation.setOnClickListener {
             log("Add Translation button clicked")
             translationAdapter.addNewQuestion()
@@ -127,7 +158,8 @@ class TranslateQuestionFragment : Fragment() {
                 "Все доступные вопросы загружены",
                 Toast.LENGTH_SHORT
             ).show()
-            requireActivity().supportFragmentManager.beginTransaction().remove(this).commit()
+            requireActivity().supportFragmentManager.beginTransaction().remove(this)
+                .commit()
         }
     }
 }
