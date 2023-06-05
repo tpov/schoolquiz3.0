@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.question
 
 import android.app.Application
 import android.content.Context
+import android.content.res.Configuration
 import android.os.CountDownTimer
 import android.util.Log
 import android.widget.Toast
@@ -11,21 +12,7 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
-import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
-import com.tpov.schoolquiz.domain.DeleteQuizUseCase
-import com.tpov.schoolquiz.domain.GetProfileUseCase
-import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
-import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
-import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
-import com.tpov.schoolquiz.domain.GetQuizListUseCase
-import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
-import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuizUseCase
-import com.tpov.schoolquiz.domain.UpdateProfileUseCase
-import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
-import com.tpov.schoolquiz.domain.UpdateQuizUseCase
+import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -72,7 +59,7 @@ class QuestionViewModel @Inject constructor(
     var persent = 0
     var maxPersent = 0
     var persentAll = 0
-    lateinit var questionListThis: List<QuestionEntity>
+    var questionListThis = ArrayList<QuestionEntity>()
     lateinit var questionDetailListThis: List<QuestionDetailEntity>
     lateinit var quizThis: QuizEntity
     lateinit var tpovId: String
@@ -178,8 +165,12 @@ class QuestionViewModel @Inject constructor(
         return ""
     }
 
+    private fun getUserLocalization(context: Context): String {
+        val config: Configuration = context.resources.configuration
+        return config.locale.language
+    }
+
     private fun getQuestionsList() {
-        questionListThis = getQuestionByIdQuizUseCase(idQuiz)
         log(
             "getQuestionsList, getQuestionByIdQuizUseCase(idQuiz) ${
                 getQuestionByIdQuizUseCase(
@@ -187,21 +178,70 @@ class QuestionViewModel @Inject constructor(
                 )
             }"
         )
-        var list = mutableListOf<QuestionEntity>()
-        questionListThis.forEach {
-            log("getQuestionsList, it.hardQuestion:${it.hardQuestion}, hardQuestion: $hardQuestion")
+        val userLocalization: String = getUserLocalization(context)
+        val availableLanguages = getProfileUseCase(getTpovId()).languages
 
-            log("DSEFSE, it.hardQuestion:${it.hardQuestion}, hardQuestion: $hardQuestion")
-            try {
-                if (it.hardQuestion == hardQuestion) list.add(it)
-            } catch (e: Exception) {
-                list.add(it)
+        val questionThisListAll = getQuestionByIdQuizUseCase(idQuiz)
+        val sizeQuestionList = questionThisListAll.size
+
+        var listMap = mutableMapOf<Int, Boolean>()
+
+        for (i in 0 until sizeQuestionList) {
+            if (questionThisListAll[i].hardQuestion != hardQuestion && listMap[i] != false) continue
+
+            for (j in i + 1 until sizeQuestionList) {
+
+                if (questionThisListAll[i].numQuestion == questionThisListAll[j].numQuestion) {
+
+                    if (userLocalization.equals(
+                            questionThisListAll[i].language,
+                            ignoreCase = true
+                        ) && questionThisListAll[j].lvlTranslate >= 100
+                    ) {
+                        questionListThis.add(questionThisListAll[i])
+                        continue
+                    } else if (userLocalization.equals(
+                            questionThisListAll[j].language,
+                            ignoreCase = true
+                        ) && questionThisListAll[i].lvlTranslate >= 100
+                    ) {
+                        questionListThis.add(questionThisListAll[j])
+                        listMap[j] = false
+                        continue
+                    }
+
+                } else if (questionThisListAll[i].lvlTranslate >= 100) {
+                    questionListThis.add(questionThisListAll[i])
+                    continue
+                }
             }
+
+            for (j in i + 1 until sizeQuestionList) {
+                val words = availableLanguages?.split("|")
+
+                if (words != null) {
+                    for (word in words) {
+
+                        if (questionThisListAll[i].language.equals(word, ignoreCase = true)) {
+                            questionListThis.add(questionThisListAll[i])
+                            continue
+                        } else if (questionThisListAll[j].language.equals(
+                                word,
+                                ignoreCase = true
+                            )
+                        ) {
+                            questionListThis.add(questionThisListAll[j])
+                            listMap[j] = false
+                            continue
+                        }
+                    }
+                }
+            }
+            translateForGoogleTranslate()
+            break
         }
 
-        questionListThis = list
-
-        log("DSEFSE, questionListThis: $questionListThis")
+        log("getQuestionsList, questionListThis: $questionListThis")
         var listQuestionDetail = mutableListOf<QuestionDetailEntity>()
         getQuestionDetailListUseCase().forEach {
             if (it.idQuiz == this.idQuiz && it.hardQuiz == this.hardQuestion) listQuestionDetail.add(
@@ -211,6 +251,10 @@ class QuestionViewModel @Inject constructor(
         questionDetailListThis = listQuestionDetail
 
         quizThis = getQuizUseCase(idQuiz)
+    }
+
+    private fun translateForGoogleTranslate() {
+        Toast.makeText(context, "Ошибка сравнивания вопросов", Toast.LENGTH_LONG).show()
     }
 
 

@@ -7,34 +7,35 @@
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-    android:layout_height="match_parent"
-        android:background="@mipmap/back_main"
-    android:id="@+id/view_background">
-
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/title_fragment"
-        android:name="com.tpov.schoolquiz.presentation.fragment.BaseFragment"
+        android:id="@+id/view_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="50dp"
-        app:layout_constraintBottom_toTopOf="@id/bNav"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+        android:background="@mipmap/back_main">
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bNav"
-        android:layout_width="0dp"
-        android:layout_height="50dp"
-        app:itemIconTint="@drawable/nav_item_color_state"
-        app:itemTextColor="@color/checked_item_menu"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:menu="@menu/menu_title_activity" />
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/title_fragment"
+            android:name="com.tpov.schoolquiz.presentation.fragment.BaseFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="50dp"
+            app:layout_constraintBottom_toTopOf="@id/bNav"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bNav"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:background="@color/colorBottomMain"
+            app:itemIconTint="@drawable/nav_item_color_state"
+            app:itemTextColor="@color/checked_item_menu"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:menu="@menu/menu_title_activity" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -154,54 +155,58 @@
                         android:layout_width="16dp"
                         android:layout_height="wrap_content"
                         android:background="@color/nullColor"
+                        android:paddingLeft="16dp"
                         android:paddingEnd="4dp"
                         app:srcCompat="@drawable/baseline_more_vert" />
-
-                    <ImageView
-                        android:id="@+id/imv_stars"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        app:srcCompat="@drawable/star_full" />
 
                     <TextView
                         android:id="@+id/tv_stars"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="16dp"
+                        android:text="0"
                         android:textColor="@color/ratingBar"
                         android:textSize="12dp"
                         android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/imv_stars"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginLeft="2dp"
+                        app:srcCompat="@drawable/star_full" />
 
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:layout_weight="0.95"
                         android:orientation="horizontal">
 
                     </LinearLayout>
-
-                    <ImageView
-                        android:id="@+id/imv_nolics"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        app:srcCompat="@drawable/nolics" />
 
                     <TextView
                         android:id="@+id/tv_nolics"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text="0"
                         android:textColor="@color/grey"
                         android:textSize="12dp"
                         android:textStyle="bold" />
 
+                    <ImageView
+                        android:id="@+id/imv_nolics"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginLeft="4dp"
+                        app:srcCompat="@drawable/ic_nolics" />
+
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal">
-
-                    </LinearLayout>
-
+                        android:layout_weight="0.95"
+                        android:orientation="horizontal"></LinearLayout>
 
                     <ImageView
                         android:id="@+id/pb_life1"
@@ -265,52 +270,22 @@
 
                     </LinearLayout>
 
-                    <ImageView
-                        android:id="@+id/imv_gold"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        app:srcCompat="@drawable/gold" />
-
                     <TextView
                         android:id="@+id/tv_gold"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text="0"
                         android:textColor="@color/ratingBar"
                         android:textSize="12dp"
                         android:textStyle="bold" />
 
+                    <ImageView
+                        android:id="@+id/imv_gold"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginLeft="4dp"
+                        app:srcCompat="@drawable/ic_gold" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.03"
-                        android:orientation="horizontal">
-
-                    </LinearLayout>
-
-                    <RelativeLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingLeft="4dp">
-
-                        <ImageView
-                            android:id="@+id/imv_premiun"
-                            android:layout_width="30dp"
-                            android:layout_height="30dp"
-                            app:srcCompat="@drawable/baseline_extension_24" />
-
-                        <TextView
-                            android:id="@+id/tv_count_premiun"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignTop="@id/imv_premiun"
-                            android:layout_alignRight="@id/imv_premiun"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginRight="8dp"
-                            android:textColor="@color/white"
-                            android:textSize="10sp" />
-
-                    </RelativeLayout>
                 </LinearLayout>
 
                 <LinearLayout
@@ -323,10 +298,38 @@
 
                     <TextView
                         android:id="@+id/tv_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:gravity="center_vertical"
+                        android:text="Name"
                         android:textSize="18sp"
                         android:textStyle="bold" />
+
+                    <RelativeLayout
+                        android:layout_width="30dp"
+                        android:layout_height="30dp">
+
+                        <ImageView
+                            android:id="@+id/imv_premiun"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            app:srcCompat="@drawable/ic_premium" />
+
+                        <TextView
+                            android:id="@+id/tv_count_premiun"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_alignTop="@id/imv_premiun"
+                            android:layout_alignRight="@id/imv_premiun"
+                            android:gravity="center"
+                            android:text="9"
+                            android:textColor="@color/teal_200"
+                            android:textSize="8sp" />
+
+                    </RelativeLayout>
                 </LinearLayout>
 
 
@@ -343,8 +346,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="12dp"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginRight="12dp"/>
+                    android:layout_marginRight="12dp"
+                    android:text="Соединение с сервером" />
 
                 <ProgressBar
                     android:id="@+id/progressBar2"
@@ -362,10 +365,10 @@
     <!-- Левая шторка -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigation_view"
-        android:background="#73FFFFFF"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="start" >
+        android:layout_gravity="start"
+        android:background="#73FFFFFF">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -376,11 +379,11 @@
                 android:id="@+id/textView11"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:layout_margin="16dp"
-                android:textStyle="bold"
                 android:layout_weight="1"
-                android:text="SchooleQuiz" />
+                android:gravity="center"
+                android:text="SchooleQuiz"
+                android:textStyle="bold" />
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 

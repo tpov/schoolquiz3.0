@@ -25,8 +25,7 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import kotlinx.android.synthetic.main.activity_question.tv_next
-import kotlinx.android.synthetic.main.activity_question.tv_pref
+import kotlinx.android.synthetic.main.activity_question.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 import kotlin.math.floor
@@ -159,7 +158,6 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun setStateTimer(nextQuestion: Boolean) {
-
 
         try {
             if (nextQuestion) {

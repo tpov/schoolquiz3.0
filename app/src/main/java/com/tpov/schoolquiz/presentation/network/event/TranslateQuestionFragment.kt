@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
-import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesShortCodes
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.*
@@ -23,6 +22,7 @@ class TranslateQuestionFragment : Fragment() {
 
     private lateinit var binding: FragmentTranslateQuestionBinding
     private lateinit var translationAdapter: TranslationQuestionAdapter
+    private var numQuestion = 0
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
@@ -42,7 +42,7 @@ class TranslateQuestionFragment : Fragment() {
     }
 
     private var questionIndex = 0
-    private var questions: List<QuestionEntity>? = null
+    private var questions: MutableList<QuestionEntity>? = null
 
     companion object {
 
@@ -75,33 +75,30 @@ class TranslateQuestionFragment : Fragment() {
 
         viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
-        val languages = languagesShortCodes
-        translationAdapter = TranslationQuestionAdapter(mutableListOf(), languages.toList())
+        translationAdapter = TranslationQuestionAdapter(mutableListOf())
         binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewQuestions.adapter = translationAdapter
 
         log("getQuestionListUseCase() idQuiz != -1")
         viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
 
-            questions = receivedQuestions?.filter {
-                val words1 = it.language
-                val words2 = viewModel.getProfile().languages?.split("|")
-                    ?.toSet() // Преобразование строки it2 в множество слов
+            var profileLanguages = viewModel.getProfile().languages?.split("|")?.toSet()
 
-                val commonWords = words2?.intersect(
-                    words1.map { it.lowercase(Locale.ROOT) }.map {
-                        it.lowercase(
-                            Locale.ROOT
-                        )
-                    }.toSet()
-                )
+            var filteredQuestions = receivedQuestions?.filter { question ->
+                val commonLanguages =
+                    profileLanguages?.filter { it.equals(question.language, ignoreCase = true) }
 
-                it.idQuiz == idQuiz && commonWords?.isNotEmpty() == true || it.lvlTranslate > (viewModel.getProfile().translater?.plus(
-                    50
-                ) ?: 100)
+                val meetsLanguageCriteria = commonLanguages?.isNotEmpty() == true
 
+                log("receivedQuestions?.filter, filter:${meetsLanguageCriteria && question.idQuiz == idQuiz} - $question")
+
+                meetsLanguageCriteria && question.idQuiz == idQuiz
             }
-            if (questions?.isNotEmpty() == true) {
+
+            if (filteredQuestions?.isNotEmpty() == true) {
+                log("receivedQuestions?.filter filteredQuestions:${filteredQuestions}")
+                questions = filteredQuestions.take(viewModel.getProfile().translater?.plus(1) ?: 1)
+                    .toMutableList()
                 loadNextQuestion()
             } else {
                 Toast.makeText(
@@ -120,7 +117,7 @@ class TranslateQuestionFragment : Fragment() {
 
         binding.buttonSave.setOnClickListener {
             val updatedQuestions = translationAdapter.getUpdatedQuestions()
-            viewModel.saveQuestions(updatedQuestions)
+            viewModel.saveQuestions(updatedQuestions, activity)
             loadNextQuestion()
         }
 
@@ -131,13 +128,22 @@ class TranslateQuestionFragment : Fragment() {
 
     private fun loadNextQuestion() {
         if (questionIndex < (questions?.size ?: 0)) {
-            val nextQuestion = questions?.get(questionIndex)
+
+            numQuestion = questions!![0].numQuestion
+            var hardQuestion = questions!![0].hardQuestion
             translationAdapter.questions.clear()
-            nextQuestion?.let {
-                translationAdapter.questions.add(it)
-                translationAdapter.notifyDataSetChanged()
-                questionIndex++
+
+            questions!!.removeIf { question ->
+                if (question.idQuiz == idQuiz && question.numQuestion == numQuestion && question.hardQuestion == hardQuestion) {
+                    log("receivedQuestions?.filter, addQuestion:$question")
+                    translationAdapter.questions.add(question)
+                    true
+                } else {
+                    false
+                }
             }
+
+            translationAdapter.notifyDataSetChanged()
         } else {
             Toast.makeText(
                 activity,

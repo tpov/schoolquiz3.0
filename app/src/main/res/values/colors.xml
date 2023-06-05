@@ -16,6 +16,9 @@
     <color name="tvLightQuestion">#167A00</color>
     <color name="tvHardQuestion">#7A0000</color>
 
+
+    <color name="colorBottomMain">#0e0e0e</color>
+
     <color name="splashTextColor">#670000</color>
     <color name="background_splash_color">#001168</color>
     <color name="num_chack_norice_red">#BF930000</color>

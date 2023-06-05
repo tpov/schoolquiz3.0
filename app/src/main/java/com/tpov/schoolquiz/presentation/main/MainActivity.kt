@@ -306,14 +306,14 @@ class MainActivity : AppCompatActivity() {
 
                 showTextWithDelay(
                     binding.tvName, try {
-                        "${it?.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
+                        "${it?.nickname} \uD83E\uDD47\uD83E\uDD48️\uD83E\uDD49\uD83C\uDF96\uD83C\uDFC5\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83C\uDFC6⭐\uD83C\uDFAF\uD83C\uDF93 \uD83C\uDFF0"
                     } catch (e: Exception) {
                         ""
                     }, 50
                 )
 
             } else binding.tvName.text =
-                "${it.nickname}  \uD83E\uDD47\uD83E\uDD48️\uD83C\uDFC6\uD83C\uDF97️\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83D\uDCFB\uD83C\uDFA7\uD83C\uDF9E️\uD83E\uDE99\uD83D\uDCC0\uD83D\uDCB5❤️"
+                "${it.nickname} \uD83E\uDD47\uD83E\uDD48\uD83E\uDD49\uD83C\uDF96\uD83C\uDFC5\uD83C\uDFC6\uD83C\uDF97\uD83C\uDF83\uD83C\uDF84\uD83C\uDF81\uD83C\uDFA7\uD83C\uDF9E\uD83E\uDE99\uD83D\uDCC0\uD83C\uDFC6⭐\uD83C\uDFAF\uD83C\uDF93\uD83C\uDFF0❤"
 
             val animationDuration = 3000L
             animateValue(

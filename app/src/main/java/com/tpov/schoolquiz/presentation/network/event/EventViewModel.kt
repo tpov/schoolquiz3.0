@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.presentation.network.event
 
+import android.widget.Toast
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
@@ -8,7 +10,6 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
@@ -36,7 +37,7 @@ class EventViewModel @Inject constructor(
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
     fun getProfile(): ProfileEntity {
-        return getProfileUseCaseFun(SharedPreferencesManager.getTpovId())
+        return getProfileUseCaseFun(getTpovId())
     }
     private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
         log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
@@ -92,9 +93,10 @@ class EventViewModel @Inject constructor(
                 }
             }
     }
+
     fun getProfileCount(): Int? {
-        val profile = getProfileUseCase(SharedPreferencesManager.getTpovId())
-        log("getProfileCount(): $profile, ${SharedPreferencesManager.getTpovId()}")
+        val profile = getProfileUseCase(getTpovId())
+        log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.count
     }
     fun getEventDeveloper() {
@@ -105,23 +107,57 @@ class EventViewModel @Inject constructor(
         log("getEventDeveloper develop: $develop")
     }
 
-    fun saveQuestions(updatedQuestions: List<QuestionEntity>) {
+    fun saveQuestions(updatedQuestions: List<QuestionEntity>, activity: FragmentActivity?) {
         val questionFirst = updatedQuestions[0]
 
         updatedQuestions.forEach {
-            log("update: $it, ${questionFirst}")
+            try {
+                parseInfoTranslater(it.infoTranslater).forEach {
+                    createMassage(it.key, it.value)
+                }
+            } catch (e: Exception) {
+                Toast.makeText(activity, "Error parse info Translater", Toast.LENGTH_LONG).show()
+            }
+            log("update: $it, $questionFirst")
             insertQuestionUseCase(it.copy(
                 numQuestion = questionFirst.numQuestion,
                 answerQuestion = questionFirst.answerQuestion,
                 hardQuestion = questionFirst.hardQuestion,
                 lvlTranslate = getProfileLvlTranslate(),
-                idQuiz = questionFirst.idQuiz
+                idQuiz = questionFirst.idQuiz,
+                infoTranslater = hasTpovIdZeroAtEnd(it.infoTranslater)
             ))
         }
     }
+
+    private fun hasTpovIdZeroAtEnd(infoTranslater: String): String {
+        return if (infoTranslater.endsWith("${getTpovId()}|0")) infoTranslater
+        else "${infoTranslater}|${getTpovId()}|0"
+
+    }
+
+    private fun createMassage(tpovId: String, rating: String) {
+
+    }
+
+    private fun parseInfoTranslater(infoTranslater: String): Map<String, String> {
+        val keyValuePairs = infoTranslater.split("|")
+        val infoMap = mutableMapOf<String, String>()
+
+        for (pair in keyValuePairs) {
+            val (key, value) = pair.split("|").map { it.trim() }
+            if (key.isNotBlank()) {
+                infoMap[key] = value
+            }
+        }
+
+        return infoMap
+    }
+
     private fun getProfileLvlTranslate(): Int {
         return getProfileUseCase(getTpovId()).translater ?: 0
     }
+
 }
 @OptIn(InternalCoroutinesApi::class)
 fun log(m: String) { Logcat.log(m, "Event", Logcat.LOG_VIEW_MODEL)}
