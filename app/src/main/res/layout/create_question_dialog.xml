@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@color/design3_main_start"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="16dp">
 
+        <ImageView
+            android:id="@+id/background_image"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:src="@drawable/back_create_new_quiz"
+            android:scaleType="centerCrop"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:id="@+id/quiz_title"
@@ -17,26 +26,44 @@
             android:textColorHint="@color/white"
             android:textColor="@color/white"
             android:gravity="center"
-            android:textStyle="bold"
-            android:textSize="18dp"
+            android:textSize="18sp"
             android:layout_height="wrap_content"
-            android:hint="Название квеста" />
+            android:hint="Название квеста"
+            app:layout_constraintTop_toTopOf="@id/background_image"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <LinearLayout
             android:id="@+id/questions_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@id/quiz_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <Button
-            android:id="@+id/add_question_button"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:paddingTop="8dp"
-            android:background="@color/design3_main_middle"
-            android:text="Добавить вопрос"
-            android:textColor="@color/white" />
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="25dp"
+            android:elevation="12dp"
+            android:backgroundTint="#363B5A"
+            app:layout_constraintTop_toBottomOf="@id/questions_container"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/add_question_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:background="@color/nullColor"
+                android:text="Добавить вопрос"
+                android:textColor="@color/white" />
+
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </ScrollView>

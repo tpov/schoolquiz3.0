@@ -28,7 +28,7 @@ import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.Locale
+import java.util.*
 
 class CreateQuestionDialog : DialogFragment() {
 
@@ -77,12 +77,19 @@ class CreateQuestionDialog : DialogFragment() {
             }
         }
 
-        return AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+        val alertDialog = AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
             .setTitle(dialogTitle)
             .setView(dialogView)
             .setPositiveButton(positiveButtonText, positiveButtonAction)
             .setNegativeButton("Отмена") { _, _ -> }
             .create()
+
+        // Установка анимации входа
+        alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimation
+        alertDialog.show()
+
+        return alertDialog
+
     }
 
     private fun addQuestionItem(): View {
