@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.fierbase.Chat
 import com.tpov.schoolquiz.databinding.FragmentChatBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.shoppinglist.utils.TimeManager
@@ -54,8 +55,7 @@ class ChatFragment : BaseFragment() {
         setupRecyclerView()
         observeChatData()
 
-        val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        val tpovId = getTpovId()
 
         binding.sendMessageButton.setOnClickListener {
             val message = binding.messageEditText.text.toString().trim()
@@ -63,7 +63,7 @@ class ChatFragment : BaseFragment() {
                 val currentTime = TimeManager.getCurrentTime()
                         val chatMessage = Chat(
                             time = currentTime,
-                            user = chatViewModel.getProfile(tpovId).nickname ?: "",
+                            user = chatViewModel.getProfile(tpovId).nickname ?: "Error",
                             msg = message,
                             importance = 0,
                             personalSms = 0,

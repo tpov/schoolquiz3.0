@@ -86,7 +86,7 @@ class TranslateQuestionFragment : Fragment() {
 
             var filteredQuestions = receivedQuestions?.filter { question ->
                 val commonLanguages =
-                    profileLanguages?.filter { it.equals(question.language, ignoreCase = true) }
+                    profileLanguages?.filter { true}
 
                 val meetsLanguageCriteria = commonLanguages?.isNotEmpty() == true
 
@@ -127,13 +127,14 @@ class TranslateQuestionFragment : Fragment() {
     }
 
     private fun loadNextQuestion() {
-        if (questionIndex < (questions?.size ?: 0)) {
+        if (questions?.size != 0) {
 
             numQuestion = questions!![0].numQuestion
             var hardQuestion = questions!![0].hardQuestion
             translationAdapter.questions.clear()
 
             questions!!.removeIf { question ->
+                log("receivedQuestions?.filter, allQuestions:$question")
                 if (question.idQuiz == idQuiz && question.numQuestion == numQuestion && question.hardQuestion == hardQuestion) {
                     log("receivedQuestions?.filter, addQuestion:$question")
                     translationAdapter.questions.add(question)

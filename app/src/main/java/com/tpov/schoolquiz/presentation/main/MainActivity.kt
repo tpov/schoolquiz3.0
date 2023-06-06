@@ -335,7 +335,7 @@ class MainActivity : AppCompatActivity() {
             animateValueFloat(
                 binding.tvStars,
                 (SharedPreferencesManager.getSkill().toFloat() / 100_000f),
-                ((it?.pointsSkill?.toFloat())?.div(100_000f))?: 0f,
+                ((it?.pointsSkill?.toFloat())?.div(100_000f)) ?: 0f,
                 animationDuration,
                 500
             )
@@ -489,16 +489,16 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount() {
         try {
-                    viewModel.updateProfileUseCase(
-                        viewModel.getProfile().copy(
-                            count = calcCount(
-                                viewModel.getProfileCount(),
-                                viewModel.getProfileCountLife(),
-                                viewModel.getProfileDateCloseAp()
-                            ),
-                            dateCloseApp = TimeManager.getCurrentTime()
-                        )
-                    )
+            viewModel.updateProfileUseCase(
+                viewModel.getProfile().copy(
+                    count = calcCount(
+                        viewModel.getProfileCount(),
+                        viewModel.getProfileCountLife(),
+                        viewModel.getProfileDateCloseAp()
+                    ),
+                    dateCloseApp = TimeManager.getCurrentTime()
+                )
+            )
         } catch (e: Exception) {
 
         }
@@ -724,7 +724,7 @@ class MainActivity : AppCompatActivity() {
 
     //Окраживаем квадратики в красный и зеленый в зависимости сколько осталось запасных вопросов-дня
     private fun loadNumBoxDay() = with(binding) {
-
+        log("numberBox setValue numDayPrizeBox: $numDayPrizeBox")
         if (numDayPrizeBox > 0) textView10.setBackgroundResource(R.color.num_chack_norice_green)
         if (numDayPrizeBox > 1) textView9.setBackgroundResource(R.color.num_chack_norice_green)
         if (numDayPrizeBox > 2) textView8.setBackgroundResource(R.color.num_chack_norice_green)

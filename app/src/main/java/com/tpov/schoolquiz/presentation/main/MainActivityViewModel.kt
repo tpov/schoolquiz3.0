@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.main
 
 import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -91,13 +92,20 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun getQuizById(position: Int): QuizEntity {
-        log("getQuizById, position: $position, getQuizByIdUseCase(position): ${getQuizByIdUseCase(position)}")
+        log(
+            "getQuizById, position: $position, getQuizByIdUseCase(position): ${
+                getQuizByIdUseCase(
+                    position
+                )
+            }"
+        )
         return getQuizByIdUseCase(position)
     }
 
     fun getQuestionList(): List<QuestionEntity> {
         return getQuestionListUseCase()
     }
+
     fun updateTpovId(tpovId: Int) {
         if (tpovId != oldId) tpovIdLiveData.value = tpovId
         oldId = tpovId
@@ -223,7 +231,8 @@ class MainActivityViewModel @Inject constructor(
         return i + 1
     }
 
-    fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(nameQuiz,
+    fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(
+        nameQuiz,
         getTpovId()
     )
 
@@ -258,25 +267,51 @@ class MainActivityViewModel @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun synthPrizeBoxDay(profile: ProfileEntity?): Int? {
-        log("wdawdwa: $profile")
-        val days = if (TimeManager.getDaysBetweenDates(profile?.timeLastOpenBox ?: "",
+
+        val days = if (TimeManager.getDaysBetweenDates(
+                profile?.timeLastOpenBox ?: "",
                 TimeManager.getCurrentTime()
-            ) == 1L && profile?.coundDayBox != 10) {
-            profile?.coundDayBox?.plus(1)!!
+            ) == 1L
+        ) {
+            if (profile?.coundDayBox == 10) 10
+            else profile?.coundDayBox?.plus(1) ?: errorGetCountBox()
+
         } else if (TimeManager.getDaysBetweenDates(
                 profile?.timeLastOpenBox ?: "",
                 TimeManager.getCurrentTime()
-            ) < 1) 0
-        else  profile?.coundDayBox
-        profile?.copy(coundDayBox = days, countBox = if (days == 10) profile.countBox?.plus(
-            1
-        ) else  profile.countBox, timeLastOpenBox = TimeManager.getCurrentTime())
-            ?.let { updateProfileUseCase(it) }
+            ) < 1
+        ) {
+            log("numberBox day2: 0}")
+            profile?.coundDayBox
+        } else 0
+
+        profile?.copy(
+            coundDayBox = days, countBox = if (days == 10) {
+                log(
+                    "numberBox day4: ${
+                        profile.countBox?.plus(
+                            1
+                        )
+                    }}"
+                )
+                profile.countBox?.plus(
+                    1
+                )
+            } else {
+                log("numberBox day5: ${profile.countBox}}")
+                profile.countBox
+            }, timeLastOpenBox = TimeManager.getCurrentTime()
+        )?.let { updateProfileUseCase(it) }
         return days
     }
 
+    private fun errorGetCountBox(): Int {
+        Toast.makeText(context, "Error get box day", Toast.LENGTH_SHORT).show()
+        return 0
+    }
+
     fun getProfileCountLife(): Int? {
-        val profile =  getProfileUseCase(getTpovId())
+        val profile = getProfileUseCase(getTpovId())
         return profile.countLife
     }
 
