@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.*
@@ -33,6 +34,7 @@ class TranslateQuestionFragment : Fragment() {
     }
 
     private lateinit var viewModel: EventViewModel
+    private var listSize = 0
     private var idQuiz = 0
 
     @OptIn(InternalCoroutinesApi::class)
@@ -81,26 +83,11 @@ class TranslateQuestionFragment : Fragment() {
 
         log("getQuestionListUseCase() idQuiz != -1")
         viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
-
-            var profileLanguages = viewModel.getProfile().languages?.split("|")?.toSet()
-
-            var filteredQuestions = receivedQuestions?.filter { question ->
-                val commonLanguages =
-                    profileLanguages?.filter { true}
-
-                val meetsLanguageCriteria = commonLanguages?.isNotEmpty() == true
-
-                log("receivedQuestions?.filter, filter:${meetsLanguageCriteria && question.idQuiz == idQuiz} - $question")
-
-                meetsLanguageCriteria && question.idQuiz == idQuiz
-            }
-
-            if (filteredQuestions?.isNotEmpty() == true) {
-                log("receivedQuestions?.filter filteredQuestions:${filteredQuestions}")
-                questions = filteredQuestions.take(viewModel.getProfile().translater?.plus(1) ?: 1)
-                    .toMutableList()
-                loadNextQuestion()
-            } else {
+            questions =
+                receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
+                    .thenBy { it.numQuestion })?.toMutableList()
+            if (!questions.isNullOrEmpty()) loadNextQuestion()
+            else {
                 Toast.makeText(
                     activity,
                     "Не удалось найти вопросы, которые можно перевести",
@@ -127,8 +114,18 @@ class TranslateQuestionFragment : Fragment() {
     }
 
     private fun loadNextQuestion() {
-        if (questions?.size != 0) {
-
+        log("receivedQuestions?.filter questions:$questions")
+        if (questions?.isNotEmpty() == true && listSize <= (viewModel.getProfile().translater
+                ?: 0) || questions?.isNotEmpty() == true &&
+            try {
+                viewModel.getTpovIdQuiz(
+                    questions!![0].idQuiz
+                ) == getTpovId()
+            } catch (e: Exception) {
+                false
+            }
+        ) {
+            listSize++
             numQuestion = questions!![0].numQuestion
             var hardQuestion = questions!![0].hardQuestion
             translationAdapter.questions.clear()
