@@ -265,6 +265,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
 
             mainTitleButton.text = quizEntity.nameQuiz
+
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }/*

@@ -133,7 +133,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         if (mainViewModel.getProfileCount()!! < 33) {
             Toast.makeText(
                 activity,
-                "Недостаточно жизней. На прохождение квеста тратиться 30% жизни",
+                "Недостаточно жизней. На прохождение квеста тратиться 33% жизни",
                 Toast.LENGTH_LONG
             ).show()
         } else {

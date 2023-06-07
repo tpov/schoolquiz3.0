@@ -22,7 +22,8 @@ class EventViewModel @Inject constructor(
     private val getQuestionListUseCase: GetQuestionListUseCase,
     val updateProfileUseCase: UpdateProfileUseCase,
     val updateQuestionUseCase: UpdateQuestionUseCase,
-    val insertQuestionUseCase: InsertQuestionUseCase
+    val insertQuestionUseCase: InsertQuestionUseCase,
+    val getQuizByIdUseCase: GetQuizByIdUseCase
 ) : ViewModel() {
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()
@@ -98,6 +99,10 @@ class EventViewModel @Inject constructor(
         val profile = getProfileUseCase(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.count
+    }
+
+    fun getTpovIdQuiz(id: Int): Int {
+        return getQuizByIdUseCase(id).tpovId
     }
     fun getEventDeveloper() {
         log("fun getTranslateList")

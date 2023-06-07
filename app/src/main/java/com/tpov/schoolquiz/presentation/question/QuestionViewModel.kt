@@ -12,7 +12,21 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
+import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
+import com.tpov.schoolquiz.domain.DeleteQuizUseCase
+import com.tpov.schoolquiz.domain.GetProfileUseCase
+import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
+import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
+import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
+import com.tpov.schoolquiz.domain.GetQuizListUseCase
+import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
+import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuizUseCase
+import com.tpov.schoolquiz.domain.UpdateProfileUseCase
+import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
+import com.tpov.schoolquiz.domain.UpdateQuizUseCase
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -40,7 +54,8 @@ class QuestionViewModel @Inject constructor(
     val getQuizLiveDataUseCase: GetQuizLiveDataUseCase,
     val getProfileUseCase: GetProfileUseCase,
     val updateProfileUseCase: UpdateProfileUseCase,
-    val getQuizListUseCase: GetQuizListUseCase
+    val getQuizListUseCase: GetQuizListUseCase,
+    val getQuizByIdUseCase: GetQuizByIdUseCase
 ) : AndroidViewModel(application) {
 
     private lateinit var context: Context
@@ -185,60 +200,127 @@ class QuestionViewModel @Inject constructor(
         val sizeQuestionList = questionThisListAll.size
 
         var listMap = mutableMapOf<Int, Boolean>()
-
+        log("ыуаыуаыуаы Перебор квестов, найдено $sizeQuestionList шт.")
         for (i in 0 until sizeQuestionList) {
+            log("ыуаыуаыуаы берем $i. ${questionThisListAll[i].nameQuestion} ===============================================")
             if (questionThisListAll[i].hardQuestion != hardQuestion && listMap[i] != false) continue
 
+            log("ыуаыуаыуаы этот вопрос совпал с нужным типом $i. ${questionThisListAll[i].hardQuestion}")
             for (j in i + 1 until sizeQuestionList) {
-
+                if (questionThisListAll[j].hardQuestion != hardQuestion && listMap[j] != false) continue
+                log("ыуаыуаыуаы берем второй вопрос $j. ${questionThisListAll[j].nameQuestion} ----------------------")
                 if (questionThisListAll[i].numQuestion == questionThisListAll[j].numQuestion) {
 
+                    log("ыуаыуаыуаы этот вопрос является конкурентом, нужно выбрать один по языку системы")
                     if (userLocalization.equals(
                             questionThisListAll[i].language,
                             ignoreCase = true
-                        ) && questionThisListAll[j].lvlTranslate >= 100
+                        ) && questionThisListAll[i].lvlTranslate >= 100 || userLocalization.equals(
+                            questionThisListAll[i].language,
+                            ignoreCase = true
+                        ) && getQuizByIdUseCase(
+                            questionThisListAll[i].idQuiz
+                        ).tpovId == getTpovId()
                     ) {
+                        log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
                         questionListThis.add(questionThisListAll[i])
-                        continue
+                        listMap[i] = false
+                        listMap[j] = false
+                        break
                     } else if (userLocalization.equals(
                             questionThisListAll[j].language,
                             ignoreCase = true
-                        ) && questionThisListAll[i].lvlTranslate >= 100
+                        ) && questionThisListAll[j].lvlTranslate >= 100 || userLocalization.equals(
+                            questionThisListAll[j].language,
+                            ignoreCase = true
+                        ) && getQuizByIdUseCase(
+                            questionThisListAll[j].idQuiz
+                        ).tpovId == getTpovId()
                     ) {
+                        log("ыуаыуаыуаы второй вопрос прошел ${questionThisListAll[j].nameQuestion}, ${questionThisListAll[j].language}")
                         questionListThis.add(questionThisListAll[j])
+                        listMap[i] = false
                         listMap[j] = false
-                        continue
+                        break
                     }
-
-                } else if (questionThisListAll[i].lvlTranslate >= 100) {
-                    questionListThis.add(questionThisListAll[i])
-                    continue
                 }
             }
 
-            for (j in i + 1 until sizeQuestionList) {
-                val words = availableLanguages?.split("|")
+            log("ыуаыуаыуаы $listMap")
+            if (listMap[i] != false) {
+                log("ыуаыуаыуаы ищем по языку который знает пользователь +++++++++++++++++++++++++++++")
+                for (j in i + 1 until sizeQuestionList) {
+                    if (questionThisListAll[j].hardQuestion != hardQuestion && listMap[j] != false) continue
+                    if (questionThisListAll[i].numQuestion == questionThisListAll[j].numQuestion) {
+                        if (listMap[j] != false) {
+                            log("ыуаыуаыуаы берем второй вопрос $j. ${questionThisListAll[j].nameQuestion} +++++++++++++")
+                            val words = availableLanguages?.split("|")
 
-                if (words != null) {
-                    for (word in words) {
+                            if (words != null) {
+                                for (word in words) {
 
-                        if (questionThisListAll[i].language.equals(word, ignoreCase = true)) {
-                            questionListThis.add(questionThisListAll[i])
-                            continue
-                        } else if (questionThisListAll[j].language.equals(
-                                word,
-                                ignoreCase = true
-                            )
-                        ) {
-                            questionListThis.add(questionThisListAll[j])
-                            listMap[j] = false
-                            continue
+                                    if (questionThisListAll[i].language.equals(
+                                            word,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
+                                        questionListThis.add(questionThisListAll[i])
+                                        listMap[i] = false
+                                        listMap[j] = false
+                                        break
+                                    } else if (questionThisListAll[j].language.equals(
+                                            word,
+                                            ignoreCase = true
+                                        )
+                                    ) {
+                                        log("ыуаыуаыуаы второй вопрос прошел ${questionThisListAll[j].nameQuestion}, ${questionThisListAll[j].language}")
+                                        questionListThis.add(questionThisListAll[j])
+                                        listMap[i] = false
+                                        listMap[j] = false
+                                        break
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-            translateForGoogleTranslate()
-            break
+            if (listMap[i] != false) {
+                if (userLocalization.equals(
+                        questionThisListAll[i].language,
+                        ignoreCase = true
+                    ) && questionThisListAll[i].lvlTranslate >= 100 || userLocalization.equals(
+                        questionThisListAll[i].language,
+                        ignoreCase = true
+                    ) && getQuizByIdUseCase(
+                        questionThisListAll[i].idQuiz
+                    ).tpovId == getTpovId()
+                ) {
+                    log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
+                    questionListThis.add(questionThisListAll[i])
+                    listMap[i] = false
+                    continue
+                } else {
+                    val words = availableLanguages?.split("|")
+
+                    if (words != null) {
+                        for (word in words) {
+
+                            if (questionThisListAll[i].language.equals(
+                                    word,
+                                    ignoreCase = true
+                                )
+                            ) {
+                                log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
+                                questionListThis.add(questionThisListAll[i])
+                                listMap[i] = false
+                                break
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         log("getQuestionsList, questionListThis: $questionListThis")
@@ -256,7 +338,6 @@ class QuestionViewModel @Inject constructor(
     private fun translateForGoogleTranslate() {
         Toast.makeText(context, "Ошибка сравнивания вопросов", Toast.LENGTH_LONG).show()
     }
-
 
     private fun getUpdateAnswer(codeAnswer: String?): Boolean {
         if (codeAnswer == null || codeAnswer == "") return false

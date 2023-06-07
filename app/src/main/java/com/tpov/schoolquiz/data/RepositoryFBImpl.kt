@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.data
 
 import android.app.Application
-import android.content.Context
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -1239,9 +1238,8 @@ class RepositoryFBImpl @Inject constructor(
                 log("getTpovIdFB() snapshot: $snapshot")
 
                 val tpovId: String =
-                    snapshot.child("listTpovId/$uid").getValue(String::class.java) ?: ""
+                    snapshot.child("listTpovId/$uid").getValue(String::class.java) ?: errorTpovId().toString()
                 log("getTpovIdFB() tpovId: $tpovId")
-                val sharedPref = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
                 setTpovId(tpovId.toInt())
 
                 log("getTpovIdFB()/ set tpovId: $tpovId")
@@ -1255,6 +1253,11 @@ class RepositoryFBImpl @Inject constructor(
                 log("getTpovIdFB() ошибка $error")
             }
         })
+    }
+
+    private fun errorTpovId(): Int {
+        getTpovIdFB()
+        return getTpovId()
     }
 
     override fun setQuestionDetail() {
