@@ -86,6 +86,7 @@ class TranslateQuestionFragment : Fragment() {
             questions =
                 receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
                     .thenBy { it.numQuestion })?.toMutableList()
+            questions?.filter { it.idQuiz == idQuiz }
             if (!questions.isNullOrEmpty()) loadNextQuestion()
             else {
                 Toast.makeText(
@@ -132,7 +133,7 @@ class TranslateQuestionFragment : Fragment() {
 
             questions!!.removeIf { question ->
                 log("receivedQuestions?.filter, allQuestions:$question")
-                if (question.idQuiz == idQuiz && question.numQuestion == numQuestion && question.hardQuestion == hardQuestion) {
+                if (question.numQuestion == numQuestion && question.hardQuestion == hardQuestion) {
                     log("receivedQuestions?.filter, addQuestion:$question")
                     translationAdapter.questions.add(question)
                     true
@@ -140,8 +141,10 @@ class TranslateQuestionFragment : Fragment() {
                     false
                 }
             }
-
             translationAdapter.notifyDataSetChanged()
+            if (questions.isNullOrEmpty()) requireActivity().supportFragmentManager.beginTransaction()
+                .remove(this)
+                .commit()
         } else {
             Toast.makeText(
                 activity,

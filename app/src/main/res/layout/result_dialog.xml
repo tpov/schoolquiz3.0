@@ -3,7 +3,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="300dp"
-    android:layout_height="200dp"
+    android:layout_height="230dp"
     android:layout_gravity="center"
     android:background="@drawable/back_result"
     android:padding="@dimen/dialog_padding">
@@ -118,8 +118,9 @@
             android:id="@+id/b_help_translate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/nullColor"
+            android:layout_marginTop="8dp"
             android:visibility="gone"
+            android:background="@color/nullColor"
             android:text="Помочь с переводом" />
 
     </LinearLayout>
