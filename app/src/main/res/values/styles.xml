@@ -5,14 +5,10 @@
     </style>
 
     <style name="CustomCardStyle" parent="Widget.MaterialComponents.CardView">
-        <item name="android:layout_width">70dp</item>
-        <item name="android:layout_height">27dp</item>
-        <item name="cardCornerRadius">12dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="cardBackgroundColor">@color/nullColor</item>
         <item name="cardElevation">8dp</item>
-        <item name="contentPaddingLeft">8dp</item>
-        <item name="contentPaddingRight">8dp</item>
-        <item name="android:layout_marginLeft">21dp</item>
         <!-- Другие атрибуты стиля, если нужно -->
     </style>
 

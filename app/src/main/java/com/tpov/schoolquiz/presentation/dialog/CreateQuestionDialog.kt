@@ -78,10 +78,7 @@ class CreateQuestionDialog : DialogFragment() {
         }
 
         val alertDialog = AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
-            .setTitle(dialogTitle)
             .setView(dialogView)
-            .setPositiveButton(positiveButtonText, positiveButtonAction)
-            .setNegativeButton("Отмена") { _, _ -> }
             .create()
 
         // Установка анимации входа

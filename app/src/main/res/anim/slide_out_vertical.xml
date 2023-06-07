@@ -5,18 +5,18 @@
         android:fromXScale="1"
         android:fromYScale="1"
         android:toXScale="1"
-        android:toYScale="0"
-        android:pivotX="0%"
-        android:pivotY="0%"
+        android:toYScale="0.1"
+        android:pivotX="50%"
+        android:pivotY="50%"
         android:duration="300" />
 
     <scale
         android:fromXScale="1"
-        android:fromYScale="0"
-        android:toXScale="0"
-        android:toYScale="0"
-        android:pivotX="0%"
-        android:pivotY="0%"
+        android:fromYScale="0.1"
+        android:toXScale="0.1"
+        android:toYScale="0.1"
+        android:pivotX="50%"
+        android:pivotY="50%"
         android:startOffset="300"
         android:duration="300" />
 </set>

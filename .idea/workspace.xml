@@ -15,29 +15,17 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Create search in quiz5&#10;Create filter start question activity&#10;Edit filter search translate question">
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/anim/slide_in_horizontal.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/anim/slide_out_vertical.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable-hdpi/back_create_new_quiz.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/7.6/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/checksums/checksums.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/7.6/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/checksums/sha1-checksums.bin" afterDir="false" />
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Create animation create question dialog">
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_1.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_2.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialog.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialog.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/anim/slide_out_vertical.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/anim/slide_out_vertical.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/create_question_dialog.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/create_question_dialog.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/question_create_item.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/question_create_item.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -118,6 +106,7 @@
   <component name="PropertiesComponent">
     <property name="PROJECT_TRUSTED_KEY" value="true" />
     <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="android-custom-viewC:/Users/oleg1/AppData/Local/Android/Sdk/sources/android-33/android/view/View.java_SELECTED" value="View" />
     <property name="cidr.known.project.marker" value="true" />
     <property name="last_directory_selection" value="$PROJECT_DIR$/app/src/main/res/drawable-hdpi" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/app/src/main/res/drawable-hdpi" />
@@ -469,7 +458,14 @@
       <option name="project" value="LOCAL" />
       <updated>1685984747000</updated>
     </task>
-    <option name="localTasksCounter" value="36" />
+    <task id="LOCAL-00036" summary="Create animation create question dialog">
+      <created>1685988637024</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1685988637024</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -489,7 +485,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="create chat" />
     <MESSAGE value="edit sort chat" />
     <MESSAGE value="fix setEvent quiz" />
     <MESSAGE value="edit autoswipe chat" />
@@ -514,7 +509,8 @@
     <MESSAGE value="Hotfix crash ended quiz in 0 percent&#10;Fix new Id create quiz&#10;Fix null life" />
     <MESSAGE value="Hotfix crash ended quiz in 0 percent&#10;Fix new Id create quiz&#10;Fix null life&#10;Edit FB to suspend&#10;Edit input translate question List -&gt; item" />
     <MESSAGE value="Create search in quiz5&#10;Create filter start question activity&#10;Edit filter search translate question" />
-    <option name="LAST_COMMIT_MESSAGE" value="Create search in quiz5&#10;Create filter start question activity&#10;Edit filter search translate question" />
+    <MESSAGE value="Create animation create question dialog" />
+    <option name="LAST_COMMIT_MESSAGE" value="Create animation create question dialog" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>
