@@ -49,6 +49,7 @@ import com.tpov.schoolquiz.domain.UpdateQuizUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.setting.SharedPrefSettings
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.Locale
@@ -116,6 +117,7 @@ class MainActivityViewModel @Inject constructor(
 
     init {
         SharedPreferencesManager.initialize(context)
+        SharedPrefSettings.initialize(context)
     }
 
     fun init() {

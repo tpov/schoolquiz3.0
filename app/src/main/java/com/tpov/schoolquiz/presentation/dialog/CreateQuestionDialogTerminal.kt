@@ -194,19 +194,19 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
             if (numQuestion != 0) {
                 getLanguage(languageIdentifier, nameQuestion) { lang ->
 
-                            question.add(
-                                QuestionEntity(
-                                    null,
-                                    numQuestion,
-                                    nameQuestion,
-                                    getTextTrue(binding.rbTrue).toBoolean(),
-                                    getTypeText(binding.rbLightQuestion).toBoolean(),
-                                    -1,
-                                    lang,
-                                    mainActivityViewModel.getProfile().translater!!,
-                                    getTpovId().toString()
-                                )
-                            )
+                    question.add(
+                        QuestionEntity(
+                            null,
+                            numQuestion,
+                            nameQuestion,
+                            getTextTrue(binding.rbTrue).toBoolean(),
+                            getTypeText(binding.rbLightQuestion).toBoolean(),
+                            -1,
+                            lang,
+                            mainActivityViewModel.getProfile().translater!!,
+                            getTpovId().toString()
+                        )
+                    )
                 }
             } else {
                 nameQuiz = binding.intvQuiz.text.toString()
@@ -269,36 +269,37 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
             sumbolQuestion2 = TextView(context)
             intvQuestion2 = TextInputEditText(requireContext())
 
-                mainActivityViewModel.insertQuiz(
-                    QuizEntity(
-                        null,
-                        nameQuiz,
-                        mainActivityViewModel.getProfile().name!!,
-                        TimeManager.getCurrentTime(),
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        null,
-                        1,
-                        0,
-                        0,
-                        false,
-                        tpovId ?: 0
-                    )
+            mainActivityViewModel.insertQuiz(
+                QuizEntity(
+                    null,
+                    nameQuiz,
+                    mainActivityViewModel.getProfile().name!!,
+                    TimeManager.getCurrentTime(),
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    null,
+                    1,
+                    0,
+                    0,
+                    false,
+                    tpovId ?: 0,
+                    ""
                 )
+            )
 
-                question.forEach {
-                    mainActivityViewModel.insertQuestion(
-                        it.copy(
-                            idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
-                                nameQuiz
-                            )
+            question.forEach {
+                mainActivityViewModel.insertQuestion(
+                    it.copy(
+                        idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
+                            nameQuiz
                         )
                     )
+                )
             }
         }
 

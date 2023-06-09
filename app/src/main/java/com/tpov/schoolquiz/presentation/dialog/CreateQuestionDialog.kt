@@ -175,6 +175,24 @@ class CreateQuestionDialog : DialogFragment() {
         builder.show()
     }
 
+    private fun getLanguages(questions: List<QuestionEntity>, languages: String): String {
+        if (questions.isEmpty()) {
+            return ""
+        }
+
+        val words = questions[0].language.split("|").toMutableSet()
+
+        for (i in 1 until questions.size) {
+            val currentWords = questions[i].language.split("|")
+            if (questions[i].lvlTranslate >= 100) words.retainAll(currentWords.toSet())
+        }
+
+        val secondWords = languages.split("|").toSet()
+        words.retainAll(secondWords)
+
+        return words.joinToString("|")
+    }
+
     @OptIn(InternalCoroutinesApi::class)
     private fun createQuestions() {
         val questions = mutableListOf<QuestionEntity>()
@@ -252,7 +270,9 @@ class CreateQuestionDialog : DialogFragment() {
             else (mainActivityViewModel.getQuizById(id1).ratingPlayer),
             true,
             if (id1 == -1) getTpovId()
-            else (mainActivityViewModel.getQuizById(id1).tpovId)
+            else (mainActivityViewModel.getQuizById(id1).tpovId),
+            if (id1 == -1) getLanguages(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz), mainActivityViewModel.getQuizById(idQuiz).languages)
+            else getLanguages(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz), mainActivityViewModel.getQuizById(id1).languages)
         )
 
         // Сохранение quizEntity и questions в базу данных

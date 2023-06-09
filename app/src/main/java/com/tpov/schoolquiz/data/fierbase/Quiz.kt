@@ -17,9 +17,10 @@ data class Quiz (
     var starsPlayer: Int,
     var ratingPlayer: Int,
     var userName: String,
+    var languages: String
 ) {
     constructor() : this(
-        "", 0, "", -1, "", -1, 0, 0, 0, 0, 0,""
+        "", 0, "", -1, "", -1, 0, 0, 0, 0, 0,"", ""
     )
 }
 
@@ -46,6 +47,7 @@ fun Quiz.toQuizEntity(
         tpovId = tpovId,
         starsAll = starsAll,
         starsPlayer = starsPlayer,
-        ratingPlayer = ratingPlayer
+        ratingPlayer = ratingPlayer,
+        languages = languages
     )
 }

@@ -336,6 +336,7 @@ interface QuizDao {
     @Query("SELECT COUNT(*) FROM chat_data")
     fun getChatCount(): Int
 
+
 }
 
 @OptIn(InternalCoroutinesApi::class)

@@ -17,6 +17,7 @@ import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
+import com.tpov.schoolquiz.presentation.setting.SharedPrefSettings
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -170,6 +171,7 @@ class RepositoryFBImpl @Inject constructor(
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun getChatData(): Flow<List<ChatEntity>> {
+        getPersonalMassage()
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
         val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
         chatValueEventListener =
@@ -220,7 +222,7 @@ class RepositoryFBImpl @Inject constructor(
         log("fun savePictureToLocalDirectory()")
         if (!context.cacheDir.exists()) context.cacheDir.mkdir()
         val directory = File(context.cacheDir, "")
-        var uid = FirebaseAuth.getInstance().currentUser?.uid
+        FirebaseAuth.getInstance().currentUser?.uid
 
         val storage: FirebaseStorage = FirebaseStorage.getInstance()
         val storageRef: StorageReference = storage.reference
@@ -240,6 +242,69 @@ class RepositoryFBImpl @Inject constructor(
             // Обработка ошибок
             callback(null)
         }
+    }
+
+    private fun sendMassageTranslate(info: String, idQuiz: Int, language: String, numQuestion: Int) {
+
+        log("sendMassageTranslate: $info")
+        log("sendMassageTranslate: $info")
+        val pairs = info.split("|")
+            .chunked(2)
+            .associate { chunk ->
+                if (chunk.size >= 2) chunk[0].toInt() to chunk[1].toIntOrNull()
+                else null to null
+            }
+            .filterValues { it != null }
+
+        log("sendMassageTranslate: $pairs")
+        pairs.forEach {
+            log("getPersonalMassage, pairs $it")
+            FirebaseDatabase.getInstance()
+                .getReference("PersonalMassage/translate/${it.key}/$idQuiz/$numQuestion/$language")
+                .setValue(
+                    Chat(
+                        TimeManager.getCurrentTime(),
+                        SharedPreferencesManager.getNick(),
+                        "Ваш перевод был оценен в ${it.value}/3 былов",
+                        SharedPreferencesManager.getSkill(),
+                        it.key!!,
+                        SharedPrefSettings.getProfileIcon(),
+                        it.value!!
+                    )
+                )
+                .addOnFailureListener {
+                    log("getPersonalMassage, $it")
+                }
+        }
+    }
+
+    private fun getPersonalMassage() {
+        val chatRef =
+            FirebaseDatabase.getInstance().getReference("PersonalMassage/translate/${getTpovId()}")
+        val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
+        chatRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                log("getPersonalMassage snapshot: $snapshot")
+                // Получаем данные из snapshot и сохраняем их в локальную базу данных
+
+                for (dateSnapshot in snapshot.children) {
+                    for (idQuizSnapshot in dateSnapshot.children) {
+                        for (numQuestion in idQuizSnapshot.children) {
+                            for (chatSnapshot in numQuestion.children) {
+                                log("getPersonalMassage data: $dateSnapshot")
+                                val chat = dateSnapshot.getValue(Chat::class.java)
+
+                                dao.insertChat(chat!!.toChatEntity())
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Обработка ошибок
+            }
+        })
     }
 
     override fun getQuiz8Data() {
@@ -1172,6 +1237,7 @@ class RepositoryFBImpl @Inject constructor(
 
         var i = 0
         question.forEach {
+            sendMassageTranslate(it.infoTranslater, it.idQuiz,it.language, it.numQuestion)
             log(
                 "setQuestionData() перебираем квесты size: ${question.size}, dao.getQuizTpovIdById(it.idQuiz): ${
                     dao.getQuizTpovIdById(
@@ -1202,10 +1268,7 @@ class RepositoryFBImpl @Inject constructor(
             if (eventByIdQuiz == 8) questionRef8.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
                 .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
         }
-
         synthLiveData.value = ++synth
-
-
     }
 
     override fun setTpovIdFB() {
@@ -1238,7 +1301,8 @@ class RepositoryFBImpl @Inject constructor(
                 log("getTpovIdFB() snapshot: $snapshot")
 
                 val tpovId: String =
-                    snapshot.child("listTpovId/$uid").getValue(String::class.java) ?: errorTpovId().toString()
+                    snapshot.child("listTpovId/$uid").getValue(String::class.java)
+                        ?: errorTpovId().toString()
                 log("getTpovIdFB() tpovId: $tpovId")
                 setTpovId(tpovId.toInt())
 
@@ -1354,7 +1418,6 @@ class RepositoryFBImpl @Inject constructor(
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-
                     log("setProfile() error2: $error")
 
                 }

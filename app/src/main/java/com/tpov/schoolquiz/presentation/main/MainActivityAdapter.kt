@@ -22,7 +22,6 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
 import java.util.*
 
-
 class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
     private val context: Context,
@@ -264,6 +263,24 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 (quizEntity.stars.toFloat() / 50)
             else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
 
+            imvTranslate.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showTranslationPopup(quizEntity)
+                }
+                true
+            }
+
+            ratingBar.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showRatingInfo(quizEntity)
+                }
+                true
+            }
+
             mainTitleButton.text = quizEntity.nameQuiz
 
             mainTitleButton.setOnClickListener {
@@ -280,6 +297,65 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }*/
         }
 
+        private fun showRatingInfo(quizEntity: QuizEntity) {
+            val context = itemView.context
+
+            val popupMenu = PopupMenu(context, itemView)
+            val menuInflater = popupMenu.menuInflater
+            menuInflater.inflate(R.menu.translation_menu, popupMenu.menu)
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+
+                itemView.findViewById<TextView>(R.id.menu_translate_info).text = quizEntity.stars.toString()
+
+                when (menuItem.itemId) {
+                    R.id.menu_translate_button -> {
+                        // Perform translation logic here
+                        translateText()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }
+        private fun showTranslationPopup(quizEntity: QuizEntity) {
+            val context = itemView.context
+
+            val popupMenu = PopupMenu(context, itemView)
+            val menuInflater = popupMenu.menuInflater
+            menuInflater.inflate(R.menu.translation_menu, popupMenu.menu)
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.menu_translate_button -> {
+                        // Perform translation logic here
+                        translateText()
+                        true
+                    }
+                    else -> false
+                }
+            }
+            // Show the popup menu
+            popupMenu.show()
+        }
+
+        private fun translateText() {
+//            val originalTexts = viewMode.getList()
+//
+//            // Создаем экземпляр API для перевода
+//            val translationApi = TranslationApi() // Замените на вашу библиотеку или методы для вызова API перевода
+//
+//            originalTexts.forEach { originalText ->
+//                // Выполняем перевод текста
+//                val translatedText = translationApi.translate(originalText)
+//
+//                // Создаем экземпляр вопроса с оригинальным и переведенным текстом
+//                val question = Question(originalText, translatedText)
+//
+//                // Сохраняем вопрос с помощью ViewModel
+//                viewModel.insertQuestion(question)
+//            }
+        }
         companion object {
             const val PERCENT_TWO_STARS = 0.83333
             const val MAX_PERCENT = 100

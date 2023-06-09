@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "e89baff8081fe8302cd1d3fdf11fe767",
+    "identityHash": "593034d505a8d22b3e5c9143c0f4b0a7",
     "entities": [
       {
         "tableName": "table_data",
@@ -234,7 +234,7 @@
       },
       {
         "tableName": "front_list",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `nameQuiz` TEXT NOT NULL, `user_name` TEXT NOT NULL, `data` TEXT NOT NULL, `stars` INTEGER NOT NULL, `starsPlayer` INTEGER NOT NULL, `numQ` INTEGER NOT NULL, `numHQ` INTEGER NOT NULL, `starsAll` INTEGER NOT NULL, `starsAllPlayer` INTEGER NOT NULL, `versionQuiz` INTEGER NOT NULL, `picture` TEXT, `event` INTEGER NOT NULL, `rating` INTEGER NOT NULL, `ratingPlayer` INTEGER NOT NULL, `showDeleteButton` INTEGER NOT NULL, `tpovId` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `nameQuiz` TEXT NOT NULL, `user_name` TEXT NOT NULL, `data` TEXT NOT NULL, `stars` INTEGER NOT NULL, `starsPlayer` INTEGER NOT NULL, `numQ` INTEGER NOT NULL, `numHQ` INTEGER NOT NULL, `starsAll` INTEGER NOT NULL, `starsAllPlayer` INTEGER NOT NULL, `versionQuiz` INTEGER NOT NULL, `picture` TEXT, `event` INTEGER NOT NULL, `rating` INTEGER NOT NULL, `ratingPlayer` INTEGER NOT NULL, `showDeleteButton` INTEGER NOT NULL, `tpovId` INTEGER NOT NULL, `languages` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -336,6 +336,12 @@
             "fieldPath": "tpovId",
             "columnName": "tpovId",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "languages",
+            "columnName": "languages",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -722,7 +728,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e89baff8081fe8302cd1d3fdf11fe767')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '593034d505a8d22b3e5c9143c0f4b0a7')"
     ]
   }
 }

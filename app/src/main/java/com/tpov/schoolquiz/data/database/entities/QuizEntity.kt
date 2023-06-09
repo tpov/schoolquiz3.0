@@ -55,9 +55,12 @@ data class QuizEntity(
     var showItemMenu: Boolean = false,
 
     @ColumnInfo(name = "tpovId")
-    var tpovId: Int
+    var tpovId: Int,
+
+    @ColumnInfo(name = "languages")
+    var languages: String
 ) {
     constructor() : this(
-        0, "", "", "", 0, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, false, 0
+        0, "", "", "", 0, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, false, 0, ""
     )
 }
