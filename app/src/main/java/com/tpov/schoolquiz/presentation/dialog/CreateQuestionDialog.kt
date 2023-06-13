@@ -2,7 +2,6 @@ package com.tpov.schoolquiz.presentation.dialog
 
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -25,6 +24,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovI
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.android.synthetic.main.create_question_dialog.save_question_button
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -53,22 +53,13 @@ class CreateQuestionDialog : DialogFragment() {
             addFilledQuestionItem(questionEntity)
         }
 
-        val dialogTitle: String
-        val positiveButtonText: String
-        val positiveButtonAction: (DialogInterface, Int) -> Unit
 
         if (id == -1) {
-            dialogTitle = "Создать квест"
-            positiveButtonText = "Создать"
-            positiveButtonAction = { _, _ -> createQuestions() }
 
             dialogView.add_question_button.setOnClickListener {
                 addQuestionItem()
             }
         } else {
-            dialogTitle = "Обновить квест"
-            positiveButtonText = "Обновить"
-            positiveButtonAction = { _, _ -> createQuestions() }
 
             dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
 
@@ -85,6 +76,9 @@ class CreateQuestionDialog : DialogFragment() {
         alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimation
         alertDialog.show()
 
+        save_question_button.setOnClickListener {
+            createQuestions()
+        }
         return alertDialog
 
     }

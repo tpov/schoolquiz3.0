@@ -161,7 +161,7 @@
                     android:paddingLeft="4dp"
                     android:text="name quiz very long name"
                     android:textColor="@color/white"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:transformPivotX="12dp" />
 

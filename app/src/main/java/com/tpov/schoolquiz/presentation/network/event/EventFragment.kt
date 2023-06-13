@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
+import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -27,6 +28,8 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     private lateinit var recyclerView: RecyclerView
     private lateinit var eventAdapter: EventAdapter
     private lateinit var eventViewModel: EventViewModel
+    @OptIn(InternalCoroutinesApi::class)
+    private lateinit var mainViewModel: MainActivityViewModel
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
@@ -36,10 +39,12 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         (requireActivity().application as MainApp).component
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         eventViewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
+        mainViewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
 
         val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
         val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
@@ -74,7 +79,8 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             moderatorEventList,
             adminEventList,
             developerEventList,
-            this
+            this,
+            mainViewModel
         )
         recyclerView.adapter = eventAdapter
     }

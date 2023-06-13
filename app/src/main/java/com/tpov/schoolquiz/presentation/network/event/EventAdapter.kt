@@ -1,18 +1,28 @@
 package com.tpov.schoolquiz.presentation.network.event
 
+import android.content.Context
+import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.RecyclerView
+import com.google.cloud.translate.TranslateOptions
+import com.google.cloud.translate.Translation
 import com.squareup.picasso.Picasso
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
+import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
+import kotlinx.coroutines.InternalCoroutinesApi
+import org.jetbrains.anko.runOnUiThread
+import java.util.Locale
 
-class EventAdapter(
+class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val quiz2List: List<QuizEntity>,
     private val quiz3List: List<QuizEntity>,
     private val quiz4List: List<QuizEntity>,
@@ -22,7 +32,8 @@ class EventAdapter(
     private val moderatorEventList: List<ChatEntity>,
     private val adminEventList: List<ChatEntity>,
     private val developerEventList: List<ChatEntity>,
-    private val listener: ListenerEvent
+    private val listener: ListenerEvent,
+    private val viewModel: MainActivityViewModel
 ) : RecyclerView.Adapter<EventAdapter.MyViewHolder>() {
 
     private val viewTypes by lazy {
@@ -180,7 +191,264 @@ class EventAdapter(
     }
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        @OptIn(InternalCoroutinesApi::class)
+        private fun showPopupInfo(
+            quizEntity: QuizEntity,
+            event: MotionEvent,
+            popupType: Int,
+            viewModel: MainActivityViewModel
+        ) {
+            val context = itemView.context
+            // Create the popup window
+            val inflater =
+                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val popupView = inflater.inflate(R.layout.translation_popup_layout, null)
+            val popupWindow = PopupWindow(
+                popupView,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+            )
 
+            // Configure the popup window
+            val tvPopup1 = popupView.findViewById<TextView>(R.id.tv_popup_1)
+            val tvPopup2 = popupView.findViewById<TextView>(R.id.tv_popup_2)
+            val tvPopup3 = popupView.findViewById<TextView>(R.id.tv_popup_3)
+            val tvPopup4 = popupView.findViewById<TextView>(R.id.tv_popup_4)
+            val tvPopup5 = popupView.findViewById<TextView>(R.id.tv_popup_5)
+            val tvPopup6 = popupView.findViewById<TextView>(R.id.tv_popup_6)
+            val tvPopup7 = popupView.findViewById<TextView>(R.id.tv_popup_7)
+            val tvPopup8 = popupView.findViewById<TextView>(R.id.tv_popup_8)
+            val tvPopup9 = popupView.findViewById<TextView>(R.id.tv_popup_9)
+            val spListPopup1 = popupView.findViewById<Spinner>(R.id.sp_list_popup_1)
+            val bPopup1 = popupView.findViewById<Button>(R.id.b_popup_1)
+            val layoutSp = popupView.findViewById<LinearLayout>(R.id.l_sp)
+            val layoutB = popupView.findViewById<LinearLayout>(R.id.l_b)
+
+            if (popupType == MainActivityAdapter.POPUP_TRANSLATE) {
+                tvPopup1.visibility = View.VISIBLE
+                spListPopup1.visibility = View.VISIBLE
+                bPopup1.visibility = View.VISIBLE
+
+                layoutB.visibility = View.VISIBLE
+                layoutSp.visibility = View.VISIBLE
+
+                tvPopup2.visibility = View.GONE
+                tvPopup3.visibility = View.GONE
+                tvPopup4.visibility = View.GONE
+                tvPopup5.visibility = View.GONE
+                tvPopup6.visibility = View.GONE
+                tvPopup7.visibility = View.GONE
+                tvPopup8.visibility = View.GONE
+                tvPopup9.visibility = View.GONE
+
+                bPopup1.setOnClickListener {
+                    // Perform translation logic here
+                    translateText(viewModel, context, quizEntity)
+                    popupWindow.dismiss()
+                }
+
+                val languageString = quizEntity.languages // Получите строку языков из quizEntity
+                val languageItems = languageString.split("|") // Разделите строку на элементы
+
+                val languageMap =
+                    mutableMapOf<String?, Int?>() // Создайте пустой Map для хранения соответствия язык-число
+
+                for (item in languageItems) {
+                    val parts = item.split("-") // Разделите элемент на ключ и значение
+                    if (parts.size == 2) {
+                        val language = parts[0]
+                        val value = parts[1].toIntOrNull()
+                        if (value != null) {
+                            languageMap[language] = value // Добавьте соответствие язык-число в Map
+                        }
+                    }
+                }
+                val adapter = ArrayAdapter(
+                    context,
+                    android.R.layout.simple_spinner_item,
+                    languageMap.keys.toList()
+                )
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                log("festgfsdrgdrto,  $tvPopup1")
+                try {
+                    tvPopup1.text = "lvl: ${languageMap.values.toList()[0]}"
+                } catch (e: Exception) {
+                    tvPopup1.text = "Квест еще не переведен на ваш язык"
+                }
+                spListPopup1.adapter = adapter
+                spListPopup1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>,
+                        view: View?,
+                        position: Int,
+                        id: Long
+                    ) {
+                        val selectedLanguage = spListPopup1.selectedItem.toString()
+                        val selectedValue = languageMap[selectedLanguage]
+                        if (selectedValue != null) {
+                            tvPopup1.text = selectedLanguage
+                        }
+                    }
+
+                    override fun onNothingSelected(parent: AdapterView<*>?) {
+                        // Обработайте случай, когда ничего не выбрано, если необходимо
+                    }
+                }
+            } else if (popupType == MainActivityAdapter.POPUP_STARS) {
+                tvPopup1.visibility = View.VISIBLE
+                tvPopup2.visibility = View.VISIBLE
+                tvPopup3.visibility = View.VISIBLE
+                tvPopup4.visibility = View.VISIBLE
+                tvPopup5.visibility = View.VISIBLE
+                tvPopup6.visibility = View.VISIBLE
+                tvPopup7.visibility = View.VISIBLE
+                tvPopup8.visibility = View.VISIBLE
+                tvPopup9.visibility = View.VISIBLE
+
+
+                layoutB.visibility = View.GONE
+                layoutSp.visibility = View.GONE
+
+                spListPopup1.visibility = View.GONE
+                bPopup1.visibility = View.GONE
+
+                tvPopup2.text = "К-во легких вопросов: ${quizEntity.numQ}"
+                tvPopup1.text = "К-во сложных вопросов: ${quizEntity.numHQ}"
+                tvPopup3.text = "Дата создания: ${quizEntity.data}"
+                tvPopup4.text = "Рейтинг квеста: ${quizEntity.ratingPlayer}/3"
+                tvPopup5.text = "Ваш лучший результат: ${quizEntity.stars}/120"
+                tvPopup6.text = "Ваш средний результат: ${quizEntity.starsAll}/120"
+                tvPopup7.text = "Средний результат всх игроков: ${quizEntity.starsAllPlayer}/120"
+                tvPopup8.text = "Лучший результат всех игроков: ${quizEntity.starsPlayer}/120"
+                tvPopup9.text = "Версия квеста: ${quizEntity.versionQuiz}"
+            }
+
+            popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+            val popupWidth = popupView.measuredWidth
+            val popupHeight = popupView.measuredHeight
+            val touchX = event.rawX
+            val touchY = event.rawY
+            popupWindow.width = popupWidth.toInt()
+            popupWindow.height = popupHeight
+            popupWindow.showAtLocation(
+                itemView,
+                Gravity.NO_GRAVITY,
+                touchX.toInt() + 16,
+                touchY.toInt() + 16
+            )
+        }
+        @OptIn(InternalCoroutinesApi::class)
+        private fun translateText(
+            viewModel: MainActivityViewModel,
+            context: Context,
+            quizEntity: QuizEntity
+        ) {
+            val questionList = viewModel.getQuestionListByIdQuiz(quizEntity.id!!)
+
+            log("dawdawdf $questionList, $adapterPosition")
+            // Создаем мапу, где ключом будет numQuestion, а значением - элемент Question с наибольшим lvlTranslate
+            val questionMap: MutableMap<Int, QuestionEntity> = mutableMapOf()
+
+            for (question in questionList) {
+
+                log("dawdawdf $question")
+                val existingQuestion = questionMap[question.numQuestion]
+
+                if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
+                    log("dawdawdf add")
+                    questionMap[question.numQuestion] = question
+                }
+            }
+
+            val filteredQuestionList: List<QuestionEntity> = questionMap.values.toList()
+            var i = filteredQuestionList.size
+            Thread {
+                translateToUserLanguage(filteredQuestionList).forEach {
+                    viewModel.insertQuestion(it)
+                    log("dawdawdf $i")
+                    i--
+                    if (i == 0) context.runOnUiThread {
+                        viewModel.updateQuiz(
+                            quizEntity.copy(
+                                languages = removeDuplicateWordsFromLanguages(
+                                    if (quizEntity.languages.isNotEmpty()) "${quizEntity.languages}|${Locale.getDefault().language}-100"
+                                    else "${Locale.getDefault().language}-100"
+                                ), versionQuiz = quizEntity.versionQuiz + 1
+                            )
+                        )
+                        Toast.makeText(context, "Перевод завершен успешно", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            }.start()
+
+        }
+        fun removeDuplicateWordsFromLanguages(input: String): String {
+            val languages = input.split("|") // Разделение строки на отдельные языки
+            val uniqueLanguages =
+                languages.map { removeDuplicateWords(it) } // Удаление дубликатов слов для каждого языка
+            return uniqueLanguages.joinToString("|") // Объединение языков обратно в строку
+        }
+
+        private fun removeDuplicateWords(input: String): String {
+            val words = input.split(" ")
+            val uniqueWords = words.distinct()
+            return uniqueWords.joinToString(" ")
+        }
+
+        private fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
+            // Инициализируем объект Translate с помощью ключа API
+            val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
+                .setApiKey("AIzaSyDlxFuYjnOxDRPPdkG0Qr91TmPIUM193cY")
+                .build()
+                .service
+
+            // Создаем пустой список для хранения переведенных вопросов
+            val translatedQuestionList: MutableList<QuestionEntity> = mutableListOf()
+
+            log("dawdawdf translateToUserLanguage")
+            // Перебираем каждый вопрос в исходном списке и выполняем перевод
+            for (question in questionList) {
+                // Получаем текст для перевода
+                val textToTranslate = question.nameQuestion
+                val sourceLanguage = question.language
+
+                val userLanguage: String = Locale.getDefault().language
+
+                log("dawdawdf question $question")
+                // Выполняем перевод
+                log("dawdawdf Thread")
+                val translatedText = try {
+
+                    val translation: Translation = translate!!.translate(
+                        textToTranslate,
+                        com.google.cloud.translate.Translate.TranslateOption.sourceLanguage(
+                            sourceLanguage
+                        ),
+                        com.google.cloud.translate.Translate.TranslateOption.targetLanguage(
+                            userLanguage
+                        )
+                    )
+
+                    translation.translatedText
+                } catch (e: Exception) {
+                    textToTranslate
+                }
+
+                val translatedQuestion = question.copy(
+                    nameQuestion = translatedText,
+                    language = userLanguage,
+                    lvlTranslate = 100,
+                    infoTranslater = "0|0"
+                )
+
+                translatedQuestionList.add(translatedQuestion)
+            }
+
+            return translatedQuestionList
+        }
+        @OptIn(InternalCoroutinesApi::class)
         fun bindQuiz2(quiz: QuizEntity) {
             log("bindQuiz2")
             itemView.findViewById<Button>(R.id.main_title_button).text = quiz.nameQuiz
@@ -188,22 +456,42 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_light_quiz).visibility = View.VISIBLE
             itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.GONE
-            itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
+            val ratingBar = itemView.findViewById<RatingBar>(R.id.ratingBar)
+            ratingBar.visibility = View.GONE
             itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName
             itemView.findViewById<TextView>(R.id.tvTime).text = quiz.data
+            val imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
-            if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
+            if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
+            imvTranslate.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quiz, event, MainActivityAdapter.POPUP_TRANSLATE, viewModel)
+                }
+                true
+            }
+
+            ratingBar.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quiz, event, MainActivityAdapter.POPUP_STARS, viewModel)
+                }
+                true
+            }
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindQuiz2 setOnClickListener")
                 listener.onQuiz2Clicked(quiz.id!!)
             }
         }
 
+        @OptIn(InternalCoroutinesApi::class)
         fun bindQuiz3(quiz: QuizEntity) {
             log("bindQuiz3")
             itemView.findViewById<Button>(R.id.main_title_button).text = quiz.nameQuiz
@@ -211,7 +499,6 @@ class EventAdapter(
             itemView.findViewById<ImageView>(R.id.imv_gradient_light_quiz).visibility = View.GONE
             itemView.findViewById<ImageView>(R.id.imv_grafient_hard_quiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.VISIBLE
-            itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
             itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
@@ -220,12 +507,34 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
+            val ratingBar = itemView.findViewById<RatingBar>(R.id.ratingBar)
+            ratingBar.visibility = View.GONE
+            val imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
+
+            imvTranslate.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quiz, event, MainActivityAdapter.POPUP_TRANSLATE, viewModel)
+                }
+                true
+            }
+
+            ratingBar.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quiz, event, MainActivityAdapter.POPUP_STARS, viewModel)
+                }
+                true
+            }
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindQuiz3 setOnClickListener")
                 listener.onQuiz3Clicked(quiz.id!!)
             }
         }
 
+        @OptIn(InternalCoroutinesApi::class)
         fun bindQuiz4(quiz: QuizEntity) {
             log("bindQuiz4")
             itemView.findViewById<Button>(R.id.main_title_button).text = quiz.nameQuiz
@@ -241,6 +550,25 @@ class EventAdapter(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
 
+            val ratingBar = itemView.findViewById<RatingBar>(R.id.ratingBar)
+            val imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
+            imvTranslate.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quiz, event, MainActivityAdapter.POPUP_TRANSLATE, viewModel)
+                }
+                true
+            }
+
+            ratingBar.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quiz, event, MainActivityAdapter.POPUP_STARS, viewModel)
+                }
+                true
+            }
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindQuiz4 setOnClickListener")
                 listener.onQuiz4Clicked(quiz.id!!)
