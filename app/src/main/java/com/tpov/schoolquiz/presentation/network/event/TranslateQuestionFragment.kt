@@ -87,6 +87,7 @@ class TranslateQuestionFragment : Fragment() {
                 receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
                     .thenBy { it.numQuestion })?.toMutableList()
             questions?.filter { it.idQuiz == idQuiz }
+            log("questions: $questions")
             if (!questions.isNullOrEmpty()) loadNextQuestion()
             else {
                 Toast.makeText(

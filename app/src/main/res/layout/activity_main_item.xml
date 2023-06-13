@@ -60,6 +60,18 @@
         android:elevation="8dp"
         android:outlineSpotShadowColor="#000000">
 
+        <ImageView
+            android:id="@+id/imv_grad_button"
+            android:layout_width="16dp"
+            android:layout_height="75dp"
+            android:layout_marginLeft="84dp"
+            android:elevation="12dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/linearLayout"
+            app:srcCompat="@drawable/db_design3_grad_item_text_button" />
+
         <ImageButton
             android:id="@+id/imv_gradient_light_quiz"
             android:layout_width="100dp"
@@ -138,23 +150,24 @@
 
                 <Button
                     android:id="@+id/main_title_button"
-                    android:layout_width="100dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@null"
                     android:layout_gravity="center"
+                    android:layout_weight="1"
                     android:elevation="12dp"
+                    android:background="@null"
                     android:gravity="center"
                     android:inputType="textAutoCorrect"
-                    android:paddingLeft="16dp"
-                    android:text="name quiz"
+                    android:paddingLeft="4dp"
+                    android:text="name quiz very long name"
                     android:textColor="@color/white"
+                    android:textSize="12sp"
                     android:textStyle="bold"
                     android:transformPivotX="12dp" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
                     android:orientation="horizontal">
 
                     <LinearLayout

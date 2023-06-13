@@ -244,7 +244,12 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
-    private fun sendMassageTranslate(info: String, idQuiz: Int, language: String, numQuestion: Int) {
+    private fun sendMassageTranslate(
+        info: String,
+        idQuiz: Int,
+        language: String,
+        numQuestion: Int
+    ) {
 
         log("sendMassageTranslate: $info")
         log("sendMassageTranslate: $info")
@@ -290,11 +295,13 @@ class RepositoryFBImpl @Inject constructor(
                 for (dateSnapshot in snapshot.children) {
                     for (idQuizSnapshot in dateSnapshot.children) {
                         for (numQuestion in idQuizSnapshot.children) {
-                            for (chatSnapshot in numQuestion.children) {
-                                log("getPersonalMassage data: $dateSnapshot")
-                                val chat = dateSnapshot.getValue(Chat::class.java)
+                            for (languageSnap in numQuestion.children) {
+                                for (chatSnap in languageSnap.children) {
+                                    log("getPersonalMassage data: $dateSnapshot")
+                                    val chat = dateSnapshot.getValue(Chat::class.java)
 
-                                dao.insertChat(chat!!.toChatEntity())
+                                    dao.insertChat(chat!!.toChatEntity())
+                                }
                             }
                         }
                     }
@@ -879,6 +886,7 @@ class RepositoryFBImpl @Inject constructor(
                                 "stars" to quiz.starsAll
                             )
 
+
                             log("setQuizData() playersRef quizDB перебираем: $quiz")
                             if (quiz.event == 1) {
                                 log("setQuizData() playersRef quizDB event1")
@@ -1237,7 +1245,7 @@ class RepositoryFBImpl @Inject constructor(
 
         var i = 0
         question.forEach {
-            sendMassageTranslate(it.infoTranslater, it.idQuiz,it.language, it.numQuestion)
+            sendMassageTranslate(it.infoTranslater, it.idQuiz, it.language, it.numQuestion)
             log(
                 "setQuestionData() перебираем квесты size: ${question.size}, dao.getQuizTpovIdById(it.idQuiz): ${
                     dao.getQuizTpovIdById(

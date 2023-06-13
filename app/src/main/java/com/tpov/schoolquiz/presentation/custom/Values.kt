@@ -14,4 +14,20 @@ object Values {
             else -> Locale.getDefault().language
         }
     }
+
+    fun getMapStars(): Map<Double, String> {
+        return mapOf(
+            0.0 to "Обучение",
+            0.2 to "Новичек",
+            2.0 to "Игрок",
+            6.0 to "Любитель",
+            13.0 to "Ветеран",
+            25.0 to "Гроссместер",
+            50.0 to "Єксперт",
+            100.0 to "Легенда",
+        )
+    }
+
+    //Пройти квест
+    //Открыть вкладки
 }

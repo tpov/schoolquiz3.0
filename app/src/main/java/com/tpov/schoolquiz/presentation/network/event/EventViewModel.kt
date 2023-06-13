@@ -23,7 +23,8 @@ class EventViewModel @Inject constructor(
     val updateProfileUseCase: UpdateProfileUseCase,
     val updateQuestionUseCase: UpdateQuestionUseCase,
     val insertQuestionUseCase: InsertQuestionUseCase,
-    val getQuizByIdUseCase: GetQuizByIdUseCase
+    val getQuizByIdUseCase: GetQuizByIdUseCase,
+    private val updateQuizUseCase: UpdateQuizUseCase
 ) : ViewModel() {
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()
@@ -40,6 +41,7 @@ class EventViewModel @Inject constructor(
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
     }
+
     private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
         log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
         return getProfileUseCase(tpovId)
@@ -79,7 +81,13 @@ class EventViewModel @Inject constructor(
             .groupBy { it.idQuiz }
             .flatMap { (_, questions) ->
                 questions.filter { question ->
-                    log("getTranslateList: question.language: ${question.language}, getProfileUseCase(tpovId).languages!!.split(|): ${getProfileUseCase(tpovId).languages!!.split("|")}")
+                    log(
+                        "getTranslateList: question.language: ${question.language}, getProfileUseCase(tpovId).languages!!.split(|): ${
+                            getProfileUseCase(
+                                tpovId
+                            ).languages!!.split("|")
+                        }"
+                    )
                     question.language !in getProfileUseCase(tpovId).languages!!.split("|") ||
                             question.lvlTranslate < (getProfileUseCase(tpovId).translater)!! - 50
                 }
@@ -104,6 +112,7 @@ class EventViewModel @Inject constructor(
     fun getTpovIdQuiz(id: Int): Int {
         return getQuizByIdUseCase(id).tpovId
     }
+
     fun getEventDeveloper() {
         log("fun getTranslateList")
 
@@ -114,6 +123,9 @@ class EventViewModel @Inject constructor(
 
     fun saveQuestions(updatedQuestions: List<QuestionEntity>, activity: FragmentActivity?) {
         val questionFirst = updatedQuestions[0]
+        val idQuiz = questionFirst.idQuiz
+        val quiz = getQuizByIdUseCase(idQuiz)
+        val wordsMap = mutableMapOf<String, Int>()
 
         updatedQuestions.forEach {
             try {
@@ -124,16 +136,66 @@ class EventViewModel @Inject constructor(
                 Toast.makeText(activity, "Error parse info Translater", Toast.LENGTH_LONG).show()
             }
             log("update: $it, $questionFirst")
-            insertQuestionUseCase(it.copy(
-                numQuestion = questionFirst.numQuestion,
-                answerQuestion = questionFirst.answerQuestion,
-                hardQuestion = questionFirst.hardQuestion,
-                lvlTranslate = getProfileLvlTranslate(),
-                idQuiz = questionFirst.idQuiz,
-                infoTranslater = hasTpovIdZeroAtEnd(it.infoTranslater)
-            ))
+            insertQuestionUseCase(
+                it.copy(
+                    numQuestion = questionFirst.numQuestion,
+                    answerQuestion = questionFirst.answerQuestion,
+                    hardQuestion = questionFirst.hardQuestion,
+                    lvlTranslate = getProfileLvlTranslate(),
+                    idQuiz = questionFirst.idQuiz,
+                    infoTranslater = hasTpovIdZeroAtEnd(it.infoTranslater)
+                )
+            )
+            val word = it.language
+            val lvlTranslate = it.lvlTranslate
+
+            val currentMinLvlTranslate = wordsMap[word]
+            if (currentMinLvlTranslate == null || lvlTranslate < currentMinLvlTranslate) {
+                wordsMap[word] = lvlTranslate
+            }
+            val result = wordsMap.entries.joinToString(separator = "|") { entry ->
+                "${entry.key}-${entry.value}"
+            }
+
+            updateQuizUseCase(quiz.copy(languages = mergeStrings(result, quiz.languages), versionQuiz = quiz.versionQuiz + 1))
         }
+
     }
+    fun mergeStrings(string1: String, string2: String): String {
+        val mergedMap = mutableMapOf<String, Int>()
+
+        // Обработка первой строки
+        val parts1 = string1.split("|")
+        for (part in parts1) {
+            val (word, value) = part.split("-")
+            val currentValue = mergedMap[word]
+            if (currentValue == null || value.toInt() > currentValue) {
+                mergedMap[word] = value.toInt()
+            }
+        }
+
+        // Обработка второй строки
+        val parts2 = string2.split("|")
+        for (part in parts2) {
+            val (word, value) = part.split("-")
+            val currentValue = mergedMap[word]
+            if (currentValue == null || value.toInt() > currentValue) {
+                mergedMap[word] = value.toInt()
+            }
+        }
+
+        // Составление результирующей строки
+        val mergedString = StringBuilder()
+        for ((word, value) in mergedMap) {
+            if (mergedString.isNotEmpty()) {
+                mergedString.append("|")
+            }
+            mergedString.append("$word-$value")
+        }
+
+        return mergedString.toString()
+    }
+
 
     private fun hasTpovIdZeroAtEnd(infoTranslater: String): String {
         return if (infoTranslater.endsWith("${getTpovId()}|0")) infoTranslater
@@ -164,5 +226,8 @@ class EventViewModel @Inject constructor(
     }
 
 }
+
 @OptIn(InternalCoroutinesApi::class)
-fun log(m: String) { Logcat.log(m, "Event", Logcat.LOG_VIEW_MODEL)}
+fun log(m: String) {
+    Logcat.log(m, "Event", Logcat.LOG_VIEW_MODEL)
+}

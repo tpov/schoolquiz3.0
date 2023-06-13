@@ -17,14 +17,9 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
-import android.view.Gravity
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import android.view.*
 import android.view.animation.LinearInterpolator
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -55,6 +50,7 @@ import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import java.text.NumberFormat
 import java.util.*
@@ -362,7 +358,54 @@ class MainActivity : AppCompatActivity() {
                 it?.nickname ?: ""
             )
         }
-
+        pb_life1.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Rating bar clicked, handle the event here
+                // You can call your method to show the translation popup/dialog
+                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
+            }
+            true
+        }
+        pb_life2.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Rating bar clicked, handle the event here
+                // You can call your method to show the translation popup/dialog
+                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
+            }
+            true
+        }
+        pb_life3.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Rating bar clicked, handle the event here
+                // You can call your method to show the translation popup/dialog
+                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
+            }
+            true
+        }
+        pb_life4.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Rating bar clicked, handle the event here
+                // You can call your method to show the translation popup/dialog
+                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
+            }
+            true
+        }
+        pb_life5.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Rating bar clicked, handle the event here
+                // You can call your method to show the translation popup/dialog
+                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
+            }
+            true
+        }
+        pb_life_gold1.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Rating bar clicked, handle the event here
+                // You can call your method to show the translation popup/dialog
+                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE_GOLD)
+            }
+            true
+        }
         setButtonNavListener()
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
@@ -466,6 +509,112 @@ class MainActivity : AppCompatActivity() {
         viewModel.tpovIdLiveData.value = getTpovId()
 
         createTimer()
+    }
+
+    private fun showPopupInfo(event: MotionEvent, popupType: Int) {
+        val context = this
+        // Create the popup window
+        val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val popupView = inflater.inflate(R.layout.translation_popup_layout, null)
+        val popupWindow = PopupWindow(
+            popupView,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        )
+
+        // Configure the popup window
+        val tvPopup1 = popupView.findViewById<TextView>(R.id.tv_popup_1)
+        val tvPopup2 = popupView.findViewById<TextView>(R.id.tv_popup_2)
+        val tvPopup3 = popupView.findViewById<TextView>(R.id.tv_popup_3)
+        val tvPopup4 = popupView.findViewById<TextView>(R.id.tv_popup_4)
+        val tvPopup5 = popupView.findViewById<TextView>(R.id.tv_popup_5)
+        val tvPopup6 = popupView.findViewById<TextView>(R.id.tv_popup_6)
+        val tvPopup7 = popupView.findViewById<TextView>(R.id.tv_popup_7)
+        val tvPopup8 = popupView.findViewById<TextView>(R.id.tv_popup_8)
+        val tvPopup9 = popupView.findViewById<TextView>(R.id.tv_popup_9)
+        val spListPopup1 = popupView.findViewById<Spinner>(R.id.sp_list_popup_1)
+        val bPopup1 = popupView.findViewById<Button>(R.id.b_popup_1)
+        val layoutSp = popupView.findViewById<LinearLayout>(R.id.l_sp)
+        val layoutB = popupView.findViewById<LinearLayout>(R.id.l_b)
+
+        if (popupType == MainActivityAdapter.POPUP_LIFE) {
+            spListPopup1.visibility = View.GONE
+            bPopup1.visibility = View.GONE
+
+            layoutB.visibility = View.GONE
+            layoutSp.visibility = View.GONE
+
+            tvPopup1.visibility = View.VISIBLE
+            tvPopup2.visibility = View.GONE
+            tvPopup3.visibility = View.GONE
+            tvPopup4.visibility = View.GONE
+            tvPopup5.visibility = View.GONE
+            tvPopup6.visibility = View.GONE
+            tvPopup7.visibility = View.GONE
+            tvPopup8.visibility = View.GONE
+            tvPopup9.visibility = View.GONE
+
+            try {
+                tvPopup1.text = "Life count: ${viewModel.getProfileCount()}/${
+                    viewModel.getProfileCountLife()
+                        ?.times(100)
+                } (${
+                    (viewModel.getProfileCount()?.times(100))?.div(
+                        viewModel.getProfileCountLife()
+                            ?.times(100)!!
+                    )
+                }%)"
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error get life counts", Toast.LENGTH_LONG).show()
+            }
+
+        } else if (popupType == MainActivityAdapter.POPUP_LIFE_GOLD) {
+            tvPopup1.visibility = View.VISIBLE
+            tvPopup2.visibility = View.GONE
+            tvPopup3.visibility = View.GONE
+            tvPopup4.visibility = View.GONE
+            tvPopup5.visibility = View.GONE
+            tvPopup6.visibility = View.GONE
+            tvPopup7.visibility = View.GONE
+            tvPopup8.visibility = View.GONE
+            tvPopup9.visibility = View.GONE
+
+            layoutB.visibility = View.GONE
+            layoutSp.visibility = View.GONE
+
+            spListPopup1.visibility = View.GONE
+            bPopup1.visibility = View.GONE
+
+
+            try {
+                tvPopup1.text = "Life count: ${viewModel.getProfileCountGold()}/${
+                    viewModel.getProfileCountGoldLife()
+                        ?.times(100)
+                } (${
+                    (viewModel.getProfileCountGold()?.times(100))?.div(
+                        viewModel.getProfileCountGoldLife()
+                            ?.times(100)!!
+                    )
+                }%)"
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error get life counts", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val popupWidth = popupView.measuredWidth
+        val popupHeight = popupView.measuredHeight
+        val touchX = event.rawX
+        val touchY = event.rawY
+        popupWindow.width = popupWidth.toInt()
+        popupWindow.height = popupHeight
+        popupWindow.showAtLocation(
+            binding.viewBackground,
+            Gravity.NO_GRAVITY,
+            touchX.toInt() + 16,
+            touchY.toInt() + 16
+        )
     }
 
     private var timer: Timer? = null
@@ -877,6 +1026,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
 
         const val REQUEST_CODE_STORAGE_PERMISSION = 1001
+
     }
 }
 
