@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "762375057396",
+    "firebase_url": "https://school-quiz-89336951-default-rtdb.firebaseio.com",
     "project_id": "school-quiz-89336951",
     "storage_bucket": "school-quiz-89336951.appspot.com"
   },
@@ -20,7 +21,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDlxFuYjnOxDRPPdkG0Qr91TmPIUM193cY"
+          "current_key": "AIzaSyC10iksA0DO5OBc98KY_M1ECeNVHUIU2QQ"
         }
       ],
       "services": {

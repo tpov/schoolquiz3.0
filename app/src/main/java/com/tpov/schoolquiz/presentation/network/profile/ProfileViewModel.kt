@@ -87,7 +87,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun getTranslate() {
-        return getTranslateUseCase()
+        getTranslateUseCase()
     }
     fun getPlayersList() {
         log("getPlayersList()")

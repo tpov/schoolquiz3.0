@@ -124,38 +124,14 @@
                 android:orientation="horizontal">
 
 
-                <TextView
-                    android:id="@+id/tvNumHardQuiz"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginEnd="20dp"
-                    android:layout_weight="1"
-                    android:gravity="right|end"
-                    android:text="time"
-                    android:textColor="#334573"
-                    android:visibility="gone" />
-
-                <TextView
-                    android:id="@+id/tvNumQuestion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginEnd="20dp"
-                    android:layout_weight="1"
-                    android:gravity="right|end"
-                    android:text="time"
-                    android:textColor="#334573"
-                    android:visibility="gone" />
-
                 <Button
                     android:id="@+id/main_title_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_weight="1"
-                    android:elevation="12dp"
                     android:background="@null"
+                    android:elevation="12dp"
                     android:gravity="center"
                     android:inputType="textAutoCorrect"
                     android:paddingLeft="4dp"
@@ -164,6 +140,38 @@
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:transformPivotX="12dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvNumQuestion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="time"
+                        android:textColor="#89C6B3"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvNumHardQuiz"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_weight="1"
+                        android:foregroundGravity="center"
+                        android:gravity="center"
+                        android:text="time"
+                        android:textColor="#C68989"
+                        android:visibility="gone" />
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="wrap_content"

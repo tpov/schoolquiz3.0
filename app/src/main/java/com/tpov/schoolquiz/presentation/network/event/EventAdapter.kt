@@ -1,11 +1,7 @@
 package com.tpov.schoolquiz.presentation.network.event
 
 import android.content.Context
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.RecyclerView
@@ -20,7 +16,11 @@ import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
-import java.util.Locale
+import java.util.*
+
+interface DataObserver {
+    fun onDataUpdated()
+}
 
 class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val quiz2List: List<QuizEntity>,
@@ -34,7 +34,28 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val developerEventList: List<ChatEntity>,
     private val listener: ListenerEvent,
     private val viewModel: MainActivityViewModel
-) : RecyclerView.Adapter<EventAdapter.MyViewHolder>() {
+) : RecyclerView.Adapter<EventAdapter.MyViewHolder>(), DataObserver  {
+
+    private var dataObserver: DataObserver? = null
+
+    fun setDataObserver(observer: DataObserver) {
+        dataObserver = observer
+    }
+
+
+    override fun onDataUpdated() {
+
+        size1 = quiz2List.size
+        size2 = quiz3List.size + size1
+        size3 = quiz4List.size + size2
+        size4 = translate1EventList.size + size3
+        size5 = translate2EventList.size + size4
+        size6 = translateEditQuestionList.size + size5
+        size7 = moderatorEventList.size + size6
+        size8 = adminEventList.size + size7
+        size9 = developerEventList.size + size8
+        notifyDataSetChanged()
+    }
 
     private val viewTypes by lazy {
         arrayOf(
@@ -51,15 +72,16 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         )
     }
 
-    private val size1: Int by lazy { quiz2List.size }
-    private val size2: Int by lazy { quiz3List.size + size1 }
-    private val size3: Int by lazy { quiz4List.size + size2 }
-    private val size4: Int by lazy { translate1EventList.size + size3 }
-    private val size5: Int by lazy { translate2EventList.size + size4 }
-    private val size6: Int by lazy { translateEditQuestionList.size + size5 }
-    private val size7: Int by lazy { moderatorEventList.size + size6 }
-    private val size8: Int by lazy { adminEventList.size + size7 }
-    private val size9: Int by lazy { developerEventList.size + size8 }
+
+    private var size1 = 0
+    private var size2 = 0
+    private var size3 = 0
+    private var size4 = 0
+    private var size5 = 0
+    private var size6 = 0
+    private var size7 = 0
+    private var size8 = 0
+    private var size9 = 0
 
     private val headers = arrayOf(
         "Quiz 2",
@@ -92,6 +114,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
     override fun getItemViewType(position: Int): Int {
 
+
         log("fun getItemViewType(), position: $position")
         log("fun getItemViewType(), size1:      $size1")
         log("fun getItemViewType(), size2:      $size2")
@@ -102,18 +125,10 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         log("fun getItemViewType(), size7:      $size7")
         log("fun getItemViewType(), size8:      $size8")
         log("fun getItemViewType(), size9:      $size9")
+        log("fun getItemViewType(), translate1EventList:      $translate1EventList")
+        log("fun getItemViewType(), translate1EventList:      ${translate1EventList.size}")
         log("fun getItemViewType(), _______________________________________")
-//        return if (
-//            position == 0 ||
-//            position == size1 ||
-//            position == size2 ||
-//            position == size3 ||
-//            position == size4 ||
-//            position == size5 ||
-//            position == size6 ||
-//            position == size7 ||
-//            position == size8
-//        ) HEADER_VIEW
+
         return if (position < size1) QUIZ2_LIST
         else if (position < size2) QUIZ3_LIST
         else if (position < size3) QUIZ4_LIST
@@ -384,7 +399,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }.start()
 
         }
-        fun removeDuplicateWordsFromLanguages(input: String): String {
+        private fun removeDuplicateWordsFromLanguages(input: String): String {
             val languages = input.split("|") // Разделение строки на отдельные языки
             val uniqueLanguages =
                 languages.map { removeDuplicateWords(it) } // Удаление дубликатов слов для каждого языка
@@ -583,7 +598,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslate1Event setOnClickListener")
@@ -599,7 +614,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslate2Event setOnClickListener")
@@ -615,7 +630,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindTranslateEditQuestion setOnClickListener")
@@ -630,7 +645,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindModeratorEvent setOnClickListener")
@@ -645,7 +660,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindAdminEvent setOnClickListener")
@@ -660,7 +675,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<ImageView>(R.id.imv_gradient_translate_quiz).visibility =
                 View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<Switch>(R.id.chb_type_quiz).visibility = View.GONE
+            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
 
             itemView.findViewById<Button>(R.id.main_title_button).setOnClickListener {
                 log("bindDeveloperEvent setOnClickListener")
@@ -678,7 +693,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         fun onQuiz3Clicked(quizId: Int)
         fun onQuiz4Clicked(quizId: Int)
         fun onTranslate1EventClicked(questionId: Int)
-        fun onTranslate2EventClicked(quizId: Int)
+        fun onTranslate2EventClicked(questionId: Int)
         fun onTranslateEditQuestionClicked(questionId: Int)
         fun onModeratorEventClicked(quizId: Int)
         fun onAdminEventClicked(quizId: Int)

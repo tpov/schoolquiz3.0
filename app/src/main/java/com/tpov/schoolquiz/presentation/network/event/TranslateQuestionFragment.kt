@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
@@ -15,11 +14,12 @@ import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
+import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.*
 import javax.inject.Inject
 
-class TranslateQuestionFragment : Fragment() {
+class TranslateQuestionFragment : BaseFragment() {
 
     private lateinit var binding: FragmentTranslateQuestionBinding
     private lateinit var translationAdapter: TranslationQuestionAdapter
@@ -36,6 +36,7 @@ class TranslateQuestionFragment : Fragment() {
     private lateinit var viewModel: EventViewModel
     private var listSize = 0
     private var idQuiz = 0
+    private var idQuestion = 0
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onAttach(context: Context) {
@@ -49,11 +50,13 @@ class TranslateQuestionFragment : Fragment() {
     companion object {
 
         private const val ARG_ID_QUIZ = "idQuiz"
+        private const val ARG_ID_QUESTION = "idQuestion"
 
-        fun newInstance(idQuiz: Int?): TranslateQuestionFragment {
+        fun newInstance(idQuiz: Int?, idQuestion: Int?): TranslateQuestionFragment {
             val args = Bundle()
 
             args.putInt(ARG_ID_QUIZ, idQuiz ?: -1)
+            args.putInt(ARG_ID_QUESTION, idQuestion ?: -1)
 
             val fragment = TranslateQuestionFragment()
             fragment.arguments = args
@@ -74,44 +77,84 @@ class TranslateQuestionFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         idQuiz = arguments?.getInt(ARG_ID_QUIZ, -1) ?: -1
+        idQuestion = arguments?.getInt(ARG_ID_QUESTION, -1) ?: -1
 
-        viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
+        if (idQuiz == -1) {
+            viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
-        translationAdapter = TranslationQuestionAdapter(mutableListOf())
-        binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
-        binding.recyclerViewQuestions.adapter = translationAdapter
+            translationAdapter = TranslationQuestionAdapter(mutableListOf())
+            binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
+            binding.recyclerViewQuestions.adapter = translationAdapter
 
-        log("getQuestionListUseCase() idQuiz != -1")
-        viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
-            questions =
-                receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
-                    .thenBy { it.numQuestion })?.toMutableList()
-            questions?.filter { it.idQuiz == idQuiz }
-            log("questions: $questions")
-            if (!questions.isNullOrEmpty()) loadNextQuestion()
-            else {
+            questions = viewModel.getQuestionItem(idQuestion).toMutableList()
+
+            binding.buttonAddTranslation.setOnClickListener {
+                log("Add Translation button clicked")
+                translationAdapter.addNewQuestion()
+            }
+
+            binding.buttonSave.setOnClickListener {
+                val updatedQuestions = translationAdapter.getUpdatedQuestions()
+                viewModel.saveQuestions(updatedQuestions, activity)
+                requireActivity().supportFragmentManager.beginTransaction().remove(this)
+                    .commit()
+            }
+
+            binding.bCancel.setOnClickListener {
+                requireActivity().supportFragmentManager.beginTransaction().remove(this).commit()
+            }
+            if (!questions.isNullOrEmpty()) {
+                numQuestion = questions!![0].numQuestion
+
+                translationAdapter.questions.add(questions!![0])
+                translationAdapter.notifyDataSetChanged()
+            } else {
                 Toast.makeText(
                     activity,
                     "Не удалось найти вопросы, которые можно перевести",
                     Toast.LENGTH_LONG
                 ).show()
             }
-        }
 
-        viewModel.loadQuests()
-        binding.buttonAddTranslation.setOnClickListener {
-            log("Add Translation button clicked")
-            translationAdapter.addNewQuestion()
-        }
+        } else {
+            viewModel = ViewModelProvider(this, viewModelFactory)[EventViewModel::class.java]
 
-        binding.buttonSave.setOnClickListener {
-            val updatedQuestions = translationAdapter.getUpdatedQuestions()
-            viewModel.saveQuestions(updatedQuestions, activity)
-            loadNextQuestion()
-        }
+            translationAdapter = TranslationQuestionAdapter(mutableListOf())
+            binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
+            binding.recyclerViewQuestions.adapter = translationAdapter
 
-        binding.bCancel.setOnClickListener {
-            requireActivity().supportFragmentManager.beginTransaction().remove(this).commit()
+            log("getQuestionListUseCase() idQuiz != -1")
+            viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
+                questions =
+                    receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
+                        .thenBy { it.numQuestion })
+                        ?.filter { it.idQuiz == idQuiz }?.toMutableList()
+                log("questions: $questions")
+                if (!questions.isNullOrEmpty()) loadNextQuestion()
+                else {
+                    Toast.makeText(
+                        activity,
+                        "Не удалось найти вопросы, которые можно перевести",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            viewModel.loadQuests()
+            binding.buttonAddTranslation.setOnClickListener {
+                log("Add Translation button clicked")
+                translationAdapter.addNewQuestion()
+            }
+
+            binding.buttonSave.setOnClickListener {
+                val updatedQuestions = translationAdapter.getUpdatedQuestions()
+                viewModel.saveQuestions(updatedQuestions, activity)
+                loadNextQuestion()
+            }
+
+            binding.bCancel.setOnClickListener {
+                requireActivity().supportFragmentManager.beginTransaction().remove(this).commit()
+            }
         }
     }
 

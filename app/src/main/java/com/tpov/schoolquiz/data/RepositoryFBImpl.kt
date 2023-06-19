@@ -109,28 +109,35 @@ class RepositoryFBImpl @Inject constructor(
         )
 
         val profile = dao.getProfile(getTpovId())
-        if (profile.translater!! > 100) {
+        if (profile.translater!! >= 100) {
             questionRefs.forEach {
-                it.limitToLast(30).addListenerForSingleValueEvent(object : ValueEventListener {
+                log("getTranslateFB it: $it}")
+                it.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
-                        log("getQuestion snapshot: ${snapshot.key}")
+                        log("getTranslateFB snapshot: ${snapshot.key}")
                         for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
 
-                            log("getQuestion idQuizSnap: ${idQuizSnap.key}")
+                            log("getTranslateFB idQuizSnap: ${idQuizSnap.key}")
                             for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
 
-                                log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
+                                log("getTranslateFB idQuestionSnap: ${idQuestionSnap.key}")
                                 for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
                                     if (try {
+
+                                            log("getTranslateFB languageSnap: ${languageSnap.key}")
+                                        log("getTranslateFB try ${dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty()}")
+                                        log("getTranslateFB try ${dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty()}")
+                                        log("getTranslateFB try ${languageSnap.key?.get(0)!! == '-'}")
+                                        log("getTranslateFB try ${profile.translater >= 200}")
                                             dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty()
+                                            && dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty()
                                         } catch (e: Exception) {
                                             true
                                         }
-                                        && dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty() ||
-                                        languageSnap.key?.get(0)!! == '-' &&
-                                        profile.translater!! >= 200
+                                        || languageSnap.key?.get(0)!! == '-'
+                                        && profile.translater >= 200
                                     ) {
-                                        log("getQuestion languageSnap: ${languageSnap.key}")
+                                        log("getTranslateFB languageSnap: ${languageSnap.key}")
                                         val question = languageSnap.getValue(Question::class.java)
                                         if (question != null) {
                                             dao.insertQuestion(
@@ -155,7 +162,7 @@ class RepositoryFBImpl @Inject constructor(
                     }
 
                     override fun onCancelled(error: DatabaseError) {
-                        log("getQuestion8Data ошибка: $error")
+                        log("getTranslateFB ошибка: $error")
                     }
                 })
             }
@@ -1245,6 +1252,7 @@ class RepositoryFBImpl @Inject constructor(
 
         var i = 0
         question.forEach {
+            it.nameQuestion = it.nameQuestion.trim()
             sendMassageTranslate(it.infoTranslater, it.idQuiz, it.language, it.numQuestion)
             log(
                 "setQuestionData() перебираем квесты size: ${question.size}, dao.getQuizTpovIdById(it.idQuiz): ${

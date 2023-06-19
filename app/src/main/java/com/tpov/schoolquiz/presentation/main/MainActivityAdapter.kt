@@ -498,7 +498,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         }
 
-        fun removeDuplicateWordsFromLanguages(input: String): String {
+        private fun removeDuplicateWordsFromLanguages(input: String): String {
             val languages = input.split("|") // Разделение строки на отдельные языки
             val uniqueLanguages =
                 languages.map { removeDuplicateWords(it) } // Удаление дубликатов слов для каждого языка

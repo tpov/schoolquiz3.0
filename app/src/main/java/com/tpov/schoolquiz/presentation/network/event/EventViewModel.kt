@@ -36,7 +36,14 @@ class EventViewModel @Inject constructor(
     var admin: MutableList<ChatEntity> = arrayListOf()
     var develop: MutableList<ChatEntity> = arrayListOf()
 
+    var updateEventList: MutableLiveData<Int> = MutableLiveData()
+
+    var valUpdateEventList = 0
+
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
+
+
+    fun getQuestionItem(idQuestion: Int) = getQuestionListUseCase().filter { it.id == idQuestion }
 
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
@@ -59,6 +66,8 @@ class EventViewModel @Inject constructor(
         questionLiveData.value = getQuestionListUseCase()
     }
 
+
+
     fun getQuizList() {
         log("fun getQuizList")
 
@@ -68,6 +77,7 @@ class EventViewModel @Inject constructor(
                 3 -> quiz3List.add(it)
                 4 -> quiz4List.add(it)
             }
+            updateEventList.postValue(valUpdateEventList++)
         }
 
         log("getQuizList quiz2List: $quiz2List")
@@ -86,7 +96,7 @@ class EventViewModel @Inject constructor(
                             getProfileUseCase(
                                 tpovId
                             ).languages!!.split("|")
-                        }"
+                        },\n     ${getQuizByIdUseCase(question.idQuiz)}"
                     )
                     question.language !in getProfileUseCase(tpovId).languages!!.split("|") ||
                             question.lvlTranslate < (getProfileUseCase(tpovId).translater)!! - 50
@@ -100,7 +110,12 @@ class EventViewModel @Inject constructor(
                 } else {
                     translate1Question.add(question)
                 }
+
+                updateEventList.postValue(valUpdateEventList++)
             }
+        log("getTranslateList translate1Question $translate1Question")
+        log("getTranslateList translate2Question $translate2Question")
+        log("getTranslateList translateEditQuestion $translateEditQuestion")
     }
 
     fun getProfileCount(): Int? {
@@ -157,11 +172,15 @@ class EventViewModel @Inject constructor(
                 "${entry.key}-${entry.value}"
             }
 
-            updateQuizUseCase(quiz.copy(languages = mergeStrings(result, quiz.languages), versionQuiz = quiz.versionQuiz + 1))
+            try {
+                updateQuizUseCase(quiz.copy(languages = mergeStrings(result, quiz.languages), versionQuiz = quiz.versionQuiz + 1))
+            } catch (e: Exception) {
+                Toast.makeText(activity, "quiz do not update", Toast.LENGTH_SHORT).show()
+            }
         }
 
     }
-    fun mergeStrings(string1: String, string2: String): String {
+    private fun mergeStrings(string1: String, string2: String): String {
         val mergedMap = mutableMapOf<String, Int>()
 
         // Обработка первой строки

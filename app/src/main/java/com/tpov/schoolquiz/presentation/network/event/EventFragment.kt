@@ -16,6 +16,8 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
+import com.tpov.schoolquiz.presentation.fragment.FragmentManager
+import com.tpov.schoolquiz.presentation.main.MainActivity
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.Dispatchers
@@ -26,11 +28,10 @@ import javax.inject.Inject
 class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var eventAdapter: EventAdapter
     private lateinit var eventViewModel: EventViewModel
+
     @OptIn(InternalCoroutinesApi::class)
     private lateinit var mainViewModel: MainActivityViewModel
-
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
 
@@ -59,30 +60,30 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         recyclerView = view.findViewById(R.id.rv_event)
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        val quiz2List = eventViewModel.quiz2List
-        val quiz3List = eventViewModel.quiz3List
-        val quiz4List = eventViewModel.quiz4List
-        val translate1EventList = eventViewModel.translate1Question
-        val translate2EventList = eventViewModel.translate2Question
-        val translateEditQuestionList = eventViewModel.translateEditQuestion
-        val moderatorEventList = eventViewModel.moderator
-        val adminEventList = eventViewModel.admin
-        val developerEventList = eventViewModel.develop
-
         val eventAdapter = EventAdapter(
-            quiz2List,
-            quiz3List,
-            quiz4List,
-            translate1EventList,
-            translate2EventList,
-            translateEditQuestionList,
-            moderatorEventList,
-            adminEventList,
-            developerEventList,
+            eventViewModel.quiz2List,
+            eventViewModel.quiz3List,
+            eventViewModel.quiz4List,
+            eventViewModel.translate1Question,
+            eventViewModel.translate2Question,
+            eventViewModel.translateEditQuestion,
+            eventViewModel.moderator,
+            eventViewModel.admin,
+            eventViewModel.develop,
             this,
             mainViewModel
         )
+        eventAdapter.setDataObserver(eventAdapter)
         recyclerView.adapter = eventAdapter
+
+        eventViewModel.updateEventList.observe(viewLifecycleOwner) {
+            eventAdapter.onDataUpdated()
+            recyclerView.post {
+                eventAdapter.notifyDataSetChanged()
+            }
+
+        }
+
     }
 
     override fun onCreateView(
@@ -166,6 +167,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         }
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onTranslate1EventClicked(questionId: Int) {
 
         log("fun onQuiz2Clicked")
@@ -174,15 +176,22 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             "Недостаточно жизней. На прохождение квеста тратиться 10% жизни",
             Toast.LENGTH_LONG
         ).show()
+
         else {
             eventViewModel.updateProfileUseCase(
                 eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 10)
             )
+
+            FragmentManager.setFragment(TranslateQuestionFragment.newInstance(-1, questionId),
+                requireActivity() as MainActivity
+            )
             log("fun onTranslate1EventClicked")
+
         }
     }
 
-    override fun onTranslate2EventClicked(quizId: Int) {
+    @OptIn(InternalCoroutinesApi::class)
+    override fun onTranslate2EventClicked(questionId: Int) {
 
         log("fun onQuiz2Clicked")
         if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
@@ -194,10 +203,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             eventViewModel.updateProfileUseCase(
                 eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
             )
+            FragmentManager.setFragment(TranslateQuestionFragment.newInstance(-1, questionId),
+                requireActivity() as MainActivity
+            )
             log("fun onTranslate2EventClicked")
         }
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun onTranslateEditQuestionClicked(questionId: Int) {
 
         log("fun onQuiz2Clicked")
@@ -209,6 +222,10 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         else {
             eventViewModel.updateProfileUseCase(
                 eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 10)
+            )
+
+            FragmentManager.setFragment(TranslateQuestionFragment.newInstance(-1, questionId),
+                requireActivity() as MainActivity
             )
             log("fun onTranslateEditQuestionClicked")
         }

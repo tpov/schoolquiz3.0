@@ -177,7 +177,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                         )
                     )
 
-
                     val intent = Intent(activity, QuestionActivity::class.java)
                     intent.putExtra(NAME_USER, "user")
                     intent.putExtra(ID_QUIZ, randQuiz.id)
@@ -297,7 +296,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 val idQuiz = it.getIntExtra("idQuiz", 0)
 
                 if (translate) (requireActivity() as MainActivity).replaceFragment(
-                    TranslateQuestionFragment.newInstance(idQuiz)
+                    TranslateQuestionFragment.newInstance(idQuiz, -1)
                 )
             }
         }

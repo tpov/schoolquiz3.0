@@ -10,6 +10,7 @@ firebase-debug.*.log*
 # Firebase cache
 .firebase/
 
+app/src/main/java/com/tpov/schoolquiz/secure
 # Firebase config
 
 # Uncomment this if you'd like others to create their own Firebase project.
