@@ -24,7 +24,8 @@ class EventViewModel @Inject constructor(
     val updateQuestionUseCase: UpdateQuestionUseCase,
     val insertQuestionUseCase: InsertQuestionUseCase,
     val getQuizByIdUseCase: GetQuizByIdUseCase,
-    private val updateQuizUseCase: UpdateQuizUseCase
+    private val updateQuizUseCase: UpdateQuizUseCase,
+    private val deleteQuestionUseCase: DeleteQuestionUseCase
 ) : ViewModel() {
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()
@@ -42,8 +43,10 @@ class EventViewModel @Inject constructor(
 
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
-
     fun getQuestionItem(idQuestion: Int) = getQuestionListUseCase().filter { it.id == idQuestion }
+
+    fun getQuestionList(numQuestion: Int, idQuiz: Int) =
+        getQuestionListUseCase().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion }
 
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
@@ -65,7 +68,6 @@ class EventViewModel @Inject constructor(
         // Здесь загружайте вопрос и устанавливайте значение для questionLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
-
 
 
     fun getQuizList() {
@@ -103,11 +105,29 @@ class EventViewModel @Inject constructor(
                 }
             }
             .forEach { question ->
-                if (question.language !in getProfileUseCase(tpovId).languages!!.split("|")) {
+                if (question.language !in getProfileUseCase(tpovId).languages!!.split("|")
+                    && !translateEditQuestion.any {
+                        it.numQuestion == question.numQuestion &&
+                                it.idQuiz == question.idQuiz &&
+                                it.hardQuestion == question.hardQuestion
+                    }) {
                     translateEditQuestion.add(question)
-                } else if (question.lvlTranslate > 200) {
+
+                } else if (question.lvlTranslate > 200 &&
+                    !translate2Question.any {
+                        it.numQuestion == question.numQuestion &&
+                                it.idQuiz == question.idQuiz &&
+                                it.hardQuestion == question.hardQuestion
+                    }
+                ) {
                     translate2Question.add(question)
-                } else {
+
+                } else if (!translate1Question.any {
+                        it.numQuestion == question.numQuestion &&
+                                it.idQuiz == question.idQuiz &&
+                                it.hardQuestion == question.hardQuestion
+                    }) {
+
                     translate1Question.add(question)
                 }
 
@@ -151,7 +171,8 @@ class EventViewModel @Inject constructor(
                 Toast.makeText(activity, "Error parse info Translater", Toast.LENGTH_LONG).show()
             }
             log("update: $it, $questionFirst")
-            insertQuestionUseCase(
+            if (it.nameQuestion == "") deleteQuestionUseCase(it.id!!)
+            else insertQuestionUseCase(
                 it.copy(
                     numQuestion = questionFirst.numQuestion,
                     answerQuestion = questionFirst.answerQuestion,
@@ -173,13 +194,19 @@ class EventViewModel @Inject constructor(
             }
 
             try {
-                updateQuizUseCase(quiz.copy(languages = mergeStrings(result, quiz.languages), versionQuiz = quiz.versionQuiz + 1))
+                updateQuizUseCase(
+                    quiz.copy(
+                        languages = mergeStrings(result, quiz.languages),
+                        versionQuiz = quiz.versionQuiz + 1
+                    )
+                )
             } catch (e: Exception) {
                 Toast.makeText(activity, "quiz do not update", Toast.LENGTH_SHORT).show()
             }
         }
 
     }
+
     private fun mergeStrings(string1: String, string2: String): String {
         val mergedMap = mutableMapOf<String, Int>()
 

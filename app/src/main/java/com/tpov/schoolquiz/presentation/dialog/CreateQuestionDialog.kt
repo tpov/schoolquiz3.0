@@ -146,7 +146,7 @@ class CreateQuestionDialog : DialogFragment() {
         numQuestion++
         questionItemView.question_number.text = numQuestion.toString()
         questionsContainer.addView(questionItemView)
-
+        questionTitle.requestFocus()
         return questionItemView
     }
 

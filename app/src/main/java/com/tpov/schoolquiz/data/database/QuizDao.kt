@@ -323,6 +323,8 @@ WHERE front_list.event IN (5, 6, 7, 8)
     @Query("DELETE FROM table_data WHERE idQuiz IS :id")
     fun deleteQuestionDetailByIdQuiz(id: Int)
 
+    @Query("DELETE FROM table_data WHERE id IS :id")
+    fun deleteQuestion(id: Int)
 
     @Query("DELETE FROM chat_data WHERE time LIKE :time")
     fun deleteChat(time: String)

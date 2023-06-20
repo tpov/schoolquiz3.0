@@ -86,7 +86,8 @@ class TranslateQuestionFragment : BaseFragment() {
             binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
             binding.recyclerViewQuestions.adapter = translationAdapter
 
-            questions = viewModel.getQuestionItem(idQuestion).toMutableList()
+            var question = viewModel.getQuestionItem(idQuestion)[0]
+            questions = viewModel.getQuestionList(question.numQuestion, question.idQuiz).toMutableList()
 
             binding.buttonAddTranslation.setOnClickListener {
                 log("Add Translation button clicked")
@@ -103,11 +104,9 @@ class TranslateQuestionFragment : BaseFragment() {
             binding.bCancel.setOnClickListener {
                 requireActivity().supportFragmentManager.beginTransaction().remove(this).commit()
             }
-            if (!questions.isNullOrEmpty()) {
-                numQuestion = questions!![0].numQuestion
 
-                translationAdapter.questions.add(questions!![0])
-                translationAdapter.notifyDataSetChanged()
+            if (!questions.isNullOrEmpty()) {
+                loadNextQuestion()
             } else {
                 Toast.makeText(
                     activity,
@@ -185,6 +184,7 @@ class TranslateQuestionFragment : BaseFragment() {
                     false
                 }
             }
+
             translationAdapter.notifyDataSetChanged()
             if (questions.isNullOrEmpty()) requireActivity().supportFragmentManager.beginTransaction()
                 .remove(this)

@@ -2,7 +2,11 @@ package com.tpov.schoolquiz.data
 
 import androidx.lifecycle.LiveData
 import com.tpov.schoolquiz.data.database.QuizDao
-import com.tpov.schoolquiz.data.database.entities.*
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -117,6 +121,10 @@ class RepositoryDBImpl @Inject constructor(
 
     override fun deleteQuestionDetailById(id: Int) {
         dao.deleteQuestionDetailByIdQuiz(id)
+    }
+
+    override fun deleteQuestion(id: Int) {
+        dao.deleteQuestion(id)
     }
 
     override fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
