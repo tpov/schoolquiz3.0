@@ -24,7 +24,6 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovI
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.android.synthetic.main.create_question_dialog.save_question_button
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -45,7 +44,8 @@ class CreateQuestionDialog : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val id = arguments?.getInt("id") ?: -1
         this.id1 = id
-
+        isCancelable = false
+        dialog?.setCanceledOnTouchOutside(false)
         val inflater = LayoutInflater.from(requireContext())
         dialogView = inflater.inflate(R.layout.create_question_dialog, null)
         questionsContainer = dialogView.findViewById(R.id.questions_container)
@@ -53,12 +53,12 @@ class CreateQuestionDialog : DialogFragment() {
             addFilledQuestionItem(questionEntity)
         }
 
-
         if (id == -1) {
 
             dialogView.add_question_button.setOnClickListener {
                 addQuestionItem()
             }
+
         } else {
 
             dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
@@ -76,9 +76,15 @@ class CreateQuestionDialog : DialogFragment() {
         alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimation
         alertDialog.show()
 
-        save_question_button.setOnClickListener {
+        dialogView.save_question_button.setOnClickListener {
             createQuestions()
+            dismiss()
         }
+
+        dialogView.cancel_question_button.setOnClickListener {
+            dismiss()
+        }
+
         return alertDialog
 
     }
@@ -92,6 +98,9 @@ class CreateQuestionDialog : DialogFragment() {
         questionItemView.language_selector.setOnClickListener {
             showLanguageDialog(questionItemView)
         }
+
+        dialogView.save_question_button.isClickable = true
+        dialogView.save_question_button.isEnabled = true
 
         // Добавляем TextWatcher к questionTitle
         questionTitle.addTextChangedListener(object : TextWatcher {
@@ -169,22 +178,27 @@ class CreateQuestionDialog : DialogFragment() {
         builder.show()
     }
 
-    private fun getLanguages(questions: List<QuestionEntity>, languages: String): String {
-        if (questions.isEmpty()) {
-            return ""
+    fun findLanguageWithMinLevel(elements: List<QuestionEntity>): String {
+        var commonLanguage: String? = null
+        var minLevel = Int.MAX_VALUE
+
+        for (element in elements) {
+            if (element.language == elements[0].language) {
+                if (element.lvlTranslate < minLevel) {
+                    minLevel = element.lvlTranslate
+                    commonLanguage = element.language
+                }
+            } else {
+                commonLanguage = null
+                break
+            }
         }
 
-        val words = questions[0].language.split("|").toMutableSet()
-
-        for (i in 1 until questions.size) {
-            val currentWords = questions[i].language.split("|")
-            if (questions[i].lvlTranslate >= 100) words.retainAll(currentWords.toSet())
+        return if (commonLanguage != null) {
+            "$commonLanguage-$minLevel"
+        } else {
+            ""
         }
-
-        val secondWords = languages.split("|").toSet()
-        words.retainAll(secondWords)
-
-        return words.joinToString("|")
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -265,8 +279,8 @@ class CreateQuestionDialog : DialogFragment() {
             true,
             if (id1 == -1) getTpovId()
             else (mainActivityViewModel.getQuizById(id1).tpovId),
-            if (id1 == -1) getLanguages(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz), mainActivityViewModel.getQuizById(idQuiz).languages)
-            else getLanguages(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz), mainActivityViewModel.getQuizById(id1).languages)
+            if (id1 == -1) findLanguageWithMinLevel(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz))
+            else findLanguageWithMinLevel(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz))
         )
 
         // Сохранение quizEntity и questions в базу данных

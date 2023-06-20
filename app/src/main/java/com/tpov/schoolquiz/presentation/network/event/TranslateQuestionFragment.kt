@@ -123,22 +123,22 @@ class TranslateQuestionFragment : BaseFragment() {
             binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
             binding.recyclerViewQuestions.adapter = translationAdapter
 
-            log("getQuestionListUseCase() idQuiz != -1")
-            viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
-                questions =
-                    receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
-                        .thenBy { it.numQuestion })
-                        ?.filter { it.idQuiz == idQuiz }?.toMutableList()
-                log("questions: $questions")
-                if (!questions.isNullOrEmpty()) loadNextQuestion()
-                else {
-                    Toast.makeText(
-                        activity,
-                        "Не удалось найти вопросы, которые можно перевести",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+        log("getQuestionListUseCase() idQuiz != -1")
+        viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
+            questions =
+                receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
+                    .thenBy { it.numQuestion })
+                    ?.filter { it.idQuiz == idQuiz }?.toMutableList()
+            log("questions: $questions")
+            if (!questions.isNullOrEmpty()) loadNextQuestion()
+            else {
+                Toast.makeText(
+                    activity,
+                    "Не удалось найти вопросы, которые можно перевести",
+                    Toast.LENGTH_LONG
+                ).show()
             }
+        }
 
             viewModel.loadQuests()
             binding.buttonAddTranslation.setOnClickListener {

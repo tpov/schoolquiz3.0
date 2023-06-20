@@ -20,6 +20,7 @@ import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.secure.Secure
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
@@ -196,7 +197,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             imvTranslate.imageAlpha = 128
 
-            val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
+            val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
             //imvTranslate
             if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
@@ -257,7 +258,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             imvTranslate.imageAlpha = 128
 
-            val lvlTranslate = viewModel.getLvlTranslateByQuizId(quizEntity.id!!)
+            val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
             //imvTranslate
             if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
@@ -361,18 +362,20 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 }
 
                 val languageString = quizEntity.languages // Получите строку языков из quizEntity
-                val languageItems = languageString.split("|") // Разделите строку на элементы
+                val languageItems = languageString?.split("|") // Разделите строку на элементы
 
                 val languageMap =
                     mutableMapOf<String?, Int?>() // Создайте пустой Map для хранения соответствия язык-число
 
-                for (item in languageItems) {
-                    val parts = item.split("-") // Разделите элемент на ключ и значение
-                    if (parts.size == 2) {
-                        val language = parts[0]
-                        val value = parts[1].toIntOrNull()
-                        if (value != null) {
-                            languageMap[language] = value // Добавьте соответствие язык-число в Map
+                if (languageItems != null) {
+                    for (item in languageItems) {
+                        val parts = item.split("-") // Разделите элемент на ключ и значение
+                        if (parts.size == 2) {
+                            val language = parts[0]
+                            val value = parts[1].toIntOrNull()
+                            if (value != null) {
+                                languageMap[language] = value // Добавьте соответствие язык-число в Map
+                            }
                         }
                     }
                 }
@@ -399,7 +402,8 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                         val selectedLanguage = spListPopup1.selectedItem.toString()
                         val selectedValue = languageMap[selectedLanguage]
                         if (selectedValue != null) {
-                            tvPopup1.text = selectedLanguage
+                            tvPopup1.text = selectedValue.toString()
+
                         }
                     }
 
@@ -506,15 +510,15 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         }
 
         private fun removeDuplicateWords(input: String): String {
-            val words = input.split(" ")
+            val words = input.split("-")
             val uniqueWords = words.distinct()
-            return uniqueWords.joinToString(" ")
+            return uniqueWords.joinToString("-")
         }
 
         private fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
             // Инициализируем объект Translate с помощью ключа API
             val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
-                .setApiKey("AIzaSyDlxFuYjnOxDRPPdkG0Qr91TmPIUM193cY")
+                .setApiKey(Secure.getTranslateKey())
                 .build()
                 .service
 
@@ -524,11 +528,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             log("dawdawdf translateToUserLanguage")
             // Перебираем каждый вопрос в исходном списке и выполняем перевод
             for (question in questionList) {
-                // Получаем текст для перевода
+                // Получаем текст для переводаы
                 val textToTranslate = question.nameQuestion
                 val sourceLanguage = question.language
 
                 val userLanguage: String = Locale.getDefault().language
+                var idQuestion: Int? = null
 
                 log("dawdawdf question $question")
                 // Выполняем перевод
@@ -547,10 +552,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
                     translation.translatedText
                 } catch (e: Exception) {
+                    idQuestion = question.id
                     textToTranslate
                 }
 
                 val translatedQuestion = question.copy(
+                    id = idQuestion,
                     nameQuestion = translatedText,
                     language = userLanguage,
                     lvlTranslate = 100,
