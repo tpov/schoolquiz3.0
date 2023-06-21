@@ -245,7 +245,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             } else if (quizEntity.stars == 120) {
                 log("quizEntity.stars 2")
-                chbTypeQuiz.visibility = View.VISIBLE
+                if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.VISIBLE
 
@@ -388,8 +388,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 log("festgfsdrgdrto,  $tvPopup1")
                 try {
                     tvPopup1.text = "lvl: ${languageMap.values.toList()[0]}"
+                    binding.mainTitleButton.isClickable = true
+                    binding.mainTitleButton.isEnabled = true
                 } catch (e: Exception) {
                     tvPopup1.text = "Квест еще не переведен на ваш язык"
+                    binding.mainTitleButton.isClickable = false
+                    binding.mainTitleButton.isEnabled = false
                 }
                 spListPopup1.adapter = adapter
                 spListPopup1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {

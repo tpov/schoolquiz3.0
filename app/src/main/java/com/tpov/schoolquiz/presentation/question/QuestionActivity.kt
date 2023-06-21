@@ -4,9 +4,13 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.*
 import android.view.animation.Animation
@@ -26,7 +30,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovI
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.android.synthetic.main.activity_question.*
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
 import javax.inject.Inject
 import kotlin.math.floor
 
@@ -126,8 +130,7 @@ class QuestionActivity : AppCompatActivity() {
             log("DSEFSE, nameQuestion: ${viewModel.questionListThis}")
 
             try {
-                binding.questionTextView.text =
-                    viewModel.questionListThis[viewModel.currentIndex].nameQuestion
+                showTextWithDelay( binding.questionTextView, viewModel.questionListThis[viewModel.currentIndex].nameQuestion, DELAY_SHOW_TEXT)
             } catch (e: Exception) {
                 Toast.makeText(this@QuestionActivity, "Вопросы не были загружены, возможно произошла ошибка", Toast.LENGTH_LONG).show()
             }
@@ -138,13 +141,46 @@ class QuestionActivity : AppCompatActivity() {
         visibleCheatButton(viewModel.hardQuestion)
     }
 
+    private fun showTextWithDelay(textView: TextView, text: String, delayInMillis: Long) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val spannableText = SpannableStringBuilder()
+
+            delay(200)
+            for (char in text) {
+                val start = spannableText.length
+                spannableText.append(char.toString())
+                spannableText.setSpan(
+                    ForegroundColorSpan(Color.WHITE),
+                    start,
+                    start + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                textView.text = spannableText
+                delay(delayInMillis)
+
+                // Возвращаем цвет буквы к исходному (черный в данном случае)
+                spannableText.setSpan(
+                    ForegroundColorSpan(Color.BLACK),
+                    start,
+                    start + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                textView.text = spannableText
+            }
+        }
+    }
+
     private fun synthInputData() {
         viewModel.userName = intent.getStringExtra(NAME_USER) ?: "user"
         viewModel.idQuiz = intent.getIntExtra(ID_QUIZ, 0)
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
-        if (!viewModel.hardQuestion) binding.viewBackground.background = getDrawable(R.mipmap.back_question_light)
-        else binding.viewBackground.background = getDrawable(R.mipmap.back_question_hard)
+        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event >= 5) binding.viewBackground.background = getDrawable(R.mipmap.back_question_event5)
+        else {
+            if (!viewModel.hardQuestion) binding.viewBackground.background =
+                getDrawable(R.mipmap.back_question_light)
+            else binding.viewBackground.background = getDrawable(R.mipmap.back_question_hard)
+        }
     }
 
     private fun prefButton() {
@@ -374,8 +410,9 @@ class QuestionActivity : AppCompatActivity() {
     //Тут уже обновленные параметры
     fun updateTextQuestion() {
         updateDataView()
-        binding.questionTextView.text =
-            viewModel.questionListThis[viewModel.currentIndex].nameQuestion
+
+        showTextWithDelay(binding.questionTextView, viewModel.questionListThis[viewModel.currentIndex].nameQuestion, DELAY_SHOW_TEXT)
+
     }
 
     private fun updateDataView() {
@@ -485,5 +522,7 @@ class QuestionActivity : AppCompatActivity() {
         const val UPDATE_CURRENT_INDEX = 1
         const val RESULT_TRANSLATE = 2
         const val RESULT_OK = 1
+
+        const val DELAY_SHOW_TEXT = 50L
     }
 }
