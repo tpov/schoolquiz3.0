@@ -37,6 +37,7 @@ import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountMassageIdAndReset
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
@@ -654,7 +655,8 @@ class MainActivity : AppCompatActivity() {
                             getSkillByTimeInChat(period.toInt())
                         } else {
                             getSkillByTimeInGame(period.toInt())
-                        })),
+                        }
+                    )),
 
                     timeInGamesInQuiz =
                     if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
@@ -669,8 +671,11 @@ class MainActivity : AppCompatActivity() {
                             .plus(1)
                     } else {
                         viewModel.getProfileTimeInChat()
-                    }
-                ))
+                    },
+
+                    timeInGamesSmsPoints = viewModel.getCountChat() + getCountMassageIdAndReset()
+                )
+            )
 
         } catch (e: Exception) {
 

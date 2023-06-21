@@ -311,6 +311,11 @@ class MainActivityViewModel @Inject constructor(
         val profile = getProfileUseCase(getTpovId())
         return profile.dateCloseApp
     }
+
+    fun getCountChat(): Int {
+        val profile = getProfileUseCase(getTpovId())
+        return profile.timeInGamesSmsPoints ?: 0
+    }
     fun getProfileTimeInGame(): Int? {
         val profile = getProfileUseCase(getTpovId())
         return profile.timeInGamesInQuiz

@@ -59,6 +59,7 @@ object SharedPreferencesManager {
         editor.putInt("countStartApp", count)
         editor.apply()
     }
+
     fun getCountTimeInGame(): Int {
         if (!::sharedPreferencesCountStartApp.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
@@ -121,6 +122,38 @@ object SharedPreferencesManager {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesQuiz.getInt("$key|$tpovId", -1)
+    }
+
+    fun addCountSendMassage() {
+
+        if (!::sharedPreferencesQuiz.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+
+        val editor = sharedPreferencesQuiz.edit()
+        editor.putInt(
+            "countMassage|${getTpovId()}",
+            sharedPreferencesQuiz.getInt("countMassage|${getTpovId()}", 0) + 1
+        )
+        editor.apply()
+    }
+
+    fun getCountMassageIdAndReset(): Int {
+        val tpovId = getTpovId()
+
+        if (!::sharedPreferencesQuiz.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+
+        val count = sharedPreferencesQuiz.getInt("countMassage|$tpovId", 0)
+
+        val editor = sharedPreferencesQuiz.edit()
+        editor.putInt(
+            "countMassage|${getTpovId()}",
+            0
+        )
+
+        return count
     }
 
     fun setProfile(

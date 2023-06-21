@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.fierbase.Chat
 import com.tpov.schoolquiz.databinding.FragmentChatBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
@@ -88,7 +89,9 @@ class ChatFragment : BaseFragment() {
         val chatDateRef = chatRef.child(currentDate)
         val chatId = chatDateRef.push().key
         if (chatId != null) {
-            chatDateRef.child(chatId).setValue(chat)
+            chatDateRef.child(chatId).setValue(chat).addOnSuccessListener {
+                SharedPreferencesManager.addCountSendMassage()
+            }
         }
     }
 

@@ -82,6 +82,8 @@ class QuestionViewModel @Inject constructor(
     var persentPlayerAll = 0
     var firstQuestionDetail = true
 
+    var numTrueQuestion = 0
+
     private val _shouldCloseLiveData = MutableLiveData<Int>()
     val shouldCloseLiveData: LiveData<Int> = _shouldCloseLiveData
 
@@ -439,6 +441,7 @@ class QuestionViewModel @Inject constructor(
         codeAnswer.forEach {
             if (it == '2') i++
         }
+        numTrueQuestion = i
         getQuestionsList()
         i = 0
         var j = 0
@@ -531,6 +534,12 @@ class QuestionViewModel @Inject constructor(
         )
         updateProfileUseCase(
             getProfileUseCase(getTpovId()).copy(
+                timeInGamesCountQuestions = getProfileUseCase(getTpovId()).timeInGamesCountQuestions?.plus(
+                    numTrueQuestion
+                ),
+                timeInGamesCountTrueQuestion = getProfileUseCase(getTpovId()).timeInGamesCountTrueQuestion.plus(
+                    numQuestion
+                ) ?: 0,
                 pointsNolics = (getNolic() + CalcValues.getValueNolicForGame(
                     hardQuestion,
                     persent,
