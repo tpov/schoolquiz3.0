@@ -125,7 +125,7 @@ class MainActivityViewModel @Inject constructor(
             "",
             "",
             0,
-            TimeInGames(0, 0, 0, 0),
+            TimeInGames(0, 0, 0, 0, 0, 0),
             AddPoints(0, 0, 0, 0, ""),
             Dates(
                 TimeManager.getCurrentTime(),
@@ -310,5 +310,19 @@ class MainActivityViewModel @Inject constructor(
     fun getProfileDateCloseAp(): String? {
         val profile = getProfileUseCase(getTpovId())
         return profile.dateCloseApp
+    }
+    fun getProfileTimeInGame(): Int? {
+        val profile = getProfileUseCase(getTpovId())
+        return profile.timeInGamesInQuiz
+    }
+
+    fun getProfileSkill(): Int? {
+        val profile = getProfileUseCase(getTpovId())
+        return profile.pointsSkill
+    }
+
+    fun getProfileTimeInChat(): Int {
+        val profile = getProfileUseCase(getTpovId())
+        return profile.timeInGamesInChat ?: 0
     }
 }

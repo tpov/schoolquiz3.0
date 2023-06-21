@@ -40,16 +40,17 @@ data class Profile constructor(
         "",
         "",
         0,
-        TimeInGames(0,0,0, 0),
+        TimeInGames(0, 0, 0, 0, 0, 0),
         AddPoints(0, 0, 0, 0, ""),
         Dates("", ""),
         "",
         "",
-        Qualification(0,0,0,0,0,0,0),
-        Life(0,0),
-        Box(0,"0",0)
+        Qualification(0, 0, 0, 0, 0, 0, 0),
+        Life(0, 0),
+        Box(0, "0", 0)
     )
 }
+
 @IgnoreExtraProperties
 data class Life(
     val countLife: Int,
@@ -92,10 +93,12 @@ data class TimeInGames(
     val allTime: Int,
     val timeInQuiz: Int,
     val timeInChat: Int,
-    val smsPoints: Int
+    val smsPoints: Int,
+    val countQuestions: Int?,
+    val countTrueQuestion: Int,
 ) {
     constructor() : this(
-        0,0,0, 0
+        0, 0, 0, 0, 0, 0
     )
 }
 
@@ -178,7 +181,9 @@ fun ProfileEntity.toProfile(): Profile {
             allTime = this.timeInGamesAllTime!!,
             timeInQuiz = this.timeInGamesInQuiz!!,
             timeInChat = this.timeInGamesInChat!!,
-            smsPoints = this.timeInGamesSmsPoints!!
+            smsPoints = this.timeInGamesSmsPoints!!,
+            countQuestions = this.timeInGamesCountQuestions,
+            countTrueQuestion = this.timeInGamesCountTrueQuestion,
         ),
         addPoints = AddPoints(
             this.addPointsGold!!,
@@ -261,6 +266,8 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         count = count,
         countGoldLife = this.life.countGoldLife,
         countLife = this.life.countLife,
-        dateCloseApp = TimeManager.getCurrentTime()
+        dateCloseApp = TimeManager.getCurrentTime(),
+        timeInGamesCountQuestions = this.timeInGames.countQuestions,
+        timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion
     )
 }

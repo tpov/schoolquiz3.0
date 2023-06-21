@@ -17,10 +17,14 @@ data class ProfileEntity(
     val friends: String?,
     val city: String?,
     val logo: Int?,
+
     val timeInGamesAllTime: Int?,
     val timeInGamesInQuiz: Int?,
     val timeInGamesInChat: Int?,
     val timeInGamesSmsPoints: Int?,
+    val timeInGamesCountQuestions: Int?,
+    val timeInGamesCountTrueQuestion: Int,
+
     val pointsGold: Int?,
     val pointsSkill: Int?,
     val pointsSkillInSeason: Int?,

@@ -50,19 +50,21 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/true_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#BFFF0000"
-                android:text="True" />
 
             <RadioButton
                 android:id="@+id/false_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#BF14FF00"
+                android:textColor="#BFFF0000"
                 android:text="False" />
+
+            <RadioButton
+                android:id="@+id/true_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#BF14FF00"
+                android:text="True" />
+
         </RadioGroup>
 
         <TextView

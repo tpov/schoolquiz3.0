@@ -33,6 +33,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
+import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
@@ -622,21 +624,25 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createTimer() {
         timer = Timer()
-        val task = object : TimerTask() {
-            override fun run() {
-                updateProfileCount()
-            }
-        }
         val delay = 0L // Delay before the timer starts executing the task (in milliseconds)
         val period =
             100_000L // Interval between consecutive executions of the task (in milliseconds)
+        val task = object : TimerTask() {
+            override fun run() {
+                updateProfileCount(period)
+            }
+        }
+
 
         // Schedule the task to run every minute, starting after the specified delay
         timer?.scheduleAtFixedRate(task, delay, period)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun updateProfileCount() {
+    private fun updateProfileCount(period: Long) {
+
+
+
         try {
             viewModel.updateProfileUseCase(
                 viewModel.getProfile().copy(
@@ -645,9 +651,28 @@ class MainActivity : AppCompatActivity() {
                         viewModel.getProfileCountLife(),
                         viewModel.getProfileDateCloseAp()
                     ),
-                    dateCloseApp = TimeManager.getCurrentTime()
-                )
-            )
+                    dateCloseApp = TimeManager.getCurrentTime(),
+                    pointsSkill = (viewModel.getProfileSkill()!!.plus(
+                        if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
+                            getSkillByTimeInChat(period.toInt())
+                        } else {
+                            getSkillByTimeInGame(period.toInt())
+                        })),
+                    timeInGamesInQuiz =
+                    if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
+                        viewModel.getProfileTimeInGame()
+                    } else {
+                        viewModel.getProfileTimeInGame()
+                            ?.plus(getSkillByTimeInGame(period.toInt()))
+                    },
+
+                    timeInGamesInChat = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
+                        viewModel.getProfileTimeInChat()
+                            .plus(getSkillByTimeInGame(period.toInt()))
+                    } else {
+                        viewModel.getProfileTimeInChat()
+                    }
+                ))
         } catch (e: Exception) {
 
         }

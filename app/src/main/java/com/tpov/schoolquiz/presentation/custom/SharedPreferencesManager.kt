@@ -59,6 +59,21 @@ object SharedPreferencesManager {
         editor.putInt("countStartApp", count)
         editor.apply()
     }
+    fun getCountTimeInGame(): Int {
+        if (!::sharedPreferencesCountStartApp.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesCountStartApp.getInt("countTimeInGame", 0)
+    }
+
+    fun setCountTimeInGame(time: Int) {
+        if (!::sharedPreferencesCountStartApp.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        val editor = sharedPreferencesCountStartApp.edit()
+        editor.putInt("countTimeInGame", time)
+        editor.apply()
+    }
 
     fun setTimeMassage(time: String) {
         if (!::sharedPreferencesQuiz.isInitialized) {
