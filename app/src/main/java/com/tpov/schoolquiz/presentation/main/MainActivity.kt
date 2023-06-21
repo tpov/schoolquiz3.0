@@ -640,9 +640,6 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount(period: Long) {
-
-
-
         try {
             viewModel.updateProfileUseCase(
                 viewModel.getProfile().copy(
@@ -658,21 +655,23 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             getSkillByTimeInGame(period.toInt())
                         })),
+
                     timeInGamesInQuiz =
                     if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
                         viewModel.getProfileTimeInGame()
                     } else {
                         viewModel.getProfileTimeInGame()
-                            ?.plus(getSkillByTimeInGame(period.toInt()))
+                            ?.plus(1)
                     },
 
                     timeInGamesInChat = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
                         viewModel.getProfileTimeInChat()
-                            .plus(getSkillByTimeInGame(period.toInt()))
+                            .plus(1)
                     } else {
                         viewModel.getProfileTimeInChat()
                     }
                 ))
+
         } catch (e: Exception) {
 
         }

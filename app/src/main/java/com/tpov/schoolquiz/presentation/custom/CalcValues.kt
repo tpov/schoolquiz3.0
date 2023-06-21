@@ -48,7 +48,7 @@ object CalcValues {
         return counts
     }
 
-    fun getSkillByTimeInGame(time: Int) = (time/10) //max const = 100
+    fun getSkillByTimeInGame(time: Int) = (time / 10_000) //max const = 100 000
 
-    fun getSkillByTimeInChat(time: Int) = time / 10
+    fun getSkillByTimeInChat(time: Int) = time / 30_000
 }
