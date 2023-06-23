@@ -3,16 +3,13 @@ package com.tpov.schoolquiz.presentation.network
 import android.content.Context
 import android.os.Bundle
 import android.text.Editable
+import android.text.InputFilter
+import android.text.Spanned
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.RadioButton
-import android.widget.RadioGroup
-import android.widget.TextView
+import android.widget.*
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
@@ -96,6 +93,30 @@ class AutorisationFragment : BaseFragment() {
         return inflater.inflate(R.layout.fragment_login, container, false)
     }
 
+    private inner class DateInputFilter : InputFilter {
+        override fun filter(
+            source: CharSequence?,
+            start: Int,
+            end: Int,
+            dest: Spanned?,
+            dstart: Int,
+            dend: Int
+        ): CharSequence? {
+            // Реализуйте вашу логику валидации здесь
+            // В этом примере мы разрешаем только 7 символов (MM-yyyy) без указания дня
+
+            val input = StringBuilder(dest).apply {
+                replace(dstart, dend, source?.subSequence(start, end).toString())
+            }.toString()
+
+            if (input.length > 10) {
+                return "" // Удаляем введенные символы, если превышен лимит длины
+            }
+
+            return null // Принимаем ввод
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -119,6 +140,7 @@ class AutorisationFragment : BaseFragment() {
         loginButton.isEnabled = false
         loginButton.isClickable = false
 
+        dateEditText.filters = arrayOf(DateInputFilter())
         setupTextWatchers()
         loginMode.isChecked = true
         modeRadioGroup.setOnCheckedChangeListener { _, checkedId ->

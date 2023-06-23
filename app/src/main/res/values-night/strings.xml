@@ -9,5 +9,5 @@
     <string name="action_sign_in">Login</string>
     <string name="action_registration">registration</string>
     <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your years</string>
+    <string name="prompt_years">Your years (01.01.2001)</string>
 </resources>

@@ -97,7 +97,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="invalid_password" translatable="false">Password must be >5 characters</string>
     <string name="login_failed" translatable="false">"Login failed"</string>
     <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your birthday</string>
+    <string name="prompt_years">Your birthday (01.01.2001)</string>
     <string name="prompt_nickname">Nickname</string>
     <string name="prompt_city">Your city</string>
     <string name="app_name">SchoolQuiz</string>
