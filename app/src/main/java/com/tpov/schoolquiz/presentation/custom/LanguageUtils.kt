@@ -6,11 +6,31 @@ import java.util.Locale
 object LanguageUtils {
     val languagesShortCodes = arrayOf("en", "ru", "fr", "de", "es")
     val languagesFullNames =
-        arrayOf("Английский", "Русский", "Французский", "Немецкий", "Испанский")
+        arrayOf("Английский", "Русский", "Французский", "Немецкий", "Испанский", "Русский", "Французский", "Немецкий", "Испанский", "Русский", "Французский", "Немецкий", "Испанский", "Русский", "Французский", "Немецкий", "Испанский", "Русский", "Французский", "Немецкий", "Испанский", "Русский", "Французский", "Немецкий", "Испанский")
     val ratingNum = arrayOf(0, 1, 2, 3)
 
     val languagesWithCheckBox = listOf(
         LanguageEntity("Английский", false),
+        LanguageEntity("Русский", false),
+        LanguageEntity("Французский", false),
+        LanguageEntity("Немецкий", false),
+        LanguageEntity("Испанский", false),
+        LanguageEntity("Русский", false),
+        LanguageEntity("Французский", false),
+        LanguageEntity("Немецкий", false),
+        LanguageEntity("Испанский", false),
+        LanguageEntity("Русский", false),
+        LanguageEntity("Французский", false),
+        LanguageEntity("Немецкий", false),
+        LanguageEntity("Испанский", false),
+        LanguageEntity("Русский", false),
+        LanguageEntity("Французский", false),
+        LanguageEntity("Немецкий", false),
+        LanguageEntity("Испанский", false),
+        LanguageEntity("Русский", false),
+        LanguageEntity("Французский", false),
+        LanguageEntity("Немецкий", false),
+        LanguageEntity("Испанский", false),
         LanguageEntity("Русский", false),
         LanguageEntity("Французский", false),
         LanguageEntity("Немецкий", false),

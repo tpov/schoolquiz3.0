@@ -111,16 +111,16 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/textView12"
+                    android:id="@+id/tv_lang_profile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Выберите языки которые вы знаете" />
+                    android:text="" />
 
-                <Spinner
-                    android:id="@+id/sp_profile_language_login"
+                <Button
+                    android:id="@+id/b_set_translate_profile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/white" />
+                    android:text="Button" />
             </LinearLayout>
 
             <EditText

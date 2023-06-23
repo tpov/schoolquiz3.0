@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.presentation.network
 
+import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
 import android.text.Editable
@@ -12,8 +13,8 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.model.LanguageEntity
 import com.tpov.schoolquiz.presentation.MainApp
-import com.tpov.schoolquiz.presentation.custom.LanguageUtils.getLanguageShortCode
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesWithCheckBox
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
@@ -34,7 +35,9 @@ class AutorisationFragment : BaseFragment() {
     private lateinit var nickname: TextView
     private lateinit var loginMode: RadioButton
     private lateinit var modeRadioGroup: RadioGroup
+    private lateinit var textLanguageProfile: TextView
     private lateinit var registrationMode: RadioButton
+    private lateinit var buttonSetLanguageProfile: Button
 
     companion object {
         fun newInstance() = AutorisationFragment()
@@ -134,15 +137,39 @@ class AutorisationFragment : BaseFragment() {
         loginMode = view.findViewById(R.id.login_mode)
         registrationMode = view.findViewById(R.id.registration_mode)
         modeRadioGroup = view.findViewById(R.id.mode_radio_group)
+        textLanguageProfile = view.findViewById(R.id.tv_lang_profile)
+        buttonSetLanguageProfile = view.findViewById(R.id.b_set_translate_profile)
 
         registrationButton.isEnabled = false
         registrationButton.isClickable = false
         loginButton.isEnabled = false
         loginButton.isClickable = false
 
-        val spinner = view.findViewById<Spinner>(R.id.sp_profile_language_login)
-        val adapter = LanguageAdapter(languagesWithCheckBox)
-        spinner.adapter = adapter
+// Создаем массив строк с названиями языков
+
+        var result = ""
+        val languageNames = languagesWithCheckBox.map { it.name }.toTypedArray()
+        val checkedItems = BooleanArray(languagesWithCheckBox.size)
+
+        buttonSetLanguageProfile.setOnClickListener {
+            val builder = AlertDialog.Builder(context)
+            builder.setTitle("Выберите языки")
+            builder.setMultiChoiceItems(languageNames, checkedItems) { _, which, isChecked ->
+                checkedItems[which] = isChecked
+            }
+            builder.setPositiveButton("OK") { _, _ ->
+                val selectedLanguages = mutableListOf<LanguageEntity>()
+                for (i in checkedItems.indices) {
+                    if (checkedItems[i]) {
+                        selectedLanguages.add(languagesWithCheckBox[i])
+                    }
+                }
+                result = selectedLanguages.joinToString("|") { it.name }
+
+            }
+            builder.setNegativeButton("Отмена", null)
+            builder.show()
+        }
 
         dateEditText.filters = arrayOf(DateInputFilter())
         setupTextWatchers()
@@ -176,9 +203,6 @@ class AutorisationFragment : BaseFragment() {
         }
 
         registrationButton.setOnClickListener {
-            val selectedLanguages = languagesWithCheckBox.filter { it.isSelected }
-            val languageCodes = selectedLanguages.map { getLanguageShortCode(it.name) }
-            val result = languageCodes.joinToString("|")
 
             viewModel.createAcc(
                 usernameEditText.text.toString(),

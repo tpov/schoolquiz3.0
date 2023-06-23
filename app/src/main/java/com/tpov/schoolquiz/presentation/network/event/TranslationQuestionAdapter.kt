@@ -51,7 +51,6 @@ class TranslationQuestionAdapter(val questions: MutableList<QuestionEntity>) :
 
         fun bind(question: QuestionEntity) {
             nameQuestionEditText.setText(question.nameQuestion)
-            lvlTranslateTextView.text = question.lvlTranslate.toString()
 
             val languageAdapter = ArrayAdapter(
                 itemView.context,
@@ -96,18 +95,10 @@ class TranslationQuestionAdapter(val questions: MutableList<QuestionEntity>) :
                     val rating = ratingAdapter.getItem(position).toString()
                     val infoTranslater = questions[adapterPosition].infoTranslater
 
-// Разделение значения infoTranslater на разделитель "|"
                     val parts = infoTranslater.split("\\|").toTypedArray()
-
-// Обновление значения rating в infoTranslater
                     parts[parts.size - 1] = rating
-
-// Объединение значений снова с помощью разделителя "|"
                     val updatedInfoTranslater = String.join("|", *parts)
-
-// Установка обновленного значения infoTranslater в questions
                     questions[adapterPosition].infoTranslater = updatedInfoTranslater
-
                 }
 
                 override fun onNothingSelected(parent: AdapterView<*>?) {
