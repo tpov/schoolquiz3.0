@@ -13,6 +13,8 @@ import android.widget.*
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.LanguageUtils.getLanguageShortCode
+import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesWithCheckBox
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
@@ -102,18 +104,16 @@ class AutorisationFragment : BaseFragment() {
             dstart: Int,
             dend: Int
         ): CharSequence? {
-            // Реализуйте вашу логику валидации здесь
-            // В этом примере мы разрешаем только 7 символов (MM-yyyy) без указания дня
 
             val input = StringBuilder(dest).apply {
                 replace(dstart, dend, source?.subSequence(start, end).toString())
             }.toString()
 
             if (input.length > 10) {
-                return "" // Удаляем введенные символы, если превышен лимит длины
+                return ""
             }
 
-            return null // Принимаем ввод
+            return null
         }
     }
 
@@ -139,6 +139,10 @@ class AutorisationFragment : BaseFragment() {
         registrationButton.isClickable = false
         loginButton.isEnabled = false
         loginButton.isClickable = false
+
+        val spinner = view.findViewById<Spinner>(R.id.sp_profile_language_login)
+        val adapter = LanguageAdapter(languagesWithCheckBox)
+        spinner.adapter = adapter
 
         dateEditText.filters = arrayOf(DateInputFilter())
         setupTextWatchers()
@@ -172,6 +176,10 @@ class AutorisationFragment : BaseFragment() {
         }
 
         registrationButton.setOnClickListener {
+            val selectedLanguages = languagesWithCheckBox.filter { it.isSelected }
+            val languageCodes = selectedLanguages.map { getLanguageShortCode(it.name) }
+            val result = languageCodes.joinToString("|")
+
             viewModel.createAcc(
                 usernameEditText.text.toString(),
                 passwordEditText.text.toString(),
@@ -180,7 +188,7 @@ class AutorisationFragment : BaseFragment() {
                 nickname.text.toString(),
                 dateEditText.text.toString(),
                 loginCity.text.toString(),
-                ""
+                result
             )
         }
 

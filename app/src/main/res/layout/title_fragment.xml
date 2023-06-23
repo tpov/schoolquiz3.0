@@ -62,6 +62,38 @@
             android:src="@drawable/ic_search"
             app:elevation="16dp"
             app:backgroundTint="#80977E33" />
+
+        <RelativeLayout
+            android:id="@+id/fab_box"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="32dp"
+            android:elevation="16dp">
+
+            <ImageView
+                android:id="@+id/iv_box"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_box"
+                android:padding="8dp"
+                android:scaleType="centerCrop"
+                android:background="@drawable/circle_background" />
+
+            <TextView
+                android:id="@+id/tv_number_box"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="bottom|right"
+                android:text=""
+                android:layout_marginBottom="4dp"
+                android:layout_marginRight="12dp"
+                android:textColor="#600000"
+                android:textSize="14sp" />
+
+        </RelativeLayout>
+
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

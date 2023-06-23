@@ -5,15 +5,17 @@
     android:orientation="horizontal">
 
     <CheckBox
-        android:id="@+id/languageCheckbox"
+        android:id="@+id/checkBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
     <TextView
-        android:id="@+id/languageNameTextView"
+        android:id="@+id/textViewLanguage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_gravity="center_vertical"
+        android:paddingStart="8dp"
         android:textSize="16sp" />
 
 </LinearLayout>
+

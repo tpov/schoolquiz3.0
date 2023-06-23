@@ -79,10 +79,35 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
 
-        if (isMyQuiz == 5) binding.fabSearch.visibility = View.VISIBLE
-        else binding.fabSearch.visibility = View.GONE
-        if (isMyQuiz == 1) binding.fabAddItem.visibility = View.VISIBLE
-        else binding.fabAddItem.visibility = View.GONE
+        when (isMyQuiz) {
+            1 -> {
+                binding.fabAddItem.visibility = View.VISIBLE
+                binding.fabSearch.visibility = View.GONE
+                binding.fabBox.visibility = View.GONE
+            }
+            5 -> {
+                binding.fabSearch.visibility = View.VISIBLE
+                binding.fabAddItem.visibility = View.GONE
+                binding.fabBox.visibility = View.GONE
+            }
+            8 -> {
+                binding.fabBox.visibility = View.VISIBLE
+                binding.fabAddItem.visibility = View.GONE
+                binding.fabSearch.visibility = View.GONE
+            }
+            else -> {
+                binding.fabBox.visibility = View.GONE
+                binding.fabAddItem.visibility = View.GONE
+                binding.fabSearch.visibility = View.GONE
+            }
+        }
+
+        val countBox = mainViewModel.getProfileCountBox()
+        if (countBox != 0) {
+            binding.tvNumberBox.text = countBox.toString()
+        } else {
+            binding.fabBox.visibility = View.GONE
+        }
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             val filteredList = quizList.filter { it.event == isMyQuiz }

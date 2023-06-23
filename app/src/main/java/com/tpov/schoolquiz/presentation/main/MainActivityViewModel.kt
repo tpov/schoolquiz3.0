@@ -184,6 +184,9 @@ class MainActivityViewModel @Inject constructor(
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
     }
+    fun getProfileCountBox(): Int {
+        return getProfileUseCaseFun(getTpovId()).countBox ?: 0
+    }
 
     private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
         log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
