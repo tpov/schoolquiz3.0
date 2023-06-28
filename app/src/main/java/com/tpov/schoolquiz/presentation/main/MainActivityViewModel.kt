@@ -72,6 +72,7 @@ class MainActivityViewModel @Inject constructor(
         log("udpateQuiz: $quizEntity")
         updateQuizUseCase(quizEntity)
     }
+
     fun getQuestionList(): List<QuestionEntity> {
         return getQuestionListUseCase()
     }
@@ -85,6 +86,7 @@ class MainActivityViewModel @Inject constructor(
         log("dwawfdrgh, ${getAllProfilesDBUseCase()}")
         return getAllProfilesDBUseCase()
     }
+
     fun getPlayers(): List<PlayersEntity> {
         return getPlayersDBUseCase()
     }
@@ -190,6 +192,17 @@ class MainActivityViewModel @Inject constructor(
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
     }
+
+    fun getCountPlaceForUserQuiz(): Int {
+        val placeQuiz = getProfileUseCase(getTpovId()).buyQuizPlace
+        val countUserQuiz = getQuizList().filter { it.event == 1 }
+        return placeQuiz?.minus(countUserQuiz.size) ?: 0
+    }
+
+    fun removePlaceInUserQuiz() {
+        updateProfileUseCase(getProfile().copy(buyQuizPlace = getProfile().buyQuizPlace?.minus(1)))
+    }
+
     fun getProfileCountBox(): Int {
         return getProfileUseCaseFun(getTpovId()).countBox ?: 0
     }
@@ -254,6 +267,7 @@ class MainActivityViewModel @Inject constructor(
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.countGold
     }
+
     fun getProfileCountGoldLife(): Int? {
         val profile = getProfileUseCase(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
@@ -325,6 +339,7 @@ class MainActivityViewModel @Inject constructor(
         val profile = getProfileUseCase(getTpovId())
         return profile.timeInGamesSmsPoints ?: 0
     }
+
     fun getProfileTimeInGame(): Int? {
         val profile = getProfileUseCase(getTpovId())
         return profile.timeInGamesInQuiz

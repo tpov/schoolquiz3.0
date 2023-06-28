@@ -37,6 +37,7 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.NewValue.setNewSkill
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountMassageIdAndReset
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
@@ -369,6 +370,8 @@ class MainActivity : AppCompatActivity() {
                 it?.datePremium ?: "",
                 it?.nickname ?: ""
             )
+
+            setNewSkill(it?.pointsSkill)
         }
         pb_life1.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {

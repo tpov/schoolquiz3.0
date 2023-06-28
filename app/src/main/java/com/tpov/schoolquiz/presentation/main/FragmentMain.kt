@@ -76,8 +76,15 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             // Ваш код для удаления или выполнения других действий с элементом
             mainViewModel.deleteQuiz(quizEntity.itemId.toInt())
         }
+
+        mainViewModel.getProfile()
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
+        tv_number_place_user_quiz.text = mainViewModel.getCountPlaceForUserQuiz().toString()
+        if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
+            binding.fabAddItem.isClickable = false
+            binding.fabAddItem.isEnabled = false
+        }
 
         when (isMyQuiz) {
             1 -> {
