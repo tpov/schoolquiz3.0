@@ -294,6 +294,8 @@ class CreateQuestionDialog : DialogFragment() {
                 )
             )
         }
+
+        mainActivityViewModel.removePlaceInUserQuiz()
     }
 
     companion object {
