@@ -39,6 +39,7 @@ class ProfileAdapter(
     }
 
     override fun onBindViewHolder(holder: ProfileViewHolder, position: Int) {
+
         val profile = profiles[position]
 
         holder.ivIcon.text = profile.logo.toString()

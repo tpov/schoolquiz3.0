@@ -8,6 +8,7 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ClipDrawable
@@ -53,6 +54,7 @@ import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
+import com.tpov.userguide.UserguideImpl
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import java.text.NumberFormat
@@ -107,6 +109,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
+        val versionName: String = pInfo.versionName
+        val versionCode: Int = pInfo.versionCode
+
+        val userguide = UserguideImpl(this)
+        userguide.addGuideNewVersion(versionCode, "SchoolQuiz v${versionName}", "This is alfa test", null, null)
+            //userguide.addGuide(findViewById(R.id.menu_network), "This is network", "Network", null, null)
         log("onCreate()")
         // Remove the action bar
         supportActionBar?.hide()

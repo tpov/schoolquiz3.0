@@ -148,8 +148,9 @@ dependencies {
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
     implementation 'com.google.code.gson:gson:2.8.9'
-
     implementation "org.jetbrains.anko:anko-commons:0.10.8"
+
+    implementation 'com.github.tpov:Userguide:1.1'
 
 }
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

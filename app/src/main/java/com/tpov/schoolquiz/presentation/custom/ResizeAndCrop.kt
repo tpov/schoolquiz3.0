@@ -17,7 +17,6 @@ class ResizeAndCrop(val outWidth: Int, val outHeight: Int) : BitmapTransformatio
         val width = toTransform.width
         val height = toTransform.height
         val aspectRatio = width.toFloat() / height.toFloat()
-
         val targetHeight = outHeight
         val targetWidth = (targetHeight * aspectRatio).toInt()
 

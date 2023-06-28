@@ -60,7 +60,6 @@ class CreateQuestionDialog : DialogFragment() {
             }
 
         } else {
-
             dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
 
             mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->

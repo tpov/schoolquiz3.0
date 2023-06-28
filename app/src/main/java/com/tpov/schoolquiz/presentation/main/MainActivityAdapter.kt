@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.main
 
 import android.content.Context
 import android.graphics.*
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -204,8 +205,10 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
+            log("daegrjg, ${quizEntity.ratingPlayer.toFloat()}")
             ratingBar.rating = quizEntity.ratingPlayer.toFloat() / 100
-
+            ratingBar.stepSize = 0.01F
+            Log.d("esgfsdefse", "${quizEntity.ratingPlayer.toFloat() / 100}")
             mainTitleButton.text = quizEntity.nameQuiz
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
@@ -219,6 +222,24 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             imvTranslate.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }*/
+
+            imvTranslate.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quizEntity, event, POPUP_TRANSLATE, viewModel)
+                }
+                true
+            }
+
+            ratingBar.setOnTouchListener { view, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    // Rating bar clicked, handle the event here
+                    // You can call your method to show the translation popup/dialog
+                    showPopupInfo(quizEntity, event, POPUP_STARS, viewModel)
+                }
+                true
+            }
 
             tvName.visibility = View.VISIBLE
             tvTime.visibility = View.VISIBLE
@@ -362,12 +383,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 }
 
                 val languageString = quizEntity.languages // Получите строку языков из quizEntity
-                val languageItems = languageString?.split("|") // Разделите строку на элементы
+                val languageItems = languageString.split("|") // Разделите строку на элементы
 
                 val languageMap =
                     mutableMapOf<String?, Int?>() // Создайте пустой Map для хранения соответствия язык-число
 
-                if (languageItems != null) {
+                if (languageItems.isNotEmpty()) {
                     for (item in languageItems) {
                         val parts = item.split("-") // Разделите элемент на ключ и значение
                         if (parts.size == 2) {
@@ -436,7 +457,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 tvPopup2.text = "К-во легких вопросов: ${quizEntity.numQ}"
                 tvPopup1.text = "К-во сложных вопросов: ${quizEntity.numHQ}"
                 tvPopup3.text = "Дата создания: ${quizEntity.data}"
-                tvPopup4.text = "Рейтинг квеста: ${quizEntity.ratingPlayer}/3"
+                tvPopup4.text = "Рейтинг квеста: ${quizEntity.ratingPlayer / 100}/3"
                 tvPopup5.text = "Ваш лучший результат: ${quizEntity.stars}/120"
                 tvPopup6.text = "Ваш средний результат: ${quizEntity.starsAll}/120"
                 tvPopup7.text = "Средний результат всх игроков: ${quizEntity.starsAllPlayer}/120"

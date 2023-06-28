@@ -5,6 +5,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
@@ -80,8 +81,13 @@ class MainActivityViewModel @Inject constructor(
         oldId = tpovId
     }
 
-    fun getAllProfiles() = getAllProfilesDBUseCase()
-    fun getPlayers() = getPlayersDBUseCase()
+    fun getAllProfiles(): List<ProfileEntity> {
+        log("dwawfdrgh, ${getAllProfilesDBUseCase()}")
+        return getAllProfilesDBUseCase()
+    }
+    fun getPlayers(): List<PlayersEntity> {
+        return getPlayersDBUseCase()
+    }
 
     init {
         SharedPreferencesManager.initialize(context)
