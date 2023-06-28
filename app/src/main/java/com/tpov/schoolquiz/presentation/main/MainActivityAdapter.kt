@@ -198,6 +198,8 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             imvTranslate.imageAlpha = 128
 
+            ratingBar.rating = (quizEntity.ratingPlayer.toFloat() / 33.3333F)
+            ratingBar.stepSize = 100F
             val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
             //imvTranslate
@@ -286,9 +288,9 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
-            if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
-                (quizEntity.stars.toFloat() / 50)
-            else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
+                if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
+                    (quizEntity.stars.toFloat() / 50)
+                else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
 
             imvTranslate.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
