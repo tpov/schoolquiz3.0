@@ -46,6 +46,10 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCount
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_DOWNLOADS
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_HOME
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_MY_QUIZ
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_PROFILE
 import com.tpov.schoolquiz.presentation.main.info.InfoFragment
 import com.tpov.schoolquiz.presentation.network.AutorisationFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
@@ -424,7 +428,7 @@ class MainActivity : AppCompatActivity() {
         setButtonNavListener()
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-        SetItemMenu.setHomeMenu(binding, 1, this)
+        SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
 
         loadNumBoxDay()
 
@@ -454,7 +458,7 @@ class MainActivity : AppCompatActivity() {
         val imvGold = binding.imvGold
         val imvPremium = binding.imvPremiun
 
-        SetItemMenu.setHomeMenu(binding, fr2, this)
+        SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
 
         val yRotateAnimationDuration = 1000
         val repeatDelay = 6000L // Задержка между повторениями (1 минута)
@@ -834,7 +838,7 @@ class MainActivity : AppCompatActivity() {
                     FragmentManager.setFragment(DownloadFragment(), this)
                     SetItemMenu.setHomeMenu(
                         binding,
-                        4,
+                        MENU_DOWNLOADS,
                         this
                     ) // Используйте подходящий номер пункта меню
                 }
@@ -859,7 +863,7 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_home) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-                    SetItemMenu.setHomeMenu(binding, 1, this)
+                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
                 }
 
                 resources.getString(R.string.nav_leaders) -> {
@@ -872,7 +876,7 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_my_quiz) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(1), this)
-                    SetItemMenu.setHomeMenu(binding, 2, this)
+                    SetItemMenu.setHomeMenu(binding, MENU_MY_QUIZ, this)
                 }
 
                 resources.getString(R.string.nav_news) -> {
@@ -971,7 +975,7 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_home -> {
                 if (fr1 != 1) {
-                    SetItemMenu.setHomeMenu(binding, 1, this)
+                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
                     fr1 = 1
                 }
             }
@@ -999,7 +1003,7 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_network -> {
                 if (fr1 != 5) {
-                    SetItemMenu.setNetworkMenu(binding, 1, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this)
                     fr1 = 5
                 }
             }
