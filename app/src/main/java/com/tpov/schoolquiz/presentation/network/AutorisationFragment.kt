@@ -39,6 +39,10 @@ class AutorisationFragment : BaseFragment() {
     private lateinit var registrationMode: RadioButton
     private lateinit var buttonSetLanguageProfile: Button
     private lateinit var layoutProfileLanguage: LinearLayout
+    val startDelay = 0
+    val stepDelay = 75
+    val duration = 400L
+    var sumDelay = startDelay
 
     companion object {
         fun newInstance() = AutorisationFragment()
@@ -121,6 +125,12 @@ class AutorisationFragment : BaseFragment() {
         }
     }
 
+    private fun getDelay(): Long {
+        val delay = sumDelay + stepDelay
+        sumDelay = delay
+        return delay.toLong()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -177,27 +187,34 @@ class AutorisationFragment : BaseFragment() {
         setupTextWatchers()
         loginMode.isChecked = true
         modeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+
             when (checkedId) {
                 R.id.login_mode -> {
-                    nameEditText.visibility = View.GONE
-                    dateEditText.visibility = View.GONE
-                    nickname.visibility = View.GONE
-                    loginCity.visibility = View.GONE
-                    registrationButton.visibility = View.GONE
-                    layoutProfileLanguage.visibility = View.GONE
-                    loginButton.visibility = View.VISIBLE
+                    sumDelay = startDelay
+                    showWithDelay(nameEditText, duration, getDelay())
+                    showWithDelay(nickname, duration, getDelay())
+                    showWithDelay(loginCity, duration, getDelay())
+                    showWithDelay(layoutProfileLanguage, duration, getDelay())
+                    showWithDelay(dateEditText, duration, getDelay())
+
+                    hideWithDelay(loginButton, duration, getDelay())
+                    showWithDelay(registrationButton, duration, 0)
                 }
 
                 R.id.registration_mode -> {
-                    nameEditText.visibility = View.VISIBLE
-                    dateEditText.visibility = View.VISIBLE
-                    nickname.visibility = View.VISIBLE
-                    loginCity.visibility = View.VISIBLE
-                    registrationButton.visibility = View.VISIBLE
-                    layoutProfileLanguage.visibility = View.VISIBLE
-                    loginButton.visibility = View.GONE
+                    sumDelay = startDelay
+                    hideWithDelay(nameEditText, duration, getDelay())
+                    hideWithDelay(nickname, duration, getDelay())
+                    hideWithDelay(loginCity, duration, getDelay())
+                    hideWithDelay(layoutProfileLanguage, duration, getDelay())
+                    hideWithDelay(dateEditText, duration, getDelay())
+
+                    hideWithDelay(registrationButton, duration, getDelay())
+                    showWithDelay(loginButton, duration, 0)
                 }
             }
+
+
         }
 
         loginButton.setOnClickListener {
@@ -235,6 +252,31 @@ class AutorisationFragment : BaseFragment() {
                 }
             }
         }
+    }
+
+    private fun hideWithDelay(view: View, duration: Long, delay: Long) {
+        view.translationX = -view.width.toFloat()
+        view.apply {
+            alpha = 0f
+
+            animate()
+                .translationX(0f)
+                .alpha(1f)
+                .setDuration(duration)
+                .setStartDelay(delay)
+                .withStartAction { view.visibility = View.VISIBLE }
+                .start()
+        }
+    }
+
+    private fun showWithDelay(view: View, duration: Long, delay: Long) {
+        view.animate()
+            .translationX(view.width.toFloat())
+            .alpha(0f)
+            .setDuration(duration)
+            .setStartDelay(delay)
+            .withEndAction { view.visibility = View.GONE }
+            .start()
     }
 
     private fun updateButtonTextColor(button: Button, active: Boolean) {
