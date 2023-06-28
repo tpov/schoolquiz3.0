@@ -46,10 +46,21 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCount
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_ARENA
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_DOWNLOADS
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_EVENT
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_EXIT
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_FRIEND
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_HOME
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_LEADER
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_MASSAGE
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_MY_QUIZ
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_NEWS
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_PROFILE
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_REPORT
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_SETTING
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_USERS
 import com.tpov.schoolquiz.presentation.main.info.InfoFragment
 import com.tpov.schoolquiz.presentation.network.AutorisationFragment
 import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
@@ -73,7 +84,7 @@ import javax.inject.Inject
 
 @InternalCoroutinesApi
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    lateinit var binding: ActivityMainBinding
 
     private var iAd: InterstitialAd? = null
     private var numDayPrizeBox = 0
@@ -831,7 +842,7 @@ class MainActivity : AppCompatActivity() {
             when (menuItem.toString()) {
                 resources.getString(R.string.nav_chat) -> {
                     FragmentManager.setFragment(ChatFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, 3, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_CHAT, this)
                 }
 
                 resources.getString(R.string.nav_downloads) -> {
@@ -844,21 +855,22 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_enter) -> {
-                    SetItemMenu.setNetworkMenu(binding, 10, this)
+
+                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this)
                 }
 
                 resources.getString(R.string.nav_exit) -> {
-                    SetItemMenu.setNetworkMenu(binding, 11, this)
                     FirebaseAuth.getInstance().signOut()
+                    SetItemMenu.setNetworkMenu(binding, MENU_EXIT, this)
                 }
 
                 resources.getString(R.string.nav_global) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(5), this)
-                    SetItemMenu.setNetworkMenu(binding, 8, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_ARENA, this)
                 }
 
                 resources.getString(R.string.nav_friends) -> {
-                    SetItemMenu.setNetworkMenu(binding, 9, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_FRIEND, this)
                 }
 
                 resources.getString(R.string.nav_home) -> {
@@ -867,11 +879,11 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_leaders) -> {
-                    SetItemMenu.setNetworkMenu(binding, 11, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_LEADER, this)
                 }
 
                 resources.getString(R.string.nav_massages) -> {
-                    SetItemMenu.setNetworkMenu(binding, 5, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_MASSAGE, this)
                 }
 
                 resources.getString(R.string.nav_my_quiz) -> {
@@ -880,24 +892,27 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_news) -> {
-                    SetItemMenu.setNetworkMenu(binding, 7, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_NEWS, this)
                 }
 
                 resources.getString(R.string.nav_players) -> {
                     FragmentManager.setFragment(UsersFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, 6, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_USERS, this)
                 }
 
                 resources.getString(R.string.nav_reports) -> {
 
+                    SetItemMenu.setNetworkMenu(binding, MENU_REPORT, this)
                 }
 
                 resources.getString(R.string.nav_task) -> {
                     FragmentManager.setFragment(EventFragment.newInstance(), this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_EVENT, this)
                 }
 
                 resources.getString(R.string.nav_settings) -> {
                     FragmentManager.setFragment(SettingsFragment.newInstance(), this)
+                    SetItemMenu.setHomeMenu(binding, MENU_SETTING, this)
                 }
 
             }

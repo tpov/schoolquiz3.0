@@ -17,6 +17,16 @@ object SetItemMenu {
     const val MENU_DOWNLOADS = 3
 
     const val MENU_PROFILE = 0
+    const val MENU_MASSAGE = 1
+    const val MENU_CHAT = 2
+    const val MENU_EVENT = 3
+    const val MENU_LEADER = 4
+    const val MENU_USERS = 5
+    const val MENU_NEWS = 6
+    const val MENU_ARENA = 7
+    const val MENU_FRIEND = 8
+    const val MENU_REPORT = 9
+    const val MENU_EXIT = 10
 
     fun setHomeMenu(binding: ActivityMainBinding, fr2: Int, context: Context) {
         log("fioesjoifjsei, $fr2")
@@ -43,23 +53,27 @@ object SetItemMenu {
         val menu = binding.navigationView.menu
         menu.clear() // Очистите текущее меню
 
-        var menuItemsToAdd: MutableList<Pair<Int, Int>> = if (FirebaseAuth.getInstance().currentUser?.uid == null) emptyList<Pair<Int, Int>>().toMutableList()
-        else mutableListOf(
-            R.string.nav_profile to R.drawable.nav_profile,
-            R.string.nav_massages to R.drawable.nav_massage,
-            R.string.nav_chat to R.drawable.nav_chat,
-            R.string.nav_task to R.drawable.nav_task,
-            R.string.nav_leaders to R.drawable.nav_leader,
-            R.string.nav_players to R.drawable.nav_user,
-            R.string.nav_news to R.drawable.ic_new,
-            R.string.nav_global to R.drawable.baseline_public_24,
-            R.string.nav_friends to R.drawable.ic_baseline_drive_folder_upload_24,
-            R.string.nav_enter to R.drawable.nav_add_acc,
-            R.string.nav_reports to R.drawable.nav_report,
-            R.string.nav_exit to R.drawable.nav_exit,
-        )
+        var menuItemsToAdd: MutableList<Pair<Int, Int>> =
+            if (FirebaseAuth.getInstance().currentUser?.uid == null) emptyList<Pair<Int, Int>>().toMutableList()
 
-        menuItemsToAdd.removeAt(fr2)
+            else {
+                mutableListOf(
+                    R.string.nav_profile to R.drawable.nav_profile,
+                    R.string.nav_massages to R.drawable.nav_massage,
+                    R.string.nav_chat to R.drawable.nav_chat,
+                    R.string.nav_task to R.drawable.nav_task,
+                    R.string.nav_leaders to R.drawable.nav_leader,
+                    R.string.nav_players to R.drawable.nav_user,
+                    R.string.nav_news to R.drawable.ic_new,
+                    R.string.nav_global to R.drawable.baseline_public_24,
+                    R.string.nav_friends to R.drawable.ic_baseline_drive_folder_upload_24,
+                    R.string.nav_reports to R.drawable.nav_report,
+                    R.string.nav_exit to R.drawable.nav_exit,
+                )
+
+            }
+
+        if (FirebaseAuth.getInstance().currentUser?.uid != null) menuItemsToAdd.removeAt(fr2)
 
         for (item in menuItemsToAdd) {
             val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)
@@ -68,5 +82,7 @@ object SetItemMenu {
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    fun log(massage: String) { Logcat.log(massage, "SetItemMenu", Logcat.LOG_ACTIVITY) }
+    fun log(massage: String) {
+        Logcat.log(massage, "SetItemMenu", Logcat.LOG_ACTIVITY)
+    }
 }
