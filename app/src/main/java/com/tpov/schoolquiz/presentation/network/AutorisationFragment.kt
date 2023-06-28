@@ -38,6 +38,7 @@ class AutorisationFragment : BaseFragment() {
     private lateinit var textLanguageProfile: TextView
     private lateinit var registrationMode: RadioButton
     private lateinit var buttonSetLanguageProfile: Button
+    private lateinit var layoutProfileLanguage: LinearLayout
 
     companion object {
         fun newInstance() = AutorisationFragment()
@@ -139,6 +140,7 @@ class AutorisationFragment : BaseFragment() {
         modeRadioGroup = view.findViewById(R.id.mode_radio_group)
         textLanguageProfile = view.findViewById(R.id.tv_lang_profile)
         buttonSetLanguageProfile = view.findViewById(R.id.b_set_translate_profile)
+        layoutProfileLanguage = view.findViewById(R.id.layout_profile_language)
 
         registrationButton.isEnabled = false
         registrationButton.isClickable = false
@@ -182,6 +184,7 @@ class AutorisationFragment : BaseFragment() {
                     nickname.visibility = View.GONE
                     loginCity.visibility = View.GONE
                     registrationButton.visibility = View.GONE
+                    layoutProfileLanguage.visibility = View.GONE
                     loginButton.visibility = View.VISIBLE
                 }
 
@@ -191,6 +194,7 @@ class AutorisationFragment : BaseFragment() {
                     nickname.visibility = View.VISIBLE
                     loginCity.visibility = View.VISIBLE
                     registrationButton.visibility = View.VISIBLE
+                    layoutProfileLanguage.visibility = View.VISIBLE
                     loginButton.visibility = View.GONE
                 }
             }
