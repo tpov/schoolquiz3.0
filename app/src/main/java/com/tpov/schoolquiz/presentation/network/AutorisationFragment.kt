@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.LanguageEntity
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.LanguageUtils.getLanguageShortCode
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesWithCheckBox
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
@@ -177,14 +178,22 @@ class AutorisationFragment : BaseFragment() {
                 val selectedLanguages = mutableListOf<LanguageEntity>()
                 for (i in checkedItems.indices) {
                     if (checkedItems[i]) {
-                        selectedLanguages.add(languagesWithCheckBox[i])
+                        selectedLanguages.add(LanguageEntity(getLanguageShortCode(languagesWithCheckBox[i].name), false))
                     }
                 }
                 result = selectedLanguages.joinToString("|") { it.name }
-
+                textLanguageProfile.text = result
             }
             builder.setNegativeButton("Отмена", null)
-            builder.show()
+
+            val dialog = builder.create()
+
+            dialog.setOnShowListener {
+                val dialogWindow = dialog.window
+                dialogWindow?.setBackgroundDrawableResource(R.color.grey)
+            }
+
+            dialog.show()
         }
 
         dateEditText.filters = arrayOf(DateInputFilter())
