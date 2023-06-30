@@ -18,7 +18,7 @@
     </style>
 
     <!-- styles.xml -->
-    <style name="DialogAnimation">
+    <style name="DialogAnimationCreateQuestion">
         <item name="android:windowEnterAnimation">@anim/slide_in_horizontal</item>
         <item name="android:windowExitAnimation">@anim/slide_out_vertical</item>
     </style>

@@ -32,6 +32,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
@@ -70,7 +71,7 @@ import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
-import com.tpov.userguide.UserguideImpl
+import com.tpov.userguide.Userguide
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import java.text.NumberFormat
@@ -128,10 +129,37 @@ class MainActivity : AppCompatActivity() {
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
         val versionCode: Int = pInfo.versionCode
+        val userguide = Userguide(this)
+        userguide.addGuideNewVersion(
+            versionCode,
+            "SchoolQuiz v${versionName}",
+            "This is alfa test",
+            null,
+            null
+        )
 
-        val userguide = UserguideImpl(this)
-        userguide.addGuideNewVersion(versionCode, "SchoolQuiz v${versionName}", "This is alfa test", null, null)
-            //userguide.addGuide(findViewById(R.id.menu_network), "This is network", "Network", null, null)
+        userguide.addGuide(findViewById(R.id.menu_network), "This is network", "Network", null, null, callback = {
+            log("setButtonNavListener() menu_network")
+            val user = FirebaseAuth.getInstance()
+            if (user.currentUser != null) {
+                log("setButtonNavListener() Аккаунт зареган")
+                Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
+                    .show()
+
+                FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+            } else {
+
+                log("setButtonNavListener() Аккаунт не зареган")
+                Toast.makeText(
+                    this@MainActivity,
+                    "Аккаунт не найден, авторизуйтесь.",
+                    Toast.LENGTH_LONG
+                ).show()
+                FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
+            }
+        })
+
+
         log("onCreate()")
         // Remove the action bar
         supportActionBar?.hide()
@@ -839,10 +867,26 @@ class MainActivity : AppCompatActivity() {
             // ваш код обработки нажатия на элемент меню
 
             log("listenerDrawer() menuItem: ${menuItem.toString()}")
+            val profile = viewModel.getProfile()
+            val qualification = Qualification(
+                profile.tester ?: 0,
+                profile.moderator ?: 0,
+                profile.sponsor ?: 0,
+                profile.translater ?: 0,
+                profile.admin ?: 0,
+                profile.developer ?: 0
+            )
+
             when (menuItem.toString()) {
                 resources.getString(R.string.nav_chat) -> {
                     FragmentManager.setFragment(ChatFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, MENU_CHAT, this)
+                    SetItemMenu.setNetworkMenu(
+                        binding,
+                        MENU_CHAT,
+                        this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_downloads) -> {
@@ -856,21 +900,33 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_enter) -> {
 
-                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_exit) -> {
                     FirebaseAuth.getInstance().signOut()
-                    SetItemMenu.setNetworkMenu(binding, MENU_EXIT, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_EXIT, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_global) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(5), this)
-                    SetItemMenu.setNetworkMenu(binding, MENU_ARENA, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_ARENA, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_friends) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_FRIEND, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_FRIEND, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_home) -> {
@@ -879,11 +935,17 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_leaders) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_LEADER, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_LEADER, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_massages) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_MASSAGE, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_MASSAGE, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_my_quiz) -> {
@@ -892,22 +954,34 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_news) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_NEWS, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_NEWS, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_players) -> {
                     FragmentManager.setFragment(UsersFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, MENU_USERS, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_USERS, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_reports) -> {
 
-                    SetItemMenu.setNetworkMenu(binding, MENU_REPORT, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_REPORT, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_task) -> {
                     FragmentManager.setFragment(EventFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, MENU_EVENT, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_EVENT, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_settings) -> {
@@ -984,8 +1058,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun setVisibleMenu(itemId: MenuItem) {
 
-        log("fun setVisibleMenu()")
-        log("setVisibleMenu() itemId.itemId = ${itemId}")
+        val profile = viewModel.getProfile()
+        val qualification = Qualification(
+            profile.tester ?: 0,
+            profile.moderator ?: 0,
+            profile.sponsor ?: 0,
+            profile.translater ?: 0,
+            profile.admin ?: 0,
+            profile.developer ?: 0
+        )
+        log("fun setVisibleMenu() itemId.itemId = $itemId")
+
         when (itemId.itemId) {
 
             R.id.menu_home -> {
@@ -1018,7 +1101,10 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_network -> {
                 if (fr1 != 5) {
-                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this)
+                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
                     fr1 = 5
                 }
             }

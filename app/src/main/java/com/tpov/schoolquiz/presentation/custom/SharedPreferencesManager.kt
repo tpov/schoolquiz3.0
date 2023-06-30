@@ -29,14 +29,14 @@ object SharedPreferencesManager {
     }
 
     fun getTpovId(): Int {
-        if (!::sharedPreferencesTpovId.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesTpovId.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesTpovId.getInt("tpovId", -1)
     }
 
     fun setTpovId(tpovId: Int) {
-        if (!::sharedPreferencesTpovId.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesTpovId.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         val editor = sharedPreferencesTpovId.edit()
@@ -45,14 +45,14 @@ object SharedPreferencesManager {
     }
 
     fun getCountStartApp(): Int {
-        if (!::sharedPreferencesCountStartApp.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCountStartApp.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCountStartApp.getInt("countStartApp", 0)
     }
 
     fun setCountStartApp(count: Int) {
-        if (!::sharedPreferencesCountStartApp.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCountStartApp.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         val editor = sharedPreferencesCountStartApp.edit()
@@ -61,14 +61,14 @@ object SharedPreferencesManager {
     }
 
     fun getCountTimeInGame(): Int {
-        if (!::sharedPreferencesCountStartApp.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCountStartApp.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCountStartApp.getInt("countTimeInGame", 0)
     }
 
     fun setCountTimeInGame(time: Int) {
-        if (!::sharedPreferencesCountStartApp.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCountStartApp.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         val editor = sharedPreferencesCountStartApp.edit()
@@ -77,7 +77,7 @@ object SharedPreferencesManager {
     }
 
     fun setTimeMassage(time: String) {
-        if (!::sharedPreferencesQuiz.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         val editor = sharedPreferencesQuiz.edit()
@@ -87,7 +87,7 @@ object SharedPreferencesManager {
 
     fun getTimeMassage(): String {
 
-        if (!::sharedPreferencesQuiz.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesQuiz.getString("massageTime", "0") ?: "0"
@@ -98,7 +98,7 @@ object SharedPreferencesManager {
         log("fun getVersionQuiz tpovId: $tpovId")
         log("fun setVersionQuiz key: $key|$tpovId, value: $value")
 
-        if (!::sharedPreferencesQuiz.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         val editor = sharedPreferencesQuiz.edit()
@@ -118,7 +118,7 @@ object SharedPreferencesManager {
             }"
         )
 
-        if (!::sharedPreferencesQuiz.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesQuiz.getInt("$key|$tpovId", -1)
@@ -126,7 +126,7 @@ object SharedPreferencesManager {
 
     fun addCountSendMassage() {
 
-        if (!::sharedPreferencesQuiz.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
 
@@ -141,7 +141,7 @@ object SharedPreferencesManager {
     fun getCountMassageIdAndReset(): Int {
         val tpovId = getTpovId()
 
-        if (!::sharedPreferencesQuiz.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
 
@@ -179,35 +179,35 @@ object SharedPreferencesManager {
     }
 
     fun getSkill(): Int {
-        if (!::sharedPreferencesCounts.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCounts.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCounts.getInt("countSkill", 0)
     }
 
     fun getGold(): Int {
-        if (!::sharedPreferencesCounts.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCounts.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCounts.getInt("countGold", 0)
     }
 
     fun getPremium(): String {
-        if (!::sharedPreferencesCounts.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCounts.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCounts.getString("countPremium", "") ?: ""
     }
 
     fun getNick(): String {
-        if (!::sharedPreferencesCounts.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCounts.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCounts.getString("countNick", "") ?: ""
     }
 
     fun getNolic(): Int {
-        if (!::sharedPreferencesCounts.isInitialized) {
+        if (!SharedPreferencesManager::sharedPreferencesCounts.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCounts.getInt("countNolic", 0)

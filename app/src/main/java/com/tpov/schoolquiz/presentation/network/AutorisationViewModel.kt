@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
@@ -45,6 +46,10 @@ class AutorisationViewModel @Inject constructor(
     private fun updateProfile() {
         log("fun updateProfile")
         someData.value = someData.value?.plus(1)
+    }
+
+    fun getProfile(): ProfileEntity {
+        return getProfileUseCase(getTpovId())
     }
 
     fun createAcc(
