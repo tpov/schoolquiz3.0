@@ -15,7 +15,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Create show item menu by skill and qualification">
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Edit main activity top bar">
       <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/model/Qualification.kt" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/custom/VisibleItems.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/checksums/checksums.lock" afterDir="false" />
@@ -675,7 +675,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Fix create question not acc" />
     <MESSAGE value="Hotfix crash ended quiz in 0 percent&#10;Fix new Id create quiz" />
     <MESSAGE value="Edit setQuiz5, sort quiz5" />
     <MESSAGE value="Edit setQuiz5, sort quiz5&#10;Delete question day&#10;Fix time format&#10;Edit translate" />
@@ -700,7 +699,8 @@
     <MESSAGE value="Create limit user quiz" />
     <MESSAGE value="Refactoring menu" />
     <MESSAGE value="Create show item menu by skill and qualification" />
-    <option name="LAST_COMMIT_MESSAGE" value="Create show item menu by skill and qualification" />
+    <MESSAGE value="Edit main activity top bar" />
+    <option name="LAST_COMMIT_MESSAGE" value="Edit main activity top bar" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>
