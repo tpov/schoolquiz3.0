@@ -14,9 +14,11 @@ import android.widget.*
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.LanguageEntity
+import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesWithCheckBox
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.main.MainActivity
@@ -247,12 +249,27 @@ class AutorisationFragment : BaseFragment() {
 
             if (it > 0) {
                 if (!obs) {
+                    val profile = viewModel.getProfile()
+                    val qualification = Qualification(
+                        profile.tester ?: 0,
+                        profile.moderator ?: 0,
+                        profile.sponsor ?: 0,
+                        profile.translater ?: 0,
+                        profile.admin ?: 0,
+                        profile.developer ?: 0
+                    )
                     log("onViewCreated someData.observe() соблюдение условий для запуска ProfileFragment")
                     obs = true
                     val fragmentTransaction = fragmentManager?.beginTransaction()
                     fragmentTransaction?.remove(this)
                     fragmentTransaction?.replace(R.id.title_fragment, ProfileFragment.newInstance())
-                    SetItemMenu.setNetworkMenu((requireContext() as MainActivity).binding, MENU_PROFILE, requireActivity())
+                    SetItemMenu.setNetworkMenu(
+                        (requireContext() as MainActivity).binding,
+                        MENU_PROFILE,
+                        requireActivity(),
+                        SharedPreferencesManager.getSkill(),
+                        qualification
+                    )
                     fragmentTransaction?.commit()
                 }
             }

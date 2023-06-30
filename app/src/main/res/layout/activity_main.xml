@@ -166,20 +166,27 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="30dp"
-                        android:layout_marginTop="4dp"
+                        android:layout_height="40dp"
                         android:layout_marginRight="8dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
                         <ImageButton
                             android:id="@+id/imb_manu"
-                            android:layout_width="16dp"
+                            android:layout_width="32dp"
                             android:layout_height="wrap_content"
                             android:background="@color/nullColor"
                             android:paddingLeft="16dp"
-                            android:paddingEnd="4dp"
+                            android:paddingEnd="8dp"
                             app:srcCompat="@drawable/baseline_more_vert" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1.2"
+                            android:orientation="horizontal">
+
+                        </LinearLayout>
 
                         <TextView
                             android:id="@+id/tv_stars"
@@ -202,7 +209,7 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="0.95"
+                            android:layout_weight="1.1"
                             android:orientation="horizontal">
 
                         </LinearLayout>
@@ -228,7 +235,9 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="0.95"
-                            android:orientation="horizontal"></LinearLayout>
+                            android:orientation="horizontal">
+
+                        </LinearLayout>
 
                         <ImageView
                             android:id="@+id/pb_life1"
@@ -284,14 +293,6 @@
                         </LinearLayout>
 
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal">
-
-                        </LinearLayout>
-
                         <TextView
                             android:id="@+id/tv_gold"
                             android:layout_width="wrap_content"
@@ -305,6 +306,7 @@
                             android:id="@+id/imv_gold"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:layout_marginRight="16dp"
                             android:layout_marginLeft="4dp"
                             app:srcCompat="@drawable/ic_gold" />
 

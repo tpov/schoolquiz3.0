@@ -72,7 +72,7 @@ class CreateQuestionDialog : DialogFragment() {
             .create()
 
         // Установка анимации входа
-        alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimation
+        alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimationCreateQuestion
         alertDialog.show()
 
         dialogView.save_question_button.setOnClickListener {
