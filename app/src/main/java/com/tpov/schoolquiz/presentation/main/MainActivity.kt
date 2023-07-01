@@ -138,6 +138,11 @@ class MainActivity : AppCompatActivity() {
             null
         )
 
+        binding.imbManu.setOnClickListener {
+
+                binding.drawerLayout.closeDrawer(GravityCompat.START)
+        }
+
         userguide.addGuide(findViewById(R.id.menu_network), "This is network", "Network", null, null, callback = {
             log("setButtonNavListener() menu_network")
             val user = FirebaseAuth.getInstance()
@@ -159,9 +164,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-
-        log("onCreate()")
-        // Remove the action bar
         supportActionBar?.hide()
         viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
 

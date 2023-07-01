@@ -3,12 +3,16 @@ package com.tpov.schoolquiz.presentation.main
 import android.content.Context
 import android.view.Menu
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.VisibleItems.getShowItemsMenu
+import com.tpov.userguide.Options
+import com.tpov.userguide.Userguide
+import kotlinx.android.synthetic.main.info_fragment.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 
 object SetItemMenu {
@@ -46,8 +50,16 @@ object SetItemMenu {
         for (item in menuItemsToAdd) {
             val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)
             menuItem.icon = ContextCompat.getDrawable(context, item.second)
-        }
 
+
+        }
+        binding.navigationView.post {
+            val recyclerView = binding.navigationView.getChildAt(0) as RecyclerView
+            val position = 2
+            val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
+
+            Userguide(context).addGuide(viewHolder!!, "EAH!", options = Options(countRepeat = 100))
+        }
     }
 
     fun setNetworkMenu(binding: ActivityMainBinding, fr2: Int, context: Context, skill: Int, qualification: Qualification) {

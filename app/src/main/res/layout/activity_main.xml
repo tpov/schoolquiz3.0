@@ -12,17 +12,17 @@
         android:layout_height="match_parent"
         android:background="@mipmap/back_main">
 
-        <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/title_fragment"
-            android:name="com.tpov.schoolquiz.presentation.fragment.BaseFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="50dp"
-            app:layout_constraintBottom_toTopOf="@id/bNav"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintVertical_bias="1.0" />
+                <androidx.fragment.app.FragmentContainerView
+                    android:id="@+id/title_fragment"
+                    android:name="com.tpov.schoolquiz.presentation.fragment.BaseFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="0dp"
+                    android:layout_marginBottom="50dp"
+                    app:layout_constraintBottom_toTopOf="@id/bNav"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintVertical_bias="1.0" />
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bNav"
@@ -47,23 +47,16 @@
             <FrameLayout
                 android:id="@+id/cv"
                 android:layout_width="match_parent"
-                android:background="@drawable/back_main_top_rounded"
-                android:src="@drawable/back_main_top"
                 android:layout_height="100dp">
 
-                <androidx.cardview.widget.CardView
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/imageView7"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:cardCornerRadius="25dp">
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/back_main_top"
+                    app:shapeAppearanceOverlay="@style/BottomRoundedShapeAppearance" />
 
-                    <ImageView
-                        android:id="@+id/imageView7"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="center"
-                        app:srcCompat="@drawable/back_main_top" />
-
-                </androidx.cardview.widget.CardView>
 
                 <LinearLayout
                     android:id="@+id/cv2"
@@ -73,7 +66,6 @@
                     android:elevation="5dp"
                     android:orientation="vertical"
                     android:outlineSpotShadowColor="#000000">
-
 
                     <LinearLayout
                         android:id="@+id/top_card"
@@ -306,8 +298,8 @@
                             android:id="@+id/imv_gold"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
-                            android:layout_marginRight="16dp"
                             android:layout_marginLeft="4dp"
+                            android:layout_marginRight="16dp"
                             app:srcCompat="@drawable/ic_gold" />
 
                     </LinearLayout>
@@ -316,7 +308,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="8dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="6dp"
                         android:layout_marginRight="8dp"
                         android:orientation="horizontal">
 
@@ -370,6 +362,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="12dp"
+                        android:visibility="gone"
+                        android:layout_marginTop="2dp"
                         android:layout_marginRight="12dp"
                         android:text="Соединение с сервером" />
 
@@ -378,6 +372,7 @@
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
                         android:layout_height="2dp"
+                        android:visibility="gone"
                         android:layout_marginLeft="24dp"
                         android:layout_marginRight="24dp" />
                 </LinearLayout>
@@ -394,21 +389,6 @@
         android:layout_gravity="start"
         android:background="#73FFFFFF">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/textView11"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="SchooleQuiz"
-                android:textStyle="bold" />
-        </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 
 </androidx.drawerlayout.widget.DrawerLayout>
