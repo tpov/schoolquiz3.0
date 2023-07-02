@@ -12,17 +12,17 @@
         android:layout_height="match_parent"
         android:background="@mipmap/back_main">
 
-                <androidx.fragment.app.FragmentContainerView
-                    android:id="@+id/title_fragment"
-                    android:name="com.tpov.schoolquiz.presentation.fragment.BaseFragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="0dp"
-                    android:layout_marginBottom="50dp"
-                    app:layout_constraintBottom_toTopOf="@id/bNav"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintVertical_bias="1.0" />
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/title_fragment"
+            android:name="com.tpov.schoolquiz.presentation.fragment.BaseFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="50dp"
+            app:layout_constraintBottom_toTopOf="@id/bNav"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
 
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bNav"
@@ -362,19 +362,19 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="12dp"
-                        android:visibility="gone"
                         android:layout_marginTop="2dp"
                         android:layout_marginRight="12dp"
-                        android:text="Соединение с сервером" />
+                        android:text="Соединение с сервером"
+                        android:visibility="gone" />
 
                     <ProgressBar
                         android:id="@+id/progressBar2"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
                         android:layout_height="2dp"
-                        android:visibility="gone"
                         android:layout_marginLeft="24dp"
-                        android:layout_marginRight="24dp" />
+                        android:layout_marginRight="24dp"
+                        android:visibility="gone" />
                 </LinearLayout>
             </FrameLayout>
         </LinearLayout>

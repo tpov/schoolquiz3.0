@@ -8,20 +8,6 @@
     tools:context=".presentation.splashscreen.SplashScreen">
 
     <TextView
-        android:id="@+id/tv_answer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:fontFamily="@font/annie_use_your_telescope"
-        android:shadowColor="#B3FFFFFF"
-        android:text="Answer"
-        android:textColor="#789EFF"
-        android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/tv_splash2"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
         android:id="@+id/tvT"
         android:layout_width="70dp"
         android:layout_height="70dp"
@@ -79,31 +65,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tv_question"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="30dp"
-        android:layout_marginEnd="30dp"
-        android:layout_marginBottom="50dp"
-        android:fontFamily="@font/annie_use_your_telescope"
-        android:shadowColor="#B3FFFFFF"
-        android:text="Установка соединение с сервером"
-        android:textColor="#93923D"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/tv_splash2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="5dp"
-        android:fontFamily="@font/rochester"
-        android:text="TPOV inc. 2021-2022."
-        android:textColor="#BF2F2F"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

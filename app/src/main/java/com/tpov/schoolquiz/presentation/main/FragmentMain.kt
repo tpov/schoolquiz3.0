@@ -17,6 +17,7 @@ import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
@@ -80,6 +81,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.getProfile()
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
+
+
         tv_number_place_user_quiz.text = mainViewModel.getCountPlaceForUserQuiz().toString()
         if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
             binding.fabAddItem.isClickable = false
@@ -116,14 +119,28 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             binding.fabBox.visibility = View.GONE
         }
 
+        binding.fabBox.setOnClickListener {
+            Toast.makeText(activity, "Скоро...", Toast.LENGTH_SHORT).show()
+        }
+
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
-            val filteredList = quizList.filter { it.event == isMyQuiz }
+            val filteredList = quizList.filter { it.event == isMyQuiz && it.tpovId == getTpovId()}
             val sortedList = if (isMyQuiz == 5) {
                 filteredList.sortedBy { it.ratingPlayer }
             } else {
                 filteredList
             }
             adapter.submitList(sortedList)
+        }
+        mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
+
+            log("fgjesdriofjeskl observe")
+            log("fgjesdriofjeskl it: $it")
+            tv_number_place_user_quiz.text = it.toString()
+            if (it <= 0) {
+                binding.fabAddItem.isClickable = false
+                binding.fabAddItem.isEnabled = false
+            }
         }
     }
 
@@ -174,7 +191,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
             } else {
                 mainViewModel.updateProfileUseCase(
-                    mainViewModel.getProfile().copy(count = mainViewModel.getProfileCount()!! - 33)
+                    mainViewModel.getProfile()
+                        .copy(count = mainViewModel.getProfileCount()!! - 33)
                 )
                 val intent = Intent(activity, QuestionActivity::class.java)
                 intent.putExtra(NAME_USER, "user")
@@ -219,7 +237,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
-                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val positiveButton =
+                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                 val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
                 positiveButton.setTextColor(Color.WHITE)
@@ -250,7 +269,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
-                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val positiveButton =
+                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                 val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
                 positiveButton.setTextColor(Color.WHITE)

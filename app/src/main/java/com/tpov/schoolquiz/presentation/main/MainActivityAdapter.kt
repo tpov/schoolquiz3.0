@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.presentation.main
 
+import android.app.AlertDialog
 import android.content.Context
 import android.graphics.*
 import android.util.Log
@@ -18,10 +19,11 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
+import com.tpov.schoolquiz.presentation.custom.CoastValues.COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.secure.Secure
+import com.tpov.schoolquiz.secure.Secure.getTranslateKey
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
@@ -73,15 +75,54 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         val imvGradLightQuiz: ImageView = itemView.findViewById(R.id.imv_gradient_light_quiz)
         val imvGradHardQuiz: ImageView = itemView.findViewById(R.id.imv_grafient_hard_quiz)
 
-        private fun showPopupMenu(view: View, id: Int) {
+        @OptIn(InternalCoroutinesApi::class)
+        private fun showDialog(
+            context: Context,
+            mainViewModel: MainActivityViewModel,
+            nolics: Int,
+            id: Int
+        ) {
+            val alertDialog = AlertDialog.Builder(context)
+                .setTitle("Отправить на арену")
+                .setMessage("Этот квест будет отправлен в открытый доступ для всех игроков, после успешной проверки.")
+                .setPositiveButton("(-) $nolics ноликов") { _, _ ->
+                    mainViewModel.updateProfileUseCase(
+                        mainViewModel.getProfile().copy(
+                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                        )
+                    )
+                    listener.sendItem(id)
+                }
+                .setNegativeButton("Посмотреть рекламу", null)
+                .create()
+
+            alertDialog.setOnShowListener { dialog ->
+                val positiveButton =
+                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                positiveButton.setTextColor(Color.WHITE)
+                negativeButton.setTextColor(Color.YELLOW)
+
+                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+            }
+            alertDialog.show()
+        }
+
+        @OptIn(InternalCoroutinesApi::class)
+        private fun showPopupMenu(
+            view: View,
+            id: Int,
+            context: Context,
+            mainViewModel: MainActivityViewModel
+        ) {
             val popupMenu = PopupMenu(view.context, view)
             popupMenu.inflate(R.menu.popup_menu)
 
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.menu_send -> {
-                        // Обработка выбора элемента 1
-                        listener.sendItem(id)
+                        showDialog(context, mainViewModel, 500, id)
                         true
                     }
 
@@ -108,17 +149,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             quizEntity: QuizEntity,
             listener: Listener,
             context: Context,
-            viewModel: MainActivityViewModel
+            mainViewModel: MainActivityViewModel
         ) = with(binding) {
 
-            log("")
-            if (viewModel.getQuizById(quizEntity.id!!).showItemMenu) {
-                constraintLayout.setOnLongClickListener {
-                    showPopupMenu(it, quizEntity.id!!)
-                    true
-                }
+            constraintLayout.setOnLongClickListener {
+                showPopupMenu(it, quizEntity.id!!, context, mainViewModel)
+                true
+            }
 
-            } else constraintLayout.visibility = View.VISIBLE
             try {
 
                 val file = File(context.cacheDir, "${quizEntity.picture}")
@@ -156,8 +194,8 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             var goHardQuiz =
                 "${this.root.context.getString(R.string.go_hard_question)} - ${quizEntity.nameQuiz}"
 
-            if (quizEntity.event == 5) initViewQuiz5(quizEntity, viewModel, listener)
-            else initView(quizEntity, goHardQuiz, viewModel, listener)
+            if (quizEntity.event == 5) initViewQuiz5(quizEntity, mainViewModel, listener)
+            else initView(quizEntity, goHardQuiz, mainViewModel, listener)
 
         }
 
@@ -203,8 +241,9 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
             //imvTranslate
-            if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
+            log("sefefefe, $lvlTranslate")
+            if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
             log("daegrjg, ${quizEntity.ratingPlayer.toFloat()}")
@@ -283,14 +322,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
-            //imvTranslate
-            if (lvlTranslate <= 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate <= 200) imvTranslate.setColorFilter(Color.YELLOW)
+            log("sefefefe, $lvlTranslate")
+            if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
-                if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
-                    (quizEntity.stars.toFloat() / 50)
-                else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
+            if (quizEntity.stars <= MAX_PERCENT) ratingBar.rating =
+                (quizEntity.stars.toFloat() / 50)
+            else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
 
             imvTranslate.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
@@ -326,6 +365,153 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }*/
         }
 
+        fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
+            // Инициализируем объект Translate с помощью ключа API
+            val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
+                .setApiKey(getTranslateKey())
+                .build()
+                .service
+
+            // Создаем пустой список для хранения переведенных вопросов
+            val translatedQuestionList: MutableList<QuestionEntity> = mutableListOf()
+
+            com.tpov.schoolquiz.presentation.network.event.log("dawdawdf translateToUserLanguage")
+            // Перебираем каждый вопрос в исходном списке и выполняем перевод
+            for (question in questionList) {
+                // Получаем текст для перевода
+                val textToTranslate = question.nameQuestion
+                val sourceLanguage = question.language
+
+                val userLanguage: String = Locale.getDefault().language
+
+                com.tpov.schoolquiz.presentation.network.event.log("dawdawdf question $question")
+                // Выполняем перевод
+                com.tpov.schoolquiz.presentation.network.event.log("dawdawdf Thread")
+                val translatedText = try {
+
+                    val translation: Translation = translate!!.translate(
+                        textToTranslate,
+                        com.google.cloud.translate.Translate.TranslateOption.sourceLanguage(
+                            sourceLanguage
+                        ),
+                        com.google.cloud.translate.Translate.TranslateOption.targetLanguage(
+                            userLanguage
+                        )
+                    )
+
+                    translation.translatedText
+                } catch (e: Exception) {
+                    textToTranslate
+                }
+
+                val translatedQuestion = question.copy(
+                    nameQuestion = translatedText,
+                    language = userLanguage,
+                    lvlTranslate = 100,
+                    infoTranslater = "0|0"
+                )
+
+                translatedQuestionList.add(translatedQuestion)
+            }
+
+            return translatedQuestionList
+        }
+
+        private fun removeDuplicateWordsFromLanguages(input: String): String {
+            val languages = input.split("|") // Разделение строки на отдельные языки
+            val uniqueLanguages =
+                languages.map { removeDuplicateWords(it) } // Удаление дубликатов слов для каждого языка
+            return uniqueLanguages.joinToString("|") // Объединение языков обратно в строку
+        }
+
+        private fun removeDuplicateWords(input: String): String {
+            val words = input.split(" ")
+            val uniqueWords = words.distinct()
+            return uniqueWords.joinToString(" ")
+        }
+
+        @OptIn(InternalCoroutinesApi::class)
+        fun translateText(
+            viewModel: MainActivityViewModel,
+            context: Context,
+            quizEntity: QuizEntity
+        ) {
+            val questionList = viewModel.getQuestionListByIdQuiz(quizEntity.id!!)
+
+            // Создаем мапу, где ключом будет numQuestion, а значением - элемент Question с наибольшим lvlTranslate
+            val questionMap: MutableMap<Int, QuestionEntity> = mutableMapOf()
+
+            for (question in questionList) {
+
+                com.tpov.schoolquiz.presentation.network.event.log("dawdawdf $question")
+                val existingQuestion = questionMap[question.numQuestion]
+
+                if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
+                    com.tpov.schoolquiz.presentation.network.event.log("dawdawdf add")
+                    questionMap[question.numQuestion] = question
+                }
+            }
+
+            val filteredQuestionList: List<QuestionEntity> = questionMap.values.toList()
+            var i = filteredQuestionList.size
+            Thread {
+                translateToUserLanguage(filteredQuestionList).forEach {
+                    viewModel.insertQuestion(it)
+                    com.tpov.schoolquiz.presentation.network.event.log("dawdawdf $i")
+                    i--
+                    if (i == 0) context.runOnUiThread {
+                        viewModel.updateQuiz(
+                            quizEntity.copy(
+                                languages = removeDuplicateWordsFromLanguages(
+                                    if (quizEntity.languages.isNotEmpty()) "${quizEntity.languages}|${Locale.getDefault().language}-100"
+                                    else "${Locale.getDefault().language}-100"
+                                ), versionQuiz = quizEntity.versionQuiz + 1
+                            )
+                        )
+                        Toast.makeText(context, "Перевод завершен успешно", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            }.start()
+
+        }
+
+        @OptIn(InternalCoroutinesApi::class)
+        private fun showDialogTranslate(
+            context: Context,
+            mainViewModel: MainActivityViewModel,
+            nolics: Int,
+            quizEntity: QuizEntity,
+            popupWindow: PopupWindow,
+
+            ) {
+            val alertDialog = AlertDialog.Builder(context)
+                .setTitle("Перевести")
+                .setMessage("Сервисы перевода платные")
+                .setPositiveButton("(-) $nolics ноликов") { _, _ ->
+                    mainViewModel.updateProfileUseCase(
+                        mainViewModel.getProfile().copy(
+                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                        )
+                    )
+                    translateText(mainViewModel, context, quizEntity)
+                    popupWindow.dismiss()
+                }
+                .setNegativeButton("Посмотреть рекламу", null)
+                .create()
+
+            alertDialog.setOnShowListener { dialog ->
+                val positiveButton =
+                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                positiveButton.setTextColor(Color.WHITE)
+                negativeButton.setTextColor(Color.YELLOW)
+
+                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+            }
+            alertDialog.show()
+        }
 
         @OptIn(InternalCoroutinesApi::class)
         private fun showPopupInfo(
@@ -380,8 +566,13 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
                 bPopup1.setOnClickListener {
                     // Perform translation logic here
-                    translateText(viewModel, context, quizEntity)
-                    popupWindow.dismiss()
+                    showDialogTranslate(
+                        context,
+                        viewModel,
+                        COAST_GOOGLE_TRANSLATE,
+                        quizEntity,
+                        popupWindow
+                    )
                 }
 
                 val languageString = quizEntity.languages // Получите строку языков из quizEntity
@@ -397,7 +588,8 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                             val language = parts[0]
                             val value = parts[1].toIntOrNull()
                             if (value != null) {
-                                languageMap[language] = value // Добавьте соответствие язык-число в Map
+                                languageMap[language] =
+                                    value // Добавьте соответствие язык-число в Map
                             }
                         }
                     }
@@ -480,121 +672,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 touchX.toInt() + 16,
                 touchY.toInt() + 16
             )
-        }
-
-        @OptIn(InternalCoroutinesApi::class)
-        private fun translateText(
-            viewModel: MainActivityViewModel,
-            context: Context,
-            quizEntity: QuizEntity
-        ) {
-            val questionList = viewModel.getQuestionListByIdQuiz(quizEntity.id!!)
-
-            log("dawdawdf $questionList, $adapterPosition")
-            // Создаем мапу, где ключом будет numQuestion, а значением - элемент Question с наибольшим lvlTranslate
-            val questionMap: MutableMap<Int, QuestionEntity> = mutableMapOf()
-
-            for (question in questionList) {
-
-                log("dawdawdf $question")
-                val existingQuestion = questionMap[question.numQuestion]
-
-                if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
-                    log("dawdawdf add")
-                    questionMap[question.numQuestion] = question
-                }
-            }
-
-            val filteredQuestionList: List<QuestionEntity> = questionMap.values.toList()
-            var i = filteredQuestionList.size
-            Thread {
-                translateToUserLanguage(filteredQuestionList).forEach {
-                    viewModel.insertQuestion(it)
-                    log("dawdawdf $i")
-                    i--
-                    if (i == 0) context.runOnUiThread {
-                        viewModel.updateQuiz(
-                            quizEntity.copy(
-                                languages = removeDuplicateWordsFromLanguages(
-                                    if (quizEntity.languages.isNotEmpty()) "${quizEntity.languages}|${Locale.getDefault().language}-100"
-                                    else "${Locale.getDefault().language}-100"
-                                ), versionQuiz = quizEntity.versionQuiz + 1
-                            )
-                        )
-                        Toast.makeText(context, "Перевод завершен успешно", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            }.start()
-
-        }
-
-        private fun removeDuplicateWordsFromLanguages(input: String): String {
-            val languages = input.split("|") // Разделение строки на отдельные языки
-            val uniqueLanguages =
-                languages.map { removeDuplicateWords(it) } // Удаление дубликатов слов для каждого языка
-            return uniqueLanguages.joinToString("|") // Объединение языков обратно в строку
-        }
-
-        private fun removeDuplicateWords(input: String): String {
-            val words = input.split("-")
-            val uniqueWords = words.distinct()
-            return uniqueWords.joinToString("-")
-        }
-
-        private fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
-            // Инициализируем объект Translate с помощью ключа API
-            val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
-                .setApiKey(Secure.getTranslateKey())
-                .build()
-                .service
-
-            // Создаем пустой список для хранения переведенных вопросов
-            val translatedQuestionList: MutableList<QuestionEntity> = mutableListOf()
-
-            log("dawdawdf translateToUserLanguage")
-            // Перебираем каждый вопрос в исходном списке и выполняем перевод
-            for (question in questionList) {
-                // Получаем текст для переводаы
-                val textToTranslate = question.nameQuestion
-                val sourceLanguage = question.language
-
-                val userLanguage: String = Locale.getDefault().language
-                var idQuestion: Int? = null
-
-                log("dawdawdf question $question")
-                // Выполняем перевод
-                log("dawdawdf Thread")
-                val translatedText = try {
-
-                    val translation: Translation = translate!!.translate(
-                        textToTranslate,
-                        com.google.cloud.translate.Translate.TranslateOption.sourceLanguage(
-                            sourceLanguage
-                        ),
-                        com.google.cloud.translate.Translate.TranslateOption.targetLanguage(
-                            userLanguage
-                        )
-                    )
-
-                    translation.translatedText
-                } catch (e: Exception) {
-                    idQuestion = question.id
-                    textToTranslate
-                }
-
-                val translatedQuestion = question.copy(
-                    id = idQuestion,
-                    nameQuestion = translatedText,
-                    language = userLanguage,
-                    lvlTranslate = 100,
-                    infoTranslater = "0|0"
-                )
-
-                translatedQuestionList.add(translatedQuestion)
-            }
-
-            return translatedQuestionList
         }
 
         companion object {

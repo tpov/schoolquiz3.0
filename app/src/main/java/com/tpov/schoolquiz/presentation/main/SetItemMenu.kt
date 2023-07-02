@@ -5,13 +5,11 @@ import android.view.Menu
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
-import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.VisibleItems.getShowItemsMenu
-import com.tpov.userguide.Options
-import com.tpov.userguide.Userguide
+import com.tpov.schoolquiz.presentation.custom.VisibleItems.getShowItemsMenuHome
+import com.tpov.schoolquiz.presentation.custom.VisibleItems.getShowItemsMenuNetwork
 import kotlinx.android.synthetic.main.info_fragment.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 
@@ -34,31 +32,24 @@ object SetItemMenu {
     const val MENU_REPORT = 9
     const val MENU_EXIT = 10
 
-    fun setHomeMenu(binding: ActivityMainBinding, fr2: Int, context: Context) {
+    fun setHomeMenu(binding: ActivityMainBinding, fr2: Int, context: Context, skill: Int, qualification: Qualification) {
         log("fioesjoifjsei, $fr2")
         val menu = binding.navigationView.menu
         menu.clear() // Очистите текущее меню
 
-        var menuItemsToAdd = mutableListOf(
-            R.string.nav_home to R.drawable.ic_home,
-            R.string.nav_my_quiz to R.drawable.nav_my_quiz,
-            R.string.nav_settings to R.drawable.ic_settings,
-            R.string.nav_downloads to R.drawable.baseline_download_24
-        )
+        var menuItemsToAdd = getShowItemsMenuHome(qualification).toMutableList()
         menuItemsToAdd.removeAt(fr2)
 
         for (item in menuItemsToAdd) {
             val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)
             menuItem.icon = ContextCompat.getDrawable(context, item.second)
-
-
         }
+
         binding.navigationView.post {
             val recyclerView = binding.navigationView.getChildAt(0) as RecyclerView
             val position = 2
             val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
-
-            Userguide(context).addGuide(viewHolder!!, "EAH!", options = Options(countRepeat = 100))
+            //Userguide(context).addGuide(viewHolder!!, "EAH!", options = Options(countRepeat = 100))
         }
     }
 
@@ -69,10 +60,7 @@ object SetItemMenu {
 
         var menuItemsToAdd: MutableList<Pair<Int, Int>> =
             if (FirebaseAuth.getInstance().currentUser?.uid == null) emptyList<Pair<Int, Int>>().toMutableList()
-
-            else {
-                getShowItemsMenu(skill, qualification).toMutableList()
-            }
+            else getShowItemsMenuNetwork(skill, qualification).toMutableList()
 
         if (FirebaseAuth.getInstance().currentUser?.uid != null) menuItemsToAdd.removeAt(fr2)
 

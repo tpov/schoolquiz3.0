@@ -32,12 +32,12 @@ object LanguageUtils {
 
     fun getLanguageFullName(languageCode: String): String {
         val index = languagesShortCodes.indexOf(languageCode)
-        return if (index != -1) languagesFullNames[index] else ""
+        return if (index != -1) languagesFullNames[index] else "und"
     }
 
     fun getLanguageShortCode(languageFullName: String): String {
         val index = languagesFullNames.indexOf(languageFullName)
-        return if (index != -1) languagesShortCodes[index] else ""
+        return if (index != -1) languagesShortCodes[index] else "und"
     }
 
     val ratingNum = arrayOf(0, 1, 2, 3)

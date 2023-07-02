@@ -38,12 +38,12 @@ class CreateQuestionDialog : DialogFragment() {
     private lateinit var dialogView: View
     private lateinit var questionsContainer: LinearLayout
     private var numQuestion = 0
-    private var id1 = 0
+    private var idQuiz = 0
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val id = arguments?.getInt("id") ?: -1
-        this.id1 = id
+        this.idQuiz = id
         isCancelable = false
         dialog?.setCanceledOnTouchOutside(false)
         val inflater = LayoutInflater.from(requireContext())
@@ -54,7 +54,6 @@ class CreateQuestionDialog : DialogFragment() {
         }
 
         if (id == -1) {
-
             dialogView.add_question_button.setOnClickListener {
                 addQuestionItem()
             }
@@ -206,8 +205,8 @@ class CreateQuestionDialog : DialogFragment() {
         var numHQ = 0
         var numLQ = 0
 
-        var idQuiz = if (id1 == -1) mainActivityViewModel.getNewIdQuiz()
-        else id1
+        idQuiz = if (idQuiz == -1) mainActivityViewModel.getNewIdQuiz()
+        else idQuiz
 
         log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
         for (i in 0 until questionsContainer.childCount) {
@@ -249,38 +248,41 @@ class CreateQuestionDialog : DialogFragment() {
         val nameQuiz = dialogView.quiz_title.text.toString()
         val currentTime = TimeManager.getCurrentTime()
 
+        if (idQuiz != -1) mainActivityViewModel.deleteQuestion(idQuiz)
+
         val quizEntity = QuizEntity(
             idQuiz,
             nameQuiz,
             mainActivityViewModel.getProfile().name ?: "",
-            if (id1 == -1) currentTime
-            else (mainActivityViewModel.getQuizById(id1).data),
-            if (id1 == -1) 0
-            else (mainActivityViewModel.getQuizById(id1).stars),
-            if (id1 == -1) 0
-            else (mainActivityViewModel.getQuizById(id1).starsPlayer),
+            if (this.idQuiz == -1) currentTime
+            else (mainActivityViewModel.getQuizById(this.idQuiz).data),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).stars),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).starsPlayer),
             questions.count { !it.hardQuestion },
             questions.count { it.hardQuestion },
-            if (id1 == -1) 0
-            else (mainActivityViewModel.getQuizById(id1).starsAll),
-            if (id1 == -1) 0
-            else (mainActivityViewModel.getQuizById(id1).starsAllPlayer),
-            if (id1 == -1) 0
-            else (mainActivityViewModel.getQuizById(id1).versionQuiz + 1),
-            if (id1 == -1) null
-            else (mainActivityViewModel.getQuizById(id1).picture),
-            if (id1 == -1) 1
-            else (mainActivityViewModel.getQuizById(id1).event),
-            if (id1 == -1) 0
-            else (mainActivityViewModel.getQuizById(id1).rating),
-            if (id1 == -1) 0
-            else (mainActivityViewModel.getQuizById(id1).ratingPlayer),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).starsAll),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).starsAllPlayer),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).versionQuiz + 1),
+            if (this.idQuiz == -1) null
+            else (mainActivityViewModel.getQuizById(this.idQuiz).picture),
+            if (this.idQuiz == -1) 1
+            else (mainActivityViewModel.getQuizById(this.idQuiz).event),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).rating),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).ratingPlayer),
             true,
-            if (id1 == -1) getTpovId()
-            else (mainActivityViewModel.getQuizById(id1).tpovId),
-            if (id1 == -1) findLanguageWithMinLevel(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz))
+            if (this.idQuiz == -1) getTpovId()
+            else (mainActivityViewModel.getQuizById(this.idQuiz).tpovId),
+            if (this.idQuiz == -1) findLanguageWithMinLevel(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz))
             else findLanguageWithMinLevel(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz))
         )
+        mainActivityViewModel.removePlaceInUserQuiz()
 
         // Сохранение quizEntity и questions в базу данных
         mainActivityViewModel.insertQuiz(quizEntity)
@@ -294,8 +296,6 @@ class CreateQuestionDialog : DialogFragment() {
                 )
             )
         }
-
-        mainActivityViewModel.removePlaceInUserQuiz()
     }
 
     companion object {

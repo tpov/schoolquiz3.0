@@ -95,7 +95,7 @@ class AutorisationViewModel @Inject constructor(
                             Points(0, 0, 0, 0),
                             "0",
                             Buy(1, 0, 1, "0", "0", "0"),
-                            "0",
+                            "",
                             "",
                             city,
                             0,

@@ -139,8 +139,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         binding.imbManu.setOnClickListener {
-
-                binding.drawerLayout.closeDrawer(GravityCompat.START)
+                binding.drawerLayout.openDrawer(GravityCompat.START)
         }
 
         userguide.addGuide(findViewById(R.id.menu_network), "This is network", "Network", null, null, callback = {
@@ -399,12 +398,12 @@ class MainActivity : AppCompatActivity() {
                 TimeManager.getDaysBetweenDates(
                     SharedPreferencesManager.getPremium(),
                     TimeManager.getCurrentTime()
-                )?.toInt() ?: 0,
+                ).toInt() ?: 0,
                 TimeManager.getDaysBetweenDates(
                     it?.datePremium ?: "",
                     TimeManager.getCurrentTime()
                 )
-                    ?.toInt() ?: 0,
+                    .toInt(),
                 animationDuration,
                 500
             )
@@ -468,8 +467,20 @@ class MainActivity : AppCompatActivity() {
         }
         setButtonNavListener()
 
+        val profile = viewModel.getProfile()
+        val qualification = Qualification(
+            profile.tester ?: 0,
+            profile.moderator ?: 0,
+            profile.sponsor ?: 0,
+            profile.translater ?: 0,
+            profile.admin ?: 0,
+            profile.developer ?: 0
+        )
+
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-        SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
+        SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+            profile.pointsSkill ?: 0,
+            qualification )
 
         loadNumBoxDay()
 
@@ -499,10 +510,12 @@ class MainActivity : AppCompatActivity() {
         val imvGold = binding.imvGold
         val imvPremium = binding.imvPremiun
 
-        SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
+        SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+            profile.pointsSkill ?: 0,
+            qualification)
 
         val yRotateAnimationDuration = 1000
-        val repeatDelay = 6000L // Задержка между повторениями (1 минута)
+        val repeatDelay = 60_000L // Задержка между повторениями (1 минута)
         var initialDelay = 1000L // Начальная задержка перед запуском анимации
         var addInitialDelay = 250L
 
@@ -690,7 +703,6 @@ class MainActivity : AppCompatActivity() {
                 updateProfileCount(period)
             }
         }
-
 
         // Schedule the task to run every minute, starting after the specified delay
         timer?.scheduleAtFixedRate(task, delay, period)
@@ -896,7 +908,9 @@ class MainActivity : AppCompatActivity() {
                     SetItemMenu.setHomeMenu(
                         binding,
                         MENU_DOWNLOADS,
-                        this
+                        this,
+                        profile.pointsSkill ?: 0,
+                        qualification
                     ) // Используйте подходящий номер пункта меню
                 }
 
@@ -933,7 +947,9 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_home) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
+                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+                        profile.pointsSkill ?: 0,
+                        qualification)
                 }
 
                 resources.getString(R.string.nav_leaders) -> {
@@ -952,7 +968,9 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_my_quiz) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(1), this)
-                    SetItemMenu.setHomeMenu(binding, MENU_MY_QUIZ, this)
+                    SetItemMenu.setHomeMenu(binding, MENU_MY_QUIZ, this,
+                        profile.pointsSkill ?: 0,
+                        qualification)
                 }
 
                 resources.getString(R.string.nav_news) -> {
@@ -988,7 +1006,9 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_settings) -> {
                     FragmentManager.setFragment(SettingsFragment.newInstance(), this)
-                    SetItemMenu.setHomeMenu(binding, MENU_SETTING, this)
+                    SetItemMenu.setHomeMenu(binding, MENU_SETTING, this,
+                        profile.pointsSkill ?: 0,
+                        qualification)
                 }
 
             }
@@ -1075,7 +1095,9 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_home -> {
                 if (fr1 != 1) {
-                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this)
+                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+                        profile.pointsSkill ?: 0,
+                        qualification)
                     fr1 = 1
                 }
             }
@@ -1117,7 +1139,15 @@ class MainActivity : AppCompatActivity() {
 
         log("fun setButtonNavListener()")
         binding.bNav.setOnItemSelectedListener {
-
+            val profile = viewModel.getProfile()
+            val qualification = Qualification(
+                profile.tester ?: 0,
+                profile.moderator ?: 0,
+                profile.sponsor ?: 0,
+                profile.translater ?: 0,
+                profile.admin ?: 0,
+                profile.developer ?: 0
+            )
             setVisibleMenu(it)
             when (it.itemId) {
 
@@ -1125,7 +1155,9 @@ class MainActivity : AppCompatActivity() {
 
                     log("setButtonNavListener() menu_home")
                     FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-                    SetItemMenu.setHomeMenu(binding, 1, this)
+                    SetItemMenu.setHomeMenu(binding, 1, this,
+                        profile.pointsSkill ?: 0,
+                        qualification)
                 }
 
                 R.id.menu_adb -> {

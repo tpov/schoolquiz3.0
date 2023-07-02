@@ -52,6 +52,10 @@ class MainActivityViewModel @Inject constructor(
     var oldId = 0
     val tpovIdLiveData = MutableLiveData<Int>()
 
+    private val placeLiveData = MutableLiveData<Int>()
+
+    fun countPlaceLiveData() = placeLiveData
+
     val getProfileFBLiveData: LiveData<ProfileEntity?> = tpovIdLiveData.switchMap { tpovId ->
         log("getProfileFBLiveData tpovId: $tpovId")
         getProfileFlowUseCase(tpovId).asLiveData()
@@ -109,7 +113,6 @@ class MainActivityViewModel @Inject constructor(
         return getQuestionListUseCase().filter { it.idQuiz == idQuiz }
     }
 
-
     private fun insertProfile() {
         log("fun insertProfile()")
 
@@ -136,8 +139,7 @@ class MainActivityViewModel @Inject constructor(
             TimeInGames(0, 0, 0, 0, 0, 0),
             AddPoints(0, 0, 0, 0, ""),
             Dates(
-                TimeManager.getCurrentTime(),
-                ""
+                TimeManager.getCurrentTime(), ""
             ),
             "",
             userLanguageCode,
@@ -195,12 +197,13 @@ class MainActivityViewModel @Inject constructor(
 
     fun getCountPlaceForUserQuiz(): Int {
         val placeQuiz = getProfileUseCase(getTpovId()).buyQuizPlace
-        val countUserQuiz = getQuizList().filter { it.event == 1 }
-        return placeQuiz?.minus(countUserQuiz.size) ?: 0
+        val countUserQuiz = getQuizList().filter { it.event == 1 && it.tpovId == getTpovId() }
+        return placeQuiz?.minus(countUserQuiz.size)!!
     }
 
     fun removePlaceInUserQuiz() {
-        updateProfileUseCase(getProfile().copy(buyQuizPlace = getProfile().buyQuizPlace?.minus(1)))
+        log("fgjesdriofjeskl getCountPlaceForUserQuiz():${getCountPlaceForUserQuiz()}")
+        placeLiveData.value = getCountPlaceForUserQuiz() - 1
     }
 
     fun getProfileCountBox(): Int {
@@ -224,8 +227,7 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun getIdQuizByNameQuiz(nameQuiz: String) = getIdQuizByNameQuizUseCase(
-        nameQuiz,
-        getTpovId()
+        nameQuiz, getTpovId()
     )
 
     fun log(massage: String) {
@@ -235,6 +237,10 @@ class MainActivityViewModel @Inject constructor(
     fun deleteQuiz(id: Int) {
         deleteQuizByIdUseCase(id)
         deleteQuestionByIdQuizUseCase(id)
+    }
+
+    fun deleteQuestion(idQuiz: Int) {
+        deleteQuestionByIdQuizUseCase(idQuiz)
     }
 
     fun findValueForDeviceLocale(id: Int): Int {
@@ -283,17 +289,19 @@ class MainActivityViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     fun synthPrizeBoxDay(profile: ProfileEntity?): Int? {
 
+        log("esfsef ${profile?.timeLastOpenBox} --- ${TimeManager.getCurrentTime()}")
+        var addBox = 0
         val days = if (TimeManager.getDaysBetweenDates(
-                profile?.timeLastOpenBox ?: "",
-                TimeManager.getCurrentTime()
+                profile?.timeLastOpenBox ?: "", TimeManager.getCurrentTime()
             ) == 1L
         ) {
-            if (profile?.coundDayBox == 10) 10
-            else profile?.coundDayBox?.plus(1) ?: errorGetCountBox()
+            if (profile?.coundDayBox == 10) {
+                addBox = 1
+                10
+            } else profile?.coundDayBox?.plus(1) ?: errorGetCountBox()
 
         } else if (TimeManager.getDaysBetweenDates(
-                profile?.timeLastOpenBox ?: "",
-                TimeManager.getCurrentTime()
+                profile?.timeLastOpenBox ?: "", TimeManager.getCurrentTime()
             ) < 1
         ) {
             log("numberBox day2: 0}")
@@ -301,21 +309,9 @@ class MainActivityViewModel @Inject constructor(
         } else 0
 
         profile?.copy(
-            coundDayBox = days, countBox = if (days == 10) {
-                log(
-                    "numberBox day4: ${
-                        profile.countBox?.plus(
-                            1
-                        )
-                    }}"
-                )
-                profile.countBox?.plus(
-                    1
-                )
-            } else {
-                log("numberBox day5: ${profile.countBox}}")
-                profile.countBox
-            }, timeLastOpenBox = TimeManager.getCurrentTime()
+            coundDayBox = days, countBox = profile.countBox?.plus(
+                addBox
+            ), timeLastOpenBox = TimeManager.getCurrentTime()
         )?.let { updateProfileUseCase(it) }
         return days
     }
