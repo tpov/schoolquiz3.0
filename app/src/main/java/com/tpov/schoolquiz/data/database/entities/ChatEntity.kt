@@ -28,5 +28,9 @@ data class ChatEntity(
     val icon: String,
 
     @ColumnInfo(name = "rating")
-    val rating: Int
+    val rating: Int,
+
+    @ColumnInfo(name = "reaction")
+    val reaction: Int
+
 )

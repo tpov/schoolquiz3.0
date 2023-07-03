@@ -1,15 +1,18 @@
 package com.tpov.schoolquiz.presentation.network.profile
 
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
@@ -40,6 +43,7 @@ class ProfileFragment : BaseFragment() {
         return inflater.inflate(R.layout.fragment_profile, container, false)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(InternalCoroutinesApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -67,25 +71,29 @@ class ProfileFragment : BaseFragment() {
 
         val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
             log("fun viewModel.getSynth.observe: $number")
-            when (number) {
+            if (SharedPreferencesManager.canSyncProfile()) when (number) {
                 1 -> {
                     if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
                         viewModel.setProfile()
-                        isExecuted[0] = true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
+                        isExecuted[0] =
+                            true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
                     }
                 }
+
                 2 -> {
                     if (!isExecuted[1]) {
                         viewModel.getProfile()
                         isExecuted[1] = true
                     }
                 }
+
                 3 -> {
                     if (!isExecuted[2]) {
                         viewModel.setProfile()
                         isExecuted[2] = true
                     }
                 }
+
                 4 -> {
                     if (!isExecuted[3]) {
                         viewModel.setQuizFB()
@@ -93,13 +101,15 @@ class ProfileFragment : BaseFragment() {
                         isExecuted[3] = true
                     }
                 }
+
                 5 -> {
                     if (!isExecuted[4]) {
                         viewModel.setQuestionsFB()
                         isExecuted[4] = true
                     }
                 }
-                6-> {
+
+                6 -> {
                     if (!isExecuted[5]) {
                         viewModel.setEventQuiz()
                         isExecuted[5] = true

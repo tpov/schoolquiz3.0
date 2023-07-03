@@ -9,7 +9,8 @@ data class Chat(
     val importance: Int,
     val personalSms: Int,
     val icon: String,
-    val rating: Int
+    val rating: Int,
+    val reaction: Int
 ) {
     constructor() : this(
         time = "",
@@ -18,7 +19,8 @@ data class Chat(
         importance = 0,
         personalSms = 0,
         icon = "",
-        rating = 0
+        rating = 0,
+        reaction = 0
     )
 }
 
@@ -31,6 +33,7 @@ fun Chat.toChatEntity(): ChatEntity {
         importance = importance,
         personalSms = personalSms,
         icon = icon,
-        rating = rating
+        rating = rating,
+        reaction = reaction
     )
 }

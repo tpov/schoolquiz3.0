@@ -281,7 +281,8 @@ class RepositoryFBImpl @Inject constructor(
                         SharedPreferencesManager.getSkill(),
                         it.key!!,
                         SharedPrefSettings.getProfileIcon(),
-                        it.value!!
+                        it.value!!,
+                        0
                     )
                 )
                 .addOnFailureListener {

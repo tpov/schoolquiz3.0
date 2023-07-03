@@ -25,7 +25,7 @@ import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.main.MainActivity
 import com.tpov.schoolquiz.presentation.main.SetItemMenu
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_PROFILE
-import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
+import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -271,7 +271,7 @@ class AutorisationFragment : BaseFragment() {
                     obs = true
                     val fragmentTransaction = fragmentManager?.beginTransaction()
                     fragmentTransaction?.remove(this)
-                    fragmentTransaction?.replace(R.id.title_fragment, ProfileFragment.newInstance())
+                    fragmentTransaction?.replace(R.id.title_fragment, ChatFragment.newInstance())
                     SetItemMenu.setNetworkMenu(
                         (requireContext() as MainActivity).binding,
                         MENU_PROFILE,

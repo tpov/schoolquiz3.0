@@ -69,7 +69,8 @@ class ChatFragment : BaseFragment() {
                             importance = 0,
                             personalSms = 0,
                             icon = chatViewModel.getProfile(tpovId).logo.toString(),
-                            0
+                            rating = 0,
+                            reaction = 0
                         )
                         sendMessage(chatMessage)
                 binding.messageEditText.setText("")
@@ -154,7 +155,8 @@ class ChatFragment : BaseFragment() {
                 importance = chatEntity.importance,
                 personalSms = chatEntity.personalSms,
                 icon = chatEntity.icon,
-                rating = chatEntity.rating
+                rating = chatEntity.rating,
+                reaction = chatEntity.reaction
             )
         }
     }

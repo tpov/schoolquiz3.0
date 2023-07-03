@@ -139,29 +139,35 @@ class MainActivity : AppCompatActivity() {
         )
 
         binding.imbManu.setOnClickListener {
-                binding.drawerLayout.openDrawer(GravityCompat.START)
+            binding.drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        userguide.addGuide(findViewById(R.id.menu_network), "This is network", "Network", null, null, callback = {
-            log("setButtonNavListener() menu_network")
-            val user = FirebaseAuth.getInstance()
-            if (user.currentUser != null) {
-                log("setButtonNavListener() Аккаунт зареган")
-                Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
-                    .show()
+        userguide.addGuide(
+            findViewById(R.id.menu_network),
+            "This is network",
+            "Network",
+            null,
+            null,
+            callback = {
+                log("setButtonNavListener() menu_network")
+                val user = FirebaseAuth.getInstance()
+                if (user.currentUser != null) {
+                    log("setButtonNavListener() Аккаунт зареган")
+                    Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
+                        .show()
 
-                FragmentManager.setFragment(ProfileFragment.newInstance(), this)
-            } else {
+                    FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+                } else {
 
-                log("setButtonNavListener() Аккаунт не зареган")
-                Toast.makeText(
-                    this@MainActivity,
-                    "Аккаунт не найден, авторизуйтесь.",
-                    Toast.LENGTH_LONG
-                ).show()
-                FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
-            }
-        })
+                    log("setButtonNavListener() Аккаунт не зареган")
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Аккаунт не найден, авторизуйтесь.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
+                }
+            })
 
         supportActionBar?.hide()
         viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
@@ -478,9 +484,11 @@ class MainActivity : AppCompatActivity() {
         )
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-        SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+        SetItemMenu.setHomeMenu(
+            binding, MENU_HOME, this,
             profile.pointsSkill ?: 0,
-            qualification )
+            qualification
+        )
 
         loadNumBoxDay()
 
@@ -510,9 +518,11 @@ class MainActivity : AppCompatActivity() {
         val imvGold = binding.imvGold
         val imvPremium = binding.imvPremiun
 
-        SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+        SetItemMenu.setHomeMenu(
+            binding, MENU_HOME, this,
             profile.pointsSkill ?: 0,
-            qualification)
+            qualification
+        )
 
         val yRotateAnimationDuration = 1000
         val repeatDelay = 60_000L // Задержка между повторениями (1 минута)
@@ -710,39 +720,51 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount(period: Long) {
+
         try {
+            val profile = viewModel.getProfile()
+            val userguide = Userguide(this)
+
             viewModel.updateProfileUseCase(
-                viewModel.getProfile().copy(
+                profile.copy(
                     count = calcCount(
-                        viewModel.getProfileCount(),
-                        viewModel.getProfileCountLife(),
-                        viewModel.getProfileDateCloseAp()
+                        profile.count,
+                        profile.countLife,
+                        profile.dateCloseApp
                     ),
                     dateCloseApp = TimeManager.getCurrentTime(),
-                    pointsSkill = (viewModel.getProfileSkill()!!.plus(
+                    pointsSkill = (profile.pointsSkill!!.plus(
                         if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
                             getSkillByTimeInChat(period.toInt())
                         } else {
                             getSkillByTimeInGame(period.toInt())
                         }
-                    )),
-
-                    timeInGamesInQuiz =
-                    if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                        viewModel.getProfileTimeInGame()
+                    ).plus(profile.addPointsNolics ?: 0)),
+                    pointsGold = profile.pointsGold?.plus(profile.addPointsGold ?: 0),
+                    pointsNolics = profile.pointsNolics?.plus(profile.addPointsNolics ?: 0),
+                    trophy = profile.trophy + profile.addTrophy,
+                    timeInGamesInQuiz = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
+                        profile.timeInGamesInQuiz
                     } else {
-                        viewModel.getProfileTimeInGame()
+                        profile.timeInGamesInQuiz
                             ?.plus(1)
                     },
 
                     timeInGamesInChat = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                        viewModel.getProfileTimeInChat()
-                            .plus(1)
+                        profile.timeInGamesInChat
+                            ?.plus(1)
                     } else {
-                        viewModel.getProfileTimeInChat()
+                        profile.timeInGamesInChat
                     },
 
-                    timeInGamesSmsPoints = viewModel.getCountChat() + getCountMassageIdAndReset()
+                    timeInGamesSmsPoints = profile.timeInGamesSmsPoints?.plus(
+                        getCountMassageIdAndReset()
+                    ),
+
+                    addPointsGold = 0,
+                    addPointsNolics = 0,
+                    addPointsSkill = 0,
+                    addTrophy = ""
                 )
             )
 
@@ -916,7 +938,8 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_enter) -> {
 
-                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_PROFILE, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -924,7 +947,8 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_exit) -> {
                     FirebaseAuth.getInstance().signOut()
-                    SetItemMenu.setNetworkMenu(binding, MENU_EXIT, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_EXIT, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -932,14 +956,16 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_global) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(5), this)
-                    SetItemMenu.setNetworkMenu(binding, MENU_ARENA, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_ARENA, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
                 }
 
                 resources.getString(R.string.nav_friends) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_FRIEND, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_FRIEND, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -947,20 +973,24 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_home) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+                    SetItemMenu.setHomeMenu(
+                        binding, MENU_HOME, this,
                         profile.pointsSkill ?: 0,
-                        qualification)
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_leaders) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_LEADER, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_LEADER, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
                 }
 
                 resources.getString(R.string.nav_massages) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_MASSAGE, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_MASSAGE, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -968,13 +998,16 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_my_quiz) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(1), this)
-                    SetItemMenu.setHomeMenu(binding, MENU_MY_QUIZ, this,
+                    SetItemMenu.setHomeMenu(
+                        binding, MENU_MY_QUIZ, this,
                         profile.pointsSkill ?: 0,
-                        qualification)
+                        qualification
+                    )
                 }
 
                 resources.getString(R.string.nav_news) -> {
-                    SetItemMenu.setNetworkMenu(binding, MENU_NEWS, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_NEWS, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -982,7 +1015,8 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_players) -> {
                     FragmentManager.setFragment(UsersFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, MENU_USERS, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_USERS, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -990,7 +1024,8 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_reports) -> {
 
-                    SetItemMenu.setNetworkMenu(binding, MENU_REPORT, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_REPORT, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -998,7 +1033,8 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_task) -> {
                     FragmentManager.setFragment(EventFragment.newInstance(), this)
-                    SetItemMenu.setNetworkMenu(binding, MENU_EVENT, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_EVENT, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -1006,9 +1042,11 @@ class MainActivity : AppCompatActivity() {
 
                 resources.getString(R.string.nav_settings) -> {
                     FragmentManager.setFragment(SettingsFragment.newInstance(), this)
-                    SetItemMenu.setHomeMenu(binding, MENU_SETTING, this,
+                    SetItemMenu.setHomeMenu(
+                        binding, MENU_SETTING, this,
                         profile.pointsSkill ?: 0,
-                        qualification)
+                        qualification
+                    )
                 }
 
             }
@@ -1095,9 +1133,11 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_home -> {
                 if (fr1 != 1) {
-                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+                    SetItemMenu.setHomeMenu(
+                        binding, MENU_HOME, this,
                         profile.pointsSkill ?: 0,
-                        qualification)
+                        qualification
+                    )
                     fr1 = 1
                 }
             }
@@ -1106,13 +1146,6 @@ class MainActivity : AppCompatActivity() {
                 if (fr1 != 2) {
 
                     fr1 = 2
-                }
-            }
-
-            R.id.menu_settings -> {
-                if (fr1 != 3) {
-
-                    fr1 = 3
                 }
             }
 
@@ -1125,7 +1158,8 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_network -> {
                 if (fr1 != 5) {
-                    SetItemMenu.setNetworkMenu(binding, MENU_PROFILE, this,
+                    SetItemMenu.setNetworkMenu(
+                        binding, MENU_PROFILE, this,
                         profile.pointsSkill ?: 0,
                         qualification
                     )
@@ -1155,9 +1189,11 @@ class MainActivity : AppCompatActivity() {
 
                     log("setButtonNavListener() menu_home")
                     FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
+                    SetItemMenu.setHomeMenu(
+                        binding, MENU_HOME, this,
                         profile.pointsSkill ?: 0,
-                        qualification)
+                        qualification
+                    )
                 }
 
                 R.id.menu_adb -> {
@@ -1187,7 +1223,7 @@ class MainActivity : AppCompatActivity() {
                             "Аккаунт не найден, авторизуйтесь.",
                             Toast.LENGTH_LONG
                         ).show()
-                        FragmentManager.setFragment(ChatFragment.newInstance(), this)
+                        FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
                     }
                 }
             }

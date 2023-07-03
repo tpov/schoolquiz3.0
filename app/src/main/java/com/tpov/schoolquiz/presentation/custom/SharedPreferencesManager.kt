@@ -2,6 +2,10 @@ package com.tpov.schoolquiz.presentation.custom
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
+import androidx.annotation.RequiresApi
+import java.time.LocalDate
+import java.util.prefs.Preferences
 
 object SharedPreferencesManager {
     private const val PREFS_NAME_QUIZ = "version_quiz"
@@ -9,13 +13,26 @@ object SharedPreferencesManager {
     private const val PREFS_NAME_COUNTS = "profile_counts"
     private const val PREFS_TPOV_ID = "profile"
     private const val PREFS_COUNT_START_APP = "count_start_app"
+    private const val PREF_KEY_LAST_SYNC_DATE = "lastSyncDate"
     private lateinit var sharedPreferencesQuiz: SharedPreferences
     private lateinit var sharedPreferencesQuestion: SharedPreferences
     private lateinit var sharedPreferencesCounts: SharedPreferences
     private lateinit var sharedPreferencesTpovId: SharedPreferences
     private lateinit var sharedPreferencesCountStartApp: SharedPreferences
     var updateProfile = true
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun canSyncProfile(): Boolean {
+        val prefs = Preferences.userRoot().node("com.example.app.sync")
+        val lastSyncDateStr = prefs.get(PREF_KEY_LAST_SYNC_DATE, null)
+        val currentDate = LocalDate.now()
 
+        if (lastSyncDateStr == null || lastSyncDateStr != currentDate.toString()) {
+            prefs.put(PREF_KEY_LAST_SYNC_DATE, currentDate.toString())
+            return true
+        }
+
+        return false
+    }
     fun initialize(context: Context) {
         sharedPreferencesQuiz = context.getSharedPreferences(PREFS_NAME_QUIZ, Context.MODE_PRIVATE)
         sharedPreferencesQuestion =
