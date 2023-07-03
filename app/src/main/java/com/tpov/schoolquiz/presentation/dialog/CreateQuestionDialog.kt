@@ -205,7 +205,7 @@ class CreateQuestionDialog : DialogFragment() {
         var numHQ = 0
         var numLQ = 0
 
-        idQuiz = if (idQuiz == -1) mainActivityViewModel.getNewIdQuiz()
+        var newIdQuiz = if (idQuiz == -1) mainActivityViewModel.getNewIdQuiz()
         else idQuiz
 
         log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
@@ -251,7 +251,7 @@ class CreateQuestionDialog : DialogFragment() {
         if (idQuiz != -1) mainActivityViewModel.deleteQuestion(idQuiz)
 
         val quizEntity = QuizEntity(
-            idQuiz,
+            newIdQuiz,
             nameQuiz,
             mainActivityViewModel.getProfile().name ?: "",
             if (this.idQuiz == -1) currentTime

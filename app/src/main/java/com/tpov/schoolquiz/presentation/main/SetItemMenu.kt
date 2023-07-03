@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.main
 
 import android.content.Context
 import android.view.Menu
+import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
@@ -32,7 +33,13 @@ object SetItemMenu {
     const val MENU_REPORT = 9
     const val MENU_EXIT = 10
 
-    fun setHomeMenu(binding: ActivityMainBinding, fr2: Int, context: Context, skill: Int, qualification: Qualification) {
+    fun setHomeMenu(
+        binding: ActivityMainBinding,
+        fr2: Int,
+        context: Context,
+        skill: Int,
+        qualification: Qualification
+    ) {
         log("fioesjoifjsei, $fr2")
         val menu = binding.navigationView.menu
         menu.clear() // Очистите текущее меню
@@ -45,6 +52,14 @@ object SetItemMenu {
             menuItem.icon = ContextCompat.getDrawable(context, item.second)
         }
 
+        if (menuItemsToAdd.isEmpty()) {
+            binding.imbManu.visibility = View.GONE
+            binding.navigationView.visibility = View.GONE
+        } else {
+            binding.navigationView.visibility = View.VISIBLE
+            binding.imbManu.visibility = View.VISIBLE
+        }
+
         binding.navigationView.post {
             val recyclerView = binding.navigationView.getChildAt(0) as RecyclerView
             val position = 2
@@ -53,8 +68,14 @@ object SetItemMenu {
         }
     }
 
-    fun setNetworkMenu(binding: ActivityMainBinding, fr2: Int, context: Context, skill: Int, qualification: Qualification) {
-        log("fun setNetworkMenu()")
+    fun setNetworkMenu(
+        binding: ActivityMainBinding,
+        fr2: Int,
+        context: Context,
+        skill: Int,
+        qualification: Qualification
+    ) {
+        log("fun setNetworkMenu() remove menu: $fr2")
         val menu = binding.navigationView.menu
         menu.clear() // Очистите текущее меню
 
@@ -67,6 +88,14 @@ object SetItemMenu {
         for (item in menuItemsToAdd) {
             val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)
             menuItem.icon = ContextCompat.getDrawable(context, item.second)
+        }
+
+        if (menuItemsToAdd.isEmpty()) {
+            binding.imbManu.visibility = View.GONE
+            binding.navigationView.visibility = View.GONE
+        } else {
+            binding.navigationView.visibility = View.VISIBLE
+            binding.imbManu.visibility = View.VISIBLE
         }
     }
 

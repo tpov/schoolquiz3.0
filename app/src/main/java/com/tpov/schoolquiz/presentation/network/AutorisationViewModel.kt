@@ -30,7 +30,6 @@ class AutorisationViewModel @Inject constructor(
         someData.value = 0
     }
 
-
     fun loginAcc(email: String, pass: String, context: Context) {
         log("fun loginAcc")
         auth.signInWithEmailAndPassword(email, pass).addOnSuccessListener {

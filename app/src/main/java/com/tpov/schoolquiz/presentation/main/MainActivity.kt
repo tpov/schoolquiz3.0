@@ -1155,17 +1155,13 @@ class MainActivity : AppCompatActivity() {
 
                     log("setButtonNavListener() menu_home")
                     FragmentManager.setFragment(FragmentMain.newInstance(8), this)
-                    SetItemMenu.setHomeMenu(binding, 1, this,
+                    SetItemMenu.setHomeMenu(binding, MENU_HOME, this,
                         profile.pointsSkill ?: 0,
                         qualification)
                 }
 
                 R.id.menu_adb -> {
                     FragmentManager.setFragment(ShopFragment.newInstance(), this)
-                }
-
-                R.id.menu_settings -> {
-                    log("setButtonNavListener() menu_settings")
                 }
 
                 R.id.menu_info -> {
@@ -1182,7 +1178,7 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
                             .show()
 
-                        FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+                        FragmentManager.setFragment(ChatFragment.newInstance(), this)
                     } else {
 
                         log("setButtonNavListener() Аккаунт не зареган")
@@ -1191,7 +1187,7 @@ class MainActivity : AppCompatActivity() {
                             "Аккаунт не найден, авторизуйтесь.",
                             Toast.LENGTH_LONG
                         ).show()
-                        FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
+                        FragmentManager.setFragment(ChatFragment.newInstance(), this)
                     }
                 }
             }
