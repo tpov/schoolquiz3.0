@@ -1214,7 +1214,7 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
                             .show()
 
-                        FragmentManager.setFragment(ChatFragment.newInstance(), this)
+                        FragmentManager.setFragment(ProfileFragment.newInstance(), this)
                     } else {
 
                         log("setButtonNavListener() Аккаунт не зареган")

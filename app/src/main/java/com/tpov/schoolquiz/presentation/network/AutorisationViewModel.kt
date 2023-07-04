@@ -147,6 +147,8 @@ class AutorisationViewModel @Inject constructor(
                         .show()
                 }
             }
+        }.addOnFailureListener {
+            Toast.makeText(context, it.toString(), Toast.LENGTH_LONG).show()
         }
     }
     //todo start Activity

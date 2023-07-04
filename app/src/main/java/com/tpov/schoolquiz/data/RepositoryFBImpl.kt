@@ -29,8 +29,7 @@ import javax.inject.Singleton
 
 @Singleton
 class RepositoryFBImpl @Inject constructor(
-    private val dao: QuizDao,
-    private val application: Application
+    private val dao: QuizDao, private val application: Application
 ) : RepositoryFB {
 
     private lateinit var chatValueEventListener: ValueEventListener
@@ -125,17 +124,22 @@ class RepositoryFBImpl @Inject constructor(
                                     if (try {
 
                                             log("getTranslateFB languageSnap: ${languageSnap.key}")
-                                        log("getTranslateFB try ${dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty()}")
-                                        log("getTranslateFB try ${dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty()}")
-                                        log("getTranslateFB try ${languageSnap.key?.get(0)!! == '-'}")
-                                        log("getTranslateFB try ${profile.translater >= 200}")
-                                            dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty()
-                                            && dao.getQuestionByIdQuiz(idQuizSnap.key?.toInt()!!)[0].nameQuestion.isNullOrEmpty()
+                                            log("getTranslateFB try ${dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty()}")
+                                            log(
+                                                "getTranslateFB try ${
+                                                    dao.getQuestionByIdQuiz(
+                                                        idQuizSnap.key?.toInt()!!
+                                                    )[0].nameQuestion.isNullOrEmpty()
+                                                }"
+                                            )
+                                            log("getTranslateFB try ${languageSnap.key?.get(0)!! == '-'}")
+                                            log("getTranslateFB try ${profile.translater >= 200}")
+                                            dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty() && dao.getQuestionByIdQuiz(
+                                                idQuizSnap.key?.toInt()!!
+                                            )[0].nameQuestion.isNullOrEmpty()
                                         } catch (e: Exception) {
                                             true
-                                        }
-                                        || languageSnap.key?.get(0)!! == '-'
-                                        && profile.translater >= 200
+                                        } || languageSnap.key?.get(0)!! == '-' && profile.translater >= 200
                                     ) {
                                         log("getTranslateFB languageSnap: ${languageSnap.key}")
                                         val question = languageSnap.getValue(Question::class.java)
@@ -223,8 +227,7 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     fun savePictureToLocalDirectory(
-        pictureString: String,
-        callback: (path: String?) -> Unit
+        pictureString: String, callback: (path: String?) -> Unit
     ) {
         log("fun savePictureToLocalDirectory()")
         if (!context.cacheDir.exists()) context.cacheDir.mkdir()
@@ -252,21 +255,14 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     private fun sendMassageTranslate(
-        info: String,
-        idQuiz: Int,
-        language: String,
-        numQuestion: Int
+        info: String, idQuiz: Int, language: String, numQuestion: Int
     ) {
 
         log("sendMassageTranslate: $info")
-        log("sendMassageTranslate: $info")
-        val pairs = info.split("|")
-            .chunked(2)
-            .associate { chunk ->
+        val pairs = info.split("|").chunked(2).associate { chunk ->
                 if (chunk.size >= 2) chunk[0].toInt() to chunk[1].toIntOrNull()
                 else null to null
-            }
-            .filterValues { it != null }
+            }.filterValues { it != null }
 
         log("sendMassageTranslate: $pairs")
         pairs.forEach {
@@ -284,8 +280,7 @@ class RepositoryFBImpl @Inject constructor(
                         it.value!!,
                         0
                     )
-                )
-                .addOnFailureListener {
+                ).addOnFailureListener {
                     log("getPersonalMassage, $it")
                 }
         }
@@ -341,15 +336,13 @@ class RepositoryFBImpl @Inject constructor(
             @RequiresApi(Build.VERSION_CODES.O)
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (data in snapshot.children) {
-                    val versionQuiz =
-                        SharedPreferencesManager.getVersionQuiz(data.key ?: "-1")
+                    val versionQuiz = SharedPreferencesManager.getVersionQuiz(data.key ?: "-1")
                     val quiz = data.getValue(Quiz::class.java)
 
                     log("getQuiz(), data: ${data.key}, versionQuiz: $versionQuiz, quizEntity: $quiz")
                     if (quiz != null && versionQuiz < quiz.versionQuiz) {
                         if (quiz.event != 5 || TimeManager.getDaysBetweenDates(
-                                quiz.data,
-                                TimeManager.getCurrentTime()
+                                quiz.data, TimeManager.getCurrentTime()
                             )!! < 90
                         ) {
                             savePictureToLocalDirectory(
@@ -358,20 +351,12 @@ class RepositoryFBImpl @Inject constructor(
                                 log("getQuiz() версия квеста меньше - обновляем, или добавляем")
                                 if (versionQuiz == -1) dao.insertQuiz(
                                     quiz.toQuizEntity(
-                                        data.key!!.toInt(),
-                                        0,
-                                        0,
-                                        0,
-                                        path ?: ""
+                                        data.key!!.toInt(), 0, 0, 0, path ?: ""
                                     )
                                 )
                                 else dao.updateQuiz(
                                     quiz.toQuizEntity(
-                                        data.key!!.toInt(),
-                                        0,
-                                        0,
-                                        0,
-                                        path
+                                        data.key!!.toInt(), 0, 0, 0, path
                                     )
                                 )
                                 val refQuestion = when (quiz.event) {
@@ -397,15 +382,13 @@ class RepositoryFBImpl @Inject constructor(
                                     6 -> FirebaseDatabase.getInstance().getReference("")
                                     7 -> FirebaseDatabase.getInstance().getReference("")
                                     8 -> FirebaseDatabase.getInstance().getReference("")
-                                    else -> FirebaseDatabase.getInstance()
-                                        .getReference("")
+                                    else -> FirebaseDatabase.getInstance().getReference("")
                                 }
                                 getQuestion(refQuestion, data.key!!)
                                 getQuestionDetail(refQuestionDetail, data.key!!)
 
                                 SharedPreferencesManager.setVersionQuiz(
-                                    data.key!!,
-                                    quiz.versionQuiz
+                                    data.key!!, quiz.versionQuiz
                                 )
                             }
                         }
@@ -552,9 +535,7 @@ class RepositoryFBImpl @Inject constructor(
 
                                 dao.insertQuizDetail(
                                     questionDetailEntity.toQuestionDetailEntity(
-                                        null,
-                                        idQuiz.toInt(),
-                                        true
+                                        null, idQuiz.toInt(), true
                                     )
                                 )
                             }
@@ -618,8 +599,7 @@ class RepositoryFBImpl @Inject constructor(
                         dao.updateProfiles(
                             dao.getProfileByFirebaseId(
                                 FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                            )
-                                .copy(
+                            ).copy(
                                     addPointsGold = profile.addPoints.addGold,
                                     addPointsNolics = profile.addPoints.addNolics,
                                     addTrophy = profile.addPoints.addTrophy,
@@ -689,8 +669,7 @@ class RepositoryFBImpl @Inject constructor(
             when (quiz.event) {
                 3 -> {
                     log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
-                    quizRef3.child(quiz.id.toString())
-                        .setValue(quiz).addOnSuccessListener {
+                    quizRef3.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
                             quizRef2.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
@@ -709,8 +688,7 @@ class RepositoryFBImpl @Inject constructor(
 
                 4 -> {
                     log("fun setEvent event: ${quiz.event}")
-                    quizRef4.child(quiz.id.toString())
-                        .setValue(quiz).addOnSuccessListener {
+                    quizRef4.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
                             quizRef3.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
@@ -729,21 +707,18 @@ class RepositoryFBImpl @Inject constructor(
                 5 -> {
 
                     log("fun setEvent event: ${quiz.event}")
-                    quizRef5.child(quiz.id.toString())
-                        .setValue(quiz).addOnSuccessListener {
+                    quizRef5.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
                             quizRef4.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question)
-                            .addOnSuccessListener {
+                            .setValue(question).addOnSuccessListener {
                                 questionRef4.child("${question.idQuiz}").removeValue()
                             }
                     }
                     log("quiz.data: ${quiz.data}, TimeManager.getCurrentTime(): ${TimeManager.getCurrentTime()}")
                     if (TimeManager.getDaysBetweenDates(
-                            quiz.data,
-                            TimeManager.getCurrentTime()
+                            quiz.data, TimeManager.getCurrentTime()
                         )!! > 90
                     ) {
                         dao.deleteQuizById(quiz.id!!)
@@ -755,14 +730,12 @@ class RepositoryFBImpl @Inject constructor(
 
                 6 -> {
                     log("fun setEvent event: ${quiz.event}")
-                    quizRef6.child(quiz.id.toString())
-                        .setValue(quiz).addOnSuccessListener {
+                    quizRef6.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
                             quizRef5.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef6.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question)
-                            .addOnSuccessListener {
+                            .setValue(question).addOnSuccessListener {
                                 questionRef5.child("${question.idQuiz}").removeValue()
                             }
                     }
@@ -775,14 +748,12 @@ class RepositoryFBImpl @Inject constructor(
 
                 7 -> {
                     log("fun setEvent event: ${quiz.event}")
-                    quizRef7.child(quiz.id.toString())
-                        .setValue(quiz).addOnSuccessListener {
+                    quizRef7.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
                             quizRef6.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef7.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question)
-                            .addOnSuccessListener {
+                            .setValue(question).addOnSuccessListener {
                                 questionRef6.child("${question.idQuiz}").removeValue()
                             }
                     }
@@ -795,14 +766,12 @@ class RepositoryFBImpl @Inject constructor(
 
                 8 -> {
                     log("fun setEvent event: ${quiz.event}")
-                    quizRef8.child(quiz.id.toString())
-                        .setValue(quiz).addOnSuccessListener {
+                    quizRef8.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
                             quizRef7.child("${quiz.id}").removeValue()
                         }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef8.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question)
-                            .addOnSuccessListener {
+                            .setValue(question).addOnSuccessListener {
                                 questionRef7.child("${question.idQuiz}").removeValue()
                             }
                     }
@@ -890,8 +859,7 @@ class RepositoryFBImpl @Inject constructor(
 
                         quizDB.forEach { quiz ->
                             val quizRatingMap = mapOf(
-                                "rating" to quiz.rating,
-                                "stars" to quiz.starsAll
+                                "rating" to quiz.rating, "stars" to quiz.starsAll
                             )
 
 
@@ -906,7 +874,6 @@ class RepositoryFBImpl @Inject constructor(
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${quiz.tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
-
                                 } else {
                                     log("setQuizData() playersRef quizDB event1 id < 100 синхронизируем с сервером")
                                     idQuiz++
@@ -930,8 +897,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.deleteQuizById(oldId)
 
                                     SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
+                                        idQuiz.toString(), quiz.versionQuiz
                                     )
                                 }
 
@@ -939,8 +905,8 @@ class RepositoryFBImpl @Inject constructor(
                                 log("setQuizData() playersRef quizDB event2")
                                 if (quiz.id!! >= 100) {
                                     log("setQuizData() playersRef quizDB id >= 100  event2 просто созраняем на сервер")
-                                    quizRef2.child("${tpovId}/${quiz.id.toString()}")
-                                        .setValue(quiz).addOnSuccessListener {
+                                    quizRef2.child("${tpovId}/${quiz.id.toString()}").setValue(quiz)
+                                        .addOnSuccessListener {
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
@@ -958,8 +924,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
-                                    dao.getQuestionDetailByIdQuiz(oldId)
-                                        .forEach { item ->
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
                                             dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                         }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
@@ -968,22 +933,20 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.deleteQuizById(oldId)
 
                                     SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
+                                        idQuiz.toString(), quiz.versionQuiz
                                     )
                                 }
 
                             } else if (quiz.event == 3) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef3.child(quiz.id.toString())
-                                        .setValue(quiz).addOnSuccessListener {
+                                    quizRef3.child(quiz.id.toString()).setValue(quiz)
+                                        .addOnSuccessListener {
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
 
                                     SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
+                                        idQuiz.toString(), quiz.versionQuiz
                                     )
                                 } else {
 
@@ -999,8 +962,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
-                                    dao.getQuestionDetailByIdQuiz(oldId)
-                                        .forEach { item ->
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
                                             dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                         }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
@@ -1011,15 +973,14 @@ class RepositoryFBImpl @Inject constructor(
                                 }
                             } else if (quiz.event == 4) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef4.child(quiz.id.toString())
-                                        .setValue(quiz).addOnSuccessListener {
+                                    quizRef4.child(quiz.id.toString()).setValue(quiz)
+                                        .addOnSuccessListener {
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
 
                                     SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
+                                        idQuiz.toString(), quiz.versionQuiz
                                     )
                                 } else {
 
@@ -1035,8 +996,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
-                                    dao.getQuestionDetailByIdQuiz(oldId)
-                                        .forEach { item ->
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
                                             dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                         }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
@@ -1046,50 +1006,119 @@ class RepositoryFBImpl @Inject constructor(
                                 }
                             } else if (quiz.event == 5) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef5.child(quiz.id.toString())
-                                        .setValue(quiz).addOnSuccessListener {
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                .updateChildren(quizRatingMap)
+                                    quizRef5.child(quiz.id.toString()).setValue(quiz)
+                                        .addOnSuccessListener {
+                                            quizRef5.child("quiz5/$idQuiz/starsAllPlayer").get()
+                                                .addOnSuccessListener { dataSnapshotStars ->
+                                                    val starsAllPlayer =
+                                                        dataSnapshotStars.getValue(Int::class.java)
+
+                                                    quizRef5.child("quiz5/$idQuiz/ratingPlayer")
+                                                        .get()
+                                                        .addOnSuccessListener { dataSnapshotRating ->
+                                                            val ratingPlayer =
+                                                                dataSnapshotRating.getValue(Int::class.java)
+
+                                                            if (starsAllPlayer != null && ratingPlayer != null) {
+                                                                // Установка значений starsAllPlayer и ratingPlayer в объект quiz
+                                                                val updatedQuiz = quiz.copy(
+                                                                    starsAllPlayer = starsAllPlayer,
+                                                                    ratingPlayer = ratingPlayer
+                                                                )
+
+                                                                if (quiz.stars != 0) {
+                                                                    playersQuiz.child("${quiz.id}/${tpovId}")
+                                                                        .updateChildren(
+                                                                            quizRatingMap
+                                                                        )
+                                                                }
+
+                                                                SharedPreferencesManager.setVersionQuiz(
+                                                                    idQuiz.toString(),
+                                                                    quiz.versionQuiz
+                                                                )
+                                                            } else {
+                                                                // Обработка случая, когда значения не были получены
+                                                            }
+                                                        }.addOnFailureListener { error ->
+                                                            // Обработка ошибки при получении значения ratingPlayer
+                                                        }
+                                                }.addOnFailureListener { error ->
+                                                    // Обработка ошибки при получении значения starsAllPlayer
+                                                }
+                                        }.addOnFailureListener { error ->
+                                            // Обработка ошибки при сохранении объекта quiz
                                         }
-
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
-                                    )
                                 } else {
-
                                     log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef5.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
 
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    quizRef5.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        quizRef5.child("quiz5/$idQuiz/starsAllPlayer").get()
+                                            .addOnSuccessListener { dataSnapshotStars ->
+                                                val starsAllPlayer =
+                                                    dataSnapshotStars.getValue(Int::class.java)
+
+                                                quizRef5.child("quiz5/$idQuiz/ratingPlayer").get()
+                                                    .addOnSuccessListener { dataSnapshotRating ->
+                                                        val ratingPlayer =
+                                                            dataSnapshotRating.getValue(Int::class.java)
+
+                                                        if (starsAllPlayer != null && ratingPlayer != null) {
+                                                            if (quiz.stars != 0) {
+                                                                playersQuiz.child("${quiz.id}/${tpovId}")
+                                                                    .updateChildren(quizRatingMap)
+                                                            }
+
+                                                            SharedPreferencesManager.setVersionQuiz(
+                                                                idQuiz.toString(), quiz.versionQuiz
+                                                            )
+
+                                                            dao.getQuestionByIdQuiz(oldId)
+                                                                .forEach { item ->
+                                                                    dao.insertQuestion(
+                                                                        item.copy(
+                                                                            idQuiz = quiz.id!!
+                                                                        )
+                                                                    )
+                                                                }
+                                                            dao.getQuestionDetailByIdQuiz(oldId)
+                                                                .forEach { item ->
+                                                                    dao.insertQuizDetail(
+                                                                        item.copy(
+                                                                            idQuiz = quiz.id!!
+                                                                        )
+                                                                    )
+                                                                }
+                                                            dao.deleteQuestionDetailByIdQuiz(oldId)
+                                                            dao.deleteQuestionByIdQuiz(oldId)
+                                                            dao.insertQuiz(quiz)
+                                                            dao.deleteQuizById(oldId)
+                                                        } else {
+                                                            // Обработка случая, когда значения не были получены
+                                                        }
+                                                    }.addOnFailureListener { error ->
+                                                        // Обработка ошибки при получении значения ratingPlayer
+                                                    }
+                                            }.addOnFailureListener { error ->
+                                                // Обработка ошибки при получении значения starsAllPlayer
+                                            }
+                                    }.addOnFailureListener { error ->
+                                        // Обработка ошибки при сохранении объекта quiz
                                     }
-                                    dao.getQuestionDetailByIdQuiz(oldId)
-                                        .forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                        }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
                                 }
                             } else if (quiz.event == 6) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef6.child(quiz.id.toString())
-                                        .setValue(quiz).addOnSuccessListener {
+                                    quizRef6.child(quiz.id.toString()).setValue(quiz)
+                                        .addOnSuccessListener {
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
 
                                     SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
+                                        idQuiz.toString(), quiz.versionQuiz
                                     )
                                 } else {
 
@@ -1105,8 +1134,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
-                                    dao.getQuestionDetailByIdQuiz(oldId)
-                                        .forEach { item ->
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
                                             dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                         }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
@@ -1116,15 +1144,14 @@ class RepositoryFBImpl @Inject constructor(
                                 }
                             } else if (quiz.event == 7) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef7.child(quiz.id.toString())
-                                        .setValue(quiz).addOnSuccessListener {
+                                    quizRef7.child(quiz.id.toString()).setValue(quiz)
+                                        .addOnSuccessListener {
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
 
                                     SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
+                                        idQuiz.toString(), quiz.versionQuiz
                                     )
                                 } else {
 
@@ -1140,8 +1167,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
-                                    dao.getQuestionDetailByIdQuiz(oldId)
-                                        .forEach { item ->
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
                                             dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                         }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
@@ -1158,8 +1184,7 @@ class RepositoryFBImpl @Inject constructor(
                                                 .updateChildren(quizRatingMap)
                                         }
                                     SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(),
-                                        quiz.versionQuiz
+                                        idQuiz.toString(), quiz.versionQuiz
                                     )
                                 } else {
 
@@ -1175,8 +1200,7 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
-                                    dao.getQuestionDetailByIdQuiz(oldId)
-                                        .forEach { item ->
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
                                             dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
                                         }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
@@ -1224,8 +1248,7 @@ class RepositoryFBImpl @Inject constructor(
 
                     val databaseReference = FirebaseDatabase.getInstance().reference
                     val updates = hashMapOf<String, Any>(
-                        "players/read" to true,
-                        "players/idQuiz" to idQuiz
+                        "players/read" to true, "players/idQuiz" to idQuiz
                     )
                     databaseReference.updateChildren(updates).addOnFailureListener {
                         log("setQuizData() ошибка : $it")
@@ -1265,7 +1288,8 @@ class RepositoryFBImpl @Inject constructor(
             synthLiveData.value = --synth
             log("setQuestionData() найдет квест it: ${it}")
             val eventByIdQuiz = dao.getEventByIdQuiz(it.idQuiz)
-            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
+            if (eventByIdQuiz == 1) questionRef1
+                .child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${if (it.language.isEmpty()) it.language else Locale.getDefault()}")
                 .setValue(it).addOnSuccessListener {
                     synthLiveData.value = ++synth
                 }
@@ -1317,9 +1341,8 @@ class RepositoryFBImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getTpovIdFB() snapshot: $snapshot")
 
-                val tpovId: String =
-                    snapshot.child("listTpovId/$uid").getValue(String::class.java)
-                        ?: errorTpovId().toString()
+                val tpovId: String = snapshot.child("listTpovId/$uid").getValue(String::class.java)
+                    ?: errorTpovId().toString()
                 log("getTpovIdFB() tpovId: $tpovId")
                 setTpovId(tpovId.toInt())
 
@@ -1366,8 +1389,8 @@ class RepositoryFBImpl @Inject constructor(
                 log("setQuestionDetail() найден квест с таким же tpovId, idQuiz: ${it.idQuiz}")
                 val event = dao.getEventByIdQuiz(it.idQuiz)
                 if (event in 1..8) {
-                    questionDetailRefs[event!! - 1].child("${it.idQuiz}").push()
-                        .setValue(it).addOnSuccessListener { _ ->
+                    questionDetailRefs[event!! - 1].child("${it.idQuiz}").push().setValue(it)
+                        .addOnSuccessListener { _ ->
                             dao.updateQuizDetail(it.copy(synthFB = true))
                             synthLiveData.value = ++synth
                         }

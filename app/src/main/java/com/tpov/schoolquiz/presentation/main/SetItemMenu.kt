@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.Menu
 import android.view.View
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
@@ -45,7 +44,7 @@ object SetItemMenu {
         menu.clear() // Очистите текущее меню
 
         var menuItemsToAdd = getShowItemsMenuHome(qualification).toMutableList()
-        menuItemsToAdd.removeAt(fr2)
+            //menuItemsToAdd.removeAt(fr2)
 
         for (item in menuItemsToAdd) {
             val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)
@@ -60,12 +59,12 @@ object SetItemMenu {
             binding.imbManu.visibility = View.VISIBLE
         }
 
-        binding.navigationView.post {
-            val recyclerView = binding.navigationView.getChildAt(0) as RecyclerView
-            val position = 2
-            val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
-            //Userguide(context).addGuide(viewHolder!!, "EAH!", options = Options(countRepeat = 100))
-        }
+//        binding.navigationView.post {
+//            val recyclerView = binding.navigationView.getChildAt(0) as RecyclerView
+//            val position = 2
+//            val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
+//            //Userguide(context).addGuide(viewHolder!!, "EAH!", options = Options(countRepeat = 100))
+//        }
     }
 
     fun setNetworkMenu(
@@ -83,7 +82,7 @@ object SetItemMenu {
             if (FirebaseAuth.getInstance().currentUser?.uid == null) emptyList<Pair<Int, Int>>().toMutableList()
             else getShowItemsMenuNetwork(skill, qualification).toMutableList()
 
-        if (FirebaseAuth.getInstance().currentUser?.uid != null) menuItemsToAdd.removeAt(fr2)
+        if (FirebaseAuth.getInstance().currentUser?.uid != null) //menuItemsToAdd.removeAt(fr2)
 
         for (item in menuItemsToAdd) {
             val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)

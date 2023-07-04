@@ -68,57 +68,59 @@ class ProfileFragment : BaseFragment() {
         view.findViewById<ImageButton>(R.id.imb_delete).setOnClickListener {
             viewModel.getDeleteAllQuiz()
         }
-
-        val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
-            log("fun viewModel.getSynth.observe: $number")
-            if (SharedPreferencesManager.canSyncProfile()) when (number) {
-                1 -> {
-                    if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
-                        viewModel.setProfile()
-                        isExecuted[0] =
-                            true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
+        if (SharedPreferencesManager.canSyncProfile()) {
+            val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
+                log("fun viewModel.getSynth.observe: $number")
+                when (number) {
+                    1 -> {
+                        if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
+                            viewModel.setProfile()
+                            isExecuted[0] =
+                                true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
+                        }
                     }
-                }
 
-                2 -> {
-                    if (!isExecuted[1]) {
-                        viewModel.getProfile()
-                        isExecuted[1] = true
+                    2 -> {
+                        if (!isExecuted[1]) {
+                            viewModel.getProfile()
+                            isExecuted[1] = true
+                        }
                     }
-                }
 
-                3 -> {
-                    if (!isExecuted[2]) {
-                        viewModel.setProfile()
-                        isExecuted[2] = true
+                    3 -> {
+                        if (!isExecuted[2]) {
+                            viewModel.setProfile()
+                            isExecuted[2] = true
+                        }
                     }
-                }
 
-                4 -> {
-                    if (!isExecuted[3]) {
-                        viewModel.setQuizFB()
-                        viewModel.getPlayersList()
-                        isExecuted[3] = true
+                    4 -> {
+                        if (!isExecuted[3]) {
+                            viewModel.setQuizFB()
+                            viewModel.getPlayersList()
+                            isExecuted[3] = true
+                        }
                     }
-                }
 
-                5 -> {
-                    if (!isExecuted[4]) {
-                        viewModel.setQuestionsFB()
-                        isExecuted[4] = true
+                    5 -> {
+                        if (!isExecuted[4]) {
+                            viewModel.setQuestionsFB()
+                            isExecuted[4] = true
+                        }
                     }
-                }
 
-                6 -> {
-                    if (!isExecuted[5]) {
-                        viewModel.setEventQuiz()
-                        isExecuted[5] = true
+                    6 -> {
+                        if (!isExecuted[5]) {
+                            viewModel.setEventQuiz()
+                            isExecuted[5] = true
+                        }
                     }
                 }
             }
+            val referenceValue = Integer.toHexString(System.identityHashCode(osb))
+            log("fun viewModel.getSynth referenceValue: $referenceValue")
         }
-        val referenceValue = Integer.toHexString(System.identityHashCode(osb))
-        log("fun viewModel.getSynth referenceValue: $referenceValue")
+
         viewModel.getTpovId()
 
     }

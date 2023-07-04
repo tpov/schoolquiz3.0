@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.custom
 
 import com.tpov.schoolquiz.data.model.LanguageEntity
+import java.util.Locale
 
 object LanguageUtils {
     val languagesShortCodes = arrayOf(
@@ -32,12 +33,12 @@ object LanguageUtils {
 
     fun getLanguageFullName(languageCode: String): String {
         val index = languagesShortCodes.indexOf(languageCode)
-        return if (index != -1) languagesFullNames[index] else "und"
+        return if (index != -1) languagesFullNames[index] else Locale.getDefault().language
     }
 
     fun getLanguageShortCode(languageFullName: String): String {
         val index = languagesFullNames.indexOf(languageFullName)
-        return if (index != -1) languagesShortCodes[index] else "und"
+        return if (index != -1) languagesShortCodes[index] else Locale.getDefault().language
     }
 
     val ratingNum = arrayOf(0, 1, 2, 3)
@@ -181,13 +182,6 @@ object LanguageUtils {
 
 
     fun getPositionLang(shortCode: String): Int {
-        return when (shortCode.lowercase()) {
-            "en" -> 0
-            "ru" -> 1
-            "fr" -> 2
-            "de" -> 3
-            "es" -> 4
-            else -> 0
-        }
+        return languagesShortCodes.indexOf(shortCode.lowercase()).coerceAtLeast(0)
     }
 }
