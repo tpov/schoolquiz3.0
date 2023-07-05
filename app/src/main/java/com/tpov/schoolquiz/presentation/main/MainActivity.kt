@@ -131,11 +131,8 @@ class MainActivity : AppCompatActivity() {
         val versionCode: Int = pInfo.versionCode
         val userguide = Userguide(this)
         userguide.addGuideNewVersion(
-            versionCode,
             "SchoolQuiz v${versionName}",
-            "This is alfa test",
-            null,
-            null
+            "This is alfa test"
         )
 
         binding.imbManu.setOnClickListener {
@@ -1157,7 +1154,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             R.id.menu_network -> {
-                if (fr1 != 5) {
+                if (fr1 != 2) {
                     SetItemMenu.setNetworkMenu(
                         binding, MENU_PROFILE, this,
                         profile.pointsSkill ?: 0,

@@ -1487,7 +1487,53 @@ class RepositoryFBImpl @Inject constructor(
                             profile.copy(
                                 tpovId = idUsers,
                                 idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                dateSynch = TimeManager.getCurrentTime()
+                                dateSynch = TimeManager.getCurrentTime(),
+                                translater = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("qualification")
+                                        .child("translater").get()
+                                ).getValue(Int::class.java),
+                                admin = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("qualification")
+                                        .child("admin").get()
+                                ).getValue(Int::class.java),
+                                developer = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("qualification")
+                                        .child("developer").get()
+                                ).getValue(Int::class.java),
+                                moderator = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("qualification")
+                                        .child("moderator").get()
+                                ).getValue(Int::class.java),
+                                sponsor = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("qualification")
+                                        .child("sponsor").get()
+                                ).getValue(Int::class.java),
+                                tester = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("qualification")
+                                        .child("tester").get()
+                                ).getValue(Int::class.java),
+
+                                addTrophy = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("addPoints")
+                                        .child("addTrophy").get()
+                                ).getValue(String::class.java),
+                                addPointsNolics = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("addPoints")
+                                        .child("addNolics").get()
+                                ).getValue(Int::class.java),
+                                addPointsGold = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("addPoints")
+                                        .child("addGold").get()
+                                ).getValue(Int::class.java),
+                                addPointsSkill = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("addPoints")
+                                        .child("addSkill").get()
+                                ).getValue(Int::class.java),
+                                addPointsSkillInSeason = Tasks.await(
+                                    profileRef.child(idUsers.toString()).child("addPoints")
+                                        .child("addSkillInSesone").get()
+                                ).getValue(Int::class.java)
+
                             )
                         )
 

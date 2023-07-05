@@ -49,18 +49,12 @@ class CreateQuestionDialog : DialogFragment() {
         val inflater = LayoutInflater.from(requireContext())
         dialogView = inflater.inflate(R.layout.create_question_dialog, null)
         questionsContainer = dialogView.findViewById(R.id.questions_container)
-        mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-            addFilledQuestionItem(questionEntity)
-        }
 
-        if (id == -1) {
+        if (id != -1) {
+            dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
             dialogView.add_question_button.setOnClickListener {
                 addQuestionItem()
             }
-
-        } else {
-            dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
-
             mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
                 addFilledQuestionItem(questionEntity)
             }
@@ -70,10 +64,13 @@ class CreateQuestionDialog : DialogFragment() {
             .setView(dialogView)
             .create()
 
-        // Установка анимации входа
         alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimationCreateQuestion
         alertDialog.show()
 
+        dialogView.add_question_button.setOnClickListener {
+            addQuestionItem()
+        }
+        
         dialogView.save_question_button.setOnClickListener {
             createQuestions()
             dismiss()
