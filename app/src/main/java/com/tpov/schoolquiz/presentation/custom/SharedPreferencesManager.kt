@@ -166,9 +166,10 @@ object SharedPreferencesManager {
 
         val editor = sharedPreferencesQuiz.edit()
         editor.putInt(
-            "countMassage|${getTpovId()}",
+            "countMassage|${tpovId}",
             0
         )
+        editor.apply()
 
         return count
     }

@@ -5,6 +5,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.MutableLiveData
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
@@ -260,9 +261,9 @@ class RepositoryFBImpl @Inject constructor(
 
         log("sendMassageTranslate: $info")
         val pairs = info.split("|").chunked(2).associate { chunk ->
-                if (chunk.size >= 2) chunk[0].toInt() to chunk[1].toIntOrNull()
-                else null to null
-            }.filterValues { it != null }
+            if (chunk.size >= 2) chunk[0].toInt() to chunk[1].toIntOrNull()
+            else null to null
+        }.filterValues { it != null }
 
         log("sendMassageTranslate: $pairs")
         pairs.forEach {
@@ -600,22 +601,22 @@ class RepositoryFBImpl @Inject constructor(
                             dao.getProfileByFirebaseId(
                                 FirebaseAuth.getInstance().currentUser?.uid ?: ""
                             ).copy(
-                                    addPointsGold = profile.addPoints.addGold,
-                                    addPointsNolics = profile.addPoints.addNolics,
-                                    addTrophy = profile.addPoints.addTrophy,
-                                    addPointsSkill = profile.addPoints.addSkill,
-                                    addPointsSkillInSeason = profile.addPoints.addSkillInSesone,
-                                    gamer = profile.qualification.gamer,
-                                    sponsor = profile.qualification.sponsor,
-                                    tester = profile.qualification.tester,
-                                    translater = profile.qualification.translater,
-                                    moderator = profile.qualification.moderator,
-                                    admin = profile.qualification.admin,
-                                    developer = profile.qualification.developer,
-                                    dateSynch = TimeManager.getCurrentTime(),
-                                    count = dao.getProfileByTpovId(tpovId).count,
-                                    countGold = dao.getProfileByTpovId(tpovId).countGold
-                                )
+                                addPointsGold = profile.addPoints.addGold,
+                                addPointsNolics = profile.addPoints.addNolics,
+                                addTrophy = profile.addPoints.addTrophy,
+                                addPointsSkill = profile.addPoints.addSkill,
+                                addPointsSkillInSeason = profile.addPoints.addSkillInSesone,
+                                gamer = profile.qualification.gamer,
+                                sponsor = profile.qualification.sponsor,
+                                tester = profile.qualification.tester,
+                                translater = profile.qualification.translater,
+                                moderator = profile.qualification.moderator,
+                                admin = profile.qualification.admin,
+                                developer = profile.qualification.developer,
+                                dateSynch = TimeManager.getCurrentTime(),
+                                count = dao.getProfileByTpovId(tpovId).count,
+                                countGold = dao.getProfileByTpovId(tpovId).countGold
+                            )
                         )
                     }
                     synthLiveData.value = ++synth
@@ -670,8 +671,8 @@ class RepositoryFBImpl @Inject constructor(
                 3 -> {
                     log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
                     quizRef3.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                            quizRef2.child("${quiz.id}").removeValue()
-                        }
+                        quizRef2.child("${quiz.id}").removeValue()
+                    }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef3.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
                             .setValue(question).addOnSuccessListener {
@@ -689,8 +690,8 @@ class RepositoryFBImpl @Inject constructor(
                 4 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef4.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                            quizRef3.child("${quiz.id}").removeValue()
-                        }
+                        quizRef3.child("${quiz.id}").removeValue()
+                    }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef4.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question).addOnSuccessListener {
@@ -708,8 +709,8 @@ class RepositoryFBImpl @Inject constructor(
 
                     log("fun setEvent event: ${quiz.event}")
                     quizRef5.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                            quizRef4.child("${quiz.id}").removeValue()
-                        }
+                        quizRef4.child("${quiz.id}").removeValue()
+                    }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question).addOnSuccessListener {
@@ -731,8 +732,8 @@ class RepositoryFBImpl @Inject constructor(
                 6 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef6.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                            quizRef5.child("${quiz.id}").removeValue()
-                        }
+                        quizRef5.child("${quiz.id}").removeValue()
+                    }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef6.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question).addOnSuccessListener {
@@ -749,8 +750,8 @@ class RepositoryFBImpl @Inject constructor(
                 7 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef7.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                            quizRef6.child("${quiz.id}").removeValue()
-                        }
+                        quizRef6.child("${quiz.id}").removeValue()
+                    }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef7.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question).addOnSuccessListener {
@@ -767,8 +768,8 @@ class RepositoryFBImpl @Inject constructor(
                 8 -> {
                     log("fun setEvent event: ${quiz.event}")
                     quizRef8.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                            quizRef7.child("${quiz.id}").removeValue()
-                        }
+                        quizRef7.child("${quiz.id}").removeValue()
+                    }
                     dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
                         questionRef8.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
                             .setValue(question).addOnSuccessListener {
@@ -925,8 +926,8 @@ class RepositoryFBImpl @Inject constructor(
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                        }
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
@@ -963,8 +964,8 @@ class RepositoryFBImpl @Inject constructor(
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                        }
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
@@ -997,8 +998,8 @@ class RepositoryFBImpl @Inject constructor(
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                        }
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
@@ -1135,8 +1136,8 @@ class RepositoryFBImpl @Inject constructor(
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                        }
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
@@ -1168,8 +1169,8 @@ class RepositoryFBImpl @Inject constructor(
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                        }
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
@@ -1201,8 +1202,8 @@ class RepositoryFBImpl @Inject constructor(
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
                                     }
                                     dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                            dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                        }
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
                                     dao.deleteQuestionDetailByIdQuiz(oldId)
                                     dao.deleteQuestionByIdQuiz(oldId)
                                     dao.insertQuiz(quiz)
@@ -1432,7 +1433,53 @@ class RepositoryFBImpl @Inject constructor(
                         profile.copy(
                             tpovId = idUsers,
                             idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                            dateSynch = TimeManager.getCurrentTime()
+                            dateSynch = TimeManager.getCurrentTime(),
+                            translater = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("qualification")
+                                    .child("translater").get()
+                            ).getValue(Int::class.java),
+                            admin = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("qualification")
+                                    .child("admin").get()
+                            ).getValue(Int::class.java),
+                            developer = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("qualification")
+                                    .child("developer").get()
+                            ).getValue(Int::class.java),
+                            moderator = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("qualification")
+                                    .child("moderator").get()
+                            ).getValue(Int::class.java),
+                            sponsor = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("qualification")
+                                    .child("sponsor").get()
+                            ).getValue(Int::class.java),
+                            tester = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("qualification")
+                                    .child("tester").get()
+                            ).getValue(Int::class.java),
+
+                            addTrophy = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("addPoints")
+                                    .child("addTrophy").get()
+                            ).getValue(String::class.java),
+                            addPointsNolics = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("addPoints")
+                                    .child("addNolics").get()
+                            ).getValue(Int::class.java),
+                            addPointsGold = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("addPoints")
+                                    .child("addGold").get()
+                            ).getValue(Int::class.java),
+                            addPointsSkill = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("addPoints")
+                                    .child("addSkill").get()
+                            ).getValue(Int::class.java),
+                            addPointsSkillInSeason = Tasks.await(
+                                profileRef.child(idUsers.toString()).child("addPoints")
+                                    .child("addSkillInSesone").get()
+                            ).getValue(Int::class.java)
+
                         ).toProfile()
                     ).addOnSuccessListener {
 

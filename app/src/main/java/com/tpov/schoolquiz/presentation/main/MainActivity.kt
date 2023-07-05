@@ -690,7 +690,7 @@ class MainActivity : AppCompatActivity() {
         val popupHeight = popupView.measuredHeight
         val touchX = event.rawX
         val touchY = event.rawY
-        popupWindow.width = popupWidth.toInt()
+        popupWindow.width = popupWidth
         popupWindow.height = popupHeight
         popupWindow.showAtLocation(
             binding.viewBackground,

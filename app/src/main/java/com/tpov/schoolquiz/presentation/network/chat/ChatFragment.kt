@@ -19,6 +19,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
+import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.text.SimpleDateFormat
@@ -91,6 +92,7 @@ class ChatFragment : BaseFragment() {
         val chatId = chatDateRef.push().key
         if (chatId != null) {
             chatDateRef.child(chatId).setValue(chat).addOnSuccessListener {
+                log("awdawdawdaw add")
                 SharedPreferencesManager.addCountSendMassage()
             }
         }
