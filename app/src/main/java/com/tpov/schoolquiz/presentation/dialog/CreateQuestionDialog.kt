@@ -70,7 +70,7 @@ class CreateQuestionDialog : DialogFragment() {
         dialogView.add_question_button.setOnClickListener {
             addQuestionItem()
         }
-        
+
         dialogView.save_question_button.setOnClickListener {
             createQuestions()
             dismiss()
