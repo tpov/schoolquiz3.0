@@ -5,7 +5,6 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.MutableLiveData
-import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
@@ -40,32 +39,32 @@ class RepositoryFBImpl @Inject constructor(
     var synthGetData = 0
     var synthSetData = 0
     override fun deleteAllQuiz() {
-        FirebaseDatabase.getInstance().getReference("question1").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question2").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question3").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question4").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question5").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question6").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question7").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question8").setValue(null)
-
-        FirebaseDatabase.getInstance().getReference("quiz1").setValue(null)
-        FirebaseDatabase.getInstance().getReference("quiz2").setValue(null)
-        FirebaseDatabase.getInstance().getReference("quiz3").setValue(null)
-        FirebaseDatabase.getInstance().getReference("quiz4").setValue(null)
-        FirebaseDatabase.getInstance().getReference("quiz5").setValue(null)
-        FirebaseDatabase.getInstance().getReference("quiz6").setValue(null)
-        FirebaseDatabase.getInstance().getReference("quiz7").setValue(null)
-        FirebaseDatabase.getInstance().getReference("quiz8").setValue(null)
-
-        FirebaseDatabase.getInstance().getReference("question_detail1").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question_detail2").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question_detail3").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question_detail4").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question_detail5").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question_detail6").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question_detail7").setValue(null)
-        FirebaseDatabase.getInstance().getReference("question_detail8").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question1").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question2").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question3").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question4").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question5").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question6").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question7").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question8").setValue(null)
+//
+//        FirebaseDatabase.getInstance().getReference("quiz1").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("quiz2").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("quiz3").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("quiz4").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("quiz5").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("quiz6").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("quiz7").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("quiz8").setValue(null)
+//
+//        FirebaseDatabase.getInstance().getReference("question_detail1").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question_detail2").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question_detail3").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question_detail4").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question_detail5").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question_detail6").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question_detail7").setValue(null)
+//        FirebaseDatabase.getInstance().getReference("question_detail8").setValue(null)
 
     }
 
@@ -594,13 +593,11 @@ class RepositoryFBImpl @Inject constructor(
                     if (dao.getProfileByTpovId(tpovId) == null) {
                         log("getProfile() профиль по tpovid пустой, создаем новый")
                         dao.insertProfile(profile.toProfileEntity(100, 500))
-
+                        synthLiveData.value = ++synth
                     } else {
                         log("getProfile() профиль по tpovid найден")
-                        dao.updateProfiles(
-                            dao.getProfileByFirebaseId(
-                                FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                            ).copy(
+                        val updatedProfile = dao.getProfileByFirebaseId(FirebaseAuth.getInstance().currentUser?.uid ?: "")
+                            .copy(
                                 addPointsGold = profile.addPoints.addGold,
                                 addPointsNolics = profile.addPoints.addNolics,
                                 addTrophy = profile.addPoints.addTrophy,
@@ -613,14 +610,11 @@ class RepositoryFBImpl @Inject constructor(
                                 moderator = profile.qualification.moderator,
                                 admin = profile.qualification.admin,
                                 developer = profile.qualification.developer,
-                                dateSynch = TimeManager.getCurrentTime(),
-                                count = dao.getProfileByTpovId(tpovId).count,
-                                countGold = dao.getProfileByTpovId(tpovId).countGold
+                                dateSynch = TimeManager.getCurrentTime()
                             )
-                        )
+                        log("getProfile ${dao.updateProfiles(updatedProfile)}")
+                        if (dao.updateProfiles(updatedProfile) > 0) synthLiveData.value = ++synth
                     }
-                    synthLiveData.value = ++synth
-                    log("getProfile() synth: ${synthLiveData.value}")
                 }
             }
 
@@ -1433,107 +1427,15 @@ class RepositoryFBImpl @Inject constructor(
                         profile.copy(
                             tpovId = idUsers,
                             idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                            dateSynch = TimeManager.getCurrentTime(),
-                            translater = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("qualification")
-                                    .child("translater").get()
-                            ).getValue(Int::class.java),
-                            admin = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("qualification")
-                                    .child("admin").get()
-                            ).getValue(Int::class.java),
-                            developer = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("qualification")
-                                    .child("developer").get()
-                            ).getValue(Int::class.java),
-                            moderator = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("qualification")
-                                    .child("moderator").get()
-                            ).getValue(Int::class.java),
-                            sponsor = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("qualification")
-                                    .child("sponsor").get()
-                            ).getValue(Int::class.java),
-                            tester = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("qualification")
-                                    .child("tester").get()
-                            ).getValue(Int::class.java),
-
-                            addTrophy = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("addPoints")
-                                    .child("addTrophy").get()
-                            ).getValue(String::class.java),
-                            addPointsNolics = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("addPoints")
-                                    .child("addNolics").get()
-                            ).getValue(Int::class.java),
-                            addPointsGold = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("addPoints")
-                                    .child("addGold").get()
-                            ).getValue(Int::class.java),
-                            addPointsSkill = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("addPoints")
-                                    .child("addSkill").get()
-                            ).getValue(Int::class.java),
-                            addPointsSkillInSeason = Tasks.await(
-                                profileRef.child(idUsers.toString()).child("addPoints")
-                                    .child("addSkillInSesone").get()
-                            ).getValue(Int::class.java)
-
+                            dateSynch = TimeManager.getCurrentTime()
                         ).toProfile()
-                    ).addOnSuccessListener {
 
+                    ).addOnSuccessListener {
                         dao.updateProfiles(
                             profile.copy(
                                 tpovId = idUsers,
                                 idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                dateSynch = TimeManager.getCurrentTime(),
-                                translater = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("qualification")
-                                        .child("translater").get()
-                                ).getValue(Int::class.java),
-                                admin = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("qualification")
-                                        .child("admin").get()
-                                ).getValue(Int::class.java),
-                                developer = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("qualification")
-                                        .child("developer").get()
-                                ).getValue(Int::class.java),
-                                moderator = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("qualification")
-                                        .child("moderator").get()
-                                ).getValue(Int::class.java),
-                                sponsor = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("qualification")
-                                        .child("sponsor").get()
-                                ).getValue(Int::class.java),
-                                tester = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("qualification")
-                                        .child("tester").get()
-                                ).getValue(Int::class.java),
-
-                                addTrophy = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("addPoints")
-                                        .child("addTrophy").get()
-                                ).getValue(String::class.java),
-                                addPointsNolics = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("addPoints")
-                                        .child("addNolics").get()
-                                ).getValue(Int::class.java),
-                                addPointsGold = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("addPoints")
-                                        .child("addGold").get()
-                                ).getValue(Int::class.java),
-                                addPointsSkill = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("addPoints")
-                                        .child("addSkill").get()
-                                ).getValue(Int::class.java),
-                                addPointsSkillInSeason = Tasks.await(
-                                    profileRef.child(idUsers.toString()).child("addPoints")
-                                        .child("addSkillInSesone").get()
-                                ).getValue(Int::class.java)
-
+                                dateSynch = TimeManager.getCurrentTime()
                             )
                         )
 
@@ -1552,28 +1454,77 @@ class RepositoryFBImpl @Inject constructor(
 
                 override fun onCancelled(error: DatabaseError) {
                     log("setProfile() error2: $error")
-
                 }
             })
 
-
         } else {
             log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId")
-            try {
-                log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId")
-                profileRef.child(tpovId.toString()).setValue(profile.toProfile())
-                    .addOnSuccessListener {
-                        synthLiveData.value = ++synth
-                    }.addOnFailureListener {
-                        log("$it")
+            profileRef.child("$tpovId")
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(profileSnapshot: DataSnapshot) {
+
+                        log("setProfile() 255: ${profileSnapshot.child("addPoints")
+                            .child("addNolics").getValue(Int::class.java)}")
+
+                        profileRef.child(tpovId.toString()).setValue(
+                            profile.copy(
+
+                                translater = profileSnapshot.child("qualification")
+                                    .child("translater")
+                                    .getValue(Int::class.java),
+
+                                admin = profileSnapshot.child("qualification")
+                                    .child("admin").getValue(Int::class.java),
+
+                                developer = profileSnapshot.child("qualification")
+                                    .child("developer").getValue(Int::class.java),
+
+                                moderator = profileSnapshot.child("qualification")
+                                    .child("moderator").getValue(Int::class.java),
+
+                                sponsor = profileSnapshot.child("qualification")
+                                    .child("sponsor").getValue(Int::class.java),
+
+                                tester = profileSnapshot.child("qualification")
+                                    .child("tester").getValue(Int::class.java),
+
+                                addTrophy = if (profile.addTrophy == "") profileSnapshot.child("addPoints")
+                                    .child("addTrophy").getValue(String::class.java) else "",
+
+                                addPointsNolics =
+                                if (profile.addPointsNolics == 0) profileSnapshot.child("addPoints")
+                                    .child("addNolics").getValue(Int::class.java) else 0,
+
+                                addPointsGold =
+                                if (profile.addPointsGold == 0) profileSnapshot.child("addPoints")
+                                    .child("addGold").getValue(Int::class.java) else 0,
+
+                                addPointsSkill =
+                                if (profile.addPointsSkill == 0) profileSnapshot.child("addPoints")
+                                    .child("addSkill").getValue(Int::class.java) else 0,
+
+                                addPointsSkillInSeason =
+                                if (profile.addPointsSkillInSeason == 0) profileSnapshot.child("addPoints")
+                                    .child("addSkillInSesone").getValue(Int::class.java) else 0
+
+                            ).toProfile()
+                        )
+                            .addOnSuccessListener {
+                                synthLiveData.value = ++synth
+                            }.addOnFailureListener {
+                                log("setProfile() $it")
+                                synthLiveData.value = ++synth
+                            }
+
                     }
 
-                log("setProfile() id != 0 просто сохраняем на сервер")
-            } catch (e: java.lang.Exception) {
-                synthLiveData.value = ++synth
-                log("setProfile() id != 0 и в бд пусто, ничего не отправляем")
-            }
+                    override fun onCancelled(error: DatabaseError) {
+
+                        log("setProfile() error24 $error")
+                    }
+                })
         }
+
     }
 
     override fun getUserName(): Profile {

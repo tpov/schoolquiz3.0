@@ -1138,20 +1138,20 @@ class MainActivity : AppCompatActivity() {
                     fr1 = 1
                 }
             }
-
-            R.id.menu_adb -> {
-                if (fr1 != 2) {
-
-                    fr1 = 2
-                }
-            }
-
-            R.id.menu_info -> {
-                if (fr1 != 4) {
-
-                    fr1 = 4
-                }
-            }
+//
+//            R.id.menu_adb -> {
+//                if (fr1 != 2) {
+//
+//                    fr1 = 2
+//                }
+//            }
+//
+//            R.id.menu_info -> {
+//                if (fr1 != 4) {
+//
+//                    fr1 = 4
+//                }
+//            }
 
             R.id.menu_network -> {
                 if (fr1 != 2) {
@@ -1160,7 +1160,7 @@ class MainActivity : AppCompatActivity() {
                         profile.pointsSkill ?: 0,
                         qualification
                     )
-                    fr1 = 5
+                    fr1 = 2
                 }
             }
         }

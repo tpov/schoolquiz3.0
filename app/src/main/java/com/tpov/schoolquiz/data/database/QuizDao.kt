@@ -349,11 +349,11 @@ WHERE front_list.event IN (5, 6, 7, 8)
     fun updateQuiz(quizEntity: QuizEntity)
 
     @Update
-    fun updateProfilesDB(profileEntity: ProfileEntity)
+    fun updateProfilesDB(profileEntity: ProfileEntity): Int
 
-    fun updateProfiles(profileEntity: ProfileEntity) {
+    fun updateProfiles(profileEntity: ProfileEntity): Int {
         log("fun update profile: $profileEntity")
-        updateProfilesDB(profileEntity)
+        return updateProfilesDB(profileEntity)
     }
 
     @Update

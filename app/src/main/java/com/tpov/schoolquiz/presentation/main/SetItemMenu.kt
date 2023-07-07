@@ -82,7 +82,7 @@ object SetItemMenu {
             if (FirebaseAuth.getInstance().currentUser?.uid == null) emptyList<Pair<Int, Int>>().toMutableList()
             else getShowItemsMenuNetwork(skill, qualification).toMutableList()
 
-        if (FirebaseAuth.getInstance().currentUser?.uid != null) //menuItemsToAdd.removeAt(fr2)
+        //if (FirebaseAuth.getInstance().currentUser?.uid != null) menuItemsToAdd.removeAt(fr2)
 
         for (item in menuItemsToAdd) {
             val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)

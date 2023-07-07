@@ -12,7 +12,6 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
@@ -68,8 +67,7 @@ class ProfileFragment : BaseFragment() {
         view.findViewById<ImageButton>(R.id.imb_delete).setOnClickListener {
             viewModel.getDeleteAllQuiz()
         }
-        if (SharedPreferencesManager.canSyncProfile()) {
-            val osb = viewModel.synth.observe(viewLifecycleOwner) { number ->
+        viewModel.synth.observe(viewLifecycleOwner) { number ->
                 log("fun viewModel.getSynth.observe: $number")
                 when (number) {
                     1 -> {
@@ -116,9 +114,6 @@ class ProfileFragment : BaseFragment() {
                         }
                     }
                 }
-            }
-            val referenceValue = Integer.toHexString(System.identityHashCode(osb))
-            log("fun viewModel.getSynth referenceValue: $referenceValue")
         }
 
         viewModel.getTpovId()
