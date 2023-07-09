@@ -12,21 +12,7 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
-import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
-import com.tpov.schoolquiz.domain.DeleteQuizUseCase
-import com.tpov.schoolquiz.domain.GetProfileUseCase
-import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
-import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
-import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
-import com.tpov.schoolquiz.domain.GetQuizListUseCase
-import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
-import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuizUseCase
-import com.tpov.schoolquiz.domain.UpdateProfileUseCase
-import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
-import com.tpov.schoolquiz.domain.UpdateQuizUseCase
+import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -463,7 +449,11 @@ class QuestionViewModel @Inject constructor(
                     0
                 } > maxPersent
             ) maxPersent = ((100 * i) / j)
-            perc.add(((100 * i) / j))
+            try {
+                perc.add(((100 * i) / j))
+            } catch (e: Exception) {
+                perc.add(0)
+            }
         }
         j = 0
         i = 0

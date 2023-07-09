@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.presentation.network.event
 
-import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -46,7 +45,7 @@ class EventViewModel @Inject constructor(
     fun getQuestionItem(idQuestion: Int) = getQuestionListUseCase().filter { it.id == idQuestion }
 
     fun getQuestionList(numQuestion: Int, idQuiz: Int) =
-        getQuestionListUseCase().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion }
+        getQuestionListUseCase().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion}
 
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
@@ -163,14 +162,16 @@ class EventViewModel @Inject constructor(
         val wordsMap = mutableMapOf<String, Int>()
 
         updatedQuestions.forEach {
+            log("updateddsd1: ${it.language}")
             try {
                 parseInfoTranslater(it.infoTranslater).forEach {
+                    log("updateddsd2: ${it}")
                     createMassage(it.key, it.value)
                 }
             } catch (e: Exception) {
-                Toast.makeText(activity, "Error parse info Translater", Toast.LENGTH_LONG).show()
+
             }
-            log("update: $it, $questionFirst")
+
             if (it.nameQuestion == "") deleteQuestionUseCase(it.id!!)
             else insertQuestionUseCase(
                 it.copy(
@@ -193,59 +194,15 @@ class EventViewModel @Inject constructor(
                 "${entry.key}-${entry.value}"
             }
 
-            try {
-                updateQuizUseCase(
-                    quiz.copy(
-                        languages = mergeStrings(result, quiz.languages),
-                        versionQuiz = quiz.versionQuiz + 1
-                    )
-                )
-            } catch (e: Exception) {
-                Toast.makeText(activity, "quiz do not update", Toast.LENGTH_SHORT).show()
-            }
+
         }
 
-    }
-
-    private fun mergeStrings(string1: String, string2: String): String {
-        val mergedMap = mutableMapOf<String, Int>()
-
-        // Обработка первой строки
-        val parts1 = string1.split("|")
-        for (part in parts1) {
-            val (word, value) = part.split("-")
-            val currentValue = mergedMap[word]
-            if (currentValue == null || value.toInt() > currentValue) {
-                mergedMap[word] = value.toInt()
-            }
-        }
-
-        // Обработка второй строки
-        val parts2 = string2.split("|")
-        for (part in parts2) {
-            val (word, value) = part.split("-")
-            val currentValue = mergedMap[word]
-            if (currentValue == null || value.toInt() > currentValue) {
-                mergedMap[word] = value.toInt()
-            }
-        }
-
-        // Составление результирующей строки
-        val mergedString = StringBuilder()
-        for ((word, value) in mergedMap) {
-            if (mergedString.isNotEmpty()) {
-                mergedString.append("|")
-            }
-            mergedString.append("$word-$value")
-        }
-
-        return mergedString.toString()
     }
 
 
     private fun hasTpovIdZeroAtEnd(infoTranslater: String): String {
-        return if (infoTranslater.endsWith("${getTpovId()}|0")) infoTranslater
-        else "${infoTranslater}|${getTpovId()}|0"
+        return if (infoTranslater.endsWith("${getTpovId()}|")) infoTranslater
+        else "${infoTranslater}|${getTpovId()}|"
 
     }
 
@@ -254,13 +211,17 @@ class EventViewModel @Inject constructor(
     }
 
     private fun parseInfoTranslater(infoTranslater: String): Map<String, String> {
+
         val keyValuePairs = infoTranslater.split("|")
         val infoMap = mutableMapOf<String, String>()
 
         for (pair in keyValuePairs) {
-            val (key, value) = pair.split("|").map { it.trim() }
-            if (key.isNotBlank()) {
-                infoMap[key] = value
+            try {
+                val (key, value) = pair.split("|").map { it.trim() }
+                if (key.isNotBlank()) {
+                    infoMap[key] = value
+                }
+            } catch (e: Exception) {
             }
         }
 

@@ -46,6 +46,7 @@ class TranslateQuestionFragment : BaseFragment() {
 
     private var questionIndex = 0
     private var questions: MutableList<QuestionEntity>? = null
+    private var hardQuestions: MutableList<QuestionEntity>? = null
 
     companion object {
 
@@ -125,7 +126,7 @@ class TranslateQuestionFragment : BaseFragment() {
         log("getQuestionListUseCase() idQuiz != -1")
         viewModel.questionLiveData.observe(viewLifecycleOwner) { receivedQuestions ->
             questions =
-                receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { !it.hardQuestion }
+                receivedQuestions?.sortedWith(compareByDescending<QuestionEntity> { false }
                     .thenBy { it.numQuestion })
                     ?.filter { it.idQuiz == idQuiz }?.toMutableList()
             log("questions: $questions")
@@ -186,9 +187,7 @@ class TranslateQuestionFragment : BaseFragment() {
             }
 
             translationAdapter.notifyDataSetChanged()
-            if (questions.isNullOrEmpty()) requireActivity().supportFragmentManager.beginTransaction()
-                .remove(this)
-                .commit()
+
         } else {
             Toast.makeText(
                 activity,

@@ -596,8 +596,9 @@ class RepositoryFBImpl @Inject constructor(
                         synthLiveData.value = ++synth
                     } else {
                         log("getProfile() профиль по tpovid найден")
-                        val updatedProfile = dao.getProfileByFirebaseId(FirebaseAuth.getInstance().currentUser?.uid ?: "")
-                            .copy(
+                        val updatedProfile = dao.getProfileByFirebaseId(
+                            FirebaseAuth.getInstance().currentUser?.uid ?: ""
+                        ).copy(
                                 addPointsGold = profile.addPoints.addGold,
                                 addPointsNolics = profile.addPoints.addNolics,
                                 addTrophy = profile.addPoints.addTrophy,
@@ -1283,8 +1284,7 @@ class RepositoryFBImpl @Inject constructor(
             synthLiveData.value = --synth
             log("setQuestionData() найдет квест it: ${it}")
             val eventByIdQuiz = dao.getEventByIdQuiz(it.idQuiz)
-            if (eventByIdQuiz == 1) questionRef1
-                .child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${if (it.language.isEmpty()) it.language else Locale.getDefault()}")
+            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${if (it.language.isEmpty()) it.language else Locale.getDefault()}")
                 .setValue(it).addOnSuccessListener {
                     synthLiveData.value = ++synth
                 }
@@ -1459,62 +1459,88 @@ class RepositoryFBImpl @Inject constructor(
 
         } else {
             log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId")
-            profileRef.child("$tpovId")
-                .addListenerForSingleValueEvent(object : ValueEventListener {
+            profileRef.child("$tpovId").addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(profileSnapshot: DataSnapshot) {
 
-                        log("setProfile() 255: ${profileSnapshot.child("addPoints")
-                            .child("addNolics").getValue(Int::class.java)}")
-
-                        profileRef.child(tpovId.toString()).setValue(
-                            profile.copy(
-
-                                translater = profileSnapshot.child("qualification")
-                                    .child("translater")
-                                    .getValue(Int::class.java),
-
-                                admin = profileSnapshot.child("qualification")
-                                    .child("admin").getValue(Int::class.java),
-
-                                developer = profileSnapshot.child("qualification")
-                                    .child("developer").getValue(Int::class.java),
-
-                                moderator = profileSnapshot.child("qualification")
-                                    .child("moderator").getValue(Int::class.java),
-
-                                sponsor = profileSnapshot.child("qualification")
-                                    .child("sponsor").getValue(Int::class.java),
-
-                                tester = profileSnapshot.child("qualification")
-                                    .child("tester").getValue(Int::class.java),
-
-                                addTrophy = if (profile.addTrophy == "") profileSnapshot.child("addPoints")
-                                    .child("addTrophy").getValue(String::class.java) else "",
-
-                                addPointsNolics =
-                                if (profile.addPointsNolics == 0) profileSnapshot.child("addPoints")
-                                    .child("addNolics").getValue(Int::class.java) else 0,
-
-                                addPointsGold =
-                                if (profile.addPointsGold == 0) profileSnapshot.child("addPoints")
-                                    .child("addGold").getValue(Int::class.java) else 0,
-
-                                addPointsSkill =
-                                if (profile.addPointsSkill == 0) profileSnapshot.child("addPoints")
-                                    .child("addSkill").getValue(Int::class.java) else 0,
-
-                                addPointsSkillInSeason =
-                                if (profile.addPointsSkillInSeason == 0) profileSnapshot.child("addPoints")
-                                    .child("addSkillInSesone").getValue(Int::class.java) else 0
-
-                            ).toProfile()
+                        log(
+                            "setProfile() 255: ${
+                                profileSnapshot.child("addPoints").child("addNolics")
+                                    .getValue(Int::class.java)
+                            }"
                         )
-                            .addOnSuccessListener {
-                                synthLiveData.value = ++synth
-                            }.addOnFailureListener {
-                                log("setProfile() $it")
-                                synthLiveData.value = ++synth
-                            }
+
+                        try {
+                            profileRef.child(tpovId.toString()).setValue(
+                                profile.copy(
+
+                                    translater = profileSnapshot.child("qualification")
+                                        .child("translater").getValue(Int::class.java),
+
+                                    admin = profileSnapshot.child("qualification").child("admin")
+                                        .getValue(Int::class.java),
+
+                                    developer = profileSnapshot.child("qualification")
+                                        .child("developer").getValue(Int::class.java),
+
+                                    moderator = profileSnapshot.child("qualification")
+                                        .child("moderator").getValue(Int::class.java),
+
+                                    sponsor = profileSnapshot.child("qualification").child("sponsor")
+                                        .getValue(Int::class.java),
+
+                                    tester = profileSnapshot.child("qualification").child("tester")
+                                        .getValue(Int::class.java),
+
+                                    addTrophy = try {
+                                        if (profile.addTrophy == "") profileSnapshot.child("addPoints")
+                                            .child("addTrophy").getValue(String::class.java) else ""
+                                    } catch (e: Exception) {
+                                        profileSnapshot.child("addPoints").child("addTrophy")
+                                            .getValue(String::class.java)
+                                    },
+
+                                    addPointsNolics = try {
+                                        if (profile.addPointsNolics == 0) profileSnapshot.child("addPoints")
+                                            .child("addNolics").getValue(Int::class.java) else 0
+                                    } catch (e: Exception) {
+                                        profileSnapshot.child("addPoints").child("addNolics")
+                                            .getValue(Int::class.java)
+                                    },
+
+                                    addPointsGold = try {
+                                        if (profile.addPointsGold == 0) profileSnapshot.child("addPoints")
+                                            .child("addGold").getValue(Int::class.java) else 0
+                                    } catch (e: Exception) {
+                                        profileSnapshot.child("addPoints").child("addGold")
+                                            .getValue(Int::class.java)
+                                    },
+
+                                    addPointsSkill = try {
+                                        if (profile.addPointsSkill == 0) profileSnapshot.child("addPoints")
+                                            .child("addSkill").getValue(Int::class.java) else 0
+                                    } catch (e: Exception) {
+                                        profileSnapshot.child("addPoints").child("addSkill")
+                                            .getValue(Int::class.java)
+                                    },
+
+                                    addPointsSkillInSeason = try {
+                                        if (profile.addPointsSkillInSeason == 0) profileSnapshot.child("addPoints")
+                                            .child("addSkillInSesone").getValue(Int::class.java) else 0
+                                    } catch (e: Exception) {
+                                        profileSnapshot.child("addPoints").child("addSkillInSesone")
+                                            .getValue(Int::class.java)
+                                    }
+
+                                ).toProfile()
+                            ).addOnSuccessListener {
+                                    synthLiveData.value = ++synth
+                                }.addOnFailureListener {
+                                    log("setProfile() $it")
+                                    synthLiveData.value = ++synth
+                                }
+                        } catch (e: Exception) {
+                            synthLiveData.value = ++synth
+                        }
 
                     }
 

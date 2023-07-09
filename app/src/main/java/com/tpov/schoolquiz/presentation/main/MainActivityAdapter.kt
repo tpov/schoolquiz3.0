@@ -23,7 +23,7 @@ import com.tpov.schoolquiz.presentation.custom.CoastValues.COAST_GOOGLE_TRANSLAT
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.secure.Secure.getTranslateKey
+import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
@@ -205,30 +205,31 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             viewModel: MainActivityViewModel,
             listener: Listener
         ) {
-            if (quizEntity.stars >= MAX_PERCENT) {
 
+            log("quizEntity.stars 3")
+            chbTypeQuiz.visibility = View.GONE
+            imvGradLightQuiz.visibility = View.GONE
+            imvGradHardQuiz.visibility = View.GONE
+
+            chbTypeQuiz.isChecked = false
+
+            if (quizEntity.stars >= MAX_PERCENT) {
                 log("quizEntity.stars 1")
                 imvGradLightQuiz.visibility = View.VISIBLE
                 imvGradHardQuiz.visibility = View.GONE
+                chbTypeQuiz.isChecked = true
+            }
 
-            } else if (quizEntity.ratingPlayer == 3) {
-
+            if (quizEntity.ratingPlayer == 250) {
                 log("quizEntity.stars 2")
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.VISIBLE
+            }
 
-            } else if (quizEntity.tpovId == getTpovId()) {
-
+            if (quizEntity.tpovId == getTpovId()) {
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.GONE
-                imvGradientTranslateQuiz.visibility = View.GONE
-
-            } else {
-
-                log("quizEntity.stars 3")
-                chbTypeQuiz.visibility = View.GONE
-                imvGradLightQuiz.visibility = View.GONE
-                imvGradHardQuiz.visibility = View.GONE
+                imvGradientTranslateQuiz.visibility = View.VISIBLE
             }
 
             chbTypeQuiz.visibility = View.VISIBLE
@@ -299,23 +300,31 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
             }
 
-            if (quizEntity.stars >= MAX_PERCENT) {
-                log("quizEntity.stars 1")
-                imvGradLightQuiz.visibility = View.VISIBLE
-                imvGradHardQuiz.visibility = View.GONE
-                chbTypeQuiz.visibility = View.VISIBLE
+            log("quizEntity.stars")
+            when (quizEntity.stars) {
+                in MAX_PERCENT..119 -> {
+                    log("quizEntity.stars 1")
+                    imvGradLightQuiz.visibility = View.VISIBLE
+                    imvGradHardQuiz.visibility = View.GONE
+                    chbTypeQuiz.visibility = View.VISIBLE
+                    chbTypeQuiz.isChecked = true
 
-            } else if (quizEntity.stars == 120) {
-                log("quizEntity.stars 2")
-                if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
-                imvGradLightQuiz.visibility = View.GONE
-                imvGradHardQuiz.visibility = View.VISIBLE
+                }
+                120 -> {
+                    log("quizEntity.stars 2")
+                    if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
+                    imvGradLightQuiz.visibility = View.GONE
+                    imvGradHardQuiz.visibility = View.VISIBLE
+                    chbTypeQuiz.isChecked = true
 
-            } else {
-                log("quizEntity.stars 3")
-                chbTypeQuiz.visibility = View.GONE
-                imvGradLightQuiz.visibility = View.GONE
-                imvGradHardQuiz.visibility = View.GONE
+                }
+                else -> {
+                    log("quizEntity.stars 3")
+                    chbTypeQuiz.visibility = View.GONE
+                    imvGradLightQuiz.visibility = View.GONE
+                    imvGradHardQuiz.visibility = View.GONE
+                    chbTypeQuiz.isChecked = false
+                }
             }
 
             imvTranslate.imageAlpha = 128
@@ -367,6 +376,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
             // Инициализируем объект Translate с помощью ключа API
+
             val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
                 .setApiKey(getTranslateKey())
                 .build()
@@ -375,7 +385,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             // Создаем пустой список для хранения переведенных вопросов
             val translatedQuestionList: MutableList<QuestionEntity> = mutableListOf()
 
-            com.tpov.schoolquiz.presentation.network.event.log("dawdawdf translateToUserLanguage")
+            com.tpov.schoolquiz.presentation.network.event.log("dawdawdf questionList:$questionList ")
             // Перебираем каждый вопрос в исходном списке и выполняем перевод
             for (question in questionList) {
                 // Получаем текст для перевода
@@ -385,11 +395,9 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 val userLanguage: String = Locale.getDefault().language
 
                 com.tpov.schoolquiz.presentation.network.event.log("dawdawdf question $question")
-                // Выполняем перевод
-                com.tpov.schoolquiz.presentation.network.event.log("dawdawdf Thread")
-                val translatedText = try {
-
-                    val translation: Translation = translate!!.translate(
+                try {
+                    if (sourceLanguage != userLanguage) {
+                        val translation: Translation = translate!!.translate(
                         textToTranslate,
                         com.google.cloud.translate.Translate.TranslateOption.sourceLanguage(
                             sourceLanguage
@@ -398,20 +406,21 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                             userLanguage
                         )
                     )
-
-                    translation.translatedText
+                        log("dawdawdf translation:$translation")
+                        log("dawdawdf translation.translatedText:${translation.translatedText}")
+                        translatedQuestionList.add(
+                            question.copy(
+                                nameQuestion = translation.translatedText,
+                                language = userLanguage,
+                                lvlTranslate = 100,
+                                infoTranslater = "0|0"
+                            )
+                        )
+                    }
                 } catch (e: Exception) {
-                    textToTranslate
+
                 }
 
-                val translatedQuestion = question.copy(
-                    nameQuestion = translatedText,
-                    language = userLanguage,
-                    lvlTranslate = 100,
-                    infoTranslater = "0|0"
-                )
-
-                translatedQuestionList.add(translatedQuestion)
             }
 
             return translatedQuestionList
@@ -440,23 +449,55 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             // Создаем мапу, где ключом будет numQuestion, а значением - элемент Question с наибольшим lvlTranslate
             val questionMap: MutableMap<Int, QuestionEntity> = mutableMapOf()
+            val questionHardMap: MutableMap<Int, QuestionEntity> = mutableMapOf()
 
             for (question in questionList) {
 
                 com.tpov.schoolquiz.presentation.network.event.log("dawdawdf $question")
                 val existingQuestion = questionMap[question.numQuestion]
+                val existingHardQuestion = questionHardMap[question.numQuestion]
 
-                if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
-                    com.tpov.schoolquiz.presentation.network.event.log("dawdawdf add")
-                    questionMap[question.numQuestion] = question
+                if (!question.hardQuestion) {
+                    if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
+                        com.tpov.schoolquiz.presentation.network.event.log("dawdawdf add !hardQuestion")
+                        questionMap[question.numQuestion] = question
+                    }
+                } else if (question.hardQuestion) {
+                    if (existingHardQuestion == null || question.lvlTranslate > existingHardQuestion.lvlTranslate) {
+                        com.tpov.schoolquiz.presentation.network.event.log("dawdawdf add hardQuestion")
+                        questionHardMap[question.numQuestion] = question
+                    }
                 }
             }
 
-            val filteredQuestionList: List<QuestionEntity> = questionMap.values.toList()
+            var filteredQuestionList: List<QuestionEntity> =
+                questionMap.values.toList() + questionHardMap.values.toList()
             var i = filteredQuestionList.size
             Thread {
+
+                val userLanguage: String = Locale.getDefault().language
+                val trueQuestionsMap = mutableMapOf<Int, QuestionEntity>()
+                val falseQuestionsMap = mutableMapOf<Int, QuestionEntity>()
+
+                filteredQuestionList
+                    .filter { it.language == userLanguage || it.language.isEmpty() }
+                    .forEach { question ->
+                        if (question.hardQuestion) {
+                            trueQuestionsMap[question.numQuestion] = question
+                        } else {
+                            falseQuestionsMap[question.numQuestion] = question
+                        }
+                    }
+
+                val filteredQuestions = mutableListOf<QuestionEntity>()
+                filteredQuestions.addAll(trueQuestionsMap.values)
+                filteredQuestions.addAll(falseQuestionsMap.values)
+
+
+
+
                 translateToUserLanguage(filteredQuestionList).forEach {
-                    viewModel.insertQuestion(it)
+                    viewModel.insertQuestion(it.copy(id = null))
                     com.tpov.schoolquiz.presentation.network.event.log("dawdawdf $i")
                     i--
                     if (i == 0) context.runOnUiThread {
@@ -585,7 +626,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                     for (item in languageItems) {
                         val parts = item.split("-") // Разделите элемент на ключ и значение
                         if (parts.size == 2) {
-                            val language = parts[0]
+                            val language = parts[0].toLowerCase()
                             val value = parts[1].toIntOrNull()
                             if (value != null) {
                                 languageMap[language] =
@@ -618,11 +659,11 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                         position: Int,
                         id: Long
                     ) {
-                        val selectedLanguage = spListPopup1.selectedItem.toString()
+                        val selectedLanguage =
+                            spListPopup1.selectedItem.toString().lowercase(Locale.ROOT)
                         val selectedValue = languageMap[selectedLanguage]
                         if (selectedValue != null) {
                             tvPopup1.text = selectedValue.toString()
-
                         }
                     }
 

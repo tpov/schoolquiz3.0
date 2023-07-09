@@ -236,7 +236,7 @@ class CreateQuestionDialog : DialogFragment() {
                     } catch (e: Exception) {
                         0
                     },
-                    getTpovId().toString()
+                    getTpovId().toString() + "|"
                 )
             )
         }
@@ -244,6 +244,35 @@ class CreateQuestionDialog : DialogFragment() {
         // Создание QuizEntity
         val nameQuiz = dialogView.quiz_title.text.toString()
         val currentTime = TimeManager.getCurrentTime()
+
+        val questionMap: MutableMap<Int, MutableSet<String>> = mutableMapOf()
+
+// Перебираем вопросы и заполняем карту, в которой ключ - номер вопроса, значение - множество языков
+        for (question in questions) {
+            val num = question.numQuestion
+            val language = question.language
+
+            log("wd23 num:$num, language:$language")
+            if (num != null && language != null) {
+
+                log("wd23 оба значение != null идем дальше")
+                val languages = questionMap.getOrDefault(num, mutableSetOf())
+                languages.add(language)
+                log("wd23 непонятная переменна languages:$languages")
+                questionMap[num] = languages
+                log("wd23 теперь questionMap:$questionMap")
+            } else
+                log("wd23 эти переменные содержат null")
+        }
+
+// Находим пересечение множеств языков для всех номеров вопросов
+        val commonLanguages = questionMap.values.reduce { acc, set -> acc.intersect(set).toMutableSet() }
+        log("wd23 commonLanguages: $commonLanguages")
+val profileLvlTranslate = mainActivityViewModel.getProfile().translater
+// Создаем строку в необходимом формате
+        val questionLang = commonLanguages.joinToString("|") { "$it-$profileLvlTranslate" }
+
+        log("wd23 questionLang: $questionLang")
 
         if (idQuiz != -1) mainActivityViewModel.deleteQuestion(idQuiz)
 
@@ -276,8 +305,8 @@ class CreateQuestionDialog : DialogFragment() {
             true,
             if (this.idQuiz == -1) getTpovId()
             else (mainActivityViewModel.getQuizById(this.idQuiz).tpovId),
-            if (this.idQuiz == -1) findLanguageWithMinLevel(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz))
-            else findLanguageWithMinLevel(mainActivityViewModel.getQuestionListByIdQuiz(idQuiz))
+            if (this.idQuiz == -1) questionLang
+            else (mainActivityViewModel.getQuizById(this.idQuiz).languages)
         )
         mainActivityViewModel.removePlaceInUserQuiz()
 
