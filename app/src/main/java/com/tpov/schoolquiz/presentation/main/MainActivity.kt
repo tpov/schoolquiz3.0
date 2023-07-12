@@ -71,7 +71,7 @@ import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
-import com.tpov.userguide.Userguide
+import com.tpov.userguide.UserGuide
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import java.text.NumberFormat
@@ -129,43 +129,27 @@ class MainActivity : AppCompatActivity() {
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
         val versionCode: Int = pInfo.versionCode
-        val userguide = Userguide(this)
+
+        val userguide = UserGuide(this)
         userguide.addGuideNewVersion(
             "SchoolQuiz v${versionName}",
-            "This is alfa test"
+            "This is alfa test",
+            icon = getDrawable(R.mipmap.ic_launcher),
+            video = "https://mcs.sec/sample-video.mp4"
         )
-
-        binding.imbManu.setOnClickListener {
-            binding.drawerLayout.openDrawer(GravityCompat.START)
-        }
 
         userguide.addGuide(
             findViewById(R.id.menu_network),
             "This is network",
             "Network",
-            null,
-            null,
+            icon = getDrawable(R.drawable.ic_settings),
             callback = {
-                log("setButtonNavListener() menu_network")
-                val user = FirebaseAuth.getInstance()
-                if (user.currentUser != null) {
-                    log("setButtonNavListener() Аккаунт зареган")
-                    Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
-                        .show()
-
-                    FragmentManager.setFragment(ProfileFragment.newInstance(), this)
-                } else {
-
-                    log("setButtonNavListener() Аккаунт не зареган")
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Аккаунт не найден, авторизуйтесь.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
-                }
+                startProfile()
             })
 
+        binding.imbManu.setOnClickListener {
+            binding.drawerLayout.openDrawer(GravityCompat.START)
+        }
         supportActionBar?.hide()
         viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
 
@@ -720,7 +704,7 @@ class MainActivity : AppCompatActivity() {
 
         try {
             val profile = viewModel.getProfile()
-            val userguide = Userguide(this)
+            val userguide = UserGuide(this)
 
             viewModel.updateProfileUseCase(
                 profile.copy(
@@ -934,7 +918,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_enter) -> {
-
                     SetItemMenu.setNetworkMenu(
                         binding, MENU_PROFILE, this,
                         profile.pointsSkill ?: 0,
@@ -1203,29 +1186,48 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 R.id.menu_network -> {
-
-                    log("setButtonNavListener() menu_network")
-                    val user = FirebaseAuth.getInstance()
-                    if (user.currentUser != null) {
-                        log("setButtonNavListener() Аккаунт зареган")
-                        Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
-                            .show()
-
-                        FragmentManager.setFragment(ProfileFragment.newInstance(), this)
-                    } else {
-
-                        log("setButtonNavListener() Аккаунт не зареган")
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Аккаунт не найден, авторизуйтесь.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
-                    }
+                    startProfile()
                 }
             }
             true
         }
+    }
+
+    private fun startProfile() {
+        val profile = viewModel.getProfile()
+        val qualification = Qualification(
+            profile.tester ?: 0,
+            profile.moderator ?: 0,
+            profile.sponsor ?: 0,
+            profile.translater ?: 0,
+            profile.admin ?: 0,
+            profile.developer ?: 0
+        )
+        SetItemMenu.setNetworkMenu(
+            binding, MENU_PROFILE, this,
+            viewModel.getProfileSkill() ?: 0,
+            qualification
+        )
+        log("setButtonNavListener() menu_network")
+        val user = FirebaseAuth.getInstance()
+        if (user.currentUser != null) {
+            log("setButtonNavListener() Аккаунт зареган")
+            Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
+                .show()
+
+            FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+
+        } else {
+
+            log("setButtonNavListener() Аккаунт не зареган")
+            Toast.makeText(
+                this@MainActivity,
+                "Аккаунт не найден, авторизуйтесь.",
+                Toast.LENGTH_LONG
+            ).show()
+            FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
+        }
+
     }
 
     fun log(massage: String) {

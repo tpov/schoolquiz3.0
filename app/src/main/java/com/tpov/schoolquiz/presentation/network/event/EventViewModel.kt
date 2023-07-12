@@ -97,7 +97,7 @@ class EventViewModel @Inject constructor(
                             getProfileUseCase(
                                 tpovId
                             ).languages!!.split("|")
-                        },\n     ${getQuizByIdUseCase(question.idQuiz)}"
+                        },\n ${getQuizByIdUseCase(question.idQuiz)}"
                     )
                     question.language !in getProfileUseCase(tpovId).languages!!.split("|") ||
                             question.lvlTranslate < (getProfileUseCase(tpovId).translater)!! - 50
@@ -172,6 +172,7 @@ class EventViewModel @Inject constructor(
 
             }
 
+            log("dwadwad21: ${it.nameQuestion}")
             if (it.nameQuestion == "") deleteQuestionUseCase(it.id!!)
             else insertQuestionUseCase(
                 it.copy(

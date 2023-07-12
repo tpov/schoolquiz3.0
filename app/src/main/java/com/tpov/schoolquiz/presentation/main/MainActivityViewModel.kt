@@ -106,7 +106,6 @@ class MainActivityViewModel @Inject constructor(
         if (getTpovId() == -1) insertProfile()
         getProfileFlowUseCase(getTpovId())
         getQuiz8FBUseCase()
-        getQuestion8FBUseCase()
     }
 
     fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {

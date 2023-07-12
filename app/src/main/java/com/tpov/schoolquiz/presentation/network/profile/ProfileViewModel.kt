@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.domain.GetQuiz4FBUseCase
 import com.tpov.schoolquiz.domain.GetQuiz5FBUseCase
 import com.tpov.schoolquiz.domain.GetQuiz6FBUseCase
 import com.tpov.schoolquiz.domain.GetQuiz7FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz8FBUseCase
 import com.tpov.schoolquiz.domain.GetSynthUseCase
 import com.tpov.schoolquiz.domain.GetTpovIdFBUseCase
 import com.tpov.schoolquiz.domain.GetTranslateUseCase
@@ -43,6 +44,7 @@ class ProfileViewModel @Inject constructor(
     private val getQuiz5FBUseCase: GetQuiz5FBUseCase,
     private val getQuiz6FBUseCase: GetQuiz6FBUseCase,
     private val getQuiz7FBUseCase: GetQuiz7FBUseCase,
+    private val getQuiz8FBUseCase: GetQuiz8FBUseCase,
     private val getSynthUseCase: GetSynthUseCase,
     private val setQuizEventUseCase: SetQuizEventUseCase,
     private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
@@ -99,6 +101,7 @@ class ProfileViewModel @Inject constructor(
         getQuiz5FBUseCase()
         getQuiz6FBUseCase()
         getQuiz7FBUseCase()
+        getQuiz8FBUseCase()
     }
 
     fun getTranslate() {

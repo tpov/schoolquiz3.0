@@ -12,7 +12,21 @@ import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
+import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
+import com.tpov.schoolquiz.domain.DeleteQuizUseCase
+import com.tpov.schoolquiz.domain.GetProfileUseCase
+import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
+import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
+import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
+import com.tpov.schoolquiz.domain.GetQuizListUseCase
+import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
+import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuestionUseCase
+import com.tpov.schoolquiz.domain.InsertQuizUseCase
+import com.tpov.schoolquiz.domain.UpdateProfileUseCase
+import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
+import com.tpov.schoolquiz.domain.UpdateQuizUseCase
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -90,13 +104,15 @@ class QuestionViewModel @Inject constructor(
 
     private fun initVariable() {
 
-        questionDetailListThis.forEach {
+//todo fix crash after answer oldQuestion
+        //questionDetailListThis.forEach {
+        //if (it.hardQuiz == this.hardQuestion) {
+        //    if (getUpdateAnswer(it.codeAnswer)) initOldQuestionDetail(it)
+        //}
+        //}
+        //if (createQuestionDetail) initNewQuestionDetail()
 
-            if (it.hardQuiz == this.hardQuestion) {
-                if (getUpdateAnswer(it.codeAnswer)) initOldQuestionDetail(it)
-            }
-        }
-        if (createQuestionDetail) initNewQuestionDetail()
+        initNewQuestionDetail() //delete after fix
     }
 
     private fun initNewQuestionDetail() {
@@ -406,7 +422,6 @@ class QuestionViewModel @Inject constructor(
         else setFalseAnswer()
     }
 
-
     private fun getLeftAnswer(codeAnswer: String?): Int {
         if (codeAnswer == "" || codeAnswer == null) return numQuestion
         var i = 0
@@ -562,12 +577,20 @@ class QuestionViewModel @Inject constructor(
                 }
 
                 if (!it.hardQuiz) {
-                    if (((100 * i) / j) > maxPersent) maxPersent = ((100 * i) / j)
-                    perc.add(((100 * i) / j))
+                    try {
+                        if (((100 * i) / j) > maxPersent) maxPersent = ((100 * i) / j)
+                        perc.add(((100 * i) / j))
+                    } catch (e: Exception) {
+                        perc.add(0)
+                    }
                 } else {
-                    if ((((100 * i) / j) / 5) + 100 > maxPersent) maxPersent =
-                        (((100 * i) / j) / 5) + 100
-                    perc.add((((100 * i) / j) / 5) + 100)
+                    try {
+                        if ((((100 * i) / j) / 5) + 100 > maxPersent) maxPersent =
+                            (((100 * i) / j) / 5) + 100
+                        perc.add((((100 * i) / j) / 5) + 100)
+                    } catch (e: Exception) {
+                        perc.add(0)
+                    }
                 }
 
                 var j = 0

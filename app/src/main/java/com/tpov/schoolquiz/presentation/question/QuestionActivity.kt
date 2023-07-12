@@ -69,6 +69,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this, viewModelFactory)[QuestionViewModel::class.java]
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        supportActionBar?.hide()
         synthInputData()
         viewModel.synthWithDB(this)
         viewModel.shouldCloseLiveData.observe(this) {
@@ -175,6 +176,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.idQuiz = intent.getIntExtra(ID_QUIZ, 0)
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
+
         if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event >= 5) binding.viewBackground.background = getDrawable(R.mipmap.back_question_event5)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =

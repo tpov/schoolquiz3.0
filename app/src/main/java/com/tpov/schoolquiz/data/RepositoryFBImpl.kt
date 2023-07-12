@@ -343,7 +343,7 @@ class RepositoryFBImpl @Inject constructor(
                     if (quiz != null && versionQuiz < quiz.versionQuiz) {
                         if (quiz.event != 5 || TimeManager.getDaysBetweenDates(
                                 quiz.data, TimeManager.getCurrentTime()
-                            )!! < 90
+                            ) < 90
                         ) {
                             savePictureToLocalDirectory(
                                 quiz.picture
@@ -375,14 +375,14 @@ class RepositoryFBImpl @Inject constructor(
                                     1 -> FirebaseDatabase.getInstance()
                                         .getReference("question_detail1/${getTpovId()}")
 
-                                    2 -> FirebaseDatabase.getInstance().getReference("")
-                                    3 -> FirebaseDatabase.getInstance().getReference("")
-                                    4 -> FirebaseDatabase.getInstance().getReference("")
-                                    5 -> FirebaseDatabase.getInstance().getReference("")
-                                    6 -> FirebaseDatabase.getInstance().getReference("")
-                                    7 -> FirebaseDatabase.getInstance().getReference("")
-                                    8 -> FirebaseDatabase.getInstance().getReference("")
-                                    else -> FirebaseDatabase.getInstance().getReference("")
+                                    2 -> FirebaseDatabase.getInstance().getReference("question_detail2")
+                                    3 -> FirebaseDatabase.getInstance().getReference("question_detail3")
+                                    4 -> FirebaseDatabase.getInstance().getReference("question_detail4")
+                                    5 -> FirebaseDatabase.getInstance().getReference("question_detail5")
+                                    6 -> FirebaseDatabase.getInstance().getReference("question_detail6")
+                                    7 -> FirebaseDatabase.getInstance().getReference("question_detail7")
+                                    8 -> FirebaseDatabase.getInstance().getReference("question_detail8")
+                                    else -> FirebaseDatabase.getInstance().getReference("question_detail8")
                                 }
                                 getQuestion(refQuestion, data.key!!)
                                 getQuestionDetail(refQuestionDetail, data.key!!)
@@ -523,10 +523,9 @@ class RepositoryFBImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuestionDetail2() snapshot: ${snapshot.key}")
                 for (user in snapshot.children) {
-                    log("getQuestionDetail2() user: ${user.key}")
-                    if (user.key == idQuiz && dao.getQuestionDetailList().size != user.childrenCount.toInt()) {
+                    if ((user.key == idQuiz || idQuiz == "-1") && dao.getQuestionDetailList().size != user.childrenCount.toInt()) {
                         dao.deleteQuestionDetailByIdQuiz(idQuiz.toInt())
-                        for (idQuizSnap in user.children) {                                             //
+                        for (idQuizSnap in user.children) {
                             log("getQuestionDetail2() idQuizSnap: ${idQuizSnap.key}")
                             val questionDetailEntity =
                                 idQuizSnap.getValue(QuestionDetail::class.java)
@@ -599,20 +598,20 @@ class RepositoryFBImpl @Inject constructor(
                         val updatedProfile = dao.getProfileByFirebaseId(
                             FirebaseAuth.getInstance().currentUser?.uid ?: ""
                         ).copy(
-                                addPointsGold = profile.addPoints.addGold,
-                                addPointsNolics = profile.addPoints.addNolics,
-                                addTrophy = profile.addPoints.addTrophy,
-                                addPointsSkill = profile.addPoints.addSkill,
-                                addPointsSkillInSeason = profile.addPoints.addSkillInSesone,
-                                gamer = profile.qualification.gamer,
-                                sponsor = profile.qualification.sponsor,
-                                tester = profile.qualification.tester,
-                                translater = profile.qualification.translater,
-                                moderator = profile.qualification.moderator,
-                                admin = profile.qualification.admin,
-                                developer = profile.qualification.developer,
-                                dateSynch = TimeManager.getCurrentTime()
-                            )
+                            addPointsGold = profile.addPoints.addGold,
+                            addPointsNolics = profile.addPoints.addNolics,
+                            addTrophy = profile.addPoints.addTrophy,
+                            addPointsSkill = profile.addPoints.addSkill,
+                            addPointsSkillInSeason = profile.addPoints.addSkillInSesone,
+                            gamer = profile.qualification.gamer,
+                            sponsor = profile.qualification.sponsor,
+                            tester = profile.qualification.tester,
+                            translater = profile.qualification.translater,
+                            moderator = profile.qualification.moderator,
+                            admin = profile.qualification.admin,
+                            developer = profile.qualification.developer,
+                            dateSynch = TimeManager.getCurrentTime()
+                        )
                         log("getProfile ${dao.updateProfiles(updatedProfile)}")
                         if (dao.updateProfiles(updatedProfile) > 0) synthLiveData.value = ++synth
                     }
@@ -715,7 +714,7 @@ class RepositoryFBImpl @Inject constructor(
                     log("quiz.data: ${quiz.data}, TimeManager.getCurrentTime(): ${TimeManager.getCurrentTime()}")
                     if (TimeManager.getDaysBetweenDates(
                             quiz.data, TimeManager.getCurrentTime()
-                        )!! > 90
+                        ) > 90
                     ) {
                         dao.deleteQuizById(quiz.id!!)
                         dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
@@ -836,12 +835,16 @@ class RepositoryFBImpl @Inject constructor(
                                 delay(100) // заменяем Thread.sleep() на delay()
                                 i++
 
-                                if (i == 300) Toast.makeText(
-                                    context,
-                                    "Если сервер не освободится в течении 3 минут - будет совершена принудительная синхронизация, возможно она решит проблему",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                if (i == 600 * 3) break
+                                if (i == 300) try {
+                                    Toast.makeText(
+                                        context,
+                                        "Если сервер не освободится в течении 1 минут - будет совершена принудительная синхронизация, возможно она решит проблему",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                } catch (e: Exception) {
+
+                                }
+                                if (i == 200 * 3) break
                             }
 
                             val players =
@@ -857,7 +860,6 @@ class RepositoryFBImpl @Inject constructor(
                             val quizRatingMap = mapOf(
                                 "rating" to quiz.rating, "stars" to quiz.starsAll
                             )
-
 
                             log("setQuizData() playersRef quizDB перебираем: $quiz")
                             if (quiz.event == 1) {
@@ -937,6 +939,8 @@ class RepositoryFBImpl @Inject constructor(
                                 if (quiz.id!! >= 100) {
                                     quizRef3.child(quiz.id.toString()).setValue(quiz)
                                         .addOnSuccessListener {
+                                            quizRef2.child("${tpovId}/${quiz.id.toString()}")
+                                                .setValue(null)
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
@@ -971,6 +975,7 @@ class RepositoryFBImpl @Inject constructor(
                                 if (quiz.id!! >= 100) {
                                     quizRef4.child(quiz.id.toString()).setValue(quiz)
                                         .addOnSuccessListener {
+                                            quizRef3.child(quiz.id.toString()).setValue(null)
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
@@ -1000,209 +1005,119 @@ class RepositoryFBImpl @Inject constructor(
                                     dao.insertQuiz(quiz)
                                     dao.deleteQuizById(oldId)
                                 }
+
                             } else if (quiz.event == 5) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef5.child(quiz.id.toString()).setValue(quiz)
-                                        .addOnSuccessListener {
-                                            quizRef5.child("quiz5/$idQuiz/starsAllPlayer").get()
-                                                .addOnSuccessListener { dataSnapshotStars ->
-                                                    val starsAllPlayer =
-                                                        dataSnapshotStars.getValue(Int::class.java)
-
-                                                    quizRef5.child("quiz5/$idQuiz/ratingPlayer")
-                                                        .get()
-                                                        .addOnSuccessListener { dataSnapshotRating ->
-                                                            val ratingPlayer =
-                                                                dataSnapshotRating.getValue(Int::class.java)
-
-                                                            if (starsAllPlayer != null && ratingPlayer != null) {
-                                                                // Установка значений starsAllPlayer и ratingPlayer в объект quiz
-                                                                val updatedQuiz = quiz.copy(
-                                                                    starsAllPlayer = starsAllPlayer,
-                                                                    ratingPlayer = ratingPlayer
-                                                                )
-
-                                                                if (quiz.stars != 0) {
-                                                                    playersQuiz.child("${quiz.id}/${tpovId}")
-                                                                        .updateChildren(
-                                                                            quizRatingMap
-                                                                        )
-                                                                }
-
-                                                                SharedPreferencesManager.setVersionQuiz(
-                                                                    idQuiz.toString(),
-                                                                    quiz.versionQuiz
-                                                                )
-                                                            } else {
-                                                                // Обработка случая, когда значения не были получены
-                                                            }
-                                                        }.addOnFailureListener { error ->
-                                                            // Обработка ошибки при получении значения ratingPlayer
-                                                        }
-                                                }.addOnFailureListener { error ->
-                                                    // Обработка ошибки при получении значения starsAllPlayer
-                                                }
-                                        }.addOnFailureListener { error ->
-                                            // Обработка ошибки при сохранении объекта quiz
-                                        }
-                                } else {
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-
-                                    quizRef5.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        quizRef5.child("quiz5/$idQuiz/starsAllPlayer").get()
-                                            .addOnSuccessListener { dataSnapshotStars ->
-                                                val starsAllPlayer =
-                                                    dataSnapshotStars.getValue(Int::class.java)
-
-                                                quizRef5.child("quiz5/$idQuiz/ratingPlayer").get()
-                                                    .addOnSuccessListener { dataSnapshotRating ->
-                                                        val ratingPlayer =
-                                                            dataSnapshotRating.getValue(Int::class.java)
-
-                                                        if (starsAllPlayer != null && ratingPlayer != null) {
-                                                            if (quiz.stars != 0) {
-                                                                playersQuiz.child("${quiz.id}/${tpovId}")
-                                                                    .updateChildren(quizRatingMap)
-                                                            }
-
-                                                            SharedPreferencesManager.setVersionQuiz(
-                                                                idQuiz.toString(), quiz.versionQuiz
-                                                            )
-
-                                                            dao.getQuestionByIdQuiz(oldId)
-                                                                .forEach { item ->
-                                                                    dao.insertQuestion(
-                                                                        item.copy(
-                                                                            idQuiz = quiz.id!!
-                                                                        )
-                                                                    )
-                                                                }
-                                                            dao.getQuestionDetailByIdQuiz(oldId)
-                                                                .forEach { item ->
-                                                                    dao.insertQuizDetail(
-                                                                        item.copy(
-                                                                            idQuiz = quiz.id!!
-                                                                        )
-                                                                    )
-                                                                }
-                                                            dao.deleteQuestionDetailByIdQuiz(oldId)
-                                                            dao.deleteQuestionByIdQuiz(oldId)
-                                                            dao.insertQuiz(quiz)
-                                                            dao.deleteQuizById(oldId)
-                                                        } else {
-                                                            // Обработка случая, когда значения не были получены
-                                                        }
-                                                    }.addOnFailureListener { error ->
-                                                        // Обработка ошибки при получении значения ratingPlayer
+                                    quizRef5.child("${quiz.id.toString()}")
+                                        .addListenerForSingleValueEvent(object :
+                                            ValueEventListener {
+                                            override fun onDataChange(snapshot: DataSnapshot) {
+                                                val oldQuiz =
+                                                    snapshot.getValue(QuizEntity::class.java)
+                                                quizRef5.child(quiz.id.toString()).setValue(
+                                                    quiz.copy(
+                                                        rating = oldQuiz?.rating ?: 0,
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                    )
+                                                )
+                                                    .addOnSuccessListener {
+                                                        quizRef4.child(quiz.id.toString())
+                                                            .setValue(null)
+                                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                                            .updateChildren(quizRatingMap)
                                                     }
-                                            }.addOnFailureListener { error ->
-                                                // Обработка ошибки при получении значения starsAllPlayer
+
+                                                SharedPreferencesManager.setVersionQuiz(
+                                                    idQuiz.toString(), quiz.versionQuiz
+                                                )
                                             }
-                                    }.addOnFailureListener { error ->
-                                        // Обработка ошибки при сохранении объекта quiz
-                                    }
+
+                                            override fun onCancelled(error: DatabaseError) {
+
+                                            }
+
+                                        })
                                 }
+
                             } else if (quiz.event == 6) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef6.child(quiz.id.toString()).setValue(quiz)
-                                        .addOnSuccessListener {
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
+                                    quizRef6.child("${quiz.id.toString()}")
+                                        .addListenerForSingleValueEvent(object :
+                                            ValueEventListener {
+                                            override fun onDataChange(snapshot: DataSnapshot) {
+                                                val oldQuiz =
+                                                    snapshot.getValue(QuizEntity::class.java)
+                                                quizRef6.child(quiz.id.toString()).setValue(
+                                                    quiz.copy(
+                                                        rating = oldQuiz?.rating ?: 0,
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                    )
+                                                )
 
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(), quiz.versionQuiz
-                                    )
-                                } else {
+                                                SharedPreferencesManager.setVersionQuiz(
+                                                    idQuiz.toString(), quiz.versionQuiz
+                                                )
+                                            }
 
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef6.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
+                                            override fun onCancelled(error: DatabaseError) {
 
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
+                                            }
+
+                                        })
                                 }
-                            } else if (quiz.event == 7) {
+
+                            }else if (quiz.event == 7) {
                                 if (quiz.id!! >= 100) {
-                                    quizRef7.child(quiz.id.toString()).setValue(quiz)
-                                        .addOnSuccessListener {
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
+                                    quizRef7.child("${quiz.id.toString()}")
+                                        .addListenerForSingleValueEvent(object :
+                                            ValueEventListener {
+                                            override fun onDataChange(snapshot: DataSnapshot) {
+                                                val oldQuiz =
+                                                    snapshot.getValue(QuizEntity::class.java)
+                                                quizRef7.child(quiz.id.toString()).setValue(
+                                                    quiz.copy(
+                                                        rating = oldQuiz?.rating ?: 0,
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                    )
+                                                )
 
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(), quiz.versionQuiz
-                                    )
-                                } else {
+                                                SharedPreferencesManager.setVersionQuiz(
+                                                    idQuiz.toString(), quiz.versionQuiz
+                                                )
+                                            }
 
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef7.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
+                                            override fun onCancelled(error: DatabaseError) {
 
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
+                                            }
+
+                                        })
                                 }
+
                             } else if (quiz.event == 8) {
                                 if (quiz.id!! >= 100) {
-                                    log("setQuizData() event8 просто сохраняем на сервер")
-                                    quizRef8.child(quiz.id.toString()).setValue(quiz)
-                                        .addOnSuccessListener {
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(), quiz.versionQuiz
-                                    )
-                                } else {
+                                    quizRef8.child("${quiz.id.toString()}")
+                                        .addListenerForSingleValueEvent(object :
+                                            ValueEventListener {
+                                            override fun onDataChange(snapshot: DataSnapshot) {
+                                                val oldQuiz =
+                                                    snapshot.getValue(QuizEntity::class.java)
+                                                quizRef8.child(quiz.id.toString()).setValue(
+                                                    quiz.copy(
+                                                        rating = oldQuiz?.rating ?: 0,
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                    )
+                                                )
 
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef8.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
+                                                SharedPreferencesManager.setVersionQuiz(
+                                                    idQuiz.toString(), quiz.versionQuiz
+                                                )
+                                            }
 
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
+                                            override fun onCancelled(error: DatabaseError) {
+
+                                            }
+
+                                        })
                                 }
                             }
 
@@ -1460,95 +1375,95 @@ class RepositoryFBImpl @Inject constructor(
         } else {
             log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId")
             profileRef.child("$tpovId").addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(profileSnapshot: DataSnapshot) {
+                override fun onDataChange(profileSnapshot: DataSnapshot) {
 
-                        log(
-                            "setProfile() 255: ${
-                                profileSnapshot.child("addPoints").child("addNolics")
-                                    .getValue(Int::class.java)
-                            }"
-                        )
+                    log(
+                        "setProfile() 255: ${
+                            profileSnapshot.child("addPoints").child("addNolics")
+                                .getValue(Int::class.java)
+                        }"
+                    )
 
-                        try {
-                            profileRef.child(tpovId.toString()).setValue(
-                                profile.copy(
+                    try {
+                        profileRef.child(tpovId.toString()).setValue(
+                            profile.copy(
 
-                                    translater = profileSnapshot.child("qualification")
-                                        .child("translater").getValue(Int::class.java),
+                                translater = profileSnapshot.child("qualification")
+                                    .child("translater").getValue(Int::class.java),
 
-                                    admin = profileSnapshot.child("qualification").child("admin")
-                                        .getValue(Int::class.java),
+                                admin = profileSnapshot.child("qualification").child("admin")
+                                    .getValue(Int::class.java),
 
-                                    developer = profileSnapshot.child("qualification")
-                                        .child("developer").getValue(Int::class.java),
+                                developer = profileSnapshot.child("qualification")
+                                    .child("developer").getValue(Int::class.java),
 
-                                    moderator = profileSnapshot.child("qualification")
-                                        .child("moderator").getValue(Int::class.java),
+                                moderator = profileSnapshot.child("qualification")
+                                    .child("moderator").getValue(Int::class.java),
 
-                                    sponsor = profileSnapshot.child("qualification").child("sponsor")
-                                        .getValue(Int::class.java),
+                                sponsor = profileSnapshot.child("qualification").child("sponsor")
+                                    .getValue(Int::class.java),
 
-                                    tester = profileSnapshot.child("qualification").child("tester")
-                                        .getValue(Int::class.java),
+                                tester = profileSnapshot.child("qualification").child("tester")
+                                    .getValue(Int::class.java),
 
-                                    addTrophy = try {
-                                        if (profile.addTrophy == "") profileSnapshot.child("addPoints")
-                                            .child("addTrophy").getValue(String::class.java) else ""
-                                    } catch (e: Exception) {
-                                        profileSnapshot.child("addPoints").child("addTrophy")
-                                            .getValue(String::class.java)
-                                    },
+                                addTrophy = try {
+                                    if (profile.addTrophy == "") profileSnapshot.child("addPoints")
+                                        .child("addTrophy").getValue(String::class.java) else ""
+                                } catch (e: Exception) {
+                                    profileSnapshot.child("addPoints").child("addTrophy")
+                                        .getValue(String::class.java)
+                                },
 
-                                    addPointsNolics = try {
-                                        if (profile.addPointsNolics == 0) profileSnapshot.child("addPoints")
-                                            .child("addNolics").getValue(Int::class.java) else 0
-                                    } catch (e: Exception) {
-                                        profileSnapshot.child("addPoints").child("addNolics")
-                                            .getValue(Int::class.java)
-                                    },
+                                addPointsNolics = try {
+                                    if (profile.addPointsNolics == 0) profileSnapshot.child("addPoints")
+                                        .child("addNolics").getValue(Int::class.java) else 0
+                                } catch (e: Exception) {
+                                    profileSnapshot.child("addPoints").child("addNolics")
+                                        .getValue(Int::class.java)
+                                },
 
-                                    addPointsGold = try {
-                                        if (profile.addPointsGold == 0) profileSnapshot.child("addPoints")
-                                            .child("addGold").getValue(Int::class.java) else 0
-                                    } catch (e: Exception) {
-                                        profileSnapshot.child("addPoints").child("addGold")
-                                            .getValue(Int::class.java)
-                                    },
+                                addPointsGold = try {
+                                    if (profile.addPointsGold == 0) profileSnapshot.child("addPoints")
+                                        .child("addGold").getValue(Int::class.java) else 0
+                                } catch (e: Exception) {
+                                    profileSnapshot.child("addPoints").child("addGold")
+                                        .getValue(Int::class.java)
+                                },
 
-                                    addPointsSkill = try {
-                                        if (profile.addPointsSkill == 0) profileSnapshot.child("addPoints")
-                                            .child("addSkill").getValue(Int::class.java) else 0
-                                    } catch (e: Exception) {
-                                        profileSnapshot.child("addPoints").child("addSkill")
-                                            .getValue(Int::class.java)
-                                    },
+                                addPointsSkill = try {
+                                    if (profile.addPointsSkill == 0) profileSnapshot.child("addPoints")
+                                        .child("addSkill").getValue(Int::class.java) else 0
+                                } catch (e: Exception) {
+                                    profileSnapshot.child("addPoints").child("addSkill")
+                                        .getValue(Int::class.java)
+                                },
 
-                                    addPointsSkillInSeason = try {
-                                        if (profile.addPointsSkillInSeason == 0) profileSnapshot.child("addPoints")
-                                            .child("addSkillInSesone").getValue(Int::class.java) else 0
-                                    } catch (e: Exception) {
-                                        profileSnapshot.child("addPoints").child("addSkillInSesone")
-                                            .getValue(Int::class.java)
-                                    }
-
-                                ).toProfile()
-                            ).addOnSuccessListener {
-                                    synthLiveData.value = ++synth
-                                }.addOnFailureListener {
-                                    log("setProfile() $it")
-                                    synthLiveData.value = ++synth
+                                addPointsSkillInSeason = try {
+                                    if (profile.addPointsSkillInSeason == 0) profileSnapshot.child("addPoints")
+                                        .child("addSkillInSesone").getValue(Int::class.java) else 0
+                                } catch (e: Exception) {
+                                    profileSnapshot.child("addPoints").child("addSkillInSesone")
+                                        .getValue(Int::class.java)
                                 }
-                        } catch (e: Exception) {
+
+                            ).toProfile()
+                        ).addOnSuccessListener {
+                            synthLiveData.value = ++synth
+                        }.addOnFailureListener {
+                            log("setProfile() $it")
                             synthLiveData.value = ++synth
                         }
-
+                    } catch (e: Exception) {
+                        synthLiveData.value = ++synth
                     }
 
-                    override fun onCancelled(error: DatabaseError) {
+                }
 
-                        log("setProfile() error24 $error")
-                    }
-                })
+                override fun onCancelled(error: DatabaseError) {
+
+                    log("setProfile() error24 $error")
+                }
+            })
         }
 
     }

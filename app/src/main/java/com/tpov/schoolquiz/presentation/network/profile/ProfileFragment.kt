@@ -69,7 +69,7 @@ class ProfileFragment : BaseFragment() {
         }
         viewModel.synth.observe(viewLifecycleOwner) { number ->
                 log("fun viewModel.getSynth.observe: $number")
-                when (number) {
+             when (number) { //if (SharedPreferencesManager.canSyncProfile())
                     1 -> {
                         if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
                             viewModel.setProfile()

@@ -81,8 +81,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.getProfile()
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
-
-
         tv_number_place_user_quiz.text = mainViewModel.getCountPlaceForUserQuiz().toString()
         if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
             binding.fabAddItem.isClickable = false
@@ -95,16 +93,19 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 binding.fabSearch.visibility = View.GONE
                 binding.fabBox.visibility = View.GONE
             }
+
             5 -> {
                 binding.fabSearch.visibility = View.VISIBLE
                 binding.fabAddItem.visibility = View.GONE
                 binding.fabBox.visibility = View.GONE
             }
+
             8 -> {
                 binding.fabBox.visibility = View.VISIBLE
                 binding.fabAddItem.visibility = View.GONE
                 binding.fabSearch.visibility = View.GONE
             }
+
             else -> {
                 binding.fabBox.visibility = View.GONE
                 binding.fabAddItem.visibility = View.GONE
@@ -124,7 +125,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
-            val filteredList = quizList.filter { it.event == isMyQuiz && it.tpovId == getTpovId()}
+            val filteredList =
+                quizList.filter { if (it.event == 8) true else it.event == isMyQuiz && it.tpovId == getTpovId() }
             val sortedList = if (isMyQuiz == 5) {
                 filteredList.sortedBy { it.ratingPlayer }
             } else {
@@ -134,8 +136,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
         mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
 
-            log("fgjesdriofjeskl observe")
-            log("fgjesdriofjeskl it: $it")
+            log("fgjesdriofjeskl observe it: $it")
             tv_number_place_user_quiz.text = it.toString()
             if (it <= 0) {
                 binding.fabAddItem.isClickable = false

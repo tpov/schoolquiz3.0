@@ -23,7 +23,7 @@ import com.tpov.schoolquiz.presentation.custom.CoastValues.COAST_GOOGLE_TRANSLAT
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
+import com.tpov.schoolquiz.secure.Secure.getTranslateKey
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
