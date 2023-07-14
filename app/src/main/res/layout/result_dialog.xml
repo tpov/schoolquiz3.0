@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="300dp"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center"    android:background="@drawable/db_design3_main_90"
+    android:layout_height="230dp"
+    android:layout_gravity="center"
+    android:background="@drawable/back_result"
     android:padding="@dimen/dialog_padding">
 
     <LinearLayout
@@ -22,8 +24,8 @@
                 android:id="@+id/tv_seekBar"
                 android:layout_width="250dp"
                 android:layout_height="30dp"
-                android:gravity="center"
                 android:layout_weight="1"
+                android:gravity="center"
                 android:text="Результат"
                 android:textColor="@color/white" />
 
@@ -48,6 +50,31 @@
                 android:text="0%"
                 android:textColor="@color/white"
                 android:textSize="10dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_nolics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="8dp"
+                android:foregroundGravity="center"
+                android:gravity="center"
+                android:text="100"
+                android:textColor="@color/white"
+                android:textSize="16dp" />
+
+            <ImageView
+                android:id="@+id/imv_nolics"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                app:srcCompat="@drawable/nolics" />
         </LinearLayout>
 
         <ProgressBar
@@ -91,8 +118,9 @@
             android:id="@+id/b_help_translate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/nullColor"
+            android:layout_marginTop="8dp"
             android:visibility="gone"
+            android:background="@color/nullColor"
             android:text="Помочь с переводом" />
 
     </LinearLayout>

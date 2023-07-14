@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <string name="question_light2">Тихий океан більший за Атлантичний океан.</string>
     <string name="question_light3">Суецький канал з`єднує Червоне море та Індійський океан.</string>
     <string name="question_light4">Витік річки Ніл знаходиться в Єгипті.</string>
@@ -115,5 +115,5 @@
     <string name="action_sign_in">Login</string>
     <string name="action_registration">registration</string>
     <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your years</string>
+    <string name="prompt_years">Your years (01.01.2001)</string>
 </resources>

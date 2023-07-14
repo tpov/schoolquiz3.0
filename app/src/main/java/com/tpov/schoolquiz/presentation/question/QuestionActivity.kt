@@ -1,11 +1,16 @@
 package com.tpov.schoolquiz.presentation.question
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.*
 import android.view.animation.Animation
@@ -18,11 +23,16 @@ import androidx.dynamicanimation.animation.SpringForce
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.*
 import com.tpov.schoolquiz.data.Services.MusicService
+import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.ActivityQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.android.synthetic.main.activity_question.*
+import kotlinx.coroutines.*
 import javax.inject.Inject
+import kotlin.math.floor
 
 private const val REQUEST_CODE_CHEAT = 0
 
@@ -54,30 +64,39 @@ class QuestionActivity : AppCompatActivity() {
         component.inject(this)
         super.onCreate(savedInstanceState)
 
+        updateProfile = false
         setContentView(binding.root)
         viewModel = ViewModelProvider(this, viewModelFactory)[QuestionViewModel::class.java]
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        supportActionBar?.hide()
         synthInputData()
         viewModel.synthWithDB(this)
-        viewModel.shouldCloseLiveData.observe(this) { if (it) finish() }
+        viewModel.shouldCloseLiveData.observe(this) {
+            if (it == RESULT_TRANSLATE || it == RESULT_OK) {
+                val resultIntent = Intent()
+                resultIntent.putExtra("translate", it == RESULT_TRANSLATE)
+                resultIntent.putExtra("idQuiz", viewModel.idQuiz)
+
+                setResult(Activity.RESULT_OK, resultIntent)
+                finish()
+            }
+        }
+
         insertQuestionsNewEvent()
         binding.apply {
             if (viewModel.hardQuestion) {
-                viewBackground.setBackgroundResource(R.color.background_hard_question)
                 cheatButton.visibility = View.GONE
             }
+
             trueButton.setOnClickListener {
-
-
                 nextButton()
                 viewModel.trueButton()
                 setStateTimer(true)
                 setVisibleButtonsNext()
             }
+
             falseButton.setOnClickListener {
-
-
                 nextButton()
                 viewModel.falseButton()
                 setStateTimer(true)
@@ -99,29 +118,77 @@ class QuestionActivity : AppCompatActivity() {
             }
 
 
-            prefButton.setOnClickListener {
+            tv_pref.setOnClickListener {
                 setVisibleButtonsPref()
                 prefButton()
             }
-            nextButton.setOnClickListener {
+            tv_next.setOnClickListener {
                 setVisibleButtonsNext()
                 nextButton()
             }
 
+            log("DSEFSE, currentIndex: ${viewModel.currentIndex}")
+            log("DSEFSE, nameQuestion: ${viewModel.questionListThis}")
 
-           binding.questionTextView.text =
-                viewModel.questionListThis[viewModel.currentIndex].nameQuestion
+            try {
+                showTextWithDelay( binding.questionTextView, viewModel.questionListThis[viewModel.currentIndex].nameQuestion, DELAY_SHOW_TEXT)
+            } catch (e: Exception) {
+                Toast.makeText(this@QuestionActivity, "Вопросы не были загружены, попробуйте их перевести", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@QuestionActivity, "Вам начислена компенсация 33% жизней", Toast.LENGTH_LONG).show()
+                viewModel.updateProfileUseCase(
+                    viewModel.getProfile()
+                        .copy(count = viewModel.getProfile().count?.plus(33))
+                )
+                finish()
+            }
         }
         actionBarSettings()
         startService(Intent(this, MusicService::class.java))
         startTimer()
+        visibleCheatButton(viewModel.hardQuestion)
+    }
+
+    private fun showTextWithDelay(textView: TextView, text: String, delayInMillis: Long) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val spannableText = SpannableStringBuilder()
+
+            delay(200)
+            for (char in text) {
+                val start = spannableText.length
+                spannableText.append(char.toString())
+                spannableText.setSpan(
+                    ForegroundColorSpan(Color.WHITE),
+                    start,
+                    start + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                textView.text = spannableText
+                delay(delayInMillis)
+
+                // Возвращаем цвет буквы к исходному (черный в данном случае)
+                spannableText.setSpan(
+                    ForegroundColorSpan(Color.BLACK),
+                    start,
+                    start + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                textView.text = spannableText
+            }
+        }
     }
 
     private fun synthInputData() {
         viewModel.userName = intent.getStringExtra(NAME_USER) ?: "user"
         viewModel.idQuiz = intent.getIntExtra(ID_QUIZ, 0)
-        viewModel.life = intent.getIntExtra(LIFE, 0)
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
+        log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
+
+        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event >= 5) binding.viewBackground.background = getDrawable(R.mipmap.back_question_event5)
+        else {
+            if (!viewModel.hardQuestion) binding.viewBackground.background =
+                getDrawable(R.mipmap.back_question_light)
+            else binding.viewBackground.background = getDrawable(R.mipmap.back_question_hard)
+        }
     }
 
     private fun prefButton() {
@@ -130,70 +197,70 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun nextButton() {
-        if (viewModel.currentIndex == viewModel.numQuestion - 1 ) springAnim(true)
+        if (viewModel.currentIndex == viewModel.numQuestion - 1) springAnim(true)
         else moveToNext()
     }
 
     private fun setStateTimer(nextQuestion: Boolean) {
-        Log.d("dwagdkghjkd", "viewModel.codeAnswer ${viewModel.codeAnswer}")
-        Log.d("dwagdkghjkd", "viewModel.currentIndex ${viewModel.codeAnswer}")
-
 
         try {
             if (nextQuestion) {
+                log("setStateTimer currentIndex + 1: ${viewModel.codeAnswer[viewModel.currentIndex + 1]}")
+
                 if (viewModel.codeAnswer[viewModel.currentIndex + 1] == '0') {
                     startTimer()
                 } else viewModel.timer?.cancel()
-            } else if (viewModel.codeAnswer[viewModel.currentIndex - 1] == '0') {
-                startTimer()
-            } else viewModel.timer?.cancel()
+
+            } else {
+                if (viewModel.codeAnswer[viewModel.currentIndex - 1] == '0') {
+
+                    log("setStateTimer currentIndex - 1: ${viewModel.codeAnswer[viewModel.currentIndex - 1]}")
+                    startTimer()
+                } else viewModel.timer?.cancel()
+            }
         } catch (e: Exception) {
+            viewModel.timer?.cancel()
         }
     }
 
     private fun startTimer() {
         viewModel.timer?.cancel()
-        if (viewModel.hardQuestion) {
-            viewModel.timer = object : CountDownTimer(
-                viewModel.getCurrentTimer(viewModel.hardQuestion) * QuestionViewModel.MILLIS_IN_SECONDS,
-                QuestionViewModel.MILLIS_IN_SECONDS
-            ) {
-                override fun onTick(millisUntilFinished: Long) {
-                    binding.tvTimer.text = viewModel.formatTime(millisUntilFinished)
-                    if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
-                            millisUntilFinished
-                        )[4] == '3'
-                    ) anim321(3) //Анимация для цифры 3
-                    if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
-                            millisUntilFinished
-                        )[4] == '2'
-                    ) anim321(2) //2
-                    if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
-                            millisUntilFinished
-                        )[4] == '1'
-                    ) anim321(1) //1
-                }
+        viewModel.timer = object : CountDownTimer(
+            viewModel.getCurrentTimer(viewModel.hardQuestion) * QuestionViewModel.MILLIS_IN_SECONDS,
+            QuestionViewModel.MILLIS_IN_SECONDS
+        ) {
+            override fun onTick(millisUntilFinished: Long) {
+                binding.tvTimer.text = viewModel.formatTime(millisUntilFinished)
+                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                        millisUntilFinished
+                    )[4] == '3'
+                ) anim321(3) //Анимация для цифры 3
+                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                        millisUntilFinished
+                    )[4] == '2'
+                ) anim321(2) //2
+                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                        millisUntilFinished
+                    )[4] == '1'
+                ) anim321(1) //1
+            }
 
-                override fun onFinish() {
-                    if ((Math.random() * 2).toInt() > 1) {
-                        setStateTimer(true)
-                        setVisibleButtonsNext()
-                        viewModel.trueButton()
-                    } else {
-                        setStateTimer(false)
-                        setVisibleButtonsNext()
-                        viewModel.falseButton()
-                    }
-
+            override fun onFinish() {
+                if ((Math.random() * 2).toInt() > 1) {
+                    setStateTimer(true)
+                    setVisibleButtonsNext()
+                    viewModel.trueButton()
+                } else {
+                    setStateTimer(false)
+                    setVisibleButtonsNext()
+                    viewModel.falseButton()
                 }
             }
-            viewModel.timer?.start()
         }
+        viewModel.timer?.start()
     }
 
     private fun setVisibleButtonsNext() { //Стоит учитывать, что в момент вызова этой функции пользователь находится все еще на том вопросе
-        Log.d("iophkgjfklghjkldr", "currentIndex ${viewModel.currentIndex}")
-        Log.d("iophkgjfklghjkldr", "numQuestion ${viewModel.numQuestion}")
 
 
     }
@@ -203,7 +270,6 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun visibleCheatButton(it: Boolean) {
-
         binding.cheatButton.isClickable = it
         binding.cheatButton.isEnabled = it
     }
@@ -249,21 +315,23 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun insertQuestionsNewEvent() {
-        viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt()).observe(this) { list ->
-            list.forEach { quiz ->
-               if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
-                   viewModel.questionListThis.forEach {
-                       viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
-                   }
-               }
-           }
-        }
 
+        viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt())
+            .observe(this@QuestionActivity) { list ->
 
+                list.forEach { quiz ->
+
+                    if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
+                        viewModel.getQuestionByIdQuizUseCase(quiz.id!!).forEach {
+                            viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
+                        }
+                    }
+                }
+            }
     }
 
     private fun springAnim(next: Boolean) = with(binding) {
-        var START_VELOCITY = if (next) -5000f
+        val START_VELOCITY = if (next) - 5000f
         else 5000f
 
         var springAnimation = SpringAnimation(questionTextView, DynamicAnimation.X)
@@ -309,7 +377,18 @@ class QuestionActivity : AppCompatActivity() {
             return
         }
         if (requestCode == REQUEST_CODE_CHEAT) {
-            if (data.getBooleanExtra(EXTRA_ANSWER_SHOW, false)) viewModel.life - 1
+
+                    if (data.getBooleanExtra(
+                            EXTRA_ANSWER_SHOW,
+                            false
+                        )
+                    ) viewModel.updateProfileUseCase(
+                        viewModel.getProfileUseCase(getTpovId()).copy(
+                            countLife = viewModel.getProfileUseCase(
+                                getTpovId()
+                            ).countLife
+                        )
+                    )
         } else if (requestCode == UPDATE_CURRENT_INDEX) {
             viewModel.currentIndex = data.getIntExtra(EXTRA_UPDATE_CURRENT_INDEX, 0)
 
@@ -326,7 +405,6 @@ class QuestionActivity : AppCompatActivity() {
                 setStateTimer(false)
                 prefButton()
             }
-
         }
     }
 
@@ -339,8 +417,21 @@ class QuestionActivity : AppCompatActivity() {
 
     //Тут уже обновленные параметры
     fun updateTextQuestion() {
-        binding.questionTextView.text =
-            viewModel.questionListThis[viewModel.currentIndex].nameQuestion
+        updateDataView()
+
+        showTextWithDelay(binding.questionTextView, viewModel.questionListThis[viewModel.currentIndex].nameQuestion, DELAY_SHOW_TEXT)
+
+    }
+
+    private fun updateDataView() {
+        binding.tvPercent.text = (viewModel.persent).toString()
+        binding.tvPointsLife.text = (floor(
+            viewModel.getProfileUseCase(getTpovId()).count?.toDouble()?.div(1000.0) ?: 0.0
+        )).toInt().toString()
+        binding.tvPointsGoldLife.text = (floor(
+            viewModel.getProfileUseCase(getTpovId()).countGold?.toDouble()?.div(1000.0) ?: 0.0
+        )).toInt().toString()
+
     }
 
     private fun moveToPref() = with(binding) {
@@ -359,8 +450,6 @@ class QuestionActivity : AppCompatActivity() {
                 questionTextView.visibility = View.GONE
                 viewModel.currentIndex = (viewModel.currentIndex - 1) % viewModel.numQuestion!!
                 updateTextQuestion()
-
-
 
                 questionTextView.startAnimation(animPref2)
             }
@@ -394,7 +483,6 @@ class QuestionActivity : AppCompatActivity() {
 
         animNext1.setAnimationListener(object : Animation.AnimationListener {
             override fun onAnimationStart(p0: Animation?) {
-
                 //todo сделать все кнопки что-бы нельзя их нажать
             }
 
@@ -437,9 +525,12 @@ class QuestionActivity : AppCompatActivity() {
     companion object {
         const val ID_QUIZ = "name_question"
         const val NAME_USER = "name_user"
-        const val LIFE = "life"
         const val HARD_QUESTION = "hard_question"
         const val STARS = "stars"
         const val UPDATE_CURRENT_INDEX = 1
+        const val RESULT_TRANSLATE = 2
+        const val RESULT_OK = 1
+
+        const val DELAY_SHOW_TEXT = 50L
     }
 }

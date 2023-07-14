@@ -1,9 +1,5 @@
 package com.tpov.schoolquiz.data.fierbase
 
-import android.graphics.Bitmap
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.google.firebase.database.IgnoreExtraProperties
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 
@@ -17,34 +13,41 @@ data class Quiz (
     var event: Int = -1,
     var numQ: Int,
     var numHQ: Int,
-    var starsAll: Int,
-    var rating: Int,
+    var starsAllPlayer: Int,
+    var starsPlayer: Int,
+    var ratingPlayer: Int,
     var userName: String,
+    var languages: String
 ) {
     constructor() : this(
-        "", 0, "", -1, "", -1, 0, 0, 0, 0, ""
+        "", 0, "", -1, "", -1, 0, 0, 0, 0, 0,"", ""
     )
 }
 
-
-fun quizToQuizEntity(
-    quiz: Quiz,
+fun Quiz.toQuizEntity(
+    id: Int,
     stars: Int,
+    starsAll: Int,
+    rating: Int,
     picture: String?
 ): QuizEntity {
     return QuizEntity(
-        id = null,
-        nameQuiz = quiz.nameQuiz,
-        userName = quiz.userName,
-        data = quiz.data,
+        id = id,
+        nameQuiz = nameQuiz,
+        userName = userName,
+        data = data,
         stars = stars,
-        numQ = quiz.numQ,
-        numHQ = quiz.numHQ,
-        starsAll = quiz.starsAll,
-        versionQuiz = quiz.versionQuiz,
+        numQ = numQ,
+        numHQ = numHQ,
+        starsAllPlayer = starsAllPlayer,
+        versionQuiz = versionQuiz,
         picture = picture,
-        event = quiz.event,
-        rating = quiz.rating,
-        tpovId = quiz.tpovId
+        event = event,
+        rating = rating,
+        tpovId = tpovId,
+        starsAll = starsAll,
+        starsPlayer = starsPlayer,
+        ratingPlayer = ratingPlayer,
+        languages = languages
     )
 }

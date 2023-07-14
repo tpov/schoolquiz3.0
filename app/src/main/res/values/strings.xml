@@ -1,4 +1,24 @@
 <resources>
+    <!-- ... -->
+    <string-array name="nick_colors">
+        <item>Красный</item>
+        <item>Зеленый</item>
+        <item>Синий</item>
+        <item>Желтый</item>
+    </string-array>
+    <string-array name="nick_color_spinner">
+        <item>Красный</item>
+        <item>Зеленый</item>
+        <item>Синий</item>
+        <item>Желтый</item>
+    </string-array>
+
+    <string-array name="languages">
+        <item>Русский</item>
+        <item>Украинский</item>
+        <item>Английский</item>
+        <item>Французкий</item>
+    </string-array>
 
     <string name="true_button">True</string>
     <string name="false_button">False</string>
@@ -17,7 +37,7 @@
 
     <string name="title_text">Quiz</string>
     <string name="menu_home_text">Home</string>
-    <string name="menu_new">New quiz</string>
+    <string name="menu_new">Shop</string>
     <string name="menu_info">Info</string>
     <string name="menu_settings">Settings</string>
     <string name="main_title_name">Home</string>
@@ -77,8 +97,8 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="invalid_password" translatable="false">Password must be >5 characters</string>
     <string name="login_failed" translatable="false">"Login failed"</string>
     <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your birthday</string>
-    <string name="prompt_nickname">Come up with your gaming nickname</string>
+    <string name="prompt_years">Your birthday (01.01.2001)</string>
+    <string name="prompt_nickname">Nickname</string>
     <string name="prompt_city">Your city</string>
     <string name="app_name">SchoolQuiz</string>
     <string name="nav_home">Главные квесты</string>
@@ -89,13 +109,24 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="nav_exit">Выход</string>
     <string name="nav_task">Задачи</string>
     <string name="nav_profile">Профиль</string>
+    <string name="nav_contact">Контакты</string>
     <string name="nav_downloads">Загрузки</string>
-    <string name="nav_global">Общедоступные квесты</string>
+    <string name="nav_global">Арена</string>
     <string name="nav_news">Новости</string>
     <string name="nav_leaders">Лидеры</string>
     <string name="nav_players">Игроки</string>
     <string name="nav_friends">Друзья</string>
     <string name="nav_massages">Cообщения</string>
     <string name="nav_reports">Отчеты</string>
+    <string name="login_mode">login</string>
+    <string name="registration_mode">regestration</string>
+    <string name="add_language">Добавить язык</string>
+    <string name="save_translation">Сохранить перевод</string>
+    <string name="translated_question_hint">Перевод</string>
+    <string name="source_question_hint">Название квеста</string>
+    <string name="delete_resource">Удалить</string>
+    <string name="downloads_section">Загрузки</string>
+    <string name="profile_section">Профиль</string>
+    <string name="select_nick_color">Цвет ника</string>
 
 </resources>

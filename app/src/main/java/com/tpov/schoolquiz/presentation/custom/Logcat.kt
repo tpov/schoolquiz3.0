@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.presentation.custom
 
 import android.util.Log
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivity
 
 object Logcat {
 

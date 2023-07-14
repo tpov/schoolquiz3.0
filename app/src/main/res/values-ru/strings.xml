@@ -1,5 +1,4 @@
 <resources>
-
     <string name="question_light2">Тихий океан больше Атлантического океана.</string>
     <string name="question_light3">Суэцкий канал соединяет Красное море и Индийский океан.</string>
     <string name="question_light4">Исток реки Нил находится в Египте.</string>
@@ -59,7 +58,7 @@
 
     <string name="title_text">Quiz</string>
     <string name="menu_home_text">Домой</string>
-    <string name="menu_new">Новые Вопросы</string>
+    <string name="menu_new">Магазин</string>
     <string name="menu_info">Инфо</string>
     <string name="menu_settings">Настройки</string>
     <string name="main_title_name">Домой</string>
@@ -113,5 +112,5 @@
     <string name="action_sign_in">Login</string>
     <string name="action_registration">registration</string>
     <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your years</string>
+    <string name="prompt_years">Your years (01.01.2001)</string>
 </resources>

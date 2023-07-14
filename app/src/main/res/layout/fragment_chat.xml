@@ -1,13 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@mipmap/back_chat"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".presentation.network.chat.ChatFragment">
+    android:layout_height="match_parent">
 
-    <TextView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chatRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Hello" />
+        android:paddingTop="106dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/messageInputLayout" />
 
-</FrameLayout>
+    <LinearLayout
+        android:id="@+id/messageInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/messageEditText"
+            android:layout_width="0dp"
+            android:textColor="@color/white"
+            android:layout_height="wrap_content"
+            android:textColorHint="#AFAFAF"
+            android:layout_weight="1"
+            android:hint="Type a message" />
+
+        <Button
+            android:id="@+id/sendMessageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send" />
+    </LinearLayout>
+</RelativeLayout>

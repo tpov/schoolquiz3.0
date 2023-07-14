@@ -2,344 +2,344 @@ package com.tpov.schoolquiz.presentation.dialog
 
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
-import android.widget.TextView
-import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.textfield.TextInputEditText
-import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.languageid.LanguageIdentification
-import com.google.mlkit.nl.languageid.LanguageIdentifier
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.databinding.CreateQuestionDialogBinding
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivityViewModel
+import com.tpov.schoolquiz.presentation.custom.Errors.errorGetLvlTranslate
+import com.tpov.schoolquiz.presentation.custom.LanguageUtils
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
+import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.android.synthetic.main.create_question_dialog.view.*
+import kotlinx.android.synthetic.main.question_create_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.*
-import kotlin.collections.ArrayList
 
-
-class CreateQuestionDialog() : DialogFragment() {
+class CreateQuestionDialog : DialogFragment() {
 
     @OptIn(InternalCoroutinesApi::class)
     private val mainActivityViewModel by lazy {
         ViewModelProvider(requireActivity())[MainActivityViewModel::class.java]
     }
+    private lateinit var dialogView: View
+    private lateinit var questionsContainer: LinearLayout
+    private var numQuestion = 0
+    private var idQuiz = 0
 
     @OptIn(InternalCoroutinesApi::class)
-    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(activity)
-        val binding = CreateQuestionDialogBinding.inflate(LayoutInflater.from(activity))
-        var question = ArrayList<QuestionEntity>()
-        val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        val tpovId = sharedPref?.getInt("tpovId", 0)
-        var nameQuestion = ""
-        var intvQuestion2 = TextInputEditText(requireContext())
-        var questionLayout2 = LinearLayout(context)
-        var tvQuestion2 = TextView(context)
-        var sumbolQuestion2 = TextView(context)
+        val id = arguments?.getInt("id") ?: -1
+        this.idQuiz = id
+        isCancelable = false
+        dialog?.setCanceledOnTouchOutside(false)
+        val inflater = LayoutInflater.from(requireContext())
+        dialogView = inflater.inflate(R.layout.create_question_dialog, null)
+        questionsContainer = dialogView.findViewById(R.id.questions_container)
 
-        val languageIdentifier = LanguageIdentification.getClient()
-        val conditions = DownloadConditions.Builder()
-            .requireWifi()
-            .build()
-
-        builder.setView(binding.root)
-
-        var numQuestion = 0
-        var nameQuiz = ""
-
-
-        binding.tvNext.setOnClickListener {
-
-            tvQuestion2.text =
-                "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
-
-            intvQuestion2 = TextInputEditText(requireContext())
-            tvQuestion2 = TextView(context)
-
-            intvQuestion2.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int
-                ) {
-                }
-
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    nameQuestion = ""
-                    nameQuestion = s.toString()
-                    tvQuestion2.text =
-                        "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
-                }
-
-                override fun afterTextChanged(s: Editable?) {}
-            })
-            if (numQuestion != 0) {
-                getLanguage(languageIdentifier, nameQuestion) { lang ->
-                    question.add(
-                        QuestionEntity(
-                            null,
-                            numQuestion,
-                            nameQuestion,
-                            getTextTrue(binding.rbTrue).toBoolean(),
-                            getTypeText(binding.rbLightQuestion).toBoolean(),
-                            -1,
-                            lang,
-                            mainActivityViewModel.getProfileFBLiveData.value?.translater ?: -1
-                        )
-                    )
-                }
-            } else {
-                nameQuiz = binding.intvQuiz.text.toString()
+        if (id != -1) {
+            dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
+            dialogView.add_question_button.setOnClickListener {
+                addQuestionItem()
             }
-
-            Log.d("adasfgdrh", "===question ${question}")
-            // Создание нового question_layout
-
-
-            questionLayout2.id = View.generateViewId()
-            questionLayout2.orientation = LinearLayout.HORIZONTAL
-
-            tvQuestion2.layoutParams =
-                LinearLayout.LayoutParams(500, LinearLayout.LayoutParams.WRAP_CONTENT)
-            questionLayout2.addView(tvQuestion2)
-
-            // Добавление TextView для символа
-            sumbolQuestion2.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            sumbolQuestion2.text = " -$ "
-            questionLayout2.addView(sumbolQuestion2)
-            questionLayout2.background = null
-            // Добавление TextInputEditText для ввода текста вопроса
-            intvQuestion2.layoutParams =
-                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2F)
-            intvQuestion2.hint = "your question"
-            intvQuestion2.requestFocus()
-            val cursorDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.cursor)
-            intvQuestion2.textCursorDrawable = cursorDrawable
-            questionLayout2.addView(intvQuestion2)
-
-            sumbolQuestion2.setTextAppearance(requireContext(), R.style.TerminalText)
-            tvQuestion2.setTextAppearance(requireContext(), R.style.TerminalText)
-            intvQuestion2.setTextAppearance(requireContext(), R.style.TerminalText)
-
-            tvQuestion2.maxLines = 1
-            intvQuestion2.background = null
-
-            intvQuestion2.width = 30
-            // Добавление нового question_layout в layout
-            binding.layout.addView(questionLayout2)
-            questionLayout2 = LinearLayout(context)
-            sumbolQuestion2 = TextView(context)
-            intvQuestion2 = TextInputEditText(requireContext())
-
-            binding.rbTrue.setOnCheckedChangeListener { _, _ ->
-                tvQuestion2.text =
-                    "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
-
+            mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+                addFilledQuestionItem(questionEntity)
             }
-
-            binding.rbLightQuestion.setOnCheckedChangeListener { _, _ ->
-                tvQuestion2.text =
-                    "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
-            }
-            numQuestion++
         }
 
-        binding.tvEnd.setOnClickListener {
-            intvQuestion2 = TextInputEditText(requireContext())
-            tvQuestion2 = TextView(context)
-            intvQuestion2.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int
-                ) {
-                    // вызывается перед изменением текста в поле
+        val alertDialog = AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+            .setView(dialogView)
+            .create()
+
+        alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimationCreateQuestion
+        alertDialog.show()
+
+        dialogView.add_question_button.setOnClickListener {
+            addQuestionItem()
+        }
+
+        dialogView.save_question_button.setOnClickListener {
+            createQuestions()
+            dismiss()
+        }
+
+        dialogView.cancel_question_button.setOnClickListener {
+            dismiss()
+        }
+
+        return alertDialog
+
+    }
+
+    private fun addQuestionItem(): View {
+        val inflater = LayoutInflater.from(requireContext())
+        val questionItemView = inflater.inflate(R.layout.question_create_item, null)
+
+        val questionTitle = questionItemView.findViewById<EditText>(R.id.question_title)
+
+        questionItemView.language_selector.setOnClickListener {
+            showLanguageDialog(questionItemView)
+        }
+
+        dialogView.save_question_button.isClickable = true
+        dialogView.save_question_button.isEnabled = true
+
+        // Добавляем TextWatcher к questionTitle
+        questionTitle.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                log("onTextChanged $s")
+                if (count > 0) {
+                    log("onTextChanged count > 0")
+
+                    var lang = ""
+                    val languageIdentifier = LanguageIdentification.getClient()
+                    languageIdentifier.identifyLanguage(s.toString())
+                        .addOnSuccessListener { language ->
+                            log("onTextChanged, $language")
+                            lang = language ?: "und"
+                            if (lang == "und") {
+                                val userLocale: Locale = Locale.getDefault()
+                                val userLanguageCode: String = userLocale.language
+
+                                val languageFullName =
+                                    LanguageUtils.getLanguageFullName(userLanguageCode)
+                                questionItemView.language_selector.text = languageFullName
+                            } else {
+                                val languageFullName = LanguageUtils.getLanguageFullName(language)
+                                questionItemView.language_selector.text = languageFullName
+                            }
+                        }
+                        .addOnFailureListener {
+                            val userLocale: Locale = Locale.getDefault()
+                            val userLanguageCode: String = userLocale.language
+                            lang = userLanguageCode
+
+                            val languageFullName = LanguageUtils.getLanguageFullName(lang)
+                            questionItemView.language_selector.text = languageFullName
+                        }
                 }
+            }
 
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    nameQuestion = ""
-                    nameQuestion = s.toString()
-                    Log.d("adasfgdrh", "Текст изменился: $s")
-                }
+            override fun afterTextChanged(s: Editable?) {}
+        })
 
-                override fun afterTextChanged(s: Editable?) {
-                    // вызывается после изменения текста в поле
-                }
-            })
+        numQuestion++
+        questionItemView.question_number.text = numQuestion.toString()
+        questionsContainer.addView(questionItemView)
+        questionTitle.requestFocus()
+        return questionItemView
+    }
 
-            if (numQuestion != 0) {
-                getLanguage(languageIdentifier, nameQuestion) { lang ->
+    private fun addFilledQuestionItem(questionEntity: QuestionEntity): View {
+        val questionItemView = addQuestionItem()
 
-                    question.add(
-                        QuestionEntity(
-                            null,
-                            numQuestion,
-                            nameQuestion,
-                            getTextTrue(binding.rbTrue).toBoolean(),
-                            getTypeText(binding.rbLightQuestion).toBoolean(),
-                            -1,
-                            lang,
-                            mainActivityViewModel.getProfileFBLiveData.value?.translater ?: -1
-                        )
-                    )
+        val questionTitle = questionItemView.findViewById<EditText>(R.id.question_title)
+        val trueButton = questionItemView.findViewById<RadioButton>(R.id.true_button)
+        val hardQuestionCheckbox =
+            questionItemView.findViewById<CheckBox>(R.id.hard_question_checkbox)
+        val languageSelector =
+            questionItemView.findViewById<AppCompatTextView>(R.id.language_selector)
+
+        questionTitle.setText(questionEntity.nameQuestion)
+        trueButton.isChecked = questionEntity.answerQuestion
+        hardQuestionCheckbox.isChecked = questionEntity.hardQuestion
+        languageSelector.text = LanguageUtils.getLanguageFullName(questionEntity.language)
+
+        return questionItemView
+    }
+
+    private fun showLanguageDialog(questionItemView: View) {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Язык вопроса")
+        builder.setItems(LanguageUtils.languagesFullNames) { dialog, which ->
+            questionItemView.language_selector.text = LanguageUtils.languagesFullNames[which]
+            dialog.dismiss()
+        }
+        builder.show()
+    }
+
+    fun findLanguageWithMinLevel(elements: List<QuestionEntity>): String {
+        var commonLanguage: String? = null
+        var minLevel = Int.MAX_VALUE
+
+        for (element in elements) {
+            if (element.language == elements[0].language) {
+                if (element.lvlTranslate < minLevel) {
+                    minLevel = element.lvlTranslate
+                    commonLanguage = element.language
                 }
             } else {
-                nameQuiz = binding.intvQuiz.text.toString()
+                commonLanguage = null
+                break
             }
+        }
 
-            Log.d("adasfgdrh", "===question $question")
-            // Создание нового question_layout
+        return if (commonLanguage != null) {
+            "$commonLanguage-$minLevel"
+        } else {
+            ""
+        }
+    }
 
+    @OptIn(InternalCoroutinesApi::class)
+    private fun createQuestions() {
+        val questions = mutableListOf<QuestionEntity>()
+        var numHQ = 0
+        var numLQ = 0
 
-            questionLayout2.id = View.generateViewId()
-            questionLayout2.orientation = LinearLayout.HORIZONTAL
+        var newIdQuiz = if (idQuiz == -1) mainActivityViewModel.getNewIdQuiz()
+        else idQuiz
 
-            tvQuestion2.layoutParams =
-                LinearLayout.LayoutParams(500, LinearLayout.LayoutParams.WRAP_CONTENT)
-            tvQuestion2.text =
-                "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|${++numQuestion}"
+        log("getNewIdQuiz: ${mainActivityViewModel.getNewIdQuiz()}")
+        for (i in 0 until questionsContainer.childCount) {
+            val questionItemView = questionsContainer.getChildAt(i)
 
-            binding.rbLightQuestion.setOnCheckedChangeListener { _, _ ->
-                // Установка значения tvQuestion2 в зависимости от состояния кнопок
-                tvQuestion2.text =
-                    "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
-            }
+            val questionTitle = questionItemView.question_title.text.toString()
+            val questionAnswer = questionItemView.true_button.isChecked
+            val questionHard = questionItemView.hard_question_checkbox.isChecked
 
-            binding.rbTrue.setOnCheckedChangeListener { _, _ ->
-                // Установка значения tvQuestion2 в зависимости от состояния кнопок
-                tvQuestion2.text =
-                    "${getTextTrue(binding.rbTrue)}|${getTypeText(binding.rbLightQuestion)}|$numQuestion"
-            }
-            questionLayout2.addView(tvQuestion2)
+            if (questionHard) numHQ++
+            else numLQ++
 
-            // Добавление TextView для символа
-            sumbolQuestion2.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            val questionLanguage = questionItemView.language_selector.text.toString()
+            val language = LanguageUtils.getLanguageShortCode(questionLanguage)
+
+            questions.add(
+                QuestionEntity(
+                    null,
+                    if (questionHard) numHQ
+                    else numLQ,
+                    questionTitle,
+                    questionAnswer,
+                    questionHard,
+                    idQuiz,
+                    language,
+                    try {
+                        mainActivityViewModel.getProfile().translater ?: errorGetLvlTranslate(
+                            activity
+                        )
+                    } catch (e: Exception) {
+                        0
+                    },
+                    getTpovId().toString() + "|"
+                )
             )
-            sumbolQuestion2.text = " -$ "
-            questionLayout2.addView(sumbolQuestion2)
-            questionLayout2.background = null
-            // Добавление TextInputEditText для ввода текста вопроса
-            intvQuestion2.layoutParams =
-                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2F)
-            intvQuestion2.hint = "your question"
-            intvQuestion2.requestFocus()
-            val cursorDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.cursor)
-            intvQuestion2.textCursorDrawable = cursorDrawable
-            questionLayout2.addView(intvQuestion2)
+        }
 
-            sumbolQuestion2.setTextAppearance(requireContext(), R.style.TerminalText)
-            tvQuestion2.setTextAppearance(requireContext(), R.style.TerminalText)
-            intvQuestion2.setTextAppearance(requireContext(), R.style.TerminalText)
+        // Создание QuizEntity
+        val nameQuiz = dialogView.quiz_title.text.toString()
+        val currentTime = TimeManager.getCurrentTime()
 
-            tvQuestion2.maxLines = 1
-            intvQuestion2.background = null
+        val questionMap: MutableMap<Int, MutableSet<String>> = mutableMapOf()
 
-            intvQuestion2.width = 30
+// Перебираем вопросы и заполняем карту, в которой ключ - номер вопроса, значение - множество языков
+        for (question in questions) {
+            if (question.nameQuestion != "") {
+                val num = question.numQuestion
+                val language = question.language
 
-            // Добавление нового question_layout в layout
-            binding.layout.addView(questionLayout2)
-            questionLayout2 = LinearLayout(context)
-            tvQuestion2 = TextView(context)
-            sumbolQuestion2 = TextView(context)
-            intvQuestion2 = TextInputEditText(requireContext())
-                mainActivityViewModel.insertQuiz(
-                    QuizEntity(
-                        null,
-                        nameQuiz,
-                        mainActivityViewModel.getProfileFBLiveData.value?.name ?: "user",
-                        TimeManager.getCurrentTime(),
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        null,
-                        1,
-                        0,
-                        false,
-                        tpovId ?: 0
+                log("wd23 num:$num, language:$language")
+                if (num != null && language != null) {
+
+                    log("wd23 оба значение != null идем дальше")
+                    val languages = questionMap.getOrDefault(num, mutableSetOf())
+                    languages.add(language)
+                    log("wd23 непонятная переменна languages:$languages")
+                    questionMap[num] = languages
+                    log("wd23 теперь questionMap:$questionMap")
+                } else
+                    log("wd23 эти переменные содержат null")
+            }
+        }
+
+// Находим пересечение множеств языков для всех номеров вопросов
+        val commonLanguages =
+            questionMap.values.reduce { acc, set -> acc.intersect(set).toMutableSet() }
+        log("wd23 commonLanguages: $commonLanguages")
+        val profileLvlTranslate = mainActivityViewModel.getProfile().translater
+// Создаем строку в необходимом формате
+        val questionLang = commonLanguages.joinToString("|") { "$it-$profileLvlTranslate" }
+
+        log("wd23 questionLang: $questionLang")
+
+        if (idQuiz != -1) mainActivityViewModel.deleteQuestion(idQuiz)
+
+        val quizEntity = QuizEntity(
+            newIdQuiz,
+            nameQuiz,
+            mainActivityViewModel.getProfile().name ?: "",
+            if (this.idQuiz == -1) currentTime
+            else (mainActivityViewModel.getQuizById(this.idQuiz).data),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).stars),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).starsPlayer),
+            questions.count { !it.hardQuestion && it.nameQuestion != "" },
+            questions.count { it.hardQuestion && it.nameQuestion != "" },
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).starsAll),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).starsAllPlayer),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).versionQuiz + 1),
+            if (this.idQuiz == -1) null
+            else (mainActivityViewModel.getQuizById(this.idQuiz).picture),
+            if (this.idQuiz == -1) 1
+            else (mainActivityViewModel.getQuizById(this.idQuiz).event),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).rating),
+            if (this.idQuiz == -1) 0
+            else (mainActivityViewModel.getQuizById(this.idQuiz).ratingPlayer),
+            true,
+            if (this.idQuiz == -1) getTpovId()
+            else (mainActivityViewModel.getQuizById(this.idQuiz).tpovId),
+            if (this.idQuiz == -1) questionLang
+            else (mainActivityViewModel.getQuizById(this.idQuiz).languages)
+        )
+        mainActivityViewModel.removePlaceInUserQuiz()
+
+        // Сохранение quizEntity и questions в базу данных
+        mainActivityViewModel.insertQuiz(quizEntity)
+
+        questions.forEach {
+            if (it.nameQuestion != "") {
+                mainActivityViewModel.insertQuestion(
+                    it.copy(
+                        idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
+                            nameQuiz
+                        )
                     )
                 )
-
-                question.forEach {
-                    mainActivityViewModel.insertQuestion(
-                        it.copy(
-                            idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
-                                nameQuiz
-                            )
-                        )
-                    )
             }
         }
-
-        return builder.create()
-    }
-
-    private fun getLanguage(
-        languageIdentifier: LanguageIdentifier,
-        nameQuestion: String,
-        callback: (String) -> Unit
-    ) {
-        var lang = ""
-
-        languageIdentifier.identifyLanguage(nameQuestion)
-            .addOnSuccessListener { language ->
-                lang = language ?: "und"
-                if (lang == "und") {
-                    val userLocale: Locale = Locale.getDefault()
-                    val userLanguageCode: String = userLocale.language
-                    lang = userLanguageCode
-                }
-                callback(lang)
-            }
-            .addOnFailureListener {
-                val userLocale: Locale = Locale.getDefault()
-                val userLanguageCode: String = userLocale.language
-                lang = userLanguageCode
-                callback(lang)
-            }
-    }
-
-    private fun getTextTrue(rbTrue: RadioButton): String {
-        return if (rbTrue.isChecked) "true"
-        else "false"
-    }
-
-    private fun getTypeText(rbLightQuestion: RadioButton): String {
-        return if (rbLightQuestion.isChecked) "light"
-        else "hard"
     }
 
     companion object {
         const val NAME = "name"
 
-        fun newInstance(name: String): CreateQuestionDialog {
+        fun newInstance(name: String, id: Int): CreateQuestionDialog {
             val fragment = CreateQuestionDialog()
             val args = Bundle()
-            args.putString("name", name)
+            args.putString(NAME, name)
+            args.putInt("id", id)
             fragment.arguments = args
             return fragment
         }
     }
+
 }

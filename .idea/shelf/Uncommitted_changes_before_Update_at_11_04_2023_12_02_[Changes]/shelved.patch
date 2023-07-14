@@ -1,0 +1,92 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	
++++ b/.idea/workspace.xml	
+@@ -16,28 +16,19 @@
+   </component>
+   <component name="ChangeListManager">
+     <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="create chat">
+-      <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" beforeDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/schemas/com.tpov.schoolquiz.data.database.QuizDatabase/1.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/schemas/com.tpov.schoolquiz.data.database.QuizDatabase/1.json" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/entities/ProfileEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/entities/ProfileEntity.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/fierbase/Profile.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/fierbase/Profile.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityViewModel.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationFragment.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationViewModel.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/chat/ChatFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/chat/ChatFragment.kt" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/chat_item.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/chat_item.xml" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+     <option name="LAST_RESOLUTION" value="IGNORE" />
+   </component>
+-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
++  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[RD00802QA10E03592]" />
+   <component name="ExternalProjectsData">
+     <projectState path="$PROJECT_DIR$">
+       <ProjectState />
+@@ -61,6 +52,7 @@
+       </map>
+     </option>
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
++    <option name="UPDATE_TYPE" value="REBASE" />
+   </component>
+   <component name="GitSEFilterConfiguration">
+     <file-type-list>
+@@ -82,16 +74,18 @@
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+-  <component name="PropertiesComponent"><![CDATA[{
+-  "keyToString": {
+-    "PROJECT_TRUSTED_KEY": "true",
+-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+-    "project.structure.last.edited": "SDK Location",
+-    "project.structure.proportion": "0.17",
+-    "project.structure.side.proportion": "0.0",
+-    "settings.editor.selected.configurable": "preferences.lookFeel"
++  <component name="PropertiesComponent">{
++  &quot;keyToString&quot;: {
++    &quot;PROJECT_TRUSTED_KEY&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
++    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
++    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
++    &quot;project.structure.last.edited&quot;: &quot;SDK Location&quot;,
++    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
++    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
++    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+   }
+-}]]></component>
++}</component>
+   <component name="PsdUISettings">
+     <option name="MODULE_TAB" value="Properties" />
+     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
+@@ -262,7 +256,14 @@
+       <option name="project" value="LOCAL" />
+       <updated>1681137571296</updated>
+     </task>
+-    <option name="localTasksCounter" value="13" />
++    <task id="LOCAL-00013" summary="create chat">
++      <created>1681138849922</created>
++      <option name="number" value="00013" />
++      <option name="presentableId" value="LOCAL-00013" />
++      <option name="project" value="LOCAL" />
++      <updated>1681138849922</updated>
++    </task>
++    <option name="localTasksCounter" value="14" />
+     <servers />
+   </component>
+   <component name="UnknownFeatures">

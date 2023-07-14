@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="16dp"
+    android:background="@color/nullColor"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/question_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/num_chack_norice_red"
+            android:textSize="18dp"
+            android:textStyle="bold"
+            android:text="1." />
+
+        <EditText
+            android:id="@+id/question_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:textColor="#FFE700"
+            android:background="@color/nullColor"
+            android:hint="Название вопроса" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/hard_question_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#57639E"
+            android:text="Сложный" />
+
+
+        <RadioGroup
+            android:id="@+id/answer_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+
+            <RadioButton
+                android:id="@+id/false_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#BFFF0000"
+                android:text="False" />
+
+            <RadioButton
+                android:id="@+id/true_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#BF14FF00"
+                android:text="True" />
+
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/language_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="italic"
+            android:textColor="@color/white"
+            android:paddingLeft="8dp"
+            android:clickable="true"
+            android:text="Язык" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/num_chack_norice_red"
+        android:orientation="vertical">
+
+    </LinearLayout>
+</LinearLayout>

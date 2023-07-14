@@ -2,11 +2,12 @@ package com.tpov.schoolquiz.data
 
 import androidx.lifecycle.LiveData
 import com.tpov.schoolquiz.data.database.QuizDao
-import com.tpov.schoolquiz.data.database.entities.ApiQuestion
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -33,16 +34,16 @@ class RepositoryDBImpl @Inject constructor(
         dao.insertQuestion(questionEntity)
     }
 
-    override fun insertListApiQuestion(apiQuestion: List<ApiQuestion>) {
-        dao.insertListApiQuestion(apiQuestion)
-    }
-
     override fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
-       return dao.getQuestionDetailListByNameQuiz(nameQuiz)
+        return dao.getQuestionDetailListByNameQuiz(nameQuiz)
     }
 
     override fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>> {
         return dao.getQuizLiveData(tpovId)
+    }
+
+    override fun getEventLiveData(): LiveData<List<QuizEntity>> {
+        return dao.getEventLiveDataDB()
     }
 
     override fun getQuestionDetailList(): List<QuestionDetailEntity> {
@@ -61,6 +62,10 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getProfile(tpovId)
     }
 
+    override fun getAllProfiles(): List<ProfileEntity> {
+        return dao.getAllProfiles()
+    }
+
     override fun getQuizList(tpovId: Int): List<QuizEntity> {
         return dao.getQuizList(tpovId)
     }
@@ -73,8 +78,8 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getTranslateEvent()
     }
 
-    override fun getQuizById(id: Int, tpovId: Int): QuizEntity {
-        return dao.getQuizById(id, tpovId)
+    override fun getQuizById(id: Int): QuizEntity {
+        return dao.getQuizById(id)
     }
 
     override fun getQuestionList(): List<QuestionEntity> {
@@ -85,20 +90,21 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getQuestionByIdQuiz(id)
     }
 
-    override fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion> {
-        return dao.getListApiQuestionBySystemDate(systemDate)
-    }
-
-    override fun getApiQuestionList(): List<ApiQuestion> {
-        return dao.getListApiQuestion()
-    }
-
     override fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int {
-        return dao.getIdQuizByNameQuiz(nameQuiz, tpovId) ?: dao.getIdQuizByNameQuiz(nameQuiz, 0) ?: 0
+        return dao.getIdQuizByNameQuiz(nameQuiz, tpovId) ?: dao.getIdQuizByNameQuiz(nameQuiz, 0)
+        ?: 0
     }
 
     override fun getNameQuizByIdQuiz(id: Int): String {
         return dao.getNameQuizByIdQuiz(id)!!
+    }
+
+    override fun getPlayersDB(): List<PlayersEntity> {
+        return dao.getPlayersDB()
+    }
+
+    override fun getPlayersDB(tpovId: Int): PlayersEntity {
+        return dao.getPlayersDB(tpovId)
     }
 
     override fun deleteQuestionById(id: Int) {
@@ -117,6 +123,10 @@ class RepositoryDBImpl @Inject constructor(
         dao.deleteQuestionDetailByIdQuiz(id)
     }
 
+    override fun deleteQuestion(id: Int) {
+        dao.deleteQuestion(id)
+    }
+
     override fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
         dao.updateQuizDetail(questionDetailEntity)
     }
@@ -125,12 +135,10 @@ class RepositoryDBImpl @Inject constructor(
         dao.updateQuiz(quizEntity)
     }
 
-    override fun updateApiQuestion(apiQuestion: ApiQuestion) {
-        dao.updateApiQuestion(apiQuestion)
-    }
+    override fun updateProfile(profile: ProfileEntity): Int {
 
-    override fun updateProfile(profile: ProfileEntity) {
-        dao.updateProfiles(profile)
+        log("updateProfileCount() updateProfile(): ${profile.pointsNolics}")
+        return dao.updateProfiles(profile)
     }
 
     override fun updateQuestion(questionEntity: QuestionEntity) {

@@ -35,8 +35,16 @@
                         android:id="@+id/imb_download"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
+                        android:layout_weight="1"
                         android:padding="0dp"
                         android:src="@drawable/baseline_download_24" />
+
+                    <ImageButton
+                        android:id="@+id/imb_delete"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="0dp"
+                        android:src="@drawable/ic_baseline_delete_outline_24" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

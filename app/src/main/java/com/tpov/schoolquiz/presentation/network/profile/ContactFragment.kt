@@ -20,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.ContactItem
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.mainactivity.MainActivityAdapter
 import kotlinx.coroutines.InternalCoroutinesApi
 
 class ContactFragment : BaseFragment() {

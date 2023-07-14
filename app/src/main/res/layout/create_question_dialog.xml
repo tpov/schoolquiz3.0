@@ -1,198 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    style="@style/TerminalText"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#00000000"
-    android:elevation="12dp">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
+        <ImageView
+            android:id="@+id/background_image"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:src="@drawable/back_create_new_quiz"
+            android:scaleType="centerCrop"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.cardview.widget.CardView
-        style="@style/TerminalText"
+    <EditText
+        android:id="@+id/quiz_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#000000"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:gravity="center"
+        android:hint="Название квеста"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
+    <ScrollView
+        android:id="@+id/scv_questions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/quiz_title">
 
+        <LinearLayout
+            android:id="@+id/questions_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/quiz_title" />
+
+    </ScrollView>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#000000"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scv_questions">
 
-            <ScrollView
-                android:id="@+id/scroll_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:layout_weight="1"
+                android:backgroundTint="#703A3A"
+                android:elevation="12dp"
+                app:cardCornerRadius="25dp">
 
-                <LinearLayout
-                    android:id="@+id/layout"
+                <Button
+                    android:id="@+id/cancel_question_button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    app:layout_constraintHeight_max="250dp">
+                    android:background="@color/nullColor"
+                    android:paddingTop="8dp"
+                    android:text="Отмена"
+                    android:textColor="@color/white" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+            </androidx.cardview.widget.CardView>
 
-                        <TextView
-                            android:id="@+id/tv_title"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="terminal tpov1.0" />
-
-                        <TextView
-                            android:id="@+id/tv_load"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="32dp"
-                            android:text="" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tv_quiz"
-                            style="@style/TerminalText"
-                            android:layout_width="500px"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            android:ellipsize="none"
-                            android:text="Name Quizq" />
-
-                        <TextView
-                            android:id="@+id/sumbol_quiz"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            android:text=" -$ " />
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/intv_quiz"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@null"
-                            android:hint="your name quiz"
-                            android:maxLines="1"
-                            android:textCursorDrawable="@drawable/cursor" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-            </ScrollView>
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_weight="1"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:backgroundTint="#3A7057"
+                android:elevation="12dp"
+                app:cardCornerRadius="25dp">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
-
-
-                    <TextView
-                        android:id="@+id/tv_next"
-                        style="@style/TerminalText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingLeft="8dp"
-                        android:text="Next" />
-
-                    <TextView
-                        android:id="@+id/tv_end"
-                        style="@style/TerminalText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingLeft="8dp"
-                        android:text="End" />
-
-                    <TextView
-                        android:id="@+id/tv_clear_question"
-                        style="@style/TerminalText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:paddingLeft="8dp"
-                        android:text="Clear" />
-
-                </LinearLayout>
-
-                <LinearLayout
+                <Button
+                    android:id="@+id/add_question_button"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:layout_height="wrap_content"
+                    android:background="@color/nullColor"
+                    android:paddingTop="8dp"
+                    android:text="Добавить вопрос"
+                    android:textColor="@color/white" />
 
-                    <RadioGroup
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:paddingLeft="8dp">
+            </androidx.cardview.widget.CardView>
 
-                        <RadioButton
-                            android:id="@+id/rb_true"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="true" />
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:layout_weight="1"
+                android:backgroundTint="#5361DF"
+                android:elevation="12dp"
+                app:cardCornerRadius="25dp">
 
-                        <RadioButton
-                            android:id="@+id/rb_false"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="false" />
+                <Button
+                    android:id="@+id/save_question_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/nullColor"
+                    android:paddingTop="8dp"
+                    android:clickable="false"
+                    android:enabled="false"
+                    android:text="Сохранить"
+                    android:textColor="@color/white" />
 
-                    </RadioGroup>
-
-                    <RadioGroup
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:paddingLeft="8dp">
-
-                        <RadioButton
-                            android:id="@+id/rb_hard_question"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="hard" />
-
-                        <RadioButton
-                            android:id="@+id/rb_light_question"
-                            style="@style/TerminalText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="light" />
-
-                    </RadioGroup>
-                </LinearLayout>
-            </LinearLayout>
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
 
-
-    </androidx.cardview.widget.CardView>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>

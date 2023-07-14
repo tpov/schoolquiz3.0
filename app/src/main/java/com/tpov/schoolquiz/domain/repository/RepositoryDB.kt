@@ -1,12 +1,15 @@
 package com.tpov.schoolquiz.domain.repository
 
 import androidx.lifecycle.LiveData
-import com.tpov.schoolquiz.data.database.entities.*
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
+import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import kotlinx.coroutines.flow.Flow
 
 // TODO: 25.07.2022 LiveData -> Flow
 interface RepositoryDB {
-
     fun insertQuizDetail(questionDetailEntity: QuestionDetailEntity)
 
     fun insertProfile(profile: ProfileEntity)
@@ -14,8 +17,6 @@ interface RepositoryDB {
     fun insertQuiz(quizEntity: QuizEntity)
 
     fun insertQuestion(questionEntity: QuestionEntity)
-
-    fun insertListApiQuestion(apiQuestion: List<ApiQuestion>)
 
 
     fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity>
@@ -28,9 +29,11 @@ interface RepositoryDB {
 
     fun getProfile(tpovId: Int): ProfileEntity
 
+    fun getAllProfiles(): List<ProfileEntity>
+
     fun getQuizList(tpovId: Int): List<QuizEntity>
 
-    fun getQuizById(id: Int, tpovId: Int): QuizEntity
+    fun getQuizById(id: Int): QuizEntity
 
     fun getQuizEvent(): List<QuizEntity>
 
@@ -38,17 +41,19 @@ interface RepositoryDB {
 
     fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>>
 
+    fun getEventLiveData(): LiveData<List<QuizEntity>>
+
     fun getQuestionList(): List<QuestionEntity>
 
     fun getQuestionListByIdQuiz(id: Int): List<QuestionEntity>
 
-    fun getListApiQuestionBySystemDate(systemDate: String): List<ApiQuestion>
-
-    fun getApiQuestionList(): List<ApiQuestion>
-
     fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int): Int
 
     fun getNameQuizByIdQuiz(id: Int): String
+
+    fun getPlayersDB(): List<PlayersEntity>
+
+    fun getPlayersDB(tpovId: Int): PlayersEntity
 
 
     fun deleteQuestionById(id: Int)
@@ -59,14 +64,14 @@ interface RepositoryDB {
 
     fun deleteQuestionDetailById(id: Int)
 
+    fun deleteQuestion(id: Int)
+
 
     fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity)
 
     fun updateQuiz(quizEntity: QuizEntity)
 
-    fun updateApiQuestion(apiQuestion: ApiQuestion)
-
-    fun updateProfile(profile: ProfileEntity)
+    fun updateProfile(profile: ProfileEntity): Int
 
     fun updateQuestion(questionEntity: QuestionEntity)
 }

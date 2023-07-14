@@ -1,0 +1,28 @@
+Index: app/src/main/java/com/tpov/schoolquiz/presentation/custom/Values.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/tpov/schoolquiz/presentation/custom/Values.kt b/app/src/main/java/com/tpov/schoolquiz/presentation/custom/Values.kt
+deleted file mode 100644
+--- a/app/src/main/java/com/tpov/schoolquiz/presentation/custom/Values.kt	(revision 2875a5a57bded6fc227a2d0af56e25c97c383dc2)
++++ /dev/null	(revision 2875a5a57bded6fc227a2d0af56e25c97c383dc2)
+@@ -1,17 +0,0 @@
+-package com.tpov.schoolquiz.presentation.custom
+-
+-import java.util.*
+-
+-object Values {
+-    fun getNameThropy(language: String): String {
+-        return when (language) {
+-            //🥇🥈️🥉🎖🏅🏆🎗️🎃🎄🎁🎧🎞️🪙📀🏆⭐🎯🎓🏰❤
+-            "\uD83E\uDD47" -> "занявший 1 место в турнире"
+-            "\uD83E\uDD48" -> "Игрок занявший 2 место в турнире"
+-            "\uD83E\uDD49" -> "занявший 3 место в турнире"
+-            "Немецкий" -> "de"
+-            "Испанский" -> "es"
+-            else -> Locale.getDefault().language
+-        }
+-    }
+-}
+\ No newline at end of file

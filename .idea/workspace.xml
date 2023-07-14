@@ -3,8 +3,8 @@
   <component name="AndroidLayouts">
     <shared>
       <config>
-        <device id="_device_class_phone" />
         <device id="_device_class_foldable" />
+        <device id="_device_class_phone" />
         <device id="_device_class_desktop" />
         <locale>uk</locale>
         <target>android-33-ext4</target>
@@ -15,7 +15,18 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Fix get question detail">
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Create contact manu nav">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/ContactLibrary.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/Address.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/Contact.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/Contacts.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/CursorHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/Email.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/Event.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/PhoneNumber.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/Query.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/contact/Where.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/res/drawable/ic_contact.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" afterDir="false" />
@@ -23,43 +34,87 @@
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryFBImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryFBImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/custom/CustomProgressBar.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/custom/CustomProgressBar.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/custom/VisibleItems.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/custom/VisibleItems.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialog.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialog.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/ResultDialog.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/ResultDialog.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/FragmentMain.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/FragmentMain.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/mainactivity/MainActivityViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/FragmentMain.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/FragmentMain.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/SetItemMenu.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/SetItemMenu.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventAdapter.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventFragment.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/functions/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/functions/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[ZY323J98GX]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
     </projectState>
   </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$/app">
+          <activation />
+        </task>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="schoolquiz" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Python Script" />
+        <option value="Class" />
+        <option value="valueResourceFile" />
         <option value="layoutResourceFile" />
         <option value="resourceFile" />
-        <option value="Kotlin Class" />
         <option value="Kotlin Object" />
+        <option value="Kotlin Class" />
       </list>
     </option>
   </component>
+  <component name="GenerateSignedApkSettings">
+    <option name="BUILD_TARGET_KEY" value="apk" />
+  </component>
+  <component name="Git.Merge.Settings">
+    <option name="BRANCH" value="origin/fix" />
+  </component>
+  <component name="Git.Rebase.Settings">
+    <option name="NEW_BASE" value="alfa/schoolquiz3.0" />
+  </component>
   <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="Oleg &lt;oleg12794@gmail.com&gt;" />
+      </list>
+    </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="82b940d6209b5a50e1195a052700e8b42ea2da15" />
+        <entry key="$PROJECT_DIR$" value="fix" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -71,6 +126,13 @@
       <filtered-out-file-type name="TAG" />
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
+  </component>
+  <component name="GithubProjectSettings">
+    <option name="branchProtectionPatterns">
+      <list>
+        <option value="master" />
+      </list>
+    </option>
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -84,28 +146,44 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="PROJECT_TRUSTED_KEY" value="true" />
-    <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
-    <property name="android-custom-viewE:/Программирование/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/custom/CustomProgressBar.kt_SELECTED" value="CustomProgressBar" />
-    <property name="cidr.known.project.marker" value="true" />
-    <property name="project.structure.last.edited" value="SDK Location" />
-    <property name="project.structure.proportion" value="0.17" />
-    <property name="project.structure.side.proportion" value="0.0" />
-  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "PROJECT_TRUSTED_KEY": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "last_opened_file_path": "E:/SchoolQuiz/app/src/main/java/com/tpov/schoolquiz/presentation/contact"
+  }
+}]]></component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Properties" />
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\SchoolQuiz\app\src\main\java\com\tpov\schoolquiz\domain" />
-      <recent name="D:\SchoolQuiz\app\src\main\res\drawable-hdpi" />
-      <recent name="D:\SchoolQuiz\app\src\main\res\drawable-xxhdpi" />
-      <recent name="F:\Developer\Programmer\Android\SchoolQuiz\app\src\main\res\drawable" />
+      <recent name="E:\SchoolQuiz\app\src\main\java\com\tpov\schoolquiz\presentation\contact" />
+      <recent name="E:\SchoolQuiz\app\src\main\res\xml" />
+      <recent name="E:\SchoolQuiz\app\src\main\res" />
+      <recent name="E:\SchoolQuiz\app\src\main\res\drawable" />
+      <recent name="E:\Программирование\Android\schoolquiz3.0\app\src\main\res\drawable-hdpi" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\SchoolQuiz\app\src\main\java\com\tpov\schoolquiz\presentation\contact" />
+      <recent name="E:\SchoolQuiz\app\src\main\res\mipmap-hdpi" />
+      <recent name="E:\Программирование\Android\schoolquiz3.0\app" />
+      <recent name="E:\Программирование\Android\schoolquiz3.0\app\src\main\res\drawable-hdpi" />
+      <recent name="E:\SchoolQuiz\app\src\main\res\back_main" />
+    </key>
+    <key name="CreateKotlinClassDialog.RecentsKey">
+      <recent name="com.tpov.schoolquiz.data.model" />
+    </key>
+    <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
+      <recent name="com.tpov.schoolquiz.secure" />
+      <recent name="com.tpov.schoolquiz.presentation.network.event" />
     </key>
     <key name="CopyKotlinDeclarationDialog.RECENTS_KEY">
       <recent name="com.tpov.schoolquiz.domain" />
+      <recent name="com.tpov.schoolquiz.presentation.network.arena" />
       <recent name="com.tpov.schoolquiz.presentation.network.event" />
       <recent name="com.tpov.schoolquiz.data.fierbase" />
     </key>
@@ -160,7 +238,6 @@
         <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
         <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
         <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
-        <option name="PROFILING_MODE" value="NOT_SET" />
       </Profilers>
       <option name="DEEP_LINK" value="" />
       <option name="ACTIVITY_CLASS" value="" />
@@ -179,41 +256,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1678092861294</updated>
-    </task>
-    <task id="LOCAL-00001" summary="build">
-      <created>1680408918363</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1680408918363</updated>
-    </task>
-    <task id="LOCAL-00002" summary="fix build">
-      <created>1680435462178</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1680435462178</updated>
-    </task>
-    <task id="LOCAL-00003" summary="fix event adapter">
-      <created>1680449661463</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1680449661463</updated>
-    </task>
-    <task id="LOCAL-00004" summary="create logcat custom">
-      <created>1680493508899</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1680493508899</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Refactoring repository FB&#10;fix synth data">
-      <created>1680706876046</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1680706876046</updated>
     </task>
     <task id="LOCAL-00006" summary="fix load quiz">
       <created>1680773588658</created>
@@ -236,7 +278,329 @@
       <option name="project" value="LOCAL" />
       <updated>1680928726440</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Fix get question detail">
+      <created>1680977705498</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1680977705498</updated>
+    </task>
+    <task id="LOCAL-00010" summary="add 2event -&gt; 3event">
+      <created>1681047372984</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1681047372984</updated>
+    </task>
+    <task id="LOCAL-00011" summary="fix create question (number = 0)&#10;fix synth server">
+      <created>1681051869138</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1681051869138</updated>
+    </task>
+    <task id="LOCAL-00012" summary="create chat">
+      <created>1681137571296</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1681137571296</updated>
+    </task>
+    <task id="LOCAL-00013" summary="edit sort chat">
+      <created>1681185211864</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1681185211864</updated>
+    </task>
+    <task id="LOCAL-00014" summary="fix setEvent quiz">
+      <created>1681186958854</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1681186958854</updated>
+    </task>
+    <task id="LOCAL-00015" summary="edit autoswipe chat">
+      <created>1681207294559</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1681207294559</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Edit registration fragment (delete to 2 path)">
+      <created>1681221696668</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1681221696668</updated>
+    </task>
+    <task id="LOCAL-00017" summary="create main list quiz and home list quiz">
+      <created>1681376434409</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1681376434409</updated>
+    </task>
+    <task id="LOCAL-00018" summary="edit merge front fragment - arena fragment">
+      <created>1681471483540</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1681471483540</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Create setting and info">
+      <created>1681725319556</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1681725319556</updated>
+    </task>
+    <task id="LOCAL-00020" summary="fix main images">
+      <created>1681982264179</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1681982264179</updated>
+    </task>
+    <task id="LOCAL-00021" summary="fix main images">
+      <created>1681982665577</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1681982665577</updated>
+    </task>
+    <task id="LOCAL-00022" summary="fix main images (center gravity)">
+      <created>1681984258945</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1681984258945</updated>
+    </task>
+    <task id="LOCAL-00023" summary="fix main images (center gravity)">
+      <created>1681984507809</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1681984507809</updated>
+    </task>
+    <task id="LOCAL-00024" summary="fix main images (center gravity)&#10;fix questionActivity &lt;- question8">
+      <created>1681988419524</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1681988419524</updated>
+    </task>
+    <task id="LOCAL-00025" summary="fix main images (center gravity)&#10;fix questionActivity &lt;- question8">
+      <created>1681996293308</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1681996293308</updated>
+    </task>
+    <task id="LOCAL-00026" summary="fix timer">
+      <created>1682359780573</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1682359780573</updated>
+    </task>
+    <task id="LOCAL-00027" summary="fix timer">
+      <created>1682620234799</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1682620234799</updated>
+    </task>
+    <task id="LOCAL-00028" summary="Create create question dialog">
+      <created>1682950533561</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1682950533561</updated>
+    </task>
+    <task id="LOCAL-00029" summary="add create question">
+      <created>1683196789093</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1683196789093</updated>
+    </task>
+    <task id="LOCAL-00030" summary="Delete swipe item question&#10;Add swipe menu">
+      <created>1683267960195</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1683267960195</updated>
+    </task>
+    <task id="LOCAL-00031" summary="Fix create acc">
+      <created>1683954831933</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1683954831933</updated>
+    </task>
+    <task id="LOCAL-00032" summary="Fix create question not acc">
+      <created>1683959805715</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1683959805715</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Fix synth life with FB&#10;Fix adds nolics in MainActivity">
+      <created>1684505932256</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1684505932256</updated>
+    </task>
+    <task id="LOCAL-00034" summary="Edit setQuiz5, sort quiz5">
+      <created>1685125505095</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1685125505096</updated>
+    </task>
+    <task id="LOCAL-00035" summary="Edit setQuiz5, sort quiz5&#10;Delete question day&#10;Fix time format&#10;Edit translate &#10;Add detect language">
+      <created>1685383661332</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1685383661332</updated>
+    </task>
+    <task id="LOCAL-00036" summary="Merge">
+      <created>1685432222909</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1685432222909</updated>
+    </task>
+    <task id="LOCAL-00037" summary="Edit Design question activity&#10;Create background image">
+      <created>1685444849867</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1685444849867</updated>
+    </task>
+    <task id="LOCAL-00038" summary="Fix translate create double question&#10;Create get, set translate FB question">
+      <created>1685457719356</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1685457719356</updated>
+    </task>
+    <task id="LOCAL-00039" summary="Fix translate create double question&#10;Create get, set translate FB question">
+      <created>1685458972467</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1685458972467</updated>
+    </task>
+    <task id="LOCAL-00040" summary="Create search in quiz5&#10;Edit addQuiz icon in quiz1&#10;Create anim text chat">
+      <created>1685545059889</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1685545059889</updated>
+    </task>
+    <task id="LOCAL-00041" summary="Fix set number box day">
+      <created>1686041335363</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1686041335363</updated>
+    </task>
+    <task id="LOCAL-00042" summary="Edit backgrounf create new quiz">
+      <created>1687263276446</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1687263276446</updated>
+    </task>
+    <task id="LOCAL-00043" summary="Edit backgrounf create new quiz">
+      <created>1687268314513</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1687268314513</updated>
+    </task>
+    <task id="LOCAL-00044" summary="Edit backgrounf create new quiz">
+      <created>1687328212717</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1687328212717</updated>
+    </task>
+    <task id="LOCAL-00045" summary="Edit skill for time in gamme">
+      <created>1687348470191</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1687348470191</updated>
+    </task>
+    <task id="LOCAL-00046" summary="Create profile language in registration with checkbox">
+      <created>1687522038964</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1687522038964</updated>
+    </task>
+    <task id="LOCAL-00047" summary="Ended main activity top bap">
+      <created>1688220031872</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1688220031872</updated>
+    </task>
+    <task id="LOCAL-00048" summary="Remove unused views">
+      <created>1688370611982</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1688370611982</updated>
+    </task>
+    <task id="LOCAL-00049" summary="Create reaction&#10;Edit limit synth">
+      <created>1688381008710</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1688381008710</updated>
+    </task>
+    <task id="LOCAL-00050" summary="Fix crash nav menu">
+      <created>1688482632781</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1688482632782</updated>
+    </task>
+    <task id="LOCAL-00051" summary="Add synth add points">
+      <created>1688542401510</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1688542401511</updated>
+    </task>
+    <task id="LOCAL-00052" summary="Fix Create quiz dialog">
+      <created>1688568874031</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1688568874031</updated>
+    </task>
+    <task id="LOCAL-00053" summary="Fix Create quiz dialog">
+      <created>1688568899166</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1688568899166</updated>
+    </task>
+    <task id="LOCAL-00054" summary="Fix show quiz8 when create acc&#10;Edit load question detail main with mainActivity -&gt; getProfileActivity&#10;Fix crash after answer oldQuestion">
+      <created>1689176475838</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1689176475839</updated>
+    </task>
+    <option name="localTasksCounter" value="55" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -256,17 +620,35 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="front" />
-    <MESSAGE value="build" />
-    <MESSAGE value="fix build" />
-    <MESSAGE value="fix event adapter" />
-    <MESSAGE value="create logcat custom" />
-    <MESSAGE value="Refactoring repository FB&#10;fix synth data" />
-    <MESSAGE value="fix load quiz" />
-    <MESSAGE value="fix questionActivity" />
-    <MESSAGE value="fix load all questions" />
-    <MESSAGE value="Fix numeration item in list FB" />
-    <MESSAGE value="Fix get question detail" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix get question detail" />
+    <ignored-roots>
+      <path value="$PROJECT_DIR$/schoolquiz" />
+    </ignored-roots>
+    <MESSAGE value="Edit setQuiz5, sort quiz5&#10;Delete question day&#10;Fix time format&#10;Edit translate &#10;Add detect language" />
+    <MESSAGE value="Merge" />
+    <MESSAGE value="Edit Design question activity&#10;Create background image" />
+    <MESSAGE value="Fix translate create double question&#10;Create get, set translate FB question" />
+    <MESSAGE value="Create search in quiz5" />
+    <MESSAGE value="Create search in quiz5&#10;Edit addQuiz icon in quiz1&#10;Create anim text chat" />
+    <MESSAGE value="Fix set number box day" />
+    <MESSAGE value="Create popup menu info main item" />
+    <MESSAGE value="Create translate with event translate" />
+    <MESSAGE value="Create translate with event translate&#10;Edit numQuestion in item main activity" />
+    <MESSAGE value="Edit backgrounf create new quiz" />
+    <MESSAGE value="Edit skill for time in gamme" />
+    <MESSAGE value="Create time in sms" />
+    <MESSAGE value="Create profile language in registration with checkbox" />
+    <MESSAGE value="Ended main activity top bap" />
+    <MESSAGE value="Bugfix Hot alfa" />
+    <MESSAGE value="Remove unused views" />
+    <MESSAGE value="Create reaction&#10;Edit limit synth" />
+    <MESSAGE value="Fix crash nav menu" />
+    <MESSAGE value="Add synth add points" />
+    <MESSAGE value="Edit Create quiz" />
+    <MESSAGE value="Fix Create quiz dialog" />
+    <MESSAGE value="Fix show quiz8 when create acc" />
+    <MESSAGE value="Fix show quiz8 when create acc&#10;Edit load question detail main with mainActivity -&gt; getProfileActivity&#10;Fix crash after answer oldQuestion" />
+    <MESSAGE value="Create contact manu nav" />
+    <option name="LAST_COMMIT_MESSAGE" value="Create contact manu nav" />
+    <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

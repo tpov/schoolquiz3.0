@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
@@ -8,54 +8,46 @@
     android:animateLayoutChanges="true"
     android:background="@color/nullColor">
 
-
     <LinearLayout
         android:id="@+id/swipe_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:background="#00FFFFFF"
-        android:elevation="-10dp"
+        android:elevation="10dp"
         android:foregroundGravity="center"
         android:gravity="end"
         android:orientation="horizontal"
         android:translationZ="100dp">
 
         <ImageButton
-            android:id="@+id/edit_button_swipe"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:background="#59005A41"
-            android:padding="21dp"
-            android:text=""
-            android:textColor="#000000"
-            app:srcCompat="@drawable/baseline_edit_24" />
-
-        <ImageButton
             android:id="@+id/delete_button_swipe"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
             android:layout_margin="4dp"
             android:background="#59FF0000"
             android:padding="21dp"
             android:text=""
             android:textColor="#000000"
+            android:visibility="gone"
             app:srcCompat="@drawable/ic_baseline_quiz" />
 
         <ImageButton
             android:id="@+id/send_button_swipe"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
             android:layout_margin="4dp"
             android:background="#590037FF"
             android:padding="21dp"
             android:text=""
             android:textColor="#000000"
+            android:visibility="gone"
             app:srcCompat="@drawable/ic_baseline_drive_folder_upload_24" />
     </LinearLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <com.tpov.schoolquiz.presentation.custom.CustomRoundedImageView
 
         android:id="@+id/constraint_layout"
         android:layout_width="match_parent"
@@ -66,8 +58,19 @@
         android:animateLayoutChanges="true"
         android:background="@drawable/rounded_corners"
         android:elevation="8dp"
-        android:outlineSpotShadowColor="#000000"
-        app:layout_constraintEnd_toStartOf="@+id/swipe_container">
+        android:outlineSpotShadowColor="#000000">
+
+        <ImageView
+            android:id="@+id/imv_grad_button"
+            android:layout_width="16dp"
+            android:layout_height="75dp"
+            android:layout_marginLeft="84dp"
+            android:elevation="12dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/linearLayout"
+            app:srcCompat="@drawable/db_design3_grad_item_text_button" />
 
         <ImageButton
             android:id="@+id/imv_gradient_light_quiz"
@@ -75,13 +78,11 @@
             android:layout_height="0dp"
             android:layout_margin="0dp"
             android:background="@color/nullColor"
-            android:elevation="10dp"
             android:foregroundGravity="bottom"
             android:padding="0dp"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
+            app:layout_constraintTop_toTopOf="@+id/linearLayout"
             app:srcCompat="@drawable/gradient_light_quiz" />
 
         <ImageButton
@@ -90,13 +91,11 @@
             android:layout_height="0dp"
             android:layout_margin="0dp"
             android:background="@color/nullColor"
-            android:elevation="10dp"
             android:foregroundGravity="bottom"
             android:padding="0dp"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
+            app:layout_constraintTop_toTopOf="@+id/linearLayout"
             app:srcCompat="@drawable/gradient_hard_quiz" />
 
         <ImageButton
@@ -105,167 +104,151 @@
             android:layout_height="0dp"
             android:layout_margin="0dp"
             android:background="@color/nullColor"
-            android:elevation="10dp"
             android:foregroundGravity="bottom"
             android:padding="0dp"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/linearLayout"
             app:srcCompat="@drawable/gradient_universal_quiz" />
 
         <LinearLayout
-            android:id="@+id/linearlayout"
+            android:id="@+id/linearLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/backgraund_item_front_activity"
-                android:orientation="horizontal"
-                app:layout_constraintBottom_toBottomOf="@id/linearlayout"
-                app:layout_constraintEnd_toEndOf="@id/linearlayout"
-                app:layout_constraintStart_toStartOf="@id/linearlayout"
-                app:layout_constraintTop_toTopOf="@id/linearlayout">
+                android:orientation="horizontal">
 
 
                 <Button
                     android:id="@+id/main_title_button"
-                    android:layout_width="120dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
                     android:background="@null"
+                    android:elevation="12dp"
+                    android:gravity="center"
                     android:inputType="textAutoCorrect"
-                    android:text="name quiz"
+                    android:paddingLeft="4dp"
+                    android:text="name quiz very long name"
                     android:textColor="@color/white"
-                    android:textStyle="bold" />
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:transformPivotX="12dp" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-
-                        <RatingBar
-                            android:id="@+id/ratingBar"
-                            style="?android:attr/ratingBarStyleIndicator"
-                            android:layout_width="106dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center|center_vertical"
-                            android:background="#003A3A3A"
-                            android:foregroundGravity="center_vertical|center"
-                            android:numStars="3"
-                            android:progressBackgroundTint="#AAAAAA"
-                            android:progressBackgroundTintMode="multiply"
-                            android:stepSize="0.01"
-                            android:theme="@style/RatingBar" />
-
-                    <Switch
-                        android:id="@+id/s_hardQuiz"
+                    <TextView
+                        android:id="@+id/tvNumQuestion"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:trackTint="@color/num_chack_norice_green"
-                        android:thumbTint="@color/num_chack_norice_red"
                         android:layout_gravity="center"
-                        android:layout_weight="0" />
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="time"
+                        android:textColor="#89C6B3"
+                        android:visibility="gone" />
 
-                    <LinearLayout
-                        android:id="@+id/infoQuiz"
-                        android:layout_width="100dp"
+                    <TextView
+                        android:id="@+id/tvNumHardQuiz"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:orientation="vertical"
-                        android:visibility="gone">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/tvNumQuestion"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="left"
-                                android:layout_marginLeft="10dp"
-                                android:layout_marginTop="10dp"
-                                android:layout_marginRight="2dp"
-                                android:background="#80124F5E"
-                                android:backgroundTint="#66186C00"
-                                android:gravity="center"
-                                android:text="000"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvNumHardQuiz"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="left"
-                                android:layout_marginTop="3dp"
-                                android:layout_weight="1"
-                                android:background="#80124F5E"
-                                android:backgroundTint="#772121"
-                                android:text="000"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvNumAnswer"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="left"
-                                android:layout_marginLeft="2dp"
-                                android:layout_marginTop="3dp"
-                                android:layout_weight="1"
-                                android:background="#80124F5E"
-                                android:backgroundTint="#3A3A3A"
-                                android:gravity="center"
-                                android:text="000"
-                                android:textSize="12sp" />
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                    <ImageView
-                        android:id="@+id/imageView"
-                        android:layout_width="120dp"
-                        android:layout_height="75dp"
-                        android:layout_gravity="end"
-                        android:foregroundGravity="right"
-                        android:scaleType="fitEnd" />
-
-                    <ImageButton
-                        android:id="@+id/imShare"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_gravity="center|right"
                         android:layout_weight="1"
-                        android:backgroundTint="#00FFFFFF"
-                        android:elevation="15dp"
-                        android:foregroundGravity="right"
-                        android:visibility="gone"
-                        app:srcCompat="@drawable/ic_share_quiz" />
-
-                    <ImageButton
-                        android:id="@+id/imDeleteQuiz"
-                        android:layout_width="15dp"
-                        android:layout_height="15dp"
-                        android:layout_gravity="center"
-                        android:layout_marginLeft="6dp"
-                        android:layout_marginRight="6dp"
-                        android:backgroundTint="#124F5E"
-                        android:elevation="15dp"
-                        android:visibility="gone"
-                        app:srcCompat="@drawable/ic_baseline_quiz"
-                        app:tint="#FF0000" />
+                        android:foregroundGravity="center"
+                        android:gravity="center"
+                        android:text="time"
+                        android:textColor="#C68989"
+                        android:visibility="gone" />
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:minWidth="40dp"
+                        android:orientation="vertical">
+
+
+                        <ImageView
+                            android:id="@+id/imv_translate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:background="@color/nullColor"
+                            app:srcCompat="@drawable/ic_translate" />
+
+                        <CheckBox
+                            android:id="@+id/chb_type_quiz"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="" />
+                    </LinearLayout>
+                </LinearLayout>
+
+
+                <RatingBar
+                    android:id="@+id/ratingBar"
+                    style="?android:attr/ratingBarStyleIndicator"
+                    android:layout_width="106dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|center_vertical"
+                    android:background="#003A3A3A"
+                    android:numStars="3"
+                    android:progressBackgroundTint="#AAAAAA"
+                    android:progressBackgroundTintMode="multiply"
+                    android:stepSize="0.01"
+                    android:theme="@style/RatingBar" />
+
+                <ImageView
+                    android:id="@+id/imageView"
+                    android:layout_width="100dp"
+                    android:layout_height="75dp"
+                    android:layout_alignParentRight="true"
+                    android:scaleType="fitCenter"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/imShare"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center|right"
+                    android:layout_weight="1"
+                    android:backgroundTint="#00FFFFFF"
+                    android:elevation="15dp"
+                    android:foregroundGravity="right"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/ic_share_quiz" />
+
+                <ImageButton
+                    android:id="@+id/imDeleteQuiz"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="6dp"
+                    android:layout_marginRight="6dp"
+                    android:backgroundTint="#124F5E"
+                    android:elevation="15dp"
+                    android:visibility="gone"
+                    app:srcCompat="@drawable/ic_baseline_quiz"
+                    app:tint="#FF0000" />
 
 
             </LinearLayout>
@@ -273,47 +256,37 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_weight="0.3"
                 android:orientation="horizontal">
 
-
-                <LinearLayout
-                    android:id="@+id/layout_name_and_date"
+                <TextView
+                    android:id="@+id/tvName"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="20dp"
+                    android:layout_weight="0.3"
+                    android:foregroundGravity="left"
+                    android:text="user name"
+                    android:textColor="#000000"
+                    android:textColorLink="#8E0000"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginEnd="20dp"
                     android:layout_weight="1"
-                    android:background="@color/backgraund_item_front_activity"
-                    android:gravity="end"
-                    android:orientation="horizontal"
-                    android:paddingRight="10dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/tvName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="20dp"
-                        android:layout_weight="1"
-                        android:foregroundGravity="left"
-                        android:text="Name"
-                        android:textColor="#384A7A"
-                        android:textColorLink="#8E0000" />
-
-                    <TextView
-                        android:id="@+id/tvTime"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end"
-                        android:layout_marginEnd="20dp"
-                        android:layout_weight="1"
-                        android:gravity="right|end"
-                        android:text="time"
-                        android:textColor="#334573"
-                        android:visibility="gone" />
-
-                </LinearLayout>
+                    android:gravity="right|end"
+                    android:text="time"
+                    android:textColor="#000000"
+                    android:visibility="gone" />
             </LinearLayout>
+
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.tpov.schoolquiz.presentation.custom.CustomRoundedImageView>
 
-</FrameLayout>
+</RelativeLayout>

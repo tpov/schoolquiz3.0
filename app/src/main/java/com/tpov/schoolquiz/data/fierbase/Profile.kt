@@ -2,12 +2,14 @@ package com.tpov.schoolquiz.data.fierbase
 
 import com.google.firebase.database.IgnoreExtraProperties
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.shoppinglist.utils.TimeManager
 
 @IgnoreExtraProperties
 data class Profile constructor(
-    val tpovId: Int,
+    val tpovId: String,
     val login: String,
     val name: String,
+    val nickname: String,
     val birthday: String,
     val points: Points,
     val datePremium: String,
@@ -21,10 +23,13 @@ data class Profile constructor(
     val dates: Dates,
     val idFirebase: String,
     val languages: String,
-    val qualification: Qualification
+    val qualification: Qualification,
+    val life: Life,
+    val box: Box
 ) {
     constructor() : this(
-        0,
+        0.toString(),
+        "",
         "",
         "",
         "",
@@ -35,12 +40,35 @@ data class Profile constructor(
         "",
         "",
         0,
-        TimeInGames("", "", "", 0),
+        TimeInGames(0, 0, 0, 0, 0, 0),
         AddPoints(0, 0, 0, 0, ""),
         Dates("", ""),
         "",
         "",
-        Qualification(0,0,0,0,0,0,0)
+        Qualification(0, 0, 0, 0, 0, 0, 0),
+        Life(0, 0),
+        Box(0, "0", 0)
+    )
+}
+
+@IgnoreExtraProperties
+data class Life(
+    val countLife: Int,
+    val countGoldLife: Int,
+) {
+    constructor() : this(
+        0, 0
+    )
+}
+
+@IgnoreExtraProperties
+data class Box(
+    val countBox: Int,
+    val timeLastOpenBox: String,
+    val coundDayBox: Int
+) {
+    constructor() : this(
+        0, "", 0
     )
 }
 
@@ -62,13 +90,15 @@ data class Qualification(
 
 @IgnoreExtraProperties
 data class TimeInGames(
-    val allTime: String,
-    val timeInQuiz: String,
-    val timeInChat: String,
-    val smsPoints: Int
+    val allTime: Int,
+    val timeInQuiz: Int,
+    val timeInChat: Int,
+    val smsPoints: Int,
+    val countQuestions: Int?,
+    val countTrueQuestion: Int,
 ) {
     constructor() : this(
-        "", "", "", 0
+        0, 0, 0, 0, 0, 0
     )
 }
 
@@ -123,62 +153,73 @@ data class Dates(
 
 fun ProfileEntity.toProfile(): Profile {
     return Profile(
-        tpovId = this.tpovId,
-        login = this.login,
-        name = this.name,
-        birthday = this.birthday,
+        tpovId = this.tpovId.toString(),
+        login = this.login!!,
+        name = this.name ?: "",
+        nickname = this.nickname!!,
+        birthday = this.birthday!!,
         points = Points(
-            gold = this.pointsGold,
-            skill = this.pointsSkill,
-            skillInSesone = this.pointsSkillInSeason,
-            nolics = this.pointsNolics
+            gold = this.pointsGold!!,
+            skill = this.pointsSkill!!,
+            skillInSesone = this.pointsSkillInSeason!!,
+            nolics = this.pointsNolics!!
         ),
-        datePremium = this.datePremium,
+        datePremium = this.datePremium!!,
         buy = Buy(
-            heart = this.buyHeart,
-            goldHeart = this.buyGoldHeart,
-            quizPlace = this.buyQuizPlace,
-            theme = this.buyTheme,
-            music = this.buyMusic,
-            logo = this.buyLogo
+            heart = this.buyHeart!!,
+            goldHeart = this.buyGoldHeart!!,
+            quizPlace = this.buyQuizPlace!!,
+            theme = this.buyTheme!!,
+            music = this.buyMusic!!,
+            logo = this.buyLogo!!
         ),
-        trophy = this.trophy,
-        friends = this.friends,
-        city = this.city,
-        logo = this.logo,
+        trophy = this.trophy!!,
+        friends = this.friends!!,
+        city = this.city!!,
+        logo = this.logo!!,
         timeInGames = TimeInGames(
-            allTime = this.timeInGamesAllTime,
-            timeInQuiz = this.timeInGamesInQuiz,
-            timeInChat = this.timeInGamesInChat,
-            smsPoints = this.timeInGamesSmsPoints
+            allTime = this.timeInGamesAllTime!!,
+            timeInQuiz = this.timeInGamesInQuiz!!,
+            timeInChat = this.timeInGamesInChat!!,
+            smsPoints = this.timeInGamesSmsPoints!!,
+            countQuestions = this.timeInGamesCountQuestions,
+            countTrueQuestion = this.timeInGamesCountTrueQuestion,
         ),
         addPoints = AddPoints(
-            this.addPointsGold,
-            this.addPointsSkill,
-            this.addPointsSkillInSeason,
-            this.addPointsNolics,
-            this.addTrophy
+            this.addPointsGold!!,
+            this.addPointsSkill!!,
+            this.addPointsSkillInSeason!!,
+            this.addPointsNolics!!,
+            this.addTrophy!!
         ),
-        dates = Dates(this.dataCreateAcc, this.dateSynch),
-        idFirebase = this.idFirebase,
-        languages = this.languages,
+        dates = Dates(this.dataCreateAcc!!, this.dateSynch!!),
+        idFirebase = this.idFirebase!!,
+        languages = this.languages!!,
         qualification = Qualification(
-            this.gamer,
-            this.sponsor,
-            this.tester,
-            this.translater,
-            this.moderator,
-            this.admin,
-            this.developer
+            this.gamer!!,
+            this.sponsor!!,
+            this.tester!!,
+            this.translater!!,
+            this.moderator!!,
+            this.admin!!,
+            this.developer!!
+        ),
+        life = Life(
+            this.countLife!!,
+            this.countGoldLife!!,
+        ),
+        box = Box(
+            this.countBox!!,
+            this.timeLastOpenBox!!,
+            this.coundDayBox!!
         )
     )
-
 }
 
-fun Profile.toProfileEntity(): ProfileEntity {
+fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
     return ProfileEntity(
         id = null,
-        tpovId = this.tpovId,
+        tpovId = this.tpovId.toInt(),
         login = this.login,
         name = this.name,
         birthday = this.birthday,
@@ -216,6 +257,17 @@ fun Profile.toProfileEntity(): ProfileEntity {
         translater = this.qualification.translater,
         moderator = this.qualification.moderator,
         admin = this.qualification.admin,
-        developer = this.qualification.developer
+        developer = this.qualification.developer,
+        nickname = this.nickname,
+        coundDayBox = this.box.coundDayBox,
+        countBox = this.box.countBox,
+        timeLastOpenBox = this.box.timeLastOpenBox,
+        countGold = countGold,
+        count = count,
+        countGoldLife = this.life.countGoldLife,
+        countLife = this.life.countLife,
+        dateCloseApp = TimeManager.getCurrentTime(),
+        timeInGamesCountQuestions = this.timeInGames.countQuestions,
+        timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion
     )
 }

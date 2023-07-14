@@ -9,8 +9,8 @@
         app:showAsAction="ifRoom"
         />
 
-    <item android:id="@+id/menu_new_quiz"
-        android:icon="@drawable/ic_new"
+    <item android:id="@+id/menu_adb"
+        android:icon="@drawable/shop"
         android:title="@string/menu_new"
         app:showAsAction="ifRoom"
         />

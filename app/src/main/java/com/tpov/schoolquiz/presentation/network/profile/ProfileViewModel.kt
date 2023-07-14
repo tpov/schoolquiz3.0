@@ -1,13 +1,28 @@
 package com.tpov.schoolquiz.presentation.network.profile
 
-import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
-import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.domain.DeleteAllQuizUseCase
+import com.tpov.schoolquiz.domain.GetProfileFBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz1FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz2FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz3FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz4FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz5FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz6FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz7FBUseCase
+import com.tpov.schoolquiz.domain.GetQuiz8FBUseCase
+import com.tpov.schoolquiz.domain.GetSynthUseCase
+import com.tpov.schoolquiz.domain.GetTpovIdFBUseCase
+import com.tpov.schoolquiz.domain.GetTranslateUseCase
+import com.tpov.schoolquiz.domain.SetProfileFBUseCase
+import com.tpov.schoolquiz.domain.SetQuestionDetailFBUseCase
+import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
+import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
+import com.tpov.schoolquiz.domain.SetQuizEventUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,38 +36,44 @@ class ProfileViewModel @Inject constructor(
     private val getProfileFBUseCase: GetProfileFBUseCase,
     private val getTpovIdFBUseCase: GetTpovIdFBUseCase,
 
-    private val getQuestion1FBUseCase: GetQuestion1FBUseCase,
     private val getQuiz1FBUseCase: GetQuiz1FBUseCase,
-    private val getQuestionDetail1FBUseCase: GetQuestionDetail1FBUseCase,
-
-    private val getQuestion2FBUseCase: GetQuestion2FBUseCase,
     private val getQuiz2FBUseCase: GetQuiz2FBUseCase,
-    private val getQuestionDetail2FBUseCase: GetQuestionDetail2FBUseCase,
-    private val getSynthUseCase: GetSynthUseCase
+    private val getQuiz3FBUseCase: GetQuiz3FBUseCase,
+
+    private val getQuiz4FBUseCase: GetQuiz4FBUseCase,
+    private val getQuiz5FBUseCase: GetQuiz5FBUseCase,
+    private val getQuiz6FBUseCase: GetQuiz6FBUseCase,
+    private val getQuiz7FBUseCase: GetQuiz7FBUseCase,
+    private val getQuiz8FBUseCase: GetQuiz8FBUseCase,
+    private val getSynthUseCase: GetSynthUseCase,
+    private val setQuizEventUseCase: SetQuizEventUseCase,
+    private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
+    private val getTranslateUseCase: GetTranslateUseCase,
+    //private val getPlayersListUseCase: GetPlayersListUseCase
 
 ) : ViewModel() {
-
-    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
-    private val database: FirebaseDatabase by lazy { FirebaseDatabase.getInstance() }
 
     var addQuestion = MutableLiveData<Int>()
     var addInfoQuestion = MutableLiveData<Int>()
     var addQuiz = MutableLiveData<Int>()
     var synth = getSynthUseCase()
 
-    var tpovId = 0
-
 
     fun getTpovId() {
         getTpovIdFBUseCase()
     }
 
-
-
     fun setQuizFB() {
         log("fun setQuizFB()")
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             setQuizDataFBUseCase()
+        }
+    }
+
+    fun setEventQuiz() {
+        log("fun setEventQuiz()")
+        viewModelScope.launch {
+            setQuizEventUseCase()
         }
     }
 
@@ -71,26 +92,31 @@ class ProfileViewModel @Inject constructor(
         log("fun getProfile()")
         getProfileFBUseCase()
     }
-
     fun getQuizzFB() {
         log("fun getQuizzFB()")
         getQuiz1FBUseCase()
         getQuiz2FBUseCase()
+        getQuiz3FBUseCase()
+        getQuiz4FBUseCase()
+        getQuiz5FBUseCase()
+        getQuiz6FBUseCase()
+        getQuiz7FBUseCase()
+        getQuiz8FBUseCase()
     }
 
-    fun getQuestions2FB() {
-        log("fun getQuestions2FB()")
-        getQuestion2FBUseCase()
-        getQuestionDetail2FBUseCase()
+    fun getTranslate() {
+        getTranslateUseCase()
     }
-
-    fun getQuestions1FB() {
-        log("fun getQuestions1FB()")
-        getQuestion1FBUseCase()
-        getQuestionDetail1FBUseCase()
+    fun getPlayersList() {
+        log("getPlayersList()")
+        //getPlayersListUseCase()
     }
 
     fun log(m: String) {
         Logcat.log(m, "Profile", Logcat.LOG_VIEW_MODEL)
+    }
+
+    fun getDeleteAllQuiz() {
+        deleteAllQuizUseCase()
     }
 }

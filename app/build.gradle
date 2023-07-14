@@ -4,6 +4,7 @@ plugins {
     id 'kotlin-kapt'
     id 'com.google.gms.google-services'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-android-extensions'
 }
 
 android {
@@ -44,8 +45,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_9
-        targetCompatibility JavaVersion.VERSION_1_9
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     configurations {
         all {
@@ -76,6 +77,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
+
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //Библиотека Руум
 
@@ -93,7 +95,7 @@ dependencies {
 
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.10'
     implementation 'com.squareup.retrofit2:converter-gson:2.7.0'
     implementation 'androidx.work:work-runtime-ktx:2.7.1'
     implementation 'androidx.annotation:annotation:1.5.0'
@@ -123,7 +125,6 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
-    implementation 'com.squareup.picasso:picasso:2.71828'
 
     implementation platform('com.google.firebase:firebase-bom:31.2.0')
     implementation 'com.google.firebase:firebase-auth'
@@ -137,7 +138,20 @@ dependencies {
         exclude group: "com.google.protobuf", module: "protobuf-java"
     }
     implementation 'com.google.mlkit:language-id:17.0.4'
+    implementation 'com.google.android.gms:play-services-ads:20.4.0'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation "org.jetbrains.kotlin:kotlin-parcelize-runtime:$kotlin_version"
 
+    implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'jp.wasabeef:picasso-transformations:2.4.0'
+    implementation 'com.github.bumptech.glide:glide:4.13.2'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
+    implementation 'jp.wasabeef:glide-transformations:4.3.0'
+
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation "org.jetbrains.anko:anko-commons:0.10.8"
+
+    implementation 'com.github.tpov:Userguide:1.4.1-alfa3'
 
 }
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

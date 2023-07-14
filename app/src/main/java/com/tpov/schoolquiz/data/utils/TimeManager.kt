@@ -1,17 +1,23 @@
 package com.tpov.shoppinglist.utils
 
 import android.content.SharedPreferences
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
+import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.*
+import kotlin.math.abs
 
 object TimeManager {
 
-    private const val DEF_TIME_FORMAT = "hh:mm:ss - yyyy/MM/dd"
+    private const val DEF_TIME_FORMAT = "HH:mm:ss - dd/MM/yy"
     fun getCurrentTime(): String{
         Log.d("NewNoteActivity", "getCurrentTime")
 
-        val formatter = SimpleDateFormat("hh:mm:ss - yyyy/MM/dd", Locale.getDefault())
+        val formatter = SimpleDateFormat("HH:mm:ss - dd/MM/yy", Locale.getDefault())
         return formatter.format(Calendar.getInstance().time)
     }
 
@@ -24,6 +30,44 @@ object TimeManager {
             newFormatter.format(defDate)
         } else {
             time
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getDaysBetweenDates(dateString1: String, dateString2: String): Long {
+        val formatter = SimpleDateFormat(DEF_TIME_FORMAT, Locale.getDefault())
+
+        return try {
+            // Преобразуйте строки даты в объекты Date
+            val date1 = formatter.parse(dateString1)
+            val date2 = formatter.parse(dateString2)
+
+            // Преобразуйте объекты Date в объекты LocalDate
+            val localDate1 = date1.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+            val localDate2 = date2.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+
+            // Вычислите разницу между двумя объектами LocalDate
+            val daysBetween = ChronoUnit.DAYS.between(localDate1, localDate2)
+            Log.d("daysBetween","daysBetween: $daysBetween")
+            // Верните абсолютное значение разницы в днях
+            abs(daysBetween)
+        } catch (e: ParseException) {
+            0
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getSecondBetweenDates(dateString1: String, dateString2: String): Long? {
+        val formatter = SimpleDateFormat(DEF_TIME_FORMAT, Locale.getDefault())
+
+        return try {
+            val date1 = formatter.parse(dateString1)
+            val date2 = formatter.parse(dateString2)
+
+            val millisecondsDiff = abs( date2.time - date1.time )
+            millisecondsDiff / 1000
+        } catch (e: ParseException) {
+            0
         }
     }
 }
