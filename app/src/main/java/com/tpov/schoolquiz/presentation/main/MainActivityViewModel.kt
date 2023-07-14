@@ -16,7 +16,10 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.setting.SharedPrefSettings
 import com.tpov.shoppinglist.utils.TimeManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -103,10 +106,21 @@ class MainActivityViewModel @Inject constructor(
     fun init() {
         log("fun init(), tpovId: ${getTpovId()}")
 
-        if (getTpovId() == -1) insertProfile()
-        getProfileFlowUseCase(getTpovId())
-        getQuiz8FBUseCase()
+        if (getTpovId() == -1) {
+            CoroutineScope(Dispatchers.IO).launch {
+                insertProfile()
+            }
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            getProfileFlowUseCase(getTpovId())
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            getQuiz8FBUseCase()
+        }
     }
+
 
     fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
         return getQuestionListUseCase().filter { it.idQuiz == idQuiz }

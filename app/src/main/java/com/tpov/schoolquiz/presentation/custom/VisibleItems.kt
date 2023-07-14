@@ -36,6 +36,7 @@ object VisibleItems {
             items.add(R.string.nav_massages to R.drawable.nav_massage)
             items.add(R.string.nav_reports to R.drawable.nav_report)
             items.add(R.string.nav_profile to R.drawable.nav_profile)
+            items.add(R.string.nav_contact to R.drawable.ic_contact)
         }
 
         items.add(R.string.nav_exit to R.drawable.nav_exit)

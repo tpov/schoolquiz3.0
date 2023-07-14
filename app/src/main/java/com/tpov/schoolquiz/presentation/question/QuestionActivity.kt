@@ -133,7 +133,13 @@ class QuestionActivity : AppCompatActivity() {
             try {
                 showTextWithDelay( binding.questionTextView, viewModel.questionListThis[viewModel.currentIndex].nameQuestion, DELAY_SHOW_TEXT)
             } catch (e: Exception) {
-                Toast.makeText(this@QuestionActivity, "Вопросы не были загружены, возможно произошла ошибка", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@QuestionActivity, "Вопросы не были загружены, попробуйте их перевести", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@QuestionActivity, "Вам начислена компенсация 33% жизней", Toast.LENGTH_LONG).show()
+                viewModel.updateProfileUseCase(
+                    viewModel.getProfile()
+                        .copy(count = viewModel.getProfile().count?.plus(33))
+                )
+                finish()
             }
         }
         actionBarSettings()

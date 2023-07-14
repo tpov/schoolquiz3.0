@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.presentation.main
 
+import android.Manifest.permission.READ_CONTACTS
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.WRITE_CONTACTS
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -32,9 +34,11 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.custom.Logcat
@@ -49,6 +53,7 @@ import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_ARENA
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CONTACT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_DOWNLOADS
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_EVENT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_EXIT
@@ -134,8 +139,7 @@ class MainActivity : AppCompatActivity() {
         userguide.addGuideNewVersion(
             "SchoolQuiz v${versionName}",
             "This is alfa test",
-            icon = getDrawable(R.mipmap.ic_launcher),
-            video = "https://mcs.sec/sample-video.mp4"
+            icon = getDrawable(R.mipmap.ic_launcher)
         )
 
         userguide.addGuide(
@@ -934,6 +938,27 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
 
+                resources.getString(R.string.nav_contact) -> {
+                    log("ContactList123: 1")
+                    if (ContextCompat.checkSelfPermission(
+                            this,
+                            READ_CONTACTS
+                        ) == PackageManager.PERMISSION_GRANTED &&
+                        ContextCompat.checkSelfPermission(
+                            this,
+                            WRITE_CONTACTS
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // Разрешения уже предоставлены, выполнить нужную функцию
+                        log("ContactList123: 2.2")
+                        clickNavMenuContact(profile, qualification)
+
+                    } else {
+                        // Разрешения не предоставлены, запросить их
+                        requestContactsPermission()
+                    }
+                }
+
                 resources.getString(R.string.nav_global) -> {
                     FragmentManager.setFragment(FragmentMain.newInstance(5), this)
                     SetItemMenu.setNetworkMenu(
@@ -1037,11 +1062,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getLogsContacts() {
+        Contacts.initialize(this)
+        Contacts.getQuery().find().forEach {
+            if (it.givenName?.contains("Oleg") == true) {
+                log("ContactList123: id: ${it.id}.")
+                log("ContactList123: addresses: ${it.addresses}.")
+                log("ContactList123: addresses: ${it.addresses}.")
+                log("ContactList123: anniversary: ${it.anniversary}.")
+                log("ContactList123: birthday: ${it.birthday}.")
+                log("ContactList123: companyName: ${it.companyName}.")
+                log("ContactList123: emails: ${it.emails}.")
+                log("ContactList123: events: ${it.events}.")
+                log("ContactList123: familyName: ${it.familyName}.")
+                log("ContactList123: displayName: ${it.displayName}.")
+                log("ContactList123: givenName: ${it.givenName}.")
+                it.phoneNumbers.forEach {
+                    log("ContactList123: phoneNumbers: ${it.number}.")
+                }
+                log("ContactList123: photoUri: ${it.photoUri}.")
+                log("ContactList123: addresses: ${it.addresses}.")
+                log("ContactList123: _________________________________________")
+            }
+        }
+    }
+
     private fun requestStoragePermission() {
         ActivityCompat.requestPermissions(
             this,
             arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE),
             REQUEST_CODE_STORAGE_PERMISSION
+        )
+    }
+    private fun requestContactsPermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(READ_CONTACTS, WRITE_CONTACTS),
+            REQUEST_CODE_CONTACTS_PERMISSION
         )
     }
 
@@ -1076,16 +1133,39 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == REQUEST_CODE_STORAGE_PERMISSION) {
+        if (requestCode == REQUEST_CODE_CONTACTS_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                val profile = viewModel.getProfile()
+                val qualification = Qualification(
+                    profile.tester ?: 0,
+                    profile.moderator ?: 0,
+                    profile.sponsor ?: 0,
+                    profile.translater ?: 0,
+                    profile.admin ?: 0,
+                    profile.developer ?: 0
+                )
+
+                log("ContactList123: 2.1")
+                // Contacts permission is granted, proceed with accessing the contacts provider
+                clickNavMenuContact(profile, qualification)
+            } else {
+                // Contacts permission is denied, handle this situation accordingly
+                Toast.makeText(
+                    this,
+                    "Contacts permission is required to use this app",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } else if (requestCode == REQUEST_CODE_STORAGE_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
                 grantResults[1] == PackageManager.PERMISSION_GRANTED
             ) {
-                // Разрешения получены, выполнить нужную функцию
+                // Storage permissions are granted, execute the necessary function
                 viewModel =
                     ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
                 viewModel.init()
             } else {
-                // Разрешения не получены, вывести сообщение об ошибке
+                // Storage permissions are not granted, show an error message
                 Toast.makeText(
                     this,
                     "Storage permission is required to use this app",
@@ -1093,6 +1173,17 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+
+    private fun clickNavMenuContact(profile: ProfileEntity, qualification: Qualification) {
+// Permissions are already granted, proceed with accessing the contacts provider
+        log("ContactList123: 3")
+        getLogsContacts()
+        SetItemMenu.setNetworkMenu(
+            binding, MENU_CONTACT, this,
+            profile.pointsSkill ?: 0,
+            qualification
+        )
     }
 
 
@@ -1235,9 +1326,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-
         const val REQUEST_CODE_STORAGE_PERMISSION = 1001
-
+        const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
     }
 }
 

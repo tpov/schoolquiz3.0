@@ -176,7 +176,7 @@ exports.calculateAverages = functions.pubsub
     .timeZone("Europe/Kiev")
     .onRun(async (context) => {
       const database = admin.database();
-      const quizFolders = ["quiz5"];
+      const quizFolders = ["quiz5, quiz6, quiz7, quiz8"];
       const updates = {};
 
       try {

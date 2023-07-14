@@ -109,6 +109,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="nav_exit">Выход</string>
     <string name="nav_task">Задачи</string>
     <string name="nav_profile">Профиль</string>
+    <string name="nav_contact">Контакты</string>
     <string name="nav_downloads">Загрузки</string>
     <string name="nav_global">Арена</string>
     <string name="nav_news">Новости</string>

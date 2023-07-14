@@ -30,6 +30,7 @@ object SetItemMenu {
     const val MENU_ARENA = 7
     const val MENU_FRIEND = 8
     const val MENU_REPORT = 9
+    const val MENU_CONTACT = 9
     const val MENU_EXIT = 10
 
     fun setHomeMenu(

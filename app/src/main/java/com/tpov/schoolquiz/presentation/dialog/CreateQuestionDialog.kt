@@ -249,26 +249,29 @@ class CreateQuestionDialog : DialogFragment() {
 
 // Перебираем вопросы и заполняем карту, в которой ключ - номер вопроса, значение - множество языков
         for (question in questions) {
-            val num = question.numQuestion
-            val language = question.language
+            if (question.nameQuestion != "") {
+                val num = question.numQuestion
+                val language = question.language
 
-            log("wd23 num:$num, language:$language")
-            if (num != null && language != null) {
+                log("wd23 num:$num, language:$language")
+                if (num != null && language != null) {
 
-                log("wd23 оба значение != null идем дальше")
-                val languages = questionMap.getOrDefault(num, mutableSetOf())
-                languages.add(language)
-                log("wd23 непонятная переменна languages:$languages")
-                questionMap[num] = languages
-                log("wd23 теперь questionMap:$questionMap")
-            } else
-                log("wd23 эти переменные содержат null")
+                    log("wd23 оба значение != null идем дальше")
+                    val languages = questionMap.getOrDefault(num, mutableSetOf())
+                    languages.add(language)
+                    log("wd23 непонятная переменна languages:$languages")
+                    questionMap[num] = languages
+                    log("wd23 теперь questionMap:$questionMap")
+                } else
+                    log("wd23 эти переменные содержат null")
+            }
         }
 
 // Находим пересечение множеств языков для всех номеров вопросов
-        val commonLanguages = questionMap.values.reduce { acc, set -> acc.intersect(set).toMutableSet() }
+        val commonLanguages =
+            questionMap.values.reduce { acc, set -> acc.intersect(set).toMutableSet() }
         log("wd23 commonLanguages: $commonLanguages")
-val profileLvlTranslate = mainActivityViewModel.getProfile().translater
+        val profileLvlTranslate = mainActivityViewModel.getProfile().translater
 // Создаем строку в необходимом формате
         val questionLang = commonLanguages.joinToString("|") { "$it-$profileLvlTranslate" }
 
@@ -286,8 +289,8 @@ val profileLvlTranslate = mainActivityViewModel.getProfile().translater
             else (mainActivityViewModel.getQuizById(this.idQuiz).stars),
             if (this.idQuiz == -1) 0
             else (mainActivityViewModel.getQuizById(this.idQuiz).starsPlayer),
-            questions.count { !it.hardQuestion },
-            questions.count { it.hardQuestion },
+            questions.count { !it.hardQuestion && it.nameQuestion != "" },
+            questions.count { it.hardQuestion && it.nameQuestion != "" },
             if (this.idQuiz == -1) 0
             else (mainActivityViewModel.getQuizById(this.idQuiz).starsAll),
             if (this.idQuiz == -1) 0
@@ -314,13 +317,15 @@ val profileLvlTranslate = mainActivityViewModel.getProfile().translater
         mainActivityViewModel.insertQuiz(quizEntity)
 
         questions.forEach {
-            mainActivityViewModel.insertQuestion(
-                it.copy(
-                    idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
-                        nameQuiz
+            if (it.nameQuestion != "") {
+                mainActivityViewModel.insertQuestion(
+                    it.copy(
+                        idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
+                            nameQuiz
+                        )
                     )
                 )
-            )
+            }
         }
     }
 

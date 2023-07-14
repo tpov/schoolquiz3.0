@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
@@ -91,6 +92,9 @@ class QuestionViewModel @Inject constructor(
         _shouldCloseLiveData.postValue(result)
     }
 
+    fun getProfile(): ProfileEntity {
+        return getProfileUseCase(getTpovId())
+    }
     fun synthWithDB(context: Context) {
         initConst(context)
         getQuestionsList()

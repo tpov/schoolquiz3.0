@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_Q
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
 import kotlinx.android.synthetic.main.title_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
+import java.util.Locale
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -126,7 +127,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             val filteredList =
-                quizList.filter { if (it.event == 8) true else it.event == isMyQuiz && it.tpovId == getTpovId() }
+                quizList.filter { if (it.event == 8) it.event == isMyQuiz else it.event == isMyQuiz && it.tpovId == getTpovId() }
             val sortedList = if (isMyQuiz == 5) {
                 filteredList.sortedBy { it.ratingPlayer }
             } else {
@@ -188,9 +189,15 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             ).show()
         } else {
             if (mainViewModel.getQuizById(id).event == 5) {
-                dialogNolics(id, type, 500)
+                if (containsLangQuizInUser(id)) {
+                    dialogNolics(id, type, 500)
+                } else {
+                    Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
+                        .show()
+                }
 
             } else {
+                if (containsLangQuizInUser(id)) {
                 mainViewModel.updateProfileUseCase(
                     mainViewModel.getProfile()
                         .copy(count = mainViewModel.getProfileCount()!! - 33)
@@ -200,55 +207,62 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 intent.putExtra(ID_QUIZ, id)
                 intent.putExtra(HARD_QUESTION, type)
                 startActivityForResult(intent, REQUEST_CODE)
+                } else {
+                    Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
+                        .show()
+                }
             }
         }
     }
+    @OptIn(InternalCoroutinesApi::class)
+    fun containsLangQuizInUser(idQuiz: Int) = mainViewModel.getProfile().languages?.split('|')
+        ?.any { mainViewModel.getQuizById(idQuiz).languages.contains(it) } ?: false
 
-    private fun FragmentMain.dialogNolics(
+    private fun dialogNolics(
         id: Int,
         type: Boolean,
         nolics: Int
     ) {
         if (id == -1) {
-
-            val randQuiz =
-                mainViewModel.getQuizList().filter {
-                    it.event == 5
+            if (mainViewModel.getQuizList().isNotEmpty()) {
+                val randQuiz = mainViewModel.getQuizList().filter {
+                    it.event == 5 && it.languages.contains(Locale.getDefault().language)
                 }.random()
 
-            val alertDialog = AlertDialog.Builder(activity)
-                .setTitle("Поиск")
-                .setMessage("Пройти рандомный квест из этого списка")
-                .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+                val alertDialog = AlertDialog.Builder(activity)
+                    .setTitle("Поиск")
+                    .setMessage("Пройти рандомный квест из этого списка")
+                    .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
 
-                    mainViewModel.updateProfileUseCase(
-                        mainViewModel.getProfile().copy(
-                            count = mainViewModel.getProfileCount()!! - 33,
-                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                        mainViewModel.updateProfileUseCase(
+                            mainViewModel.getProfile().copy(
+                                count = mainViewModel.getProfileCount()!! - 33,
+                                pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                            )
                         )
-                    )
 
-                    val intent = Intent(activity, QuestionActivity::class.java)
-                    intent.putExtra(NAME_USER, "user")
-                    intent.putExtra(ID_QUIZ, randQuiz.id)
-                    intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
-                    startActivityForResult(intent, REQUEST_CODE)
+                        val intent = Intent(activity, QuestionActivity::class.java)
+                        intent.putExtra(NAME_USER, "user")
+                        intent.putExtra(ID_QUIZ, randQuiz.id)
+                        intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
+                        startActivityForResult(intent, REQUEST_CODE)
+                    }
+                    .setNegativeButton("Отмена", null)
+                    .create()
+
+                alertDialog.setOnShowListener { dialog ->
+                    val positiveButton =
+                        (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                    val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                    positiveButton.setTextColor(Color.WHITE)
+                    negativeButton.setTextColor(Color.YELLOW)
+
+                    dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
                 }
-                .setNegativeButton("Отмена", null)
-                .create()
 
-            alertDialog.setOnShowListener { dialog ->
-                val positiveButton =
-                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
-                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-                positiveButton.setTextColor(Color.WHITE)
-                negativeButton.setTextColor(Color.YELLOW)
-
-                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                alertDialog.show()
             }
-
-            alertDialog.show()
         } else {
             val alertDialog = AlertDialog.Builder(activity)
                 .setTitle("Попытка платная")

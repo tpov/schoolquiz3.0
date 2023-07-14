@@ -114,6 +114,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         }
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     override fun getItemViewType(position: Int): Int {
         log("fun getItemViewType(), position: $position")
         log("fun getItemViewType(), size1:      $size1")
@@ -132,9 +133,9 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         return if (position < size1) QUIZ2_LIST
         else if (position < size2) QUIZ3_LIST
         else if (position < size3) QUIZ4_LIST
-        else if (position < size4) TRANSLATE1_EVENT_LIST
-        else if (position < size5) TRANSLATE2_EVENT_LIST
-        else if (position < size6) TRANSLATE_EDIT_QUESTION_LIST
+        else if (position < size4 && viewModel.getProfile().translater!! > 100) TRANSLATE1_EVENT_LIST
+        else if (position < size5 && viewModel.getProfile().translater!! > 200) TRANSLATE2_EVENT_LIST
+        else if (position < size6 && viewModel.getProfile().translater!! > 200) TRANSLATE_EDIT_QUESTION_LIST
         else if (position < size7) MODERATOR_EVENT_LIST
         else if (position < size8) ADMIN_EVENT_LIST
         else if (position < size9) DEVELOPER_EVENT_LIST
@@ -608,12 +609,14 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         @OptIn(InternalCoroutinesApi::class)
         fun bindQuiz4(quiz: QuizEntity) {
             log("bindQuiz4")
+            val chbTypeQuiz = itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz)
+
             itemView.findViewById<Button>(R.id.main_title_button).text = quiz.nameQuiz
             itemView.findViewById<LinearLayout>(R.id.swipe_layout).visibility = View.GONE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).visibility = View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumQuestion).visibility = View.VISIBLE
             itemView.findViewById<RatingBar>(R.id.ratingBar).visibility = View.GONE
-            itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
+            chbTypeQuiz.visibility = if (quiz.numHQ == 0) View.GONE else View.VISIBLE
             itemView.findViewById<TextView>(R.id.tvNumHardQuiz).text = quiz.numHQ.toString()
             itemView.findViewById<TextView>(R.id.tvNumQuestion).text = quiz.numQ.toString()
             itemView.findViewById<TextView>(R.id.tvName).text = quiz.userName

@@ -30,7 +30,6 @@ import org.jetbrains.anko.runOnUiThread
 import java.io.File
 import java.util.*
 
-
 class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
     private val context: Context,
@@ -42,8 +41,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
         return ItemHolder.create(parent, listener)
     }
-
-
     @OptIn(InternalCoroutinesApi::class)
     override fun onBindViewHolder(holder: ItemHolder, position: Int) {
         val item = getItem(position)
@@ -306,7 +303,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                     log("quizEntity.stars 1")
                     imvGradLightQuiz.visibility = View.VISIBLE
                     imvGradHardQuiz.visibility = View.GONE
-                    chbTypeQuiz.visibility = View.VISIBLE
+                    if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
                     chbTypeQuiz.isChecked = true
 
                 }
@@ -374,7 +371,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }*/
         }
 
-        fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
+        private fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
             // Инициализируем объект Translate с помощью ключа API
 
             val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()

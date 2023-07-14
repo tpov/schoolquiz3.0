@@ -32,6 +32,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
     @OptIn(InternalCoroutinesApi::class)
     private lateinit var mainViewModel: MainActivityViewModel
+
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
 
@@ -81,9 +82,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             recyclerView.post {
                 eventAdapter.notifyDataSetChanged()
             }
-
         }
-
     }
 
     override fun onCreateView(
@@ -112,16 +111,25 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
-            )
-            val intent = Intent(activity, QuestionActivity::class.java)
-            intent.putExtra(QuestionActivity.NAME_USER, "user")
-            intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-            intent.putExtra(QuestionActivity.HARD_QUESTION, false)
-            startActivity(intent)
+            if (containsLangQuizInUser(quizId)) {
+                eventViewModel.updateProfileUseCase(
+                    eventViewModel.getProfile()
+                        .copy(count = eventViewModel.getProfileCount()!! - 15)
+                )
+                val intent = Intent(activity, QuestionActivity::class.java)
+                intent.putExtra(QuestionActivity.NAME_USER, "user")
+                intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+                intent.putExtra(QuestionActivity.HARD_QUESTION, false)
+                startActivity(intent)
+            } else {
+                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG).show()
+            }
         }
     }
+
+    @OptIn(InternalCoroutinesApi::class)
+    fun containsLangQuizInUser(idQuiz: Int) = mainViewModel.getProfile().languages?.split('|')
+        ?.any { mainViewModel.getQuizById(idQuiz).languages.contains(it) } ?: false
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz3Clicked(quizId: Int) {
@@ -134,14 +142,20 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
-            )
-            val intent = Intent(activity, QuestionActivity::class.java)
-            intent.putExtra(QuestionActivity.NAME_USER, "user")
-            intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-            intent.putExtra(QuestionActivity.HARD_QUESTION, true)
-            startActivity(intent)
+            if (containsLangQuizInUser(quizId)) {
+                eventViewModel.updateProfileUseCase(
+                    eventViewModel.getProfile()
+                        .copy(count = eventViewModel.getProfileCount()!! - 15)
+                )
+                val intent = Intent(activity, QuestionActivity::class.java)
+                intent.putExtra(QuestionActivity.NAME_USER, "user")
+                intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+                intent.putExtra(QuestionActivity.HARD_QUESTION, true)
+                startActivity(intent)
+            } else {
+                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
+                    .show()
+            }
         }
     }
 
@@ -155,15 +169,21 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 20)
-            )
-            log("fun onQuiz4Clicked")
-            val intent = Intent(activity, QuestionActivity::class.java)
-            intent.putExtra(QuestionActivity.NAME_USER, "user")
-            intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
-            intent.putExtra(QuestionActivity.HARD_QUESTION, false)
-            startActivity(intent)
+            if (containsLangQuizInUser(quizId)) {
+                eventViewModel.updateProfileUseCase(
+                    eventViewModel.getProfile()
+                        .copy(count = eventViewModel.getProfileCount()!! - 20)
+                )
+                log("fun onQuiz4Clicked")
+                val intent = Intent(activity, QuestionActivity::class.java)
+                intent.putExtra(QuestionActivity.NAME_USER, "user")
+                intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
+                intent.putExtra(QuestionActivity.HARD_QUESTION, false)
+                startActivity(intent)
+            } else {
+                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
+                    .show()
+            }
         }
     }
 
@@ -176,13 +196,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             "Недостаточно жизней. На прохождение квеста тратиться 10% жизни",
             Toast.LENGTH_LONG
         ).show()
-
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 10)
+                eventViewModel.getProfile()
+                    .copy(count = eventViewModel.getProfileCount()!! - 10)
             )
 
-            FragmentManager.setFragment(TranslateQuestionFragment.newInstance(-1, questionId),
+            FragmentManager.setFragment(
+                TranslateQuestionFragment.newInstance(-1, questionId),
                 requireActivity() as MainActivity
             )
             log("fun onTranslate1EventClicked")
@@ -201,9 +222,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 15)
+                eventViewModel.getProfile()
+                    .copy(count = eventViewModel.getProfileCount()!! - 15)
             )
-            FragmentManager.setFragment(TranslateQuestionFragment.newInstance(-1, questionId),
+            FragmentManager.setFragment(
+                TranslateQuestionFragment.newInstance(-1, questionId),
                 requireActivity() as MainActivity
             )
             log("fun onTranslate2EventClicked")
@@ -221,10 +244,12 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 10)
+                eventViewModel.getProfile()
+                    .copy(count = eventViewModel.getProfileCount()!! - 10)
             )
 
-            FragmentManager.setFragment(TranslateQuestionFragment.newInstance(-1, questionId),
+            FragmentManager.setFragment(
+                TranslateQuestionFragment.newInstance(-1, questionId),
                 requireActivity() as MainActivity
             )
             log("fun onTranslateEditQuestionClicked")
@@ -241,7 +266,8 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+                eventViewModel.getProfile()
+                    .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onModeratorEventClicked")
         }
@@ -257,7 +283,8 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+                eventViewModel.getProfile()
+                    .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onAdminEventClicked")
         }
@@ -273,7 +300,8 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
-                eventViewModel.getProfile().copy(count = eventViewModel.getProfileCount()!! - 50)
+                eventViewModel.getProfile()
+                    .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onDeveloperEventClicked")
         }
