@@ -65,12 +65,12 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             eventViewModel.quiz2List,
             eventViewModel.quiz3List,
             eventViewModel.quiz4List,
-            eventViewModel.translate1Question,
-            eventViewModel.translate2Question,
-            eventViewModel.translateEditQuestion,
-            eventViewModel.moderator,
-            eventViewModel.admin,
-            eventViewModel.develop,
+            emptyList(),// eventViewModel.translate1Question,
+            emptyList(),//eventViewModel.translate2Question,
+            emptyList(),//eventViewModel.translateEditQuestion,
+            emptyList(),//eventViewModel.moderator,
+            emptyList(),//eventViewModel.admin,
+            emptyList(),//eventViewModel.develop,
             this,
             mainViewModel
         )

@@ -14,10 +14,10 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.presentation.custom.CoastValues.COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.custom.CoastValues.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
-import com.tpov.schoolquiz.secure.Secure.getTranslateKey
+import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
 import java.util.*
@@ -411,7 +411,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                     showDialogTranslate(
                         context,
                         viewModel,
-                        COAST_GOOGLE_TRANSLATE,
+                        quizEntity.numHQ + quizEntity.numQ * COEF_COAST_GOOGLE_TRANSLATE,
                         quizEntity,
                         popupWindow
                     )

@@ -49,7 +49,8 @@ class MainActivityViewModel @Inject constructor(
     private val deleteQuestionByIdQuizUseCase: DeleteQuestionByIdQuizUseCase,
     val updateQuizUseCase: UpdateQuizUseCase,
     val updateProfileUseCase: UpdateProfileUseCase,
-    private val getQuizEventUseCase: GetQuizEventUseCase
+    private val getQuizEventUseCase: GetQuizEventUseCase,
+    private val getQuestionDetailListUseCase: GetQuestionDetailListUseCase
 ) : ViewModel() {
 
     var oldId = 0
@@ -362,5 +363,62 @@ class MainActivityViewModel @Inject constructor(
     fun getProfileTimeInChat(): Int {
         val profile = getProfileUseCase(getTpovId())
         return profile.timeInGamesInChat ?: 0
+    }
+
+    fun setPercentResultAllQuiz() {
+        getQuizEventUseCase().forEach { quiz ->
+            var perc = mutableListOf<Int>()
+            var persentAll: Int
+            var maxPersent = 0
+
+            log("getQuizEventUseCase")
+            getQuestionDetailListUseCase().forEach {
+                if (it.idQuiz == quiz.id) {
+                    log("getQuestionDetailListUseCase")
+                    var i = 0
+                    var j = 0
+
+                    it.codeAnswer?.forEach { item ->
+                        if (item == '2') i++
+                        j++
+                    }
+
+                    if (!it.hardQuiz) {
+                        try {
+                            if (((100 * i) / j) > maxPersent) maxPersent = ((100 * i) / j)
+                            perc.add(((100 * i) / j))
+                        } catch (e: Exception) {
+                            perc.add(0)
+                        }
+                    } else {
+                        try {
+                            if ((((100 * i) / j) / 5) + 100 > maxPersent) maxPersent =
+                                (((100 * i) / j) / 5) + 100
+                            perc.add((((100 * i) / j) / 5) + 100)
+                        } catch (e: Exception) {
+                            perc.add(0)
+                        }
+                    }
+
+                    j = 0
+                    i = 0
+                    perc.forEach { itemPerc ->
+                        i += itemPerc
+                    }
+                    persentAll = i / perc.size
+
+                    com.tpov.schoolquiz.presentation.question.log("saveResult $maxPersent")
+
+                    when (quiz.event) {
+                        1, 5, 6, 7, 8 -> updateQuizUseCase(
+                            quiz.copy(
+                                stars = maxPersent,
+                                starsAll = persentAll
+                            )
+                        )
+                    }
+                }
+            }
+        }
     }
 }

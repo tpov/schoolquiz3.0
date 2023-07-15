@@ -28,7 +28,7 @@ import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_Q
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
 import kotlinx.android.synthetic.main.title_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.Locale
+import java.util.*
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -171,7 +171,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         savedInstanceState: Bundle?
     ): View {
         binding = inflate(inflater, container, false)
-        // binding.swipeRefreshLayout.setOnRefreshListener { reloadData() }
+
         return binding.root
     }
 

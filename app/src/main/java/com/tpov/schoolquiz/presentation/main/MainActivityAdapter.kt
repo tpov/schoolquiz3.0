@@ -19,11 +19,11 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
-import com.tpov.schoolquiz.presentation.custom.CoastValues.COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.custom.CoastValues.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.secure.Secure.getTranslateKey
+import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
@@ -375,7 +375,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             // Инициализируем объект Translate с помощью ключа API
 
             val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
-                .setApiKey(getTranslateKey())
+                . setApiKey(getTranslateKey())
                 .build()
                 .service
 
@@ -601,7 +601,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                     showDialogTranslate(
                         context,
                         viewModel,
-                        COAST_GOOGLE_TRANSLATE,
+                        COEF_COAST_GOOGLE_TRANSLATE,
                         quizEntity,
                         popupWindow
                     )

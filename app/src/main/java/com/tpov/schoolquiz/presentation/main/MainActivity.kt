@@ -1,9 +1,6 @@
 package com.tpov.schoolquiz.presentation.main
 
-import android.Manifest.permission.READ_CONTACTS
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.Manifest.permission.WRITE_CONTACTS
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+import android.Manifest.permission.*
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
@@ -124,6 +121,10 @@ class MainActivity : AppCompatActivity() {
         timer = null
     }
 
+    private fun calculateQuizzResult() {
+        viewModel.setPercentResultAllQuiz()
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         component.inject(this)
@@ -131,6 +132,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val swipeRefreshLayout = binding.swipeRefreshLayout
+
+        swipeRefreshLayout.setOnRefreshListener {
+            log("wdwdwdfweadaw")
+            calculateQuizzResult()
+            swipeRefreshLayout.isRefreshing = false
+        }
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
         val versionCode: Int = pInfo.versionCode
@@ -708,7 +716,7 @@ class MainActivity : AppCompatActivity() {
 
         try {
             val profile = viewModel.getProfile()
-            val userguide = UserGuide(this)
+                val userguide = UserGuide(this)
 
             viewModel.updateProfileUseCase(
                 profile.copy(

@@ -5,7 +5,7 @@ import com.tpov.schoolquiz.data.model.Qualification
 
 object VisibleItems {
 
-    fun getShowItemsMenuNetwork(skill: Int, qualification: Qualification): List<Pair<Int, Int>> {
+    fun getShowItemsMenuNetwork(qualification: Qualification): List<Pair<Int, Int>> {
         val skill = SharedPreferencesManager.getSkill()
 
         val items = mutableListOf(

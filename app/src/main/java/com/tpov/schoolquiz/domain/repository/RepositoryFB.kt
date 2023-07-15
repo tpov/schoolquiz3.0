@@ -14,61 +14,61 @@ interface RepositoryFB {
 
     fun getPlayersList()
 
-    fun getTranslateFB()
+    suspend fun getTranslateFB()
 
-    fun getChatData(): Flow<List<ChatEntity>>
+    suspend fun getChatData(): Flow<List<ChatEntity>>
 
     fun removeChatListener()
 
-    fun getQuiz8Data()
+    suspend fun getQuiz8Data()
 
-    fun getQuiz7Data()
+    suspend fun getQuiz7Data()
 
-    fun getQuiz6Data()
+    suspend fun getQuiz6Data()
 
-    fun getQuiz5Data()
+    suspend fun getQuiz5Data()
 
-    fun getQuiz4Data()
+    suspend fun getQuiz4Data()
 
-    fun getQuiz3Data()
+    suspend fun getQuiz3Data()
 
-    fun getQuiz2Data()
+    suspend fun getQuiz2Data()
 
-    fun getQuiz1Data()
-
-
-    fun getQuestion8()
-
-    fun getQuestion7()
-
-    fun getQuestion6()
-
-    fun getQuestion5()
-
-    fun getQuestion4()
-
-    fun getQuestion3()
-
-    fun getQuestion2()
-
-    fun getQuestion1()
+    suspend fun getQuiz1Data()
 
 
-    fun getQuestionDetail1()
+    suspend fun getQuestion8()
 
-    fun getQuestionDetail2()
+    suspend fun getQuestion7()
 
-    fun getQuestionDetail3()
+    suspend fun getQuestion6()
 
-    fun getQuestionDetail4()
+    suspend fun getQuestion5()
 
-    fun getQuestionDetail5()
+    suspend fun getQuestion4()
 
-    fun getQuestionDetail6()
+    suspend fun getQuestion3()
 
-    fun getQuestionDetail7()
+    suspend fun getQuestion2()
 
-    fun getQuestionDetail8()
+    suspend fun getQuestion1()
+
+
+    suspend fun getQuestionDetail1()
+
+    suspend fun getQuestionDetail2()
+
+    suspend fun getQuestionDetail3()
+
+    suspend fun getQuestionDetail4()
+
+    suspend fun getQuestionDetail5()
+
+    suspend fun getQuestionDetail6()
+
+    suspend fun getQuestionDetail7()
+
+    suspend fun getQuestionDetail8()
 
     fun getProfile()
 
@@ -84,7 +84,7 @@ interface RepositoryFB {
 
     fun setProfile()
 
-    fun setEvent()
+    suspend fun setEvent()
 
     fun getUserName(): Profile
 

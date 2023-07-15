@@ -13,21 +13,7 @@ import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.domain.DeleteQuestionByIdQuizUseCase
-import com.tpov.schoolquiz.domain.DeleteQuestionDetailByIdQuiz
-import com.tpov.schoolquiz.domain.DeleteQuizUseCase
-import com.tpov.schoolquiz.domain.GetProfileUseCase
-import com.tpov.schoolquiz.domain.GetQuestionDetailListUseCase
-import com.tpov.schoolquiz.domain.GetQuestionListByIdQuiz
-import com.tpov.schoolquiz.domain.GetQuizByIdUseCase
-import com.tpov.schoolquiz.domain.GetQuizListUseCase
-import com.tpov.schoolquiz.domain.GetQuizLiveDataUseCase
-import com.tpov.schoolquiz.domain.InsertInfoQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuestionUseCase
-import com.tpov.schoolquiz.domain.InsertQuizUseCase
-import com.tpov.schoolquiz.domain.UpdateProfileUseCase
-import com.tpov.schoolquiz.domain.UpdateQuestionDetailUseCase
-import com.tpov.schoolquiz.domain.UpdateQuizUseCase
+import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -95,6 +81,7 @@ class QuestionViewModel @Inject constructor(
     fun getProfile(): ProfileEntity {
         return getProfileUseCase(getTpovId())
     }
+
     fun synthWithDB(context: Context) {
         initConst(context)
         getQuestionsList()
@@ -544,10 +531,10 @@ class QuestionViewModel @Inject constructor(
         updateProfileUseCase(
             getProfileUseCase(getTpovId()).copy(
                 timeInGamesCountQuestions = getProfileUseCase(getTpovId()).timeInGamesCountQuestions?.plus(
-                    numTrueQuestion
+                    numQuestion
                 ),
                 timeInGamesCountTrueQuestion = getProfileUseCase(getTpovId()).timeInGamesCountTrueQuestion.plus(
-                    numQuestion
+                    numTrueQuestion
                 ) ?: 0,
                 pointsNolics = (getNolic() + CalcValues.getValueNolicForGame(
                     hardQuestion,

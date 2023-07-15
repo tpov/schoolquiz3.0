@@ -139,6 +139,7 @@ class QuestionActivity : AppCompatActivity() {
                     viewModel.getProfile()
                         .copy(count = viewModel.getProfile().count?.plus(33))
                 )
+                viewModel.timer?.cancel()
                 finish()
             }
         }

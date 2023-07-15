@@ -81,7 +81,7 @@ object SetItemMenu {
 
         var menuItemsToAdd: MutableList<Pair<Int, Int>> =
             if (FirebaseAuth.getInstance().currentUser?.uid == null) emptyList<Pair<Int, Int>>().toMutableList()
-            else getShowItemsMenuNetwork(skill, qualification).toMutableList()
+            else getShowItemsMenuNetwork(qualification).toMutableList()
 
         //if (FirebaseAuth.getInstance().currentUser?.uid != null) menuItemsToAdd.removeAt(fr2)
 

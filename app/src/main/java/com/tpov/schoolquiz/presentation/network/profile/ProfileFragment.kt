@@ -10,12 +10,16 @@ import android.widget.ImageButton
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ProfileFragment : BaseFragment() {
@@ -61,8 +65,10 @@ class ProfileFragment : BaseFragment() {
 
         val isExecuted = BooleanArray(8) // создаем массив флагов для каждого числа
         view.findViewById<ImageButton>(R.id.imb_download).setOnClickListener {
-            viewModel.getQuizzFB()
-            viewModel.getTranslate()
+            lifecycleScope.launch(Dispatchers.IO) {
+                viewModel.getQuizzFB()
+                viewModel.getTranslate()
+            }
         }
         view.findViewById<ImageButton>(R.id.imb_delete).setOnClickListener {
             viewModel.getDeleteAllQuiz()
@@ -72,7 +78,7 @@ class ProfileFragment : BaseFragment() {
              when (number) { //if (SharedPreferencesManager.canSyncProfile())
                     1 -> {
                         if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
-                            viewModel.setProfile()
+                            CoroutineScope(Dispatchers.IO).launch {viewModel.setProfile() }
                             isExecuted[0] =
                                 true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
                         }
@@ -80,36 +86,36 @@ class ProfileFragment : BaseFragment() {
 
                     2 -> {
                         if (!isExecuted[1]) {
-                            viewModel.getProfile()
+                            CoroutineScope(Dispatchers.IO).launch {viewModel.getProfile() }
                             isExecuted[1] = true
                         }
                     }
 
                     3 -> {
                         if (!isExecuted[2]) {
-                            viewModel.setProfile()
+                            CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
                             isExecuted[2] = true
                         }
                     }
 
                     4 -> {
                         if (!isExecuted[3]) {
-                            viewModel.setQuizFB()
-                            viewModel.getPlayersList()
+                            CoroutineScope(Dispatchers.IO).launch {viewModel.setQuizFB()
+                            viewModel.getPlayersList() }
                             isExecuted[3] = true
                         }
                     }
 
                     5 -> {
                         if (!isExecuted[4]) {
-                            viewModel.setQuestionsFB()
+                            CoroutineScope(Dispatchers.IO).launch {viewModel.setQuestionsFB() }
                             isExecuted[4] = true
                         }
                     }
 
                     6 -> {
                         if (!isExecuted[5]) {
-                            viewModel.setEventQuiz()
+                            CoroutineScope(Dispatchers.IO).launch {viewModel.setEventQuiz() }
                             isExecuted[5] = true
                         }
                     }

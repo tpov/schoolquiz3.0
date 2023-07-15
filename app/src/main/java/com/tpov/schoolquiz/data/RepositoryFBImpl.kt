@@ -102,7 +102,7 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override fun getTranslateFB() {
+    override suspend fun getTranslateFB() {
         val questionRefs: MutableList<DatabaseReference> = mutableListOf(
             FirebaseDatabase.getInstance().getReference("question5")
         )
@@ -181,7 +181,7 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    override fun getChatData(): Flow<List<ChatEntity>> {
+    override suspend fun getChatData(): Flow<List<ChatEntity>> {
         getPersonalMassage()
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
         val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
@@ -317,18 +317,18 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override fun getQuiz8Data() {
+    override suspend fun getQuiz8Data() {
         log("fun getQuiz8Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz8"))
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    override fun getQuiz7Data() {
+    override suspend fun getQuiz7Data() {
         log("fun getQuiz7Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz7"))
     }
 
-    private fun getQuiz(
+    private suspend fun getQuiz(
         quizRef: DatabaseReference
     ) {
         log("fun getQuiz()")
@@ -384,8 +384,10 @@ class RepositoryFBImpl @Inject constructor(
                                     8 -> FirebaseDatabase.getInstance().getReference("question_detail8")
                                     else -> FirebaseDatabase.getInstance().getReference("question_detail8")
                                 }
-                                getQuestion(refQuestion, data.key!!)
-                                getQuestionDetail(refQuestionDetail, data.key!!)
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    getQuestion(refQuestion, data.key!!)
+                                    getQuestionDetail(refQuestionDetail, data.key!!)
+                                }
 
                                 SharedPreferencesManager.setVersionQuiz(
                                     data.key!!, quiz.versionQuiz
@@ -402,43 +404,43 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override fun getQuiz6Data() {
+    override suspend fun getQuiz6Data() {
         log("fun getQuiz6Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz6"))
     }
 
-    override fun getQuiz5Data() {
+    override suspend fun getQuiz5Data() {
         log("fun getQuiz5Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz5"))
     }
 
-    override fun getQuiz4Data() {
+    override suspend fun getQuiz4Data() {
         log("fun getQuiz4Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz4"))
     }
 
-    override fun getQuiz3Data() {
+    override suspend fun getQuiz3Data() {
         log("fun getQuiz3Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz3"))
     }
 
-    override fun getQuiz2Data() {
+    override suspend fun getQuiz2Data() {
         log("fun getQuiz2Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz2"))
     }
 
-    override fun getQuiz1Data() {
+    override suspend fun getQuiz1Data() {
         log("fun getQuiz1Data")
         getQuiz(FirebaseDatabase.getInstance().getReference("quiz1/${getTpovId()}"))
     }
 
-    override fun getQuestion8() {
+    override suspend fun getQuestion8() {
         log("fun getQuestion8Data")
         val questionRef = FirebaseDatabase.getInstance().getReference("question8")
         getQuestion(questionRef, "-1")
     }
 
-    private fun getQuestion(questionRef: DatabaseReference, idQuiz: String) {
+    private suspend fun getQuestion(questionRef: DatabaseReference, idQuiz: String) {
         questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuestion snapshot: ${snapshot.key}")
@@ -478,47 +480,47 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override fun getQuestion7() {
+    override suspend fun getQuestion7() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question7"), "-1")
     }
 
-    override fun getQuestion6() {
+    override suspend fun getQuestion6() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question6"), "-1")
     }
 
-    override fun getQuestion5() {
+    override suspend fun getQuestion5() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question5"), "-1")
     }
 
-    override fun getQuestion4() {
+    override suspend fun getQuestion4() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question4"), "-1")
     }
 
-    override fun getQuestion3() {
+    override suspend fun getQuestion3() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question3"), "-1")
     }
 
-    override fun getQuestion2() {
+    override suspend fun getQuestion2() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question2"), "-1")
     }
 
-    override fun getQuestion1() {
+    override suspend fun getQuestion1() {
         getQuestion(FirebaseDatabase.getInstance().getReference("question1/$${getTpovId()}"), "-1")
     }
 
-    override fun getQuestionDetail1() {
+    override suspend fun getQuestionDetail1() {
         log("fun getQuestionDetail1()")
         getQuestionDetail(
             FirebaseDatabase.getInstance().getReference("question_detail1/$${getTpovId()}"), "-1"
         )
     }
 
-    override fun getQuestionDetail2() {
+    override suspend fun getQuestionDetail2() {
         log("fun getQuestionDetail2()")
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail2"), "-1")
     }
 
-    private fun getQuestionDetail(questionRef: DatabaseReference, idQuiz: String) {
+    private suspend fun getQuestionDetail(questionRef: DatabaseReference, idQuiz: String) {
         questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getQuestionDetail2() snapshot: ${snapshot.key}")
@@ -550,28 +552,28 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override fun getQuestionDetail3() {
+    override suspend fun getQuestionDetail3() {
         log("fun getQuestionDetail3()")
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail3"), "-1")
     }
 
-    override fun getQuestionDetail4() {
+    override suspend fun getQuestionDetail4() {
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail4"), "-1")
     }
 
-    override fun getQuestionDetail5() {
+    override suspend fun getQuestionDetail5() {
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail5"), "-1")
     }
 
-    override fun getQuestionDetail6() {
+    override suspend fun getQuestionDetail6() {
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail6"), "-1")
     }
 
-    override fun getQuestionDetail7() {
+    override suspend fun getQuestionDetail7() {
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail7"), "-1")
     }
 
-    override fun getQuestionDetail8() {
+    override suspend fun getQuestionDetail8() {
         getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail8"), "-1")
     }
 
@@ -625,7 +627,7 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun setEvent() {
+    override suspend fun setEvent() {
         log("fun setEvent")
 
         val quizEventDB = dao.getQuizEvent()
@@ -1171,7 +1173,7 @@ class RepositoryFBImpl @Inject constructor(
 
     override fun setQuestionData() {
         val tpovId = getTpovId()
-
+        val userLang = Locale.getDefault().language
         log("fun setQuestionData()")
         var question = dao.getQuestionList()
 
@@ -1189,37 +1191,30 @@ class RepositoryFBImpl @Inject constructor(
         question.forEach {
             it.nameQuestion = it.nameQuestion.trim()
             sendMassageTranslate(it.infoTranslater, it.idQuiz, it.language, it.numQuestion)
-            log(
-                "setQuestionData() перебираем квесты size: ${question.size}, dao.getQuizTpovIdById(it.idQuiz): ${
-                    dao.getQuizTpovIdById(
-                        it.idQuiz
-                    )
-                }, = tpovid: $tpovId"
-            )
-            synthLiveData.value = --synth
-            log("setQuestionData() найдет квест it: ${it}")
+            synthLiveData.postValue(--synth)
+
             val eventByIdQuiz = dao.getEventByIdQuiz(it.idQuiz)
-            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${if (it.language.isEmpty()) it.language else Locale.getDefault()}")
+            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${if (it.language.isEmpty()) it.language else userLang}")
                 .setValue(it).addOnSuccessListener {
-                    synthLiveData.value = ++synth
+                    synthLiveData.postValue(++synth)
                 }
 
             if (eventByIdQuiz == 2) questionRef2.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
             if (eventByIdQuiz == 3) questionRef3.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
             if (eventByIdQuiz == 4) questionRef4.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
             if (eventByIdQuiz == 5) questionRef5.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
             if (eventByIdQuiz == 6) questionRef6.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
             if (eventByIdQuiz == 7) questionRef7.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
             if (eventByIdQuiz == 8) questionRef8.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.value = ++synth }
+                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
         }
-        synthLiveData.value = ++synth
+        synthLiveData.postValue(++synth)
     }
 
     override fun setTpovIdFB() {
@@ -1295,19 +1290,19 @@ class RepositoryFBImpl @Inject constructor(
 
         questionDetail.forEach {
             if (dao.getQuizTpovIdById(it.idQuiz) == tpovId && !it.synthFB) {
-                synthLiveData.value = --synth
+                synthLiveData.postValue(--synth)
                 log("setQuestionDetail() найден квест с таким же tpovId, idQuiz: ${it.idQuiz}")
                 val event = dao.getEventByIdQuiz(it.idQuiz)
                 if (event in 1..8) {
                     questionDetailRefs[event!! - 1].child("${it.idQuiz}").push().setValue(it)
                         .addOnSuccessListener { _ ->
                             dao.updateQuizDetail(it.copy(synthFB = true))
-                            synthLiveData.value = ++synth
+                            synthLiveData.postValue(++synth)
                         }
                 }
             }
         }
-        synthLiveData.value = ++synth
+        synthLiveData.postValue(++synth)
     }
 
     override fun setProfile() {

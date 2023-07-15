@@ -21,7 +21,7 @@ import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -55,7 +55,9 @@ class ChatFragment : BaseFragment() {
 
         chatViewModel = ViewModelProvider(this, viewModelFactory)[ChatViewModel::class.java]
         setupRecyclerView()
-        observeChatData()
+        CoroutineScope(Dispatchers.IO).launch {
+            observeChatData()
+        }
 
         val tpovId = getTpovId()
 
@@ -111,7 +113,7 @@ class ChatFragment : BaseFragment() {
         chatViewModel.removeChatListener()
     }
 
-    private fun observeChatData() {
+    private suspend fun observeChatData() {
         chatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 val layoutManager = binding.chatRecyclerView.layoutManager as LinearLayoutManager
@@ -122,7 +124,7 @@ class ChatFragment : BaseFragment() {
                 }
             }
         })
-
+        withContext(Dispatchers.Main) {
         chatViewModel.chatData().observe(viewLifecycleOwner) { chatEntityList ->
             val chatList = convertChatEntityListToChatList(chatEntityList)
 
@@ -144,7 +146,7 @@ class ChatFragment : BaseFragment() {
                 }
             } else {
                 chatAdapter.submitList(chatList)
-            }
+            }}
         }
     }
 
