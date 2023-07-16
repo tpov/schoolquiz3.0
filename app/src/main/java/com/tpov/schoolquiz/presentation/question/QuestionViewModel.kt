@@ -181,144 +181,106 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun getQuestionsList() {
-        log(
-            "getQuestionsList, getQuestionByIdQuizUseCase(idQuiz) ${
-                getQuestionByIdQuizUseCase(
-                    idQuiz
-                )
-            }"
-        )
+
+        val questionThisListAll =
+            getQuestionByIdQuizUseCase(idQuiz).filter { it.hardQuestion == hardQuestion }
+
+        var listMap = mutableMapOf<Int, Boolean>()
+
+        listMap = getMap(questionThisListAll, listMap)
+        log("okokoko, listMap:$listMap")
+
+
+        val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
+
+        this.questionListThis =
+            if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
+            else getListQuestionByProfileLang(
+                questionThisListAll,
+                listMap
+            )
+
+        if (!didFoundAllQuestion(this.questionListThis, listMap)) Toast.makeText(
+            context,
+            "Error found questions",
+            Toast.LENGTH_LONG
+        ).show()
+        getQuestionDetail()
+
+        quizThis = getQuizUseCase(idQuiz)
+    }
+
+    private fun getListQuestionByProfileLang(
+        questionThisListAll: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): ArrayList<QuestionEntity> {
         val userLocalization: String = getUserLocalization(context)
         val availableLanguages = getProfileUseCase(getTpovId()).languages
 
-        val questionThisListAll = getQuestionByIdQuizUseCase(idQuiz)
-        val sizeQuestionList = questionThisListAll.size
+        val questionList = ArrayList<QuestionEntity>()
 
-        var listMap = mutableMapOf<Int, Boolean>()
-        log("ыуаыуаыуаы Перебор квестов, найдено $sizeQuestionList шт.")
-        for (i in 0 until sizeQuestionList) {
-            log("ыуаыуаыуаы берем $i. ${questionThisListAll[i].nameQuestion} ===============================================")
-            if (questionThisListAll[i].hardQuestion != hardQuestion && listMap[i] != false) continue
+        listMap.forEach { map ->
+            var filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
 
-            log("ыуаыуаыуаы этот вопрос совпал с нужным типом $i. ${questionThisListAll[i].hardQuestion}")
-            for (j in i + 1 until sizeQuestionList) {
-                if (questionThisListAll[j].hardQuestion != hardQuestion && listMap[j] != false) continue
-                log("ыуаыуаыуаы берем второй вопрос $j. ${questionThisListAll[j].nameQuestion} ----------------------")
-                if (questionThisListAll[i].numQuestion == questionThisListAll[j].numQuestion) {
+            if (filteredList.isNotEmpty()) {
+                questionList.add(filteredList[0])
+            } else {
+                filteredList = questionThisListAll
+                    .filter { it.numQuestion == map.key }
+                    .filter { availableLanguages?.contains(it.language) ?: false}
 
-                    log("ыуаыуаыуаы этот вопрос является конкурентом, нужно выбрать один по языку системы")
-                    if (userLocalization.equals(
-                            questionThisListAll[i].language,
-                            ignoreCase = true
-                        ) && questionThisListAll[i].lvlTranslate >= 100 || userLocalization.equals(
-                            questionThisListAll[i].language,
-                            ignoreCase = true
-                        ) && getQuizByIdUseCase(
-                            questionThisListAll[i].idQuiz
-                        ).tpovId == getTpovId()
-                    ) {
-                        log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
-                        questionListThis.add(questionThisListAll[i])
-                        listMap[i] = false
-                        listMap[j] = false
-                        break
-                    } else if (userLocalization.equals(
-                            questionThisListAll[j].language,
-                            ignoreCase = true
-                        ) && questionThisListAll[j].lvlTranslate >= 100 || userLocalization.equals(
-                            questionThisListAll[j].language,
-                            ignoreCase = true
-                        ) && getQuizByIdUseCase(
-                            questionThisListAll[j].idQuiz
-                        ).tpovId == getTpovId()
-                    ) {
-                        log("ыуаыуаыуаы второй вопрос прошел ${questionThisListAll[j].nameQuestion}, ${questionThisListAll[j].language}")
-                        questionListThis.add(questionThisListAll[j])
-                        listMap[i] = false
-                        listMap[j] = false
-                        break
-                    }
-                }
-            }
-
-            log("ыуаыуаыуаы $listMap")
-            if (listMap[i] != false) {
-                log("ыуаыуаыуаы ищем по языку который знает пользователь +++++++++++++++++++++++++++++")
-                for (j in i + 1 until sizeQuestionList) {
-                    if (questionThisListAll[j].hardQuestion != hardQuestion && listMap[j] != false) continue
-                    if (questionThisListAll[i].numQuestion == questionThisListAll[j].numQuestion) {
-                        if (listMap[j] != false) {
-                            log("ыуаыуаыуаы берем второй вопрос $j. ${questionThisListAll[j].nameQuestion} +++++++++++++")
-                            val words = availableLanguages?.split("|")
-
-                            if (words != null) {
-                                for (word in words) {
-
-                                    if (questionThisListAll[i].language.equals(
-                                            word,
-                                            ignoreCase = true
-                                        )
-                                    ) {
-                                        log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
-                                        questionListThis.add(questionThisListAll[i])
-                                        listMap[i] = false
-                                        listMap[j] = false
-                                        break
-                                    } else if (questionThisListAll[j].language.equals(
-                                            word,
-                                            ignoreCase = true
-                                        )
-                                    ) {
-                                        log("ыуаыуаыуаы второй вопрос прошел ${questionThisListAll[j].nameQuestion}, ${questionThisListAll[j].language}")
-                                        questionListThis.add(questionThisListAll[j])
-                                        listMap[i] = false
-                                        listMap[j] = false
-                                        break
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if (listMap[i] != false) {
-                if (userLocalization.equals(
-                        questionThisListAll[i].language,
-                        ignoreCase = true
-                    ) && questionThisListAll[i].lvlTranslate >= 100 || userLocalization.equals(
-                        questionThisListAll[i].language,
-                        ignoreCase = true
-                    ) && getQuizByIdUseCase(
-                        questionThisListAll[i].idQuiz
-                    ).tpovId == getTpovId()
-                ) {
-                    log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
-                    questionListThis.add(questionThisListAll[i])
-                    listMap[i] = false
-                    continue
-                } else {
-                    val words = availableLanguages?.split("|")
-
-                    if (words != null) {
-                        for (word in words) {
-
-                            if (questionThisListAll[i].language.equals(
-                                    word,
-                                    ignoreCase = true
-                                )
-                            ) {
-                                log("ыуаыуаыуаы первый вопрос прошел ${questionThisListAll[i].nameQuestion}, ${questionThisListAll[i].language}")
-                                questionListThis.add(questionThisListAll[i])
-                                listMap[i] = false
-                                break
-                            }
-                        }
-                    }
+                if (filteredList.isNotEmpty()) {
+                    questionList.add(filteredList[0])
                 }
             }
         }
+        return questionList
+    }
 
-        log("getQuestionsList, questionListThis: $questionListThis")
+    private fun didFoundAllQuestion(
+        questionList: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): Boolean {
+        var fountQuestion = true
+
+        log("okokoko listMap: $listMap")
+        questionList.forEach {
+
+            log("okokoko questionList: $it")
+        }
+        listMap.forEach {
+            try {
+                if (questionList[it.key - 1].id == null) fountQuestion = false
+            } catch (e: Exception) {
+                fountQuestion = false
+            }
+        }
+        log("okokoko fountQuestion: $fountQuestion")
+        return fountQuestion
+    }
+
+    private fun getListQuestionListByLocal(
+        listMap: MutableMap<Int, Boolean>,
+        questionThisListAll: List<QuestionEntity>
+    ): ArrayList<QuestionEntity> {
+        val userLocalization: String = getUserLocalization(context)
+
+        val questionList = ArrayList<QuestionEntity>()
+        listMap.forEach { map ->
+            val filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
+
+            if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
+        }
+
+        log("okokoko, questionList:$questionList")
+        return questionList
+    }
+
+    private fun getQuestionDetail() {
         var listQuestionDetail = mutableListOf<QuestionDetailEntity>()
         getQuestionDetailListUseCase().forEach {
             if (it.idQuiz == this.idQuiz && it.hardQuiz == this.hardQuestion) listQuestionDetail.add(
@@ -326,8 +288,16 @@ class QuestionViewModel @Inject constructor(
             )
         }
         questionDetailListThis = listQuestionDetail
+    }
 
-        quizThis = getQuizUseCase(idQuiz)
+    private fun getMap(
+        listQuestionEntity: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): MutableMap<Int, Boolean> {
+        listQuestionEntity.forEach {
+            listMap[it.numQuestion] = false
+        }
+        return listMap
     }
 
     private fun translateForGoogleTranslate() {

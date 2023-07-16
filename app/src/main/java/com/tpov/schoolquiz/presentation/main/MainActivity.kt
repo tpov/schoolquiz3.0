@@ -716,7 +716,7 @@ class MainActivity : AppCompatActivity() {
 
         try {
             val profile = viewModel.getProfile()
-                val userguide = UserGuide(this)
+            val userguide = UserGuide(this)
 
             viewModel.updateProfileUseCase(
                 profile.copy(
@@ -1102,6 +1102,7 @@ class MainActivity : AppCompatActivity() {
             REQUEST_CODE_STORAGE_PERMISSION
         )
     }
+
     private fun requestContactsPermission() {
         ActivityCompat.requestPermissions(
             this,
@@ -1253,14 +1254,25 @@ class MainActivity : AppCompatActivity() {
         log("fun setButtonNavListener()")
         binding.bNav.setOnItemSelectedListener {
             val profile = viewModel.getProfile()
-            val qualification = Qualification(
-                profile.tester ?: 0,
-                profile.moderator ?: 0,
-                profile.sponsor ?: 0,
-                profile.translater ?: 0,
-                profile.admin ?: 0,
-                profile.developer ?: 0
-            )
+            val qualification = try {
+                Qualification(
+                    profile.tester ?: 0,
+                    profile.moderator ?: 0,
+                    profile.sponsor ?: 0,
+                    profile.translater ?: 0,
+                    profile.admin ?: 0,
+                    profile.developer ?: 0
+                )
+            } catch (e: Exception) {
+                Qualification(
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                )
+            }
             setVisibleMenu(it)
             when (it.itemId) {
 
