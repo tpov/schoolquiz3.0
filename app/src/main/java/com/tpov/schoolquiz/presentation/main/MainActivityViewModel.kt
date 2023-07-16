@@ -258,22 +258,27 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun findValueForDeviceLocale(id: Int): Int {
-        val data = getQuizById(id).languages
-        val deviceLocale = Locale.getDefault().language
+        try {
+            val data = getQuizById(id).languages
+            val deviceLocale = Locale.getDefault().language
 
-        val pairs = data.split("|")
-        for (pair in pairs) {
-            val keyValue = pair.split("-")
-            if (keyValue.size == 2) {
-                val key = keyValue[0]
-                val value = keyValue[1].toInt()
-                if (key == deviceLocale) {
-                    return value
+            val pairs = data.split("|")
+            for (pair in pairs) {
+                val keyValue = pair.split("-")
+                if (keyValue.size == 2) {
+                    val key = keyValue[0]
+                    val value = keyValue[1].toInt()
+                    if (key == deviceLocale) {
+                        return value
+                    }
                 }
             }
+
+            return 0
+        } catch (e: Exception) {
+            return -1
         }
 
-        return 0
     }
 
     fun getProfileCount(): Int? {

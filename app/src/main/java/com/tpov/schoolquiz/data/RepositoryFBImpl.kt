@@ -596,7 +596,7 @@ class RepositoryFBImpl @Inject constructor(
                         dao.insertProfile(profile.toProfileEntity(100, 500))
                         synthLiveData.value = ++synth
                     } else {
-                        log("getProfile() профиль по tpovid найден")
+                        log("getProfile() профиль по tpovid найден $profile")
                         val updatedProfile = dao.getProfileByFirebaseId(
                             FirebaseAuth.getInstance().currentUser?.uid ?: ""
                         ).copy(
@@ -806,7 +806,7 @@ class RepositoryFBImpl @Inject constructor(
             var blockServer = false
             quizDB.forEach {
                 if (it.id!! < 100) {
-                    log("setQuizData() найден квест который не был синхронизирован с сервером")
+                    log("setQuizData() найден квест который не был синхронизирован с сервером $it")
                     blockServer = true
                 }
             }
@@ -1039,6 +1039,26 @@ class RepositoryFBImpl @Inject constructor(
                                             }
 
                                         })
+                                } else {
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef5.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
                                 }
 
                             } else if (quiz.event == 6) {
@@ -1066,9 +1086,29 @@ class RepositoryFBImpl @Inject constructor(
                                             }
 
                                         })
+                                } else {
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef6.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
                                 }
 
-                            }else if (quiz.event == 7) {
+                            } else if (quiz.event == 7) {
                                 if (quiz.id!! >= 100) {
                                     quizRef7.child("${quiz.id.toString()}")
                                         .addListenerForSingleValueEvent(object :
@@ -1093,6 +1133,26 @@ class RepositoryFBImpl @Inject constructor(
                                             }
 
                                         })
+                                } else {
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef7.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
                                 }
 
                             } else if (quiz.event == 8) {
@@ -1120,6 +1180,26 @@ class RepositoryFBImpl @Inject constructor(
                                             }
 
                                         })
+                                } else {
+                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    idQuiz++
+                                    var oldId = quiz.id!!
+                                    quiz.id = idQuiz
+                                    quizRef8.child("$idQuiz").setValue(quiz).addOnSuccessListener {
+                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                            .updateChildren(quizRatingMap)
+                                    }
+
+                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
+                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
+                                    }
+                                    dao.deleteQuestionDetailByIdQuiz(oldId)
+                                    dao.deleteQuestionByIdQuiz(oldId)
+                                    dao.insertQuiz(quiz)
+                                    dao.deleteQuizById(oldId)
                                 }
                             }
 

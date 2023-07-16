@@ -282,7 +282,7 @@ class CreateQuestionDialog : DialogFragment() {
         val quizEntity = QuizEntity(
             newIdQuiz,
             nameQuiz,
-            mainActivityViewModel.getProfile().name ?: "",
+            mainActivityViewModel.getProfile().nickname ?: "",
             if (this.idQuiz == -1) currentTime
             else (mainActivityViewModel.getQuizById(this.idQuiz).data),
             if (this.idQuiz == -1) 0

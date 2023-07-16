@@ -236,6 +236,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             ratingBar.rating = (quizEntity.ratingPlayer.toFloat() / 33.3333F)
             ratingBar.stepSize = 100F
+
             val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
             //imvTranslate
@@ -483,9 +484,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 val filteredQuestions = mutableListOf<QuestionEntity>()
                 filteredQuestions.addAll(trueQuestionsMap.values)
                 filteredQuestions.addAll(falseQuestionsMap.values)
-
-
-
 
                 translateToUserLanguage(filteredQuestionList).forEach {
                     viewModel.insertQuestion(it.copy(id = null))
