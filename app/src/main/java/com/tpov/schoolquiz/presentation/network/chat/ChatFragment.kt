@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.database.FirebaseDatabase
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.fierbase.Chat
 import com.tpov.schoolquiz.databinding.FragmentChatBinding
@@ -21,6 +22,8 @@ import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
+import com.tpov.userguide.Options
+import com.tpov.userguide.UserGuide
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.text.SimpleDateFormat
 import java.util.*
@@ -58,6 +61,14 @@ class ChatFragment : BaseFragment() {
         observeChatData()
 
         val tpovId = getTpovId()
+
+        UserGuide(requireContext()).addNotification(
+            binding.chatRecyclerView.id,
+            text = " - Не оскорблять \n  - Не навьязывать \n  - Не флудить \n  - Не оскорблять \n  - Помогать \n  - Улыбаться",
+            titleText = "Правила чата:",
+            options = Options(countRepeat = 100),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
 
         binding.sendMessageButton.setOnClickListener {
             val message = binding.messageEditText.text.toString().trim()
