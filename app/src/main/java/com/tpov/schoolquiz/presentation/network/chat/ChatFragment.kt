@@ -61,6 +61,14 @@ class ChatFragment : BaseFragment() {
 
         val tpovId = getTpovId()
 
+        UserGuide(requireContext()).addNotification(
+            binding.chatRecyclerView.id,
+            text = " - Не оскорблять \n  - Не навьязывать \n  - Не флудить \n  - Не оскорблять \n  - Помогать \n  - Улыбаться",
+            titleText = "Правила чата:",
+            options = Options(countRepeat = 100),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
         binding.sendMessageButton.setOnClickListener {
             val message = binding.messageEditText.text.toString().trim()
             if (message.isNotEmpty()) {

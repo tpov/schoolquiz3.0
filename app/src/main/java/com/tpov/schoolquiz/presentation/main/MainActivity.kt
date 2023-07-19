@@ -73,6 +73,7 @@ import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
+import com.tpov.userguide.Options
 import com.tpov.userguide.UserGuide
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
@@ -144,6 +145,7 @@ class MainActivity : AppCompatActivity() {
         val versionCode: Int = pInfo.versionCode
 
         val userguide = UserGuide(this)
+
         userguide.addGuideNewVersion(
             "SchoolQuiz v${versionName}",
             "This is alfa test",
@@ -292,7 +294,7 @@ class MainActivity : AppCompatActivity() {
         numDayPrizeBox = viewModel.synthPrizeBoxDay(viewModel.getProfile()) ?: 0
         viewModel.getProfileFBLiveData.observe(this) {
             log("it: $it")
-
+            showNotification(it?.pointsSkill)
             var count = (it?.count ?: 0) * 100
             layerDrawable1.findDrawableByLayerId(android.R.id.progress).level = count
             count -= 10000
@@ -416,6 +418,7 @@ class MainActivity : AppCompatActivity() {
 
             setNewSkill(it?.pointsSkill)
         }
+
         pb_life1.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 // Rating bar clicked, handle the event here
@@ -424,7 +427,7 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
-        pb_life2.setOnTouchListener { view, event ->
+        pb_life2.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 // Rating bar clicked, handle the event here
                 // You can call your method to show the translation popup/dialog
@@ -587,6 +590,145 @@ class MainActivity : AppCompatActivity() {
         createTimer()
     }
 
+    private fun showNotification(skill: Int?) {
+        val userguide = UserGuide(this)
+        userguide.setCounterValue(skill ?: 0)
+
+        var id = 1
+        userguide.addNotification(
+            id++,
+            titleText = "Your skill = $skill",
+            text = "Добро пожаловать в квиз правда-ложь, готов потрясти своими извинилами? Нажимай на квест который больше всего нравится.",
+            options = Options(countKey = 0),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+//////////////////////////////////
+        userguide.addNotification(
+            id++,
+            text = "У тебя отлично получается! В этой игре еще есть много всего интересного, по мере набирания опыта - у тебя открывается различный функционал. Дерзай дальше!",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 200),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+        /////////////////////////////////////////
+
+        userguide.addNotification(
+            id++,
+            text = "Арена - здесь находятся квесты других игроков и их могут проходить все игроки.",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.baseline_public_24)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы можете создавать собственные квесты.",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.nav_my_quiz)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы можете создавать собственные квесты.",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.nav_my_quiz)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Новичек",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+            /////////////////////////////
+
+        userguide.addNotification(
+            id++,
+            text = "Вы можете создавать собственные квесты.",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.nav_my_quiz)
+        )
+
+
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Игрок",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+        userguide.addNotification(
+            id++,
+            text = "Вы можете смотреть список лучших игроков в этой игре по разным критериям",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2_0000),
+            icon = resources.getDrawable(R.drawable.nav_leader)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Любитель",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 6_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы можете просматривать профили других игроков по другим различным фильтрам",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 6_0000),
+            icon = resources.getDrawable(R.drawable.nav_user)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Ветеран",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 13_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Гроссместер",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 25_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Єксперт",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 50_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Легенда",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 100_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Привет мой друг, ты прошел не легкий путь от новичка до Легенды через всю дорогу препятствий и трудностей, я желаю что-бы тебе был безвозместный успех в жизни так же, как и в этой игре. \n  Признаюсь, мы так же шли по не легкой дороге, что-бы сделать все условия, что-бы наши замечатильные игроки, дошли до этой черты. Я этот текст пишу на этапе альфа версии квеста, но надеюсь, мы дойдем до момента когда наши игроки возьмут Легенду. Благодарим тебя за большой вклад в наше сообщество, каждый из вас действительно важен. Могу предложить податься к нам в работу, возможно именно у нас ты так же сможешь показать весь потенциал. Удачи! ",
+            titleText = "Поздравление от разработчика игры.",
+            options = Options(countKey = 100_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+    }
+
     private fun showPopupInfo(event: MotionEvent, popupType: Int) {
         val context = this
         // Create the popup window
@@ -717,6 +859,77 @@ class MainActivity : AppCompatActivity() {
         try {
             val profile = viewModel.getProfile()
             val userguide = UserGuide(this)
+
+            if ((profile.translater ?: 0) >= 100) userguide.addNotification(
+                -1,
+                text = "Translater 1 lvl: ${profile.translater} points",
+                titleText = "New qualification",
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
+            if ((profile.translater ?: 0) >= 200) userguide.addNotification(
+                -2,
+                titleText = "New qualification",
+                text = "Translater 2 lvl: ${profile.translater} points",
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
+            if ((profile.translater ?: 0) >= 300) userguide.addNotification(
+                -3,
+                titleText = "New qualification",
+                text = "Translater 3 lvl: ${profile.translater} points",
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
+            if ((profile.tester ?: 0) >= 100) userguide.addNotification(
+                -4,
+                text = "Tester: ${profile.tester} points",
+                titleText = "New qualification",
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
+            if ((profile.moderator ?: 0) >= 100) userguide.addNotification(
+                -5,
+                text = "Moderator: ${profile.moderator} points",
+                titleText = "New qualification",
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
+            if ((profile.admin ?: 0) >= 100) userguide.addNotification(
+                -6,
+                text = "Admin: ${profile.admin} points",
+                titleText = "New qualification",
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
+            if ((profile.developer ?: 0) >= 100) userguide.addNotification(
+                -7,
+                text = "Developer: ${profile.developer} points",
+                titleText = "New qualification",
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
+
+            if ((profile.addPointsGold ?: 0) > 0) userguide.addNotification(
+                0,
+                text = "Золото: ${profile.addPointsGold} points",
+                titleText = "Награда от разработчиков",
+                icon = resources.getDrawable(R.drawable.ic_gold)
+            )
+
+            if ((profile.addPointsNolics ?: 0) > 0) userguide.addNotification(
+                0,
+                text = "Нолики: ${profile.addPointsNolics} points",
+                titleText = "Награда от разработчиков",
+                icon = resources.getDrawable(R.drawable.ic_gold)
+            )
+
+            if ((profile.addPointsSkill ?: 0) > 0) userguide.addNotification(
+                0,
+                text = "Опыт: ${profile.addPointsSkill} points",
+                titleText = "Награда от разработчиков",
+                icon = resources.getDrawable(R.drawable.ic_gold)
+            )
+
+            if (profile.addTrophy != "") userguide.addNotification(
+                0,
+                text = "Трофеи: ${profile.addTrophy} points",
+                titleText = "Награда от разработчиков",
+                icon = resources.getDrawable(R.drawable.baseline_favorite_24)
+            )
 
             viewModel.updateProfileUseCase(
                 profile.copy(

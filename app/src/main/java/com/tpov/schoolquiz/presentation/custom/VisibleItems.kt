@@ -14,7 +14,6 @@ object VisibleItems {
 
         if (skill >= 2000) {
             items.add(R.string.nav_global to R.drawable.baseline_public_24)
-            items.add(R.string.nav_friends to R.drawable.ic_baseline_drive_folder_upload_24)
         }
 
         if (skill >= 2_0000) {
@@ -32,10 +31,11 @@ object VisibleItems {
         }
 
         if (qualification.developer >= 100) {
+            items.add(R.string.nav_profile to R.drawable.nav_profile)
             items.add(R.string.nav_news to R.drawable.ic_new)
             items.add(R.string.nav_massages to R.drawable.nav_massage)
             items.add(R.string.nav_reports to R.drawable.nav_report)
-            items.add(R.string.nav_profile to R.drawable.nav_profile)
+            items.add(R.string.nav_friends to R.drawable.ic_baseline_drive_folder_upload_24)
             items.add(R.string.nav_contact to R.drawable.ic_contact)
         }
 
