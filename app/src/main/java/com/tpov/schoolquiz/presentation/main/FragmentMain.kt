@@ -127,9 +127,9 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             val filteredList =
-                quizList.filter { if (it.event == 8) it.event == isMyQuiz else it.event == isMyQuiz && it.tpovId == getTpovId() }
+                quizList.filter { if (isMyQuiz == 8) it.event == isMyQuiz else if (isMyQuiz == 5) it.event == isMyQuiz else it.event == isMyQuiz && it.tpovId == getTpovId() }
             val sortedList = if (isMyQuiz == 5) {
-                filteredList.sortedBy { it.ratingPlayer }
+                filteredList.sortedBy { -it.ratingPlayer }
             } else {
                 filteredList
             }
@@ -198,15 +198,15 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
             } else {
                 if (containsLangQuizInUser(id)) {
-                mainViewModel.updateProfileUseCase(
-                    mainViewModel.getProfile()
-                        .copy(count = mainViewModel.getProfileCount()!! - 33)
-                )
-                val intent = Intent(activity, QuestionActivity::class.java)
-                intent.putExtra(NAME_USER, "user")
-                intent.putExtra(ID_QUIZ, id)
-                intent.putExtra(HARD_QUESTION, type)
-                startActivityForResult(intent, REQUEST_CODE)
+                    mainViewModel.updateProfileUseCase(
+                        mainViewModel.getProfile()
+                            .copy(count = mainViewModel.getProfileCount()!! - 33)
+                    )
+                    val intent = Intent(activity, QuestionActivity::class.java)
+                    intent.putExtra(NAME_USER, "user")
+                    intent.putExtra(ID_QUIZ, id)
+                    intent.putExtra(HARD_QUESTION, type)
+                    startActivityForResult(intent, REQUEST_CODE)
                 } else {
                     Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
                         .show()
@@ -214,6 +214,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
         }
     }
+
     @OptIn(InternalCoroutinesApi::class)
     fun containsLangQuizInUser(idQuiz: Int) = mainViewModel.getProfile().languages?.split('|')
         ?.any { mainViewModel.getQuizById(idQuiz).languages.contains(it) } ?: false

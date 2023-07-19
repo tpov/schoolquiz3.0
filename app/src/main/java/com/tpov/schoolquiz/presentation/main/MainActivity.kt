@@ -76,6 +76,7 @@ import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
+import com.tpov.userguide.Options
 import com.tpov.userguide.UserGuide
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
@@ -284,7 +285,7 @@ class MainActivity : AppCompatActivity() {
         numDayPrizeBox = viewModel.synthPrizeBoxDay(viewModel.getProfile()) ?: 0
         viewModel.getProfileFBLiveData.observe(this) {
             log("it: $it")
-
+            showNotification(it?.pointsSkill)
             var count = (it?.count ?: 0) * 100
             layerDrawable1.findDrawableByLayerId(android.R.id.progress).level = count
             count -= 10000
@@ -408,6 +409,7 @@ class MainActivity : AppCompatActivity() {
 
             setNewSkill(it?.pointsSkill)
         }
+
         pb_life1.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 // Rating bar clicked, handle the event here
@@ -416,7 +418,7 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
-        pb_life2.setOnTouchListener { view, event ->
+        pb_life2.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 // Rating bar clicked, handle the event here
                 // You can call your method to show the translation popup/dialog
@@ -579,6 +581,30 @@ class MainActivity : AppCompatActivity() {
         createTimer()
     }
 
+    private fun showNotification(skill: Int?) {
+        val userguide = UserGuide(this)
+        userguide.setCounterValue(skill ?: 0)
+
+        var id = 1
+        userguide.addNotification(
+            id++,
+            text = "Hello",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 0),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+        userguide.addNotification(
+            id++,
+            text = "Wow",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 200),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+
+
+    }
+
     private fun showPopupInfo(event: MotionEvent, popupType: Int) {
         val context = this
         // Create the popup window
@@ -710,6 +736,13 @@ class MainActivity : AppCompatActivity() {
             val profile = viewModel.getProfile()
             val userguide = UserGuide(this)
 
+            userguide.addNotification(
+                -1,
+                text = "Hello",
+                titleText = "Your skill = $skill",
+                options = Options(countKey = 0),
+                icon = resources.getDrawable(R.drawable.star_full)
+            )
             viewModel.updateProfileUseCase(
                 profile.copy(
                     count = calcCount(
@@ -1094,6 +1127,7 @@ class MainActivity : AppCompatActivity() {
             REQUEST_CODE_STORAGE_PERMISSION
         )
     }
+
     private fun requestContactsPermission() {
         ActivityCompat.requestPermissions(
             this,
