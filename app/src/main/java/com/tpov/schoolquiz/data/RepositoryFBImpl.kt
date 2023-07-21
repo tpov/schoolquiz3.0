@@ -889,6 +889,7 @@ class RepositoryFBImpl @Inject constructor(
                                 "rating" to quiz.rating, "stars" to quiz.starsAll
                             )
 
+
                             log("setQuizData() playersRef quizDB перебираем: $quiz")
                             if (quiz.event == 1) {
                                 log("setQuizData() playersRef quizDB event1")
@@ -1035,6 +1036,8 @@ class RepositoryFBImpl @Inject constructor(
                                 }
 
                             } else if (quiz.event == 5) {
+                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                    .updateChildren(quizRatingMap)
                                 if (quiz.id!! >= 100) {
                                     quizRef5.child("${quiz.id.toString()}")
                                         .addListenerForSingleValueEvent(object :
@@ -1089,6 +1092,8 @@ class RepositoryFBImpl @Inject constructor(
                                 }
 
                             } else if (quiz.event == 6) {
+                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                    .updateChildren(quizRatingMap)
                                 if (quiz.id!! >= 100) {
                                     quizRef6.child("${quiz.id.toString()}")
                                         .addListenerForSingleValueEvent(object :
@@ -1137,6 +1142,8 @@ class RepositoryFBImpl @Inject constructor(
                                 }
 
                             } else if (quiz.event == 7) {
+                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                    .updateChildren(quizRatingMap)
                                 if (quiz.id!! >= 100) {
                                     quizRef7.child("${quiz.id.toString()}")
                                         .addListenerForSingleValueEvent(object :
@@ -1185,6 +1192,8 @@ class RepositoryFBImpl @Inject constructor(
                                 }
 
                             } else if (quiz.event == 8) {
+                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
+                                    .updateChildren(quizRatingMap)
                                 if (quiz.id!! >= 100) {
                                     quizRef8.child("${quiz.id.toString()}")
                                         .addListenerForSingleValueEvent(object :
@@ -1215,10 +1224,7 @@ class RepositoryFBImpl @Inject constructor(
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz
-                                    quizRef8.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
+                                    quizRef8.child("$idQuiz").setValue(quiz)
 
                                     dao.getQuestionByIdQuiz(oldId).forEach { item ->
                                         dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
