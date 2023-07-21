@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.database.FirebaseDatabase
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.fierbase.Chat
 import com.tpov.schoolquiz.databinding.FragmentChatBinding
@@ -20,7 +21,8 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovI
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
-import com.tpov.shoppinglist.utils.TimeManager
+import com.tpov.userguide.Options
+import com.tpov.userguide.UserGuide
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -63,32 +65,39 @@ class ChatFragment : BaseFragment() {
 
         UserGuide(requireContext()).addNotification(
             binding.chatRecyclerView.id,
-            text = " - Не оскорблять \n  - Не навьязывать \n  - Не флудить \n  - Не оскорблять \n  - Помогать \n  - Улыбаться",
+            text = " - Не оскорблять \n  - Не навьязывать \n  - Не флудить \n  - Помогать \n  - Улыбаться",
             titleText = "Правила чата:",
             options = Options(countRepeat = 100),
-            icon = resources.getDrawable(R.drawable.star_full)
+            icon = resources.getDrawable(R.drawable.nav_chat)
         )
 
         binding.sendMessageButton.setOnClickListener {
             val message = binding.messageEditText.text.toString().trim()
             if (message.isNotEmpty()) {
-                val currentTime = TimeManager.getCurrentTime()
-                        val chatMessage = Chat(
-                            time = currentTime,
-                            user = chatViewModel.getProfile(tpovId).nickname ?: "Error",
-                            msg = message,
-                            importance = 0,
-                            personalSms = 0,
-                            icon = chatViewModel.getProfile(tpovId).logo.toString(),
-                            rating = 0,
-                            reaction = 0
-                        )
-                        sendMessage(chatMessage)
+                val currentTime = getCurrentTimeKiev()
+
+                val chatMessage = Chat(
+                    time = currentTime,
+                    user = chatViewModel.getProfile(tpovId).nickname ?: "Error",
+                    msg = message,
+                    importance = 0,
+                    personalSms = 0,
+                    icon = chatViewModel.getProfile(tpovId).logo.toString(),
+                    rating = 0,
+                    reaction = 0
+                )
+                sendMessage(chatMessage)
                 binding.messageEditText.setText("")
             }
         }
     }
 
+    fun getCurrentTimeKiev(): String {
+        val timeZone = TimeZone.getTimeZone("Europe/Kiev")
+        val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy", Locale.getDefault())
+        dateFormat.timeZone = timeZone
+        return dateFormat.format(Date())
+    }
     @OptIn(InternalCoroutinesApi::class)
     override fun onAttach(context: Context) {
         component.inject(this)
@@ -97,9 +106,13 @@ class ChatFragment : BaseFragment() {
 
     private fun sendMessage(chat: Chat) {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val currentDate = dateFormat.format(Date())
+
         val chatDateRef = chatRef.child(currentDate)
         val chatId = chatDateRef.push().key
+
         if (chatId != null) {
             chatDateRef.child(chatId).setValue(chat).addOnSuccessListener {
                 log("awdawdawdaw add")
@@ -118,6 +131,10 @@ class ChatFragment : BaseFragment() {
 
     override fun onStop() {
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         chatViewModel.removeChatListener()
     }
 

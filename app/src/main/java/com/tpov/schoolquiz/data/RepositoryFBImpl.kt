@@ -184,42 +184,51 @@ class RepositoryFBImpl @Inject constructor(
     override suspend fun getChatData(): Flow<List<ChatEntity>> {
         getPersonalMassage()
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
-        val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
-        chatValueEventListener =
-            chatRef.limitToLast(10).addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    log("getChatData snapshot: $snapshot")
-                    GlobalScope.launch {
-                        // Получаем данные из snapshot и сохраняем их в локальную базу данных
+        val dateFormatKiev = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
+        dateFormatKiev.timeZone = TimeZone.getTimeZone("Europe/Kiev")
 
-                        for (dateSnapshot in snapshot.children) {
-                            log("getChatData dateSnapshot: $dateSnapshot")
-                            for (data in dateSnapshot.children) {
+        val userTimeZone = TimeZone.getDefault()
+
+        chatValueEventListener = chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                log("getChatData snapshot: $snapshot")
+                GlobalScope.launch {
+                    // Получаем данные из snapshot и сохраняем их в локальную базу данных
+                    for (dateSnapshot in snapshot.children) {
+                        log("getChatData dateSnapshot: $dateSnapshot")
+                        for (data in dateSnapshot.children) {
+                            try {
                                 log("getChatData data: $data")
                                 val chat = data.getValue(Chat::class.java)
-                                val date1 = dateFormat.parse(chat?.time.toString())
-                                var date2: Date? =
-                                    if (SharedPreferencesManager.getTimeMassage() == "0") {
-                                        SharedPreferencesManager.setTimeMassage(TimeManager.getCurrentTime())
-                                        dateFormat.parse(SharedPreferencesManager.getTimeMassage())
-                                    } else dateFormat.parse(SharedPreferencesManager.getTimeMassage())
+                                val kievTime = chat?.time.toString()
+                                val date1 = dateFormatKiev.parse(kievTime)
 
-                                log("getChatData (date1.after(date2): ${(date1.after(date2))}")
-                                if (chat != null && (date1.after(date2))) {
-                                    dao.insertChat(chat.toChatEntity())
-                                    SharedPreferencesManager.setTimeMassage(chat.time)
+                                log("wededeefef chat: $chat")
+                                if (chat != null) {
+                                    val lastTime = SharedPreferencesManager.getTimeMassage()
+                                    val date2 = if (lastTime != null) Date(lastTime.toLong()) else null
+                                    log("wededeefef date2: $date2")
+                                    log("wededeefef date1: $date1")
+                                    if (date2 == null || date1.after(date2)) {
+                                        dao.insertChat(chat.toChatEntity())
+                                        SharedPreferencesManager.setTimeMassage(date1.time.toString())
+                                    }
                                 }
+                            } catch (e: Exception) {
+                                log("Error: ${e.message}")
                             }
                         }
                     }
                 }
+            }
 
-                override fun onCancelled(error: DatabaseError) {
-                    // Обработка ошибок
-                }
-            })
+            override fun onCancelled(error: DatabaseError) {
+                // Обработка ошибок
+            }
+        })
         return dao.getChat()
     }
+
 
     override fun removeChatListener() {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
