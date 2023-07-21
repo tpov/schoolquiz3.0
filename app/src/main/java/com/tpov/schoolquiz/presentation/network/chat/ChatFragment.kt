@@ -65,7 +65,7 @@ class ChatFragment : BaseFragment() {
 
         UserGuide(requireContext()).addNotification(
             binding.chatRecyclerView.id,
-            text = " - Не оскорблять \n  - Не навьязывать \n  - Не флудить \n  - Помогать \n  - Улыбаться",
+            text = " - Не оскорблять \n - Не навьязывать \n - Не флудить \n - Помогать \n - Улыбаться",
             titleText = "Правила чата:",
             options = Options(countRepeat = 100),
             icon = resources.getDrawable(R.drawable.nav_chat)
@@ -92,12 +92,13 @@ class ChatFragment : BaseFragment() {
         }
     }
 
-    fun getCurrentTimeKiev(): String {
+    private fun getCurrentTimeKiev(): String {
         val timeZone = TimeZone.getTimeZone("Europe/Kiev")
         val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy", Locale.getDefault())
         dateFormat.timeZone = timeZone
         return dateFormat.format(Date())
     }
+
     @OptIn(InternalCoroutinesApi::class)
     override fun onAttach(context: Context) {
         component.inject(this)
@@ -150,28 +151,33 @@ class ChatFragment : BaseFragment() {
             }
         })
         withContext(Dispatchers.Main) {
-        chatViewModel.chatData().observe(viewLifecycleOwner) { chatEntityList ->
-            val chatList = convertChatEntityListToChatList(chatEntityList)
+            chatViewModel.chatData().observe(viewLifecycleOwner) { chatEntityList ->
+                val chatList = convertChatEntityListToChatList(chatEntityList)
 
-            if (chatList.isNotEmpty()) {
-                val lastChat = chatList.last()
-                val lastMessage = lastChat.msg
+                if (chatList.isNotEmpty()) {
+                    val lastChat = chatList.last()
+                    val lastMessage = lastChat.msg
 
-                // Побуквенное добавление последнего сообщения в список чата в основном потоке
-                val handler = Handler(Looper.getMainLooper())
-                val charList = mutableListOf<Char>()
-                lastMessage.forEachIndexed { index, char ->
-                    charList.add(char)
-                    val updatedChatList = chatList.toMutableList()
-                    updatedChatList[updatedChatList.indexOf(lastChat)] = lastChat.copy(msg = charList.joinToString(""))
-                    handler.postDelayed({
-                        chatAdapter.submitList(updatedChatList.toList())
-                        binding.chatRecyclerView.scrollToPosition(updatedChatList.size - 1)
-                    }, index * 50L) // Пауза между добавлением каждого символа (можно настроить по своему усмотрению)
+                    // Побуквенное добавление последнего сообщения в список чата в основном потоке
+                    val handler = Handler(Looper.getMainLooper())
+                    val charList = mutableListOf<Char>()
+                    lastMessage.forEachIndexed { index, char ->
+                        charList.add(char)
+                        val updatedChatList = chatList.toMutableList()
+                        updatedChatList[updatedChatList.indexOf(lastChat)] =
+                            lastChat.copy(msg = charList.joinToString(""))
+                        handler.postDelayed(
+                            {
+                                chatAdapter.submitList(updatedChatList.toList())
+                                binding.chatRecyclerView.scrollToPosition(updatedChatList.size - 1)
+                            },
+                            index * 50L
+                        ) // Пауза между добавлением каждого символа (можно настроить по своему усмотрению)
+                    }
+                } else {
+                    chatAdapter.submitList(chatList)
                 }
-            } else {
-                chatAdapter.submitList(chatList)
-            }}
+            }
         }
     }
 

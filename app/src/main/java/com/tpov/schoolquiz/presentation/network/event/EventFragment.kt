@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.network.event
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
@@ -100,7 +102,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         super.onAttach(context)
     }
 
-
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz2Clicked(quizId: Int) {
         log("fun onQuiz2Clicked")
@@ -111,7 +112,8 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            if (containsLangQuizInUser(quizId)) {
+
+            if (foundQuestionList(quizId, false)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
                         .copy(count = eventViewModel.getProfileCount()!! - 15)
@@ -128,8 +130,107 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    fun containsLangQuizInUser(idQuiz: Int) = mainViewModel.getProfile().languages?.split('|')
-        ?.any { mainViewModel.getQuizById(idQuiz).languages.contains(it) } ?: false
+    private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean?): Boolean {
+
+        log("kokol hardQuestion: $hardQuestion")
+        val questionThisListAll =
+            mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
+                .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
+
+        var listMap = mutableMapOf<Int, Boolean>()
+        listMap = getMap(questionThisListAll, listMap)
+        val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
+
+        val questionListThis =
+            if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
+            else getListQuestionByProfileLang(
+                questionThisListAll,
+                listMap
+            )
+
+        return didFoundAllQuestion(questionListThis, listMap)
+
+    }
+
+    private fun getMap(
+        listQuestionEntity: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): MutableMap<Int, Boolean> {
+        listQuestionEntity.forEach {
+            listMap[it.numQuestion] = false
+        }
+        return listMap
+    }
+
+    private fun getUserLocalization(context: Context): String {
+        val config: Configuration = context.resources.configuration
+        return config.locale.language
+    }
+
+    @OptIn(InternalCoroutinesApi::class)
+    private fun getListQuestionByProfileLang(
+        questionThisListAll: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): ArrayList<QuestionEntity> {
+        val userLocalization: String = getUserLocalization(requireContext())
+        val availableLanguages = mainViewModel.getProfile().languages
+
+        val questionList = ArrayList<QuestionEntity>()
+
+        listMap.forEach { map ->
+            var filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
+
+            if (filteredList.isNotEmpty()) {
+                questionList.add(filteredList[0])
+            } else {
+                filteredList = questionThisListAll
+                    .filter { it.numQuestion == map.key }
+                    .filter { availableLanguages?.contains(it.language) ?: false }
+
+                if (filteredList.isNotEmpty()) {
+                    questionList.add(filteredList[0])
+                }
+            }
+        }
+        return questionList
+    }
+
+    private fun didFoundAllQuestion(
+        questionList: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): Boolean {
+        var fountQuestion = listMap.isNotEmpty()
+
+        listMap.forEach {
+            log("kokol: ${it.key}. ${it.value}: ${questionList[it.key - 1].id}")
+            try {
+                if (questionList[it.key - 1].id == null) fountQuestion = false
+            } catch (e: Exception) {
+                fountQuestion = false
+            }
+        }
+        return fountQuestion
+    }
+
+    private fun getListQuestionListByLocal(
+        listMap: MutableMap<Int, Boolean>,
+        questionThisListAll: List<QuestionEntity>
+    ): ArrayList<QuestionEntity> {
+        val userLocalization: String = getUserLocalization(requireContext())
+
+        val questionList = ArrayList<QuestionEntity>()
+        listMap.forEach { map ->
+            val filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
+
+            if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
+        }
+
+        return questionList
+    }
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz3Clicked(quizId: Int) {
@@ -142,7 +243,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            if (containsLangQuizInUser(quizId)) {
+            if (foundQuestionList(quizId, true)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
                         .copy(count = eventViewModel.getProfileCount()!! - 15)
@@ -169,7 +270,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            if (containsLangQuizInUser(quizId)) {
+            if (foundQuestionList(quizId, null)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
                         .copy(count = eventViewModel.getProfileCount()!! - 20)

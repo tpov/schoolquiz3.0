@@ -50,7 +50,8 @@ class MainActivityViewModel @Inject constructor(
     val updateQuizUseCase: UpdateQuizUseCase,
     val updateProfileUseCase: UpdateProfileUseCase,
     private val getQuizEventUseCase: GetQuizEventUseCase,
-    private val getQuestionDetailListUseCase: GetQuestionDetailListUseCase
+    private val getQuestionDetailListUseCase: GetQuestionDetailListUseCase,
+    val getQuestionByIdQuizUseCase: GetQuestionListByIdQuiz,
 ) : ViewModel() {
 
     var oldId = 0

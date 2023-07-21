@@ -599,70 +599,51 @@ class MainActivity : AppCompatActivity() {
         var id = 1
         userguide.addNotification(
             id++,
-            titleText = "Your skill = $skill",
-            text = "Добро пожаловать в квиз правда-ложь, готов потрясти своими извинилами? Нажимай на квест который больше всего нравится.",
-            options = Options(countKey = 0),
+            text = "Привет мой друг, ты прошел не легкий путь от Новичка до Легенды через всю дорогу препятствий и трудностей, я желаю что-бы тебе был безвозместный успех в жизни так же, как и в этой игре. \n  Признаюсь, мы так же шли по не легкой дороге, что-бы сделать все условия, что-бы наши замечатильные игроки, дошли до этой черты. Я этот текст пишу на этапе альфа версии квеста, но надеюсь, мы дойдем до момента когда наши игроки возьмут Легенду. Благодарим тебя за большой вклад в наше сообщество, каждый из вас действительно важен. Могу предложить податься к нам в работу, возможно именно у нас ты так же сможешь показать весь потенциал. Удачи! ",
+            titleText = "Поздравление от разработчика игры.",
+            options = Options(countKey = 100_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
-//////////////////////////////////
         userguide.addNotification(
             id++,
-            text = "У тебя отлично получается! В этой игре еще есть много всего интересного, по мере набирания опыта - у тебя открывается различный функционал. Дерзай дальше!",
+            text = "Вы получили звание - Легенда",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 200),
+            options = Options(countKey = 100_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
-
-        /////////////////////////////////////////
-
         userguide.addNotification(
             id++,
-            text = "Арена - здесь находятся квесты других игроков и их могут проходить все игроки.",
+            text = "Вы получили звание - Єксперт",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 2000),
-            icon = resources.getDrawable(R.drawable.baseline_public_24)
-        )
-
-        userguide.addNotification(
-            id++,
-            text = "Вы можете создавать собственные квесты.",
-            titleText = "Your skill = $skill",
-            options = Options(countKey = 2000),
-            icon = resources.getDrawable(R.drawable.nav_my_quiz)
-        )
-
-        userguide.addNotification(
-            id++,
-            text = "Вы можете создавать собственные квесты.",
-            titleText = "Your skill = $skill",
-            options = Options(countKey = 2000),
-            icon = resources.getDrawable(R.drawable.nav_my_quiz)
-        )
-
-        userguide.addNotification(
-            id++,
-            text = "Вы получили звание - Новичек",
-            titleText = "Your skill = $skill",
-            options = Options(countKey = 2000),
+            options = Options(countKey = 50_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
-
-            /////////////////////////////
-
         userguide.addNotification(
             id++,
-            text = "Вы можете создавать собственные квесты.",
+            text = "Вы получили звание - Гроссместер",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 2000),
-            icon = resources.getDrawable(R.drawable.nav_my_quiz)
+            options = Options(countKey = 25_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
         )
-
-
         userguide.addNotification(
             id++,
-            text = "Вы получили звание - Игрок",
+            text = "Вы получили звание - Ветеран",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 2_0000),
+            options = Options(countKey = 13_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+        userguide.addNotification(
+            id++,
+            text = "Вы можете просматривать профили других игроков по другим различным фильтрам",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 6_0000),
+            icon = resources.getDrawable(R.drawable.nav_user)
+        )
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Любитель",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 6_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
@@ -672,63 +653,53 @@ class MainActivity : AppCompatActivity() {
             options = Options(countKey = 2_0000),
             icon = resources.getDrawable(R.drawable.nav_leader)
         )
+        userguide.addNotification(
+            id++,
+            text = "Вы получили звание - Игрок",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2_0000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+        /////////////////////////////
+
+
 
         userguide.addNotification(
             id++,
-            text = "Вы получили звание - Любитель",
+            text = "Вы получили звание - Новичек",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 6_0000),
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.star_full)
+        )
+        userguide.addNotification(
+            id++,
+            text = "Вы можете создавать собственные квесты.",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.nav_my_quiz)
+        )
+        userguide.addNotification(
+            id++,
+            text = "Арена - здесь находятся квесты других игроков и их могут проходить все игроки.",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 2000),
+            icon = resources.getDrawable(R.drawable.baseline_public_24)
+        )
+        userguide.addNotification(
+            id++,
+            text = "У тебя отлично получается! В этой игре еще есть много всего интересного, по мере набирания опыта - у тебя открывается различный функционал. Дерзай дальше!",
+            titleText = "Your skill = $skill",
+            options = Options(countKey = 200),
             icon = resources.getDrawable(R.drawable.star_full)
         )
 
+        /////////////////////////////////////////
         userguide.addNotification(
             id++,
-            text = "Вы можете просматривать профили других игроков по другим различным фильтрам",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 6_0000),
-            icon = resources.getDrawable(R.drawable.nav_user)
-        )
-
-        userguide.addNotification(
-            id++,
-            text = "Вы получили звание - Ветеран",
-            titleText = "Your skill = $skill",
-            options = Options(countKey = 13_0000),
+            text = "Добро пожаловать в квиз правда-ложь, готов потрясти своими извинилами? Нажимай на квест который больше всего нравится.",
             icon = resources.getDrawable(R.drawable.star_full)
         )
-
-        userguide.addNotification(
-            id++,
-            text = "Вы получили звание - Гроссместер",
-            titleText = "Your skill = $skill",
-            options = Options(countKey = 25_0000),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-
-        userguide.addNotification(
-            id++,
-            text = "Вы получили звание - Єксперт",
-            titleText = "Your skill = $skill",
-            options = Options(countKey = 50_0000),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-
-        userguide.addNotification(
-            id++,
-            text = "Вы получили звание - Легенда",
-            titleText = "Your skill = $skill",
-            options = Options(countKey = 100_0000),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-
-        userguide.addNotification(
-            id++,
-            text = "Привет мой друг, ты прошел не легкий путь от Новичка до Легенды через всю дорогу препятствий и трудностей, я желаю что-бы тебе был безвозместный успех в жизни так же, как и в этой игре. \n  Признаюсь, мы так же шли по не легкой дороге, что-бы сделать все условия, что-бы наши замечатильные игроки, дошли до этой черты. Я этот текст пишу на этапе альфа версии квеста, но надеюсь, мы дойдем до момента когда наши игроки возьмут Легенду. Благодарим тебя за большой вклад в наше сообщество, каждый из вас действительно важен. Могу предложить податься к нам в работу, возможно именно у нас ты так же сможешь показать весь потенциал. Удачи! ",
-            titleText = "Поздравление от разработчика игры.",
-            options = Options(countKey = 100_0000),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-
     }
 
     private fun showPopupInfo(event: MotionEvent, popupType: Int) {

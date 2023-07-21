@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,6 +14,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.MainApp
@@ -33,7 +35,6 @@ import javax.inject.Inject
 
 @InternalCoroutinesApi
 class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
-
 
     @OptIn(InternalCoroutinesApi::class)
     fun log(m: String) {
@@ -179,7 +180,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.deleteQuiz(id)
     }
 
-    override fun onClick(id: Int, type: Boolean) {
+    override fun onClick(id: Int, typeQuestion: Boolean) {
         log("onClick mainViewModel.getQuizById(id).event")
         if (mainViewModel.getProfileCount()!! < 33) {
             Toast.makeText(
@@ -188,16 +189,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 Toast.LENGTH_LONG
             ).show()
         } else {
-            if (mainViewModel.getQuizById(id).event == 5) {
-                if (containsLangQuizInUser(id)) {
-                    dialogNolics(id, type, 500)
-                } else {
-                    Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
-                        .show()
-                }
+            if (foundQuestionList(id, typeQuestion)) {
 
-            } else {
-                if (containsLangQuizInUser(id)) {
+                if (mainViewModel.getQuizById(id).event == 5) {
+                    dialogNolics(id, typeQuestion, 500)
+                } else {
                     mainViewModel.updateProfileUseCase(
                         mainViewModel.getProfile()
                             .copy(count = mainViewModel.getProfileCount()!! - 33)
@@ -205,19 +201,127 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     val intent = Intent(activity, QuestionActivity::class.java)
                     intent.putExtra(NAME_USER, "user")
                     intent.putExtra(ID_QUIZ, id)
-                    intent.putExtra(HARD_QUESTION, type)
+                    intent.putExtra(HARD_QUESTION, typeQuestion)
                     startActivityForResult(intent, REQUEST_CODE)
-                } else {
-                    Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
-                        .show()
                 }
+
+            } else {
+                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
+                    .show()
             }
         }
     }
 
-    @OptIn(InternalCoroutinesApi::class)
-    fun containsLangQuizInUser(idQuiz: Int) = mainViewModel.getProfile().languages?.split('|')
-        ?.any { mainViewModel.getQuizById(idQuiz).languages.contains(it) } ?: false
+    private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean): Boolean {
+
+        val questionThisListAll =
+            mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
+                .filter { it.hardQuestion == hardQuestion }
+
+        var listMap = mutableMapOf<Int, Boolean>()
+
+        listMap = getMap(questionThisListAll, listMap)
+
+        val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
+
+        val questionListThis =
+            if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
+            else getListQuestionByProfileLang(
+                questionThisListAll,
+                listMap
+            )
+
+        log("kokol end 1 ${didFoundAllQuestion(questionByLocal, listMap)}")
+        log("kokol end 2 ${didFoundAllQuestion(questionListThis, listMap)}")
+        return didFoundAllQuestion(questionListThis, listMap)
+
+    }
+
+
+    private fun getMap(
+        listQuestionEntity: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): MutableMap<Int, Boolean> {
+        listQuestionEntity.forEach {
+            listMap[it.numQuestion] = false
+        }
+        return listMap
+    }
+
+    private fun getUserLocalization(context: Context): String {
+        val config: Configuration = context.resources.configuration
+        return config.locale.language
+    }
+
+    private fun getListQuestionByProfileLang(
+        questionThisListAll: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): ArrayList<QuestionEntity> {
+        val userLocalization: String = getUserLocalization(requireContext())
+        val availableLanguages = mainViewModel.getProfile().languages
+
+        val questionList = ArrayList<QuestionEntity>()
+
+        listMap.forEach { map ->
+            var filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
+
+            if (filteredList.isNotEmpty()) {
+                questionList.add(filteredList[0])
+            } else {
+                filteredList = questionThisListAll
+                    .filter { it.numQuestion == map.key }
+                    .filter { availableLanguages?.contains(it.language) ?: false }
+
+                if (filteredList.isNotEmpty()) {
+                    questionList.add(filteredList[0])
+                }
+            }
+        }
+        return questionList
+    }
+
+    private fun didFoundAllQuestion(
+        questionList: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): Boolean {
+        var foundQuestion = listMap.isNotEmpty()
+
+        log("kokol foundQuestion: $foundQuestion")
+        listMap.forEach {
+
+            try {
+                if (questionList[it.key - 1].id == null) foundQuestion = false
+            } catch (e: Exception) {
+                log("kokol catch: $it")
+                foundQuestion = false
+            }
+
+            log("kokol foundQuestion: $foundQuestion, it: $it")
+        }
+
+        log("kokol foundQuestion: $foundQuestion")
+        return foundQuestion
+    }
+
+    private fun getListQuestionListByLocal(
+        listMap: MutableMap<Int, Boolean>,
+        questionThisListAll: List<QuestionEntity>
+    ): ArrayList<QuestionEntity> {
+        val userLocalization: String = getUserLocalization(requireContext())
+
+        val questionList = ArrayList<QuestionEntity>()
+        listMap.forEach { map ->
+            val filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
+
+            if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
+        }
+
+        return questionList
+    }
 
     private fun dialogNolics(
         id: Int,

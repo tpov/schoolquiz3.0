@@ -189,43 +189,45 @@ class RepositoryFBImpl @Inject constructor(
 
         val userTimeZone = TimeZone.getDefault()
 
-        chatValueEventListener = chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                log("getChatData snapshot: $snapshot")
-                GlobalScope.launch {
-                    // Получаем данные из snapshot и сохраняем их в локальную базу данных
-                    for (dateSnapshot in snapshot.children) {
-                        log("getChatData dateSnapshot: $dateSnapshot")
-                        for (data in dateSnapshot.children) {
-                            try {
-                                log("getChatData data: $data")
-                                val chat = data.getValue(Chat::class.java)
-                                val kievTime = chat?.time.toString()
-                                val date1 = dateFormatKiev.parse(kievTime)
+        chatValueEventListener =
+            chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    log("getChatData snapshot: $snapshot")
+                    GlobalScope.launch {
+                        // Получаем данные из snapshot и сохраняем их в локальную базу данных
+                        for (dateSnapshot in snapshot.children) {
+                            log("getChatData dateSnapshot: $dateSnapshot")
+                            for (data in dateSnapshot.children) {
+                                try {
+                                    log("getChatData data: $data")
+                                    val chat = data.getValue(Chat::class.java)
+                                    val kievTime = chat?.time.toString()
+                                    val date1 = dateFormatKiev.parse(kievTime)
 
-                                log("wededeefef chat: $chat")
-                                if (chat != null) {
-                                    val lastTime = SharedPreferencesManager.getTimeMassage()
-                                    val date2 = if (lastTime != null) Date(lastTime.toLong()) else null
-                                    log("wededeefef date2: $date2")
-                                    log("wededeefef date1: $date1")
-                                    if (date2 == null || date1.after(date2)) {
-                                        dao.insertChat(chat.toChatEntity())
-                                        SharedPreferencesManager.setTimeMassage(date1.time.toString())
+                                    log("wededeefef chat: $chat")
+                                    if (chat != null) {
+                                        val lastTime = SharedPreferencesManager.getTimeMassage()
+                                        val date2 =
+                                            if (lastTime != null) Date(lastTime.toLong()) else null
+                                        log("wededeefef date2: $date2")
+                                        log("wededeefef date1: $date1")
+                                        if (date2 != null && date1.after(date2)) {
+                                            dao.insertChat(chat.toChatEntity())
+                                            SharedPreferencesManager.setTimeMassage(date1.time.toString())
+                                        }
                                     }
+                                } catch (e: Exception) {
+                                    log("Error: ${e.message}")
                                 }
-                            } catch (e: Exception) {
-                                log("Error: ${e.message}")
                             }
                         }
                     }
                 }
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                // Обработка ошибок
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    // Обработка ошибок
+                }
+            })
         return dao.getChat()
     }
 
@@ -384,14 +386,29 @@ class RepositoryFBImpl @Inject constructor(
                                     1 -> FirebaseDatabase.getInstance()
                                         .getReference("question_detail1/${getTpovId()}")
 
-                                    2 -> FirebaseDatabase.getInstance().getReference("question_detail2")
-                                    3 -> FirebaseDatabase.getInstance().getReference("question_detail3")
-                                    4 -> FirebaseDatabase.getInstance().getReference("question_detail4")
-                                    5 -> FirebaseDatabase.getInstance().getReference("question_detail5")
-                                    6 -> FirebaseDatabase.getInstance().getReference("question_detail6")
-                                    7 -> FirebaseDatabase.getInstance().getReference("question_detail7")
-                                    8 -> FirebaseDatabase.getInstance().getReference("question_detail8")
-                                    else -> FirebaseDatabase.getInstance().getReference("question_detail8")
+                                    2 -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail2")
+
+                                    3 -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail3")
+
+                                    4 -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail4")
+
+                                    5 -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail5")
+
+                                    6 -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail6")
+
+                                    7 -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail7")
+
+                                    8 -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail8")
+
+                                    else -> FirebaseDatabase.getInstance()
+                                        .getReference("question_detail8")
                                 }
                                 CoroutineScope(Dispatchers.IO).launch {
                                     getQuestion(refQuestion, data.key!!)
@@ -1028,7 +1045,8 @@ class RepositoryFBImpl @Inject constructor(
                                                 quizRef5.child(quiz.id.toString()).setValue(
                                                     quiz.copy(
                                                         rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
+                                                            ?: 0
                                                     )
                                                 )
                                                     .addOnSuccessListener {
@@ -1081,7 +1099,8 @@ class RepositoryFBImpl @Inject constructor(
                                                 quizRef6.child(quiz.id.toString()).setValue(
                                                     quiz.copy(
                                                         rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
+                                                            ?: 0
                                                     )
                                                 )
 
@@ -1128,7 +1147,8 @@ class RepositoryFBImpl @Inject constructor(
                                                 quizRef7.child(quiz.id.toString()).setValue(
                                                     quiz.copy(
                                                         rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
+                                                            ?: 0
                                                     )
                                                 )
 
@@ -1175,7 +1195,8 @@ class RepositoryFBImpl @Inject constructor(
                                                 quizRef8.child(quiz.id.toString()).setValue(
                                                     quiz.copy(
                                                         rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer ?: 0
+                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
+                                                            ?: 0
                                                     )
                                                 )
 
