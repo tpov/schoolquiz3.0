@@ -542,7 +542,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 true
             }
 
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
             ratingBar.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     // Rating bar clicked, handle the event here
@@ -591,7 +591,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 true
             }
 
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
             ratingBar.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     // Rating bar clicked, handle the event here
@@ -640,7 +640,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 true
             }
 
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
             ratingBar.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     // Rating bar clicked, handle the event here
@@ -670,7 +670,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
             else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
             imvTranslate.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     // Rating bar clicked, handle the event here
@@ -707,7 +707,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
             else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
             imvTranslate.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     // Rating bar clicked, handle the event here
@@ -743,7 +743,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
             imvTranslate.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     showPopupInfo(

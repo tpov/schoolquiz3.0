@@ -89,7 +89,7 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             android:paddingTop="8dp"
-            android:text="Оцените игру" />
+            android:text="Оцените квест" />
 
         <RatingBar
             android:id="@+id/rb_evaluation"

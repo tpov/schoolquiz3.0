@@ -96,7 +96,7 @@ class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context,
 
                 rbEvaluation.setOnRatingBarChangeListener { ratingBar, rating, fromUser ->
                     bOk.visibility = VISIBLE
-                    bHelpTranslate.visibility = VISIBLE
+                    bHelpTranslate.visibility = GONE
                 }
                 // Анимация закончилась
                 progressBar.visibility = GONE

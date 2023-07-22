@@ -662,7 +662,6 @@ class MainActivity : AppCompatActivity() {
         )
         /////////////////////////////
 
-
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Новичек",

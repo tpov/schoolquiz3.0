@@ -231,8 +231,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 listMap
             )
 
-        log("kokol end 1 ${didFoundAllQuestion(questionByLocal, listMap)}")
-        log("kokol end 2 ${didFoundAllQuestion(questionListThis, listMap)}")
         return didFoundAllQuestion(questionListThis, listMap)
 
     }

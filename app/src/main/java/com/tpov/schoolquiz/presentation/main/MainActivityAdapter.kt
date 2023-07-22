@@ -232,7 +232,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             chbTypeQuiz.visibility = View.VISIBLE
             chbTypeQuiz.isChecked = quizEntity.stars >= MAX_PERCENT
 
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
 
             ratingBar.rating = (quizEntity.ratingPlayer.toFloat() / 33.3333F)
             ratingBar.stepSize = 100F
@@ -325,7 +325,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 }
             }
 
-            imvTranslate.imageAlpha = 128
+            imvTranslate.imageAlpha = 85
 
             val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
@@ -632,7 +632,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 log("festgfsdrgdrto,  $tvPopup1")
                 try {
-                    tvPopup1.text = "lvl: ${languageMap.values.toList()[0]}"
+                    tvPopup1.text = "lvl translate:: ${languageMap.values.toList()[0]}"
                     binding.mainTitleButton.isClickable = true
                     binding.mainTitleButton.isEnabled = true
                 } catch (e: Exception) {
@@ -652,7 +652,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                             spListPopup1.selectedItem.toString().lowercase(Locale.ROOT)
                         val selectedValue = languageMap[selectedLanguage]
                         if (selectedValue != null) {
-                            tvPopup1.text = selectedValue.toString()
+                            tvPopup1.text = "lvl translate: ${selectedValue.toString()}"
                         }
                     }
 
