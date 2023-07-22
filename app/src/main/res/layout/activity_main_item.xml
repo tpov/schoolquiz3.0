@@ -212,6 +212,7 @@
                     android:layout_gravity="center|center_vertical"
                     android:background="#003A3A3A"
                     android:numStars="3"
+                    android:layout_marginRight="8dp"
                     android:progressBackgroundTint="#AAAAAA"
                     android:progressBackgroundTintMode="multiply"
                     android:stepSize="0.01"

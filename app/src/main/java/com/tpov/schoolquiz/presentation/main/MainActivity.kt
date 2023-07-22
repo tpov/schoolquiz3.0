@@ -663,7 +663,6 @@ class MainActivity : AppCompatActivity() {
         /////////////////////////////
 
 
-
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Новичек",
@@ -829,127 +828,128 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun updateProfileCount(period: Long) {
         try {
-        val mainHandler = Handler(Looper.getMainLooper())
-        mainHandler.post {
-            val profile = viewModel.getProfile()
-            val userguide = UserGuide(this)
+            val mainHandler = Handler(Looper.getMainLooper())
+            mainHandler.post {
+                val profile = viewModel.getProfile()
+                val userguide = UserGuide(this)
 
-            if ((profile.translater ?: 0) >= 100) userguide.addNotification(
-                -1,
-                text = "Translater 1 lvl: ${profile.translater} points",
-                titleText = "New qualification",
-                icon = resources.getDrawable(R.drawable.star_full)
-            )
-            if ((profile.translater ?: 0) >= 200) userguide.addNotification(
-                -2,
-                titleText = "New qualification",
-                text = "Translater 2 lvl: ${profile.translater} points",
-                icon = resources.getDrawable(R.drawable.star_full)
-            )
-            if ((profile.translater ?: 0) >= 300) userguide.addNotification(
-                -3,
-                titleText = "New qualification",
-                text = "Translater 3 lvl: ${profile.translater} points",
-                icon = resources.getDrawable(R.drawable.star_full)
-            )
-            if ((profile.tester ?: 0) >= 100) userguide.addNotification(
-                -4,
-                text = "Tester: ${profile.tester} points",
-                titleText = "New qualification",
-                icon = resources.getDrawable(R.drawable.star_full)
-            )
-            if ((profile.moderator ?: 0) >= 100) userguide.addNotification(
-                -5,
-                text = "Moderator: ${profile.moderator} points",
-                titleText = "New qualification",
-                icon = resources.getDrawable(R.drawable.star_full)
-            )
-            if ((profile.admin ?: 0) >= 100) userguide.addNotification(
-                -6,
-                text = "Admin: ${profile.admin} points",
-                titleText = "New qualification",
-                icon = resources.getDrawable(R.drawable.star_full)
-            )
-            if ((profile.developer ?: 0) >= 100) userguide.addNotification(
-                -7,
-                text = "Developer: ${profile.developer} points",
-                titleText = "New qualification",
-                icon = resources.getDrawable(R.drawable.star_full)
-            )
-
-            if ((profile.addPointsGold ?: 0) != 0) userguide.addNotification(
-                0,
-                text = "Золото: ${profile.addPointsGold} points",
-                titleText = "Награда от разработчиков",
-                icon = resources.getDrawable(R.drawable.ic_gold)
-            )
-
-            if ((profile.addPointsNolics ?: 0) != 0) userguide.addNotification(
-                0,
-                text = "Нолики: ${profile.addPointsNolics} points",
-                titleText = "Награда от разработчиков",
-                icon = resources.getDrawable(R.drawable.ic_gold)
-            )
-
-            if ((profile.addPointsSkill ?: 0) != 0) userguide.addNotification(
-                0,
-                text = "Опыт: ${profile.addPointsSkill} points",
-                titleText = "Награда от разработчиков",
-                icon = resources.getDrawable(R.drawable.ic_gold)
-            )
-
-            if (profile.addTrophy != "") userguide.addNotification(
-                0,
-                text = "Трофеи: ${profile.addTrophy} points",
-                titleText = "Награда от разработчиков",
-                icon = resources.getDrawable(R.drawable.baseline_favorite_24)
-            )
-
-            viewModel.updateProfileUseCase(
-                profile.copy(
-                    count = calcCount(
-                        profile.count,
-                        profile.countLife,
-                        profile.dateCloseApp
-                    ),
-                    dateCloseApp = TimeManager.getCurrentTime(),
-                    pointsSkill = (profile.pointsSkill!!.plus(
-                        if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                            getSkillByTimeInChat(period.toInt())
-                        } else {
-                            getSkillByTimeInGame(period.toInt())
-                        }
-                    ).plus(profile.addPointsNolics ?: 0)),
-                    pointsGold = profile.pointsGold?.plus(profile.addPointsGold ?: 0),
-                    pointsNolics = profile.pointsNolics?.plus(profile.addPointsNolics ?: 0),
-                    trophy = profile.trophy + profile.addTrophy,
-                    timeInGamesInQuiz = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                        profile.timeInGamesInQuiz
-                    } else {
-                        profile.timeInGamesInQuiz
-                            ?.plus(1)
-                    },
-
-                    timeInGamesInChat = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                        profile.timeInGamesInChat
-                            ?.plus(1)
-                    } else {
-                        profile.timeInGamesInChat
-                    },
-
-                    timeInGamesSmsPoints = profile.timeInGamesSmsPoints?.plus(
-                        getCountMassageIdAndReset()
-                    ),
-
-                    addPointsGold = 0,
-                    addPointsNolics = 0,
-                    addPointsSkill = 0,
-                    addTrophy = ""
+                if ((profile.translater ?: 0) >= 100) userguide.addNotification(
+                    -1,
+                    text = "Translater 1 lvl: ${profile.translater} points",
+                    titleText = "New qualification",
+                    icon = resources.getDrawable(R.drawable.star_full)
                 )
-            )
+                if ((profile.translater ?: 0) >= 200) userguide.addNotification(
+                    -2,
+                    titleText = "New qualification",
+                    text = "Translater 2 lvl: ${profile.translater} points",
+                    icon = resources.getDrawable(R.drawable.star_full)
+                )
+                if ((profile.translater ?: 0) >= 300) userguide.addNotification(
+                    -3,
+                    titleText = "New qualification",
+                    text = "Translater 3 lvl: ${profile.translater} points",
+                    icon = resources.getDrawable(R.drawable.star_full)
+                )
+                if ((profile.tester ?: 0) >= 100) userguide.addNotification(
+                    -4,
+                    text = "Tester: ${profile.tester} points",
+                    titleText = "New qualification",
+                    icon = resources.getDrawable(R.drawable.star_full)
+                )
+                if ((profile.moderator ?: 0) >= 100) userguide.addNotification(
+                    -5,
+                    text = "Moderator: ${profile.moderator} points",
+                    titleText = "New qualification",
+                    icon = resources.getDrawable(R.drawable.star_full)
+                )
+                if ((profile.admin ?: 0) >= 100) userguide.addNotification(
+                    -6,
+                    text = "Admin: ${profile.admin} points",
+                    titleText = "New qualification",
+                    icon = resources.getDrawable(R.drawable.star_full)
+                )
+                if ((profile.developer ?: 0) >= 100) userguide.addNotification(
+                    -7,
+                    text = "Developer: ${profile.developer} points",
+                    titleText = "New qualification",
+                    icon = resources.getDrawable(R.drawable.star_full)
+                )
+
+                if ((profile.addPointsGold ?: 0) != 0) userguide.addNotification(
+                    0,
+                    text = "Золото: ${profile.addPointsGold} points",
+                    titleText = "Награда от разработчиков",
+                    icon = resources.getDrawable(R.drawable.ic_gold)
+                )
+
+                if ((profile.addPointsNolics ?: 0) != 0) userguide.addNotification(
+                    0,
+                    text = "Нолики: ${profile.addPointsNolics} points",
+                    titleText = "Награда от разработчиков",
+                    icon = resources.getDrawable(R.drawable.ic_gold)
+                )
+
+                if ((profile.addPointsSkill ?: 0) != 0) userguide.addNotification(
+                    0,
+                    text = "Опыт: ${profile.addPointsSkill} points",
+                    titleText = "Награда от разработчиков",
+                    icon = resources.getDrawable(R.drawable.ic_gold)
+                )
+
+                if (profile.addTrophy != "") userguide.addNotification(
+                    0,
+                    text = "Трофеи: ${profile.addTrophy} points",
+                    titleText = "Награда от разработчиков",
+                    icon = resources.getDrawable(R.drawable.baseline_favorite_24)
+                )
+
+                viewModel.updateProfileUseCase(
+                    profile.copy(
+                        count = calcCount(
+                            profile.count,
+                            profile.countLife,
+                            profile.dateCloseApp
+                        ),
+                        dateCloseApp = TimeManager.getCurrentTime(),
+                        pointsSkill = (profile.pointsSkill!!.plus(
+                            if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
+                                getSkillByTimeInChat(period.toInt())
+                            } else {
+                                getSkillByTimeInGame(period.toInt())
+                            }
+                        ).plus(profile.addPointsNolics ?: 0)),
+                        pointsGold = profile.pointsGold?.plus(profile.addPointsGold ?: 0),
+                        pointsNolics = profile.pointsNolics?.plus(profile.addPointsNolics ?: 0),
+                        trophy = profile.trophy + profile.addTrophy,
+                        timeInGamesInQuiz = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
+                            profile.timeInGamesInQuiz
+                        } else {
+                            profile.timeInGamesInQuiz
+                                ?.plus(1)
+                        },
+
+                        timeInGamesInChat = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
+                            profile.timeInGamesInChat
+                                ?.plus(1)
+                        } else {
+                            profile.timeInGamesInChat
+                        },
+
+                        timeInGamesSmsPoints = profile.timeInGamesSmsPoints?.plus(
+                            getCountMassageIdAndReset()
+                        ),
+
+                        addPointsGold = 0,
+                        addPointsNolics = 0,
+                        addPointsSkill = 0,
+                        addTrophy = ""
+                    )
+                )
+            }
+        } catch (e: Exception) {
+
         }
-    } catch (e: Exception) {
-    }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

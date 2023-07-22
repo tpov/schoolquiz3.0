@@ -217,22 +217,24 @@ class RepositoryFBImpl @Inject constructor(
                                         val date2 = Date(lastTime.toLong())
                                         log("wededeefef date2: $date2")
                                         log("wededeefef date1: $date1")
-                                        if (date1.after(date2)) {
-                                            val kievTimeZone = TimeZone.getTimeZone("Europe/Kiev")
-                                            val localTimeZone = TimeZone.getDefault()
+                                        if (chat != null) {
+                                            var lastTime = SharedPreferencesManager.getTimeMassage()
+                                            log("wededeefef lastTime: $lastTime")
 
-                                            val format = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
-                                            format.timeZone = kievTimeZone
+                                            if (lastTime == "0") {
+                                                lastTime = System.currentTimeMillis().toString()
+                                            }
 
-                                            val localFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
-                                            localFormat.timeZone = localTimeZone
+                                            val date2 = if (lastTime != null) Date(lastTime.toLong()) else null
+                                            log("wededeefef date2: $date2")
+                                            log("wededeefef date1: $date1")
 
-                                            val localDateStr = localFormat.format(format.parse(format.format(date1)))
-                                            val localDate = localFormat.parse(localDateStr)
-
-                                            dao.insertChat(chat.copy(time = localDate.time.toString()).toChatEntity())
-                                            SharedPreferencesManager.setTimeMassage(date1.time.toString())
+                                            if (date2 != null && date1.after(date2)) {
+                                                dao.insertChat(chat.toChatEntity())
+                                                SharedPreferencesManager.setTimeMassage(date1.time.toString())
+                                            }
                                         }
+
 
                                     }
 

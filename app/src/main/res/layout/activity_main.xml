@@ -329,6 +329,7 @@
                             android:gravity="center_vertical"
                             android:singleLine="true"
                             android:text="Name"
+                            android:textColor="@color/default_nick_color1"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
