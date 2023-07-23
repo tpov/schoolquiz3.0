@@ -5,7 +5,6 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.text.Spannable
@@ -86,7 +85,12 @@ class QuestionActivity : AppCompatActivity() {
         insertQuestionsNewEvent()
         binding.apply {
             if (viewModel.hardQuestion) {
-                cheatButton.visibility = View.GONE
+                imvListQuestion.isClickable = false
+                imvListQuestion.isEnabled = false
+                imvLife.visibility = View.GONE
+                imvLifeGold.visibility = View.VISIBLE
+            } else {
+
             }
 
             trueButton.setOnClickListener {
@@ -105,18 +109,21 @@ class QuestionActivity : AppCompatActivity() {
             }
 
             cheatButton.setOnClickListener { view ->
-                val answerIsTrue = viewModel.questionListThis[viewModel.currentIndex].answerQuestion
-                val intent = CheatActivity.newIntent(this@QuestionActivity, answerIsTrue)
+                log("okokowkdowd 1")
+                if (viewModel.getProfile().countLife!! > 0 && !viewModel.hardQuestion
+                    || viewModel.getProfile().countGoldLife!! > 0 && viewModel.hardQuestion) {
+                    val answerIsTrue =
+                        viewModel.questionListThis[viewModel.currentIndex].answerQuestion
+                    val intent = CheatActivity.newIntent(this@QuestionActivity, answerIsTrue)
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    log("okokowkdowd 2")
                     val options =
                         ActivityOptions.makeClipRevealAnimation(view, 0, 0, view.width, view.height)
                     startActivityForResult(intent, REQUEST_CODE_CHEAT, options.toBundle())
                 } else {
-                    startActivityForResult(intent, REQUEST_CODE_CHEAT)
+                    Toast.makeText(this@QuestionActivity, "Недостаточно жизней", Toast.LENGTH_LONG).show()
                 }
             }
-
 
             tv_pref.setOnClickListener {
                 setVisibleButtonsPref()
@@ -127,14 +134,23 @@ class QuestionActivity : AppCompatActivity() {
                 nextButton()
             }
 
-            log("DSEFSE, currentIndex: ${viewModel.currentIndex}")
-            log("DSEFSE, nameQuestion: ${viewModel.questionListThis}")
-
             try {
-                showTextWithDelay( binding.questionTextView, viewModel.questionListThis[viewModel.currentIndex].nameQuestion, DELAY_SHOW_TEXT)
+                showTextWithDelay(
+                    binding.questionTextView,
+                    viewModel.questionListThis[viewModel.currentIndex].nameQuestion,
+                    DELAY_SHOW_TEXT
+                )
             } catch (e: Exception) {
-                Toast.makeText(this@QuestionActivity, "Вопросы не были загружены, попробуйте их перевести", Toast.LENGTH_LONG).show()
-                Toast.makeText(this@QuestionActivity, "Вам начислена компенсация 33% жизней", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this@QuestionActivity,
+                    "Вопросы не были загружены, попробуйте их перевести",
+                    Toast.LENGTH_LONG
+                ).show()
+                Toast.makeText(
+                    this@QuestionActivity,
+                    "Вам начислена компенсация 33% жизней",
+                    Toast.LENGTH_LONG
+                ).show()
                 viewModel.updateProfileUseCase(
                     viewModel.getProfile()
                         .copy(count = viewModel.getProfile().count?.plus(33))
@@ -142,11 +158,51 @@ class QuestionActivity : AppCompatActivity() {
                 viewModel.timer?.cancel()
                 finish()
             }
+
+            viewModel.setPetcentPBLiveData.observe(this@QuestionActivity) {
+                pbAnswer.progress = it
+            }
+
+            viewModel.setPercentiveData.observe(this@QuestionActivity) {
+                tvPercent.text = it.toString()
+            }
+
+            viewModel.setLeftAnswerLiveData.observe(this@QuestionActivity) {
+                tvLoad.text = it.toString()
+            }
+
+            tvLoad.text = viewModel.leftAnswer.toString()
+            tvNumQuestion.text = viewModel.numQuestion.toString()
+
+            imvListQuestion.setOnClickListener {
+                if (!viewModel.hardQuestion) {
+                    val questionActivityIntent =
+                        Intent(this@QuestionActivity, QuestionListActivity::class.java)
+
+                    ActivityOptions.makeClipRevealAnimation(
+                        View(this@QuestionActivity),
+                        0,
+                        0,
+                        View(this@QuestionActivity).width,
+                        View(this@QuestionActivity).height
+                    )
+
+                    questionActivityIntent.putExtra(
+                        EXTRA_CURRENT_INDEX,
+                        viewModel.currentIndex
+                    )   //Output
+                    questionActivityIntent.putExtra(EXTRA_CODE_ANSWER, viewModel.codeAnswer)
+                    questionActivityIntent.putExtra(EXTRA_CODE_ID_USER, viewModel.idQuiz)
+                    startActivityForResult(questionActivityIntent, UPDATE_CURRENT_INDEX)
+                }
+            }
         }
+
+        updateDataView()
         actionBarSettings()
         startService(Intent(this, MusicService::class.java))
         startTimer()
-        visibleCheatButton(viewModel.hardQuestion)
+        visibleCheatButton(true)
     }
 
     private fun showTextWithDelay(textView: TextView, text: String, delayInMillis: Long) {
@@ -184,7 +240,8 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
 
-        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event >= 5) binding.viewBackground.background = getDrawable(R.mipmap.back_question_event5)
+        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event >= 5) binding.viewBackground.background =
+            getDrawable(R.mipmap.back_question_event5)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =
                 getDrawable(R.mipmap.back_question_light)
@@ -204,6 +261,9 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun setStateTimer(nextQuestion: Boolean) {
 
+        log("setStateTimer currentIndex: ${viewModel.codeAnswer}")
+        log("setStateTimer currentIndex: ${viewModel.currentIndex}")
+
         try {
             if (nextQuestion) {
                 log("setStateTimer currentIndex + 1: ${viewModel.codeAnswer[viewModel.currentIndex + 1]}")
@@ -213,9 +273,10 @@ class QuestionActivity : AppCompatActivity() {
                 } else viewModel.timer?.cancel()
 
             } else {
+                log("setStateTimer currentIndex - 1: ${viewModel.codeAnswer[viewModel.currentIndex - 1]}")
+
                 if (viewModel.codeAnswer[viewModel.currentIndex - 1] == '0') {
 
-                    log("setStateTimer currentIndex - 1: ${viewModel.codeAnswer[viewModel.currentIndex - 1]}")
                     startTimer()
                 } else viewModel.timer?.cancel()
             }
@@ -247,14 +308,16 @@ class QuestionActivity : AppCompatActivity() {
             }
 
             override fun onFinish() {
-                if ((Math.random() * 2).toInt() > 1) {
+                if ((Math.random() * 2) > 1.0) {
+                    nextButton()
+                    viewModel.trueButton()
                     setStateTimer(true)
                     setVisibleButtonsNext()
-                    viewModel.trueButton()
                 } else {
-                    setStateTimer(false)
-                    setVisibleButtonsNext()
+                    nextButton()
                     viewModel.falseButton()
+                    setStateTimer(true)
+                    setVisibleButtonsNext()
                 }
             }
         }
@@ -267,7 +330,7 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun setVisibleButtonsPref() {
-        setBlockButton(viewModel.codeAnswer[viewModel.currentIndex - 1] == '0')
+
     }
 
     private fun visibleCheatButton(it: Boolean) {
@@ -283,35 +346,6 @@ class QuestionActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main_activity, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            android.R.id.home -> finish()
-
-            R.id.item_list_answer -> {
-                if (!viewModel.hardQuestion) {
-                    val questionActivityIntent = Intent(this, QuestionListActivity::class.java)
-
-                    ActivityOptions.makeClipRevealAnimation(
-                        View(this),
-                        0,
-                        0,
-                        View(this).width,
-                        View(this).height
-                    )
-
-                    questionActivityIntent.putExtra(
-                        EXTRA_CURRENT_INDEX,
-                        viewModel.currentIndex
-                    )   //Output
-                    questionActivityIntent.putExtra(EXTRA_CODE_ANSWER, viewModel.codeAnswer)
-                    questionActivityIntent.putExtra(EXTRA_CODE_ID_USER, viewModel.idQuiz)
-                    startActivityForResult(questionActivityIntent, UPDATE_CURRENT_INDEX)
-                }
-            }
-        }
         return true
     }
 
@@ -332,7 +366,7 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun springAnim(next: Boolean) = with(binding) {
-        val START_VELOCITY = if (next) - 5000f
+        val START_VELOCITY = if (next) -5000f
         else 5000f
 
         var springAnimation = SpringAnimation(questionTextView, DynamicAnimation.X)
@@ -379,17 +413,17 @@ class QuestionActivity : AppCompatActivity() {
         }
         if (requestCode == REQUEST_CODE_CHEAT) {
 
-                    if (data.getBooleanExtra(
-                            EXTRA_ANSWER_SHOW,
-                            false
-                        )
-                    ) viewModel.updateProfileUseCase(
-                        viewModel.getProfileUseCase(getTpovId()).copy(
-                            countLife = viewModel.getProfileUseCase(
-                                getTpovId()
-                            ).countLife
-                        )
-                    )
+            if (data.getBooleanExtra(
+                    EXTRA_ANSWER_SHOW,
+                    false
+                )
+            ) viewModel.updateProfileUseCase(
+                viewModel.getProfileUseCase(getTpovId()).copy(
+                    countLife = viewModel.getProfileUseCase(
+                        getTpovId()
+                    ).countLife
+                )
+            )
         } else if (requestCode == UPDATE_CURRENT_INDEX) {
             viewModel.currentIndex = data.getIntExtra(EXTRA_UPDATE_CURRENT_INDEX, 0)
 
@@ -420,7 +454,11 @@ class QuestionActivity : AppCompatActivity() {
     fun updateTextQuestion() {
         updateDataView()
 
-        showTextWithDelay(binding.questionTextView, viewModel.questionListThis[viewModel.currentIndex].nameQuestion, DELAY_SHOW_TEXT)
+        showTextWithDelay(
+            binding.questionTextView,
+            viewModel.questionListThis[viewModel.currentIndex].nameQuestion,
+            DELAY_SHOW_TEXT
+        )
 
     }
 

@@ -286,6 +286,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     ): Boolean {
         var foundQuestion = listMap.isNotEmpty()
 
+        questionList.forEach {
+
+            log("kokol question: ${it.numQuestion}. ${it.nameQuestion}")
+        }
+
         log("kokol foundQuestion: $foundQuestion")
         listMap.forEach {
 

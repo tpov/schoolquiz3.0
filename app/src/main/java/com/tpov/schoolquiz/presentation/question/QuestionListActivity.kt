@@ -48,7 +48,8 @@ class QuestionListActivity : AppCompatActivity(), QuestionListRecyclerAdapter.Up
         val codeAnswerArray = codeAnswer.toMutableList()
         Log.d("QuestionListActivity", "map1 = ${questionBankAdapter.map { (it.textResId) }}")
 
-        val questionThis = questionViewModel.questionListThis
+        val questionThis = Questionlist.questionListThis
+        Log.d("QuestionListActivity", "questionThis = ${questionThis }}")
         questionBankAdapter.addAll(questionThis.filterNot { it.hardQuestion }.map { Quiz(it.nameQuestion, it.answerQuestion) })
 
         recyclerView.adapter = QuestionListRecyclerAdapter(

@@ -133,7 +133,7 @@ class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context,
     ) {
         rbEvaluation.visibility = GONE
         bOk.visibility = VISIBLE
-        bHelpTranslate.visibility = VISIBLE
+        bHelpTranslate.visibility = GONE
         tvEvaluation.visibility = GONE
     }
 }
