@@ -417,7 +417,7 @@ class QuestionViewModel @Inject constructor(
             if (it == '2') i++
         }
         numTrueQuestion = i
-        getQuestionsList()
+
         i = 0
         var j = 0
         var iThis = 0

@@ -409,28 +409,28 @@ class RepositoryFBImpl @Inject constructor(
                                         .getReference("question_detail1/${getTpovId()}")
 
                                     2 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail2")
+                                        .getReference("question_detail2/${getTpovId()}")
 
                                     3 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail3")
+                                        .getReference("question_detail3/${getTpovId()}")
 
                                     4 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail4")
+                                        .getReference("question_detail4/${getTpovId()}")
 
                                     5 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail5")
+                                        .getReference("question_detail5/${getTpovId()}")
 
                                     6 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail6")
+                                        .getReference("question_detail6/${getTpovId()}")
 
                                     7 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail7")
+                                        .getReference("question_detail7/${getTpovId()}")
 
                                     8 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail8")
+                                        .getReference("question_detail8/${getTpovId()}")
 
                                     else -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail8")
+                                        .getReference("question_detail8/${getTpovId()}")
                                 }
                                 CoroutineScope(Dispatchers.IO).launch {
                                     getQuestion(refQuestion, data.key!!)
@@ -1417,13 +1417,13 @@ class RepositoryFBImpl @Inject constructor(
 
         val questionDetailRefs = arrayOf(
             database.getReference("question_detail1/${tpovId}"),
-            database.getReference("question_detail2"),
-            database.getReference("question_detail3"),
-            database.getReference("question_detail4"),
-            database.getReference("question_detail5"),
-            database.getReference("question_detail6"),
-            database.getReference("question_detail7"),
-            database.getReference("question_detail8")
+            database.getReference("question_detail2/${tpovId}"),
+            database.getReference("question_detail3/${tpovId}"),
+            database.getReference("question_detail4/${tpovId}"),
+            database.getReference("question_detail5/${tpovId}"),
+            database.getReference("question_detail6/${tpovId}"),
+            database.getReference("question_detail7/${tpovId}"),
+            database.getReference("question_detail8/${tpovId}")
         )
 
         questionDetail.forEach {

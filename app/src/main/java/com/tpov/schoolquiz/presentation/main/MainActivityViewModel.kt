@@ -377,7 +377,7 @@ class MainActivityViewModel @Inject constructor(
             var persentAll: Int
             var maxPersent = 0
 
-            log("getQuizEventUseCase")
+            log("sdsdsds ${quiz.nameQuiz}")
             getQuestionDetailListUseCase().forEach {
                 if (it.idQuiz == quiz.id) {
                     log("getQuestionDetailListUseCase")
@@ -413,7 +413,7 @@ class MainActivityViewModel @Inject constructor(
                     }
                     persentAll = i / perc.size
 
-                    com.tpov.schoolquiz.presentation.question.log("saveResult $maxPersent")
+                    com.tpov.schoolquiz.presentation.question.log("saveResult ${quiz.nameQuiz}. $maxPersent")
 
                     when (quiz.event) {
                         1, 5, 6, 7, 8 -> updateQuizUseCase(
