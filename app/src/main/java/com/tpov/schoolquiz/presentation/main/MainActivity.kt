@@ -606,49 +606,49 @@ class MainActivity : AppCompatActivity() {
             id++,
             text = "Привет мой друг, ты прошел не легкий путь от Новичка до Легенды через всю дорогу препятствий и трудностей, я желаю что-бы тебе был безвозместный успех в жизни так же, как и в этой игре. \n  Признаюсь, мы так же шли по не легкой дороге, что-бы сделать все условия, что-бы наши замечатильные игроки, дошли до этой черты. Я этот текст пишу на этапе альфа версии квеста, но надеюсь, мы дойдем до момента когда наши игроки возьмут Легенду. Благодарим тебя за большой вклад в наше сообщество, каждый из вас действительно важен. Могу предложить податься к нам в работу, возможно именно у нас ты так же сможешь показать весь потенциал. Удачи! ",
             titleText = "Поздравление от разработчика игры.",
-            options = Options(countKey = 100_0000),
+            options = Options(countKey = 1000_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Легенда",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 100_0000),
+            options = Options(countKey = 1000_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Єксперт",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 50_0000),
+            options = Options(countKey = 500_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Гроссместер",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 25_0000),
+            options = Options(countKey = 250_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Ветеран",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 13_0000),
+            options = Options(countKey = 130_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы можете просматривать профили других игроков по другим различным фильтрам",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 6_0000),
+            options = Options(countKey = 60_0000),
             icon = resources.getDrawable(R.drawable.nav_user)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Любитель",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 6_0000),
+            options = Options(countKey = 60_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
@@ -909,6 +909,9 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 val countSmsPoints = getCountMassageIdAndReset()
+
+                log("lklklkl 1 $countSmsPoints")
+                log("lklklkl 2 ${getSkillByCountInChat(countSmsPoints)}")
                 viewModel.updateProfileUseCase(
                     profile.copy(
                         count = calcCount(
