@@ -201,17 +201,22 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         questionList: List<QuestionEntity>,
         listMap: MutableMap<Int, Boolean>
     ): Boolean {
-        var fountQuestion = listMap.isNotEmpty()
+        var foundQuestion = listMap.isNotEmpty()
 
+        questionList.forEach {
+
+            log("kokol question: ${it.numQuestion}. ${it.nameQuestion}")
+        }
+
+        log("kokol foundQuestion: $foundQuestion")
         listMap.forEach {
-            log("kokol: ${it.key}. ${it.value}: ${questionList[it.key - 1].id}")
             try {
-                if (questionList[it.key - 1].id == null) fountQuestion = false
+                if (questionList[it.key - 1].id == null) foundQuestion = false
             } catch (e: Exception) {
-                fountQuestion = false
+                foundQuestion = false
             }
         }
-        return fountQuestion
+        return foundQuestion
     }
 
     private fun getListQuestionListByLocal(

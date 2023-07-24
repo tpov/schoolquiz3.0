@@ -239,7 +239,7 @@ class QuestionViewModel @Inject constructor(
             } else {
                 filteredList = questionThisListAll
                     .filter { it.numQuestion == map.key }
-                    .filter { availableLanguages?.contains(it.language) ?: false}
+                    .filter { availableLanguages?.contains(it.language) ?: false }
 
                 if (filteredList.isNotEmpty()) {
                     questionList.add(filteredList[0])
@@ -366,7 +366,8 @@ class QuestionViewModel @Inject constructor(
             )
         )
         setPercentResult()
-        _setPetcentPBLiveData.value = (((numQuestion - leftAnswer).toDouble() / numQuestion) * 100).toInt()
+        _setPetcentPBLiveData.value =
+            (((numQuestion - leftAnswer).toDouble() / numQuestion) * 100).toInt()
         _setPercentiveData.value = persent
         _setLeftAnswerLiveData.value = leftAnswer
         if (leftAnswer == 0) result()
@@ -450,7 +451,11 @@ class QuestionViewModel @Inject constructor(
             i += it
         }
 
-        persentAll = i / perc.size
+        persentAll = try {
+            i / perc.size
+        } catch (e: Exception) {
+            0
+        }
 
         j = 0
         i = 0
@@ -485,7 +490,7 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun saveResult(rating: Int, result: Int) {
-             updateProfileUseCase(
+        updateProfileUseCase(
             getProfileUseCase(getTpovId()).copy(
                 timeInGamesCountQuestions = getProfileUseCase(getTpovId()).timeInGamesCountQuestions?.plus(
                     numQuestion
