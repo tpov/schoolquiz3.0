@@ -38,6 +38,7 @@ import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.contact.Contacts
+import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByCountInChat
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.custom.Logcat
@@ -903,6 +904,7 @@ class MainActivity : AppCompatActivity() {
                     icon = resources.getDrawable(R.drawable.baseline_favorite_24)
                 )
 
+                val countSmsPoints = getCountMassageIdAndReset()
                 viewModel.updateProfileUseCase(
                     profile.copy(
                         count = calcCount(
@@ -917,7 +919,8 @@ class MainActivity : AppCompatActivity() {
                             } else {
                                 getSkillByTimeInGame(period.toInt())
                             }
-                        ).plus(profile.addPointsNolics ?: 0)),
+                        ).plus(profile.addPointsNolics ?: 0)
+                            .plus(getSkillByCountInChat(countSmsPoints))),
                         pointsGold = profile.pointsGold?.plus(profile.addPointsGold ?: 0),
                         pointsNolics = profile.pointsNolics?.plus(profile.addPointsNolics ?: 0),
                         trophy = profile.trophy + profile.addTrophy,
@@ -936,7 +939,7 @@ class MainActivity : AppCompatActivity() {
                         },
 
                         timeInGamesSmsPoints = profile.timeInGamesSmsPoints?.plus(
-                            getCountMassageIdAndReset()
+                            countSmsPoints
                         ),
 
                         addPointsGold = 0,
