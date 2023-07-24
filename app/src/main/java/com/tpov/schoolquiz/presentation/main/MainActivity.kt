@@ -139,10 +139,14 @@ class MainActivity : AppCompatActivity() {
         val swipeRefreshLayout = binding.swipeRefreshLayout
 
         swipeRefreshLayout.setOnRefreshListener {
-            log("wdwdwdfweadaw")
-            calculateQuizzResult()
+            if (supportFragmentManager.findFragmentById(R.id.title_fragment) is FragmentMain) {
+                log("wdwdwdfweadaw")
+                calculateQuizzResult()
+            }
+
             swipeRefreshLayout.isRefreshing = false
         }
+
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
         val versionCode: Int = pInfo.versionCode
