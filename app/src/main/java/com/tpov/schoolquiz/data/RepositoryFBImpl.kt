@@ -190,10 +190,11 @@ class RepositoryFBImpl @Inject constructor(
         val userTimeZone = TimeZone.getDefault()
 
         chatValueEventListener =
-            chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
+            chatRef.limitToLast(20).addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     log("getChatData snapshot: $snapshot")
-                    GlobalScope.launch {
+
+                        var lastTime = SharedPreferencesManager.getTimeMassage()
                         // Получаем данные из snapshot и сохраняем их в локальную базу данных
                         for (dateSnapshot in snapshot.children) {
                             log("getChatData dateSnapshot: $dateSnapshot")
@@ -201,13 +202,13 @@ class RepositoryFBImpl @Inject constructor(
                                 try {
                                     log("getChatData data: $data")
                                     val chat = data.getValue(Chat::class.java)
-                                    val kievTime = chat?.time.toString()
-                                    val date1 = dateFormatKiev.parse(kievTime)
+                                    val date1 = dateFormatKiev.parse(chat?.time.toString())
 
-                                    log("wededeefef chat: $chat")
+                                    log("wededeefef chat: ${chat?.msg}")
                                     if (chat != null) {
-                                        var lastTime = SharedPreferencesManager.getTimeMassage()
-                                        log("wededeefef lastTime: $lastTime")
+                                        log("lastTime lastTimeукукук:-")
+                                        log("lastTime lastTimeукукук: $lastTime")
+                                        log("wededeefef lastTime: $lastTime ${chat.msg}")
 
                                         if (lastTime == "0") {
                                             lastTime = System.currentTimeMillis().toString()
@@ -215,23 +216,23 @@ class RepositoryFBImpl @Inject constructor(
                                         }
 
                                         val date2 = Date(lastTime.toLong())
-                                        log("wededeefef date2: $date2")
-                                        log("wededeefef date1: $date1")
+                                        log("wededeefef date2: $date2 ${chat.msg}")
+                                        log("wededeefef date1: $date1 ${chat.msg}")
                                         if (chat != null) {
-                                            var lastTime = SharedPreferencesManager.getTimeMassage()
-                                            log("wededeefef lastTime: $lastTime")
+                                            log("wededeefef lastTime: $lastTime ${chat.msg}")
 
                                             if (lastTime == "0") {
                                                 lastTime = System.currentTimeMillis().toString()
                                             }
 
                                             val date2 = if (lastTime != null) Date(lastTime.toLong()) else null
-                                            log("wededeefef date2: $date2")
-                                            log("wededeefef date1: $date1")
+                                            log("wededeefef date2: $date2.${chat.time} - ${chat.msg}")
+                                            log("wededeefef date1: $date1 ${chat.msg}")
 
                                             if (date2 != null && date1.after(date2)) {
-                                                dao.insertChat(chat.toChatEntity())
                                                 SharedPreferencesManager.setTimeMassage(date1.time.toString())
+                                                log("wededeefef insert ${chat.msg}")
+                                                dao.insertChat(chat.toChatEntity())
                                             }
                                         }
 
@@ -243,13 +244,13 @@ class RepositoryFBImpl @Inject constructor(
                                 }
                             }
                         }
-                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
                     // Обработка ошибок
                 }
             })
+
         return dao.getChat()
     }
 

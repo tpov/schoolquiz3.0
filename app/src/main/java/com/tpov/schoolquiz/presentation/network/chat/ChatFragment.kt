@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.presentation.network.chat
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -52,24 +54,37 @@ class ChatFragment : BaseFragment() {
         return binding.root
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            observeChatData()
+        }
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         chatViewModel = ViewModelProvider(this, viewModelFactory)[ChatViewModel::class.java]
         setupRecyclerView()
-        CoroutineScope(Dispatchers.IO).launch {
-            observeChatData()
-        }
 
         val tpovId = getTpovId()
-
-        UserGuide(requireContext()).addNotification(
-            binding.chatRecyclerView.id,
-            text = " - Не оскорблять \n - Не навьязывать \n - Не флудить \n - Помогать \n - Улыбаться",
-            titleText = "Правила чата:",
-            options = Options(countRepeat = 100),
-            icon = resources.getDrawable(R.drawable.nav_chat)
-        )
+        try {
+            val pInfo = context?.packageManager?.getPackageInfo(requireContext().packageName, 0)
+            val versionName = pInfo?.versionName
+            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pInfo?.longVersionCode?.toInt() // Use longVersionCode for Android P and later
+            } else {
+                pInfo?.versionCode
+            }
+            UserGuide(requireContext()).addNotification(
+                versionCode ?: binding.chatRecyclerView.id,
+                text = " - Не оскорблять \n - Не навьязывать \n - Не флудить \n - Помогать \n - Улыбаться",
+                titleText = "Правила чата:",
+                options = Options(),
+                icon = resources.getDrawable(R.drawable.nav_chat)
+            )
+        } catch (e: PackageManager.NameNotFoundException) {
+        }
 
         binding.sendMessageButton.setOnClickListener {
             val message = binding.messageEditText.text.toString().trim()
@@ -130,14 +145,11 @@ class ChatFragment : BaseFragment() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onPause() {
+        super.onPause()
         chatViewModel.removeChatListener()
     }
+
 
     private suspend fun observeChatData() {
         chatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {

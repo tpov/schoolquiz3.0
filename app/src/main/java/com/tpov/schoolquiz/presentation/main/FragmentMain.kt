@@ -218,12 +218,15 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
                 .filter { it.hardQuestion == hardQuestion }
 
+        log("kokol size questionThisListAll: ${questionThisListAll.size}")
         var listMap = mutableMapOf<Int, Boolean>()
 
         listMap = getMap(questionThisListAll, listMap)
 
+        log("kokol size listMap: ${listMap.size}")
         val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
 
+        log("kokol size questionByLocal: ${questionByLocal.size}")
         val questionListThis =
             if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
             else getListQuestionByProfileLang(
@@ -231,6 +234,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 listMap
             )
 
+        log("kokol size questionListThis: ${questionListThis.size}")
         return didFoundAllQuestion(questionListThis, listMap)
 
     }
@@ -240,9 +244,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         listQuestionEntity: List<QuestionEntity>,
         listMap: MutableMap<Int, Boolean>
     ): MutableMap<Int, Boolean> {
+
         listQuestionEntity.forEach {
             listMap[it.numQuestion] = false
         }
+
         return listMap
     }
 
@@ -288,7 +294,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         questionList.forEach {
 
-            log("kokol question: ${it.numQuestion}. ${it.nameQuestion}")
+            log("kokol question: ${it.numQuestion}. ${it.nameQuestion} - ${it.language}")
         }
 
         log("kokol foundQuestion: $foundQuestion")
@@ -333,43 +339,52 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     ) {
         if (id == -1) {
             if (mainViewModel.getQuizList().isNotEmpty()) {
-                val randQuiz = mainViewModel.getQuizList().filter {
-                    it.event == 5 && it.languages.contains(Locale.getDefault().language)
-                }.random()
+                try {
 
-                val alertDialog = AlertDialog.Builder(activity)
-                    .setTitle("Поиск")
-                    .setMessage("Пройти рандомный квест из этого списка")
-                    .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+                    val randQuiz = mainViewModel.getQuizList().filter {
+                        it.event == 5 && it.languages.contains(Locale.getDefault().language)
+                    }.random()
 
-                        mainViewModel.updateProfileUseCase(
-                            mainViewModel.getProfile().copy(
-                                count = mainViewModel.getProfileCount()!! - 33,
-                                pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                    val alertDialog = AlertDialog.Builder(activity)
+                        .setTitle("Поиск")
+                        .setMessage("Пройти рандомный квест из этого списка")
+                        .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+
+                            mainViewModel.updateProfileUseCase(
+                                mainViewModel.getProfile().copy(
+                                    count = mainViewModel.getProfileCount()!! - 33,
+                                    pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                                )
                             )
-                        )
 
-                        val intent = Intent(activity, QuestionActivity::class.java)
-                        intent.putExtra(NAME_USER, "user")
-                        intent.putExtra(ID_QUIZ, randQuiz.id)
-                        intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
-                        startActivityForResult(intent, REQUEST_CODE)
+                            val intent = Intent(activity, QuestionActivity::class.java)
+                            intent.putExtra(NAME_USER, "user")
+                            intent.putExtra(ID_QUIZ, randQuiz.id)
+                            intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
+                            startActivityForResult(intent, REQUEST_CODE)
+                        }
+                        .setNegativeButton("Отмена", null)
+                        .create()
+
+                    alertDialog.setOnShowListener { dialog ->
+                        val positiveButton =
+                            (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                        val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                        positiveButton.setTextColor(Color.WHITE)
+                        negativeButton.setTextColor(Color.YELLOW)
+
+                        dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
                     }
-                    .setNegativeButton("Отмена", null)
-                    .create()
 
-                alertDialog.setOnShowListener { dialog ->
-                    val positiveButton =
-                        (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
-                    val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-                    positiveButton.setTextColor(Color.WHITE)
-                    negativeButton.setTextColor(Color.YELLOW)
-
-                    dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                    alertDialog.show()
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Не найдено переведенного квеста",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-
-                alertDialog.show()
             }
         } else {
             val alertDialog = AlertDialog.Builder(activity)
