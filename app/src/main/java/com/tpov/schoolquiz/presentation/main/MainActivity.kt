@@ -5,7 +5,10 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
@@ -22,6 +25,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.*
 import android.view.animation.LinearInterpolator
 import android.widget.*
+import android.window.SplashScreen
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -83,6 +87,7 @@ import kotlinx.coroutines.*
 import java.text.NumberFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.system.exitProcess
 
 /**
  * This is the main screen of the application, it consists of a panel that shows how much spare is left.
@@ -143,7 +148,6 @@ class MainActivity : AppCompatActivity() {
                 log("wdwdwdfweadaw")
                 calculateQuizzResult()
             }
-
             swipeRefreshLayout.isRefreshing = false
         }
 
@@ -477,14 +481,54 @@ class MainActivity : AppCompatActivity() {
         setButtonNavListener()
 
         val profile = viewModel.getProfile()
-        val qualification = Qualification(
-            profile.tester ?: 0,
-            profile.moderator ?: 0,
-            profile.sponsor ?: 0,
-            profile.translater ?: 0,
-            profile.admin ?: 0,
-            profile.developer ?: 0
-        )
+        val qualification = try {
+            Qualification(
+                profile.tester ?: 0,
+                profile.moderator ?: 0,
+                profile.sponsor ?: 0,
+                profile.translater ?: 0,
+                profile.admin ?: 0,
+                profile.developer ?: 0
+            )
+        } catch (e: Exception) {
+            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (1), подождите несколько секунд", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (2), подождите несколько секунд", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (3), подождите несколько секунд", Toast.LENGTH_LONG).show()
+
+            val cacheDir = this.cacheDir
+
+            val files = cacheDir.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    file.delete()
+                }
+            } else {
+                Toast.makeText(this, "Кеш не удалось почистить ..(", Toast.LENGTH_LONG).show()
+                0
+            }
+
+            val mStartActivity = Intent(this, SplashScreen::class.java)
+            val mPendingIntentId = 123456
+            val mPendingIntent = PendingIntent.getActivity(
+                this,
+                mPendingIntentId,
+                mStartActivity,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val mgr = this.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 3000, mPendingIntent)
+            exitProcess(0)
+
+            Qualification(
+                profile.tester ?: 0,
+                profile.moderator ?: 0,
+                profile.sponsor ?: 0,
+                profile.translater ?: 0,
+                profile.admin ?: 0,
+                profile.developer ?: 0
+            )
+
+        }
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
         SetItemMenu.setHomeMenu(
@@ -523,7 +567,11 @@ class MainActivity : AppCompatActivity() {
 
         SetItemMenu.setHomeMenu(
             binding, MENU_HOME, this,
-            profile.pointsSkill ?: 0,
+            try {
+                profile.pointsSkill ?: 0
+            } catch (e: java.lang.Exception) {
+                0
+            },
             qualification
         )
 

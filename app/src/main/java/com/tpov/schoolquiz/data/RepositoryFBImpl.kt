@@ -554,19 +554,19 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     override suspend fun getQuestion1() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question1/$${getTpovId()}"), "-1")
+        getQuestion(FirebaseDatabase.getInstance().getReference("question1/${getTpovId()}"), "-1")
     }
 
     override suspend fun getQuestionDetail1() {
         log("fun getQuestionDetail1()")
         getQuestionDetail(
-            FirebaseDatabase.getInstance().getReference("question_detail1/$${getTpovId()}"), "-1"
+            FirebaseDatabase.getInstance().getReference("question_detail1/${getTpovId()}"), "-1"
         )
     }
 
     override suspend fun getQuestionDetail2() {
         log("fun getQuestionDetail2()")
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail2"), "-1")
+        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail2/${getTpovId()}"), "-1")
     }
 
     private suspend fun getQuestionDetail(questionRef: DatabaseReference, idQuiz: String) {
@@ -603,27 +603,27 @@ class RepositoryFBImpl @Inject constructor(
 
     override suspend fun getQuestionDetail3() {
         log("fun getQuestionDetail3()")
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail3"), "-1")
+        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail3/${getTpovId()}"), "-1")
     }
 
     override suspend fun getQuestionDetail4() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail4"), "-1")
+        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail4/${getTpovId()}"), "-1")
     }
 
     override suspend fun getQuestionDetail5() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail5"), "-1")
+        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail5/${getTpovId()}"), "-1")
     }
 
     override suspend fun getQuestionDetail6() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail6"), "-1")
+        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail6/${getTpovId()}"), "-1")
     }
 
     override suspend fun getQuestionDetail7() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail7"), "-1")
+        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail7/${getTpovId()}"), "-1")
     }
 
     override suspend fun getQuestionDetail8() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail8"), "-1")
+        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail8/${getTpovId()}"), "-1")
     }
 
     override fun getProfile() {
@@ -829,7 +829,7 @@ class RepositoryFBImpl @Inject constructor(
     override fun setQuizData() {
         log("fun setQuizData()")
         var tpovId = getTpovId()
-        var quizDB = dao.getQuizEvent()
+        var quizDB = dao.getQuizEvent().filter { it.event != 1 || (it.event == 1 && it.tpovId == getTpovId()) }
 
         var idQuiz = 0
 
@@ -988,11 +988,11 @@ class RepositoryFBImpl @Inject constructor(
                                 }
 
                             } else if (quiz.event == 3) {
+                                quizRef2.child("${tpovId}/${quiz.id.toString()}")
+                                .setValue(null)
                                 if (quiz.id!! >= 100) {
                                     quizRef3.child(quiz.id.toString()).setValue(quiz)
                                         .addOnSuccessListener {
-                                            quizRef2.child("${tpovId}/${quiz.id.toString()}")
-                                                .setValue(null)
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
@@ -1024,10 +1024,10 @@ class RepositoryFBImpl @Inject constructor(
 
                                 }
                             } else if (quiz.event == 4) {
+                                quizRef3.child(quiz.id.toString()).setValue(null)
                                 if (quiz.id!! >= 100) {
                                     quizRef4.child(quiz.id.toString()).setValue(quiz)
                                         .addOnSuccessListener {
-                                            quizRef3.child(quiz.id.toString()).setValue(null)
                                             if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                 .updateChildren(quizRatingMap)
                                         }
@@ -1059,13 +1059,18 @@ class RepositoryFBImpl @Inject constructor(
                                 }
 
                             } else if (quiz.event == 5) {
+
+                                quizRef4.child(quiz.id.toString())
+                                    .setValue(null)
                                 if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                     .updateChildren(quizRatingMap)
                                 if (quiz.id!! >= 100) {
-                                    quizRef5.child("${quiz.id.toString()}")
+                                    log("sвацаыуаыа 1")
+                                    quizRef5.child(quiz.id.toString())
                                         .addListenerForSingleValueEvent(object :
                                             ValueEventListener {
                                             override fun onDataChange(snapshot: DataSnapshot) {
+
                                                 val oldQuiz =
                                                     snapshot.getValue(QuizEntity::class.java)
                                                 quizRef5.child(quiz.id.toString()).setValue(
@@ -1076,10 +1081,10 @@ class RepositoryFBImpl @Inject constructor(
                                                     )
                                                 )
                                                     .addOnSuccessListener {
-                                                        quizRef4.child(quiz.id.toString())
-                                                            .setValue(null)
                                                         if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
                                                             .updateChildren(quizRatingMap)
+                                                    }.addOnFailureListener { it ->
+
                                                     }
 
                                                 SharedPreferencesManager.setVersionQuiz(
@@ -1089,11 +1094,12 @@ class RepositoryFBImpl @Inject constructor(
 
                                             override fun onCancelled(error: DatabaseError) {
 
+                                                log("sвацаыуаыа 5 $error")
                                             }
 
                                         })
                                 } else {
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
+                                    log("setQuizData() playersRef quizDB id < 100 event5 синхронизируем с сервером")
                                     idQuiz++
                                     var oldId = quiz.id!!
                                     quiz.id = idQuiz

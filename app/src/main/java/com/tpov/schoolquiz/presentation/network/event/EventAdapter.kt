@@ -7,19 +7,16 @@ import android.view.*
 import android.widget.*
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.RecyclerView
-import com.google.cloud.translate.TranslateOptions
-import com.google.cloud.translate.Translation
 import com.squareup.picasso.Picasso
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.custom.CoastValues.COEF_COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
 import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
-import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
 import kotlinx.coroutines.InternalCoroutinesApi
-import org.jetbrains.anko.runOnUiThread
 import java.util.*
 
 interface DataObserver {
@@ -206,116 +203,6 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         return size9
     }
 
-    private fun translateToUserLanguage(questionList: List<QuestionEntity>): List<QuestionEntity> {
-        // Инициализируем объект Translate с помощью ключа API
-        val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
-            .setApiKey(getTranslateKey())
-            .build()
-            .service
-
-        // Создаем пустой список для хранения переведенных вопросов
-        val translatedQuestionList: MutableList<QuestionEntity> = mutableListOf()
-
-        log("dawdawdf translateToUserLanguage")
-        // Перебираем каждый вопрос в исходном списке и выполняем перевод
-        for (question in questionList) {
-            // Получаем текст для перевода
-            val textToTranslate = question.nameQuestion
-            val sourceLanguage = question.language
-
-            val userLanguage: String = Locale.getDefault().language
-
-            log("dawdawdf question $question")
-            // Выполняем перевод
-            log("dawdawdf Thread")
-            val translatedText = try {
-
-                val translation: Translation = translate!!.translate(
-                    textToTranslate,
-                    com.google.cloud.translate.Translate.TranslateOption.sourceLanguage(
-                        sourceLanguage
-                    ),
-                    com.google.cloud.translate.Translate.TranslateOption.targetLanguage(
-                        userLanguage
-                    )
-                )
-
-                translation.translatedText
-            } catch (e: Exception) {
-                textToTranslate
-            }
-
-            val translatedQuestion = question.copy(
-                nameQuestion = translatedText,
-                language = userLanguage,
-                lvlTranslate = 100,
-                infoTranslater = "0|0"
-            )
-
-            translatedQuestionList.add(translatedQuestion)
-        }
-
-        return translatedQuestionList
-    }
-
-    private fun removeDuplicateWordsFromLanguages(input: String): String {
-        val languages = input.split("|") // Разделение строки на отдельные языки
-        val uniqueLanguages =
-            languages.map { removeDuplicateWords(it) } // Удаление дубликатов слов для каждого языка
-        return uniqueLanguages.joinToString("|") // Объединение языков обратно в строку
-    }
-
-    private fun removeDuplicateWords(input: String): String {
-        val words = input.split(" ")
-        val uniqueWords = words.distinct()
-        return uniqueWords.joinToString(" ")
-    }
-
-    @OptIn(InternalCoroutinesApi::class)
-    fun translateText(
-        viewModel: MainActivityViewModel,
-        context: Context,
-        quizEntity: QuizEntity
-    ) {
-        val questionList = viewModel.getQuestionListByIdQuiz(quizEntity.id!!)
-
-        // Создаем мапу, где ключом будет numQuestion, а значением - элемент Question с наибольшим lvlTranslate
-        val questionMap: MutableMap<Int, QuestionEntity> = mutableMapOf()
-
-        for (question in questionList) {
-
-            log("dawdawdf $question")
-            val existingQuestion = questionMap[question.numQuestion]
-
-            if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
-                log("dawdawdf add")
-                questionMap[question.numQuestion] = question
-            }
-        }
-
-        val filteredQuestionList: List<QuestionEntity> = questionMap.values.toList()
-        var i = filteredQuestionList.size
-        Thread {
-            translateToUserLanguage(filteredQuestionList).forEach {
-                viewModel.insertQuestion(it)
-                log("dawdawdf $i")
-                i--
-                if (i == 0) context.runOnUiThread {
-                    viewModel.updateQuiz(
-                        quizEntity.copy(
-                            languages = removeDuplicateWordsFromLanguages(
-                                if (quizEntity.languages.isNotEmpty()) "${quizEntity.languages}|${Locale.getDefault().language}-100"
-                                else "${Locale.getDefault().language}-100"
-                            ), versionQuiz = quizEntity.versionQuiz + 1
-                        )
-                    )
-                    Toast.makeText(context, "Перевод завершен успешно", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            }
-        }.start()
-
-    }
 
     @OptIn(InternalCoroutinesApi::class)
     private fun showDialogTranslate(

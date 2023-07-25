@@ -51,7 +51,7 @@ class MainActivityViewModel @Inject constructor(
     val updateProfileUseCase: UpdateProfileUseCase,
     private val getQuizEventUseCase: GetQuizEventUseCase,
     private val getQuestionDetailListUseCase: GetQuestionDetailListUseCase,
-    val getQuestionByIdQuizUseCase: GetQuestionListByIdQuiz,
+    val getQuestionByIdQuizUseCase: GetQuestionListByIdQuiz
 ) : ViewModel() {
 
     var oldId = 0
@@ -211,9 +211,13 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun getCountPlaceForUserQuiz(): Int {
-        val placeQuiz = getProfileUseCase(getTpovId()).buyQuizPlace
-        val countUserQuiz = getQuizList().filter { it.event == 1 && it.tpovId == getTpovId() }
-        return placeQuiz?.minus(countUserQuiz.size)!!
+        return try {
+            val placeQuiz = getProfileUseCase(getTpovId()).buyQuizPlace
+            val countUserQuiz = getQuizList().filter { it.event == 1 && it.tpovId == getTpovId() }
+            placeQuiz?.minus(countUserQuiz.size)!!
+        } catch (e: Exception) {
+            1
+        }
     }
 
     fun removePlaceInUserQuiz() {
@@ -379,7 +383,7 @@ class MainActivityViewModel @Inject constructor(
 
             log("sdsdsds ${quiz.nameQuiz}")
             getQuestionDetailListUseCase().forEach {
-                if (it.idQuiz == quiz.id) {
+                if (it.idQuiz == quiz.id && getTpovId() == quiz.tpovId) {
                     log("getQuestionDetailListUseCase")
                     var i = 0
                     var j = 0

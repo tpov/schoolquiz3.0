@@ -247,7 +247,7 @@ class CreateQuestionDialog : DialogFragment() {
 
         val questionMap: MutableMap<Int, MutableSet<String>> = mutableMapOf()
 
-// Перебираем вопросы и заполняем карту, в которой ключ - номер вопроса, значение - множество языков
+        // Перебираем вопросы и заполняем карту, в которой ключ - номер вопроса, значение - множество языков
         for (question in questions) {
             if (question.nameQuestion != "") {
                 val num = question.numQuestion
@@ -267,12 +267,12 @@ class CreateQuestionDialog : DialogFragment() {
             }
         }
 
-// Находим пересечение множеств языков для всех номеров вопросов
+        // Находим пересечение множеств языков для всех номеров вопросов
         val commonLanguages =
             questionMap.values.reduce { acc, set -> acc.intersect(set).toMutableSet() }
         log("wd23 commonLanguages: $commonLanguages")
         val profileLvlTranslate = mainActivityViewModel.getProfile().translater
-// Создаем строку в необходимом формате
+        // Создаем строку в необходимом формате
         val questionLang = commonLanguages.joinToString("|") { "$it-$profileLvlTranslate" }
 
         log("wd23 questionLang: $questionLang")
@@ -317,15 +317,11 @@ class CreateQuestionDialog : DialogFragment() {
         mainActivityViewModel.insertQuiz(quizEntity)
 
         questions.forEach {
-            if (it.nameQuestion != "") {
+            //if (it.nameQuestion != "") {
                 mainActivityViewModel.insertQuestion(
-                    it.copy(
-                        idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
-                            nameQuiz
-                        )
-                    )
+                    it.copy(idQuiz = newIdQuiz)
                 )
-            }
+           // }
         }
     }
 
