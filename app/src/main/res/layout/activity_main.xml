@@ -333,7 +333,7 @@
                             android:shadowDy="0"
                             android:shadowRadius="10"
                             android:text="Name"
-                            android:textColor="@color/default_nick_color1"
+                            android:textColor="@color/black"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 

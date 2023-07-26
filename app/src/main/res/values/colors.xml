@@ -45,4 +45,9 @@
    <color name="default_nick_color7">#9ACD32</color> <!--  (Желтая зелень)-->
     <color name="default_nick_color8">#000000</color>
 
+
+    <color name="profile_card_back">#353535</color>
+
+
+
 </resources>

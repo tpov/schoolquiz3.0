@@ -45,7 +45,9 @@ class ProfileAdapter(
         holder.ivIcon.text = profile.logo.toString()
         holder.tvTpovId.text = profile.tpovId.toString()
         holder.tvNickname.text = profile.nickname
-        if ((profile.datePremium ?: "") > TimeManager.getCurrentTime()) holder.imvPremium.visibility =
+        if ((profile.datePremium
+                ?: "") > TimeManager.getCurrentTime()
+        ) holder.imvPremium.visibility =
             View.VISIBLE
         else holder.imvPremium.visibility = View.GONE
         holder.tvLanguage.text = profile.languages
@@ -74,8 +76,8 @@ class ProfileAdapter(
         val entries = profiles.map { RadarEntry(it) }
         val entriesDeltail = profilesDetail.map { RadarEntry(it) }
 
-        val radarDataSet = RadarDataSet(entries, "Label")
-        val radarDataSetDetail = RadarDataSet(entriesDeltail, "Label")
+        val radarDataSet = RadarDataSet(entries, "Игрок")
+        val radarDataSetDetail = RadarDataSet(entriesDeltail, "Квалификации")
 
         val radarData = RadarData(listOf(radarDataSet, radarDataSetDetail))
         radarDataSet.color = Color.BLUE

@@ -27,10 +27,12 @@ object VisibleItems {
             items.add(
                 R.string.nav_task to R.drawable.nav_task
             )
+            items.add(
+                R.string.nav_task to R.drawable.nav_task
+            )
         }
 
         if (qualification.developer >= 100) {
-            items.add(R.string.nav_profile to R.drawable.nav_profile)
             items.add(R.string.nav_leaders to R.drawable.nav_leader)
             items.add(R.string.nav_players to R.drawable.nav_user)
             items.add(R.string.nav_news to R.drawable.ic_new)
