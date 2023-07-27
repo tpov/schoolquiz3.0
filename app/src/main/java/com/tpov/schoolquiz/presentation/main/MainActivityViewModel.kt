@@ -5,6 +5,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
+import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
@@ -144,26 +145,27 @@ class MainActivityViewModel @Inject constructor(
             "",
             "",
             "",
-            Points(0, 0, 0, 0),
+            Points(0, 0, 0),
             "0",
-            Buy(1, 0, 1, "0", "0", "0"),
+            Buy(1, "", "", ""),
             "0",
             "",
             "",
             0,
             TimeInGames(0, 0, 0, 0, 0, 0),
-            AddPoints(0, 0, 0, 0, ""),
+            AddPoints(0, 0, 0, ""),
             Dates(
                 TimeManager.getCurrentTime(), ""
             ),
             "",
             userLanguageCode,
-            Qualification(1, 0, 0, 0, 0, 0, 0),
+            Qualification( 0, 0, 0, 0, 0, 0),
             Life(1, 0),
-            Box(0, TimeManager.getCurrentTime(), 0)
+            Box(0, TimeManager.getCurrentTime(), 0),
+                    0
         )
 
-        insertProfileUseCase(profile.toProfileEntity(0, 100))
+        insertProfileUseCase(profile.toProfileEntity(0, 2000))
     }
 
     fun insertQuiz(quizEntity: QuizEntity) {
@@ -358,6 +360,10 @@ class MainActivityViewModel @Inject constructor(
     fun getCountChat(): Int {
         val profile = getProfileUseCase(getTpovId())
         return profile.timeInGamesSmsPoints ?: 0
+    }
+
+    fun getMassage(): List<ChatEntity> {
+        return getMassage() //todo create UseCase
     }
 
     fun getProfileTimeInGame(): Int? {

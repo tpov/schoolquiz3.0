@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cv_profile"
     android:layout_width="match_parent"
-    android:layout_height="180dp"
+    android:layout_height="200dp"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="16dp"
     app:cardCornerRadius="25dp"
@@ -12,6 +12,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center"
         android:background="@drawable/profile_gradient"
         android:orientation="vertical">
 
@@ -21,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:text="Карточка профиля отображает насколько вы сильные по сравнению с лучшим игроков в процентном соотношении по разным параметрам."
             android:textColor="@color/white" />
 
@@ -30,7 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:text="Зеленый график отображает насколько вы хороши как игрок, насколько хорошо играете \n Красный - насколько вы большой вклад делаете в игру, насколько вы важны игре"
             android:textColor="@color/white" />
 
@@ -39,17 +40,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:text="Например: у игрока который играет лучше всех - график полностью заполенный зеленым, а у игрока который больше всех помогает разработчикам, вносит вклад в игру - будет весь красный"
             android:textColor="@color/white" />
 
-        <TextView
-            android:id="@+id/tv4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:textSize="10sp"
-            android:text="Если вы ничего не поняли - ничего страшного, у игры большой функционал, еще успеете разобраться :)"
-            android:textColor="@color/white" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModelProvider
@@ -20,6 +21,7 @@ import com.github.mikephil.charting.data.RadarEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
@@ -63,49 +65,35 @@ class ProfileFragment : BaseFragment() {
         viewModel = ViewModelProvider(this, viewModelFactory)[ProfileViewModel::class.java]
 
         val radarChart = view.findViewById<RadarChart>(R.id.chart_profile)
-
         val flipView = view.findViewById<EasyFlipView>(R.id.efv_card)
+        val tvSkill = view.findViewById<TextView>(R.id.tv_rating)
 
-// Flip the view programatically
         flipView.flipTheView()
-        try {
-           // val player: PlayersEntity = viewModel.getPlayer()
-        } catch (e: Exception) {
 
+        val player: PlayersEntity = try {
+            viewModel.getPlayer()
+        } catch (e: Exception) {
+            PlayersEntity(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         }
 
+        tvSkill.text = player.skill.toString()
+
         val profileGameValues = listOf(
-            56,
-            85,
-            45,
-            76,
-            56,
-            75,
-            15
-            //player.timeInGamesAllTime,
-            //player.timeInGamesInQuiz,
-            //player.timeInGamesInChat,
-            //player.timeInGamesSmsPoints,
-            //player.ratingPlayer,
-            //player.ratingAnswer,
-            //player.ratingQuiz
+            player.ratingCountQuestions,
+            player.ratingCountTrueQuestion,
+            player.ratingTimeInQuiz,
+            player.ratingTimeInChat,
+            player.ratingSmsPoints,
+            player.ratingQuiz,
         )
 
         val profileQualificationValues = listOf(
-            75,
-            25,
-            56,
-            0,
-            36,
-            86,
-            100
-            //player.gamer,
-            //player.sponsor,
-            //player.translater,
-            //player.tester,
-            //player.moderator,
-            //player.admin,
-            //player.developer
+            player.sponsor,
+            player.tester,
+            player.translater,
+            player.moderator,
+            player.admin,
+            player.developer
         )
 
         val radarDataSet1 = RadarDataSet(profileGameValues.indices.map {
@@ -173,6 +161,7 @@ class ProfileFragment : BaseFragment() {
             lifecycleScope.launch(Dispatchers.IO) {
                 viewModel.getQuizzFB()
                 viewModel.getTranslate()
+                viewModel.getPlayersList()
             }
         }
         view.findViewById<ImageButton>(R.id.imb_delete).setOnClickListener {

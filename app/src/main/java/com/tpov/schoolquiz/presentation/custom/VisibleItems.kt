@@ -25,7 +25,7 @@ object VisibleItems {
 
         if (qualification.translator >= 100 || qualification.tester >= 100 || qualification.admin >= 100 || qualification.moderator >= 100 || qualification.developer >= 100) {
             items.add(
-                R.string.nav_task to R.drawable.nav_task
+                R.string.nav_profile to R.drawable.nav_profile
             )
             items.add(
                 R.string.nav_task to R.drawable.nav_task

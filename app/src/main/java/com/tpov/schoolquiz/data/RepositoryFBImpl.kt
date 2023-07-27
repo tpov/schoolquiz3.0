@@ -84,11 +84,11 @@ class RepositoryFBImpl @Inject constructor(
                 for (playerSnapshot in snapshot.children) {
 
                     log("getPlayersList playerSnapshot: $playerSnapshot")
-                    val player = playerSnapshot.getValue(Players::class.java)
+                    val player = playerSnapshot.getValue(PlayersEntity::class.java)
                     if (player != null) {
                         log("getPlayersList player: $player")
                         playersList.add(
-                            player.toPlayersEntity().copy(id = playerSnapshot.key?.toInt())
+                            player.copy(id = playerSnapshot.key?.toInt())
                         )
                     }
                 }
@@ -653,8 +653,6 @@ class RepositoryFBImpl @Inject constructor(
                             addPointsNolics = profile.addPoints.addNolics,
                             addTrophy = profile.addPoints.addTrophy,
                             addPointsSkill = profile.addPoints.addSkill,
-                            addPointsSkillInSeason = profile.addPoints.addSkillInSesone,
-                            gamer = profile.qualification.gamer,
                             sponsor = profile.qualification.sponsor,
                             tester = profile.qualification.tester,
                             translater = profile.qualification.translater,
@@ -1575,14 +1573,6 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addSkill").getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addSkill")
-                                        .getValue(Int::class.java)
-                                },
-
-                                addPointsSkillInSeason = try {
-                                    if (profile.addPointsSkillInSeason == 0) profileSnapshot.child("addPoints")
-                                        .child("addSkillInSesone").getValue(Int::class.java) else 0
-                                } catch (e: Exception) {
-                                    profileSnapshot.child("addPoints").child("addSkillInSesone")
                                         .getValue(Int::class.java)
                                 }
 

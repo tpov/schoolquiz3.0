@@ -37,6 +37,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
@@ -52,6 +53,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCount
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
+import com.tpov.schoolquiz.presentation.custom.getResources
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -145,7 +147,6 @@ class MainActivity : AppCompatActivity() {
 
         swipeRefreshLayout.setOnRefreshListener {
             if (supportFragmentManager.findFragmentById(R.id.title_fragment) is FragmentMain) {
-                log("wdwdwdfweadaw")
                 calculateQuizzResult()
             }
             swipeRefreshLayout.isRefreshing = false
@@ -527,7 +528,6 @@ class MainActivity : AppCompatActivity() {
                 profile.admin ?: 0,
                 profile.developer ?: 0
             )
-
         }
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
@@ -650,6 +650,14 @@ class MainActivity : AppCompatActivity() {
         userguide.setCounterValue(skill ?: 0)
 
         var id = 1
+            // getPersonalMassage().forEach { it: ChatEntity ->
+       //     userguide.addNotification(
+       //         text = it.msg,
+       //         titleText = "Mersonal sms by: ${it.user}",
+       //         icon = getResources.getUserIcon(it.icon, this)
+                //     )
+       // }
+
         userguide.addNotification(
             id++,
             text = "Привет мой друг, ты прошел не легкий путь от Новичка до Легенды через всю дорогу препятствий и трудностей, я желаю что-бы тебе был безвозместный успех в жизни так же, как и в этой игре. \n  Признаюсь, мы так же шли по не легкой дороге, что-бы сделать все условия, что-бы наши замечатильные игроки, дошли до этой черты. Я этот текст пишу на этапе альфа версии квеста, но надеюсь, мы дойдем до момента когда наши игроки возьмут Легенду. Благодарим тебя за большой вклад в наше сообщество, каждый из вас действительно важен. Могу предложить податься к нам в работу, возможно именно у нас ты так же сможешь показать весь потенциал. Удачи! ",
@@ -745,12 +753,16 @@ class MainActivity : AppCompatActivity() {
         )
 
         /////////////////////////////////////////
-        userguide.addNotification(
+        if(skill != 0) userguide.addNotification(
             id++,
             titleText = "Your skill = $skill",
             text = "Добро пожаловать в квиз правда-ложь, готов потрясти своими извинилами? Нажимай на квест который больше всего нравится.",
             icon = resources.getDrawable(R.drawable.star_full)
         )
+    }
+
+    private fun getPersonalMassage(): List<ChatEntity> {
+        return viewModel.getMassage()
     }
 
     private fun showPopupInfo(event: MotionEvent, popupType: Int) {
@@ -1455,6 +1467,8 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_home -> {
                 if (fr1 != 1) {
+
+                    swipeRefreshLayout.isEnabled = true
                     SetItemMenu.setHomeMenu(
                         binding, MENU_HOME, this,
                         profile.pointsSkill ?: 0,
@@ -1480,6 +1494,8 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_network -> {
                 if (fr1 != 2) {
+
+                    swipeRefreshLayout.isEnabled = false
                     SetItemMenu.setNetworkMenu(
                         binding, MENU_PROFILE, this,
                         profile.pointsSkill ?: 0,
@@ -1547,6 +1563,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startProfile() {
+        swipeRefreshLayout.isEnabled = false
         val profile = viewModel.getProfile()
         val qualification = Qualification(
             profile.tester ?: 0,
@@ -1567,7 +1584,7 @@ class MainActivity : AppCompatActivity() {
             log("setButtonNavListener() Аккаунт зареган")
             Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
                 .show()
-
+            swipeRefreshLayout.isEnabled = false
             FragmentManager.setFragment(ProfileFragment.newInstance(), this)
 
         } else {

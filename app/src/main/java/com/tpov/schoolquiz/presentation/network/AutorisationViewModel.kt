@@ -91,24 +91,25 @@ class AutorisationViewModel @Inject constructor(
                             name,
                             nickname,
                             date,
-                            Points(0, 0, 0, 0),
+                            Points( 0, 0, 0),
                             "0",
-                            Buy(1, 0, 1, "0", "0", "0"),
+                            Buy( 1, "", "", ""),
                             "",
                             "",
                             city,
                             0,
                             TimeInGames(0, 0, 0, 0, 0, 0),
-                            AddPoints(0, 0, 0, 0, ""),
+                            AddPoints( 0, 0, 0, ""),
                             Dates(
                                 TimeManager.getCurrentTime(),
                                 ""
                             ),
                             auth.currentUser?.uid ?: "",
                             languages,
-                            Qualification(0, 0, 0, 0, 0, 0, 0),
+                            Qualification(0, 0, 0, 0, 0, 0),
                             Life(1, 0),
-                            Box(0, TimeManager.getCurrentTime(), 0)
+                            Box(0, TimeManager.getCurrentTime(), 0),
+                            0
                         )
 
                         insertProfile(profile)

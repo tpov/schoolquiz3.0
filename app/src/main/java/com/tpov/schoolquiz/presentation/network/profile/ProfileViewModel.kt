@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.schoolquiz.domain.DeleteAllQuizUseCase
 import com.tpov.schoolquiz.domain.GetPlayersDBUseCase
+import com.tpov.schoolquiz.domain.GetPlayersListUseCase
 import com.tpov.schoolquiz.domain.GetProfileFBUseCase
 import com.tpov.schoolquiz.domain.GetProfileUseCase
 import com.tpov.schoolquiz.domain.GetQuiz1FBUseCase
@@ -24,6 +25,7 @@ import com.tpov.schoolquiz.domain.SetQuestionFBUseCase
 import com.tpov.schoolquiz.domain.SetQuizDataFBUseCase
 import com.tpov.schoolquiz.domain.SetQuizEventUseCase
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -52,8 +54,8 @@ class ProfileViewModel @Inject constructor(
     private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
     private val getTranslateUseCase: GetTranslateUseCase,
     private val getProfileUseCase: GetProfileUseCase,
-    val getPlayersDBUseCase: GetPlayersDBUseCase
-    //private val getPlayersListUseCase: GetPlayersListUseCase
+    val getPlayersDBUseCase: GetPlayersDBUseCase,
+    private val getPlayersListUseCase: GetPlayersListUseCase
 
 ) : ViewModel() {
 
@@ -62,8 +64,8 @@ class ProfileViewModel @Inject constructor(
     var addQuiz = MutableLiveData<Int>()
     var synth = getSynthUseCase()
 
-   // fun getPlayer() = getPlayersDBUseCase()
-   //     .filter { it.id == SharedPreferencesManager.getTpovId() }[0]
+   fun getPlayer() = getPlayersDBUseCase()
+       .filter { it.id == SharedPreferencesManager.getTpovId() }[0]
 
     fun getTpovId() {
         getTpovIdFBUseCase()
@@ -117,7 +119,7 @@ class ProfileViewModel @Inject constructor(
 
     fun getPlayersList() {
         log("getPlayersList()")
-        //getPlayersListUseCase()
+        getPlayersListUseCase()
     }
 
     fun log(m: String) {
