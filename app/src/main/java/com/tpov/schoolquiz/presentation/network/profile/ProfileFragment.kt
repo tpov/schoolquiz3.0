@@ -73,10 +73,15 @@ class ProfileFragment : BaseFragment() {
         val player: PlayersEntity = try {
             viewModel.getPlayer()
         } catch (e: Exception) {
-            PlayersEntity(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+            PlayersEntity(0, 0, 0, 0, 0, 0, 0,
+                -1, 0, 0, 0, 0, 0)
         }
 
-        tvSkill.text = player.skill.toString()
+        tvSkill.text = if (player.skill == -1) {
+            Toast.makeText(context, "Нужно скачать данные профиля нажав на \"download\"", Toast.LENGTH_LONG).show()
+            "no data"
+        }
+            else "Rating: ${player.skill}%"
 
         val profileGameValues = listOf(
             player.ratingCountQuestions,

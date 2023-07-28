@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView android:id="@+id/cv_profile"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="16dp"
+    android:layout_width="match_parent"
+    app:cardElevation="8dp"
+    app:cardCornerRadius="25dp"
+    android:layout_height="200dp"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/profile_gradient"
+        android:orientation="horizontal">
+
+        <com.github.mikephil.charting.charts.RadarChart
+            android:id="@+id/chart_profile"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:layout_gravity="center">
+
+        </com.github.mikephil.charting.charts.RadarChart>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/ratingBar"
+                android:textStyle="bold"
+                android:layout_margin="12dp"
+                android:layout_gravity="center"
+                android:textSize="18sp"
+                android:text="rating: 58%" />
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:stretchColumns="*">
+
+                <TableRow
+                    android:layout_marginBottom="8dp">
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_weight="4"
+                        android:layout_height="10dp"/>
+
+                    <View
+                        android:id="@+id/view_red"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_gravity="center"
+                        android:layout_height="10dp"
+                        android:background="@color/num_chack_norice_green"/>
+
+                    <TextView
+                        android:id="@+id/tv_history_titul_player"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:layout_marginLeft="8dp"
+                        android:textSize="11dp"
+                        android:text="player." />
+
+                    <View
+                        android:id="@+id/view_green"
+                        android:layout_width="0dp"
+                        android:layout_gravity="center"
+                        android:layout_height="10dp"
+                        android:layout_weight="1"
+                        android:background="@color/num_chack_norice_red"/>
+
+                    <TextView
+                        android:id="@+id/tv_history_titul_qualification"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:textSize="11dp"
+                        android:layout_marginLeft="8dp"
+                        android:text="qualif." />
+
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        android:id="@+id/tv_history_1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:layout_weight="2"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="1" />
+
+                    <TextView
+                        android:id="@+id/tv_history_ratingCountQuestions"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="answer" />
+
+                    <TextView
+                        android:id="@+id/tv_history_sponsor"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="sponsor" />
+
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        android:id="@+id/tv_history_2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="2" />
+
+                    <TextView
+                        android:id="@+id/tv_history_ratingCountTrueQuestion"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="true answer" />
+
+                    <TextView
+                        android:id="@+id/tv_history_tester"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="tester" />
+
+                </TableRow>
+                <TableRow>
+
+                    <TextView
+                        android:id="@+id/tv_history_3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="3" />
+
+                    <TextView
+                        android:id="@+id/tv_history_ratingTimeInQuiz"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="time quiz" />
+
+                    <TextView
+                        android:id="@+id/tv_history_translater"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="translater" />
+
+                </TableRow>
+                <TableRow>
+
+                    <TextView
+                        android:id="@+id/tv_history_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="4" />
+
+                    <TextView
+                        android:id="@+id/tv_history_ratingTimeInChat"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="chat time" />
+
+                    <TextView
+                        android:id="@+id/tv_history_moderator"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="moderator" />
+
+                </TableRow>
+                <TableRow>
+
+                    <TextView
+                        android:id="@+id/tv_history_5"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="5" />
+
+                    <TextView
+                        android:id="@+id/tv_history_ratingSmsPoints"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="sms count" />
+
+                    <TextView
+                        android:id="@+id/tv_history_admin"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="admin" />
+
+                </TableRow>
+                <TableRow>
+
+                    <TextView
+                        android:id="@+id/tv_history_6"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:gravity="center"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="6" />
+
+                    <TextView
+                        android:id="@+id/tv_history_ratingQuiz"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="rating quiz" />
+
+                    <TextView
+                        android:id="@+id/tv_history_developer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:textSize="11dp"
+                        android:textColor="@color/white"
+                        android:text="developer" />
+
+                </TableRow>
+            </TableLayout>
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -59,7 +59,8 @@ class AutorisationViewModel @Inject constructor(
         nickname: String,
         date: String,
         city: String,
-        languages: String
+        languages: String,
+        invitation: Int?
     ) {
         log("fun createAcc")
         auth.createUserWithEmailAndPassword(email, pass).addOnSuccessListener {
@@ -109,7 +110,7 @@ class AutorisationViewModel @Inject constructor(
                             Qualification(0, 0, 0, 0, 0, 0),
                             Life(1, 0),
                             Box(0, TimeManager.getCurrentTime(), 0),
-                            0
+                            invitation ?: 0
                         )
 
                         insertProfile(profile)
@@ -131,7 +132,8 @@ class AutorisationViewModel @Inject constructor(
                             birthday = date,
                             city = city,
                             languages = languages,
-                            dateSynch = TimeManager.getCurrentTime()
+                            dateSynch = TimeManager.getCurrentTime(),
+                            commander = invitation ?: 0
                         )
                         Toast.makeText(
                             context,
