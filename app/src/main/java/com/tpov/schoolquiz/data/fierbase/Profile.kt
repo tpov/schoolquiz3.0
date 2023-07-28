@@ -42,7 +42,7 @@ data class Profile constructor(
         "",
         0,
         TimeInGames(0, 0, 0, 0, 0, 0),
-        AddPoints(0, 0, 0, ""),
+        AddPoints(0, 0, 0, "", ""),
         Dates("", ""),
         "",
         "",
@@ -131,10 +131,11 @@ data class AddPoints(
     val addGold: Int,
     val addSkill: Int,
     val addNolics: Int,
-    val addTrophy: String
+    val addTrophy: String,
+    val addMassage: String
 ) {
     constructor() : this(
-        0,  0, 0, ""
+        0,  0, 0, "", ""
     )
 }
 
@@ -183,7 +184,8 @@ fun ProfileEntity.toProfile(): Profile {
             this.addPointsGold!!,
             this.addPointsSkill!!,
             this.addPointsNolics!!,
-            this.addTrophy!!
+            this.addTrophy!!,
+            this.addMassage!!
         ),
         dates = Dates(this.dataCreateAcc!!, this.dateSynch!!),
         idFirebase = this.idFirebase!!,
@@ -257,6 +259,7 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         timeInGamesCountQuestions = this.timeInGames.countQuestions,
         timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion,
         timeInQuizRating = this.timeInGames.timeInQuizRating,
-        commander = this.comander
+        commander = this.comander,
+        addMassage = this.addPoints.addMassage
     )
 }

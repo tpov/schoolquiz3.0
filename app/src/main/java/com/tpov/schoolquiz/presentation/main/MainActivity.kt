@@ -53,7 +53,6 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCount
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
-import com.tpov.schoolquiz.presentation.custom.getResources
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -1161,6 +1160,16 @@ class MainActivity : AppCompatActivity() {
             )
 
             when (menuItem.toString()) {
+                resources.getString(R.string.nav_profile) -> {
+                    FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+                    SetItemMenu.setNetworkMenu(
+                        binding,
+                        MENU_PROFILE,
+                        this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
+                }
                 resources.getString(R.string.nav_chat) -> {
                     FragmentManager.setFragment(ChatFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(

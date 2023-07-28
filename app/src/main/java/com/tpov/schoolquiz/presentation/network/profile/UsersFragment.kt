@@ -38,7 +38,7 @@ class UsersFragment : BaseFragment() {
 
         MainScope().launch {
             withContext(Dispatchers.IO) {
-                profileAdapter = ProfileAdapter(viewModel.getAllProfiles(), viewModel.getPlayers())
+                profileAdapter = ProfileAdapter(viewModel.getPlayers(), viewModel.getPlayers())
             }
             withContext(Dispatchers.Main) {
                 recyclerView.apply {

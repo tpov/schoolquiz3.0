@@ -84,21 +84,21 @@ class ProfileFragment : BaseFragment() {
             else "Rating: ${player.skill}%"
 
         val profileGameValues = listOf(
-            player.ratingCountQuestions,
-            player.ratingCountTrueQuestion,
-            player.ratingTimeInQuiz,
-            player.ratingTimeInChat,
-            player.ratingSmsPoints,
-            player.ratingQuiz,
-        )
-
-        val profileQualificationValues = listOf(
             player.sponsor,
             player.tester,
             player.translater,
             player.moderator,
             player.admin,
             player.developer
+        )
+
+        val profileQualificationValues = listOf(
+            player.ratingCountQuestions,
+            player.ratingCountTrueQuestion,
+            player.ratingTimeInQuiz,
+            player.ratingTimeInChat,
+            player.ratingSmsPoints,
+            player.ratingQuiz,
         )
 
         val radarDataSet1 = RadarDataSet(profileGameValues.indices.map {
@@ -113,7 +113,7 @@ class ProfileFragment : BaseFragment() {
                 it.toFloat()
             )
         }, "Qualifications")
-        radarChart.setExtraOffsets(8f, 8f, 8f, 8f)
+        radarChart.setExtraOffsets(0f, 10f, 0f, 8f)
 
         val dataSets = ArrayList<RadarDataSet>()
         dataSets.add(radarDataSet1)

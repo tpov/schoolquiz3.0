@@ -37,6 +37,7 @@ data class ProfileEntity(
     val addPointsSkill: Int?,
     val addPointsNolics: Int?,
     val addTrophy: String?,
+    val addMassage: String?,
 
     val dataCreateAcc: String?,
     val dateSynch: String?,

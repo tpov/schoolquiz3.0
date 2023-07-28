@@ -21,4 +21,5 @@ data class PlayersEntity(
     val ratingCountQuestions: Int = 0,
     val ratingCountTrueQuestion: Int = 0,
     val ratingQuiz: Int = 0,
+    val userName: String = ""
 )
