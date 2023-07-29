@@ -15,25 +15,17 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add get massage">
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add translate UserGuide">
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_21_07_2023_20_07__Changes_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/schemas/com.tpov.schoolquiz.data.database.QuizDatabase/2.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/schemas/com.tpov.schoolquiz.data.database.QuizDatabase/2.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryFBImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryFBImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/fierbase/Profile.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/fierbase/Profile.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/custom/TranslateGoogle.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/custom/TranslateGoogle.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/profile/ProfileAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/profile/ProfileAdapter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -135,6 +127,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
+    <property name="android-custom-viewC:/Users/oleg1/AppData/Local/Android/Sdk/sources/android-33/android/view/View.java_SELECTED" value="View" />
     <property name="cidr.known.project.marker" value="true" />
     <property name="project.structure.last.edited" value="SDK Location" />
     <property name="project.structure.proportion" value="0.17" />
@@ -243,13 +236,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1678092861294</updated>
-    </task>
-    <task id="LOCAL-00012" summary="create chat">
-      <created>1681137571296</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1681137571296</updated>
     </task>
     <task id="LOCAL-00013" summary="edit sort chat">
       <created>1681185211864</created>
@@ -587,7 +573,14 @@
       <option name="project" value="LOCAL" />
       <updated>1690381663115</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="Add get massage">
+      <created>1690627442130</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1690627442130</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -610,7 +603,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Create profile language in registration with checkbox" />
     <MESSAGE value="Ended main activity top bap" />
     <MESSAGE value="Bugfix Hot alfa" />
     <MESSAGE value="Remove unused views" />
@@ -635,7 +627,8 @@
     <MESSAGE value="Create design rofile" />
     <MESSAGE value="Add profile fragment prototype" />
     <MESSAGE value="Add get massage" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add get massage" />
+    <MESSAGE value="Add translate UserGuide" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add translate UserGuide" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

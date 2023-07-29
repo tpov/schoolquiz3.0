@@ -37,6 +37,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
         return ItemHolder.create(parent, listener)
     }
+
     @OptIn(InternalCoroutinesApi::class)
     override fun onBindViewHolder(holder: ItemHolder, position: Int) {
         val item = getItem(position)
@@ -334,6 +335,8 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 (quizEntity.stars.toFloat() / 50)
             else ratingBar.rating = (((quizEntity.stars.toFloat() - 100) / 20) + 2)
 
+
+
             imvTranslate.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     // Rating bar clicked, handle the event here
@@ -366,7 +369,9 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             imvTranslate.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }*/
+
         }
+
 
         @OptIn(InternalCoroutinesApi::class)
         private fun showDialogTranslate(

@@ -153,7 +153,6 @@ class MainActivity : AppCompatActivity() {
 
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
-        val versionCode: Int = pInfo.versionCode
 
         val userguide = UserGuide(this)
 
@@ -165,7 +164,7 @@ class MainActivity : AppCompatActivity() {
 
         userguide.addGuide(
             findViewById(R.id.menu_network),
-            "This is network",
+            "Тут находится связь с внешним миром, квесты других игроков, чат, турниры и многое другое",
             "Network",
             icon = getDrawable(R.drawable.ic_settings),
             callback = {
@@ -754,10 +753,18 @@ class MainActivity : AppCompatActivity() {
         /////////////////////////////////////////
         if(skill != 0) userguide.addNotification(
             id++,
+            "Это индикатор, который отображает перведен ли квест на ваш язык, на него можно нажать. \nЕсли квест не переведен, вы можете нажать на перевести\n - Синий - квест переведен хорошо \n - Желтый - квест переведен переводчиком\n - Серый - квест переведен",
+            titleText = "Перевод квеста",
+            icon = getDrawable(R.drawable.ic_translate),
+        )
+
+        if(skill != 0) userguide.addNotification(
+            id++,
             titleText = "Your skill = $skill",
             text = "Добро пожаловать в квиз правда-ложь, готов потрясти своими извинилами? Нажимай на квест который больше всего нравится.",
             icon = resources.getDrawable(R.drawable.star_full)
         )
+
     }
 
     private fun getPersonalMassage(): List<ChatEntity> {
