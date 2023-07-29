@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "6466e1e9ff49b015252bb33207531396",
+    "identityHash": "7abc1968b0ea691a06b4c2ccb1b08864",
     "entities": [
       {
         "tableName": "table_data",
@@ -56,7 +56,7 @@
       },
       {
         "tableName": "table_players",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `skill` INTEGER NOT NULL, `ratingTimeInQuiz` INTEGER NOT NULL, `ratingTimeInChat` INTEGER NOT NULL, `ratingSmsPoints` INTEGER NOT NULL, `ratingCountQuestions` INTEGER NOT NULL, `ratingCountTrueQuestion` INTEGER NOT NULL, `ratingQuiz` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `sponsor` INTEGER NOT NULL, `tester` INTEGER NOT NULL, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `skill` INTEGER NOT NULL, `ratingTimeInQuiz` INTEGER NOT NULL, `ratingTimeInChat` INTEGER NOT NULL, `ratingSmsPoints` INTEGER NOT NULL, `ratingCountQuestions` INTEGER NOT NULL, `ratingCountTrueQuestion` INTEGER NOT NULL, `ratingQuiz` INTEGER NOT NULL, `userName` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -140,6 +140,12 @@
             "fieldPath": "ratingQuiz",
             "columnName": "ratingQuiz",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userName",
+            "columnName": "userName",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -344,7 +350,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER, `login` TEXT, `name` TEXT, `nickname` TEXT, `birthday` TEXT, `datePremium` TEXT, `trophy` TEXT, `friends` TEXT, `city` TEXT, `logo` INTEGER, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER, `timeInGamesInChat` INTEGER, `timeInGamesSmsPoints` INTEGER, `timeInGamesCountQuestions` INTEGER, `timeInGamesCountTrueQuestion` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER, `pointsSkill` INTEGER, `pointsNolics` INTEGER, `buyQuizPlace` INTEGER, `buyTheme` TEXT, `buyMusic` TEXT, `buyLogo` TEXT, `addPointsGold` INTEGER, `addPointsSkill` INTEGER, `addPointsNolics` INTEGER, `addTrophy` TEXT, `dataCreateAcc` TEXT, `dateSynch` TEXT, `dateCloseApp` TEXT, `idFirebase` TEXT, `languages` TEXT, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER, `moderator` INTEGER, `admin` INTEGER, `developer` INTEGER, `countBox` INTEGER, `timeLastOpenBox` TEXT, `coundDayBox` INTEGER, `countLife` INTEGER, `count` INTEGER, `countGoldLife` INTEGER, `countGold` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER, `login` TEXT, `name` TEXT, `nickname` TEXT, `birthday` TEXT, `datePremium` TEXT, `trophy` TEXT, `friends` TEXT, `city` TEXT, `logo` INTEGER, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER, `timeInGamesInChat` INTEGER, `timeInGamesSmsPoints` INTEGER, `timeInGamesCountQuestions` INTEGER, `timeInGamesCountTrueQuestion` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER, `pointsSkill` INTEGER, `pointsNolics` INTEGER, `buyQuizPlace` INTEGER, `buyTheme` TEXT, `buyMusic` TEXT, `buyLogo` TEXT, `addPointsGold` INTEGER, `addPointsSkill` INTEGER, `addPointsNolics` INTEGER, `addTrophy` TEXT, `addMassage` TEXT, `dataCreateAcc` TEXT, `dateSynch` TEXT, `dateCloseApp` TEXT, `idFirebase` TEXT, `languages` TEXT, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER, `moderator` INTEGER, `admin` INTEGER, `developer` INTEGER, `countBox` INTEGER, `timeLastOpenBox` TEXT, `coundDayBox` INTEGER, `countLife` INTEGER, `count` INTEGER, `countGoldLife` INTEGER, `countGold` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -517,6 +523,12 @@
           {
             "fieldPath": "addTrophy",
             "columnName": "addTrophy",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "addMassage",
+            "columnName": "addMassage",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -710,7 +722,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6466e1e9ff49b015252bb33207531396')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7abc1968b0ea691a06b4c2ccb1b08864')"
     ]
   }
 }

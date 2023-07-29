@@ -20,12 +20,9 @@ import com.github.mikephil.charting.data.RadarEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet
 import com.google.firebase.database.ktx.database
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.PlayersEntity
-import com.tpov.schoolquiz.data.fierbase.Chat
-import com.tpov.shoppinglist.utils.TimeManager
 
 class ProfileAdapter(
     private val players: List<PlayersEntity>,
@@ -126,38 +123,39 @@ class ProfileAdapter(
             linearLayout.addView(addTrophy)
 
             val addNolic = EditText(it.context)
-            addNolic.inputType = InputType.TYPE_CLASS_NUMBER
+            addNolic.inputType = InputType.TYPE_NUMBER_FLAG_SIGNED
             addNolic.hint = "Начисление ноликов"
             linearLayout.addView(addNolic)
 
             val addGold = EditText(it.context)
-            addGold.inputType = InputType.TYPE_CLASS_NUMBER
+            addGold.inputType = InputType.TYPE_NUMBER_FLAG_SIGNED
             addGold.hint = "Начисление золота"
             linearLayout.addView(addGold)
 
             val addSkill = EditText(it.context)
-            addSkill.inputType = InputType.TYPE_CLASS_NUMBER
+            addSkill.inputType = InputType.TYPE_NUMBER_FLAG_SIGNED
             addSkill.hint = "Начисление опыта"
             linearLayout.addView(addSkill)
 
             val addBox = EditText(it.context)
-            addSkill.inputType = InputType.TYPE_CLASS_NUMBER
-            addSkill.hint = "Начисление коробок"
-            linearLayout.addView(addSkill)
+            addBox.inputType = InputType.TYPE_NUMBER_FLAG_SIGNED
+            addBox.hint = "Начисление коробок"
+            linearLayout.addView(addBox)
 
             builder.setView(linearLayout)
 
             // Настраиваем кнопки
             builder.setPositiveButton("OK") { dialog, _ ->
 
-                val massage = messageEditText.text.toString()
+                val message = messageEditText.text.toString()
                 val trophy = addTrophy.text.toString()
-                val nolic = addNolic.text.toString().toInt()
-                val gold = addGold.text.toString().toInt()
-                val skill = addSkill.text.toString().toInt()
-                val box = addBox.text.toString().toInt()
+                val nolic = convertToInt(addNolic.text.toString())
+                val gold = convertToInt(addGold.text.toString())
+                val skill = convertToInt(addSkill.text.toString())
+                val box = convertToInt(addBox.text.toString())
 
-                sendData(massage, trophy, nolic, gold, skill, box, holder, player.id ?: 0)
+
+                sendData(message, trophy, nolic, gold, skill, box, holder, player.id ?: 0)
 
                 dialog.dismiss()
             }
@@ -183,10 +181,11 @@ class ProfileAdapter(
         holder.radarChart.invalidate()
     }
 
-    private fun sendMassage(massage: String, holder: ProfileViewHolder, userTpovId: Int) {
-
+    fun convertToInt(input: String, default: Int = 0): Int {
+        return input.toIntOrNull() ?: default
     }
 
+    //todo get old value before set new value
     private fun sendData(
         massage: String,
         trophy: String,
@@ -205,55 +204,67 @@ class ProfileAdapter(
         if (box != 0) sendBox(box, holder, userTpovId)
     }
 
-    private fun sendNolic(nolic: Int, holder: ProfileViewHolder, userTpovId: Int) {
-
+    private fun sendMassage(massage: String, holder: ProfileViewHolder, userTpovId: Int) {
         val database = Firebase.database
         val myRef = database.getReference("Profiles/$userTpovId/addPoints/addMassage")
-        myRef.setValue("$nolic").addOnFailureListener {
+        myRef.setValue("$massage").addOnSuccessListener {
             Toast.makeText(holder.itemView.context, "send massage", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(holder.itemView.context, "error", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun sendNolic(nolic: Int, holder: ProfileViewHolder, userTpovId: Int) {
+        val database = Firebase.database
+        val myRef = database.getReference("Profiles/$userTpovId/addPoints/addNolic")
+        myRef.setValue(nolic).addOnSuccessListener {
+            Toast.makeText(holder.itemView.context, "send massage", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(holder.itemView.context, "error", Toast.LENGTH_SHORT).show()
         }
 
     }
 
     private fun sendTrophy(trophy: String, holder: ProfileViewHolder, userTpovId: Int) {
-
-        val db = Firebase.firestore
-
-        val message = Chat(
-            TimeManager.getCurrentTime(),
-            "TPOV",
-            trophy,
-            10,
-            userTpovId,
-            "",
-            0,
-            0
-        )
-
-        db.collection("PersonalMassage/addNolic")
-            .add(message)
-            .addOnSuccessListener { documentReference ->
-                Toast.makeText(holder.itemView.context, "send", Toast.LENGTH_LONG).show()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(holder.itemView.context, "error", Toast.LENGTH_LONG).show()
-            }
-
-
+        val database = Firebase.database
+        val myRef = database.getReference("Profiles/$userTpovId/addPoints/addTrophy")
+        myRef.setValue("$trophy").addOnSuccessListener {
+            Toast.makeText(holder.itemView.context, "send massage", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(holder.itemView.context, "error", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun sendGold(gold: Int, holder: ProfileViewHolder, userTpovId: Int) {
-
+        val database = Firebase.database
+        val myRef = database.getReference("Profiles/$userTpovId/addPoints/addGold")
+        myRef.setValue(gold).addOnSuccessListener {
+            Toast.makeText(holder.itemView.context, "send massage", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(holder.itemView.context, "error", Toast.LENGTH_SHORT).show()
+        }
 
     }
 
     private fun sendSkill(skill: Int, holder: ProfileViewHolder, userTpovId: Int) {
-
+        val database = Firebase.database
+        val myRef = database.getReference("Profiles/$userTpovId/addPoints/addSkill")
+        myRef.setValue(skill).addOnSuccessListener {
+            Toast.makeText(holder.itemView.context, "send massage", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(holder.itemView.context, "error", Toast.LENGTH_SHORT).show()
+        }
 
     }
 
     private fun sendBox(box: Int, holder: ProfileViewHolder, userTpovId: Int) {
-
+        val database = Firebase.database
+        val myRef = database.getReference("Profiles/$userTpovId/addPoints/addBox")
+        myRef.setValue(box).addOnSuccessListener {
+            Toast.makeText(holder.itemView.context, "send massage", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(holder.itemView.context, "error", Toast.LENGTH_SHORT).show()
+        }
 
     }
 

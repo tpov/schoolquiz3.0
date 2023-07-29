@@ -237,6 +237,7 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         addPointsSkill = this.addPoints.addSkill,
         addPointsNolics = this.addPoints.addNolics,
         addTrophy = this.addPoints.addTrophy,
+        addMassage = this.addPoints.addMassage,
         dataCreateAcc = this.dates.dataCreateAcc,
         dateSynch = this.dates.dateSynch,
         idFirebase = this.idFirebase,
@@ -260,6 +261,5 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion,
         timeInQuizRating = this.timeInGames.timeInQuizRating,
         commander = this.comander,
-        addMassage = this.addPoints.addMassage
     )
 }

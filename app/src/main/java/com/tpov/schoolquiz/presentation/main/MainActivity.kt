@@ -967,6 +967,12 @@ class MainActivity : AppCompatActivity() {
                     icon = resources.getDrawable(R.drawable.baseline_favorite_24)
                 )
 
+                if (profile.addMassage != "") userguide.addNotification(
+                    0,
+                    text = " - ${profile.addMassage}",
+                    titleText = "Developer massage"
+                )
+
                 val countSmsPoints = getCountMassageIdAndReset()
 
                 log("lklklkl 1 $countSmsPoints")
@@ -1011,7 +1017,8 @@ class MainActivity : AppCompatActivity() {
                         addPointsGold = 0,
                         addPointsNolics = 0,
                         addPointsSkill = 0,
-                        addTrophy = ""
+                        addTrophy = "",
+                        addMassage = ""
                     )
                 )
             }

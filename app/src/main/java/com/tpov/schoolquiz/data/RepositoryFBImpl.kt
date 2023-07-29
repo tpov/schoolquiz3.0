@@ -652,6 +652,7 @@ class RepositoryFBImpl @Inject constructor(
                             addPointsGold = profile.addPoints.addGold,
                             addPointsNolics = profile.addPoints.addNolics,
                             addTrophy = profile.addPoints.addTrophy,
+                            addMassage = profile.addPoints.addMassage,
                             addPointsSkill = profile.addPoints.addSkill,
                             sponsor = profile.qualification.sponsor,
                             tester = profile.qualification.tester,
@@ -1549,6 +1550,14 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addTrophy").getValue(String::class.java) else ""
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addTrophy")
+                                        .getValue(String::class.java)
+                                },
+
+                                addMassage = try {
+                                    if (profile.addMassage == "") profileSnapshot.child("addMassage")
+                                        .child("addMassage").getValue(String::class.java) else ""
+                                } catch (e: Exception) {
+                                    profileSnapshot.child("addPoints").child("addMassage")
                                         .getValue(String::class.java)
                                 },
 

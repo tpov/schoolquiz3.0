@@ -8,10 +8,10 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.network.event.log
-import com.tpov.schoolquiz.secure.Secure
+import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.jetbrains.anko.runOnUiThread
-import java.util.Locale
+import java.util.*
 
 object TranslateGoogle {
     @OptIn(InternalCoroutinesApi::class)
@@ -92,7 +92,7 @@ object TranslateGoogle {
         // Инициализируем объект Translate с помощью ключа API
 
         val translate: com.google.cloud.translate.Translate? = TranslateOptions.newBuilder()
-            .setApiKey(Secure.getTranslateKey())
+            .setApiKey(getTranslateKey())
             .build()
             .service
 
