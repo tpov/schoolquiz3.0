@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovI
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getVersionQuiz
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setVersionQuiz
+import com.tpov.schoolquiz.presentation.custom.Values.loadText
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -73,7 +74,7 @@ class RepositoryFBImpl @Inject constructor(
         val playersListRef = FirebaseDatabase.getInstance().getReference("players/listPlayers")
         playersListRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-
+                loadText.postValue("Загрузка лидеров")
                 val playersList = mutableListOf<PlayersEntity>()
                 log("getPlayersList snapshot: $snapshot")
                 for (playerSnapshot in snapshot.children) {
@@ -89,11 +90,13 @@ class RepositoryFBImpl @Inject constructor(
                 }
                 dao.deletePlayersList()
                 dao.insertPlayersList(playersList)
+                loadText.postValue("")
             }
 
             override fun onCancelled(error: DatabaseError) {
                 // Обработка ошибок
             }
+
         })
     }
 
@@ -150,7 +153,6 @@ class RepositoryFBImpl @Inject constructor(
 
         return dao.getChat()
     }
-
 
     override fun removeChatListener() {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
@@ -210,6 +212,7 @@ class RepositoryFBImpl @Inject constructor(
         log("fun getProfile()")
         val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
 
+        loadText.postValue("Загрузка профилей")
         profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getProfile() snapshot: ${snapshot.key}")
@@ -246,6 +249,8 @@ class RepositoryFBImpl @Inject constructor(
                         if (dao.updateProfiles(updatedProfile) > 0) synthLiveData.value = ++synth
                     }
                 }
+
+                loadText.postValue("")
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -315,6 +320,7 @@ class RepositoryFBImpl @Inject constructor(
         var idUsers = 0
         var oldIdUser = 0
 
+        loadText.postValue("Отправка профиля")
         val tpovId = getTpovId()
         val profile = dao.getProfileByTpovId(tpovId)
 
@@ -361,6 +367,7 @@ class RepositoryFBImpl @Inject constructor(
                             setTpovIdFB()
 
                             log("setProfile() tpovId: $tpovId")
+
                         }
                     }.addOnFailureListener {
                         log("setProfile() error1: $it")
@@ -449,6 +456,7 @@ class RepositoryFBImpl @Inject constructor(
                             ).toProfile()
                         ).addOnSuccessListener {
                             synthLiveData.value = ++synth
+                            loadText.postValue("")
                         }.addOnFailureListener {
                             log("setProfile() $it")
                             synthLiveData.value = ++synth
@@ -520,6 +528,7 @@ class RepositoryFBImpl @Inject constructor(
         ), getQuestionDetails: Boolean = true
     ) = suspendCancellableCoroutine { continuation ->
 
+        loadText.postValue("Загрузка квестов")
         log("lplplplp 1")
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("players/read")
@@ -551,6 +560,8 @@ class RepositoryFBImpl @Inject constructor(
                                             if (getQuestionDetails) getQuestionDetails(quizItem)
                                             setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
                                             synthLiveData.value = ++synth
+
+                                            loadText.postValue("")
                                         }
                                     // Теперь вы можете работать с объектом quiz
                                 }
@@ -562,9 +573,13 @@ class RepositoryFBImpl @Inject constructor(
                         })
                     }
                     myRef.setValue(true)
+
+                    loadText.postValue("")
                     continuation.resume(Unit) {
                         // Обработка отмены после возобновления корутины
                     }
+                } else {
+                    loadText.postValue("Сервер занят, ждем..")
                 }
             }
 
@@ -615,13 +630,11 @@ class RepositoryFBImpl @Inject constructor(
                                         question.infoTranslater
                                     )
                                 )
-
                                 synthLiveData.postValue(++synth)
                             }
                         }
                     }
                 }
-
             }
 
             override fun onCancelled(error: DatabaseError) {

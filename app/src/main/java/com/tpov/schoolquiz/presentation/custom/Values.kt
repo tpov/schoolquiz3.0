@@ -1,8 +1,13 @@
 package com.tpov.schoolquiz.presentation.custom
 
-import java.util.Locale
+import androidx.lifecycle.MutableLiveData
+import java.util.*
 
 object Values {
+
+    var loadText: MutableLiveData<String> = MutableLiveData()
+    var loadProgress: MutableLiveData<Int> = MutableLiveData()
+
     fun getNameThropy(language: String): String {
         return when (language) {
             //🥇🥈️🥉🎖🏅🏆🎗️🎃🎄🎁🎧🎞️📀🪙⭐🏆🎯🎓🏰❤

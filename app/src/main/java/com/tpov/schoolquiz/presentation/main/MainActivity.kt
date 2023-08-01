@@ -54,6 +54,8 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCount
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
+import com.tpov.schoolquiz.presentation.custom.Values.loadProgress
+import com.tpov.schoolquiz.presentation.custom.Values.loadText
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -147,6 +149,18 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val swipeRefreshLayout = binding.swipeRefreshLayout
+
+        var oldLoadText = ""
+        loadText.observe(this) {
+            log("ioioioio $it")
+           // binding.tvPbLoad.visibility = View.VISIBLE
+            if (oldLoadText != it) showTextWithDelay(binding.tvPbLoad, it, 25)
+            oldLoadText = it
+        }
+
+        loadProgress.observe(this) {
+
+        }
 
         swipeRefreshLayout.setOnRefreshListener {
             if (supportFragmentManager.findFragmentById(R.id.title_fragment) is FragmentMain) {
@@ -581,9 +595,6 @@ class MainActivity : AppCompatActivity() {
         val repeatDelay = 60_000L // Задержка между повторениями (1 минута)
         var initialDelay = 1000L // Начальная задержка перед запуском анимации
         var addInitialDelay = 250L
-
-
-        showTextWithDelay(binding.tvPbLoad, "Соединение с сервером...", 50)
 
         startAnimationWithRepeat(imvStars, yRotateAnimationDuration, initialDelay, repeatDelay)
 
