@@ -21,7 +21,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getSkill
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -576,11 +576,12 @@ class QuestionViewModel @Inject constructor(
 
     private fun getNewIdQuiz(): Int {
         var i = 0
-
-        getQuizListUseCase(getTpovId()).forEach {
-            log("getNewIdQuiz: it: ${it.id}")
-            if (it.id!! in (i + 1)..100) {
-                i = it.id!!
+        runBlocking {
+            getQuizListUseCase(getTpovId()).forEach {
+                log("getNewIdQuiz: it: ${it.id}")
+                if (it.id!! in (i + 1)..100) {
+                    i = it.id!!
+                }
             }
         }
         return i + 1
@@ -600,11 +601,13 @@ class QuestionViewModel @Inject constructor(
                     stars = 0
                 )
             )
-            getQuestionByIdQuizUseCase(idQuiz).forEach {
-                log("DSEFSE, it: $it")
-                insertQuestionUseCase(it.copy(idQuiz = newIdQuizVar))
-            }
 
+            CoroutineScope(Dispatchers.IO).launch {
+                getQuestionByIdQuizUseCase(idQuiz).forEach {
+                    log("DSEFSE, it: $it")
+                    insertQuestionUseCase(it.copy(idQuiz = newIdQuizVar))
+                }
+            }
         }
         deleteQuizUseCase(idQuiz)
         deleteQuestionByIdQuizUseCase(idQuiz)

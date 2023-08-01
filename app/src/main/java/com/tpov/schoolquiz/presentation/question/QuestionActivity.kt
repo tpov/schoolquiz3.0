@@ -111,7 +111,8 @@ class QuestionActivity : AppCompatActivity() {
             cheatButton.setOnClickListener { view ->
                 log("okokowkdowd 1")
                 if (viewModel.getProfile().countLife!! > 0 && !viewModel.hardQuestion
-                    || viewModel.getProfile().countGoldLife!! > 0 && viewModel.hardQuestion) {
+                    || viewModel.getProfile().countGoldLife!! > 0 && viewModel.hardQuestion
+                ) {
                     val answerIsTrue =
                         viewModel.questionListThis[viewModel.currentIndex].answerQuestion
                     val intent = CheatActivity.newIntent(this@QuestionActivity, answerIsTrue)
@@ -121,7 +122,8 @@ class QuestionActivity : AppCompatActivity() {
                         ActivityOptions.makeClipRevealAnimation(view, 0, 0, view.width, view.height)
                     startActivityForResult(intent, REQUEST_CODE_CHEAT, options.toBundle())
                 } else {
-                    Toast.makeText(this@QuestionActivity, "Недостаточно жизней", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@QuestionActivity, "Недостаточно жизней", Toast.LENGTH_LONG)
+                        .show()
                 }
             }
 
@@ -351,18 +353,27 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun insertQuestionsNewEvent() {
 
-        viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt())
-            .observe(this@QuestionActivity) { list ->
+        CoroutineScope(Dispatchers.Main).launch {
+            viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt())
+                .observe(this@QuestionActivity) { list ->
 
-                list.forEach { quiz ->
+                    list.forEach { quiz ->
 
-                    if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
-                        viewModel.getQuestionByIdQuizUseCase(quiz.id!!).forEach {
-                            viewModel.insertQuestionUseCase(it.copy(id = null, idQuiz = quiz.id!!))
+                        CoroutineScope(Dispatchers.IO).launch {
+                            if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
+                                viewModel.getQuestionByIdQuizUseCase(quiz.id!!).forEach {
+                                    viewModel.insertQuestionUseCase(
+                                        it.copy(
+                                            id = null,
+                                            idQuiz = quiz.id!!
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-            }
+        }
     }
 
     private fun springAnim(next: Boolean) = with(binding) {

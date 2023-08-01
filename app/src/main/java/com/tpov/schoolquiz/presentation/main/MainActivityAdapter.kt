@@ -22,7 +22,10 @@ import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
 import kotlinx.android.synthetic.main.activity_main_item.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 
@@ -391,7 +394,10 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )
                     )
-                    translateText(mainViewModel, context, quizEntity)
+
+                    CoroutineScope(Dispatchers.IO).launch {
+                        translateText(mainViewModel, context, quizEntity)
+                    }
                     popupWindow.dismiss()
                 }
                 .setNegativeButton("Посмотреть рекламу", null)

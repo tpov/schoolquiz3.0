@@ -15,7 +15,7 @@ import java.util.*
 
 object TranslateGoogle {
     @OptIn(InternalCoroutinesApi::class)
-    fun translateText(
+    suspend fun translateText(
         viewModel: MainActivityViewModel,
         context: Context,
         quizEntity: QuizEntity

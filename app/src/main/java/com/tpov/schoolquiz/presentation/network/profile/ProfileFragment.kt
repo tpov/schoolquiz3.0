@@ -165,7 +165,6 @@ class ProfileFragment : BaseFragment() {
         view.findViewById<ImageButton>(R.id.imb_download).setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 viewModel.getQuizzFB()
-                viewModel.getTranslate()
                 viewModel.getPlayersList()
             }
         }
@@ -205,20 +204,6 @@ class ProfileFragment : BaseFragment() {
                             viewModel.getPlayersList()
                         }
                         isExecuted[3] = true
-                    }
-                }
-
-                5 -> {
-                    if (!isExecuted[4]) {
-                        CoroutineScope(Dispatchers.IO).launch { viewModel.setQuestionsFB() }
-                        isExecuted[4] = true
-                    }
-                }
-
-                6 -> {
-                    if (!isExecuted[5]) {
-                        CoroutineScope(Dispatchers.IO).launch { viewModel.setEventQuiz() }
-                        isExecuted[5] = true
                     }
                 }
             }

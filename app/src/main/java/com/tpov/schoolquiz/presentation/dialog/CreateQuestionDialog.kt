@@ -26,7 +26,10 @@ import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import java.util.*
 
 class CreateQuestionDialog : DialogFragment() {
@@ -55,8 +58,11 @@ class CreateQuestionDialog : DialogFragment() {
             dialogView.add_question_button.setOnClickListener {
                 addQuestionItem()
             }
-            mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-                addFilledQuestionItem(questionEntity)
+
+            CoroutineScope(Dispatchers.IO).launch {
+                mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+                    addFilledQuestionItem(questionEntity)
+                }
             }
         }
 
@@ -311,7 +317,10 @@ class CreateQuestionDialog : DialogFragment() {
             if (this.idQuiz == -1) questionLang
             else (mainActivityViewModel.getQuizById(this.idQuiz).languages)
         )
-        mainActivityViewModel.removePlaceInUserQuiz()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            mainActivityViewModel.removePlaceInUserQuiz()
+        }
 
         // Сохранение quizEntity и questions в базу данных
         mainActivityViewModel.insertQuiz(quizEntity)

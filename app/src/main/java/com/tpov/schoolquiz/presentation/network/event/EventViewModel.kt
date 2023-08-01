@@ -10,7 +10,7 @@ import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 
@@ -42,9 +42,9 @@ class EventViewModel @Inject constructor(
 
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
-    fun getQuestionItem(idQuestion: Int) = getQuestionListUseCase().filter { it.id == idQuestion }
+    suspend fun getQuestionItem(idQuestion: Int) = getQuestionListUseCase().filter { it.id == idQuestion }
 
-    fun getQuestionList(numQuestion: Int, idQuiz: Int) =
+    suspend fun getQuestionList(numQuestion: Int, idQuiz: Int) =
         getQuestionListUseCase().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion}
 
     fun getProfile(): ProfileEntity {
@@ -56,13 +56,13 @@ class EventViewModel @Inject constructor(
         return getProfileUseCase(tpovId)
     }
 
-    fun loadQuests() {
+    suspend fun loadQuests() {
         log("loadQuests")
         // Здесь загружайте список квестов и устанавливайте значение для questsLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
 
-    fun loadQuestion(idQuestion: Int) {
+    suspend fun loadQuestion(idQuestion: Int) {
         log("getQuestionListUseCase() :${getQuestionListUseCase()}")
         // Здесь загружайте вопрос и устанавливайте значение для questionLiveData
         questionLiveData.value = getQuestionListUseCase()
@@ -72,13 +72,15 @@ class EventViewModel @Inject constructor(
     fun getQuizList() {
         log("fun getQuizList")
 
-        getQuizEventUseCase().forEach {
-            when (it.event) {
-                2 -> quiz2List.add(it)
-                3 -> quiz3List.add(it)
-                4 -> quiz4List.add(it)
+        runBlocking {
+            getQuizEventUseCase().forEach {
+                when (it.event) {
+                    2 -> quiz2List.add(it)
+                    3 -> quiz3List.add(it)
+                    4 -> quiz4List.add(it)
+                }
+                updateEventList.postValue(valUpdateEventList++)
             }
-            updateEventList.postValue(valUpdateEventList++)
         }
 
         log("getQuizList quiz2List: $quiz2List")
@@ -173,17 +175,20 @@ class EventViewModel @Inject constructor(
             }
 
             log("dwadwad21: ${it.nameQuestion}")
-            if (it.nameQuestion == "") deleteQuestionUseCase(it.id!!)
-            else insertQuestionUseCase(
-                it.copy(
-                    numQuestion = questionFirst.numQuestion,
-                    answerQuestion = questionFirst.answerQuestion,
-                    hardQuestion = questionFirst.hardQuestion,
-                    lvlTranslate = getProfileLvlTranslate(),
-                    idQuiz = questionFirst.idQuiz,
-                    infoTranslater = hasTpovIdZeroAtEnd(it.infoTranslater)
+
+            CoroutineScope(Dispatchers.IO).launch {
+                if (it.nameQuestion == "") deleteQuestionUseCase(it.id!!)
+                else insertQuestionUseCase(
+                    it.copy(
+                        numQuestion = questionFirst.numQuestion,
+                        answerQuestion = questionFirst.answerQuestion,
+                        hardQuestion = questionFirst.hardQuestion,
+                        lvlTranslate = getProfileLvlTranslate(),
+                        idQuiz = questionFirst.idQuiz,
+                        infoTranslater = hasTpovIdZeroAtEnd(it.infoTranslater)
+                    )
                 )
-            )
+            }
             val word = it.language
             val lvlTranslate = it.lvlTranslate
 

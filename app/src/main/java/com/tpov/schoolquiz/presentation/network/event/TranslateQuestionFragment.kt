@@ -15,7 +15,10 @@ import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -87,10 +90,11 @@ class TranslateQuestionFragment : BaseFragment() {
             binding.recyclerViewQuestions.layoutManager = LinearLayoutManager(requireContext())
             binding.recyclerViewQuestions.adapter = translationAdapter
 
-            var question = viewModel.getQuestionItem(idQuestion)[0]
-            questions =
-                viewModel.getQuestionList(question.numQuestion, question.idQuiz).toMutableList()
-
+            CoroutineScope(Dispatchers.IO).launch {
+                var question = viewModel.getQuestionItem(idQuestion)[0]
+                questions =
+                    viewModel.getQuestionList(question.numQuestion, question.idQuiz).toMutableList()
+            }
             binding.buttonAddTranslation.setOnClickListener {
                 log("Add Translation button clicked")
                 translationAdapter.addNewQuestion()
@@ -141,7 +145,9 @@ class TranslateQuestionFragment : BaseFragment() {
                 }
             }
 
-            viewModel.loadQuests()
+            CoroutineScope(Dispatchers.IO).launch {
+                viewModel.loadQuests()
+            }
             binding.buttonAddTranslation.setOnClickListener {
                 log("Add Translation button clicked")
                 translationAdapter.addNewQuestion()

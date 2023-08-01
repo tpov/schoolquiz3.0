@@ -62,23 +62,23 @@ interface QuizDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertQuestionDB(name: QuestionEntity)
 
-    fun insertQuestion(note: QuestionEntity) {
+    suspend fun insertQuestion(note: QuestionEntity) {
         log("fun insertQuestion $note")
         insertQuestionDB(note)
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertQuizListDB(note: List<QuizEntity>)
+    suspend fun insertQuizListDB(note: List<QuizEntity>)
 
-    fun insertQuizList(note: List<QuizEntity>) {
+    suspend fun insertQuizList(note: List<QuizEntity>) {
         log("fun insertQuizList $note")
         insertQuizListDB(note)
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertQuestionListDB(name: List<QuestionEntity>)
+    suspend fun insertQuestionListDB(name: List<QuestionEntity>)
 
-    fun insertQuestionList(note: List<QuestionEntity>) {
+    suspend fun insertQuestionList(note: List<QuestionEntity>) {
         log("fun insertQuestionList $note")
         insertQuestionListDB(note)
     }
@@ -116,7 +116,7 @@ interface QuizDao {
         return getTpovIdByUidDB(uid)
     }
 
-    fun getQuizList(tpovId: Int): List<QuizEntity> {
+    suspend fun getQuizList(tpovId: Int): List<QuizEntity> {
         log("fun getQuizList tpovId: $tpovId, return: ${getQuizListDB(tpovId)}")
         return getQuizListDB(tpovId)
     }
@@ -142,7 +142,7 @@ interface QuizDao {
     fun getTpovIdByUidDB(uid: String?): ProfileEntity
 
     @Query("SELECT * FROM front_list WHERE tpovId LIKE :tpovId")
-    fun getQuizListDB(tpovId: Int): List<QuizEntity>
+    suspend fun getQuizListDB(tpovId: Int): List<QuizEntity>
 
     @Query("""
     SELECT new_user_table.*
@@ -152,12 +152,12 @@ WHERE front_list.event IN (5, 6, 7, 8)
 """)
     fun getTranslateEventDB(): List<QuestionEntity>
 
-    fun getQuizEvent(): List<QuizEntity> {
+    suspend fun getQuizEvent(): List<QuizEntity> {
         log("fun getQuizEvent return: ${getQuizEventDB()}")
         return getQuizEventDB()
     }
 
-    fun getQuestionList(): List<QuestionEntity> {
+    suspend fun getQuestionList(): List<QuestionEntity> {
         log("fun getQuestionList return: ${getQuestionListDB()}")
         return getQuestionListDB()
     }
@@ -167,7 +167,7 @@ WHERE front_list.event IN (5, 6, 7, 8)
         return getQuestionDetailListDB()
     }
 
-    fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>> {
+    suspend fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>> {
         log("fun getQuizLiveData, tpovId: $tpovId, return: ${getQuizListDB(tpovId)}")
         return getQuizLiveDataDB(tpovId)
     }
@@ -182,12 +182,12 @@ WHERE front_list.event IN (5, 6, 7, 8)
         return getQuizListIdByTpovIdDB(tpovId)
     }
 
-    fun getQuizTpovIdById(id: Int): Int {
+    suspend fun getQuizTpovIdById(id: Int): Int {
         log("fun getQuizTpovIdById, id: $id, return: ${getQuizTpovIdByIdDB(id)}")
         return getQuizTpovIdByIdDB(id)
     }
 
-    fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
+    suspend fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
         log(
             "fun getQuestionDetailListByNameQuiz, nameQuiz: $nameQuiz, return: ${
                 getQuestionDetailListByNameQuizDB(
@@ -198,7 +198,7 @@ WHERE front_list.event IN (5, 6, 7, 8)
         return getQuestionDetailListByNameQuizDB(nameQuiz)
     }
 
-    fun getQuestionByIdQuiz(nameQuiz: String): List<QuestionEntity> {
+    suspend fun getQuestionByIdQuiz(nameQuiz: String): List<QuestionEntity> {
         log("fun getQuestionByIdQuiz, nameQuiz: $nameQuiz, return: ${getQuestionByIdQuizDB(nameQuiz)}")
         return getQuestionByIdQuizDB(nameQuiz)
     }
@@ -244,16 +244,16 @@ WHERE front_list.event IN (5, 6, 7, 8)
         return getQuestionByIdQuizDB(id)
     }
 
-    fun getQuestionDetailByIdQuiz(id: Int): List<QuestionDetailEntity> {
+    suspend fun getQuestionDetailByIdQuiz(id: Int): List<QuestionDetailEntity> {
         log("fun getQuestionDetailByIdQuiz, id: $id, return: ${getQuestionDetailByIdQuizDB(id)}")
         return getQuestionDetailByIdQuizDB(id)
     }
 
     @Query("SELECT * FROM front_list")
-    fun getQuizEventDB(): List<QuizEntity>
+    suspend fun getQuizEventDB(): List<QuizEntity>
 
     @Query("SELECT * FROM new_user_table")
-    fun getQuestionListDB(): List<QuestionEntity>
+    suspend fun getQuestionListDB(): List<QuestionEntity>
 
     @Query("SELECT * FROM table_data")
     fun getQuestionDetailListDB(): List<QuestionDetailEntity>
@@ -283,7 +283,7 @@ WHERE front_list.event IN (5, 6, 7, 8)
     fun getQuestionDetailListByNameQuizDB(nameQuiz: String): List<QuestionDetailEntity>
 
     @Query("SELECT * FROM new_user_table WHERE idQuiz LIKE :nameQuiz")
-    fun getQuestionByIdQuizDB(nameQuiz: String): List<QuestionEntity>
+    suspend fun getQuestionByIdQuizDB(nameQuiz: String): List<QuestionEntity>
 
     @Query("SELECT * FROM profiles")
     fun getAllProfilesListDB(): ProfileEntity
@@ -310,7 +310,7 @@ WHERE front_list.event IN (5, 6, 7, 8)
     fun getQuestionByIdQuizDB(id: Int): List<QuestionEntity>
 
     @Query("SELECT * FROM table_data WHERE idQuiz = :id")
-    fun getQuestionDetailByIdQuizDB(id: Int): List<QuestionDetailEntity>
+    suspend fun getQuestionDetailByIdQuizDB(id: Int): List<QuestionDetailEntity>
 
     @Query("DELETE FROM new_user_table WHERE idQuiz IS :id")
     fun deleteQuestionByIdQuizDB(id: Int)

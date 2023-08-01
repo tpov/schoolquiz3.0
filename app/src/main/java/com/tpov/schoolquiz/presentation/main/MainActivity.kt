@@ -34,6 +34,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
@@ -132,7 +133,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun calculateQuizzResult() {
-        viewModel.setPercentResultAllQuiz()
+
+        lifecycleScope.launch {
+            viewModel.setPercentResultAllQuiz()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

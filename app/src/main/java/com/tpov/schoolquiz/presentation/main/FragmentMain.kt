@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
@@ -29,7 +30,10 @@ import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
 import kotlinx.android.synthetic.main.title_fragment.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -83,10 +87,14 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.getProfile()
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
-        tv_number_place_user_quiz.text = mainViewModel.getCountPlaceForUserQuiz().toString()
+        lifecycleScope.launchWhenStarted {
+            val countPlace = mainViewModel.getCountPlaceForUserQuiz()
+            tv_number_place_user_quiz.text = countPlace.toString()
+
         if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
             binding.fabAddItem.isClickable = false
             binding.fabAddItem.isEnabled = false
+        }
         }
 
         when (isMyQuiz) {
@@ -338,52 +346,54 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         nolics: Int
     ) {
         if (id == -1) {
-            if (mainViewModel.getQuizList().isNotEmpty()) {
-                try {
+            lifecycleScope.launchWhenStarted {
+                if (mainViewModel.getQuizList().isNotEmpty()) {
+                    try {
 
-                    val randQuiz = mainViewModel.getQuizList().filter {
-                        it.event == 5 && it.languages.contains(Locale.getDefault().language)
-                    }.random()
+                        val randQuiz = mainViewModel.getQuizList().filter {
+                            it.event == 5 && it.languages.contains(Locale.getDefault().language)
+                        }.random()
 
-                    val alertDialog = AlertDialog.Builder(activity)
-                        .setTitle("Поиск")
-                        .setMessage("Пройти рандомный квест из этого списка")
-                        .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+                        val alertDialog = AlertDialog.Builder(activity)
+                            .setTitle("Поиск")
+                            .setMessage("Пройти рандомный квест из этого списка")
+                            .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
 
-                            mainViewModel.updateProfileUseCase(
-                                mainViewModel.getProfile().copy(
-                                    count = mainViewModel.getProfileCount()!! - 33,
-                                    pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                                mainViewModel.updateProfileUseCase(
+                                    mainViewModel.getProfile().copy(
+                                        count = mainViewModel.getProfileCount()!! - 33,
+                                        pointsNolics = mainViewModel.getProfileNolic()!! - nolics
+                                    )
                                 )
-                            )
 
-                            val intent = Intent(activity, QuestionActivity::class.java)
-                            intent.putExtra(NAME_USER, "user")
-                            intent.putExtra(ID_QUIZ, randQuiz.id)
-                            intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
-                            startActivityForResult(intent, REQUEST_CODE)
+                                val intent = Intent(activity, QuestionActivity::class.java)
+                                intent.putExtra(NAME_USER, "user")
+                                intent.putExtra(ID_QUIZ, randQuiz.id)
+                                intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
+                                startActivityForResult(intent, REQUEST_CODE)
+                            }
+                            .setNegativeButton("Отмена", null)
+                            .create()
+
+                        alertDialog.setOnShowListener { dialog ->
+                            val positiveButton =
+                                (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                            val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+
+                            positiveButton.setTextColor(Color.WHITE)
+                            negativeButton.setTextColor(Color.YELLOW)
+
+                            dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
                         }
-                        .setNegativeButton("Отмена", null)
-                        .create()
 
-                    alertDialog.setOnShowListener { dialog ->
-                        val positiveButton =
-                            (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
-                        val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-                        positiveButton.setTextColor(Color.WHITE)
-                        negativeButton.setTextColor(Color.YELLOW)
-
-                        dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                        alertDialog.show()
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Не найдено переведенного квеста",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
-
-                    alertDialog.show()
-                } catch (e: Exception) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Не найдено переведенного квеста",
-                        Toast.LENGTH_LONG
-                    ).show()
                 }
             }
         } else {
@@ -439,24 +449,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.updateQuizUseCase(quizEntity.copy(showItemMenu = false))
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
-        mainViewModel.getQuizLiveData().observe(this) { list ->
+        lifecycleScope.launchWhenStarted {
+        mainViewModel.getQuizLiveData().observe(this@FragmentMain) { list ->
             log("getQuizLiveData.observe")
+            CoroutineScope(Dispatchers.IO).launch {
             list.forEach { quiz ->
-                log(
-                    "getQuizLiveData.observe question by id: ${
-                        mainViewModel.getQuestionListByIdQuiz(
-                            quiz.id ?: 0
-                        ).isNullOrEmpty()
-                    }"
-                )
-                log(
-                    "getQuizLiveData.observe question is empty: ${
-                        mainViewModel.getQuestionListByIdQuiz(
-                            quiz.id ?: 0
-                        )
-                    }"
-                )
-                log("getQuizLiveData.observe quiz: ${quiz}")
                 if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
                     mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
                         mainViewModel.insertQuestion(
@@ -466,7 +463,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                             )
                         )
                     }
-                }
+                }}
             }
             var setQuestion = false
             if (list.isEmpty()) setQuestion = true
@@ -475,7 +472,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
             if (!setQuestion) mainViewModel.setQuestionsFB()
         }
-    }
+    }}
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

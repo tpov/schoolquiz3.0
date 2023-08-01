@@ -5,11 +5,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
-import com.tpov.schoolquiz.data.database.entities.ChatEntity
-import com.tpov.schoolquiz.data.database.entities.PlayersEntity
-import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
@@ -17,10 +13,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.setting.SharedPrefSettings
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
 
@@ -29,14 +22,11 @@ class MainActivityViewModel @Inject constructor(
     private val context: Context,
     private val insertQuizUseCase: InsertQuizUseCase,
     private val getQuizLiveDataUseCase: GetQuizLiveDataUseCase,
-    private val getQuiz8FBUseCase: GetQuiz8FBUseCase,
-    private val getQuestionDetail8FBUseCase: GetQuestionDetail8FBUseCase,
-    private val getQuestion8FBUseCase: GetQuestion8FBUseCase,
+    private val getQuizUseCase: GetQuizUseCase,
+    private val getQuiz8UseCase: GetQuiz8UseCase,
+    private val setQuizUseCase: SetQuizUseCase,
     private val getIdQuizByNameQuizUseCase: GetIdQuizByNameQuizUseCase,
     private val insertQuestionUseCase: InsertQuestionUseCase,
-    private val setQuizFBUseCase: SetQuizDataFBUseCase,
-    private val setQuestionFBUseCase: SetQuestionFBUseCase,
-    private val setQuestionDetailFBUseCase: SetQuestionDetailFBUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val insertProfileUseCase: InsertProfileUseCase,
     private val getQuestionListUseCase: GetQuestionListUseCase,
@@ -83,7 +73,7 @@ class MainActivityViewModel @Inject constructor(
         updateQuizUseCase(quizEntity)
     }
 
-    fun getQuestionList(): List<QuestionEntity> {
+    suspend fun getQuestionList(): List<QuestionEntity> {
         return getQuestionListUseCase()
     }
 
@@ -120,12 +110,12 @@ class MainActivityViewModel @Inject constructor(
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            getQuiz8FBUseCase()
+            getQuiz8UseCase()
         }
     }
 
 
-    fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
+    suspend fun getQuestionListByIdQuiz(idQuiz: Int): List<QuestionEntity> {
         return getQuestionListUseCase().filter { it.idQuiz == idQuiz }
     }
 
@@ -176,7 +166,10 @@ class MainActivityViewModel @Inject constructor(
 
     fun insertQuestion(questionEntity: QuestionEntity) {
         log("fun insertQuestionList")
-        insertQuestionUseCase(questionEntity)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            insertQuestionUseCase(questionEntity)
+        }
     }
 
     fun insertQuizEvent(quizEntity: QuizEntity) {
@@ -191,20 +184,22 @@ class MainActivityViewModel @Inject constructor(
 
     fun setQuestionsFB() {
         log("fun setQuestionsFB")
-        setQuestionFBUseCase()
-        setQuestionDetailFBUseCase()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            setQuizUseCase()
+        }
     }
 
-    fun getQuizListLiveData(): LiveData<List<QuizEntity>> {
+    suspend fun getQuizListLiveData(): LiveData<List<QuizEntity>> {
         log("fun getQuizList tpovId: ${getTpovId()}")
         return getQuizLiveDataUseCase.getQuizUseCase(getTpovId())
     }
 
-    fun getQuizLiveData(): LiveData<List<QuizEntity>> {
+    suspend fun getQuizLiveData(): LiveData<List<QuizEntity>> {
         return getQuizListLiveData()
     }
 
-    fun getQuizList(): List<QuizEntity> {
+    suspend fun getQuizList(): List<QuizEntity> {
         return getQuizEventUseCase()
     }
 
@@ -212,7 +207,7 @@ class MainActivityViewModel @Inject constructor(
         return getProfileUseCaseFun(getTpovId())
     }
 
-    fun getCountPlaceForUserQuiz(): Int {
+    suspend fun getCountPlaceForUserQuiz(): Int {
         return try {
             val placeQuiz = getProfileUseCase(getTpovId()).buyQuizPlace
             val countUserQuiz = getQuizList().filter { it.event == 1 && it.tpovId == getTpovId() }
@@ -222,7 +217,7 @@ class MainActivityViewModel @Inject constructor(
         }
     }
 
-    fun removePlaceInUserQuiz() {
+    suspend fun removePlaceInUserQuiz() {
         log("fgjesdriofjeskl getCountPlaceForUserQuiz():${getCountPlaceForUserQuiz()}")
         placeLiveData.value = getCountPlaceForUserQuiz() - 1
     }
@@ -238,12 +233,13 @@ class MainActivityViewModel @Inject constructor(
 
     fun getNewIdQuiz(): Int {
         var i = 0
+        runBlocking {
         getQuizListUseCase(getTpovId()).forEach {
             log("getNewIdQuiz: it: ${it.id}")
             if (it.id!! in (i + 1)..100) {
                 i = it.id!!
             }
-        }
+        }}
         return i + 1
     }
 
@@ -381,7 +377,7 @@ class MainActivityViewModel @Inject constructor(
         return profile.timeInGamesInChat ?: 0
     }
 
-    fun setPercentResultAllQuiz() {
+    suspend fun setPercentResultAllQuiz() {
         getQuizEventUseCase().forEach { quiz ->
             var perc = mutableListOf<Int>()
             var persentAll: Int

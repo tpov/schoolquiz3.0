@@ -16,7 +16,10 @@ import com.tpov.schoolquiz.presentation.custom.CoastValues.COEF_COAST_GOOGLE_TRA
 import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
 import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import java.util.*
 
 interface DataObserver {
@@ -222,7 +225,9 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                     )
                 )
-                translateText(viewModel, context, quizEntity)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                translateText(viewModel, context, quizEntity)}
                 popupWindow.dismiss()
             }
             .setNegativeButton("Посмотреть рекламу", null)
