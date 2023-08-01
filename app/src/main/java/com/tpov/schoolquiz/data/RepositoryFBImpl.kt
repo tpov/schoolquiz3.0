@@ -504,11 +504,180 @@ class RepositoryFBImpl @Inject constructor(
         getQuiz()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun waitForReadToBecomeTrue(): Boolean = try {
+        withTimeout(60000L) {
+            suspendCancellableCoroutine<Boolean> { continuation ->
+                val database = FirebaseDatabase.getInstance()
+                val myRef = database.getReference("players/read")
+
+                val listener = object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val value = dataSnapshot.getValue(Boolean::class.java)
+                        if (value == true) {
+                            myRef.removeEventListener(this)
+                            continuation.resume(true) {
+                                // Обработка отмены после возобновления корутины
+                            }
+                        }
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                    }
+                }
+
+                myRef.addValueEventListener(listener)
+
+                continuation.invokeOnCancellation {
+                    myRef.removeEventListener(listener)
+                }
+            }
+        }
+    } catch (e: TimeoutCancellationException) {
+        setRead(true)
+        true
+    }
+
+    private fun setRead(value: Boolean) {
+        val database = FirebaseDatabase.getInstance()
+        val myRef = database.getReference("players/read")
+        myRef.setValue(value)
+    }
+
     override suspend fun setAllQuiz() {
 
-        dao.getQuizList(getTpovId()).forEach {
+        if (waitForReadToBecomeTrue()) {
 
+            val database = FirebaseDatabase.getInstance()
+            loadText.postValue("Отправка квестов на сервер")
+
+            dao.getQuizList(getTpovId()).forEach {
+                val eventQuiz = it.event
+                val quizRef = database.getReference(
+                    if (eventQuiz == 1) "quiz1/${getTpovId()}" else "quiz$eventQuiz"
+                )
+
+                val profileRef = FirebaseDatabase.getInstance().getReference("players/idQuiz")
+                profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+
+                        val newIdQuiz = if (it.id!! < 100) {
+                            val id = snapshot.getValue(Int::class.java)?.plus(1)
+                            profileRef.setValue(id)
+                            id
+                        } else it.id
+
+                        quizRef.child(newIdQuiz.toString())
+                            .addListenerForSingleValueEvent(object : ValueEventListener {
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    val newVersionQuiz =
+                                        snapshot.child("versionQuiz").getValue(Int::class.java)
+
+                                    if (newVersionQuiz!! < getVersionQuiz(newIdQuiz.toString())) {
+                                        val newQuiz = Quiz(
+                                            nameQuiz = it.nameQuiz,
+                                            tpovId = it.tpovId,
+                                            data = it.data,
+                                            versionQuiz = newVersionQuiz,
+                                            picture = it.picture!!,
+                                            event = eventQuiz,
+                                            numQ = it.numQ,
+                                            numHQ = it.numHQ,
+                                            starsAllPlayer = snapshot.child("starsAllPlayer")
+                                                .getValue(Int::class.java)!!,
+                                            starsPlayer = snapshot.child("starsPlayer")
+                                                .getValue(Int::class.java)!!,
+                                            ratingPlayer = it.ratingPlayer,
+                                            userName = it.userName,
+                                            languages = it.languages
+
+                                        )
+                                        quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
+                                        dao.deleteQuizById(it.id!!)
+                                        dao.insertQuiz(
+                                            newQuiz.toQuizEntity(
+                                                newIdQuiz!!,
+                                                it.stars,
+                                                it.starsAll,
+                                                it.rating,
+                                                it.picture
+                                            )
+                                        )
+
+                                        setQuestions(newIdQuiz, eventQuiz, it.id!!)
+                                        setQuestionDetails(newIdQuiz, eventQuiz, it.id!!)
+                                    }
+                                }
+
+                                override fun onCancelled(error: DatabaseError) {}
+                            })
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+
+                    }
+                })
+            }
+
+            CoroutineScope(Dispatchers.IO).launch {
+                while (true) {
+                    var exit = true
+                    dao.getQuizList(getTpovId()).forEach {
+                        if (it.id!! < 100) exit = false
+                    }
+
+                    if (exit) {
+                        setRead(true)
+                        loadText.postValue("")
+                        synthLiveData.value = ++synth
+
+                        break
+                    }
+                    delay(300)
+                }
+            }
         }
+    }
+
+    private fun setQuestions(newIdQuiz: Int?, eventQuiz: Int?, id: Int) {
+        val questionRef = FirebaseDatabase.getInstance().getReference(
+            if (eventQuiz != 1) "question$eventQuiz/$newIdQuiz"
+            else "question1/${getTpovId()}/$newIdQuiz"
+        )
+
+        dao.getQuestionByIdQuiz(id).forEach {
+            questionRef.child(newIdQuiz.toString())
+                .child(if (it.hardQuestion) "-${it.numQuestion}" else "${it.numQuestion}")
+                .child(if (it.lvlTranslate <= 100) "-${it.language}" else "${it.language}")
+                .setValue(it.toQuestion())
+
+            dao.deleteQuestion(id)
+            CoroutineScope(Dispatchers.IO).launch {
+                dao.insertQuestion(it.copy(id = newIdQuiz))
+            }
+        }
+    }
+
+    private fun setQuestionDetails(newIdQuiz: Int?, eventQuiz: Int?, id: Int) {
+        val questionDetailRef = FirebaseDatabase.getInstance().getReference(
+            if (eventQuiz != 1) "questionDetail$eventQuiz/$newIdQuiz"
+            else "question1/${getTpovId()}/$newIdQuiz"
+        )
+
+        CoroutineScope(Dispatchers.Main).launch {
+            dao.getQuestionDetailByIdQuiz(id).forEach {
+                questionDetailRef.setValue(it)
+
+                dao.deleteQuestionDetailByIdQuiz(id)
+                dao.insertQuizDetail(it.copy(id = newIdQuiz))
+            }
+        }
+    }
+
+    private fun setReadToFalse() {
+        val database = FirebaseDatabase.getInstance()
+        val myRef = database.getReference("players/read")
+        myRef.setValue(false)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -526,74 +695,45 @@ class RepositoryFBImpl @Inject constructor(
             ) "quiz4" else null,
             "quiz5", "quiz6", "quiz7", "quiz8"
         ), getQuestionDetails: Boolean = true
-    ) = suspendCancellableCoroutine { continuation ->
-
+    ) {
         loadText.postValue("Загрузка квестов")
-        log("lplplplp 1")
-        val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("players/read")
 
-        val listener = object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                log("lplplplp 2")
-                val value = dataSnapshot.getValue(Boolean::class.java)
-                if (value == true) {
-                    myRef.removeEventListener(this)
-                    myRef.setValue(false)
+        if (waitForReadToBecomeTrue()) { // Мы дождались, пока read станет true
+            pathQuiz.forEach { quizItem ->
+                val database = FirebaseDatabase.getInstance()
+                val quizRef = database.getReference(quizItem!!)
 
-                    pathQuiz.forEach { quizItem ->
-
-                        val database = FirebaseDatabase.getInstance()
-                        val quizRef = database.getReference(quizItem!!)
-
-                        quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                                for (quizSnapshot in dataSnapshot.children) {
-                                    val idQuiz = quizSnapshot.key?.toInt() ?: 0
-                                    val quiz =
-                                        quizSnapshot.getValue(Quiz::class.java) // Замените Quiz на класс вашего объекта
-                                    if (quiz?.versionQuiz!! > getVersionQuiz(idQuiz.toString()))
-                                        savePictureToLocalDirectory(quiz.picture) {
-
-                                            dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
-                                            getQuestions(quizItem)
-                                            if (getQuestionDetails) getQuestionDetails(quizItem)
-                                            setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
-                                            synthLiveData.value = ++synth
-
-                                            loadText.postValue("")
-                                        }
-                                    // Теперь вы можете работать с объектом quiz
+                quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        for (quizSnapshot in dataSnapshot.children) {
+                            val idQuiz = quizSnapshot.key?.toInt() ?: 0
+                            val quiz =
+                                quizSnapshot.getValue(Quiz::class.java) // Замените Quiz на класс вашего объекта
+                            if (quiz?.versionQuiz!! > getVersionQuiz(idQuiz.toString()))
+                                savePictureToLocalDirectory(quiz.picture) {
+                                    dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
+                                    getQuestions(quizItem)
+                                    if (getQuestionDetails) getQuestionDetails(quizItem)
+                                    setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
+                                    synthLiveData.value = ++synth
+                                    loadText.postValue("")
                                 }
-                            }
-
-                            override fun onCancelled(error: DatabaseError) {
-                                // Ошибка чтения данных
-                            }
-                        })
+                            // Теперь вы можете работать с объектом quiz
+                        }
                     }
-                    myRef.setValue(true)
 
-                    loadText.postValue("")
-                    continuation.resume(Unit) {
-                        // Обработка отмены после возобновления корутины
+                    override fun onCancelled(error: DatabaseError) {
+                        // Ошибка чтения данных
                     }
-                } else {
-                    loadText.postValue("Сервер занят, ждем..")
-                }
+                })
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                log("lplplplp 2error: $error")
-            }
-        }
-
-        myRef.addValueEventListener(listener)
-
-        continuation.invokeOnCancellation {
-            myRef.removeEventListener(listener)
+            setReadToFalse() // Устанавливаем read обратно в false
+            loadText.postValue("")
+        } else {
+            loadText.postValue("Сервер занят, ждем..")
         }
     }
+
 
     fun getQuestions(pathQuiz: String) {
         val pathQuestion = when (pathQuiz) {
