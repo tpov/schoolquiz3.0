@@ -629,7 +629,7 @@ class RepositoryFBImpl @Inject constructor(
                     if (exit) {
                         setRead(true)
                         loadText.postValue("")
-                        synthLiveData.value = ++synth
+                        synthLiveData.postValue(++synth)
 
                         break
                     }
