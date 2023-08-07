@@ -20,8 +20,8 @@ android {
         applicationId "com.tpov.schoolquiz"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 3006
-        versionName "3.0.6"
+        versionCode 3007
+        versionName "3.0.7"
 
         javaCompileOptions {
             annotationProcessorOptions {
