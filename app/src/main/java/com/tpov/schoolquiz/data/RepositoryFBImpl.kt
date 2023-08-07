@@ -697,15 +697,19 @@ class RepositoryFBImpl @Inject constructor(
         ), getQuestionDetails: Boolean = true
     ) {
         loadText.postValue("Загрузка квестов")
+        log("wdwdwdw 1")
 
         if (waitForReadToBecomeTrue()) { // Мы дождались, пока read станет true
+            log("wdwdwdw 2")
             pathQuiz.forEach { quizItem ->
+                log("wdwdwdw 3")
                 val database = FirebaseDatabase.getInstance()
                 val quizRef = database.getReference(quizItem!!)
 
                 quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         for (quizSnapshot in dataSnapshot.children) {
+                            log("wdwdwdw 4")
                             val idQuiz = quizSnapshot.key?.toInt() ?: 0
                             val quiz =
                                 quizSnapshot.getValue(Quiz::class.java) // Замените Quiz на класс вашего объекта
@@ -727,7 +731,7 @@ class RepositoryFBImpl @Inject constructor(
                     }
                 })
             }
-            setReadToFalse() // Устанавливаем read обратно в false
+            setRead(true) // Устанавливаем read обратно в false
             loadText.postValue("")
         } else {
             loadText.postValue("Сервер занят, ждем..")
