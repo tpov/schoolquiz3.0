@@ -22,7 +22,7 @@ data class ChatEntity(
     val importance: Int,
 
     @ColumnInfo(name = "personalSms")
-    val personalSms: Int,
+    val personalSms: Int = 0,
 
     @ColumnInfo(name = "icon")
     val icon: String,

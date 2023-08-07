@@ -17,21 +17,24 @@ object VisibleItems {
         }
 
         if (skill >= 2_0000) {
-            items.add(R.string.nav_leaders to R.drawable.nav_leader)
         }
 
         if (skill >= 6_0000) {
-            items.add(R.string.nav_players to R.drawable.nav_user)
+
         }
 
         if (qualification.translator >= 100 || qualification.tester >= 100 || qualification.admin >= 100 || qualification.moderator >= 100 || qualification.developer >= 100) {
+            items.add(
+                R.string.nav_profile to R.drawable.nav_profile
+            )
             items.add(
                 R.string.nav_task to R.drawable.nav_task
             )
         }
 
         if (qualification.developer >= 100) {
-            items.add(R.string.nav_profile to R.drawable.nav_profile)
+            items.add(R.string.nav_leaders to R.drawable.nav_leader)
+            items.add(R.string.nav_players to R.drawable.nav_user)
             items.add(R.string.nav_news to R.drawable.ic_new)
             items.add(R.string.nav_massages to R.drawable.nav_massage)
             items.add(R.string.nav_reports to R.drawable.nav_report)

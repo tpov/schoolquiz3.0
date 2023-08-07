@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -13,26 +14,16 @@ import javax.inject.Inject
 @InternalCoroutinesApi
 class ProfileViewModel @Inject constructor(
     private val setProfileFBUseCase: SetProfileFBUseCase,
-    private val setQuestionFBUseCase: SetQuestionFBUseCase,
-    private val setQuizDataFBUseCase: SetQuizDataFBUseCase,
-    private val setQuestionDetailFBUseCase: SetQuestionDetailFBUseCase,
     private val getProfileFBUseCase: GetProfileFBUseCase,
     private val getTpovIdFBUseCase: GetTpovIdFBUseCase,
-
-    private val getQuiz1FBUseCase: GetQuiz1FBUseCase,
-    private val getQuiz2FBUseCase: GetQuiz2FBUseCase,
-    private val getQuiz3FBUseCase: GetQuiz3FBUseCase,
-
-    private val getQuiz4FBUseCase: GetQuiz4FBUseCase,
-    private val getQuiz5FBUseCase: GetQuiz5FBUseCase,
-    private val getQuiz6FBUseCase: GetQuiz6FBUseCase,
-    private val getQuiz7FBUseCase: GetQuiz7FBUseCase,
-    private val getQuiz8FBUseCase: GetQuiz8FBUseCase,
+    private val getQuiz8UseCase: GetQuiz8UseCase,
+    private val getQuizUseCase: GetQuizUseCase,
+    private val setQuizUseCase: SetQuizUseCase,
     private val getSynthUseCase: GetSynthUseCase,
-    private val setQuizEventUseCase: SetQuizEventUseCase,
     private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
-    private val getTranslateUseCase: GetTranslateUseCase,
-    //private val getPlayersListUseCase: GetPlayersListUseCase
+    private val getProfileUseCase: GetProfileUseCase,
+    val getPlayersDBUseCase: GetPlayersDBUseCase,
+    private val getPlayersListUseCase: GetPlayersListUseCase
 
 ) : ViewModel() {
 
@@ -41,6 +32,8 @@ class ProfileViewModel @Inject constructor(
     var addQuiz = MutableLiveData<Int>()
     var synth = getSynthUseCase()
 
+   fun getPlayer() = getPlayersDBUseCase()
+       .filter { it.id == SharedPreferencesManager.getTpovId() }[0]
 
     fun getTpovId() {
         getTpovIdFBUseCase()
@@ -49,21 +42,8 @@ class ProfileViewModel @Inject constructor(
     fun setQuizFB() {
         log("fun setQuizFB()")
         viewModelScope.launch(Dispatchers.IO) {
-            setQuizDataFBUseCase()
+            setQuizUseCase()
         }
-    }
-
-    fun setEventQuiz() {
-        log("fun setEventQuiz()")
-        viewModelScope.launch {
-            setQuizEventUseCase()
-        }
-    }
-
-    fun setQuestionsFB() {
-        log("fun setQuestionsFB()")
-        setQuestionFBUseCase()
-        setQuestionDetailFBUseCase()
     }
 
     fun setProfile() {
@@ -75,24 +55,15 @@ class ProfileViewModel @Inject constructor(
         log("fun getProfile()")
         getProfileFBUseCase()
     }
+
     suspend fun getQuizzFB() {
         log("fun getQuizzFB()")
-        getQuiz1FBUseCase()
-        getQuiz2FBUseCase()
-        getQuiz3FBUseCase()
-        getQuiz4FBUseCase()
-        getQuiz5FBUseCase()
-        getQuiz6FBUseCase()
-        getQuiz7FBUseCase()
-        getQuiz8FBUseCase()
+        getQuizUseCase()
     }
 
-    suspend fun getTranslate() {
-        getTranslateUseCase()
-    }
     fun getPlayersList() {
         log("getPlayersList()")
-        //getPlayersListUseCase()
+        getPlayersListUseCase()
     }
 
     fun log(m: String) {

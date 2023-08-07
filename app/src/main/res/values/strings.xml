@@ -88,7 +88,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="dialog_text_share">Share text</string>
     <string name="prompt_email">email</string>
     <string name="prompt_password">password</string>
-    <string name="action_sign_in_short">out email</string>
+    <string name="action_sign_in_short">invitation</string>
     <string name="action_sign_in">Login</string>
     <string name="action_registration">registration</string>
     <string name="menu_network">Network</string>
@@ -100,6 +100,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="prompt_years">Your birthday (01.01.2001)</string>
     <string name="prompt_nickname">Nickname</string>
     <string name="prompt_city">Your city</string>
+    <string name="prompt_invitation">Инвайд-код (не обязательно)</string>
     <string name="app_name">SchoolQuiz</string>
     <string name="nav_home">Главные квесты</string>
     <string name="nav_my_quiz">Мои квесты</string>

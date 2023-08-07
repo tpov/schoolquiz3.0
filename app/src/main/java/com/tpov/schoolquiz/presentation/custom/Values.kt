@@ -1,11 +1,16 @@
 package com.tpov.schoolquiz.presentation.custom
 
+import androidx.lifecycle.MutableLiveData
 import java.util.*
 
 object Values {
+
+    var loadText: MutableLiveData<String> = MutableLiveData()
+    var loadProgress: MutableLiveData<Int> = MutableLiveData()
+
     fun getNameThropy(language: String): String {
         return when (language) {
-            //🥇🥈️🥉🎖🏅🏆🎗️🎃🎄🎁🎧🎞️🪙📀🏆⭐🎯🎓🏰❤
+            //🥇🥈️🥉🎖🏅🏆🎗️🎃🎄🎁🎧🎞️📀🪙⭐🏆🎯🎓🏰❤
             "\uD83E\uDD47" -> "занявший 1 место в турнире"
             "\uD83E\uDD48" -> "Игрок занявший 2 место в турнире"
             "\uD83E\uDD49" -> "занявший 3 место в турнире"

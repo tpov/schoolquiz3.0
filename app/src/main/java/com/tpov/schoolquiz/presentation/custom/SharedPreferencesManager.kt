@@ -97,6 +97,7 @@ object SharedPreferencesManager {
         if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
+        log("wededeefef chat: time2 ${time}")
         val editor = sharedPreferencesQuiz.edit()
         editor.putString("massageTime", time)
         editor.apply()
@@ -107,6 +108,7 @@ object SharedPreferencesManager {
         if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
+        log("wededeefef chat: gettime ${sharedPreferencesQuiz.getString("massageTime", "0")}")
         return sharedPreferencesQuiz.getString("massageTime", "0") ?: "0"
     }
 

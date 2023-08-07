@@ -1,9 +1,6 @@
 package com.tpov.schoolquiz.data
 
 import android.app.Application
-import android.os.Build
-import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -16,8 +13,10 @@ import com.tpov.schoolquiz.domain.repository.RepositoryFB
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getVersionQuiz
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
-import com.tpov.schoolquiz.presentation.setting.SharedPrefSettings
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setVersionQuiz
+import com.tpov.schoolquiz.presentation.custom.Values.loadText
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 @Singleton
 class RepositoryFBImpl @Inject constructor(
@@ -68,116 +68,36 @@ class RepositoryFBImpl @Inject constructor(
 
     }
 
-    override fun getValSynth(): MutableLiveData<Int> {
-        log("getValSynth()  ${synthLiveData.value}")
-        log("getValSynth()s  $synth")
-        return synthLiveData
-    }
+    override fun getValSynth(): MutableLiveData<Int> = synthLiveData
 
     override fun getPlayersList() {
         val playersListRef = FirebaseDatabase.getInstance().getReference("players/listPlayers")
         playersListRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-
+                loadText.postValue("Загрузка лидеров")
                 val playersList = mutableListOf<PlayersEntity>()
                 log("getPlayersList snapshot: $snapshot")
                 for (playerSnapshot in snapshot.children) {
 
                     log("getPlayersList playerSnapshot: $playerSnapshot")
-                    val player = playerSnapshot.getValue(Players::class.java)
+                    val player = playerSnapshot.getValue(PlayersEntity::class.java)
                     if (player != null) {
                         log("getPlayersList player: $player")
                         playersList.add(
-                            player.toPlayersEntity().copy(id = playerSnapshot.key?.toInt())
+                            player.copy(id = playerSnapshot.key?.toInt())
                         )
                     }
                 }
                 dao.deletePlayersList()
                 dao.insertPlayersList(playersList)
+                loadText.postValue("")
             }
 
             override fun onCancelled(error: DatabaseError) {
                 // Обработка ошибок
             }
+
         })
-    }
-
-    override suspend fun getTranslateFB() {
-        val questionRefs: MutableList<DatabaseReference> = mutableListOf(
-            FirebaseDatabase.getInstance().getReference("question5")
-        )
-
-        val profile = dao.getProfile(getTpovId())
-        if (profile.translater!! >= 100) {
-            questionRefs.forEach {
-                log("getTranslateFB it: $it}")
-                it.addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        log("getTranslateFB snapshot: ${snapshot.key}")
-                        for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
-
-                            log("getTranslateFB idQuizSnap: ${idQuizSnap.key}")
-                            for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
-
-                                log("getTranslateFB idQuestionSnap: ${idQuestionSnap.key}")
-                                for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
-                                    if (try {
-
-                                            log("getTranslateFB languageSnap: ${languageSnap.key}")
-                                            log("getTranslateFB try ${dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty()}")
-                                            log(
-                                                "getTranslateFB try ${
-                                                    dao.getQuestionByIdQuiz(
-                                                        idQuizSnap.key?.toInt()!!
-                                                    )[0].nameQuestion.isNullOrEmpty()
-                                                }"
-                                            )
-                                            log("getTranslateFB try ${languageSnap.key?.get(0)!! == '-'}")
-                                            log("getTranslateFB try ${profile.translater >= 200}")
-                                            dao.getQuizByIdDB(idQuizSnap.key?.toInt()!!).nameQuiz.isNullOrEmpty() && dao.getQuestionByIdQuiz(
-                                                idQuizSnap.key?.toInt()!!
-                                            )[0].nameQuestion.isNullOrEmpty()
-                                        } catch (e: Exception) {
-                                            true
-                                        } || languageSnap.key?.get(0)!! == '-' && profile.translater >= 200
-                                    ) {
-                                        log("getTranslateFB languageSnap: ${languageSnap.key}")
-                                        val question = languageSnap.getValue(Question::class.java)
-                                        if (question != null) {
-                                            dao.insertQuestion(
-                                                QuestionEntity(
-                                                    null,
-                                                    idQuestionSnap.key?.toInt() ?: 0,
-                                                    question.nameQuestion,
-                                                    question.answerQuestion,
-                                                    question.typeQuestion,
-                                                    idQuizSnap.key?.toInt() ?: -1,
-                                                    languageSnap.key?.lowercase(Locale.ROOT)
-                                                        ?: "eu",
-                                                    question.lvlTranslate,
-                                                    question.infoTranslater
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        log("getTranslateFB ошибка: $error")
-                    }
-                })
-            }
-        }
-
-    }
-
-    init {
-        val referenceValue = Integer.toHexString(System.identityHashCode(getValSynth()))
-
-        log("fun init referenceValue :$referenceValue")
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -187,60 +107,40 @@ class RepositoryFBImpl @Inject constructor(
         val dateFormatKiev = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
         dateFormatKiev.timeZone = TimeZone.getTimeZone("Europe/Kiev")
 
-        val userTimeZone = TimeZone.getDefault()
-
         chatValueEventListener =
-            chatRef.limitToLast(100).addValueEventListener(object : ValueEventListener {
+            chatRef.limitToLast(20).addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     log("getChatData snapshot: $snapshot")
-                    GlobalScope.launch {
-                        // Получаем данные из snapshot и сохраняем их в локальную базу данных
-                        for (dateSnapshot in snapshot.children) {
-                            log("getChatData dateSnapshot: $dateSnapshot")
-                            for (data in dateSnapshot.children) {
-                                try {
-                                    log("getChatData data: $data")
-                                    val chat = data.getValue(Chat::class.java)
-                                    val kievTime = chat?.time.toString()
-                                    val date1 = dateFormatKiev.parse(kievTime)
 
-                                    log("wededeefef chat: $chat")
-                                    if (chat != null) {
-                                        var lastTime = SharedPreferencesManager.getTimeMassage()
-                                        log("wededeefef lastTime: $lastTime")
+                    var lastTime = SharedPreferencesManager.getTimeMassage()
+                    // Получаем данные из snapshot и сохраняем их в локальную базу данных
+                    for (dateSnapshot in snapshot.children) {
+                        for (data in dateSnapshot.children) {
+                            try {
+                                val chat = data.getValue(Chat::class.java)
+                                val date1 = dateFormatKiev.parse(chat?.time.toString())
 
-                                        if (lastTime == "0") {
-                                            lastTime = System.currentTimeMillis().toString()
-                                            SharedPreferencesManager.setTimeMassage(lastTime)
-                                        }
+                                if (chat != null) {
 
-                                        val date2 = Date(lastTime.toLong())
-                                        log("wededeefef date2: $date2")
-                                        log("wededeefef date1: $date1")
-                                        if (chat != null) {
-                                            var lastTime = SharedPreferencesManager.getTimeMassage()
-                                            log("wededeefef lastTime: $lastTime")
-
-                                            if (lastTime == "0") {
-                                                lastTime = System.currentTimeMillis().toString()
-                                            }
-
-                                            val date2 = if (lastTime != null) Date(lastTime.toLong()) else null
-                                            log("wededeefef date2: $date2")
-                                            log("wededeefef date1: $date1")
-
-                                            if (date2 != null && date1.after(date2)) {
-                                                dao.insertChat(chat.toChatEntity())
-                                                SharedPreferencesManager.setTimeMassage(date1.time.toString())
-                                            }
-                                        }
-
-
+                                    if (lastTime == "0") {
+                                        lastTime = System.currentTimeMillis().toString()
+                                        SharedPreferencesManager.setTimeMassage(lastTime)
                                     }
+                                    if (chat != null) {
+                                        if (lastTime == "0") lastTime =
+                                            System.currentTimeMillis().toString()
+                                        val date2 =
+                                            if (lastTime != null) Date(lastTime.toLong()) else null
 
-                                } catch (e: Exception) {
-                                    log("Error: ${e.message}")
+                                        if (date2 != null && date1.after(date2)) {
+                                            SharedPreferencesManager.setTimeMassage(date1.time.toString())
+                                            dao.insertChat(chat.toChatEntity())
+                                        }
+                                    }
                                 }
+
+                            } catch (e: Exception) {
+                                log("Error: ${e.message}")
                             }
                         }
                     }
@@ -250,9 +150,9 @@ class RepositoryFBImpl @Inject constructor(
                     // Обработка ошибок
                 }
             })
+
         return dao.getChat()
     }
-
 
     override fun removeChatListener() {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
@@ -262,7 +162,6 @@ class RepositoryFBImpl @Inject constructor(
     fun savePictureToLocalDirectory(
         pictureString: String, callback: (path: String?) -> Unit
     ) {
-        log("fun savePictureToLocalDirectory()")
         if (!context.cacheDir.exists()) context.cacheDir.mkdir()
         val directory = File(context.cacheDir, "")
         FirebaseAuth.getInstance().currentUser?.uid
@@ -273,59 +172,20 @@ class RepositoryFBImpl @Inject constructor(
 
         val file = File(directory, "$pictureString")
 
-        log("savePictureToLocalDirectory() путь сохранения картинки: $pictureString")
         pathReference.getFile(file).addOnSuccessListener {
             // Обработка успешного скачивания картинки
-            log("savePictureToLocalDirectory() картинка получена успешно")
 
             callback("$pictureString")
         }.addOnFailureListener {
-
-            log("savePictureToLocalDirectory() ошибка получение картинки: $it")
-            // Обработка ошибок
             callback(null)
-        }
-    }
-
-    private fun sendMassageTranslate(
-        info: String, idQuiz: Int, language: String, numQuestion: Int
-    ) {
-
-        log("sendMassageTranslate: $info")
-        val pairs = info.split("|").chunked(2).associate { chunk ->
-            if (chunk.size >= 2) chunk[0].toInt() to chunk[1].toIntOrNull()
-            else null to null
-        }.filterValues { it != null }
-
-        log("sendMassageTranslate: $pairs")
-        pairs.forEach {
-            log("getPersonalMassage, pairs $it")
-            FirebaseDatabase.getInstance()
-                .getReference("PersonalMassage/translate/${it.key}/$idQuiz/$numQuestion/$language")
-                .setValue(
-                    Chat(
-                        TimeManager.getCurrentTime(),
-                        SharedPreferencesManager.getNick(),
-                        "Ваш перевод был оценен в ${it.value}/3 былов",
-                        SharedPreferencesManager.getSkill(),
-                        it.key!!,
-                        SharedPrefSettings.getProfileIcon(),
-                        it.value!!,
-                        0
-                    )
-                ).addOnFailureListener {
-                    log("getPersonalMassage, $it")
-                }
         }
     }
 
     private fun getPersonalMassage() {
         val chatRef =
             FirebaseDatabase.getInstance().getReference("PersonalMassage/translate/${getTpovId()}")
-        val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
         chatRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                log("getPersonalMassage snapshot: $snapshot")
                 // Получаем данные из snapshot и сохраняем их в локальную базу данных
 
                 for (dateSnapshot in snapshot.children) {
@@ -333,9 +193,7 @@ class RepositoryFBImpl @Inject constructor(
                         for (numQuestion in idQuizSnapshot.children) {
                             for (languageSnap in numQuestion.children) {
                                 for (chatSnap in languageSnap.children) {
-                                    log("getPersonalMassage data: $dateSnapshot")
                                     val chat = dateSnapshot.getValue(Chat::class.java)
-
                                     dao.insertChat(chat!!.toChatEntity())
                                 }
                             }
@@ -350,285 +208,11 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    override suspend fun getQuiz8Data() {
-        log("fun getQuiz8Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz8"))
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    override suspend fun getQuiz7Data() {
-        log("fun getQuiz7Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz7"))
-    }
-
-    private suspend fun getQuiz(
-        quizRef: DatabaseReference
-    ) {
-        log("fun getQuiz()")
-        quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            @RequiresApi(Build.VERSION_CODES.O)
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for (data in snapshot.children) {
-                    val versionQuiz = SharedPreferencesManager.getVersionQuiz(data.key ?: "-1")
-                    val quiz = data.getValue(Quiz::class.java)
-
-                    log("getQuiz(), data: ${data.key}, versionQuiz: $versionQuiz, quizEntity: $quiz")
-                    if (quiz != null && versionQuiz < quiz.versionQuiz) {
-                        if (quiz.event != 5 || TimeManager.getDaysBetweenDates(
-                                quiz.data, TimeManager.getCurrentTime()
-                            ) < 90
-                        ) {
-                            savePictureToLocalDirectory(
-                                quiz.picture
-                            ) { path ->
-                                log("getQuiz() версия квеста меньше - обновляем, или добавляем")
-                                if (versionQuiz == -1) dao.insertQuiz(
-                                    quiz.toQuizEntity(
-                                        data.key!!.toInt(), 0, 0, 0, path ?: ""
-                                    )
-                                )
-                                else dao.updateQuiz(
-                                    quiz.toQuizEntity(
-                                        data.key!!.toInt(), 0, 0, 0, path
-                                    )
-                                )
-                                val refQuestion = when (quiz.event) {
-                                    2 -> FirebaseDatabase.getInstance().getReference("question2")
-                                    3 -> FirebaseDatabase.getInstance().getReference("question3")
-                                    4 -> FirebaseDatabase.getInstance().getReference("question4")
-                                    5 -> FirebaseDatabase.getInstance().getReference("question5")
-                                    6 -> FirebaseDatabase.getInstance().getReference("question6")
-                                    7 -> FirebaseDatabase.getInstance().getReference("question7")
-                                    8 -> FirebaseDatabase.getInstance().getReference("question8")
-                                    else -> FirebaseDatabase.getInstance()
-                                        .getReference("question1/${quiz.tpovId}")
-                                }
-
-                                val refQuestionDetail = when (quiz.event) {
-                                    1 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail1/${getTpovId()}")
-
-                                    2 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail2")
-
-                                    3 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail3")
-
-                                    4 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail4")
-
-                                    5 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail5")
-
-                                    6 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail6")
-
-                                    7 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail7")
-
-                                    8 -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail8")
-
-                                    else -> FirebaseDatabase.getInstance()
-                                        .getReference("question_detail8")
-                                }
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    getQuestion(refQuestion, data.key!!)
-                                    getQuestionDetail(refQuestionDetail, data.key!!)
-                                }
-
-                                SharedPreferencesManager.setVersionQuiz(
-                                    data.key!!, quiz.versionQuiz
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                log("getQuiz(), error: $error")
-            }
-        })
-    }
-
-    override suspend fun getQuiz6Data() {
-        log("fun getQuiz6Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz6"))
-    }
-
-    override suspend fun getQuiz5Data() {
-        log("fun getQuiz5Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz5"))
-    }
-
-    override suspend fun getQuiz4Data() {
-        log("fun getQuiz4Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz4"))
-    }
-
-    override suspend fun getQuiz3Data() {
-        log("fun getQuiz3Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz3"))
-    }
-
-    override suspend fun getQuiz2Data() {
-        log("fun getQuiz2Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz2"))
-    }
-
-    override suspend fun getQuiz1Data() {
-        log("fun getQuiz1Data")
-        getQuiz(FirebaseDatabase.getInstance().getReference("quiz1/${getTpovId()}"))
-    }
-
-    override suspend fun getQuestion8() {
-        log("fun getQuestion8Data")
-        val questionRef = FirebaseDatabase.getInstance().getReference("question8")
-        getQuestion(questionRef, "-1")
-    }
-
-    private suspend fun getQuestion(questionRef: DatabaseReference, idQuiz: String) {
-        questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                log("getQuestion snapshot: ${snapshot.key}")
-                for (idQuizSnap in snapshot.children) { // перебор всех папок idQuiz внутри uid
-                    if (idQuizSnap.key == idQuiz) {
-                        dao.deleteQuestionByIdQuiz(idQuizSnap.key?.toInt() ?: -1)
-                        log("getQuestion idQuizSnap: ${idQuizSnap.key}")
-                        for (idQuestionSnap in idQuizSnap.children) { // перебор всех папок language внутри idQuiz
-                            log("getQuestion idQuestionSnap: ${idQuestionSnap.key}")
-                            for (languageSnap in idQuestionSnap.children) { // перебор всех вопросов внутри language
-                                log("getQuestion languageSnap: ${languageSnap.key}")
-                                val question = languageSnap.getValue(Question::class.java)
-                                if (question != null) {
-                                    dao.insertQuestion(
-                                        QuestionEntity(
-                                            null,
-                                            kotlin.math.abs(idQuestionSnap.key?.toInt() ?: 0),
-                                            question.nameQuestion,
-                                            question.answerQuestion,
-                                            idQuestionSnap.key?.toInt()!! < 0,
-                                            idQuizSnap.key?.toInt() ?: -1,
-                                            languageSnap.key ?: "eu",
-                                            question.lvlTranslate,
-                                            question.infoTranslater
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                log("getQuestion8Data ошибка: $error")
-            }
-        })
-    }
-
-    override suspend fun getQuestion7() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question7"), "-1")
-    }
-
-    override suspend fun getQuestion6() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question6"), "-1")
-    }
-
-    override suspend fun getQuestion5() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question5"), "-1")
-    }
-
-    override suspend fun getQuestion4() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question4"), "-1")
-    }
-
-    override suspend fun getQuestion3() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question3"), "-1")
-    }
-
-    override suspend fun getQuestion2() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question2"), "-1")
-    }
-
-    override suspend fun getQuestion1() {
-        getQuestion(FirebaseDatabase.getInstance().getReference("question1/$${getTpovId()}"), "-1")
-    }
-
-    override suspend fun getQuestionDetail1() {
-        log("fun getQuestionDetail1()")
-        getQuestionDetail(
-            FirebaseDatabase.getInstance().getReference("question_detail1/$${getTpovId()}"), "-1"
-        )
-    }
-
-    override suspend fun getQuestionDetail2() {
-        log("fun getQuestionDetail2()")
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail2"), "-1")
-    }
-
-    private suspend fun getQuestionDetail(questionRef: DatabaseReference, idQuiz: String) {
-        questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                log("getQuestionDetail2() snapshot: ${snapshot.key}")
-                for (user in snapshot.children) {
-                    if ((user.key == idQuiz || idQuiz == "-1") && dao.getQuestionDetailList().size != user.childrenCount.toInt()) {
-                        dao.deleteQuestionDetailByIdQuiz(idQuiz.toInt())
-                        for (idQuizSnap in user.children) {
-                            log("getQuestionDetail2() idQuizSnap: ${idQuizSnap.key}")
-                            val questionDetailEntity =
-                                idQuizSnap.getValue(QuestionDetail::class.java)
-                            if (questionDetailEntity != null) {
-                                log("getQuestionDetail2() квест не пустой, добавляем в список")
-
-                                dao.insertQuizDetail(
-                                    questionDetailEntity.toQuestionDetailEntity(
-                                        null, idQuiz.toInt(), true
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                log("getQuestionDetail2() ошибка: $error")
-
-            }
-        })
-    }
-
-    override suspend fun getQuestionDetail3() {
-        log("fun getQuestionDetail3()")
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail3"), "-1")
-    }
-
-    override suspend fun getQuestionDetail4() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail4"), "-1")
-    }
-
-    override suspend fun getQuestionDetail5() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail5"), "-1")
-    }
-
-    override suspend fun getQuestionDetail6() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail6"), "-1")
-    }
-
-    override suspend fun getQuestionDetail7() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail7"), "-1")
-    }
-
-    override suspend fun getQuestionDetail8() {
-        getQuestionDetail(FirebaseDatabase.getInstance().getReference("question_detail8"), "-1")
-    }
-
     override fun getProfile() {
         log("fun getProfile()")
         val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
 
+        loadText.postValue("Загрузка профилей")
         profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getProfile() snapshot: ${snapshot.key}")
@@ -651,9 +235,8 @@ class RepositoryFBImpl @Inject constructor(
                             addPointsGold = profile.addPoints.addGold,
                             addPointsNolics = profile.addPoints.addNolics,
                             addTrophy = profile.addPoints.addTrophy,
+                            addMassage = profile.addPoints.addMassage,
                             addPointsSkill = profile.addPoints.addSkill,
-                            addPointsSkillInSeason = profile.addPoints.addSkillInSesone,
-                            gamer = profile.qualification.gamer,
                             sponsor = profile.qualification.sponsor,
                             tester = profile.qualification.tester,
                             translater = profile.qualification.translater,
@@ -666,6 +249,8 @@ class RepositoryFBImpl @Inject constructor(
                         if (dao.updateProfiles(updatedProfile) > 0) synthLiveData.value = ++synth
                     }
                 }
+
+                loadText.postValue("")
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -674,686 +259,6 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    override suspend fun setEvent() {
-        log("fun setEvent")
-
-        val quizEventDB = dao.getQuizEvent()
-        val database = FirebaseDatabase.getInstance()
-
-        val quizRef2 = database.getReference("quiz2")
-        val quizRef3 = database.getReference("quiz3")
-        val quizRef4 = database.getReference("quiz4")
-        val quizRef5 = database.getReference("quiz5")
-        val quizRef6 = database.getReference("quiz6")
-        val quizRef7 = database.getReference("quiz7")
-        val quizRef8 = database.getReference("quiz8")
-        val questionRef2 = database.getReference("question2")
-        val questionRef3 = database.getReference("question3")
-        val questionRef4 = database.getReference("question4")
-        val questionRef5 = database.getReference("question5")
-        val questionRef6 = database.getReference("question6")
-        val questionRef7 = database.getReference("question7")
-        val questionRef8 = database.getReference("question8")
-        val playersRef = database.getReference("players")
-        val playersQuiz = playersRef.child("quiz")
-
-        val profile = dao.getProfile(getTpovId())
-        for (question in dao.getQuestionList()) {
-            if (profile.translater!! > 100) {
-                if (dao.getQuizById(question.idQuiz).nameQuiz.isNullOrEmpty()) {
-                    questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
-                        .setValue(question)
-                        .addOnSuccessListener { dao.deleteQuestionByIdQuiz(question.idQuiz) }
-                }
-            }
-        }
-
-        for (quiz in quizEventDB) {
-            log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
-            when (quiz.event) {
-                3 -> {
-                    log("fun setEvent event: ${quiz.event}, quiz.id.toString(): ${quiz.id.toString()}")
-                    quizRef3.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                        quizRef2.child("${quiz.id}").removeValue()
-                    }
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef3.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${question.language}")
-                            .setValue(question).addOnSuccessListener {
-                                questionRef2.child("${question.idQuiz}").removeValue()
-                            }
-                    }
-                    if (quiz.stars != 0) {
-                        dao.deleteQuizById(quiz.id!!)
-                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                        dao.deleteQuestionByIdQuiz(quiz.id!!)
-                    }
-
-                }
-
-                4 -> {
-                    log("fun setEvent event: ${quiz.event}")
-                    quizRef4.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                        quizRef3.child("${quiz.id}").removeValue()
-                    }
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef4.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question).addOnSuccessListener {
-                                questionRef3.child("${question.idQuiz}").removeValue()
-                            }
-                    }
-                    if (quiz.stars != 0) {
-                        dao.deleteQuizById(quiz.id!!)
-                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                        dao.deleteQuestionByIdQuiz(quiz.id!!)
-                    }
-                }
-
-                5 -> {
-
-                    log("fun setEvent event: ${quiz.event}")
-                    quizRef5.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                        quizRef4.child("${quiz.id}").removeValue()
-                    }
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef5.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question).addOnSuccessListener {
-                                questionRef4.child("${question.idQuiz}").removeValue()
-                            }
-                    }
-                    log("quiz.data: ${quiz.data}, TimeManager.getCurrentTime(): ${TimeManager.getCurrentTime()}")
-                    if (TimeManager.getDaysBetweenDates(
-                            quiz.data, TimeManager.getCurrentTime()
-                        ) > 90
-                    ) {
-                        dao.deleteQuizById(quiz.id!!)
-                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                        dao.deleteQuestionByIdQuiz(quiz.id!!)
-                    }
-                }
-
-
-                6 -> {
-                    log("fun setEvent event: ${quiz.event}")
-                    quizRef6.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                        quizRef5.child("${quiz.id}").removeValue()
-                    }
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef6.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question).addOnSuccessListener {
-                                questionRef5.child("${question.idQuiz}").removeValue()
-                            }
-                    }
-                    if (quiz.stars != 0) {
-                        dao.deleteQuizById(quiz.id!!)
-                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                        dao.deleteQuestionByIdQuiz(quiz.id!!)
-                    }
-                }
-
-                7 -> {
-                    log("fun setEvent event: ${quiz.event}")
-                    quizRef7.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                        quizRef6.child("${quiz.id}").removeValue()
-                    }
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef7.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question).addOnSuccessListener {
-                                questionRef6.child("${question.idQuiz}").removeValue()
-                            }
-                    }
-                    if (quiz.stars != 0) {
-                        dao.deleteQuizById(quiz.id!!)
-                        dao.deleteQuestionDetailByIdQuiz(quiz.id!!)
-                        dao.deleteQuestionByIdQuiz(quiz.id!!)
-                    }
-                }
-
-                8 -> {
-                    log("fun setEvent event: ${quiz.event}")
-                    quizRef8.child(quiz.id.toString()).setValue(quiz).addOnSuccessListener {
-                        quizRef7.child("${quiz.id}").removeValue()
-                    }
-                    dao.getQuestionByIdQuiz(quiz.id!!).forEach { question ->
-                        questionRef8.child("${question.idQuiz}/${if (question.hardQuestion) -question.numQuestion else question.numQuestion}/${if (question.lvlTranslate < 100) "-${question.language}" else question.language}")
-                            .setValue(question).addOnSuccessListener {
-                                questionRef7.child("${question.idQuiz}").removeValue()
-                            }
-                    }
-                }
-            }
-        }
-    }
-
-    override fun setQuizData() {
-        log("fun setQuizData()")
-        var tpovId = getTpovId()
-        var quizDB = dao.getQuizEvent()
-
-        var idQuiz = 0
-
-        val database = FirebaseDatabase.getInstance()
-        val quizRef1 = database.getReference("quiz1")
-        val quizRef2 = database.getReference("quiz2")
-        val quizRef3 = database.getReference("quiz3")
-        val quizRef4 = database.getReference("quiz4")
-        val quizRef5 = database.getReference("quiz5")
-        val quizRef6 = database.getReference("quiz6")
-        val quizRef7 = database.getReference("quiz7")
-        val quizRef8 = database.getReference("quiz8")
-
-        val playersRef = database.getReference("players")
-        // создаем скоуп для запуска корутин
-        val coroutineScope = CoroutineScope(Dispatchers.Default)
-        val playersQuiz = playersRef.child("quiz")
-
-// запускаем корутину
-        coroutineScope.launch(Dispatchers.IO) {
-            log("setQuizData() launch")
-            var readValue = true
-            var blockServer = false
-            quizDB.forEach {
-                if (it.id!! < 100) {
-                    log("setQuizData() найден квест который не был синхронизирован с сервером $it")
-                    blockServer = true
-                }
-            }
-
-            val databaseReference = FirebaseDatabase.getInstance().getReference("players")
-            databaseReference.child("read").addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    if (blockServer) {
-                        readValue = dataSnapshot.value as Boolean
-                        log("setQuizData() databaseReference readValue: $readValue")
-                    }
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    log("setQuizData() databaseReference error read fb: $databaseError")
-                }
-            })
-
-            playersRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    log("setQuizData() playersRef snapshot: $snapshot")
-
-                    coroutineScope.launch(Dispatchers.IO) {
-                        if (blockServer) {
-                            var i = 0
-                            while (!readValue) {
-                                log("setQuizData() playersRef сервер занят, ждем")
-                                delay(100) // заменяем Thread.sleep() на delay()
-                                i++
-
-                                if (i == 300) try {
-                                    Toast.makeText(
-                                        context,
-                                        "Если сервер не освободится в течении 1 минут - будет совершена принудительная синхронизация, возможно она решит проблему",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                } catch (e: Exception) {
-
-                                }
-                                if (i == 200 * 3) break
-                            }
-
-                            val players =
-                                snapshot.value as Map<*, *> // Преобразование значений в Map
-                            idQuiz =
-                                (players["idQuiz"] as Long).toInt() // Получение значения переменной allQuiz
-                            log("setQuizData() playersRef idQuiz: $idQuiz")
-                            val updates = hashMapOf<String, Any>("read" to false)
-                            playersRef.updateChildren(updates)
-                        }
-
-                        quizDB.forEach { quiz ->
-                            val quizRatingMap = mapOf(
-                                "rating" to quiz.rating, "stars" to quiz.starsAll
-                            )
-
-
-                            log("setQuizData() playersRef quizDB перебираем: $quiz")
-                            if (quiz.event == 1) {
-                                log("setQuizData() playersRef quizDB event1")
-
-                                if (quiz.id!! >= 100) {
-                                    log("setQuizData() playersRef quizDB event1 id >= 100 просто созраняем на сервер")
-                                    quizRef1.child("${tpovId}/${quiz.id.toString()}").setValue(quiz)
-                                        .addOnSuccessListener {
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${quiz.tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
-                                } else {
-                                    log("setQuizData() playersRef quizDB event1 id < 100 синхронизируем с сервером")
-                                    idQuiz++
-                                    val oldId = quiz.id
-                                    quiz.id = idQuiz
-                                    quizRef1.child("${tpovId}/$idQuiz").setValue(quiz)
-                                        .addOnSuccessListener {
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${quiz.tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
-
-                                    dao.getQuestionByIdQuiz(oldId!!).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(), quiz.versionQuiz
-                                    )
-                                }
-
-                            } else if (quiz.event == 2) {
-                                log("setQuizData() playersRef quizDB event2")
-                                if (quiz.id!! >= 100) {
-                                    log("setQuizData() playersRef quizDB id >= 100  event2 просто созраняем на сервер")
-                                    quizRef2.child("${tpovId}/${quiz.id.toString()}").setValue(quiz)
-                                        .addOnSuccessListener {
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
-
-                                } else {
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef2.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
-
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(), quiz.versionQuiz
-                                    )
-                                }
-
-                            } else if (quiz.event == 3) {
-                                if (quiz.id!! >= 100) {
-                                    quizRef3.child(quiz.id.toString()).setValue(quiz)
-                                        .addOnSuccessListener {
-                                            quizRef2.child("${tpovId}/${quiz.id.toString()}")
-                                                .setValue(null)
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
-
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(), quiz.versionQuiz
-                                    )
-                                } else {
-
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef3.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
-
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-
-                                }
-                            } else if (quiz.event == 4) {
-                                if (quiz.id!! >= 100) {
-                                    quizRef4.child(quiz.id.toString()).setValue(quiz)
-                                        .addOnSuccessListener {
-                                            quizRef3.child(quiz.id.toString()).setValue(null)
-                                            if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                .updateChildren(quizRatingMap)
-                                        }
-
-                                    SharedPreferencesManager.setVersionQuiz(
-                                        idQuiz.toString(), quiz.versionQuiz
-                                    )
-                                } else {
-
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef4.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
-
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-                                }
-
-                            } else if (quiz.event == 5) {
-                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                    .updateChildren(quizRatingMap)
-                                if (quiz.id!! >= 100) {
-                                    quizRef5.child("${quiz.id.toString()}")
-                                        .addListenerForSingleValueEvent(object :
-                                            ValueEventListener {
-                                            override fun onDataChange(snapshot: DataSnapshot) {
-                                                val oldQuiz =
-                                                    snapshot.getValue(QuizEntity::class.java)
-                                                quizRef5.child(quiz.id.toString()).setValue(
-                                                    quiz.copy(
-                                                        rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
-                                                            ?: 0
-                                                    )
-                                                )
-                                                    .addOnSuccessListener {
-                                                        quizRef4.child(quiz.id.toString())
-                                                            .setValue(null)
-                                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                                            .updateChildren(quizRatingMap)
-                                                    }
-
-                                                SharedPreferencesManager.setVersionQuiz(
-                                                    idQuiz.toString(), quiz.versionQuiz
-                                                )
-                                            }
-
-                                            override fun onCancelled(error: DatabaseError) {
-
-                                            }
-
-                                        })
-                                } else {
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef5.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
-
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-                                }
-
-                            } else if (quiz.event == 6) {
-                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                    .updateChildren(quizRatingMap)
-                                if (quiz.id!! >= 100) {
-                                    quizRef6.child("${quiz.id.toString()}")
-                                        .addListenerForSingleValueEvent(object :
-                                            ValueEventListener {
-                                            override fun onDataChange(snapshot: DataSnapshot) {
-                                                val oldQuiz =
-                                                    snapshot.getValue(QuizEntity::class.java)
-                                                quizRef6.child(quiz.id.toString()).setValue(
-                                                    quiz.copy(
-                                                        rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
-                                                            ?: 0
-                                                    )
-                                                )
-
-                                                SharedPreferencesManager.setVersionQuiz(
-                                                    idQuiz.toString(), quiz.versionQuiz
-                                                )
-                                            }
-
-                                            override fun onCancelled(error: DatabaseError) {
-
-                                            }
-
-                                        })
-                                } else {
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef6.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
-
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-                                }
-
-                            } else if (quiz.event == 7) {
-                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                    .updateChildren(quizRatingMap)
-                                if (quiz.id!! >= 100) {
-                                    quizRef7.child("${quiz.id.toString()}")
-                                        .addListenerForSingleValueEvent(object :
-                                            ValueEventListener {
-                                            override fun onDataChange(snapshot: DataSnapshot) {
-                                                val oldQuiz =
-                                                    snapshot.getValue(QuizEntity::class.java)
-                                                quizRef7.child(quiz.id.toString()).setValue(
-                                                    quiz.copy(
-                                                        rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
-                                                            ?: 0
-                                                    )
-                                                )
-
-                                                SharedPreferencesManager.setVersionQuiz(
-                                                    idQuiz.toString(), quiz.versionQuiz
-                                                )
-                                            }
-
-                                            override fun onCancelled(error: DatabaseError) {
-
-                                            }
-
-                                        })
-                                } else {
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef7.child("$idQuiz").setValue(quiz).addOnSuccessListener {
-                                        if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                            .updateChildren(quizRatingMap)
-                                    }
-
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-                                }
-
-                            } else if (quiz.event == 8) {
-                                if (quiz.stars != 0) playersQuiz.child("${quiz.id}/${tpovId}")
-                                    .updateChildren(quizRatingMap)
-                                if (quiz.id!! >= 100) {
-                                    quizRef8.child("${quiz.id.toString()}")
-                                        .addListenerForSingleValueEvent(object :
-                                            ValueEventListener {
-                                            override fun onDataChange(snapshot: DataSnapshot) {
-                                                val oldQuiz =
-                                                    snapshot.getValue(QuizEntity::class.java)
-                                                quizRef8.child(quiz.id.toString()).setValue(
-                                                    quiz.copy(
-                                                        rating = oldQuiz?.rating ?: 0,
-                                                        starsAllPlayer = oldQuiz?.starsAllPlayer
-                                                            ?: 0
-                                                    )
-                                                )
-
-                                                SharedPreferencesManager.setVersionQuiz(
-                                                    idQuiz.toString(), quiz.versionQuiz
-                                                )
-                                            }
-
-                                            override fun onCancelled(error: DatabaseError) {
-
-                                            }
-
-                                        })
-                                } else {
-                                    log("setQuizData() playersRef quizDB id < 100 event2 синхронизируем с сервером")
-                                    idQuiz++
-                                    var oldId = quiz.id!!
-                                    quiz.id = idQuiz
-                                    quizRef8.child("$idQuiz").setValue(quiz)
-
-                                    dao.getQuestionByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuestion(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.getQuestionDetailByIdQuiz(oldId).forEach { item ->
-                                        dao.insertQuizDetail(item.copy(idQuiz = quiz.id!!))
-                                    }
-                                    dao.deleteQuestionDetailByIdQuiz(oldId)
-                                    dao.deleteQuestionByIdQuiz(oldId)
-                                    dao.insertQuiz(quiz)
-                                    dao.deleteQuizById(oldId)
-                                }
-                            }
-
-                        }
-
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    log("setQuizData() error: $error")
-                }
-            })
-
-            var synth2 = true
-            log("setQuizData() dao.getQuizList(tpovId): ${dao.getQuizList(tpovId)}")
-            while (synth2) {
-                synth2 = false
-                dao.getQuizList(tpovId).forEach {
-                    log("setQuizData() it: $it")
-                    if (it.id!! < 100) synth2 = true
-                }
-            }
-            synthLiveData.postValue(++synth)
-            if (blockServer) {
-
-                log("setQuizData() blockServer = true")
-                coroutineScope.launch {
-                    while (true) {
-                        var openServer = true
-                        quizDB.forEach {
-                            if (it.id!! < 100) openServer = false
-                        }
-                        log("setQuizData() сервер не завершился, ждем..")
-                        if (openServer) break
-                        delay(100)
-                    }
-
-                    log("setQuizData() открываем доступ к серверу")
-
-                    val databaseReference = FirebaseDatabase.getInstance().reference
-                    val updates = hashMapOf<String, Any>(
-                        "players/read" to true, "players/idQuiz" to idQuiz
-                    )
-                    databaseReference.updateChildren(updates).addOnFailureListener {
-                        log("setQuizData() ошибка : $it")
-                    }
-                }
-            }
-        }
-    }
-
-    override fun setQuestionData() {
-        val tpovId = getTpovId()
-        val userLang = Locale.getDefault().language
-        log("fun setQuestionData()")
-        var question = dao.getQuestionList()
-
-        val database = FirebaseDatabase.getInstance()
-        val questionRef1 = database.getReference("question1")
-        val questionRef2 = database.getReference("question2")
-        val questionRef3 = database.getReference("question3")
-        val questionRef4 = database.getReference("question4")
-        val questionRef5 = database.getReference("question5")
-        val questionRef6 = database.getReference("question6")
-        val questionRef7 = database.getReference("question7")
-        val questionRef8 = database.getReference("question8")
-
-        var i = 0
-        question.forEach {
-            it.nameQuestion = it.nameQuestion.trim()
-            sendMassageTranslate(it.infoTranslater, it.idQuiz, it.language, it.numQuestion)
-            synthLiveData.postValue(--synth)
-
-            val eventByIdQuiz = dao.getEventByIdQuiz(it.idQuiz)
-            if (eventByIdQuiz == 1) questionRef1.child("${tpovId}/${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${if (it.language.isEmpty()) it.language else userLang}")
-                .setValue(it).addOnSuccessListener {
-                    synthLiveData.postValue(++synth)
-                }
-
-            if (eventByIdQuiz == 2) questionRef2.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
-            if (eventByIdQuiz == 3) questionRef3.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
-            if (eventByIdQuiz == 4) questionRef4.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
-            if (eventByIdQuiz == 5) questionRef5.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
-            if (eventByIdQuiz == 6) questionRef6.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
-            if (eventByIdQuiz == 7) questionRef7.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
-            if (eventByIdQuiz == 8) questionRef8.child("${it.idQuiz}/${if (it.hardQuestion) -it.numQuestion else it.numQuestion}/${it.language}")
-                .setValue(it).addOnSuccessListener { synthLiveData.postValue(++synth) }
-        }
-        synthLiveData.postValue(++synth)
-    }
 
     override fun setTpovIdFB() {
 
@@ -1407,42 +312,6 @@ class RepositoryFBImpl @Inject constructor(
         return getTpovId()
     }
 
-    override fun setQuestionDetail() {
-        val tpovId = getTpovId()
-        log("fun setQuestionDetail()")
-
-        var questionDetail = dao.getQuestionDetailList()
-
-        val database = FirebaseDatabase.getInstance()
-
-        val questionDetailRefs = arrayOf(
-            database.getReference("question_detail1/${tpovId}"),
-            database.getReference("question_detail2"),
-            database.getReference("question_detail3"),
-            database.getReference("question_detail4"),
-            database.getReference("question_detail5"),
-            database.getReference("question_detail6"),
-            database.getReference("question_detail7"),
-            database.getReference("question_detail8")
-        )
-
-        questionDetail.forEach {
-            if (dao.getQuizTpovIdById(it.idQuiz) == tpovId && !it.synthFB) {
-                synthLiveData.postValue(--synth)
-                log("setQuestionDetail() найден квест с таким же tpovId, idQuiz: ${it.idQuiz}")
-                val event = dao.getEventByIdQuiz(it.idQuiz)
-                if (event in 1..8) {
-                    questionDetailRefs[event!! - 1].child("${it.idQuiz}").push().setValue(it)
-                        .addOnSuccessListener { _ ->
-                            dao.updateQuizDetail(it.copy(synthFB = true))
-                            synthLiveData.postValue(++synth)
-                        }
-                }
-            }
-        }
-        synthLiveData.postValue(++synth)
-    }
-
     override fun setProfile() {
         log("fun setProfile()")
         val database = FirebaseDatabase.getInstance()
@@ -1451,6 +320,7 @@ class RepositoryFBImpl @Inject constructor(
         var idUsers = 0
         var oldIdUser = 0
 
+        loadText.postValue("Отправка профиля")
         val tpovId = getTpovId()
         val profile = dao.getProfileByTpovId(tpovId)
 
@@ -1479,22 +349,26 @@ class RepositoryFBImpl @Inject constructor(
                         ).toProfile()
 
                     ).addOnSuccessListener {
-                        dao.updateProfiles(
-                            profile.copy(
-                                tpovId = idUsers,
-                                idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                dateSynch = TimeManager.getCurrentTime()
+
+                        CoroutineScope(Dispatchers.IO).launch {
+                            dao.updateProfiles(
+                                profile.copy(
+                                    tpovId = idUsers,
+                                    idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                                    dateSynch = TimeManager.getCurrentTime()
+                                )
                             )
-                        )
 
-                        dao.getQuizList(oldIdUser).forEach {
-                            dao.updateQuiz(it.copy(tpovId = idUsers))
+                            dao.getQuizList(oldIdUser).forEach {
+                                dao.updateQuiz(it.copy(tpovId = idUsers))
+                            }
+
+                            setTpovId(idUsers)
+                            setTpovIdFB()
+
+                            log("setProfile() tpovId: $tpovId")
+
                         }
-
-                        setTpovId(idUsers)
-                        setTpovIdFB()
-
-                        log("setProfile() tpovId: $tpovId")
                     }.addOnFailureListener {
                         log("setProfile() error1: $it")
                     }
@@ -1547,6 +421,14 @@ class RepositoryFBImpl @Inject constructor(
                                         .getValue(String::class.java)
                                 },
 
+                                addMassage = try {
+                                    if (profile.addMassage == "") profileSnapshot.child("addMassage")
+                                        .child("addMassage").getValue(String::class.java) else ""
+                                } catch (e: Exception) {
+                                    profileSnapshot.child("addPoints").child("addMassage")
+                                        .getValue(String::class.java)
+                                },
+
                                 addPointsNolics = try {
                                     if (profile.addPointsNolics == 0) profileSnapshot.child("addPoints")
                                         .child("addNolics").getValue(Int::class.java) else 0
@@ -1569,19 +451,12 @@ class RepositoryFBImpl @Inject constructor(
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addSkill")
                                         .getValue(Int::class.java)
-                                },
-
-                                addPointsSkillInSeason = try {
-                                    if (profile.addPointsSkillInSeason == 0) profileSnapshot.child("addPoints")
-                                        .child("addSkillInSesone").getValue(Int::class.java) else 0
-                                } catch (e: Exception) {
-                                    profileSnapshot.child("addPoints").child("addSkillInSesone")
-                                        .getValue(Int::class.java)
                                 }
 
                             ).toProfile()
                         ).addOnSuccessListener {
                             synthLiveData.value = ++synth
+                            loadText.postValue("")
                         }.addOnFailureListener {
                             log("setProfile() $it")
                             synthLiveData.value = ++synth
@@ -1619,6 +494,337 @@ class RepositoryFBImpl @Inject constructor(
 
         })
         return profile
+    }
+
+    override suspend fun getQuiz8FB() {
+        getQuiz("quiz8", getQuestionDetails = false)
+    }
+
+    override suspend fun getAllQuiz() {
+        getQuiz()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun waitForReadToBecomeTrue(): Boolean = try {
+        withTimeout(60000L) {
+            suspendCancellableCoroutine<Boolean> { continuation ->
+                val database = FirebaseDatabase.getInstance()
+                val myRef = database.getReference("players/read")
+
+                val listener = object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val value = dataSnapshot.getValue(Boolean::class.java)
+                        if (value == true) {
+                            myRef.removeEventListener(this)
+                            continuation.resume(true) {
+                                // Обработка отмены после возобновления корутины
+                            }
+                        }
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                    }
+                }
+
+                myRef.addValueEventListener(listener)
+
+                continuation.invokeOnCancellation {
+                    myRef.removeEventListener(listener)
+                }
+            }
+        }
+    } catch (e: TimeoutCancellationException) {
+        setRead(true)
+        true
+    }
+
+    private fun setRead(value: Boolean) {
+        val database = FirebaseDatabase.getInstance()
+        val myRef = database.getReference("players/read")
+        myRef.setValue(value)
+    }
+
+    override suspend fun setAllQuiz() {
+
+        if (waitForReadToBecomeTrue()) {
+
+            val database = FirebaseDatabase.getInstance()
+            loadText.postValue("Отправка квестов на сервер")
+
+            dao.getQuizList(getTpovId()).forEach {
+                val eventQuiz = it.event
+                val quizRef = database.getReference(
+                    if (eventQuiz == 1) "quiz1/${getTpovId()}" else "quiz$eventQuiz"
+                )
+
+                val profileRef = FirebaseDatabase.getInstance().getReference("players/idQuiz")
+                profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+
+                        val newIdQuiz = if (it.id!! < 100) {
+                            val id = snapshot.getValue(Int::class.java)?.plus(1)
+                            profileRef.setValue(id)
+                            id
+                        } else it.id
+
+                        quizRef.child(newIdQuiz.toString())
+                            .addListenerForSingleValueEvent(object : ValueEventListener {
+                                override fun onDataChange(snapshot: DataSnapshot) {
+                                    val newVersionQuiz =
+                                        snapshot.child("versionQuiz").getValue(Int::class.java)
+
+                                    if (newVersionQuiz!! < getVersionQuiz(newIdQuiz.toString())) {
+                                        val newQuiz = Quiz(
+                                            nameQuiz = it.nameQuiz,
+                                            tpovId = it.tpovId,
+                                            data = it.data,
+                                            versionQuiz = newVersionQuiz,
+                                            picture = it.picture!!,
+                                            event = eventQuiz,
+                                            numQ = it.numQ,
+                                            numHQ = it.numHQ,
+                                            starsAllPlayer = snapshot.child("starsAllPlayer")
+                                                .getValue(Int::class.java)!!,
+                                            starsPlayer = snapshot.child("starsPlayer")
+                                                .getValue(Int::class.java)!!,
+                                            ratingPlayer = it.ratingPlayer,
+                                            userName = it.userName,
+                                            languages = it.languages
+
+                                        )
+                                        quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
+                                        dao.deleteQuizById(it.id!!)
+                                        dao.insertQuiz(
+                                            newQuiz.toQuizEntity(
+                                                newIdQuiz!!,
+                                                it.stars,
+                                                it.starsAll,
+                                                it.rating,
+                                                it.picture
+                                            )
+                                        )
+
+                                        setQuestions(newIdQuiz, eventQuiz, it.id!!)
+                                        setQuestionDetails(newIdQuiz, eventQuiz, it.id!!)
+                                    }
+                                }
+
+                                override fun onCancelled(error: DatabaseError) {}
+                            })
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+
+                    }
+                })
+            }
+
+            CoroutineScope(Dispatchers.IO).launch {
+                while (true) {
+                    var exit = true
+                    dao.getQuizList(getTpovId()).forEach {
+                        if (it.id!! < 100) exit = false
+                    }
+
+                    if (exit) {
+                        setRead(true)
+                        loadText.postValue("")
+                        synthLiveData.postValue(++synth)
+
+                        break
+                    }
+                    delay(300)
+                }
+            }
+        }
+    }
+
+    private fun setQuestions(newIdQuiz: Int?, eventQuiz: Int?, id: Int) {
+        val questionRef = FirebaseDatabase.getInstance().getReference(
+            if (eventQuiz != 1) "question$eventQuiz/$newIdQuiz"
+            else "question1/${getTpovId()}/$newIdQuiz"
+        )
+
+        dao.getQuestionByIdQuiz(id).forEach {
+            questionRef.child(newIdQuiz.toString())
+                .child(if (it.hardQuestion) "-${it.numQuestion}" else "${it.numQuestion}")
+                .child(if (it.lvlTranslate <= 100) "-${it.language}" else "${it.language}")
+                .setValue(it.toQuestion())
+
+            dao.deleteQuestion(id)
+            CoroutineScope(Dispatchers.IO).launch {
+                dao.insertQuestion(it.copy(id = newIdQuiz))
+            }
+        }
+    }
+
+    private fun setQuestionDetails(newIdQuiz: Int?, eventQuiz: Int?, id: Int) {
+        val questionDetailRef = FirebaseDatabase.getInstance().getReference(
+            if (eventQuiz != 1) "questionDetail$eventQuiz/$newIdQuiz"
+            else "question1/${getTpovId()}/$newIdQuiz"
+        )
+
+        CoroutineScope(Dispatchers.Main).launch {
+            dao.getQuestionDetailByIdQuiz(id).forEach {
+                questionDetailRef.setValue(it)
+
+                dao.deleteQuestionDetailByIdQuiz(id)
+                dao.insertQuizDetail(it.copy(id = newIdQuiz))
+            }
+        }
+    }
+
+    private fun setReadToFalse() {
+        val database = FirebaseDatabase.getInstance()
+        val myRef = database.getReference("players/read")
+        myRef.setValue(false)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun getQuiz(
+        vararg pathQuiz: String? = arrayOf(
+            "quiz1/${getTpovId()}",
+            if (dao.getProfile(getTpovId()).tester!! >= 100
+                || dao.getProfile(getTpovId()).developer!! >= 100
+            ) "quiz2" else null,
+            if (dao.getProfile(getTpovId()).moderator!! >= 100
+                || dao.getProfile(getTpovId()).developer!! >= 100
+            ) "quiz3" else null,
+            if (dao.getProfile(getTpovId()).admin!! >= 100
+                || dao.getProfile(getTpovId()).developer!! >= 100
+            ) "quiz4" else null,
+            "quiz5", "quiz6", "quiz7", "quiz8"
+        ), getQuestionDetails: Boolean = true
+    ) {
+        loadText.postValue("Загрузка квестов")
+        log("wdwdwdw 1")
+
+        if (waitForReadToBecomeTrue()) { // Мы дождались, пока read станет true
+            log("wdwdwdw 2")
+            pathQuiz.forEach { quizItem ->
+                log("wdwdwdw 3")
+                val database = FirebaseDatabase.getInstance()
+                val quizRef = database.getReference(quizItem!!)
+
+                quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        for (quizSnapshot in dataSnapshot.children) {
+                            log("wdwdwdw 4")
+                            val idQuiz = quizSnapshot.key?.toInt() ?: 0
+                            val quiz =
+                                quizSnapshot.getValue(Quiz::class.java) // Замените Quiz на класс вашего объекта
+                            if (quiz?.versionQuiz!! > getVersionQuiz(idQuiz.toString()))
+                                savePictureToLocalDirectory(quiz.picture) {
+                                    dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
+                                    getQuestions(quizItem)
+                                    if (getQuestionDetails) getQuestionDetails(quizItem)
+                                    setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
+                                    synthLiveData.value = ++synth
+                                    loadText.postValue("")
+                                }
+                            // Теперь вы можете работать с объектом quiz
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        // Ошибка чтения данных
+                    }
+                })
+            }
+            setRead(true) // Устанавливаем read обратно в false
+            loadText.postValue("")
+        } else {
+            loadText.postValue("Сервер занят, ждем..")
+        }
+    }
+
+
+    fun getQuestions(pathQuiz: String) {
+        val pathQuestion = when (pathQuiz) {
+            "quiz2" -> "question2"
+            "quiz3" -> "question3"
+            "quiz4" -> "question4"
+            "quiz5" -> "question5"
+            "quiz6" -> "question6"
+            "quiz7" -> "question7"
+            "quiz8" -> "question8"
+            else -> "question1/${getTpovId()}"
+        }
+
+        val database = FirebaseDatabase.getInstance()
+        val questionRef = database.getReference(pathQuestion)
+        questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                for (idQuizSnapshot in dataSnapshot.children) {
+                    for (numQuestionSnapshot in idQuizSnapshot.children) {
+                        for (languageSnapshot in numQuestionSnapshot.children) {
+                            val question = languageSnapshot.getValue(Question::class.java)
+
+                            CoroutineScope(Dispatchers.IO).launch {
+                                dao.insertQuestion(
+                                    QuestionEntity(
+                                        null,
+                                        abs(numQuestionSnapshot.key?.toInt()!!),
+                                        question!!.nameQuestion,
+                                        question.answerQuestion,
+                                        question.typeQuestion,
+                                        idQuizSnapshot.key!!.toInt(),
+                                        languageSnapshot.key!!,
+                                        question.lvlTranslate,
+                                        question.infoTranslater
+                                    )
+                                )
+                                synthLiveData.postValue(++synth)
+                            }
+                        }
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+        })
+    }
+
+    fun getQuestionDetails(pathQuiz: String) {
+        val pathQuestionDetail = when (pathQuiz) {
+            "quiz2" -> "questionDetail2"
+            "quiz3" -> "questionDetail3"
+            "quiz4" -> "questionDetail4"
+            "quiz5" -> "questionDetail5"
+            "quiz6" -> "questionDetail6"
+            "quiz7" -> "questionDetail7"
+            "quiz8" -> "questionDetail8"
+            else -> "questionDetail1/${getTpovId()}"
+        }
+
+        val database = FirebaseDatabase.getInstance()
+        val questionDetailRef = database.getReference(pathQuestionDetail)
+        questionDetailRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                for (idQuizSnapshot in dataSnapshot.children) {
+                    for ((index, numQuestionDetailSnapshot) in idQuizSnapshot.children.withIndex()) {
+                        val questionDetail =
+                            numQuestionDetailSnapshot.getValue(QuestionDetail::class.java)
+
+                        dao.insertQuizDetail(
+                            questionDetail?.toQuestionDetailEntity(
+                                index,
+                                idQuizSnapshot.key?.toInt()!!,
+                                true
+                            )!!
+                        )
+                        synthLiveData.value = ++synth
+                    }
+                }
+
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+        })
     }
 
     @OptIn(InternalCoroutinesApi::class)

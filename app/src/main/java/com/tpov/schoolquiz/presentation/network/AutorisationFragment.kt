@@ -45,6 +45,7 @@ class AutorisationFragment : BaseFragment() {
     private lateinit var registrationMode: RadioButton
     private lateinit var buttonSetLanguageProfile: Button
     private lateinit var layoutProfileLanguage: LinearLayout
+    private lateinit var invitation: EditText
     val startDelay = 0
     val stepDelay = 75
     val duration = 400L
@@ -91,7 +92,9 @@ class AutorisationFragment : BaseFragment() {
 
         val loginValid = usernameEditText.text.isNotEmpty() && passwordEditText.text.isNotEmpty()
         val registrationValid =
-            nickname.text.isNotEmpty() && nameEditText.text.isNotEmpty() && dateEditText.text.isNotEmpty() && usernameEditText.text.isNotEmpty() && passwordEditText.text.isNotEmpty()
+            nickname.text.isNotEmpty() && nameEditText.text.isNotEmpty()
+                    && dateEditText.text.isNotEmpty() && usernameEditText.text.isNotEmpty()
+                    && passwordEditText.text.isNotEmpty()
 
         loginButton.isEnabled = isLoginMode && loginValid
         registrationButton.isEnabled = isRegistrationMode && registrationValid
@@ -158,6 +161,7 @@ class AutorisationFragment : BaseFragment() {
         textLanguageProfile = view.findViewById(R.id.tv_lang_profile)
         buttonSetLanguageProfile = view.findViewById(R.id.b_set_translate_profile)
         layoutProfileLanguage = view.findViewById(R.id.layout_profile_language)
+        invitation = view.findViewById(R.id.edt_invitation)
 
         registrationButton.isEnabled = false
         registrationButton.isClickable = false
@@ -180,7 +184,13 @@ class AutorisationFragment : BaseFragment() {
                 val selectedLanguages = mutableListOf<LanguageEntity>()
                 for (i in checkedItems.indices) {
                     if (checkedItems[i]) {
-                        selectedLanguages.add(LanguageEntity(getLanguageShortCode(languagesWithCheckBox[i].name), false))
+                        selectedLanguages.add(
+                            LanguageEntity(
+                                getLanguageShortCode(
+                                    languagesWithCheckBox[i].name
+                                ), false
+                            )
+                        )
                     }
                 }
                 result = selectedLanguages.joinToString("|") { it.name }
@@ -211,6 +221,7 @@ class AutorisationFragment : BaseFragment() {
                     showWithDelay(loginCity, duration, getDelay())
                     showWithDelay(layoutProfileLanguage, duration, getDelay())
                     showWithDelay(dateEditText, duration, getDelay())
+                    showWithDelay(invitation, duration, getDelay())
 
                     hideWithDelay(loginButton, duration, getDelay())
                     showWithDelay(registrationButton, duration, 0)
@@ -223,13 +234,12 @@ class AutorisationFragment : BaseFragment() {
                     hideWithDelay(loginCity, duration, getDelay())
                     hideWithDelay(layoutProfileLanguage, duration, getDelay())
                     hideWithDelay(dateEditText, duration, getDelay())
+                    hideWithDelay(invitation, duration, getDelay())
 
                     hideWithDelay(registrationButton, duration, getDelay())
                     showWithDelay(loginButton, duration, 0)
                 }
             }
-
-
         }
 
         loginButton.setOnClickListener {
@@ -248,7 +258,8 @@ class AutorisationFragment : BaseFragment() {
                 nickname.text.toString(),
                 dateEditText.text.toString(),
                 loginCity.text.toString(),
-                result
+                result,
+                invitation.text.toString().toInt()
             )
         }
 

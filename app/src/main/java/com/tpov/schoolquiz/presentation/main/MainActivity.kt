@@ -5,7 +5,10 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
@@ -22,6 +25,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.*
 import android.view.animation.LinearInterpolator
 import android.widget.*
+import android.window.SplashScreen
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -30,14 +34,17 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.contact.Contacts
+import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByCountInChat
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
 import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.custom.Logcat
@@ -47,6 +54,8 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCount
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
+import com.tpov.schoolquiz.presentation.custom.Values.loadProgress
+import com.tpov.schoolquiz.presentation.custom.Values.loadText
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -82,6 +91,7 @@ import kotlinx.coroutines.*
 import java.text.NumberFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.system.exitProcess
 
 /**
  * This is the main screen of the application, it consists of a panel that shows how much spare is left.
@@ -125,7 +135,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun calculateQuizzResult() {
-        viewModel.setPercentResultAllQuiz()
+
+        lifecycleScope.launch {
+            viewModel.setPercentResultAllQuiz()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -137,14 +150,27 @@ class MainActivity : AppCompatActivity() {
 
         val swipeRefreshLayout = binding.swipeRefreshLayout
 
+        var oldLoadText = ""
+        loadText.observe(this) {
+            log("ioioioio $it")
+           // binding.tvPbLoad.visibility = View.VISIBLE
+            if (oldLoadText != it) showTextWithDelay(binding.tvPbLoad, it, 25)
+            oldLoadText = it
+        }
+
+        loadProgress.observe(this) {
+
+        }
+
         swipeRefreshLayout.setOnRefreshListener {
-            log("wdwdwdfweadaw")
-            calculateQuizzResult()
+            if (supportFragmentManager.findFragmentById(R.id.title_fragment) is FragmentMain) {
+                calculateQuizzResult()
+            }
             swipeRefreshLayout.isRefreshing = false
         }
+
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
-        val versionCode: Int = pInfo.versionCode
 
         val userguide = UserGuide(this)
 
@@ -156,7 +182,7 @@ class MainActivity : AppCompatActivity() {
 
         userguide.addGuide(
             findViewById(R.id.menu_network),
-            "This is network",
+            "Тут находится связь с внешним миром, квесты других игроков, чат, турниры и многое другое",
             "Network",
             icon = getDrawable(R.drawable.ic_settings),
             callback = {
@@ -472,14 +498,53 @@ class MainActivity : AppCompatActivity() {
         setButtonNavListener()
 
         val profile = viewModel.getProfile()
-        val qualification = Qualification(
-            profile.tester ?: 0,
-            profile.moderator ?: 0,
-            profile.sponsor ?: 0,
-            profile.translater ?: 0,
-            profile.admin ?: 0,
-            profile.developer ?: 0
-        )
+        val qualification = try {
+            Qualification(
+                profile.tester ?: 0,
+                profile.moderator ?: 0,
+                profile.sponsor ?: 0,
+                profile.translater ?: 0,
+                profile.admin ?: 0,
+                profile.developer ?: 0
+            )
+        } catch (e: Exception) {
+            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (1), подождите несколько секунд", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (2), подождите несколько секунд", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (3), подождите несколько секунд", Toast.LENGTH_LONG).show()
+
+            val cacheDir = this.cacheDir
+
+            val files = cacheDir.listFiles()
+            if (files != null) {
+                for (file in files) {
+                    file.delete()
+                }
+            } else {
+                Toast.makeText(this, "Кеш не удалось почистить ..(", Toast.LENGTH_LONG).show()
+                0
+            }
+
+            val mStartActivity = Intent(this, SplashScreen::class.java)
+            val mPendingIntentId = 123456
+            val mPendingIntent = PendingIntent.getActivity(
+                this,
+                mPendingIntentId,
+                mStartActivity,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val mgr = this.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 3000, mPendingIntent)
+            exitProcess(0)
+
+            Qualification(
+                profile.tester ?: 0,
+                profile.moderator ?: 0,
+                profile.sponsor ?: 0,
+                profile.translater ?: 0,
+                profile.admin ?: 0,
+                profile.developer ?: 0
+            )
+        }
 
         FragmentManager.setFragment(FragmentMain.newInstance(8), this)
         SetItemMenu.setHomeMenu(
@@ -518,7 +583,11 @@ class MainActivity : AppCompatActivity() {
 
         SetItemMenu.setHomeMenu(
             binding, MENU_HOME, this,
-            profile.pointsSkill ?: 0,
+            try {
+                profile.pointsSkill ?: 0
+            } catch (e: java.lang.Exception) {
+                0
+            },
             qualification
         )
 
@@ -526,9 +595,6 @@ class MainActivity : AppCompatActivity() {
         val repeatDelay = 60_000L // Задержка между повторениями (1 минута)
         var initialDelay = 1000L // Начальная задержка перед запуском анимации
         var addInitialDelay = 250L
-
-
-        showTextWithDelay(binding.tvPbLoad, "Соединение с сервером...", 50)
 
         startAnimationWithRepeat(imvStars, yRotateAnimationDuration, initialDelay, repeatDelay)
 
@@ -597,53 +663,61 @@ class MainActivity : AppCompatActivity() {
         userguide.setCounterValue(skill ?: 0)
 
         var id = 1
+            // getPersonalMassage().forEach { it: ChatEntity ->
+       //     userguide.addNotification(
+       //         text = it.msg,
+       //         titleText = "Mersonal sms by: ${it.user}",
+       //         icon = getResources.getUserIcon(it.icon, this)
+                //     )
+       // }
+
         userguide.addNotification(
             id++,
             text = "Привет мой друг, ты прошел не легкий путь от Новичка до Легенды через всю дорогу препятствий и трудностей, я желаю что-бы тебе был безвозместный успех в жизни так же, как и в этой игре. \n  Признаюсь, мы так же шли по не легкой дороге, что-бы сделать все условия, что-бы наши замечатильные игроки, дошли до этой черты. Я этот текст пишу на этапе альфа версии квеста, но надеюсь, мы дойдем до момента когда наши игроки возьмут Легенду. Благодарим тебя за большой вклад в наше сообщество, каждый из вас действительно важен. Могу предложить податься к нам в работу, возможно именно у нас ты так же сможешь показать весь потенциал. Удачи! ",
             titleText = "Поздравление от разработчика игры.",
-            options = Options(countKey = 100_0000),
+            options = Options(countKey = 1000_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Легенда",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 100_0000),
+            options = Options(countKey = 1000_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Єксперт",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 50_0000),
+            options = Options(countKey = 500_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Гроссместер",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 25_0000),
+            options = Options(countKey = 250_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Ветеран",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 13_0000),
+            options = Options(countKey = 130_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
             id++,
             text = "Вы можете просматривать профили других игроков по другим различным фильтрам",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 6_0000),
+            options = Options(countKey = 60_0000),
             icon = resources.getDrawable(R.drawable.nav_user)
         )
         userguide.addNotification(
             id++,
             text = "Вы получили звание - Любитель",
             titleText = "Your skill = $skill",
-            options = Options(countKey = 6_0000),
+            options = Options(countKey = 60_0000),
             icon = resources.getDrawable(R.drawable.star_full)
         )
         userguide.addNotification(
@@ -692,12 +766,24 @@ class MainActivity : AppCompatActivity() {
         )
 
         /////////////////////////////////////////
-        userguide.addNotification(
+        if(skill != 0) userguide.addNotification(
+            id++,
+            "Это индикатор, который отображает перведен ли квест на ваш язык, на него можно нажать. \nЕсли квест не переведен, вы можете нажать на перевести\n - Синий - квест переведен хорошо \n - Желтый - квест переведен переводчиком\n - Серый - квест переведен",
+            titleText = "Перевод квеста",
+            icon = getDrawable(R.drawable.ic_translate),
+        )
+
+        if(skill != 0) userguide.addNotification(
             id++,
             titleText = "Your skill = $skill",
             text = "Добро пожаловать в квиз правда-ложь, готов потрясти своими извинилами? Нажимай на квест который больше всего нравится.",
             icon = resources.getDrawable(R.drawable.star_full)
         )
+
+    }
+
+    private fun getPersonalMassage(): List<ChatEntity> {
+        return viewModel.getMassage()
     }
 
     private fun showPopupInfo(event: MotionEvent, popupType: Int) {
@@ -903,6 +989,16 @@ class MainActivity : AppCompatActivity() {
                     icon = resources.getDrawable(R.drawable.baseline_favorite_24)
                 )
 
+                if (profile.addMassage != "") userguide.addNotification(
+                    0,
+                    text = " - ${profile.addMassage}",
+                    titleText = "Developer massage"
+                )
+
+                val countSmsPoints = getCountMassageIdAndReset()
+
+                log("lklklkl 1 $countSmsPoints")
+                log("lklklkl 2 ${getSkillByCountInChat(countSmsPoints)}")
                 viewModel.updateProfileUseCase(
                     profile.copy(
                         count = calcCount(
@@ -917,7 +1013,8 @@ class MainActivity : AppCompatActivity() {
                             } else {
                                 getSkillByTimeInGame(period.toInt())
                             }
-                        ).plus(profile.addPointsNolics ?: 0)),
+                        ).plus(profile.addPointsNolics ?: 0)
+                            .plus(getSkillByCountInChat(countSmsPoints))),
                         pointsGold = profile.pointsGold?.plus(profile.addPointsGold ?: 0),
                         pointsNolics = profile.pointsNolics?.plus(profile.addPointsNolics ?: 0),
                         trophy = profile.trophy + profile.addTrophy,
@@ -936,13 +1033,14 @@ class MainActivity : AppCompatActivity() {
                         },
 
                         timeInGamesSmsPoints = profile.timeInGamesSmsPoints?.plus(
-                            getCountMassageIdAndReset()
+                            countSmsPoints
                         ),
 
                         addPointsGold = 0,
                         addPointsNolics = 0,
                         addPointsSkill = 0,
-                        addTrophy = ""
+                        addTrophy = "",
+                        addMassage = ""
                     )
                 )
             }
@@ -1091,6 +1189,16 @@ class MainActivity : AppCompatActivity() {
             )
 
             when (menuItem.toString()) {
+                resources.getString(R.string.nav_profile) -> {
+                    FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+                    SetItemMenu.setNetworkMenu(
+                        binding,
+                        MENU_PROFILE,
+                        this,
+                        profile.pointsSkill ?: 0,
+                        qualification
+                    )
+                }
                 resources.getString(R.string.nav_chat) -> {
                     FragmentManager.setFragment(ChatFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(
@@ -1397,6 +1505,8 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_home -> {
                 if (fr1 != 1) {
+
+                    swipeRefreshLayout.isEnabled = true
                     SetItemMenu.setHomeMenu(
                         binding, MENU_HOME, this,
                         profile.pointsSkill ?: 0,
@@ -1422,6 +1532,8 @@ class MainActivity : AppCompatActivity() {
 
             R.id.menu_network -> {
                 if (fr1 != 2) {
+
+                    swipeRefreshLayout.isEnabled = false
                     SetItemMenu.setNetworkMenu(
                         binding, MENU_PROFILE, this,
                         profile.pointsSkill ?: 0,
@@ -1489,6 +1601,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startProfile() {
+        swipeRefreshLayout.isEnabled = false
         val profile = viewModel.getProfile()
         val qualification = Qualification(
             profile.tester ?: 0,
@@ -1509,7 +1622,7 @@ class MainActivity : AppCompatActivity() {
             log("setButtonNavListener() Аккаунт зареган")
             Toast.makeText(this@MainActivity, "Аккаунт найден", Toast.LENGTH_LONG)
                 .show()
-
+            swipeRefreshLayout.isEnabled = false
             FragmentManager.setFragment(ProfileFragment.newInstance(), this)
 
         } else {

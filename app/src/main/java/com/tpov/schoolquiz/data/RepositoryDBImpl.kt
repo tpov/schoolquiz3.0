@@ -2,11 +2,7 @@ package com.tpov.schoolquiz.data
 
 import androidx.lifecycle.LiveData
 import com.tpov.schoolquiz.data.database.QuizDao
-import com.tpov.schoolquiz.data.database.entities.PlayersEntity
-import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.domain.repository.RepositoryDB
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -30,15 +26,15 @@ class RepositoryDBImpl @Inject constructor(
         dao.insertQuiz(quizEntity)
     }
 
-    override fun insertQuestion(questionEntity: QuestionEntity) {
+    override suspend fun insertQuestion(questionEntity: QuestionEntity) {
         dao.insertQuestion(questionEntity)
     }
 
-    override fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
+    override suspend fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity> {
         return dao.getQuestionDetailListByNameQuiz(nameQuiz)
     }
 
-    override fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>> {
+    override suspend fun getQuizLiveData(tpovId: Int): LiveData<List<QuizEntity>> {
         return dao.getQuizLiveData(tpovId)
     }
 
@@ -66,11 +62,11 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getAllProfiles()
     }
 
-    override fun getQuizList(tpovId: Int): List<QuizEntity> {
+    override suspend fun getQuizList(tpovId: Int): List<QuizEntity> {
         return dao.getQuizList(tpovId)
     }
 
-    override fun getQuizEvent(): List<QuizEntity> {
+    override suspend fun getQuizEvent(): List<QuizEntity> {
         return dao.getQuizEvent()
     }
 
@@ -82,7 +78,7 @@ class RepositoryDBImpl @Inject constructor(
         return dao.getQuizById(id)
     }
 
-    override fun getQuestionList(): List<QuestionEntity> {
+    override suspend fun getQuestionList(): List<QuestionEntity> {
         return dao.getQuestionList()
     }
 

@@ -26,7 +26,10 @@ import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import java.util.*
 
 class CreateQuestionDialog : DialogFragment() {
@@ -55,8 +58,11 @@ class CreateQuestionDialog : DialogFragment() {
             dialogView.add_question_button.setOnClickListener {
                 addQuestionItem()
             }
-            mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-                addFilledQuestionItem(questionEntity)
+
+            CoroutineScope(Dispatchers.IO).launch {
+                mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
+                    addFilledQuestionItem(questionEntity)
+                }
             }
         }
 
@@ -247,7 +253,7 @@ class CreateQuestionDialog : DialogFragment() {
 
         val questionMap: MutableMap<Int, MutableSet<String>> = mutableMapOf()
 
-// Перебираем вопросы и заполняем карту, в которой ключ - номер вопроса, значение - множество языков
+        // Перебираем вопросы и заполняем карту, в которой ключ - номер вопроса, значение - множество языков
         for (question in questions) {
             if (question.nameQuestion != "") {
                 val num = question.numQuestion
@@ -267,12 +273,12 @@ class CreateQuestionDialog : DialogFragment() {
             }
         }
 
-// Находим пересечение множеств языков для всех номеров вопросов
+        // Находим пересечение множеств языков для всех номеров вопросов
         val commonLanguages =
             questionMap.values.reduce { acc, set -> acc.intersect(set).toMutableSet() }
         log("wd23 commonLanguages: $commonLanguages")
         val profileLvlTranslate = mainActivityViewModel.getProfile().translater
-// Создаем строку в необходимом формате
+        // Создаем строку в необходимом формате
         val questionLang = commonLanguages.joinToString("|") { "$it-$profileLvlTranslate" }
 
         log("wd23 questionLang: $questionLang")
@@ -311,21 +317,20 @@ class CreateQuestionDialog : DialogFragment() {
             if (this.idQuiz == -1) questionLang
             else (mainActivityViewModel.getQuizById(this.idQuiz).languages)
         )
-        mainActivityViewModel.removePlaceInUserQuiz()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            mainActivityViewModel.removePlaceInUserQuiz()
+        }
 
         // Сохранение quizEntity и questions в базу данных
         mainActivityViewModel.insertQuiz(quizEntity)
 
         questions.forEach {
-            if (it.nameQuestion != "") {
+            //if (it.nameQuestion != "") {
                 mainActivityViewModel.insertQuestion(
-                    it.copy(
-                        idQuiz = mainActivityViewModel.getIdQuizByNameQuiz(
-                            nameQuiz
-                        )
-                    )
+                    it.copy(idQuiz = newIdQuiz)
                 )
-            }
+           // }
         }
     }
 

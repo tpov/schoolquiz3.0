@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="1dp"
-    android:background="#61B52D"
+    android:background="@mipmap/back_main"
     android:orientation="vertical"
     android:paddingTop="15dp"
     tools:ignore="MissingDefaultResource">
@@ -16,18 +16,20 @@
         android:id="@+id/num_question_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
         android:text="num_question_view" />
 
     <TextView
         android:id="@+id/short_question_text_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/black"
         android:text="short_question_text_view" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#002AFF"
+        android:background="#FF0000"
         android:orientation="vertical">
         
     </LinearLayout>
