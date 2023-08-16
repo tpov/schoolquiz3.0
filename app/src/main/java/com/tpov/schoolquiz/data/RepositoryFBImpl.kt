@@ -603,7 +603,6 @@ class RepositoryFBImpl @Inject constructor(
                                                 it.picture
                                             )
                                         )
-
                                         setQuestions(newIdQuiz, eventQuiz, it.id!!)
                                         setQuestionDetails(newIdQuiz, eventQuiz, it.id!!)
                                     }
