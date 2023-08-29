@@ -259,7 +259,11 @@ class AutorisationFragment : BaseFragment() {
                 dateEditText.text.toString(),
                 loginCity.text.toString(),
                 result,
-                invitation.text.toString().toInt()
+                try {
+                    invitation.text.toString().toInt()
+                } catch (e: Exception) {
+                    0
+                }
             )
         }
 

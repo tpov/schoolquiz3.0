@@ -573,6 +573,8 @@ class RepositoryFBImpl @Inject constructor(
                                     val newVersionQuiz =
                                         snapshot.child("versionQuiz").getValue(Int::class.java)
 
+                                    try {
+
                                     if (newVersionQuiz!! < getVersionQuiz(newIdQuiz.toString())) {
                                         val newQuiz = Quiz(
                                             nameQuiz = it.nameQuiz,
@@ -605,6 +607,9 @@ class RepositoryFBImpl @Inject constructor(
                                         )
                                         setQuestions(newIdQuiz, eventQuiz, it.id!!)
                                         setQuestionDetails(newIdQuiz, eventQuiz, it.id!!)
+                                    }
+                                    } catch (e: Exception) {
+                                        log("ошибка квеста ${snapshot.value}")
                                     }
                                 }
 
@@ -766,7 +771,7 @@ class RepositoryFBImpl @Inject constructor(
                                         abs(numQuestionSnapshot.key?.toInt()!!),
                                         question!!.nameQuestion,
                                         question.answerQuestion,
-                                        question.typeQuestion,
+                                        getTypeQuestion(numQuestionSnapshot.key?.toInt()!!),
                                         idQuizSnapshot.key!!.toInt(),
                                         languageSnapshot.key!!,
                                         question.lvlTranslate,
@@ -785,6 +790,8 @@ class RepositoryFBImpl @Inject constructor(
             }
         })
     }
+
+    fun getTypeQuestion(toInt: Int) = toInt <= 0
 
     fun getQuestionDetails(pathQuiz: String) {
         val pathQuestionDetail = when (pathQuiz) {

@@ -191,8 +191,9 @@ class QuestionViewModel @Inject constructor(
 
     private fun getQuestionsList() {
 
-        val questionThisListAll =
-            getQuestionByIdQuizUseCase(idQuiz).filter { it.hardQuestion == hardQuestion }
+        val questionThisListAll = getQuestionByIdQuizUseCase(idQuiz)
+            .filter { it.hardQuestion == hardQuestion }
+            .sortedBy { it.id }
 
         var listMap = mutableMapOf<Int, Boolean>()
 

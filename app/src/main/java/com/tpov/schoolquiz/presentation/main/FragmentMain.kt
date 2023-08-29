@@ -91,10 +91,10 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             val countPlace = mainViewModel.getCountPlaceForUserQuiz()
             tv_number_place_user_quiz.text = countPlace.toString()
 
-        if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
-            binding.fabAddItem.isClickable = false
-            binding.fabAddItem.isEnabled = false
-        }
+            if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
+                binding.fabAddItem.isClickable = false
+                binding.fabAddItem.isEnabled = false
+            }
         }
 
         when (isMyQuiz) {
@@ -450,29 +450,31 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
         lifecycleScope.launchWhenStarted {
-        mainViewModel.getQuizLiveData().observe(this@FragmentMain) { list ->
-            log("getQuizLiveData.observe")
-            CoroutineScope(Dispatchers.IO).launch {
-            list.forEach { quiz ->
-                if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
-                    mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
-                        mainViewModel.insertQuestion(
-                            it.copy(
-                                id = null,
-                                idQuiz = quiz.id ?: 0
-                            )
-                        )
+            mainViewModel.getQuizLiveData().observe(this@FragmentMain) { list ->
+                log("getQuizLiveData.observe")
+                CoroutineScope(Dispatchers.IO).launch {
+                    list.forEach { quiz ->
+                        if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
+                            mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
+                                mainViewModel.insertQuestion(
+                                    it.copy(
+                                        id = null,
+                                        idQuiz = quiz.id ?: 0
+                                    )
+                                )
+                            }
+                        }
                     }
-                }}
+                }
+                var setQuestion = false
+                if (list.isEmpty()) setQuestion = true
+                list.forEach { item ->
+                    if (item.id!! < 100) setQuestion = true
+                }
+                if (!setQuestion) mainViewModel.setQuestionsFB()
             }
-            var setQuestion = false
-            if (list.isEmpty()) setQuestion = true
-            list.forEach { item ->
-                if (item.id!! < 100) setQuestion = true
-            }
-            if (!setQuestion) mainViewModel.setQuestionsFB()
         }
-    }}
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

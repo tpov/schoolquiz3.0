@@ -52,7 +52,6 @@ class TranslateQuestionFragment : BaseFragment() {
     private var hardQuestions: MutableList<QuestionEntity>? = null
 
     companion object {
-
         private const val ARG_ID_QUIZ = "idQuiz"
         private const val ARG_ID_QUESTION = "idQuestion"
 

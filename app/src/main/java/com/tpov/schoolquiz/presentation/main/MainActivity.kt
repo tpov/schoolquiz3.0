@@ -175,9 +175,9 @@ class MainActivity : AppCompatActivity() {
         val userguide = UserGuide(this)
 
         userguide.addGuideNewVersion(
-            "SchoolQuiz v${versionName}",
-            "This is alfa test",
-            icon = getDrawable(R.mipmap.ic_launcher)
+            "I'm considering the opportunity to join your team as an Android developer. What are your thoughts on this?",
+            "Hello, Google!",
+            icon = getDrawable(R.drawable.googleg_standard_color_18)
         )
 
         userguide.addGuide(
