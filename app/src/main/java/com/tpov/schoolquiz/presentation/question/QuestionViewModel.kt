@@ -61,7 +61,7 @@ class QuestionViewModel @Inject constructor(
     var persent = 0
     var maxPersent = 0
     var persentAll = 0
-    var questionListThis = ArrayList<QuestionEntity>()
+    var questionListThis = listOf<QuestionEntity>()
     lateinit var questionDetailListThis: List<QuestionDetailEntity>
     lateinit var quizThis: QuizEntity
     lateinit var tpovId: String
@@ -209,7 +209,7 @@ class QuestionViewModel @Inject constructor(
                 questionThisListAll,
                 listMap
             )
-        Questionlist.questionListThis = this.questionListThis
+        Questionlist.questionListThis = ArrayList(this.questionListThis.sortedBy { it.id })
 
         if (!didFoundAllQuestion(this.questionListThis, listMap)) Toast.makeText(
             context,

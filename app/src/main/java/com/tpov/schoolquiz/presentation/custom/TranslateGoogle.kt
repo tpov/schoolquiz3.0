@@ -28,18 +28,18 @@ object TranslateGoogle {
 
         for (question in questionList) {
 
-            com.tpov.schoolquiz.presentation.network.event.log("dawdawdf $question")
+            log("dawdawdf $question")
             val existingQuestion = questionMap[question.numQuestion]
             val existingHardQuestion = questionHardMap[question.numQuestion]
 
             if (!question.hardQuestion) {
                 if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
-                    com.tpov.schoolquiz.presentation.network.event.log("dawdawdf add !hardQuestion")
+                    log("dawdawdf add !hardQuestion")
                     questionMap[question.numQuestion] = question
                 }
-            } else if (question.hardQuestion) {
+            } else {
                 if (existingHardQuestion == null || question.lvlTranslate > existingHardQuestion.lvlTranslate) {
-                    com.tpov.schoolquiz.presentation.network.event.log("dawdawdf add hardQuestion")
+                    log("dawdawdf add hardQuestion")
                     questionHardMap[question.numQuestion] = question
                 }
             }
@@ -70,7 +70,7 @@ object TranslateGoogle {
 
             translateToUserLanguage(filteredQuestionList).forEach {
                 viewModel.insertQuestion(it.copy(id = null))
-                com.tpov.schoolquiz.presentation.network.event.log("dawdawdf $i")
+                log("dawdawdf $i")
                 i--
                 if (i == 0) context.runOnUiThread {
                     viewModel.updateQuiz(
@@ -132,7 +132,7 @@ object TranslateGoogle {
                     )
                 }
             } catch (e: Exception) {
-
+                log("dawdawdf error: $e")
             }
 
         }

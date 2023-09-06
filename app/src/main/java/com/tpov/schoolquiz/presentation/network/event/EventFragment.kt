@@ -112,7 +112,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-
+            log("foundQuestionList(quizId, false) ${foundQuestionList(quizId, false)}")
             if (foundQuestionList(quizId, false)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
@@ -132,15 +132,18 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     @OptIn(InternalCoroutinesApi::class)
     private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean?): Boolean {
 
-        log("kokol hardQuestion: $hardQuestion")
-        val questionThisListAll =
-            mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
-                .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
+        log("kokol 1hardQuestion: $hardQuestion")
 
+        val questionThisListAll = mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
+            .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
+            .sortedBy { it.id }
+
+        log("kokol 2questionThisListAll: $questionThisListAll")
         var listMap = mutableMapOf<Int, Boolean>()
         listMap = getMap(questionThisListAll, listMap)
         val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
 
+        log("kokol 3questionByLocal: $questionByLocal")
         val questionListThis =
             if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
             else getListQuestionByProfileLang(
@@ -148,6 +151,12 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 listMap
             )
 
+        log("kokol 4didFoundAllQuestion: ${didFoundAllQuestion(questionByLocal, listMap)}")
+        log("kokol 5getListQuestionByProfileLang: ${getListQuestionByProfileLang(
+            questionThisListAll,
+            listMap
+        )}")
+        log("kokol 6questionListThis: $questionListThis")
         return didFoundAllQuestion(questionListThis, listMap)
 
     }
@@ -226,11 +235,18 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         val userLocalization: String = getUserLocalization(requireContext())
 
         val questionList = ArrayList<QuestionEntity>()
+        log("filteredList listMap $listMap")
+        log("filteredList questionThisListAll ${questionThisListAll.size}")
+
         listMap.forEach { map ->
             val filteredList = questionThisListAll
                 .filter { it.numQuestion == map.key }
                 .filter { it.language == userLocalization }
 
+            log("filteredList 1 $filteredList")
+            log("filteredList 2 $questionThisListAll")
+            log("filteredList 3 map.key: ${map.key}")
+            log("filteredList 3 userLocalization: ${userLocalization}")
             if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
         }
 

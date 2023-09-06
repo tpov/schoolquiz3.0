@@ -73,15 +73,20 @@ class ProfileFragment : BaseFragment() {
         val player: PlayersEntity = try {
             viewModel.getPlayer()
         } catch (e: Exception) {
-            PlayersEntity(0, 0, 0, 0, 0, 0, 0,
-                -1, 0, 0, 0, 0, 0)
+            PlayersEntity(
+                0, 0, 0, 0, 0, 0, 0,
+                -1, 0, 0, 0, 0, 0
+            )
         }
 
         tvSkill.text = if (player.skill == -1) {
-            Toast.makeText(context, "Нужно скачать данные профиля нажав на \"download\"", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                "Нужно скачать данные профиля нажав на \"download\"",
+                Toast.LENGTH_LONG
+            ).show()
             "no data"
-        }
-            else "Rating: ${player.skill}%"
+        } else "Rating: ${player.skill}%"
 
         val profileGameValues = listOf(
             player.sponsor,
@@ -168,50 +173,50 @@ class ProfileFragment : BaseFragment() {
                 viewModel.getPlayersList()
             }
         }
+
         view.findViewById<ImageButton>(R.id.imb_delete).setOnClickListener {
             viewModel.getDeleteAllQuiz()
         }
 
-        viewModel.synth.observe(viewLifecycleOwner) { number ->
-            log("fun viewModel.getSynth.observe: $number")
-            when (number) { //if (SharedPreferencesManager.canSyncProfile())
-                1 -> {
-                    if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
-                        CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
-                        isExecuted[0] =
-                            true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
-                    }
-                }
+        //if (SharedPreferencesManager.canSyncProfile())
+            viewModel.synth.observe(viewLifecycleOwner) { number ->
+                log("fun viewModel.getSynth.observe: $number")
 
-                2 -> {
-                    if (!isExecuted[1]) {
-                        CoroutineScope(Dispatchers.IO).launch { viewModel.getProfile() }
-                        isExecuted[1] = true
-                    }
-                }
-
-                3 -> {
-                    if (!isExecuted[2]) {
-                        CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
-                        isExecuted[2] = true
-                    }
-                }
-
-                4 -> {
-                    if (!isExecuted[3]) {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            viewModel.setQuizFB()
-                            viewModel.getPlayersList()
+                when (number) {
+                    1 -> {
+                        if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
+                            CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
+                            isExecuted[0] =
+                                true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
                         }
-                        isExecuted[3] = true
+                    }
+
+                    2 -> {
+                        if (!isExecuted[1]) {
+                            CoroutineScope(Dispatchers.IO).launch { viewModel.getProfile() }
+                            isExecuted[1] = true
+                        }
+                    }
+
+                    3 -> {
+                        if (!isExecuted[2]) {
+                            CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
+                            isExecuted[2] = true
+                        }
+                    }
+
+                    4 -> {
+                        if (!isExecuted[3]) {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                viewModel.setQuizFB()
+                                viewModel.getPlayersList()
+                            }
+                            isExecuted[3] = true
+                        }
                     }
                 }
             }
-        }
-
         viewModel.getTpovId()
-
-
     }
 
     @OptIn(InternalCoroutinesApi::class)

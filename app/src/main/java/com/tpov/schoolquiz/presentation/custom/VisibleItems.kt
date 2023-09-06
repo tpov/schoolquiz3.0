@@ -32,6 +32,7 @@ object VisibleItems {
             )
         }
 
+
         if (qualification.developer >= 100) {
             items.add(R.string.nav_leaders to R.drawable.nav_leader)
             items.add(R.string.nav_players to R.drawable.nav_user)

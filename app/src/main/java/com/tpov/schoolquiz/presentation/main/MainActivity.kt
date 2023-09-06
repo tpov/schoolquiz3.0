@@ -168,7 +168,7 @@ class MainActivity : AppCompatActivity() {
             }
             swipeRefreshLayout.isRefreshing = false
         }
-
+        
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
 

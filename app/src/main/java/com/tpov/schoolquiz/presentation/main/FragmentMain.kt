@@ -301,7 +301,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         var foundQuestion = listMap.isNotEmpty()
 
         questionList.forEach {
-
             log("kokol question: ${it.numQuestion}. ${it.nameQuestion} - ${it.language}")
         }
 
@@ -314,11 +313,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 log("kokol catch: $it")
                 foundQuestion = false
             }
-
-            log("kokol foundQuestion: $foundQuestion, it: $it")
         }
 
-        log("kokol foundQuestion: $foundQuestion")
         return foundQuestion
     }
 
