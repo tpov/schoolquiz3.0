@@ -720,20 +720,36 @@ class RepositoryFBImpl @Inject constructor(
                                 quizSnapshot.getValue(Quiz::class.java)
 
                             log("wdwdwdw 6 quiz: $quiz")
-                            if (quiz?.versionQuiz!! > getVersionQuiz(idQuiz.toString())
-                                || getVersionQuiz(idQuiz.toString()) == -1
-                            )
-                                savePictureToLocalDirectory(quiz.picture) {
-                                    log("wdwdwdw 7")
-                                    dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
-                                    log("wdwdwdw INSERT")
-                                    getQuestions(quizItem, idQuiz)
-                                    if (getQuestionDetails) getQuestionDetails(quizItem)
-                                    setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
-                                    synthLiveData.value = ++synth
-                                    loadText.postValue("")
+
+                            val maxLvlTranslate = try {
+                                var max = 0
+                                quiz?.languages?.split('|')?.forEach {
+                                    val newMax = it.split('-')[1].toInt()
+                                    if (newMax > max) max = newMax
                                 }
-                            // Теперь вы можете работать с объектом quiz
+                                max
+                            } catch (e: Exception) {
+                                try {
+                                    quiz?.languages?.split('-')!![1].toInt()
+                                } catch (e: Exception) {
+                                    0
+                                }
+                            }
+
+                            if ((quiz?.event == 5 || quiz?.event == 6 || quiz?.event == 7 || quiz?.event == 8) && maxLvlTranslate >= 100)
+                                if (quiz.versionQuiz > getVersionQuiz(idQuiz.toString())
+                                    || getVersionQuiz(idQuiz.toString()) == -1
+                                )
+                                    savePictureToLocalDirectory(quiz.picture) {
+                                        log("wdwdwdw 7")
+                                        dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
+                                        log("wdwdwdw INSERT")
+                                        getQuestions(quizItem, idQuiz)
+                                        if (getQuestionDetails) getQuestionDetails(quizItem)
+                                        setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
+                                        synthLiveData.value = ++synth
+                                        loadText.postValue("")
+                                    }
                         }
                     }
 
@@ -780,7 +796,7 @@ class RepositoryFBImpl @Inject constructor(
                                     question.answerQuestion,
                                     getTypeQuestion(numQuestionSnapshot.key?.toInt()!!),
                                     idQuiz,
-                                    languageSnapshot.key!!,
+                                    languageSnapshot.key!!.replace("-", "", true),
                                     question.lvlTranslate,
                                     question.infoTranslater
                                 )
