@@ -508,9 +508,9 @@ class MainActivity : AppCompatActivity() {
                 profile.developer ?: 0
             )
         } catch (e: Exception) {
-            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (1), подождите несколько секунд", Toast.LENGTH_LONG).show()
-            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (2), подождите несколько секунд", Toast.LENGTH_LONG).show()
-            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (3), подождите несколько секунд", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка данных профиля, подождите (1)", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка данных профиля, подождите (2)", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка данных профиля, подождите (3)", Toast.LENGTH_LONG).show()
 
             val cacheDir = this.cacheDir
 

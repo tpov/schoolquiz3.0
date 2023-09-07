@@ -390,9 +390,8 @@ class RepositoryFBImpl @Inject constructor(
                                 .getValue(Int::class.java)
                         }"
                     )
-
-                    try {
-                        profileRef.child(tpovId.toString()).setValue(
+try {
+                            profileRef.child(tpovId.toString()).setValue(
                             profile.copy(
 
                                 translater = profileSnapshot.child("qualification")
@@ -418,7 +417,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addTrophy").getValue(String::class.java) else ""
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addTrophy")
-                                        .getValue(String::class.java)
+                                        .getValue(String::class.java) ?: ""
                                 },
 
                                 addMassage = try {
@@ -426,7 +425,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addMassage").getValue(String::class.java) else ""
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addMassage")
-                                        .getValue(String::class.java)
+                                        .getValue(String::class.java) ?: ""
                                 },
 
                                 addPointsNolics = try {
@@ -434,7 +433,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addNolics").getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addNolics")
-                                        .getValue(Int::class.java)
+                                        .getValue(Int::class.java) ?: 0
                                 },
 
                                 addPointsGold = try {
@@ -442,7 +441,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addGold").getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addGold")
-                                        .getValue(Int::class.java)
+                                        .getValue(Int::class.java) ?: 0
                                 },
 
                                 addPointsSkill = try {
@@ -450,9 +449,8 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addSkill").getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addSkill")
-                                        .getValue(Int::class.java)
+                                        .getValue(Int::class.java) ?: 0
                                 }
-
                             ).toProfile()
                         ).addOnSuccessListener {
                             synthLiveData.value = ++synth
@@ -461,7 +459,7 @@ class RepositoryFBImpl @Inject constructor(
                             log("setProfile() $it")
                             synthLiveData.value = ++synth
                         }
-                    } catch (e: Exception) {
+                   } catch (e: Exception) {
                         synthLiveData.value = ++synth
                     }
 
@@ -551,6 +549,7 @@ class RepositoryFBImpl @Inject constructor(
             val database = FirebaseDatabase.getInstance()
             loadText.postValue("Отправка квестов на сервер")
 
+            var maxIdQuiz = 0
             dao.getQuizList(getTpovId()).forEach {
                 val eventQuiz = it.event
                 val quizRef = database.getReference(
@@ -562,10 +561,11 @@ class RepositoryFBImpl @Inject constructor(
                     override fun onDataChange(snapshot: DataSnapshot) {
 
                         val newIdQuiz = if (it.id!! < 100) {
-                            log("setAllQuiz 4")
-                            val id = snapshot.getValue(Int::class.java)?.plus(1)
+                            val id = if (maxIdQuiz == 0) snapshot.getValue(Int::class.java)?.plus(1)
+                            else maxIdQuiz + 1
                             profileRef.setValue(id)
-                            id
+                            maxIdQuiz = id ?: 0
+                            maxIdQuiz
                         } else it.id
 
                         quizRef.child(newIdQuiz.toString())

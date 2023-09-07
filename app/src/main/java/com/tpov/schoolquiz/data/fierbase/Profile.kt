@@ -181,11 +181,11 @@ fun ProfileEntity.toProfile(): Profile {
             timeInQuizRating = this.timeInQuizRating
         ),
         addPoints = AddPoints(
-            this.addPointsGold!!,
-            this.addPointsSkill!!,
-            this.addPointsNolics!!,
-            this.addTrophy!!,
-            this.addMassage!!
+            this.addPointsGold ?: 0,
+            this.addPointsSkill ?: 0,
+            this.addPointsNolics ?: 0,
+            this.addTrophy ?: "",
+            this.addMassage ?: ""
         ),
         dates = Dates(this.dataCreateAcc!!, this.dateSynch!!),
         idFirebase = this.idFirebase!!,
