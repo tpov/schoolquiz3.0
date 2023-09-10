@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -63,23 +64,24 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         recyclerView = view.findViewById(R.id.rv_event)
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        val eventAdapter = EventAdapter(
-            eventViewModel.quiz2List,
-            eventViewModel.quiz3List,
-            eventViewModel.quiz4List,
-            emptyList(),// eventViewModel.translate1Question,
-            emptyList(),//eventViewModel.translate2Question,
-            emptyList(),//eventViewModel.translateEditQuestion,
-            emptyList(),//eventViewModel.moderator,
-            emptyList(),//eventViewModel.admin,
-            emptyList(),//eventViewModel.develop,
-            this,
-            mainViewModel
-        )
-        eventAdapter.setDataObserver(eventAdapter)
-        recyclerView.adapter = eventAdapter
-
         eventViewModel.updateEventList.observe(viewLifecycleOwner) {
+
+            val eventAdapter = EventAdapter(
+                eventViewModel.quiz2List.filter { it.ratingPlayer == 0 },
+                eventViewModel.quiz3List.filter { it.ratingPlayer == 0 },
+                eventViewModel.quiz4List.filter { it.ratingPlayer == 0 },
+                emptyList(),// eventViewModel.translate1Question,
+                emptyList(),//eventViewModel.translate2Question,
+                emptyList(),//eventViewModel.translateEditQuestion,
+                emptyList(),//eventViewModel.moderator,
+                emptyList(),//eventViewModel.admin,
+                emptyList(),//eventViewModel.develop,
+                this,
+                mainViewModel
+            )
+           eventAdapter.setDataObserver(eventAdapter)
+            recyclerView.adapter = eventAdapter
+            com.tpov.schoolquiz.presentation.network.event.log("fun eventList()3 $it")
             eventAdapter.onDataUpdated()
             recyclerView.post {
                 eventAdapter.notifyDataSetChanged()
@@ -126,6 +128,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             } else {
                 Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG).show()
             }
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
         }
     }
 
@@ -279,6 +286,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .show()
             }
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -307,6 +319,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .show()
             }
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -331,6 +348,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             log("fun onTranslate1EventClicked")
 
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -352,6 +374,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 requireActivity() as MainActivity
             )
             log("fun onTranslate2EventClicked")
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
         }
     }
 
@@ -376,6 +403,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             )
             log("fun onTranslateEditQuestionClicked")
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     override fun onModeratorEventClicked(quizId: Int) {
@@ -392,6 +424,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onModeratorEventClicked")
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
         }
     }
 
@@ -410,6 +447,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             )
             log("fun onAdminEventClicked")
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     override fun onDeveloperEventClicked(quizId: Int) {
@@ -426,6 +468,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onDeveloperEventClicked")
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
         }
     }
 

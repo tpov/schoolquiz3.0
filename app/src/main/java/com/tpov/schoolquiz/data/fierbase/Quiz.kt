@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.data.fierbase
 
 import com.google.firebase.database.IgnoreExtraProperties
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.data.database.log
 
 @IgnoreExtraProperties
 data class Quiz (
@@ -31,6 +32,8 @@ fun Quiz.toQuizEntity(
     rating: Int,
     picture: String?
 ): QuizEntity {
+    if (event in 1..4) ratingPlayer = 0
+    log("wdwdwdw event: $event, ratingPlayer: $ratingPlayer")
     return QuizEntity(
         id = id,
         nameQuiz = nameQuiz,

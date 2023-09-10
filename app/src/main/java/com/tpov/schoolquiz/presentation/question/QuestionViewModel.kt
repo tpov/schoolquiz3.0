@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.Core.RATING_QUIZ_EVENT_BED
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -42,7 +43,8 @@ class QuestionViewModel @Inject constructor(
     val getProfileUseCase: GetProfileUseCase,
     val updateProfileUseCase: UpdateProfileUseCase,
     val getQuizListUseCase: GetQuizListUseCase,
-    val getQuizByIdUseCase: GetQuizByIdUseCase
+    val getQuizByIdUseCase: GetQuizByIdUseCase,
+    val getQuizEventUseCase: GetQuizEventUseCase
 ) : AndroidViewModel(application) {
 
     private lateinit var context: Context
@@ -576,9 +578,11 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun getNewIdQuiz(): Int {
+        log("getNewIdQuiz()")
         var i = 0
         runBlocking {
-            getQuizListUseCase(getTpovId()).forEach {
+            log("getNewIdQuiz 1")
+            getQuizEventUseCase().forEach {
                 log("getNewIdQuiz: it: ${it.id}")
                 if (it.id!! in (i + 1)..100) {
                     i = it.id!!
@@ -591,13 +595,13 @@ class QuestionViewModel @Inject constructor(
     private fun updateEvent(rating: Int) {
 
         newIdQuizVar = getNewIdQuiz()
-        if (getRating(rating) != 0) {
-            log("DSEFSE, it: quiz")
+        if (getRating(rating) != RATING_QUIZ_EVENT_BED) {
+            log("DSEFSE, id: $newIdQuizVar")
             insertQuizUseCase(
                 quizThis.copy(
                     id = newIdQuizVar,
                     event = getRating(rating),
-                    rating = rating,
+                    ratingPlayer = rating,
                     starsAll = 0,
                     stars = 0
                 )
@@ -610,8 +614,14 @@ class QuestionViewModel @Inject constructor(
                 }
             }
         }
-        deleteQuizUseCase(idQuiz)
-        deleteQuestionByIdQuizUseCase(idQuiz)
+
+        updateQuizUseCase(
+            quizThis.copy(
+                id = idQuiz,
+                ratingPlayer = getRating(rating),
+                versionQuiz = quizThis.versionQuiz + 1
+            )
+        )
         deleteQuestionDetailByIdQuiz(idQuiz)
         insertQuizPlayers()
 
@@ -619,7 +629,7 @@ class QuestionViewModel @Inject constructor(
 
     private fun getRating(rating: Int): Int {
         log("fun getRating: $rating")
-        return if (rating == 1) 0
+        return if (rating == 1) 1
         else quizThis.event + 1
     }
 

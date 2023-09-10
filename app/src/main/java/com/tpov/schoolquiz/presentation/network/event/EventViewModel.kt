@@ -74,7 +74,11 @@ class EventViewModel @Inject constructor(
         log("fun getQuizList")
 
         runBlocking {
+            quiz2List.clear()
+            quiz3List.clear()
+            quiz4List.clear()
             getQuizEventUseCase().forEach {
+                log("getQuizList ${it.event}: $it")
                 when (it.event) {
                     2 -> quiz2List.add(it)
                     3 -> quiz3List.add(it)
@@ -87,6 +91,7 @@ class EventViewModel @Inject constructor(
         log("getQuizList quiz2List: $quiz2List")
         log("getQuizList quiz3List: $quiz3List")
         log("getQuizList quiz4List: $quiz4List")
+        log("eventList() 2: $quiz2List")
     }
 
     fun getTranslateList(tpovId: Int) {

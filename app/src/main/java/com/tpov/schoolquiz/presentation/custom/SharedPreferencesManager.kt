@@ -131,15 +131,6 @@ object SharedPreferencesManager {
 
     fun getVersionQuiz(key: String): Int {
         val tpovId = getTpovId()
-        log("fun getVersionQuiz tpovId: $tpovId")
-        log(
-            "fun getVersionQuiz key: $key|$tpovId, value: ${
-                sharedPreferencesQuiz.getInt(
-                    "$key|$tpovId",
-                    -1
-                )
-            }"
-        )
 
         if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
