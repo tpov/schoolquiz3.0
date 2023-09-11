@@ -1424,7 +1424,6 @@ class MainActivity : AppCompatActivity() {
         transaction.replace(R.id.title_fragment, fragment)
         transaction.addToBackStack(null)
         transaction.commit()
-
     }
 
     override fun onRequestPermissionsResult(

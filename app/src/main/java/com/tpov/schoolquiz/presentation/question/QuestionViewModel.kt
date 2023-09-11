@@ -22,7 +22,8 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getSkill
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -594,44 +595,26 @@ class QuestionViewModel @Inject constructor(
 
     private fun updateEvent(rating: Int) {
 
-        newIdQuizVar = getNewIdQuiz()
-        if (getRating(rating) != RATING_QUIZ_EVENT_BED) {
-            log("DSEFSE, id: $newIdQuizVar")
-            insertQuizUseCase(
-                quizThis.copy(
-                    id = newIdQuizVar,
-                    event = getRating(rating),
-                    ratingPlayer = rating,
-                    starsAll = 0,
-                    stars = 0
-                )
-            )
-
-            CoroutineScope(Dispatchers.IO).launch {
-                getQuestionByIdQuizUseCase(idQuiz).forEach {
-                    log("DSEFSE, it: $it")
-                    insertQuestionUseCase(it.copy(idQuiz = newIdQuizVar))
-                }
-            }
-        }
-
-        updateQuizUseCase(
+        newIdQuizVar = idQuiz
+        log("DSEFSE, id: $newIdQuizVar")
+        insertQuizUseCase(
             quizThis.copy(
-                id = idQuiz,
-                ratingPlayer = getRating(rating),
+                id = newIdQuizVar,
+                ratingPlayer = rating,
+                event = getEvent(rating),
+                starsAll = 0,
+                stars = 0,
                 versionQuiz = quizThis.versionQuiz + 1
             )
         )
+
         deleteQuestionDetailByIdQuiz(idQuiz)
         insertQuizPlayers()
 
     }
 
-    private fun getRating(rating: Int): Int {
-        log("fun getRating: $rating")
-        return if (rating == 1) 1
-        else quizThis.event + 1
-    }
+    private fun getEvent(rating: Int) = if (rating == 1) quizThis.event
+                                        else quizThis.event + RATING_QUIZ_EVENT_BED
 
     private fun insertQuizPlayers() {
 

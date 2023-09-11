@@ -602,7 +602,11 @@ class RepositoryFBImpl @Inject constructor(
 
                                         )
                                         quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
+                                        if (isQuizForEvent(newQuiz)) database.getReference("quiz${eventQuiz - 1}")
+                                            .child(newIdQuiz.toString()).setValue(null)
+                                        quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
                                         dao.deleteQuizById(it.id!!)
+
                                         if (isInsertQuizAfterSet(newQuiz)) dao.insertQuiz(
                                             newQuiz.toQuizEntity(
                                                 newIdQuiz!!,
@@ -647,21 +651,25 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
-private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.event in 5..8
-        || quiz.event in 2..4 && quiz.tpovId != getTpovId() && quiz.ratingPlayer == 0
+    private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.event in 5..8
+            || quiz.event in 2..4 && quiz.tpovId != getTpovId() && quiz.ratingPlayer == 0
 
     private fun setQuestions(newIdQuiz: Int?, eventQuiz: Int?, id: Int, quiz: Quiz) {
         val questionRef = FirebaseDatabase.getInstance().getReference(
             if (eventQuiz != 1) "question$eventQuiz/$newIdQuiz"
             else "question1/${getTpovId()}/$newIdQuiz"
         )
+log("setQuestions 1")
+        if (isQuizForEvent(quiz)) FirebaseDatabase.getInstance()
+            .getReference( "question${quiz.event - 1}").child(newIdQuiz.toString()).setValue(null)
 
         dao.getQuestionByIdQuiz(id).forEach {
+            log("setQuestions 2: $it")
             questionRef
                 .child(if (it.hardQuestion) "-${it.numQuestion}" else "${it.numQuestion}")
                 .child(if (it.lvlTranslate < 100) "-${it.language}" else "${it.language}")
                 .setValue(it.toQuestion())
-            log("+++ it")
+
             dao.deleteQuestion(id)
             CoroutineScope(Dispatchers.IO).launch {
                 if (isInsertQuizAfterSet(quiz)) dao.insertQuestion(it.copy(id = newIdQuiz))
@@ -674,6 +682,10 @@ private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.
             if (eventQuiz != 1) "questionDetail$eventQuiz/$newIdQuiz"
             else "question1/${getTpovId()}/$newIdQuiz"
         )
+
+        if (isQuizForEvent(quiz)) FirebaseDatabase.getInstance()
+            .getReference( "questionDetail${eventQuiz?.minus(1)}")
+            .child(newIdQuiz.toString()).setValue(null)
 
         CoroutineScope(Dispatchers.Main).launch {
             dao.getQuestionDetailByIdQuiz(id).forEach {
@@ -715,7 +727,7 @@ private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.
 
             pathQuiz.forEach { quizItem ->
                 val database = FirebaseDatabase.getInstance()
-                val quizRef = database.getReference(quizItem!!)
+                val quizRef = database.getReference(quizItem ?: "quiz8" )
 
                 log("wdwdwdw 3, quizItem: $quizItem")
                 quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -749,19 +761,21 @@ private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.
                             log("wdwdwdw 6 2: ${(isQuizForEvent(quiz)) && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
                             log("wdwdwdw 6 3: ${quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1}")
 
-                            if (((isQuizPublic(quiz) && maxLvlTranslate >= 100 || (isQuizForEvent(quiz)))
-                                && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)
-                                || quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1)
+                            if (((isQuizPublic(quiz) && maxLvlTranslate >= 100 || (isQuizForEvent(
+                                    quiz
+                                )))
+                                        && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)
+                                        || quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1)
                             ) savePictureToLocalDirectory(quiz.picture) {
 
-                                    dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
-                                    log("wdwdwdw INSERT")
-                                    getQuestions(quizItem, idQuiz)
-                                    if (getQuestionDetails) getQuestionDetails(quizItem)
-                                    setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
-                                    synthLiveData.value = ++synth
-                                    loadText.postValue("")
-                                }
+                                dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
+                                log("wdwdwdw INSERT")
+                                getQuestions(quizItem ?: "quiz8", idQuiz)
+                                if (getQuestionDetails) getQuestionDetails(quizItem ?: "quiz8")
+                                setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
+                                synthLiveData.value = ++synth
+                                loadText.postValue("")
+                            }
                         }
                     }
 
