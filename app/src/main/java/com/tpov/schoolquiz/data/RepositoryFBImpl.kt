@@ -618,6 +618,7 @@ class RepositoryFBImpl @Inject constructor(
                                         )
                                         setQuestions(newIdQuiz, eventQuiz, it.id!!, newQuiz)
                                         setQuestionDetails(newIdQuiz, eventQuiz, it.id!!, newQuiz)
+                                        setQuizResults(it)
                                     }
                                 }
 
@@ -649,6 +650,16 @@ class RepositoryFBImpl @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun setQuizResults(quiz: QuizEntity) {
+            val quizRatingMap = mapOf(
+                "rating" to quiz.ratingPlayer,
+                "stars" to quiz.stars,
+                "starsAll" to quiz.starsAll
+            )
+        if (quiz.ratingPlayer != 0) FirebaseDatabase.getInstance().getReference("players/quiz/${quiz.id}/${getTpovId()}")
+            .updateChildren(quizRatingMap)
     }
 
     private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.event in 5..8

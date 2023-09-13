@@ -174,9 +174,10 @@ class MainActivity : AppCompatActivity() {
 
         val userguide = UserGuide(this)
 
+
         userguide.addGuideNewVersion(
-            "I'm considering the opportunity to join your team as an Android developer. What are your thoughts on this?",
-            "Hello, Google!",
+            "https://doc-hosting.flycricket.io/schoolquiz-privacy-policy/d00eb8d5-3cb3-4248-a841-77b96d6f783d/privacy",
+            "Policy",
             icon = getDrawable(R.drawable.googleg_standard_color_18)
         )
 
