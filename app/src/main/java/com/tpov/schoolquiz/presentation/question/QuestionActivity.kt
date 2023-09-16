@@ -242,7 +242,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
 
-        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event >= 5) binding.viewBackground.background =
+        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event == 7) binding.viewBackground.background =
             getDrawable(R.mipmap.back_question_event5)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =
