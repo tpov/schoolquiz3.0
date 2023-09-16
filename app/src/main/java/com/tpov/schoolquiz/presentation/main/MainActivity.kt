@@ -168,16 +168,17 @@ class MainActivity : AppCompatActivity() {
             }
             swipeRefreshLayout.isRefreshing = false
         }
-
+        
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
 
         val userguide = UserGuide(this)
 
+
         userguide.addGuideNewVersion(
-            "SchoolQuiz v${versionName}",
-            "This is alfa test",
-            icon = getDrawable(R.mipmap.ic_launcher)
+            "https://doc-hosting.flycricket.io/schoolquiz-privacy-policy/d00eb8d5-3cb3-4248-a841-77b96d6f783d/privacy",
+            "Policy",
+            icon = getDrawable(R.drawable.googleg_standard_color_18)
         )
 
         userguide.addGuide(
@@ -508,9 +509,9 @@ class MainActivity : AppCompatActivity() {
                 profile.developer ?: 0
             )
         } catch (e: Exception) {
-            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (1), подождите несколько секунд", Toast.LENGTH_LONG).show()
-            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (2), подождите несколько секунд", Toast.LENGTH_LONG).show()
-            Toast.makeText(this, "Произошла ошибка получения данных профиля, самовосстановление (3), подождите несколько секунд", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка данных профиля, подождите (1)", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка данных профиля, подождите (2)", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Произошла ошибка данных профиля, подождите (3)", Toast.LENGTH_LONG).show()
 
             val cacheDir = this.cacheDir
 
@@ -1424,7 +1425,6 @@ class MainActivity : AppCompatActivity() {
         transaction.replace(R.id.title_fragment, fragment)
         transaction.addToBackStack(null)
         transaction.commit()
-
     }
 
     override fun onRequestPermissionsResult(

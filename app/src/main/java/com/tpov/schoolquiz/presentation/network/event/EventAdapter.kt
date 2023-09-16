@@ -57,6 +57,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         size7 = moderatorEventList.size + size6
         size8 = adminEventList.size + size7
         size9 = developerEventList.size + size8
+        log("fun onDataUpdated() $size1")
         notifyDataSetChanged()
     }
 
@@ -99,6 +100,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
 
+        log("fun onCreateViewHolder()")
         return when (viewType) {
             HEADER_VIEW -> {
                 val itemHeader = LayoutInflater.from(parent.context)

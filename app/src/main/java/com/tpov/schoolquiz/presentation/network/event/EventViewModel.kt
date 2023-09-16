@@ -42,10 +42,11 @@ class EventViewModel @Inject constructor(
 
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
-    suspend fun getQuestionItem(idQuestion: Int) = getQuestionListUseCase().filter { it.id == idQuestion }
+    suspend fun getQuestionItem(idQuestion: Int) =
+        getQuestionListUseCase().filter { it.id == idQuestion }
 
     suspend fun getQuestionList(numQuestion: Int, idQuiz: Int) =
-        getQuestionListUseCase().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion}
+        getQuestionListUseCase().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion }
 
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
@@ -73,7 +74,11 @@ class EventViewModel @Inject constructor(
         log("fun getQuizList")
 
         runBlocking {
+            quiz2List.clear()
+            quiz3List.clear()
+            quiz4List.clear()
             getQuizEventUseCase().forEach {
+                log("getQuizList ${it.event}: $it")
                 when (it.event) {
                     2 -> quiz2List.add(it)
                     3 -> quiz3List.add(it)
@@ -86,21 +91,16 @@ class EventViewModel @Inject constructor(
         log("getQuizList quiz2List: $quiz2List")
         log("getQuizList quiz3List: $quiz3List")
         log("getQuizList quiz4List: $quiz4List")
+        log("eventList() 2: $quiz2List")
     }
 
     fun getTranslateList(tpovId: Int) {
-        log("fun getTranslateList: ${getEventTranslateUseCase()}")
+        log("getTranslateList getEventTranslateUseCase().size: ${getEventTranslateUseCase().size}")
+
         getEventTranslateUseCase()
             .groupBy { it.idQuiz }
             .flatMap { (_, questions) ->
                 questions.filter { question ->
-                    log(
-                        "getTranslateList: question.language: ${question.language}, getProfileUseCase(tpovId).languages!!.split(|): ${
-                            getProfileUseCase(
-                                tpovId
-                            ).languages!!.split("|")
-                        },\n ${getQuizByIdUseCase(question.idQuiz)}"
-                    )
                     question.language !in getProfileUseCase(tpovId).languages!!.split("|") ||
                             question.lvlTranslate < (getProfileUseCase(tpovId).translater)!! - 50
                 }
@@ -111,8 +111,10 @@ class EventViewModel @Inject constructor(
                         it.numQuestion == question.numQuestion &&
                                 it.idQuiz == question.idQuiz &&
                                 it.hardQuestion == question.hardQuestion
-                    }) {
+                    }
+                ) {
                     translateEditQuestion.add(question)
+                    log("getTranslateList translateEditQuestion.add(question): ${translateEditQuestion.add(question)}")
 
                 } else if (question.lvlTranslate > 200 &&
                     !translate2Question.any {
@@ -129,14 +131,13 @@ class EventViewModel @Inject constructor(
                                 it.hardQuestion == question.hardQuestion
                     }) {
 
+                    log("getTranslateList translate1Question.add(question): ${translate1Question.add(question)}")
                     translate1Question.add(question)
                 }
 
                 updateEventList.postValue(valUpdateEventList++)
             }
-        log("getTranslateList translate1Question $translate1Question")
-        log("getTranslateList translate2Question $translate2Question")
-        log("getTranslateList translateEditQuestion $translateEditQuestion")
+
     }
 
     fun getProfileCount(): Int? {

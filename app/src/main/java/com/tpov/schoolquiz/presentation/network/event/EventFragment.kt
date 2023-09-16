@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -63,23 +64,24 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         recyclerView = view.findViewById(R.id.rv_event)
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        val eventAdapter = EventAdapter(
-            eventViewModel.quiz2List,
-            eventViewModel.quiz3List,
-            eventViewModel.quiz4List,
-            emptyList(),// eventViewModel.translate1Question,
-            emptyList(),//eventViewModel.translate2Question,
-            emptyList(),//eventViewModel.translateEditQuestion,
-            emptyList(),//eventViewModel.moderator,
-            emptyList(),//eventViewModel.admin,
-            emptyList(),//eventViewModel.develop,
-            this,
-            mainViewModel
-        )
-        eventAdapter.setDataObserver(eventAdapter)
-        recyclerView.adapter = eventAdapter
-
         eventViewModel.updateEventList.observe(viewLifecycleOwner) {
+
+            val eventAdapter = EventAdapter(
+                eventViewModel.quiz2List.filter { it.ratingPlayer == 0 },
+                eventViewModel.quiz3List.filter { it.ratingPlayer == 0 },
+                eventViewModel.quiz4List.filter { it.ratingPlayer == 0 },
+                emptyList(),// eventViewModel.translate1Question,
+                emptyList(),//eventViewModel.translate2Question,
+                emptyList(),//eventViewModel.translateEditQuestion,
+                emptyList(),//eventViewModel.moderator,
+                emptyList(),//eventViewModel.admin,
+                emptyList(),//eventViewModel.develop,
+                this,
+                mainViewModel
+            )
+           eventAdapter.setDataObserver(eventAdapter)
+            recyclerView.adapter = eventAdapter
+            com.tpov.schoolquiz.presentation.network.event.log("fun eventList()3 $it")
             eventAdapter.onDataUpdated()
             recyclerView.post {
                 eventAdapter.notifyDataSetChanged()
@@ -112,7 +114,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-
+            log("foundQuestionList(quizId, false) ${foundQuestionList(quizId, false)}")
             if (foundQuestionList(quizId, false)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
@@ -127,20 +129,28 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG).show()
             }
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
     private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean?): Boolean {
 
-        log("kokol hardQuestion: $hardQuestion")
-        val questionThisListAll =
-            mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
-                .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
+        log("kokol 1hardQuestion: $hardQuestion")
 
+        val questionThisListAll = mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
+            .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
+            .sortedBy { it.numQuestion }
+
+        log("kokol 2questionThisListAll: $questionThisListAll")
         var listMap = mutableMapOf<Int, Boolean>()
         listMap = getMap(questionThisListAll, listMap)
         val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
 
+        log("kokol 3questionByLocal: $questionByLocal")
         val questionListThis =
             if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
             else getListQuestionByProfileLang(
@@ -148,6 +158,12 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 listMap
             )
 
+        log("kokol 4didFoundAllQuestion: ${didFoundAllQuestion(questionByLocal, listMap)}")
+        log("kokol 5getListQuestionByProfileLang: ${getListQuestionByProfileLang(
+            questionThisListAll,
+            listMap
+        )}")
+        log("kokol 6questionListThis: $questionListThis")
         return didFoundAllQuestion(questionListThis, listMap)
 
     }
@@ -226,11 +242,18 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         val userLocalization: String = getUserLocalization(requireContext())
 
         val questionList = ArrayList<QuestionEntity>()
+        log("filteredList listMap $listMap")
+        log("filteredList questionThisListAll ${questionThisListAll.size}")
+
         listMap.forEach { map ->
             val filteredList = questionThisListAll
                 .filter { it.numQuestion == map.key }
                 .filter { it.language == userLocalization }
 
+            log("filteredList 1 $filteredList")
+            log("filteredList 2 $questionThisListAll")
+            log("filteredList 3 map.key: ${map.key}")
+            log("filteredList 3 userLocalization: ${userLocalization}")
             if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
         }
 
@@ -263,6 +286,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .show()
             }
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -291,6 +319,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .show()
             }
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -315,6 +348,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             log("fun onTranslate1EventClicked")
 
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
@@ -336,6 +374,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 requireActivity() as MainActivity
             )
             log("fun onTranslate2EventClicked")
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
         }
     }
 
@@ -360,6 +403,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             )
             log("fun onTranslateEditQuestionClicked")
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     override fun onModeratorEventClicked(quizId: Int) {
@@ -376,6 +424,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onModeratorEventClicked")
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
         }
     }
 
@@ -394,6 +447,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             )
             log("fun onAdminEventClicked")
         }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
+        }
     }
 
     override fun onDeveloperEventClicked(quizId: Int) {
@@ -410,6 +468,11 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                     .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
             log("fun onDeveloperEventClicked")
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            eventViewModel.getQuizList()
+            eventViewModel.getTranslateList(getTpovId())
+            eventViewModel.getEventDeveloper()
         }
     }
 

@@ -10,6 +10,8 @@ import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.repository.RepositoryFB
+import com.tpov.schoolquiz.presentation.Core.DEFAULT_TPOVID
+import com.tpov.schoolquiz.presentation.Core.QUIZ_VERSION_DEFAULT
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
@@ -259,7 +261,6 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-
     override fun setTpovIdFB() {
 
         log("fun setTpovIdFB()")
@@ -287,18 +288,17 @@ class RepositoryFBImpl @Inject constructor(
 
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                log("getTpovIdFB() snapshot: $snapshot")
 
-                val tpovId: String = snapshot.child("listTpovId/$uid").getValue(String::class.java)
-                    ?: errorTpovId().toString()
-                log("getTpovIdFB() tpovId: $tpovId")
-                setTpovId(tpovId.toInt())
-
-                log("getTpovIdFB()/ set tpovId: $tpovId")
-                synthLiveData.value = ++synth
-
-                log("getTpovIdFB()/ set synth: ${synthLiveData.value}")
-                log("getTpovIdFB()/ set synth: ${synth}")
+                try {
+                    val tpovId: String =
+                        snapshot.child("listTpovId/$uid").getValue(String::class.java)!!
+                    setTpovId(tpovId.toInt())
+                } catch (e: Exception) {
+                    log("getTpovIdFB error get")
+                } finally {
+                    log("getTpovIdFB finally")
+                    synthLiveData.value = ++synth
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -325,7 +325,7 @@ class RepositoryFBImpl @Inject constructor(
         val profile = dao.getProfileByTpovId(tpovId)
 
         log("setProfile() tpovId: $tpovId")
-        if (tpovId == 0) {
+        if (tpovId == DEFAULT_TPOVID) {
 
             profilesRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -335,6 +335,7 @@ class RepositoryFBImpl @Inject constructor(
                     oldIdUser = tpovId
                     idUsers++
 
+                    log("setProfile() idUsers + 1: $idUsers")
                     profilesRef.updateChildren(
                         hashMapOf<String, Any>(
                             "idUser" to idUsers
@@ -390,7 +391,6 @@ class RepositoryFBImpl @Inject constructor(
                                 .getValue(Int::class.java)
                         }"
                     )
-
                     try {
                         profileRef.child(tpovId.toString()).setValue(
                             profile.copy(
@@ -418,7 +418,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addTrophy").getValue(String::class.java) else ""
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addTrophy")
-                                        .getValue(String::class.java)
+                                        .getValue(String::class.java) ?: ""
                                 },
 
                                 addMassage = try {
@@ -426,7 +426,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addMassage").getValue(String::class.java) else ""
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addMassage")
-                                        .getValue(String::class.java)
+                                        .getValue(String::class.java) ?: ""
                                 },
 
                                 addPointsNolics = try {
@@ -434,7 +434,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addNolics").getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addNolics")
-                                        .getValue(Int::class.java)
+                                        .getValue(Int::class.java) ?: 0
                                 },
 
                                 addPointsGold = try {
@@ -442,7 +442,7 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addGold").getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addGold")
-                                        .getValue(Int::class.java)
+                                        .getValue(Int::class.java) ?: 0
                                 },
 
                                 addPointsSkill = try {
@@ -450,9 +450,8 @@ class RepositoryFBImpl @Inject constructor(
                                         .child("addSkill").getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
                                     profileSnapshot.child("addPoints").child("addSkill")
-                                        .getValue(Int::class.java)
+                                        .getValue(Int::class.java) ?: 0
                                 }
-
                             ).toProfile()
                         ).addOnSuccessListener {
                             synthLiveData.value = ++synth
@@ -507,7 +506,7 @@ class RepositoryFBImpl @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun waitForReadToBecomeTrue(): Boolean = try {
         withTimeout(60000L) {
-            suspendCancellableCoroutine<Boolean> { continuation ->
+            suspendCancellableCoroutine { continuation ->
                 val database = FirebaseDatabase.getInstance()
                 val myRef = database.getReference("players/read")
 
@@ -515,10 +514,9 @@ class RepositoryFBImpl @Inject constructor(
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         val value = dataSnapshot.getValue(Boolean::class.java)
                         if (value == true) {
+                            setRead(false)
                             myRef.removeEventListener(this)
-                            continuation.resume(true) {
-                                // Обработка отмены после возобновления корутины
-                            }
+                            continuation.resume(true) {}
                         }
                     }
 
@@ -545,56 +543,72 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     override suspend fun setAllQuiz() {
-
+        log("setAllQuiz")
         if (waitForReadToBecomeTrue()) {
+            log("setAllQuiz waitForReadToBecomeTrue")
 
             val database = FirebaseDatabase.getInstance()
             loadText.postValue("Отправка квестов на сервер")
 
-            dao.getQuizList(getTpovId()).forEach {
+            log("setAllQuiz 22 ${dao.getQuizList(getTpovId())}")
+            var maxIdQuiz = 0
+            dao.getQuizEvent().forEach {
                 val eventQuiz = it.event
                 val quizRef = database.getReference(
                     if (eventQuiz == 1) "quiz1/${getTpovId()}" else "quiz$eventQuiz"
                 )
 
+                log("setAllQuiz 3")
                 val profileRef = FirebaseDatabase.getInstance().getReference("players/idQuiz")
                 profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
 
+                        log("setAllQuiz 4")
                         val newIdQuiz = if (it.id!! < 100) {
-                            val id = snapshot.getValue(Int::class.java)?.plus(1)
+                            val id = if (maxIdQuiz == 0) snapshot.getValue(Int::class.java)?.plus(1)
+                            else maxIdQuiz + 1
                             profileRef.setValue(id)
-                            id
+                            maxIdQuiz = id ?: 0
+                            maxIdQuiz
                         } else it.id
 
                         quizRef.child(newIdQuiz.toString())
                             .addListenerForSingleValueEvent(object : ValueEventListener {
                                 override fun onDataChange(snapshot: DataSnapshot) {
+
                                     val newVersionQuiz =
                                         snapshot.child("versionQuiz").getValue(Int::class.java)
+                                            ?: -1
 
-                                    if (newVersionQuiz!! < getVersionQuiz(newIdQuiz.toString())) {
+                                    log("setAllQuiz: $it")
+                                    if (newVersionQuiz <= getVersionQuiz(newIdQuiz.toString())) {
+
+                                        log("setAllQuiz setQuiz ")
                                         val newQuiz = Quiz(
                                             nameQuiz = it.nameQuiz,
                                             tpovId = it.tpovId,
                                             data = it.data,
                                             versionQuiz = newVersionQuiz,
-                                            picture = it.picture!!,
+                                            picture = it.picture ?: "",
                                             event = eventQuiz,
                                             numQ = it.numQ,
                                             numHQ = it.numHQ,
                                             starsAllPlayer = snapshot.child("starsAllPlayer")
-                                                .getValue(Int::class.java)!!,
+                                                .getValue(Int::class.java) ?: 0,
                                             starsPlayer = snapshot.child("starsPlayer")
-                                                .getValue(Int::class.java)!!,
+                                                .getValue(Int::class.java) ?: 0,
                                             ratingPlayer = it.ratingPlayer,
                                             userName = it.userName,
                                             languages = it.languages
 
                                         )
                                         quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
+                                        if (isQuizForEvent(newQuiz)) database.getReference("quiz${eventQuiz - 1}")
+                                            .child(newIdQuiz.toString()).setValue(null)
+                                        quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
                                         dao.deleteQuizById(it.id!!)
-                                        dao.insertQuiz(
+
+                                        if (isInsertQuizAfterSet(newQuiz)) dao.insertQuiz(
                                             newQuiz.toQuizEntity(
                                                 newIdQuiz!!,
                                                 it.stars,
@@ -603,9 +617,9 @@ class RepositoryFBImpl @Inject constructor(
                                                 it.picture
                                             )
                                         )
-
-                                        setQuestions(newIdQuiz, eventQuiz, it.id!!)
-                                        setQuestionDetails(newIdQuiz, eventQuiz, it.id!!)
+                                        setQuestions(newIdQuiz, eventQuiz, it.id!!, newQuiz)
+                                        setQuestionDetails(newIdQuiz, eventQuiz, it.id!!, newQuiz)
+                                        setQuizResults(it)
                                     }
                                 }
 
@@ -639,37 +653,58 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
-    private fun setQuestions(newIdQuiz: Int?, eventQuiz: Int?, id: Int) {
+    private fun setQuizResults(quiz: QuizEntity) {
+            val quizRatingMap = mapOf(
+                "rating" to quiz.ratingPlayer,
+                "stars" to quiz.stars,
+                "starsAll" to quiz.starsAll
+            )
+        if (quiz.ratingPlayer != 0) FirebaseDatabase.getInstance().getReference("players/quiz/${quiz.id}/${getTpovId()}")
+            .updateChildren(quizRatingMap)
+    }
+
+    private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.event in 5..8
+            || quiz.event in 2..4 && quiz.tpovId != getTpovId() && quiz.ratingPlayer == 0
+
+    private fun setQuestions(newIdQuiz: Int?, eventQuiz: Int?, id: Int, quiz: Quiz) {
         val questionRef = FirebaseDatabase.getInstance().getReference(
             if (eventQuiz != 1) "question$eventQuiz/$newIdQuiz"
             else "question1/${getTpovId()}/$newIdQuiz"
         )
+log("setQuestions 1")
+        if (isQuizForEvent(quiz)) FirebaseDatabase.getInstance()
+            .getReference( "question${quiz.event - 1}").child(newIdQuiz.toString()).setValue(null)
 
         dao.getQuestionByIdQuiz(id).forEach {
-            questionRef.child(newIdQuiz.toString())
+            log("setQuestions 2: $it")
+            questionRef
                 .child(if (it.hardQuestion) "-${it.numQuestion}" else "${it.numQuestion}")
-                .child(if (it.lvlTranslate <= 100) "-${it.language}" else "${it.language}")
+                .child(if (it.lvlTranslate < 100) "-${it.language}" else "${it.language}")
                 .setValue(it.toQuestion())
 
             dao.deleteQuestion(id)
             CoroutineScope(Dispatchers.IO).launch {
-                dao.insertQuestion(it.copy(id = newIdQuiz))
+                if (isInsertQuizAfterSet(quiz)) dao.insertQuestion(it.copy(id = newIdQuiz))
             }
         }
     }
 
-    private fun setQuestionDetails(newIdQuiz: Int?, eventQuiz: Int?, id: Int) {
+    private fun setQuestionDetails(newIdQuiz: Int?, eventQuiz: Int?, id: Int, quiz: Quiz) {
         val questionDetailRef = FirebaseDatabase.getInstance().getReference(
             if (eventQuiz != 1) "questionDetail$eventQuiz/$newIdQuiz"
             else "question1/${getTpovId()}/$newIdQuiz"
         )
+
+        if (isQuizForEvent(quiz)) FirebaseDatabase.getInstance()
+            .getReference( "questionDetail${eventQuiz?.minus(1)}")
+            .child(newIdQuiz.toString()).setValue(null)
 
         CoroutineScope(Dispatchers.Main).launch {
             dao.getQuestionDetailByIdQuiz(id).forEach {
                 questionDetailRef.setValue(it)
 
                 dao.deleteQuestionDetailByIdQuiz(id)
-                dao.insertQuizDetail(it.copy(id = newIdQuiz))
+                if (isInsertQuizAfterSet(quiz)) dao.insertQuizDetail(it.copy(id = newIdQuiz))
             }
         }
     }
@@ -700,29 +735,58 @@ class RepositoryFBImpl @Inject constructor(
         log("wdwdwdw 1")
 
         if (waitForReadToBecomeTrue()) { // Мы дождались, пока read станет true
-            log("wdwdwdw 2")
-            pathQuiz.forEach { quizItem ->
-                log("wdwdwdw 3")
-                val database = FirebaseDatabase.getInstance()
-                val quizRef = database.getReference(quizItem!!)
+            log("wdwdwdw 2, pathQuiz: $pathQuiz")
 
+            pathQuiz.forEach { quizItem ->
+                val database = FirebaseDatabase.getInstance()
+                val quizRef = database.getReference(quizItem ?: "quiz8" )
+
+                log("wdwdwdw 3, quizItem: $quizItem")
                 quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         for (quizSnapshot in dataSnapshot.children) {
-                            log("wdwdwdw 4")
+
                             val idQuiz = quizSnapshot.key?.toInt() ?: 0
-                            val quiz =
-                                quizSnapshot.getValue(Quiz::class.java) // Замените Quiz на класс вашего объекта
-                            if (quiz?.versionQuiz!! > getVersionQuiz(idQuiz.toString()))
-                                savePictureToLocalDirectory(quiz.picture) {
-                                    dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
-                                    getQuestions(quizItem)
-                                    if (getQuestionDetails) getQuestionDetails(quizItem)
-                                    setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
-                                    synthLiveData.value = ++synth
-                                    loadText.postValue("")
+                            val quiz = quizSnapshot.getValue(Quiz::class.java)
+
+                            log("wdwdwdw 6 quiz${quiz?.event}: $quiz")
+
+                            val maxLvlTranslate = try {
+                                var max = 0
+                                quiz?.languages?.split('|')?.forEach {
+                                    val newMax = it.split('-')[1].toInt()
+                                    if (newMax > max) max = newMax
                                 }
-                            // Теперь вы можете работать с объектом quiz
+                                max
+                            } catch (e: Exception) {
+                                try {
+                                    quiz?.languages?.split('-')!![1].toInt()
+                                } catch (e: Exception) {
+                                    0
+                                }
+                            }
+
+                            val quizVersionLocal = getVersionQuiz(idQuiz.toString())
+
+                            log("wdwdwdw 6 1: ${this@RepositoryFBImpl.isQuizPublic(quiz) && maxLvlTranslate >= 100 && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
+                            log("wdwdwdw 6 2: ${(isQuizForEvent(quiz)) && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
+                            log("wdwdwdw 6 3: ${quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1}")
+
+                            if (((isQuizPublic(quiz) && maxLvlTranslate >= 100 || (isQuizForEvent(
+                                    quiz
+                                )))
+                                        && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)
+                                        || quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1)
+                            ) savePictureToLocalDirectory(quiz.picture) {
+
+                                dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
+                                log("wdwdwdw INSERT")
+                                getQuestions(quizItem ?: "quiz8", idQuiz)
+                                if (getQuestionDetails) getQuestionDetails(quizItem ?: "quiz8")
+                                setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
+                                if (quiz.event != 8) synthLiveData.value = ++synth
+                                loadText.postValue("")
+                            }
                         }
                     }
 
@@ -738,44 +802,49 @@ class RepositoryFBImpl @Inject constructor(
         }
     }
 
+    private fun isQuizPublic(quiz: Quiz?): Boolean = quiz?.event in 5..8
 
-    fun getQuestions(pathQuiz: String) {
-        val pathQuestion = when (pathQuiz) {
-            "quiz2" -> "question2"
-            "quiz3" -> "question3"
-            "quiz4" -> "question4"
-            "quiz5" -> "question5"
-            "quiz6" -> "question6"
-            "quiz7" -> "question7"
-            "quiz8" -> "question8"
-            else -> "question1/${getTpovId()}"
+    private fun isQuizForEvent(quiz: Quiz?): Boolean =
+        this.isQuizPrivate(quiz) && quiz?.ratingPlayer != 1
+
+    private fun isQuizPrivate(quiz: Quiz?): Boolean = quiz?.event in 1..4
+
+    fun getQuestions(eventQuiz: String, idQuiz: Int) {
+        val pathQuestion = when (eventQuiz) {
+            "quiz2" -> "question2/$idQuiz"
+            "quiz3" -> "question3/$idQuiz"
+            "quiz4" -> "question4/$idQuiz"
+            "quiz5" -> "question5/$idQuiz"
+            "quiz6" -> "question6/$idQuiz"
+            "quiz7" -> "question7/$idQuiz"
+            "quiz8" -> "question8/$idQuiz"
+            else -> "question1/${getTpovId()}/$idQuiz"
         }
 
         val database = FirebaseDatabase.getInstance()
         val questionRef = database.getReference(pathQuestion)
+
         questionRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                for (idQuizSnapshot in dataSnapshot.children) {
-                    for (numQuestionSnapshot in idQuizSnapshot.children) {
-                        for (languageSnapshot in numQuestionSnapshot.children) {
-                            val question = languageSnapshot.getValue(Question::class.java)
+                for (numQuestionSnapshot in dataSnapshot.children) {
+                    for (languageSnapshot in numQuestionSnapshot.children) {
+                        val question = languageSnapshot.getValue(Question::class.java)
 
-                            CoroutineScope(Dispatchers.IO).launch {
-                                dao.insertQuestion(
-                                    QuestionEntity(
-                                        null,
-                                        abs(numQuestionSnapshot.key?.toInt()!!),
-                                        question!!.nameQuestion,
-                                        question.answerQuestion,
-                                        question.typeQuestion,
-                                        idQuizSnapshot.key!!.toInt(),
-                                        languageSnapshot.key!!,
-                                        question.lvlTranslate,
-                                        question.infoTranslater
-                                    )
+                        CoroutineScope(Dispatchers.IO).launch {
+                            dao.insertQuestion(
+                                QuestionEntity(
+                                    null,
+                                    abs(numQuestionSnapshot.key?.toInt()!!),
+                                    question!!.nameQuestion,
+                                    question.answerQuestion,
+                                    getTypeQuestion(numQuestionSnapshot.key?.toInt()!!),
+                                    idQuiz,
+                                    languageSnapshot.key!!.replace("-", "", true),
+                                    question.lvlTranslate,
+                                    question.infoTranslater
                                 )
-                                synthLiveData.postValue(++synth)
-                            }
+                            )
+                            synthLiveData.postValue(++synth)
                         }
                     }
                 }
@@ -786,6 +855,8 @@ class RepositoryFBImpl @Inject constructor(
             }
         })
     }
+
+    fun getTypeQuestion(toInt: Int) = toInt <= 0
 
     fun getQuestionDetails(pathQuiz: String) {
         val pathQuestionDetail = when (pathQuiz) {

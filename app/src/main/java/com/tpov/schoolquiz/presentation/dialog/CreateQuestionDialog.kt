@@ -26,10 +26,7 @@ import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.android.synthetic.main.create_question_dialog.view.*
 import kotlinx.android.synthetic.main.question_create_item.view.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.util.*
 
 class CreateQuestionDialog : DialogFragment() {
@@ -61,7 +58,9 @@ class CreateQuestionDialog : DialogFragment() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 mainActivityViewModel.getQuestionListByIdQuiz(id).forEach { questionEntity ->
-                    addFilledQuestionItem(questionEntity)
+                    withContext(Dispatchers.Main) {
+                        addFilledQuestionItem(questionEntity)
+                    }
                 }
             }
         }
@@ -100,8 +99,8 @@ class CreateQuestionDialog : DialogFragment() {
             showLanguageDialog(questionItemView)
         }
 
-        dialogView.save_question_button.isClickable = true
-        dialogView.save_question_button.isEnabled = true
+            dialogView.save_question_button.isClickable = true
+            dialogView.save_question_button.isEnabled = true
 
         // Добавляем TextWatcher к questionTitle
         questionTitle.addTextChangedListener(object : TextWatcher {

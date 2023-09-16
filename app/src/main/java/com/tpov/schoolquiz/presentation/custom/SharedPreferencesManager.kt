@@ -20,11 +20,15 @@ object SharedPreferencesManager {
     private lateinit var sharedPreferencesTpovId: SharedPreferences
     private lateinit var sharedPreferencesCountStartApp: SharedPreferences
     var updateProfile = true
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun canSyncProfile(): Boolean {
-        val prefs = Preferences.userRoot().node("com.example.app.sync")
+        val prefs = Preferences.userRoot().node("com.tpov.schoolquiz.synth_day")
         val lastSyncDateStr = prefs.get(PREF_KEY_LAST_SYNC_DATE, null)
         val currentDate = LocalDate.now()
+
+        log("lastSyncDateStr $lastSyncDateStr")
+        log("currentDate $currentDate")
 
         if (lastSyncDateStr == null || lastSyncDateStr != currentDate.toString()) {
             prefs.put(PREF_KEY_LAST_SYNC_DATE, currentDate.toString())
@@ -33,6 +37,7 @@ object SharedPreferencesManager {
 
         return false
     }
+
     fun initialize(context: Context) {
         sharedPreferencesQuiz = context.getSharedPreferences(PREFS_NAME_QUIZ, Context.MODE_PRIVATE)
         sharedPreferencesQuestion =
@@ -127,15 +132,6 @@ object SharedPreferencesManager {
 
     fun getVersionQuiz(key: String): Int {
         val tpovId = getTpovId()
-        log("fun getVersionQuiz tpovId: $tpovId")
-        log(
-            "fun getVersionQuiz key: $key|$tpovId, value: ${
-                sharedPreferencesQuiz.getInt(
-                    "$key|$tpovId",
-                    -1
-                )
-            }"
-        )
 
         if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")

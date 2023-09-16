@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.Core.RATING_QUIZ_EVENT_BED
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -21,7 +22,8 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getSkill
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.ResultDialog
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -42,7 +44,8 @@ class QuestionViewModel @Inject constructor(
     val getProfileUseCase: GetProfileUseCase,
     val updateProfileUseCase: UpdateProfileUseCase,
     val getQuizListUseCase: GetQuizListUseCase,
-    val getQuizByIdUseCase: GetQuizByIdUseCase
+    val getQuizByIdUseCase: GetQuizByIdUseCase,
+    val getQuizEventUseCase: GetQuizEventUseCase
 ) : AndroidViewModel(application) {
 
     private lateinit var context: Context
@@ -61,7 +64,7 @@ class QuestionViewModel @Inject constructor(
     var persent = 0
     var maxPersent = 0
     var persentAll = 0
-    var questionListThis = ArrayList<QuestionEntity>()
+    var questionListThis = listOf<QuestionEntity>()
     lateinit var questionDetailListThis: List<QuestionDetailEntity>
     lateinit var quizThis: QuizEntity
     lateinit var tpovId: String
@@ -191,8 +194,9 @@ class QuestionViewModel @Inject constructor(
 
     private fun getQuestionsList() {
 
-        val questionThisListAll =
-            getQuestionByIdQuizUseCase(idQuiz).filter { it.hardQuestion == hardQuestion }
+        val questionThisListAll = getQuestionByIdQuizUseCase(idQuiz)
+            .filter { it.hardQuestion == hardQuestion }
+            .sortedBy { it.numQuestion }
 
         var listMap = mutableMapOf<Int, Boolean>()
 
@@ -208,7 +212,7 @@ class QuestionViewModel @Inject constructor(
                 questionThisListAll,
                 listMap
             )
-        Questionlist.questionListThis = this.questionListThis
+        Questionlist.questionListThis = ArrayList(this.questionListThis.sortedBy { it.numQuestion })
 
         if (!didFoundAllQuestion(this.questionListThis, listMap)) Toast.makeText(
             context,
@@ -575,9 +579,11 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun getNewIdQuiz(): Int {
+        log("getNewIdQuiz()")
         var i = 0
         runBlocking {
-            getQuizListUseCase(getTpovId()).forEach {
+            log("getNewIdQuiz 1")
+            getQuizEventUseCase().forEach {
                 log("getNewIdQuiz: it: ${it.id}")
                 if (it.id!! in (i + 1)..100) {
                     i = it.id!!
@@ -589,38 +595,26 @@ class QuestionViewModel @Inject constructor(
 
     private fun updateEvent(rating: Int) {
 
-        newIdQuizVar = getNewIdQuiz()
-        if (getRating(rating) != 0) {
-            log("DSEFSE, it: quiz")
-            insertQuizUseCase(
-                quizThis.copy(
-                    id = newIdQuizVar,
-                    event = getRating(rating),
-                    rating = rating,
-                    starsAll = 0,
-                    stars = 0
-                )
+        newIdQuizVar = idQuiz
+        log("DSEFSE, id: $newIdQuizVar")
+        insertQuizUseCase(
+            quizThis.copy(
+                id = newIdQuizVar,
+                ratingPlayer = rating,
+                event = getEvent(rating),
+                starsAll = 0,
+                stars = 0,
+                versionQuiz = quizThis.versionQuiz + 1
             )
+        )
 
-            CoroutineScope(Dispatchers.IO).launch {
-                getQuestionByIdQuizUseCase(idQuiz).forEach {
-                    log("DSEFSE, it: $it")
-                    insertQuestionUseCase(it.copy(idQuiz = newIdQuizVar))
-                }
-            }
-        }
-        deleteQuizUseCase(idQuiz)
-        deleteQuestionByIdQuizUseCase(idQuiz)
         deleteQuestionDetailByIdQuiz(idQuiz)
         insertQuizPlayers()
 
     }
 
-    private fun getRating(rating: Int): Int {
-        log("fun getRating: $rating")
-        return if (rating == 1) 0
-        else quizThis.event + 1
-    }
+    private fun getEvent(rating: Int) = if (rating == 1) quizThis.event
+                                        else quizThis.event + RATING_QUIZ_EVENT_BED
 
     private fun insertQuizPlayers() {
 

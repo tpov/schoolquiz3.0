@@ -70,18 +70,14 @@ class AutorisationViewModel @Inject constructor(
             user?.sendEmailVerification()?.addOnCompleteListener { task ->
                 log("createAcc отправилось смс на почту")
                 if (task.isSuccessful) {
-                    Toast.makeText(
-                        context,
-                        "Verification email sent to ${user.email}",
-                        Toast.LENGTH_LONG
-                    ).show()
+
                     val tpovId = getTpovId()
 
-                    var pr = getProfileUseCase(tpovId ?: 0)
-                    if (
-                        try {
-                            pr.dateSynch!!.isNotEmpty()
-                        } catch (e: Exception) {
+                    var pr = getProfileUseCase(tpovId)
+                    log("createAcc try: ${pr.dateSynch}")
+                    if ( try {
+                        pr.dateSynch!!.isNotEmpty()
+                    } catch (e: Exception) {
                             false
                         }
                     ) {

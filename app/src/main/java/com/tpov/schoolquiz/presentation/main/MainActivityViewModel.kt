@@ -138,7 +138,7 @@ class MainActivityViewModel @Inject constructor(
             Points(0, 0, 0),
             "0",
             Buy(1, "", "", ""),
-            "0",
+            "",
             "",
             "",
             0,
@@ -219,7 +219,7 @@ class MainActivityViewModel @Inject constructor(
 
     suspend fun removePlaceInUserQuiz() {
         log("fgjesdriofjeskl getCountPlaceForUserQuiz():${getCountPlaceForUserQuiz()}")
-        placeLiveData.value = getCountPlaceForUserQuiz() - 1
+        placeLiveData.postValue(getCountPlaceForUserQuiz() - 1)
     }
 
     fun getProfileCountBox(): Int {

@@ -72,7 +72,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mainViewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
+        mainViewModel =
+            ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
 
         adapter = MainActivityAdapter(this, requireContext(), mainViewModel)
         binding.rcView.layoutManager = LinearLayoutManager(activity)
@@ -91,10 +92,10 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             val countPlace = mainViewModel.getCountPlaceForUserQuiz()
             tv_number_place_user_quiz.text = countPlace.toString()
 
-        if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
-            binding.fabAddItem.isClickable = false
-            binding.fabAddItem.isEnabled = false
-        }
+            if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
+                binding.fabAddItem.isClickable = false
+                binding.fabAddItem.isEnabled = false
+            }
         }
 
         when (isMyQuiz) {
@@ -135,8 +136,14 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
-            val filteredList =
-                quizList.filter { if (isMyQuiz == 8) it.event == isMyQuiz else if (isMyQuiz == 5) it.event == isMyQuiz else it.event == isMyQuiz && it.tpovId == getTpovId() }
+            val filteredList = quizList.filter {
+                when (isMyQuiz) {
+                    8 -> it.event == isMyQuiz
+                    5 -> it.event == isMyQuiz
+                    else -> it.event == isMyQuiz && it.tpovId == getTpovId()
+                }
+            }
+
             val sortedList = if (isMyQuiz == 5) {
                 filteredList.sortedBy { -it.ratingPlayer }
             } else {
@@ -144,6 +151,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
             adapter.submitList(sortedList)
         }
+
         mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
 
             log("fgjesdriofjeskl observe it: $it")
@@ -167,7 +175,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 dialogFragment.show(fragmentManager, "create_question_dialog")
             }
         }
-
 
         binding.fabSearch.setOnClickListener {
             dialogNolics(-1, false, 100)
@@ -301,7 +308,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         var foundQuestion = listMap.isNotEmpty()
 
         questionList.forEach {
-
             log("kokol question: ${it.numQuestion}. ${it.nameQuestion} - ${it.language}")
         }
 
@@ -314,11 +320,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 log("kokol catch: $it")
                 foundQuestion = false
             }
-
-            log("kokol foundQuestion: $foundQuestion, it: $it")
         }
 
-        log("kokol foundQuestion: $foundQuestion")
         return foundQuestion
     }
 
@@ -450,29 +453,33 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
         lifecycleScope.launchWhenStarted {
-        mainViewModel.getQuizLiveData().observe(this@FragmentMain) { list ->
-            log("getQuizLiveData.observe")
-            CoroutineScope(Dispatchers.IO).launch {
-            list.forEach { quiz ->
-                if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
-                    mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
-                        mainViewModel.insertQuestion(
-                            it.copy(
-                                id = null,
-                                idQuiz = quiz.id ?: 0
-                            )
-                        )
+            mainViewModel.getQuizLiveData().observe(this@FragmentMain) { list ->
+                log("getQuizLiveData.observe")
+                CoroutineScope(Dispatchers.IO).launch {
+                    list.forEach { quiz ->
+                        if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)
+                                .isNullOrEmpty()
+                        ) {
+                            mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
+                                mainViewModel.insertQuestion(
+                                    it.copy(
+                                        id = null,
+                                        idQuiz = quiz.id ?: 0
+                                    )
+                                )
+                            }
+                        }
                     }
-                }}
+                }
+                var setQuestion = false
+                if (list.isEmpty()) setQuestion = true
+                list.forEach { item ->
+                    if (item.id!! < 100) setQuestion = true
+                }
+                if (!setQuestion) mainViewModel.setQuestionsFB()
             }
-            var setQuestion = false
-            if (list.isEmpty()) setQuestion = true
-            list.forEach { item ->
-                if (item.id!! < 100) setQuestion = true
-            }
-            if (!setQuestion) mainViewModel.setQuestionsFB()
         }
-    }}
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

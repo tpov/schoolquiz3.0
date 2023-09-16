@@ -259,7 +259,11 @@ class AutorisationFragment : BaseFragment() {
                 dateEditText.text.toString(),
                 loginCity.text.toString(),
                 result,
-                invitation.text.toString().toInt()
+                try {
+                    invitation.text.toString().toInt()
+                } catch (e: Exception) {
+                    0
+                }
             )
         }
 
@@ -270,27 +274,38 @@ class AutorisationFragment : BaseFragment() {
             if (it > 0) {
                 if (!obs) {
                     val profile = viewModel.getProfile()
-                    val qualification = Qualification(
-                        profile.tester ?: 0,
-                        profile.moderator ?: 0,
-                        profile.sponsor ?: 0,
-                        profile.translater ?: 0,
-                        profile.admin ?: 0,
-                        profile.developer ?: 0
-                    )
-                    log("onViewCreated someData.observe() соблюдение условий для запуска ProfileFragment")
-                    obs = true
-                    val fragmentTransaction = fragmentManager?.beginTransaction()
-                    fragmentTransaction?.remove(this)
-                    fragmentTransaction?.replace(R.id.title_fragment, ProfileFragment.newInstance())
-                    SetItemMenu.setNetworkMenu(
-                        (requireContext() as MainActivity).binding,
-                        MENU_PROFILE,
-                        requireActivity(),
-                        SharedPreferencesManager.getSkill(),
-                        qualification
-                    )
-                    fragmentTransaction?.commit()
+                    var startActivity = false
+                    while (!startActivity) {
+                        try {
+                            val qualification = Qualification(
+                                profile.tester ?: 0,
+                                profile.moderator ?: 0,
+                                profile.sponsor ?: 0,
+                                profile.translater ?: 0,
+                                profile.admin ?: 0,
+                                profile.developer ?: 0
+                            )
+
+                            log("onViewCreated qualification: $qualification")
+
+                            obs = true
+                            val fragmentTransaction = fragmentManager?.beginTransaction()
+                            fragmentTransaction?.remove(this)
+                            fragmentTransaction?.replace(
+                                R.id.title_fragment,
+                                ProfileFragment.newInstance()
+                            )
+                            SetItemMenu.setNetworkMenu(
+                                (requireContext() as MainActivity).binding,
+                                MENU_PROFILE,
+                                requireActivity(),
+                                SharedPreferencesManager.getSkill(),
+                                qualification
+                            )
+                            startActivity = true
+                            fragmentTransaction?.commit()
+                        } catch (e: Exception) {}
+                    }
                 }
             }
         }
