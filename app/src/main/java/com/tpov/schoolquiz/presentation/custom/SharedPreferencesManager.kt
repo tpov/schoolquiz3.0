@@ -37,6 +37,7 @@ object SharedPreferencesManager {
 
         return false
     }
+
     fun initialize(context: Context) {
         sharedPreferencesQuiz = context.getSharedPreferences(PREFS_NAME_QUIZ, Context.MODE_PRIVATE)
         sharedPreferencesQuestion =

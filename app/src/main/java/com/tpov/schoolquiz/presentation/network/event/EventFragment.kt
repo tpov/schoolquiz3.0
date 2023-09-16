@@ -143,7 +143,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
         val questionThisListAll = mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
             .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
-            .sortedBy { it.id }
+            .sortedBy { it.numQuestion }
 
         log("kokol 2questionThisListAll: $questionThisListAll")
         var listMap = mutableMapOf<Int, Boolean>()

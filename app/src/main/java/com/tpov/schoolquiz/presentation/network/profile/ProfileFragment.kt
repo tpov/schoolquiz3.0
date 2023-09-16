@@ -23,10 +23,13 @@ import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.wajahatkarim3.easyflipview.EasyFlipView
+import kotlinx.android.synthetic.main.profile_item.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -178,7 +181,7 @@ class ProfileFragment : BaseFragment() {
             viewModel.getDeleteAllQuiz()
         }
 
-        //if (SharedPreferencesManager.canSyncProfile())
+        if (SharedPreferencesManager.canSyncProfile() || getTpovId() == 0)
             viewModel.synth.observe(viewLifecycleOwner) { number ->
                 log("fun viewModel.getSynth.observe: $number")
 
@@ -186,6 +189,7 @@ class ProfileFragment : BaseFragment() {
                     1 -> {
                         if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
                             CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
+                            log("fun viewModel.getSynth start: $number")
                             isExecuted[0] =
                                 true // устанавливаем флаг в true, чтобы пометить число 0 как выполненное
                         }
@@ -194,6 +198,7 @@ class ProfileFragment : BaseFragment() {
                     2 -> {
                         if (!isExecuted[1]) {
                             CoroutineScope(Dispatchers.IO).launch { viewModel.getProfile() }
+                            log("fun viewModel.getSynth start: $number")
                             isExecuted[1] = true
                         }
                     }
@@ -201,6 +206,7 @@ class ProfileFragment : BaseFragment() {
                     3 -> {
                         if (!isExecuted[2]) {
                             CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
+                            log("fun viewModel.getSynth start: $number")
                             isExecuted[2] = true
                         }
                     }
@@ -211,11 +217,13 @@ class ProfileFragment : BaseFragment() {
                                 viewModel.setQuizFB()
                                 viewModel.getPlayersList()
                             }
+                            log("fun viewModel.getSynth start: $number")
                             isExecuted[3] = true
                         }
                     }
                 }
             }
+        log("tpovIdfsefsef ${getTpovId()}")
         viewModel.getTpovId()
     }
 

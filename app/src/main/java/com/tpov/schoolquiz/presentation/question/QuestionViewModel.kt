@@ -196,7 +196,7 @@ class QuestionViewModel @Inject constructor(
 
         val questionThisListAll = getQuestionByIdQuizUseCase(idQuiz)
             .filter { it.hardQuestion == hardQuestion }
-            .sortedBy { it.id }
+            .sortedBy { it.numQuestion }
 
         var listMap = mutableMapOf<Int, Boolean>()
 
@@ -212,7 +212,7 @@ class QuestionViewModel @Inject constructor(
                 questionThisListAll,
                 listMap
             )
-        Questionlist.questionListThis = ArrayList(this.questionListThis.sortedBy { it.id })
+        Questionlist.questionListThis = ArrayList(this.questionListThis.sortedBy { it.numQuestion })
 
         if (!didFoundAllQuestion(this.questionListThis, listMap)) Toast.makeText(
             context,

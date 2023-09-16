@@ -10,6 +10,8 @@ import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.repository.RepositoryFB
+import com.tpov.schoolquiz.presentation.Core.DEFAULT_TPOVID
+import com.tpov.schoolquiz.presentation.Core.QUIZ_VERSION_DEFAULT
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
@@ -259,7 +261,6 @@ class RepositoryFBImpl @Inject constructor(
         })
     }
 
-
     override fun setTpovIdFB() {
 
         log("fun setTpovIdFB()")
@@ -287,18 +288,17 @@ class RepositoryFBImpl @Inject constructor(
 
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                log("getTpovIdFB() snapshot: $snapshot")
 
-                val tpovId: String = snapshot.child("listTpovId/$uid").getValue(String::class.java)
-                    ?: errorTpovId().toString()
-                log("getTpovIdFB() tpovId: $tpovId")
-                setTpovId(tpovId.toInt())
-
-                log("getTpovIdFB()/ set tpovId: $tpovId")
-                synthLiveData.value = ++synth
-
-                log("getTpovIdFB()/ set synth: ${synthLiveData.value}")
-                log("getTpovIdFB()/ set synth: ${synth}")
+                try {
+                    val tpovId: String =
+                        snapshot.child("listTpovId/$uid").getValue(String::class.java)!!
+                    setTpovId(tpovId.toInt())
+                } catch (e: Exception) {
+                    log("getTpovIdFB error get")
+                } finally {
+                    log("getTpovIdFB finally")
+                    synthLiveData.value = ++synth
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -325,7 +325,7 @@ class RepositoryFBImpl @Inject constructor(
         val profile = dao.getProfileByTpovId(tpovId)
 
         log("setProfile() tpovId: $tpovId")
-        if (tpovId == 0) {
+        if (tpovId == DEFAULT_TPOVID) {
 
             profilesRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -335,6 +335,7 @@ class RepositoryFBImpl @Inject constructor(
                     oldIdUser = tpovId
                     idUsers++
 
+                    log("setProfile() idUsers + 1: $idUsers")
                     profilesRef.updateChildren(
                         hashMapOf<String, Any>(
                             "idUser" to idUsers
@@ -746,8 +747,7 @@ log("setQuestions 1")
                         for (quizSnapshot in dataSnapshot.children) {
 
                             val idQuiz = quizSnapshot.key?.toInt() ?: 0
-                            val quiz =
-                                quizSnapshot.getValue(Quiz::class.java)
+                            val quiz = quizSnapshot.getValue(Quiz::class.java)
 
                             log("wdwdwdw 6 quiz${quiz?.event}: $quiz")
 
@@ -784,7 +784,7 @@ log("setQuestions 1")
                                 getQuestions(quizItem ?: "quiz8", idQuiz)
                                 if (getQuestionDetails) getQuestionDetails(quizItem ?: "quiz8")
                                 setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
-                                synthLiveData.value = ++synth
+                                if (quiz.event != 8) synthLiveData.value = ++synth
                                 loadText.postValue("")
                             }
                         }
@@ -801,10 +801,6 @@ log("setQuestions 1")
             loadText.postValue("Сервер занят, ждем..")
         }
     }
-
-
-    val QUIZ_VERSION_DEFAULT = -1
-
 
     private fun isQuizPublic(quiz: Quiz?): Boolean = quiz?.event in 5..8
 

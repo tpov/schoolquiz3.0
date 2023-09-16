@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".presentation.network.profile.ProfileFragment">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
         android:paddingTop="106dp"
-        android:paddingBottom="100dp"
-        android:clipToPadding="false">
+        android:paddingBottom="100dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:paddingStart="21dp"
             android:paddingTop="16dp"
-            android:paddingEnd="21dp"
-            android:orientation="vertical" >
+            android:paddingEnd="21dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -31,9 +31,9 @@
                     android:id="@+id/textView11"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingLeft="80dp"
                     android:layout_weight="1"
                     android:gravity="center"
+                    android:paddingLeft="80dp"
                     android:text="PROFILE"
                     android:textColor="#B0B0B0"
                     android:textSize="24sp"
@@ -60,65 +60,71 @@
                 android:id="@+id/efv_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:flipOnTouch="true"
-                app:flipEnabled="true"
-                app:flipDuration="400"
-                app:flipType="horizontal"
-                app:flipFrom="front"
+                app:autoFlipBack="false"
                 app:autoFlipBackTime="1000"
-                app:autoFlipBack="false">
+                app:flipDuration="400"
+                app:flipEnabled="true"
+                app:flipFrom="front"
+                app:flipOnTouch="true"
+                app:flipType="horizontal">
 
                 <!-- Back Layout Goes Here -->
-                <include layout="@layout/flash_card_layout_back"/>
+                <include layout="@layout/flash_card_layout_back" />
                 <!-- Front Layout Goes Here -->
-                <include layout="@layout/flash_card_layout_front"/>
+                <include layout="@layout/flash_card_layout_front" />
 
             </com.wajahatkarim3.easyflipview.EasyFlipView>
-        <TextView
-            android:id="@+id/textView13"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:background="@drawable/dp_dialog_background"
-            android:textColor="#B0B0B0"
-            android:text="AWARDS" />
+
+            <TextView
+                android:id="@+id/textView13"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/dp_dialog_background"
+                android:gravity="center"
+                android:text="AWARDS"
+                android:textColor="#B0B0B0"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
             <TableLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:stretchColumns="*"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/back_profile_table"
-                android:layout_marginTop="8dp">
+                android:stretchColumns="*"
+                android:visibility="gone">
 
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🥇"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🥈️"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -126,19 +132,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🥉"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -146,19 +154,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎖"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -166,19 +176,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🏅"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -186,19 +198,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🏆"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -206,19 +220,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎗️"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -226,19 +242,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎃"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -246,19 +264,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎄"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -266,39 +286,43 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎁"
-                        android:gravity="center"
-                        android:textSize="22sp"/>
+                        android:textColor="#B0B0B0"
+                        android:textSize="22sp" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎧"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -306,39 +330,43 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🪙"
-                        android:gravity="center"
-                        android:textSize="22sp"/>
+                        android:textColor="#B0B0B0"
+                        android:textSize="22sp" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎞️"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -346,19 +374,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="📀"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -366,39 +396,43 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
-                        android:text="🏆"
                         android:gravity="center"
-                        android:textSize="22sp"/>
+                        android:text="🏆"
+                        android:textColor="#B0B0B0"
+                        android:textSize="22sp" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="⭐"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -406,19 +440,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🏆"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -426,19 +462,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎯"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -446,19 +484,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🎓"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -466,19 +506,21 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
+                        android:gravity="center"
                         android:text="🏰"
-                        android:gravity="center"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
@@ -486,27 +528,29 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
 
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
 
                         android:textSize="14sp" />
                 </TableRow>
+
                 <TableRow>
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textColor="#B0B0B0"
-                        android:text="❤"
                         android:gravity="center"
+                        android:text="❤"
+                        android:textColor="#B0B0B0"
                         android:textSize="22sp" />
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="4"
-                        android:textColor="#B0B0B0"
                         android:text="Description of Award 1"
+                        android:textColor="#B0B0B0"
                         android:textSize="14sp" />
                 </TableRow>
 

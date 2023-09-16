@@ -16,6 +16,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
+import com.tpov.schoolquiz.presentation.Core.EVENT_QUIZ_HOME
 import com.tpov.schoolquiz.presentation.custom.CoastValues.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
@@ -149,7 +150,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             mainViewModel: MainActivityViewModel
         ) = with(binding) {
 
-            constraintLayout.setOnLongClickListener {
+            if (quizEntity.event != EVENT_QUIZ_HOME) constraintLayout.setOnLongClickListener {
                 showPopupMenu(it, quizEntity.id!!, context, mainViewModel)
                 true
             }

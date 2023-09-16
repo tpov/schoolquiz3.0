@@ -72,7 +72,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mainViewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
+        mainViewModel =
+            ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
 
         adapter = MainActivityAdapter(this, requireContext(), mainViewModel)
         binding.rcView.layoutManager = LinearLayoutManager(activity)
@@ -135,8 +136,14 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
-            val filteredList =
-                quizList.filter { if (isMyQuiz == 8) it.event == isMyQuiz else if (isMyQuiz == 5) it.event == isMyQuiz else it.event == isMyQuiz && it.tpovId == getTpovId() }
+            val filteredList = quizList.filter {
+                when (isMyQuiz) {
+                    8 -> it.event == isMyQuiz
+                    5 -> it.event == isMyQuiz
+                    else -> it.event == isMyQuiz && it.tpovId == getTpovId()
+                }
+            }
+
             val sortedList = if (isMyQuiz == 5) {
                 filteredList.sortedBy { -it.ratingPlayer }
             } else {
@@ -144,6 +151,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
             adapter.submitList(sortedList)
         }
+
         mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
 
             log("fgjesdriofjeskl observe it: $it")
@@ -167,7 +175,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 dialogFragment.show(fragmentManager, "create_question_dialog")
             }
         }
-
 
         binding.fabSearch.setOnClickListener {
             dialogNolics(-1, false, 100)
@@ -450,7 +457,9 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 log("getQuizLiveData.observe")
                 CoroutineScope(Dispatchers.IO).launch {
                     list.forEach { quiz ->
-                        if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0).isNullOrEmpty()) {
+                        if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)
+                                .isNullOrEmpty()
+                        ) {
                             mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
                                 mainViewModel.insertQuestion(
                                     it.copy(
