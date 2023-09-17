@@ -17,7 +17,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.Core.EVENT_QUIZ_HOME
-import com.tpov.schoolquiz.presentation.custom.CoastValues.COEF_COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.custom.CoastValuesNolic.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId

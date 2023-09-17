@@ -771,6 +771,8 @@ log("setQuestions 1")
                             log("wdwdwdw 6 1: ${this@RepositoryFBImpl.isQuizPublic(quiz) && maxLvlTranslate >= 100 && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
                             log("wdwdwdw 6 2: ${(isQuizForEvent(quiz)) && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
                             log("wdwdwdw 6 3: ${quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1}")
+                            log("wdwdwdw 6 4: ${maxLvlTranslate >= 100}")
+                            log("wdwdwdw 6 4: ${this@RepositoryFBImpl.isQuizPublic(quiz)}")
 
                             if (((isQuizPublic(quiz) && maxLvlTranslate >= 100 || (isQuizForEvent(
                                     quiz

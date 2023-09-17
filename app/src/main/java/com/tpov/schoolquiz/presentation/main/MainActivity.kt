@@ -11,6 +11,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Build
@@ -52,6 +53,10 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCount
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
+import com.tpov.schoolquiz.presentation.custom.Values
+import com.tpov.schoolquiz.presentation.custom.Values.getColorNickname
+import com.tpov.schoolquiz.presentation.custom.Values.getImportance
+import com.tpov.schoolquiz.presentation.custom.Values.init
 import com.tpov.schoolquiz.presentation.custom.Values.loadProgress
 import com.tpov.schoolquiz.presentation.custom.Values.loadText
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
@@ -85,6 +90,7 @@ import com.tpov.shoppinglist.utils.TimeManager
 import com.tpov.userguide.Options
 import com.tpov.userguide.UserGuide
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_main_item.*
 import kotlinx.coroutines.*
 import java.text.NumberFormat
 import java.util.*
@@ -144,6 +150,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        init(this)
 
         val swipeRefreshLayout = binding.swipeRefreshLayout
 
@@ -394,6 +402,22 @@ class MainActivity : AppCompatActivity() {
 
             } else binding.tvName.text =
                 "${it.nickname} ${it.trophy}"
+
+           try {
+               binding.tvName.setTextColor(getColorNickname(getImportance(it!!)))
+
+               binding.tvName.setShadowLayer(10F, 0F, 0F,
+                   when (binding.tvName.currentTextColor) {
+                       ContextCompat.getColor(Values.context, R.color.default_nick_color6) -> Color.WHITE
+                       ContextCompat.getColor(Values.context, R.color.default_nick_color7) -> Color.YELLOW
+                       else -> Color.TRANSPARENT
+                   }
+               )
+
+               binding.tvName.setTypeface(null, Typeface.BOLD)
+           } catch (e: Exception) {
+               log("ererrerer---------------------------------------------------")
+           }
 
             val animationDuration = 3000L
             animateValue(

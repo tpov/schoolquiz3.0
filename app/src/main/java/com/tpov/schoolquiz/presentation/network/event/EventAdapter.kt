@@ -12,7 +12,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.presentation.custom.CoastValues.COEF_COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.custom.CoastValuesNolic.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
 import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel

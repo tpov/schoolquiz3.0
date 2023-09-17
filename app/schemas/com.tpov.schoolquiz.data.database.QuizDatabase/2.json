@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "7abc1968b0ea691a06b4c2ccb1b08864",
+    "identityHash": "afa5450237d5fd66f1712354aa13ccb5",
     "entities": [
       {
         "tableName": "table_data",
@@ -652,7 +652,7 @@
       },
       {
         "tableName": "chat_data",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `time` TEXT NOT NULL, `user` TEXT NOT NULL, `msg` TEXT NOT NULL, `importance` INTEGER NOT NULL, `personalSms` INTEGER NOT NULL, `icon` TEXT NOT NULL, `rating` INTEGER NOT NULL, `reaction` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `time` TEXT NOT NULL, `user` TEXT NOT NULL, `msg` TEXT NOT NULL, `importance` INTEGER NOT NULL, `personalSms` INTEGER NOT NULL, `icon` TEXT NOT NULL, `rating` INTEGER NOT NULL, `reaction` INTEGER NOT NULL, `tpovId` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -707,6 +707,12 @@
             "columnName": "reaction",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "tpovId",
+            "columnName": "tpovId",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -722,7 +728,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7abc1968b0ea691a06b4c2ccb1b08864')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'afa5450237d5fd66f1712354aa13ccb5')"
     ]
   }
 }
