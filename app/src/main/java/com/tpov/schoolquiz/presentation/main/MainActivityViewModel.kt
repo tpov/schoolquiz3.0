@@ -380,13 +380,12 @@ class MainActivityViewModel @Inject constructor(
     suspend fun setPercentResultAllQuiz() {
         getQuizEventUseCase().forEach { quiz ->
             var perc = mutableListOf<Int>()
-            var persentAll: Int
+            var persentAll = 0
             var maxPersent = 0
 
             log("sdsdsds ${quiz.nameQuiz}")
             getQuestionDetailListUseCase().forEach {
                 if (it.idQuiz == quiz.id && getTpovId() == quiz.tpovId) {
-                    log("getQuestionDetailListUseCase")
                     var i = 0
                     var j = 0
 
@@ -404,8 +403,8 @@ class MainActivityViewModel @Inject constructor(
                         }
                     } else {
                         try {
-                            if ((((100 * i) / j) / 5) + 100 > maxPersent) maxPersent =
-                                (((100 * i) / j) / 5) + 100
+                            if ((((100 * i) / j) / 5) + 100 > maxPersent)
+                                maxPersent = (((100 * i) / j) / 5) + 100
                             perc.add((((100 * i) / j) / 5) + 100)
                         } catch (e: Exception) {
                             perc.add(0)
@@ -419,17 +418,15 @@ class MainActivityViewModel @Inject constructor(
                     }
                     persentAll = i / perc.size
 
-                    com.tpov.schoolquiz.presentation.question.log("saveResult ${quiz.nameQuiz}. $maxPersent")
-
-                    when (quiz.event) {
-                        1, 5, 6, 7, 8 -> updateQuizUseCase(
-                            quiz.copy(
-                                stars = maxPersent,
-                                starsAll = persentAll
-                            )
-                        )
-                    }
                 }
+            }
+            when (quiz.event) {
+                1, 5, 6, 7, 8 -> updateQuizUseCase(
+                    quiz.copy(
+                        stars = maxPersent,
+                        starsAll = persentAll
+                    )
+                )
             }
         }
     }
