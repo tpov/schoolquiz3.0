@@ -13,7 +13,8 @@
     <ScrollView
         android:id="@+id/scrollView2"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/barrier"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -105,11 +106,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginStart="24dp"
-                android:visibility="gone"
-                tools:visibility="visible"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <Button
                     android:id="@+id/b_set_translate_profile"
@@ -121,8 +122,8 @@
                     android:id="@+id/tv_lang_profile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:text="" />
+                    android:text=""
+                    android:textColor="@color/white" />
 
             </LinearLayout>
 
@@ -153,8 +154,8 @@
                 android:hint="@string/prompt_invitation"
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionDone"
-                android:selectAllOnFocus="true"
                 android:inputType="numberDecimal"
+                android:selectAllOnFocus="true"
                 android:textColor="@color/white"
                 android:textColorHint="@color/grey"
                 android:visibility="gone"
@@ -162,6 +163,13 @@
 
         </LinearLayout>
     </ScrollView>
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="scrollView2"/>
 
     <RadioGroup
         android:id="@+id/mode_radio_group"
@@ -171,21 +179,22 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="64dp"
         app:layout_constraintTop_toBottomOf="@+id/scrollView2"
-        app:layout_constraintVertical_bias="0.75">
+        app:layout_constraintVertical_bias="0.95">
 
         <RadioButton
             android:id="@+id/login_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/login_mode"
+            android:text="@string/action_sign_in"
             android:textColor="@color/white" />
 
         <RadioButton
             android:id="@+id/registration_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/registration_mode"
+            android:text="@string/action_registration"
             android:textColor="@color/white" />
     </RadioGroup>
 
@@ -218,6 +227,7 @@
         app:layout_constraintStart_toEndOf="@+id/login"
         app:layout_constraintTop_toBottomOf="@+id/scrollView2"
         app:layout_constraintVertical_bias="0.1"
+        app:layout_constraintVertical_weight="0"
         tools:visibility="visible" />
 
     <ProgressBar
@@ -233,4 +243,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/scrollView2"
         tools:visibility="visible" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

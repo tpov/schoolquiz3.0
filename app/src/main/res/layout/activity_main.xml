@@ -327,7 +327,7 @@
                             android:gravity="center_vertical"
                             android:singleLine="true"
                             android:text="Name"
-                            android:textColor="#FFFFFF"
+                            android:textColor="#939E8D"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 

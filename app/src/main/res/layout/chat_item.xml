@@ -40,8 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
+                android:textSize="17sp" />
 
             <TextView
                 android:id="@+id/messageTimeTextView"

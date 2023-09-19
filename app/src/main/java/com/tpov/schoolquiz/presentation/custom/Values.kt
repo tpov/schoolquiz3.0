@@ -59,6 +59,7 @@ object Values {
             5 -> ContextCompat.getColor(context, R.color.default_nick_color5)
             6 -> ContextCompat.getColor(context, R.color.default_nick_color6)
             7 -> ContextCompat.getColor(context, R.color.default_nick_color7)
+            8 -> ContextCompat.getColor(context, R.color.default_nick_color8)
             else -> ContextCompat.getColor(context, R.color.default_nick_color1)
         }
     }
@@ -67,13 +68,14 @@ object Values {
         log("profile.datePremium!! > TimeManager.getCurrentTime():  ${profile.datePremium!! > TimeManager.getCurrentTime()}")
         log("TimeManager.getCurrentTime():  ${TimeManager.getCurrentTime()}")
         log("profile.datePremium:  ${profile.datePremium}")
-        return if (profile.tester!! >= 100) 2
+        return if (profile.pointsSkill!! < 1_0000) 8
+        else if (profile.tester!! >= 100) 2
         else if (profile.translater!! >= 100) 3
         else if (profile.moderator!! >= 100) 5
         else if (profile.admin!! >= 100) 0
         else if (profile.developer!! >= 100) 6
-        else if (profile.datePremium!! > TimeManager.getCurrentTime()) 7
-        else if (profile.pointsSkill!! >= 1000_0000 ) 4
+        else if (profile.datePremium > TimeManager.getCurrentTime()) 7
+        else if (profile.pointsSkill >= 1000_0000 ) 4
         else 1
     }
 

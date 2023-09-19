@@ -80,7 +80,7 @@ class ChatFragment : BaseFragment() {
             }
             UserGuide(requireContext()).addNotification(
                 versionCode ?: binding.chatRecyclerView.id,
-                text = " - Не оскорблять \n - Не навьязывать \n - Не флудить \n - Помогать \n - Улыбаться",
+                text = " - Не оскорблять \n - Не флудить \n - Помогать",
                 titleText = "Правила чата:",
                 options = Options(),
                 icon = resources.getDrawable(R.drawable.nav_chat)

@@ -44,6 +44,7 @@
    <color name="default_nick_color5">#FF6347</color> <!--  (Томатный)-->
     <color name="default_nick_color6">#000000</color>
     <color name="default_nick_color7">#FFD700</color> <!--  (Золотой)-->
+    <color name="default_nick_color8">#939E8D</color>
 
 
     <color name="profile_card_back">#353535</color>
