@@ -5,9 +5,11 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
@@ -149,13 +151,13 @@ class MainActivityViewModel @Inject constructor(
             ),
             "",
             userLanguageCode,
-            Qualification( 0, 0, 0, 0, 0, 0),
+            Qualification(0, 0, 0, 0, 0, 0),
             Life(1, 0),
             Box(0, TimeManager.getCurrentTime(), 0),
-                    0
+            0
         )
 
-        insertProfileUseCase(profile.toProfileEntity(0, 2000))
+        insertProfileUseCase(profile.toProfileEntity(0, 400))
     }
 
     fun insertQuiz(quizEntity: QuizEntity) {
@@ -174,7 +176,7 @@ class MainActivityViewModel @Inject constructor(
 
     fun insertQuizEvent(quizEntity: QuizEntity) {
         log("fun updateQuizEvent")
-        if (quizEntity.event == 1) {
+        if (quizEntity.event == EVENT_QUIZ_FOR_USER) {
             quizEntity.event++
 
             log("updateQuizEvent quizEntity.event = ${quizEntity.event}")
@@ -210,7 +212,8 @@ class MainActivityViewModel @Inject constructor(
     suspend fun getCountPlaceForUserQuiz(): Int {
         return try {
             val placeQuiz = getProfileUseCase(getTpovId()).buyQuizPlace
-            val countUserQuiz = getQuizList().filter { it.event == 1 && it.tpovId == getTpovId() }
+            val countUserQuiz =
+                getQuizList().filter { it.event == EVENT_QUIZ_FOR_USER && it.tpovId == getTpovId() }
             placeQuiz?.minus(countUserQuiz.size)!!
         } catch (e: Exception) {
             1
@@ -234,12 +237,13 @@ class MainActivityViewModel @Inject constructor(
     fun getNewIdQuiz(): Int {
         var i = 0
         runBlocking {
-        getQuizListUseCase(getTpovId()).forEach {
-            log("getNewIdQuiz: it: ${it.id}")
-            if (it.id!! in (i + 1)..100) {
-                i = it.id!!
+            getQuizListUseCase(getTpovId()).forEach {
+                log("getNewIdQuiz: it: ${it.id}")
+                if (it.id!! in (i + 1)..BARRIER_QUIZ_ID_LOCAL_AND_REMOVE) {
+                    i = it.id!!
+                }
             }
-        }}
+        }
         return i + 1
     }
 
@@ -265,9 +269,9 @@ class MainActivityViewModel @Inject constructor(
             val data = getQuizById(id).languages
             val deviceLocale = Locale.getDefault().language
 
-            val pairs = data.split("|")
+            val pairs = data.split(SPLIT_BETWEEN_LANGUAGES)
             for (pair in pairs) {
-                val keyValue = pair.split("-")
+                val keyValue = pair.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)
                 if (keyValue.size == 2) {
                     val key = keyValue[0]
                     val value = keyValue[1].toInt()
@@ -317,9 +321,9 @@ class MainActivityViewModel @Inject constructor(
                 profile?.timeLastOpenBox ?: "", TimeManager.getCurrentTime()
             ) == 1L
         ) {
-            if (profile?.coundDayBox == 10) {
+            if (profile?.coundDayBox == MAX_COUNT_DAY_BOX) {
                 addBox = 1
-                10
+                MAX_COUNT_DAY_BOX
             } else profile?.coundDayBox?.plus(1) ?: errorGetCountBox()
 
         } else if (TimeManager.getDaysBetweenDates(
@@ -339,7 +343,8 @@ class MainActivityViewModel @Inject constructor(
     }
 
     private fun errorGetCountBox(): Int {
-        Toast.makeText(context, "Error get box day", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.error_get_box_day), Toast.LENGTH_SHORT)
+            .show()
         return 0
     }
 
@@ -383,16 +388,23 @@ class MainActivityViewModel @Inject constructor(
             var persentAll = 0
             var maxPersent = 0
 
-            log("sdsdsds ${quiz.nameQuiz}")
+            log("sdsdsds 1.${quiz.nameQuiz}")
+            log("sdsdsds 1. getQuestionDetailListUseCase(): ${getQuestionDetailListUseCase()}")
             getQuestionDetailListUseCase().forEach {
+                log("sdsdsds 1,1 it.idQuiz: ${it.idQuiz} == quiz.id: ${quiz.id} -> ${it.idQuiz == quiz.id}")
+                log("sdsdsds 1,2. getTpovId(): ${getTpovId()}, quiz.tpovId: ${quiz.tpovId} -> ${getTpovId() == quiz.tpovId}")
                 if (it.idQuiz == quiz.id && getTpovId() == quiz.tpovId) {
+                    log("sdsdsds 2. $it")
                     var i = 0
                     var j = 0
 
                     it.codeAnswer?.forEach { item ->
-                        if (item == '2') i++
+                        if (item == CORRECTLY_ANSWERED_IN_CODE_ANSWER) i++
                         j++
                     }
+
+                    log("sdsdsds 3. i:${i}")
+                    log("sdsdsds 4. j:${j}")
 
                     if (!it.hardQuiz) {
                         try {
@@ -411,6 +423,7 @@ class MainActivityViewModel @Inject constructor(
                         }
                     }
 
+                    log("sdsdsds 5.perc:${perc}")
                     j = 0
                     i = 0
                     perc.forEach { itemPerc ->
@@ -418,11 +431,18 @@ class MainActivityViewModel @Inject constructor(
                     }
                     persentAll = i / perc.size
 
+                    log("sdsdsds 6.i:${i}")
+                    log("sdsdsds 7.persentAll: ${persentAll}")
+                    log("sdsdsds 8.maxPersent: ${maxPersent}")
                 }
             }
             when (quiz.event) {
-                1, 5, 6, 7, 8 -> updateQuizUseCase(
-                    quiz.copy(
+                EVENT_QUIZ_FOR_USER,
+                EVENT_QUIZ_ARENA,
+                EVENT_QUIZ_TOURNIRE,
+                EVENT_QUIZ_TOURNIRE_LEADER,
+                EVENT_QUIZ_HOME
+                -> updateQuizUseCase(quiz.copy(
                         stars = maxPersent,
                         starsAll = persentAll
                     )

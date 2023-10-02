@@ -9,12 +9,13 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionDetailEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
-import com.tpov.schoolquiz.presentation.Core.RATING_QUIZ_EVENT_BED
+import com.tpov.schoolquiz.presentation.*
 import com.tpov.schoolquiz.presentation.custom.CalcValues
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getNolic
@@ -148,7 +149,7 @@ class QuestionViewModel @Inject constructor(
     private fun getCodeAnswer(size: Int): String {
         var newCodeAnswer = ""
         for (i in 0 until size) {
-            newCodeAnswer += '0'
+            newCodeAnswer += UNANSWERED_IN_CODE_ANSWER
         }
         return newCodeAnswer
     }
@@ -172,7 +173,7 @@ class QuestionViewModel @Inject constructor(
     private fun getCurrentIndex(codeAnswer: String?): Int? {
         if (codeAnswer == null || codeAnswer == "") return 0
         for (i in codeAnswer.indices) {
-            if (codeAnswer[i] == '0') return i
+            if (codeAnswer[i] == UNANSWERED_IN_CODE_ANSWER) return i
         }
         return null
     }
@@ -180,7 +181,7 @@ class QuestionViewModel @Inject constructor(
     private fun errorLoadQuestion(): String {
         Toast.makeText(
             getApplication(),
-            "Ошибка в базе данных, ждите пока разработчики пофиксят",
+            context.getString(R.string.dialog_error_db),
             Toast.LENGTH_LONG
         ).show()
 
@@ -216,7 +217,7 @@ class QuestionViewModel @Inject constructor(
 
         if (!didFoundAllQuestion(this.questionListThis, listMap)) Toast.makeText(
             context,
-            "Error found questions",
+            context.getString(R.string.toast_error_found_question),
             Toast.LENGTH_LONG
         ).show()
         getQuestionDetail()
@@ -261,7 +262,6 @@ class QuestionViewModel @Inject constructor(
 
         log("okokoko listMap: $listMap")
         questionList.forEach {
-
             log("okokoko questionList: $it")
         }
         listMap.forEach {
@@ -321,19 +321,9 @@ class QuestionViewModel @Inject constructor(
     private fun getUpdateAnswer(codeAnswer: String?): Boolean {
         if (codeAnswer == null || codeAnswer == "") return false
         codeAnswer.forEach {
-            if (it == '0') return true
+            if (it == UNANSWERED_IN_CODE_ANSWER) return true
         }
         return false
-    }
-
-    private fun useCheat() {
-        updateProfileUseCase(
-            getProfileUseCase(getTpovId()).copy(
-                count = getProfileUseCase(getTpovId()).count?.minus(
-                    1000
-                )
-            )
-        )
     }
 
     fun trueButton() {
@@ -346,7 +336,7 @@ class QuestionViewModel @Inject constructor(
         var codeAnswer = ""
         var i = 0
         repeat(this.codeAnswer.length) {
-            codeAnswer += if (i == currentIndex) '1'
+            codeAnswer += if (i == currentIndex) INCORRECTLY_ANSWERED_IN_CODE_ANSWER
             else this.codeAnswer[i]
             i++
         }
@@ -382,7 +372,7 @@ class QuestionViewModel @Inject constructor(
         var codeAnswer = ""
         var i = 0
         repeat(this.codeAnswer.length) {
-            codeAnswer += if (i == currentIndex) '2'
+            codeAnswer += if (i == currentIndex) CORRECTLY_ANSWERED_IN_CODE_ANSWER
             else this.codeAnswer[i]
             i++
         }
@@ -405,7 +395,7 @@ class QuestionViewModel @Inject constructor(
         if (codeAnswer == "" || codeAnswer == null) return numQuestion
         var i = 0
         codeAnswer.forEach {
-            if (it == '0') i++
+            if (it == UNANSWERED_IN_CODE_ANSWER) i++
         }
         return i
     }
@@ -419,7 +409,7 @@ class QuestionViewModel @Inject constructor(
     private fun setPercentResult() {
         var i = 0
         codeAnswer.forEach {
-            if (it == '2') i++
+            if (it == CORRECTLY_ANSWERED_IN_CODE_ANSWER) i++
         }
         numTrueQuestion = i
 
@@ -434,7 +424,7 @@ class QuestionViewModel @Inject constructor(
             i = 0
             j = 0
             it.codeAnswer?.forEach { item ->
-                if (item == '2') i++
+                if (item == CORRECTLY_ANSWERED_IN_CODE_ANSWER) i++
                 j++
             }
             if (try {
@@ -464,7 +454,7 @@ class QuestionViewModel @Inject constructor(
         j = 0
         i = 0
         codeAnswer.forEach {
-            if (it == '2') {
+            if (it == CORRECTLY_ANSWERED_IN_CODE_ANSWER) {
                 i++
             }
             j++
@@ -529,7 +519,7 @@ class QuestionViewModel @Inject constructor(
             if (it.idQuiz == this.idQuiz) {
 
                 it.codeAnswer?.forEach { item ->
-                    if (item == '2') i++
+                    if (item == CORRECTLY_ANSWERED_IN_CODE_ANSWER) i++
                     j++
                 }
 
@@ -562,7 +552,11 @@ class QuestionViewModel @Inject constructor(
         }
 
         when (quizThis.event) {
-            1, 5, 6, 7, 8 -> updateQuizUseCase(
+            EVENT_QUIZ_FOR_USER,
+            EVENT_QUIZ_ARENA,
+            EVENT_QUIZ_TOURNIRE,
+            EVENT_QUIZ_TOURNIRE_LEADER,
+            EVENT_QUIZ_HOME -> updateQuizUseCase(
                 quizThis.copy(
                     stars = maxPersent,
                     starsAll = persentAll,
@@ -570,7 +564,9 @@ class QuestionViewModel @Inject constructor(
                 )
             )
 
-            2, 3, 4 -> updateEvent(rating)
+            EVENT_QUIZ_FOR_TESTER,
+            EVENT_QUIZ_FOR_MODERATOR,
+            EVENT_QUIZ_FOR_ADMIN -> updateEvent(rating)
 
         }
 
@@ -613,7 +609,7 @@ class QuestionViewModel @Inject constructor(
 
     }
 
-    private fun getEvent(rating: Int) = if (rating == 1) quizThis.event
+    private fun getEvent(rating: Int) = if (rating == RATING_QUIZ_EVENT_BED) quizThis.event
                                         else quizThis.event + RATING_QUIZ_EVENT_BED
 
     private fun insertQuizPlayers() {

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 
 interface QuizDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertQuizDetailDB(note: QuestionDetailEntity)
 
     fun insertQuizDetail(note: QuestionDetailEntity) {
@@ -323,6 +323,16 @@ WHERE front_list.event IN (5, 6, 7, 8)
     @Query("DELETE FROM table_data WHERE idQuiz IS :id")
     fun deleteQuestionDetailByIdQuiz(id: Int)
 
+    @Query("DELETE FROM table_data WHERE idQuiz = :id AND synthFB = :isTrue")
+    fun deleteQuestionDetailByIdQuizAndSynthFB(id: Int, isTrue: Boolean = true)
+
+    @Query("DELETE FROM table_data WHERE id IS :id")
+    fun deleteQuestionDetailDB(id: Int)
+
+    fun deleteQuestionDetail(id: Int) {
+        log("deleteQuestionDetail ")
+        deleteQuestionDetailDB(id)
+    }
     @Query("DELETE FROM table_data WHERE id IS :id")
     fun deleteQuestion(id: Int)
 

@@ -18,7 +18,11 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
-import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_QUIZ8
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_RANDOM_QUIZ8
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
@@ -132,19 +136,19 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
 
         binding.fabBox.setOnClickListener {
-            Toast.makeText(activity, "Скоро...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, R.string.soon___, Toast.LENGTH_SHORT).show()
         }
 
         mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
             val filteredList = quizList.filter {
                 when (isMyQuiz) {
-                    8 -> it.event == isMyQuiz
-                    5 -> it.event == isMyQuiz
+                    EVENT_QUIZ_HOME -> it.event == isMyQuiz
+                    EVENT_QUIZ_ARENA -> it.event == isMyQuiz
                     else -> it.event == isMyQuiz && it.tpovId == getTpovId()
                 }
             }
 
-            val sortedList = if (isMyQuiz == 5) {
+            val sortedList = if (isMyQuiz == EVENT_QUIZ_ARENA) {
                 filteredList.sortedBy { -it.ratingPlayer }
             } else {
                 filteredList
@@ -177,7 +181,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
 
         binding.fabSearch.setOnClickListener {
-            dialogNolics(-1, false, 100)
+            dialogNolics(-1, false, COAST_RANDOM_QUIZ8)
         }
     }
 
@@ -197,21 +201,23 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
     override fun onClick(id: Int, typeQuestion: Boolean) {
         log("onClick mainViewModel.getQuizById(id).event")
-        if (mainViewModel.getProfileCount()!! < 33) {
+        if (mainViewModel.getProfileCount()!! < COAST_LIFE_HOME_QUIZ) {
+            val toastMessage = getString(R.string.not_enough_lives, COAST_LIFE_ARENA_QUIZ)
             Toast.makeText(
                 activity,
-                "Недостаточно жизней. На прохождение квеста тратиться 33% жизни",
+                toastMessage,
                 Toast.LENGTH_LONG
             ).show()
+
         } else {
             if (foundQuestionList(id, typeQuestion)) {
 
-                if (mainViewModel.getQuizById(id).event == 5) {
-                    dialogNolics(id, typeQuestion, 500)
+                if (mainViewModel.getQuizById(id).event == EVENT_QUIZ_ARENA) {
+                    dialogNolics(id, typeQuestion, COAST_QUIZ8)
                 } else {
                     mainViewModel.updateProfileUseCase(
                         mainViewModel.getProfile()
-                            .copy(count = mainViewModel.getProfileCount()!! - 33)
+                            .copy(count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ)
                     )
                     val intent = Intent(activity, QuestionActivity::class.java)
                     intent.putExtra(NAME_USER, "user")
@@ -220,10 +226,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     startActivityForResult(intent, REQUEST_CODE)
                 }
 
-            } else {
-                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
-                    .show()
-            }
+            } else Toast.makeText(context, R.string.quiz_not_translated, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -354,17 +357,17 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     try {
 
                         val randQuiz = mainViewModel.getQuizList().filter {
-                            it.event == 5 && it.languages.contains(Locale.getDefault().language)
+                            it.event == EVENT_QUIZ_ARENA && it.languages.contains(Locale.getDefault().language)
                         }.random()
 
                         val alertDialog = AlertDialog.Builder(activity)
-                            .setTitle("Поиск")
-                            .setMessage("Пройти рандомный квест из этого списка")
-                            .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+                            .setTitle(R.string.search_title)
+                            .setMessage(R.string.search_message)
+                            .setPositiveButton("(-) $nolics nolics") { dialog, which ->
 
                                 mainViewModel.updateProfileUseCase(
                                     mainViewModel.getProfile().copy(
-                                        count = mainViewModel.getProfileCount()!! - 33,
+                                        count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ,
                                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                                     )
                                 )
@@ -372,10 +375,10 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                                 val intent = Intent(activity, QuestionActivity::class.java)
                                 intent.putExtra(NAME_USER, "user")
                                 intent.putExtra(ID_QUIZ, randQuiz.id)
-                                intent.putExtra(HARD_QUESTION, randQuiz.stars >= 100)
+                                intent.putExtra(HARD_QUESTION, randQuiz.stars >= MAX_PERCENT_LIGHT_QUIZ_FULL)
                                 startActivityForResult(intent, REQUEST_CODE)
                             }
-                            .setNegativeButton("Отмена", null)
+                            .setNegativeButton(R.string.cancel_button, null)
                             .create()
 
                         alertDialog.setOnShowListener { dialog ->
@@ -393,7 +396,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     } catch (e: Exception) {
                         Toast.makeText(
                             requireContext(),
-                            "Не найдено переведенного квеста",
+                            R.string.no_translated_quest_found,
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -401,12 +404,12 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
         } else {
             val alertDialog = AlertDialog.Builder(activity)
-                .setTitle("Попытка платная")
-                .setMessage("В целях честной игры снимается плата.")
-                .setPositiveButton("(-) $nolics ноликов") { dialog, which ->
+                .setTitle(R.string.paid_attempt_title)
+                .setMessage(R.string.paid_attempt_message)
+                .setPositiveButton("(-) $nolics nolics") { dialog, which ->
                     mainViewModel.updateProfileUseCase(
                         mainViewModel.getProfile().copy(
-                            count = mainViewModel.getProfileCount()!! - 33,
+                            count = mainViewModel.getProfileCount()!! - COAST_LIFE_ARENA_QUIZ,
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )
                     )
@@ -416,7 +419,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     intent.putExtra(HARD_QUESTION, type)
                     startActivityForResult(intent, REQUEST_CODE)
                 }
-                .setNegativeButton("Отмена", null)
+                .setNegativeButton(R.string.cancel_button, null)
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
@@ -459,8 +462,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                     list.forEach { quiz ->
                         if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)
                                 .isNullOrEmpty()
-                        ) {
-                            mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
+                        ) mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
                                 mainViewModel.insertQuestion(
                                     it.copy(
                                         id = null,
@@ -468,13 +470,12 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                                     )
                                 )
                             }
-                        }
                     }
                 }
                 var setQuestion = false
                 if (list.isEmpty()) setQuestion = true
                 list.forEach { item ->
-                    if (item.id!! < 100) setQuestion = true
+                    if (item.id!! < BARRIER_QUIZ_ID_LOCAL_AND_REMOVE) setQuestion = true
                 }
                 if (!setQuestion) mainViewModel.setQuestionsFB()
             }
@@ -503,9 +504,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     companion object {
 
         const val ARG_IS_MY_QUIZ = "is_my_quiz"
-        const val CREATE_QUIZ = ""
-        const val DELETE_QUIZ = "deleteQuiz"
-        const val SHARE_QUIZ = "shareQuiz"
         const val REQUEST_CODE = 1
 
         @JvmStatic

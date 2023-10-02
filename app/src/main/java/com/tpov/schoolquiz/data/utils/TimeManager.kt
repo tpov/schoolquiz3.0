@@ -4,6 +4,8 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.tpov.schoolquiz.presentation.DEFAULT_DATA_IN_GET_CHAT
+import com.tpov.schoolquiz.presentation.DEFAULT_DATA_IN_SHOW_AD
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.ZoneId
@@ -13,11 +15,11 @@ import kotlin.math.abs
 
 object TimeManager {
 
-    private const val DEF_TIME_FORMAT = "HH:mm:ss - dd/MM/yy"
-    fun getCurrentTime(): String{
+    private const val DEF_TIME_FORMAT = DEFAULT_DATA_IN_GET_CHAT
+    fun getCurrentTime(day: Boolean = false): String{
         Log.d("NewNoteActivity", "getCurrentTime")
 
-        val formatter = SimpleDateFormat("HH:mm:ss - dd/MM/yy", Locale.getDefault())
+        val formatter = SimpleDateFormat(if (!day) DEFAULT_DATA_IN_GET_CHAT else DEFAULT_DATA_IN_SHOW_AD, Locale.getDefault())
         return formatter.format(Calendar.getInstance().time)
     }
 

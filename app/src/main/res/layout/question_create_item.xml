@@ -27,7 +27,7 @@
             android:layout_marginLeft="8dp"
             android:textColor="#FFE700"
             android:background="@color/nullColor"
-            android:hint="Название вопроса" />
+            android:hint="@string/create_question_dialog_name_question" />
     </LinearLayout>
 
     <LinearLayout
@@ -41,7 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#57639E"
-            android:text="Сложный" />
+            android:text="@string/create_question_dialog_chb_hard" />
 
 
         <RadioGroup
@@ -56,14 +56,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#BFFF0000"
-                android:text="False" />
+                android:text="@string/false_button" />
 
             <RadioButton
                 android:id="@+id/true_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#BF14FF00"
-                android:text="True" />
+                android:text="@string/true_button" />
 
         </RadioGroup>
 
@@ -75,7 +75,7 @@
             android:textColor="@color/white"
             android:paddingLeft="8dp"
             android:clickable="true"
-            android:text="Язык" />
+            android:text="@string/create_question_language" />
 
     </LinearLayout>
 

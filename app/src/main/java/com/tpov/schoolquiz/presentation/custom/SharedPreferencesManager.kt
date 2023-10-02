@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.tpov.shoppinglist.utils.TimeManager
 import java.time.LocalDate
+import java.util.*
 import java.util.prefs.Preferences
 
 object SharedPreferencesManager {
@@ -14,11 +16,13 @@ object SharedPreferencesManager {
     private const val PREFS_TPOV_ID = "profile"
     private const val PREFS_COUNT_START_APP = "count_start_app"
     private const val PREF_KEY_LAST_SYNC_DATE = "lastSyncDate"
+    private const val PREF_KEY_COUNT_KEY_AD = "count_show_ad"
     private lateinit var sharedPreferencesQuiz: SharedPreferences
     private lateinit var sharedPreferencesQuestion: SharedPreferences
     private lateinit var sharedPreferencesCounts: SharedPreferences
     private lateinit var sharedPreferencesTpovId: SharedPreferences
     private lateinit var sharedPreferencesCountStartApp: SharedPreferences
+    private lateinit var sharedPreferencesCountShowAD: SharedPreferences
     var updateProfile = true
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -48,6 +52,7 @@ object SharedPreferencesManager {
             context.getSharedPreferences(PREFS_TPOV_ID, Context.MODE_PRIVATE)
         sharedPreferencesCountStartApp =
             context.getSharedPreferences(PREFS_COUNT_START_APP, Context.MODE_PRIVATE)
+        sharedPreferencesCountShowAD = context.getSharedPreferences(PREF_KEY_COUNT_KEY_AD, Context.MODE_PRIVATE)
     }
 
     fun getTpovId(): Int {
@@ -63,6 +68,22 @@ object SharedPreferencesManager {
         }
         val editor = sharedPreferencesTpovId.edit()
         editor.putInt("tpovId", tpovId)
+        editor.apply()
+    }
+
+    fun getCountShowAd(): Int {
+        if (!SharedPreferencesManager::sharedPreferencesCountShowAD.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        return sharedPreferencesCountShowAD.getInt(TimeManager.getCurrentTime(true), 0) ?: 0
+    }
+
+    fun addCountShowAd() {
+        if (!SharedPreferencesManager::sharedPreferencesCountShowAD.isInitialized) {
+            throw IllegalStateException("SharedPreferencesManager is not initialized")
+        }
+        val editor = sharedPreferencesCountShowAD.edit()
+        editor.putInt(TimeManager.getCurrentTime(true), getCountShowAd() + 1)
         editor.apply()
     }
 

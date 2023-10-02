@@ -12,7 +12,6 @@
     <item android:id="@+id/menu_adb"
         android:icon="@drawable/shop"
         android:title="@string/menu_new"
-        android:visible="false"
         app:showAsAction="always"
         />
 

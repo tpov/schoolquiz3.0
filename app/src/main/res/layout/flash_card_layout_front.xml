@@ -3,46 +3,52 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cv_profile"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
+    android:layout_height="155dp"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="16dp"
     app:cardCornerRadius="25dp"
     app:cardElevation="8dp">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:background="@drawable/profile_gradient"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-
-        <TextView
-            android:id="@+id/tv1"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:textSize="11sp"
-            android:text="Карточка профиля отображает насколько вы сильные по сравнению с лучшим игроков в процентном соотношении по разным параметрам."
-            android:textColor="@color/white" />
+            android:layout_height="match_parent"
+            android:background="@drawable/profile_gradient"
+            android:gravity="center"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:textSize="11sp"
-            android:text="Зеленый график отображает насколько вы хороши как игрок, насколько хорошо играете \n Красный - насколько вы большой вклад делаете в игру, насколько вы важны игре"
-            android:textColor="@color/white" />
 
-        <TextView
-            android:id="@+id/tv3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:textSize="11sp"
-            android:text="Например: у игрока который играет лучше всех - график полностью заполенный зеленым, а у игрока который больше всех помогает разработчикам, вносит вклад в игру - будет весь красный"
-            android:textColor="@color/white" />
+            <TextView
+                android:id="@+id/tv1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="@string/flash_card_layout_front_1"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tv2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="@string/flash_card_layout_front_2"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tv3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="@string/flash_card_layout_front_3"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
+
+        </LinearLayout>
+    </ScrollView>
+
 </androidx.cardview.widget.CardView>

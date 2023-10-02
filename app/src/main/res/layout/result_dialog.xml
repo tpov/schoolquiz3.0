@@ -26,7 +26,7 @@
                 android:layout_height="30dp"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Результат"
+                android:text="@string/question_result_text"
                 android:textColor="@color/white" />
 
         </LinearLayout>
@@ -89,7 +89,7 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             android:paddingTop="8dp"
-            android:text="Оцените квест" />
+            android:text="@string/question_result_grade" />
 
         <RatingBar
             android:id="@+id/rb_evaluation"
@@ -121,7 +121,7 @@
             android:layout_marginTop="8dp"
             android:visibility="gone"
             android:background="@color/nullColor"
-            android:text="Помочь с переводом" />
+            android:text="@string/question_result_help_translate" />
 
     </LinearLayout>
 </FrameLayout>

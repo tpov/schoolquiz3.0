@@ -1,45 +1,174 @@
 <resources>
-    <string name="question_light2">Тихий океан більший за Атлантичний океан.</string>
-    <string name="question_light3">Суецький канал з`єднує Червоне море та Індійський океан.</string>
-    <string name="question_light4">Витік річки Ніл знаходиться в Єгипті.</string>
-    <string name="question_light5">Річка Амазонка – найдовша річка в Америці.</string>
-    <string name="question_light6">Озеро Байкал - найстаріше та найглибше прісноводне озеро у світі.</string>
+    <!-- Загальні -->
+    <string name="arena_translate_title">Відправити на Арену</string>
+    <string name="translate_negative">Скасувати</string>
+    <string name="send_to_arena_text">Цей квест буде зроблений загальнодоступним для всіх гравців після успішної перевірки.</string>
+    <string name="no_translated_quest_found">Перекладеного квесту не знайдено</string>
+    <string name="paid_attempt_title">Спроба платна</string>
+    <string name="paid_attempt_message">З метою чесної гри знімається плата.</string>
+    <string name="cancel_button">Скасувати</string>
+    <string name="not_enough_lives">Недостатньо життів. На проходження квеста витрачається %d%% життя.</string>
+    <string name="userguide_chat_rules_title">Правила чату:</string>
+    <string name="userguide_chat_rules_text"> - Не ображати \n - Не флудити \n - Допомагати</string>
 
-    <string name="question_light7">Найдовша річка в росії – Лена.</string>
-    <string name="question_light8">Штаб-квартира ООН знаходиться у Нью-Йорку.</string>
-    <string name="question_light9">Габороне - столиця Габону.</string>
-    <string name="question_light10">Сицилію омиває Середземне море.</string>
-    <string name="question_light11">Столиця Ірландії - Дублін.</string>
-    <string name="question_light12">Раніше Париж звався Лютеція.</string>
-    <string name="question_light13">Атлас – це ланцюг гірських хребтів, розташований у Європі.</string>
-    <string name="question_light14">У Китаї, незважаючи на його значні розміри, лише один часовий пояс.</string>
-    <string name="question_light15">Піраміди майя міста Чичен-Іца знаходяться в Перу.</string>
-    <string name="question_light16">Рейк`явік - столиця Ісландії.</string>
-    <string name="question_light17">Найхолодніша точка світу, де постійно проживають люди, — російське село Ойм`якон.</string>
-    <string name="question_light18">Україна - найбільша країна, яка повністю розташована в Європі.</string>
-    <string name="question_light19">Німецька імперія - це теж саме, що й Третій Рейх.</string>
-    <string name="question_light20">Каспійське море - найсолоніше озеро в світі.</string>
+    <!-- Виринаюче Меню -->
+    <string name="popup_menu_num_easy_questions">К-сть легких питань: %1$d</string>
+    <string name="popup_menu_num_hard_questions">К-сть складних питань: %1$d</string>
+    <string name="popup_menu_date_created">Дата створення: %1$s</string>
+    <string name="popup_menu_rating">Рейтинг квеста: %1$d/%2$d</string>
+    <string name="popup_menu_best_result">Ваш найкращий результат: %1$d/%2$d</string>
+    <string name="popup_menu_average_result">Ваш середній результат: %1$d/%2$d</string>
+    <string name="popup_menu_avg_all_players">Середній результат всіх гравців: %1$d/%2$d</string>
+    <string name="popup_menu_best_all_players">Найкращий результат всіх гравців: %1$d/%2$d</string>
+    <string name="popup_menu_quiz_version">Версія квеста: %1$d</string>
+    <string name="do_translate_massage">Виконується переклад</string>
 
-    <string name="question_hard1">Більшість бельгейців живуть у сільській місцевості.</string>
-    <string name="question_hard2">У прибалтійських країнах жодна жінка не обиралася на пост президента.</string>
-    <string name="question_hard3">Андорра – єдине князівство у світі.</string>
-    <string name="question_hard4">Назва держави Бельгія походить від назви стародавнього племені.</string>
-    <string name="question_hard5">Усередині Італії знаходяться дві незалежні держави.</string>
-    <string name="question_hard6">У Європі немає країн, які не мають виходу на море.</string>
-    <string name="question_hard7">У Дубліні немає жодного парку.</string>
-    <string name="question_hard8">Сан-Маріно претендує на звання найстарішої суверенної держави у світі.</string>
-    <string name="question_hard9">Великобританія – єдина європейська країна з лівостороннім рухом.</string>
-    <string name="question_hard10">У Шотладнії дуже спекотний клімат.</string>
-    <string name="question_hard11">Найбільша ірландська церква знаходиться у Дубліні.</string>
-    <string name="question_hard12">У паризькому Пантеоні не поховано жодної жінки.</string>
-    <string name="question_hard13">У Бельгії майже немає жодних фабрик та заводів.</string>
-    <string name="question_hard14">Неаполь – найбільше місто в Італії.</string>
-    <string name="question_hard15">В Англії є місто, в назві якого присутній знак оклику (!).</string>
-    <string name="question_hard16">Швеція – найменша скандинавська країна.</string>
-    <string name="question_hard17">Швейцарія не брала участі у другій світовій війні</string>
-    <string name="question_hard18">Раніше корейський півострів був під контролем Японії.</string>
-    <string name="question_hard19">США забрала Аляску війною.</string>
-    <string name="question_hard20">В`єтнам переміг у війні зі США завдяки чисельності населення</string>
+    <!-- Діалоги -->
+    <string name="dialog_edit">Редагувати</string>
+    <string name="dialog_delete">Видалити</string>
+    <string name="dialog_send">Відправити</string>
+    <string name="dialog_autorisation_language_title">Оберіть мови</string>
+
+    <!-- Гравці -->
+    <string name="dialog_player_send_point_title">Відправити дані</string>
+    <string name="dialog_player_send_point_massage">Повідомлення</string>
+    <string name="dialog_player_send_point_trophy">Нарахування трофеїв</string>
+    <string name="dialog_player_send_point_nolic">Нарахування нуликів</string>
+    <string name="dialog_player_send_point_gold">Нарахування золота</string>
+    <string name="dialog_player_send_point_skill">Нарахування досвіду</string>
+    <string name="dialog_player_send_point_box">Нарахування коробок</string>
+
+    <!-- Мережа -->
+    <string name="network_description">Тут знаходиться зв`язок з зовнішнім світом, квести інших гравців, чат, турніри та багато іншого</string>
+    <string name="network_title">Мережа</string>
+    <string name="profile_data_error">Сталася помилка даних профілю, зачекайте (%1$d)</string>
+
+    <!-- Посібник користувача -->
+    <string name="userguide_new_qualif_player_legend">Ви отримали звання - Легенда</string>
+    <string name="userguide_new_qualif_player_expert">Ви отримали звання - Експерт</string>
+    <string name="userguide_new_qualif_player_gransmaster">Ви отримали звання - Гросмейстер</string>
+    <string name="userguide_new_qualif_player_veteran">Ви отримали звання - Ветеран</string>
+    <string name="userguide_new_qualif_player_amateur">Ви отримали звання - Аматор</string>
+    <string name="userguide_new_qualif_player_beginner">Ви отримали звання - Початківець</string>
+    <string name="userguide_new_qualif_player_player">Ви отримали звання - Гравець</string>
+    <string name="userguide_massage_add_gold">Додано золота: %1$i шт</string>
+    <string name="userguide_massage_add_nolic">Додано нуликів: %1$i шт</string>
+    <string name="userguide_massage_add_trophy">Додано трофеїв: %1$i шт</string>
+    <string name="userguide_massage_add_skill">Додано досвіду: %1$i шт</string>
+    <string name="userguide_title_add_points">Винагорода від розробників</string>
+
+    <string name="error_get_box_day">Помилка при отриманні коробки дня</string>
+    <string name="error_get_profile">Помилка при отриманні профілю</string>
+
+    <string name="permission_to_access_contacts_is_denied">Доступ до контактів заборонений</string>
+
+    <string name="dialog_cancel">Скасувати</string>
+
+    <string name="shop_fragment_get_box_for_ad_text">Отримайте коробку за 10 реклам</string>
+    <string name="shop_fragment_get_box_for_ad_show">Показати</string>
+    <string name="shop_fragment_buy_life_text">Купити 1 життя</string>
+    <string name="shop_fragment_button_buy">Купити</string>
+    <string name="shop_fragment_buy_life_gold_text">Купити 1 золоте життя</string>
+    <string name="shop_fragment_buy_one_place_text">Купити 1 місце для створення вікторини</string>
+
+    <string name="dialog_autorisation_login_errir">Помилка входу, спробуйте ще раз</string>
+    <string name="dialog_create_acc_copy_acc_error">Не вдалося відправити лист для перевірки.</string>
+
+    <string name="toast_error_found_question">Помилка при знаходженні питань</string>
+    <string name="toast_ad_use_limit">Ви досягли щоденного ліміту</string>
+    <string name="toast_ad_error_load">Помилка завантаження реклами: %1$s
+    </string>
+    <string name="toast_ad_loaded">Реклама завантажена</string>
+
+    <string name="userguide_massage_text_legend">Привіт мій друг, ти пройшов не легкий шлях від Новачка до Легенди через всю дорогу перешкод і труднощів, я бажаю щоб тобі був безвозмездний успіх у житті також, як і в цій грі. \n Визнаю, ми також йшли по не легкій дорозі, щоб зробити всі умови, щоб наші чудові гравці, дійшли до цієї межі. Цей текст я пишу на етапі альфа версії квесту, але сподіваюсь, ми дійдемо до моменту коли наші гравці візьмуть Легенду. Дякуємо тобі за великий внесок в наше співтовариство, кожен з вас справді важливий. Можу запропонувати податися до нас на роботу, можливо саме у нас ти також зможеш показати весь потенціал. Удачі!</string>
+
+    <string name="userguide_massage_text_profiles_open">Ви можете переглядати профілі інших гравців по різним фільтрам</string>
+
+    <string name="userguide_massage_text_best_player_open">Ви можете дивитись список кращих гравців у цій грі по різним критеріям</string>
+
+    <string name="userguide_massage_text_user_quiz_open">Ви можете створювати власні квести</string>
+
+    <string name="userguide_massage_text_arena_open">Арена - тут знаходяться квести інших гравців і їх можуть проходити всі гравці</string>
+
+    <string name="userguide_massage_text_menu_functuions">У тебе чудово виходить! У цій грі ще є багато всього цікавого, по мірі набирання досвіду - у тебе відкривається різний функціонал. Дерзай далі!</string>
+
+    <string name="userguide_massage_text_hello">Ласкаво просимо до квізу правда-неправда, готовий потрусити своїми знаннями? Натискай на квест, який найбільше подобається.</string>
+
+    <string name="userguide_massage_text_translate">Це індикатор, який відображає перекладений чи квест на вашу мову, на нього можна натиснути.
+Якщо квест не перекладений, ви можете натиснути на перекласти
+ - Синій - квест добре перекладений
+ - Жовтий - квест перекладений перекладачем
+ - Сірий - квест перекладений</string>
+
+    <string name="fb_load_text_load_leaders">Завантаження лідерів</string>
+
+    <string name="fb_load_text_load_chat">Завантаження чату</string>
+
+    <string name="fb_load_text_load_profile">Завантаження профілю</string>
+
+    <string name="fb_load_text_load_quiz">Завантаження квестів</string>
+
+    <string name="fb_load_text_send_profile">Відправлення профілю</string>
+
+    <string name="fb_load_text_send_quizz">Відправлення квестів на сервер</string>
+
+    <string name="fb_load_text_send_profile_error">Помилка відправлення профілю</string>
+
+    <string name="fb_load_text_get_profile_error">Помилка завантаження профілю</string>
+
+    <string name="fb_load_text_weit_unlock_server">Очікування розблокування сервера</string>
+    <string name="popup_1_text">Середній результат всіх гравців: 120/120</string>
+    <string name="create_question_dialog_save">Зберегти</string>
+    <string name="create_question_language">Мова</string>
+    <string name="create_question_dialog_add_question">Додати питання</string>
+    <string name="create_question_dialog_chb_hard">Складний</string>
+    <string name="toast_ad_add_box">Вам нарахована коробка</string>
+    <string name="toast_ad_not_enough_gold">Не вистачає золота</string>
+    <string name="toast_ad_not_enough_nolic">Не вистачає ноліків</string>
+    <string name="toast_ad_dialog_title">Підтвердження</string>
+    <string name="toast_ad_dialog_massage">Ви впевнені, що хочете зробити цю дію?</string>
+    <string name="toast_ad_dialog_positive">Так</string>
+    <string name="toast_ad_dialog_negative">Ні</string>
+    <string name="question_zero_life">Недостатньо життів</string>
+    <string name="question_result_text">Результат</string>
+    <string name="question_result_grade">Оцініть квест</string>
+    <string name="question_result_help_translate">Допомогти з перекладом</string>
+    <string name="question_error_get_questions">Питання не були завантажені, спробуйте їх перекласти</string>
+    <string name="question_error_get_questions_and_compensation">Вам нарахована компенсація 33% життів</string>
+    <string name="dialog_create_acc_copy_acc">Ваш обліковий запис копіюється і створюється на сервері</string>
+    <string name="dialog_autorisation_create_acc">Перехід на новий обліковий запис, старий збережений на телефоні</string>
+    <string name="dialog_error_db">"Помилка в базі даних, чекайте, поки розробники виправлять"</string>
+    <string name="userguide_title_text_legend_massage">Вітання від розробника гри.</string>
+    <string name="userguide_title_text_translate_massage">Переклад квесту</string>
+    <string name="nav_leaders">Лідери</string>
+    <string name="nav_players">Гравці</string>
+    <string name="nav_friends">Друзі</string>
+    <string name="nav_massages">Повідомлення</string>
+    <string name="nav_reports">Звіти</string>
+
+    <string name="activity_cheat_answer">Відповідь</string>
+
+    <string name="create_question_dialog_name_quiz">Назва квізу</string>
+
+    <string name="create_question_dialog_name_question">Назва питання</string>
+
+    <string name="create_question_dialog_cancel">Скасувати</string>
+
+    <string name="chat_type_a_message">Напишіть повідомлення</string>
+
+    <string name="chat_type_a_send">Відправити</string>
+
+    <string name="fb_load_text_error">Помилка завантаження профілю</string>
+
+    <string name="fb_load_server_load">Очікування доступу до сервера</string>
+
+    <string name="fb_load_text_load_new_massage">Нові повідомлення: %1$d</string>
+
+    <string name="flash_card_layout_front_1">Карта профілю показує наскільки ви сильні в порівнянні з найкращим гравцем у відсотковому виразі по різним параметрам</string>
+
+    <string name="flash_card_layout_front_2">Зелений графік показує наскільки ви гарний гравець, наскільки гарно ви граєте \n Червоний - наскільки ви вносите в гру, наскільки важливі ви для гри</string>
+
+    <string name="flash_card_layout_front_3">Наприклад: для гравця, який грає краще за всіх, графік буде повністю залитий зеленим, а для гравця, який найбільше допомагає розробникам, вносить у гру - він буде всього червоний</string>
 
     <string name="true_button">Вірно</string>
     <string name="false_button">Не вірно</string>
@@ -58,7 +187,7 @@
 
     <string name="title_text">Quiz</string>
     <string name="menu_home_text">Додому</string>
-    <string name="menu_new">Нові питання</string>
+    <string name="menu_new">Магазин</string>
     <string name="menu_info">Інфо</string>
     <string name="menu_settings">Налаштування</string>
     <string name="main_title_name">Додому</string>
@@ -70,10 +199,10 @@
     <string name="hard_question">Важкі питання</string>
     <string name="unswer">Відповідь</string>
     <string name="light_question">Легкі питання</string>
-    <string name="clear">Очистити</string>
+    <string name="clear">ОЧИСТИТИ</string>
     <string name="load_geo_quiz">Load GeoQuiz</string>
     <string name="load_сrime">Завантажена незакінчена сесія</string>
-    <string name="go">Go</string>
+    <string name="go">Почати</string>
     <string name="error_load_question">Помилка завантаження квесту, повторіть спробу</string>
     <string name="nice">Nice</string>
     <string name="no_nice">No nice</string>
@@ -83,7 +212,6 @@
     <string name="time_format_key">time_format_key</string>
     <string name="chose_time_format">Виберіть формат часу</string>
     <string name="remove_ads">Вилучити рекламу</string>
-    <string name="remove_summary">Вилучити рекламу</string>
     <string name="load_api_question">Load api question</string>
 
     <string name="start_massage_1">Quiz - це квест правда/не правда, в якому спочатку є базові питання з можливістю додаванням власних, відповідаючи на яких ви заробляєте очки 1 до 100.</string>
@@ -102,18 +230,80 @@
     <string name="FrontActivity_num_chack_norice">Залишилось питань-дня в офлайн режимі</string>
     <string name="tv_auto_update_question">Автооновлення питання</string>
     <string name="list_question">Список питань</string>
-    <string name="hard_quiz">Hard quiz!</string>
+    <string name="hard_quiz">Важкий квіз!</string>
     <string name="light_quiz">Light quiz!</string>
     <string name="dialog_text_delete">Delete text?</string>
     <string name="dialog_short_text_delete">delete</string>
     <string name="dialog_short_text_share">Share</string>
     <string name="dialog_text_share">Share text</string>
-    <string name="menu_network">Network</string>
+    <string name="menu_network">Мережа</string>
     <string name="prompt_email">email</string>
     <string name="prompt_password">password</string>
     <string name="action_sign_in_short">out email</string>
-    <string name="action_sign_in">Login</string>
-    <string name="action_registration">registration</string>
+    <string name="action_sign_in">Вхід</string>
+    <string name="action_registration">Реєстрація</string>
     <string name="prompt_name">Your name</string>
     <string name="prompt_years">Your years (01.01.2001)</string>
+    <string name="account_registration_language">Мова</string>
+    <string name="login_failed">Логін не вірний</string>
+    <string name="prompt_nickname">Псевдонім</string>
+    <string name="prompt_city">Місто</string>
+    <string name="login_mode">" логін"</string>
+    <string name="registration_mode">реєстрація</string>
+    <string name="translation_success">Переклад виконано успішно</string>
+    <string name="translation_failed">Помилка перекладу</string>
+    <string name="userguide_new_qualif_player_title">Ваш досвід  = %1$d</string>
+    <string name="error_get_life_counts">Помилка підрахунку життя</string>
+    <string name="new_qualification">Нова кваліфікація</string>
+    <string name="userguide_title_developer_massage">Повідомлення розробника</string>
+    <string name="prompt_invitation">Інвайт-код (не обов\'язково)</string>
+    <string name="nav_home">Основні квести</string>
+    <string name="nav_my_quiz">Мої квести</string>
+    <string name="nav_settings">"Налаштування "</string>
+    <string name="nav_chat">"Чат "</string>
+    <string name="nav_enter">"Вхід "</string>
+    <string name="nav_exit">"Вихід "</string>
+    <string name="nav_task">"Завдання "</string>
+    <string name="nav_profile">"Профіль "</string>
+    <string name="nav_contact">Контакти</string>
+    <string name="nav_downloads">"Завантаження "</string>
+    <string name="nav_global">Арена</string>
+    <string name="nav_news">Новини</string>
+    <string name="add_language">Додати мову</string>
+    <string name="save_translation">Зберегти переклад</string>
+    <string name="translated_question_hint">"Переклад "</string>
+    <string name="source_question_hint">" Назва квесту"</string>
+    <string name="delete_resource">"Видалити "</string>
+    <string name="downloads_section">"Завантаження "</string>
+    <string name="profile_section">"Профіль "</string>
+    <string name="select_nick_color">Колір ніку</string>
+    <string name="thropy1">Гравець, який зайняв 1 місце в турнірі</string>
+    <string name="thropy2">Гравець, який зайняв 2 місце в турнірі</string>
+    <string name="thropy3">Гравець, який зайняв 3 місце в турнірі</string>
+    <string name="thropy_error">Помилка дешифрування трофею</string>
+    <string name="education">"Навчання "</string>
+    <string name="beginner">"Початківець "</string>
+    <string name="player">"Гравець "</string>
+    <string name="amateur">"Аматор "</string>
+    <string name="veteran">"Ветеран "</string>
+    <string name="expert">"Експерт "</string>
+    <string name="legend">"Легенда "</string>
+    <string name="grandmaster">Гросмейстер</string>
+    <string name="language_question">Мова питання</string>
+    <string name="language_quiz">Мова квесту</string>
+    <string name="soon___">Скоро</string>
+    <string name="quiz_not_translated">Квест не перекладений на вашу мову</string>
+    <string name="quizz_not_translated">Не вдалося знайти питання, які можна перекласти</string>
+    <string name="all_quiz_loaded">Всі доступні питання завантажені</string>
+    <string name="search_title">"Пошук "</string>
+    <string name="search_message">" Пройти випадковий квест з цього списку"</string>
+    <string name="send_to_arena_title">" Відправити на арену"</string>
+    <string name="send_to_arena_negative">"Скасувати "</string>
+    <string name="translate_title">Translate</string>
+    <string name="translate_message">"Послуги перекладу платні "</string>
+    <string name="shop_fragment_text_donate">Підтримайте нас, скільки вважаєте за потрібне</string>
+    <string name="shop_fragment_donate">GooglePlay</string>
+    <string name="donate_coffe">Коффе</string>
+    <string name="donate_сake">Торт</string>
+    <string name="donate_team_meal">Обід для команди</string>
 </resources>

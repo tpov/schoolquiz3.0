@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.presentation.network.profile
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
@@ -23,7 +24,8 @@ class ProfileViewModel @Inject constructor(
     private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     val getPlayersDBUseCase: GetPlayersDBUseCase,
-    private val getPlayersListUseCase: GetPlayersListUseCase
+    private val getPlayersListUseCase: GetPlayersListUseCase,
+    private val updateProfileUseCase: UpdateProfileUseCase
 
 ) : ViewModel() {
 
@@ -51,10 +53,16 @@ class ProfileViewModel @Inject constructor(
         setProfileFBUseCase()
     }
 
-    fun getProfile() {
+    fun getSynthProfile() {
         log("fun getProfile()")
         getProfileFBUseCase()
     }
+
+    fun updateProfile(profile: ProfileEntity) {
+        updateProfileUseCase(profile)
+    }
+
+    fun getProfile() = getProfileUseCase(SharedPreferencesManager.getTpovId())
 
     suspend fun getQuizzFB() {
         log("fun getQuizzFB()")

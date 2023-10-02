@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionListActivity
+import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import dagger.BindsInstance
 import dagger.Component
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -45,6 +46,8 @@ interface ApplicationComponent {
     fun inject(eventViewModel: EventViewModel)
 
     fun inject(eventFragment: EventFragment)
+
+    fun inject(shopFragment: ShopFragment)
 
     fun inject(translateQuestionFragment: TranslateQuestionFragment)
 

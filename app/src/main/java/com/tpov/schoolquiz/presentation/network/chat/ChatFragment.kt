@@ -17,7 +17,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.fierbase.Chat
 import com.tpov.schoolquiz.databinding.FragmentChatBinding
-import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.*
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.Values.getImportance
@@ -44,15 +44,14 @@ class ChatFragment : BaseFragment() {
     private lateinit var message: String
     private lateinit var chatViewModel: ChatViewModel
     private lateinit var chatAdapter: ChatAdapter
-    private var _binding: FragmentChatBinding? = null
-    private val binding get() = _binding!!
+    private var binding: FragmentChatBinding? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentChatBinding.inflate(inflater, container, false)
-        return binding.root
+        binding = FragmentChatBinding.inflate(inflater, container, false)
+        return binding?.root
     }
 
     override fun onResume() {
@@ -79,40 +78,41 @@ class ChatFragment : BaseFragment() {
                 pInfo?.versionCode
             }
             UserGuide(requireContext()).addNotification(
-                versionCode ?: binding.chatRecyclerView.id,
-                text = " - Не оскорблять \n - Не флудить \n - Помогать",
-                titleText = "Правила чата:",
-                options = Options(),
+                id = this.getString(R.string.userguide_chat_rules_text).hashCode(),
+                text = this.getString(R.string.userguide_chat_rules_text),
+                titleText = this.getString(R.string.userguide_chat_rules_title),
+                options = Options(countKeyVersion = versionCode ?: 0),
                 icon = resources.getDrawable(R.drawable.nav_chat)
             )
+
         } catch (e: PackageManager.NameNotFoundException) {
         }
 
-        binding.sendMessageButton.setOnClickListener {
-            val message = binding.messageEditText.text.toString().trim()
+        binding?.sendMessageButton?.setOnClickListener {
+            val message = binding?.messageEditText?.text.toString().trim()
             if (message.isNotEmpty()) {
                 val currentTime = getCurrentTimeKiev()
 
                 val chatMessage = Chat(
                     time = currentTime,
-                    user = chatViewModel.getProfile(tpovId).nickname ?: "Error",
+                    user = chatViewModel.getProfile(tpovId).nickname ?: getString(R.string.error_get_profile),
                     msg = message,
                     importance = getImportance(chatViewModel.getProfile(tpovId)),
-                    personalSms = 0,
+                    personalSms = DEFAULT_PERSONAL_SMS_IN_CHAT,
                     icon = chatViewModel.getProfile(tpovId).logo.toString(),
-                    rating = 0,
-                    reaction = 0,
+                    rating = DEFAULT_RATING_IN_CHAT,
+                    reaction = DEFAULT_REACTION_IN_CHAT,
                     tpovId = getTpovId()
                 )
                 sendMessage(chatMessage)
-                binding.messageEditText.setText("")
+                binding?.messageEditText?.setText("")
             }
         }
     }
 
     private fun getCurrentTimeKiev(): String {
-        val timeZone = TimeZone.getTimeZone("Europe/Kiev")
-        val dateFormat = SimpleDateFormat("HH:mm:ss - dd/MM/yy", Locale.getDefault())
+        val timeZone = TimeZone.getTimeZone(DEFAULT_LOCAL_IN_GET_CHAT)
+        val dateFormat = SimpleDateFormat(DEFAULT_DATA_IN_GET_CHAT, Locale.getDefault())
         dateFormat.timeZone = timeZone
         return dateFormat.format(Date())
     }
@@ -126,7 +126,7 @@ class ChatFragment : BaseFragment() {
     private fun sendMessage(chat: Chat) {
         val chatRef = FirebaseDatabase.getInstance().getReference("chat")
 
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dateFormat = SimpleDateFormat(DEFAULT_DATA_IN_SEND_CHAT, Locale.getDefault())
         val currentDate = dateFormat.format(Date())
 
         val chatDateRef = chatRef.child(currentDate)
@@ -142,7 +142,7 @@ class ChatFragment : BaseFragment() {
 
     private fun setupRecyclerView() {
         chatAdapter = ChatAdapter()
-        binding.chatRecyclerView.apply {
+        binding!!.chatRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = chatAdapter
         }
@@ -157,11 +157,11 @@ class ChatFragment : BaseFragment() {
     private suspend fun observeChatData() {
         chatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                val layoutManager = binding.chatRecyclerView.layoutManager as LinearLayoutManager
+                val layoutManager = binding?.chatRecyclerView?.layoutManager as LinearLayoutManager
                 val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
                 // Проверяем, находится ли пользователь ниже 5 последних элементов
                 if (chatAdapter.itemCount != 0 && lastVisibleItemPosition >= chatAdapter.itemCount - 6) {
-                    binding.chatRecyclerView.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                    binding?.chatRecyclerView?.smoothScrollToPosition(chatAdapter.itemCount - 1)
                 }
             }
         })
@@ -184,10 +184,10 @@ class ChatFragment : BaseFragment() {
                         handler.postDelayed(
                             {
                                 chatAdapter.submitList(updatedChatList.toList())
-                                binding.chatRecyclerView.scrollToPosition(updatedChatList.size - 1)
+                                binding?.chatRecyclerView?.scrollToPosition(updatedChatList.size - 1)
                             },
-                            index * 50L
-                        ) // Пауза между добавлением каждого символа (можно настроить по своему усмотрению)
+                            index * DELAY_SHOW_TEXT_IN_CHAT
+                        )
                     }
                 } else {
                     chatAdapter.submitList(chatList)
@@ -214,7 +214,7 @@ class ChatFragment : BaseFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        binding = null
     }
 
     companion object {

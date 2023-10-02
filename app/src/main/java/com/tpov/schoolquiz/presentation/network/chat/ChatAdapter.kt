@@ -49,7 +49,7 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
 
             userTextView.setShadowLayer(8F, 0F, 0F,
                 when (userTextView.currentTextColor) {
-                    ContextCompat.getColor(context, R.color.default_nick_color6) -> Color.parseColor("#FFFFFF")
+                    ContextCompat.getColor(context, R.color.default_nick_color6) -> Color.WHITE
                     ContextCompat.getColor(context, R.color.default_nick_color7) -> Color.YELLOW
                     else -> Color.TRANSPARENT
                 }

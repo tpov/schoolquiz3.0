@@ -25,12 +25,12 @@
             android:layout_height="wrap_content"
             android:textColorHint="#AFAFAF"
             android:layout_weight="1"
-            android:hint="Type a message" />
+            android:hint="@string/chat_type_a_message" />
 
         <Button
             android:id="@+id/sendMessageButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send" />
+            android:text="@string/chat_type_a_send" />
     </LinearLayout>
 </RelativeLayout>
