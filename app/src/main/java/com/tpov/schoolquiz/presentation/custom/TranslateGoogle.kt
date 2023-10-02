@@ -6,6 +6,7 @@ import com.google.cloud.translate.TranslateOptions
 import com.google.cloud.translate.Translation
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.schoolquiz.presentation.custom.CoastValuesNolic.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
@@ -14,6 +15,8 @@ import org.jetbrains.anko.runOnUiThread
 import java.util.*
 
 object TranslateGoogle {
+    var nolicResult = 0
+
     @OptIn(InternalCoroutinesApi::class)
     suspend fun translateText(
         viewModel: MainActivityViewModel,
@@ -85,6 +88,10 @@ object TranslateGoogle {
                         .show()
                 }
             }
+            val profile = viewModel.getProfile()
+            viewModel.updateProfileUseCase(profile.copy(addMassage = "Компенсация за не переведенный текст",
+                addPointsNolics = profile.addPointsNolics?.plus(nolicResult)))
+            nolicResult = 0
         }.start()
     }
 
@@ -130,13 +137,14 @@ object TranslateGoogle {
                             infoTranslater = "0|0"
                         )
                     )
+                } else {
+                    nolicResult += COEF_COAST_GOOGLE_TRANSLATE
                 }
             } catch (e: Exception) {
                 log("dawdawdf error: $e")
             }
 
         }
-
         return translatedQuestionList
     }
 

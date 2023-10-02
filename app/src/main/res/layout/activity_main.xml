@@ -13,7 +13,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/view_background"
         android:layout_width="match_parent"
@@ -64,7 +63,6 @@
                     android:scaleType="centerCrop"
                     android:src="@drawable/back_main_top"
                     app:shapeAppearanceOverlay="@style/BottomRoundedShapeAppearance" />
-
 
                 <LinearLayout
                     android:id="@+id/cv2"
@@ -328,12 +326,8 @@
                             android:ellipsize="end"
                             android:gravity="center_vertical"
                             android:singleLine="true"
-                            android:shadowColor="#FFFFFF"
-                            android:shadowDx="0"
-                            android:shadowDy="0"
-                            android:shadowRadius="10"
                             android:text="Name"
-                            android:textColor="@color/black"
+                            android:textColor="#939E8D"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
@@ -360,7 +354,6 @@
 
                         </RelativeLayout>
                     </LinearLayout>
-
 
                     <LinearLayout
                         android:layout_width="match_parent"

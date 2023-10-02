@@ -31,6 +31,9 @@ data class ChatEntity(
     val rating: Int,
 
     @ColumnInfo(name = "reaction")
-    val reaction: Int
+    val reaction: Int,
+
+    @ColumnInfo(name = "tpovId")
+    val tpovId: Int
 
 )

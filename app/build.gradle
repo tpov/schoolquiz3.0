@@ -8,7 +8,9 @@ plugins {
 }
 
 android {
-
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
     compileSdkVersion 33
     buildToolsVersion "30.0.3"
 
@@ -20,8 +22,8 @@ android {
         applicationId "com.tpov.schoolquiz"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 3011
-        versionName "3.0.11"
+        versionCode 3013
+        versionName "3.0.13"
 
         javaCompileOptions {
             annotationProcessorOptions {

@@ -20,6 +20,7 @@ import com.tpov.schoolquiz.databinding.FragmentChatBinding
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.custom.Values.getImportance
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
@@ -61,6 +62,7 @@ class ChatFragment : BaseFragment() {
             observeChatData()
         }
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -78,7 +80,7 @@ class ChatFragment : BaseFragment() {
             }
             UserGuide(requireContext()).addNotification(
                 versionCode ?: binding.chatRecyclerView.id,
-                text = " - Не оскорблять \n - Не навьязывать \n - Не флудить \n - Помогать \n - Улыбаться",
+                text = " - Не оскорблять \n - Не флудить \n - Помогать",
                 titleText = "Правила чата:",
                 options = Options(),
                 icon = resources.getDrawable(R.drawable.nav_chat)
@@ -95,11 +97,12 @@ class ChatFragment : BaseFragment() {
                     time = currentTime,
                     user = chatViewModel.getProfile(tpovId).nickname ?: "Error",
                     msg = message,
-                    importance = 0,
+                    importance = getImportance(chatViewModel.getProfile(tpovId)),
                     personalSms = 0,
                     icon = chatViewModel.getProfile(tpovId).logo.toString(),
                     rating = 0,
-                    reaction = 0
+                    reaction = 0,
+                    tpovId = getTpovId()
                 )
                 sendMessage(chatMessage)
                 binding.messageEditText.setText("")
@@ -203,7 +206,8 @@ class ChatFragment : BaseFragment() {
                 personalSms = chatEntity.personalSms,
                 icon = chatEntity.icon,
                 rating = chatEntity.rating,
-                reaction = chatEntity.reaction
+                reaction = chatEntity.reaction,
+                tpovId = chatEntity.tpovId
             )
         }
     }

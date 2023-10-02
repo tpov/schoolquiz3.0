@@ -550,7 +550,6 @@ class QuestionViewModel @Inject constructor(
                     }
                 }
 
-                var j = 0
                 var i = 0
                 perc.forEach { itemPerc ->
                     i += itemPerc
@@ -559,23 +558,24 @@ class QuestionViewModel @Inject constructor(
 
                 log("saveResult $maxPersent")
 
-                when (quizThis.event) {
-                    1, 5, 6, 7, 8 -> updateQuizUseCase(
-                        quizThis.copy(
-                            stars = maxPersent,
-                            starsAll = persentAll,
-                            rating = rating
-                        )
-                    )
-
-                    2, 3, 4 -> updateEvent(rating)
-
-                }
-
-                someAction(result)
-                Log.d("ku65k", "rating $rating")
             }
         }
+
+        when (quizThis.event) {
+            1, 5, 6, 7, 8 -> updateQuizUseCase(
+                quizThis.copy(
+                    stars = maxPersent,
+                    starsAll = persentAll,
+                    rating = rating
+                )
+            )
+
+            2, 3, 4 -> updateEvent(rating)
+
+        }
+
+        someAction(result)
+        Log.d("ku65k", "rating $rating")
     }
 
     private fun getNewIdQuiz(): Int {

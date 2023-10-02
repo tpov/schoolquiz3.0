@@ -5,6 +5,17 @@
     android:orientation="horizontal"
     android:padding="8dp">
 
+    <View
+        android:id="@+id/v_user_massage1"
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:background="@color/num_chack_norice_green"
+        android:shadowColor="@color/num_chack_norice_green"
+        android:shadowDx="10"
+        android:shadowDy="0"
+        android:shadowRadius="3"
+        android:layout_marginEnd="8dp"/>
+
     <ImageView
         android:id="@+id/messageIconImageView"
         android:layout_width="40dp"
@@ -16,6 +27,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_weight="1"
         android:orientation="vertical">
 
         <LinearLayout
@@ -28,8 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
+                android:textSize="17sp" />
 
             <TextView
                 android:id="@+id/messageTimeTextView"
@@ -48,5 +59,12 @@
             android:textSize="16sp" />
 
     </LinearLayout>
+
+    <View
+        android:id="@+id/v_user_massage2"
+        android:layout_width="2dp"
+        android:layout_weight="0"
+        android:layout_height="match_parent"
+        android:background="@color/num_chack_norice_green"/>
 
 </LinearLayout>

@@ -181,6 +181,7 @@ class ProfileFragment : BaseFragment() {
             viewModel.getDeleteAllQuiz()
         }
 
+        log("fun viewModel.getSynth getTpovId: ${getTpovId()}")
         if (SharedPreferencesManager.canSyncProfile() || getTpovId() == 0)
             viewModel.synth.observe(viewLifecycleOwner) { number ->
                 log("fun viewModel.getSynth.observe: $number")
