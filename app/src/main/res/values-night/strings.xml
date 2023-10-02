@@ -1,13 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="tv_auto_update_question">Автообновление вопроса</string>
-    <string name="list_question">Список вопросов</string>
-    <string name="menu_network">Network</string>
-    <string name="prompt_email">email</string>
-    <string name="prompt_password">password</string>
-    <string name="action_sign_in_short">out email</string>
-    <string name="action_sign_in">Login</string>
-    <string name="action_registration">registration</string>
-    <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your years (01.01.2001)</string>
 </resources>

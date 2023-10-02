@@ -10,14 +10,13 @@ import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.repository.RepositoryFB
-import com.tpov.schoolquiz.presentation.Core.DEFAULT_TPOVID
-import com.tpov.schoolquiz.presentation.Core.QUIZ_VERSION_DEFAULT
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.custom.*
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getVersionQuiz
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setVersionQuiz
+import com.tpov.schoolquiz.presentation.custom.Values.loadProgress
 import com.tpov.schoolquiz.presentation.custom.Values.loadText
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
@@ -70,17 +69,24 @@ class RepositoryFBImpl @Inject constructor(
 
     }
 
+    @Synchronized
+    fun setLoadPB(value: Int, max: Int) {
+        log("ioioioio fun ${(value * 100) / max}%")
+        loadProgress.value = ((value * 100) / max)
+    }
+
     override fun getValSynth(): MutableLiveData<Int> = synthLiveData
 
     override fun getPlayersList() {
-        val playersListRef = FirebaseDatabase.getInstance().getReference("players/listPlayers")
+        loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_load_leaders))
+        val playersListRef = FirebaseDatabase.getInstance().getReference(PATH_LIST_PLAYERS)
         playersListRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                loadText.postValue("Загрузка лидеров")
                 val playersList = mutableListOf<PlayersEntity>()
                 log("getPlayersList snapshot: $snapshot")
+                var i = 0
                 for (playerSnapshot in snapshot.children) {
-
+                    i++
                     log("getPlayersList playerSnapshot: $playerSnapshot")
                     val player = playerSnapshot.getValue(PlayersEntity::class.java)
                     if (player != null) {
@@ -88,6 +94,8 @@ class RepositoryFBImpl @Inject constructor(
                         playersList.add(
                             player.copy(id = playerSnapshot.key?.toInt())
                         )
+
+                        setLoadPB(i, snapshot.childrenCount.toInt())
                     }
                 }
                 dao.deletePlayersList()
@@ -105,10 +113,12 @@ class RepositoryFBImpl @Inject constructor(
     @OptIn(DelicateCoroutinesApi::class)
     override suspend fun getChatData(): Flow<List<ChatEntity>> {
         getPersonalMassage()
-        val chatRef = FirebaseDatabase.getInstance().getReference("chat")
-        val dateFormatKiev = SimpleDateFormat("HH:mm:ss - dd/MM/yy")
-        dateFormatKiev.timeZone = TimeZone.getTimeZone("Europe/Kiev")
+        val chatRef = FirebaseDatabase.getInstance().getReference(PATH_CHAT)
+        val dateFormatKiev = SimpleDateFormat(DEFAULT_DATA_IN_GET_CHAT)
+        dateFormatKiev.timeZone = TimeZone.getTimeZone(DEFAULT_LOCAL_IN_GET_CHAT)
 
+        var countSmsDoNotWatch = 0
+        loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_load_chat))
         chatValueEventListener =
             chatRef.limitToLast(20).addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -137,6 +147,7 @@ class RepositoryFBImpl @Inject constructor(
                                         if (date2 != null && date1.after(date2)) {
                                             SharedPreferencesManager.setTimeMassage(date1.time.toString())
                                             dao.insertChat(chat.toChatEntity())
+                                            countSmsDoNotWatch++
                                         }
                                     }
                                 }
@@ -146,6 +157,7 @@ class RepositoryFBImpl @Inject constructor(
                             }
                         }
                     }
+                    loadText.value = context.getString(com.tpov.schoolquiz.R.string.fb_load_text_load_new_massage, countSmsDoNotWatch)
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -157,7 +169,7 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     override fun removeChatListener() {
-        val chatRef = FirebaseDatabase.getInstance().getReference("chat")
+        val chatRef = FirebaseDatabase.getInstance().getReference(PATH_CHAT)
         chatRef.removeEventListener(chatValueEventListener)
     }
 
@@ -170,7 +182,7 @@ class RepositoryFBImpl @Inject constructor(
 
         val storage: FirebaseStorage = FirebaseStorage.getInstance()
         val storageRef: StorageReference = storage.reference
-        val pathReference: StorageReference = storageRef.child("picture/$pictureString")
+        val pathReference: StorageReference = storageRef.child("$PATH_PHOTO/$pictureString")
 
         val file = File(directory, "$pictureString")
 
@@ -185,7 +197,7 @@ class RepositoryFBImpl @Inject constructor(
 
     private fun getPersonalMassage() {
         val chatRef =
-            FirebaseDatabase.getInstance().getReference("PersonalMassage/translate/${getTpovId()}")
+            FirebaseDatabase.getInstance().getReference("$PATH_TRANSLATE/${getTpovId()}")
         chatRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 // Получаем данные из snapshot и сохраняем их в локальную базу данных
@@ -212,9 +224,9 @@ class RepositoryFBImpl @Inject constructor(
 
     override fun getProfile() {
         log("fun getProfile()")
-        val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
+        val profileRef = FirebaseDatabase.getInstance().getReference(PATH_PROFILES)
 
-        loadText.postValue("Загрузка профилей")
+        loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_load_profile))
         profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 log("getProfile() snapshot: ${snapshot.key}")
@@ -227,7 +239,8 @@ class RepositoryFBImpl @Inject constructor(
                     log("getProfile() профиль не пустой")
                     if (dao.getProfileByTpovId(tpovId) == null) {
                         log("getProfile() профиль по tpovid пустой, создаем новый")
-                        dao.insertProfile(profile.toProfileEntity(100, 500))
+                        dao.insertProfile(profile.toProfileEntity(COUNT_LIFE_POINTS_IN_LIFE * COUNT_MAX_LIFE_GOLD,
+                            COUNT_LIFE_POINTS_IN_LIFE * COUNT_MAX_LIFE))
                         synthLiveData.value = ++synth
                     } else {
                         log("getProfile() профиль по tpovid найден $profile")
@@ -252,7 +265,6 @@ class RepositoryFBImpl @Inject constructor(
                     }
                 }
 
-                loadText.postValue("")
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -269,7 +281,7 @@ class RepositoryFBImpl @Inject constructor(
         val uid = FirebaseAuth.getInstance().uid
         log("setTpovIdFB() tpovId = ${getTpovId()}")
 
-        ref.child("listTpovId/$uid").setValue(getTpovId().toString()).addOnSuccessListener {
+        ref.child("$PATH_LIST_TPOV_ID/$uid").setValue(getTpovId().toString()).addOnSuccessListener {
             log("setTpovIdFB() успех загрузки на сервер")
             synthLiveData.value = ++synth
         }.addOnFailureListener {
@@ -284,14 +296,14 @@ class RepositoryFBImpl @Inject constructor(
         log("fun getTpovIdFB()")
         val database = FirebaseDatabase.getInstance()
         val uid = FirebaseAuth.getInstance().uid
-        val ref = database.getReference("players")
+        val ref = database.getReference(PATH_PLAYERS)
 
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
 
                 try {
                     val tpovId: String =
-                        snapshot.child("listTpovId/$uid").getValue(String::class.java)!!
+                        snapshot.child("$PATH_LIST_TPOV_ID/$uid").getValue(String::class.java)!!
                     setTpovId(tpovId.toInt())
                 } catch (e: Exception) {
                     log("getTpovIdFB error get")
@@ -315,12 +327,12 @@ class RepositoryFBImpl @Inject constructor(
     override fun setProfile() {
         log("fun setProfile()")
         val database = FirebaseDatabase.getInstance()
-        val profileRef = database.getReference("Profiles")
-        val profilesRef = database.getReference("players")
+        val profileRef = database.getReference(PATH_PROFILES)
+        val profilesRef = database.getReference(PATH_PLAYERS)
         var idUsers = 0
         var oldIdUser = 0
 
-        loadText.postValue("Отправка профиля")
+        loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_send_profile))
         val tpovId = getTpovId()
         val profile = dao.getProfileByTpovId(tpovId)
 
@@ -331,14 +343,14 @@ class RepositoryFBImpl @Inject constructor(
                 override fun onDataChange(snapshot: DataSnapshot) {
                     log("setProfile() snapshot: ${snapshot.key}")
                     idUsers =
-                        ((snapshot.value as Map<*, *>)["idUser"] as Long).toInt() // Получение значения переменной allQuiz
+                        ((snapshot.value as Map<*, *>)[KEY_ID_USER] as Long).toInt() // Получение значения переменной allQuiz
                     oldIdUser = tpovId
                     idUsers++
 
                     log("setProfile() idUsers + 1: $idUsers")
                     profilesRef.updateChildren(
                         hashMapOf<String, Any>(
-                            "idUser" to idUsers
+                            KEY_ID_USER to idUsers
                         )
                     )
 
@@ -369,14 +381,17 @@ class RepositoryFBImpl @Inject constructor(
 
                             log("setProfile() tpovId: $tpovId")
 
+                            loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_send_profile_error))
                         }
                     }.addOnFailureListener {
                         log("setProfile() error1: $it")
+                        loadText.postValue("")
                     }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
                     log("setProfile() error2: $error")
+                    loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_send_profile_error))
                 }
             })
 
@@ -395,72 +410,74 @@ class RepositoryFBImpl @Inject constructor(
                         profileRef.child(tpovId.toString()).setValue(
                             profile.copy(
 
-                                translater = profileSnapshot.child("qualification")
+                                translater = profileSnapshot.child(KEY_QUALIFICATION)
                                     .child("translater").getValue(Int::class.java),
 
-                                admin = profileSnapshot.child("qualification").child("admin")
+                                admin = profileSnapshot.child(KEY_QUALIFICATION).child(KEY_ADMIN)
                                     .getValue(Int::class.java),
 
-                                developer = profileSnapshot.child("qualification")
+                                developer = profileSnapshot.child(KEY_QUALIFICATION)
                                     .child("developer").getValue(Int::class.java),
 
-                                moderator = profileSnapshot.child("qualification")
+                                moderator = profileSnapshot.child(KEY_QUALIFICATION)
                                     .child("moderator").getValue(Int::class.java),
 
-                                sponsor = profileSnapshot.child("qualification").child("sponsor")
+                                sponsor = profileSnapshot.child(KEY_QUALIFICATION).child(KEY_SPONSOR)
                                     .getValue(Int::class.java),
 
-                                tester = profileSnapshot.child("qualification").child("tester")
+                                tester = profileSnapshot.child(KEY_QUALIFICATION).child(KEY_TESTER)
                                     .getValue(Int::class.java),
 
                                 addTrophy = try {
-                                    if (profile.addTrophy == "") profileSnapshot.child("addPoints")
-                                        .child("addTrophy").getValue(String::class.java) else ""
+                                    if (profile.addTrophy == "") profileSnapshot.child(KEY_ADD_POINTS)
+                                        .child(KEY_ADD_TROPHY).getValue(String::class.java) else ""
                                 } catch (e: Exception) {
-                                    profileSnapshot.child("addPoints").child("addTrophy")
+                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_TROPHY)
                                         .getValue(String::class.java) ?: ""
                                 },
 
                                 addMassage = try {
-                                    if (profile.addMassage == "") profileSnapshot.child("addMassage")
-                                        .child("addMassage").getValue(String::class.java) else ""
+                                    if (profile.addMassage == "") profileSnapshot.child(KEY_ADD_MASSAGE)
+                                        .child(KEY_ADD_MASSAGE).getValue(String::class.java) else ""
                                 } catch (e: Exception) {
-                                    profileSnapshot.child("addPoints").child("addMassage")
+                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_MASSAGE)
                                         .getValue(String::class.java) ?: ""
                                 },
 
                                 addPointsNolics = try {
-                                    if (profile.addPointsNolics == 0) profileSnapshot.child("addPoints")
-                                        .child("addNolics").getValue(Int::class.java) else 0
+                                    if (profile.addPointsNolics == 0) profileSnapshot.child(KEY_ADD_POINTS)
+                                        .child(KEY_ADD_NOLICS).getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
-                                    profileSnapshot.child("addPoints").child("addNolics")
+                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_NOLICS)
                                         .getValue(Int::class.java) ?: 0
                                 },
 
                                 addPointsGold = try {
-                                    if (profile.addPointsGold == 0) profileSnapshot.child("addPoints")
-                                        .child("addGold").getValue(Int::class.java) else 0
+                                    if (profile.addPointsGold == 0) profileSnapshot.child(KEY_ADD_POINTS)
+                                        .child(KEY_ADD_GOLD).getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
-                                    profileSnapshot.child("addPoints").child("addGold")
+                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_GOLD)
                                         .getValue(Int::class.java) ?: 0
                                 },
 
                                 addPointsSkill = try {
-                                    if (profile.addPointsSkill == 0) profileSnapshot.child("addPoints")
-                                        .child("addSkill").getValue(Int::class.java) else 0
+                                    if (profile.addPointsSkill == 0) profileSnapshot.child(KEY_ADD_POINTS)
+                                        .child(KEY_ADD_SKILL).getValue(Int::class.java) else 0
                                 } catch (e: Exception) {
-                                    profileSnapshot.child("addPoints").child("addSkill")
+                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_SKILL)
                                         .getValue(Int::class.java) ?: 0
                                 }
                             ).toProfile()
                         ).addOnSuccessListener {
+                            loadText.value = ("")
                             synthLiveData.value = ++synth
-                            loadText.postValue("")
                         }.addOnFailureListener {
+                            loadText.value = (context.getString(com.tpov.schoolquiz.R.string.fb_load_text_get_profile_error))
                             log("setProfile() $it")
                             synthLiveData.value = ++synth
                         }
                     } catch (e: Exception) {
+                        loadText.value = (context.getString(com.tpov.schoolquiz.R.string.fb_load_text_get_profile_error))
                         synthLiveData.value = ++synth
                     }
 
@@ -468,6 +485,7 @@ class RepositoryFBImpl @Inject constructor(
 
                 override fun onCancelled(error: DatabaseError) {
 
+                    loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_get_profile_error))
                     log("setProfile() error24 $error")
                 }
             })
@@ -478,7 +496,7 @@ class RepositoryFBImpl @Inject constructor(
     override fun getUserName(): Profile {
         val tpovId = getTpovId()
         log("fun getUserName()")
-        val profileRef = FirebaseDatabase.getInstance().getReference("Profiles")
+        val profileRef = FirebaseDatabase.getInstance().getReference(PATH_PROFILES)
         var profile = Profile()
 
         profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -496,7 +514,7 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     override suspend fun getQuiz8FB() {
-        getQuiz("quiz8", getQuestionDetails = false)
+        getQuiz(PATH_HOME_QUIZ, getQuestionDetails = false)
     }
 
     override suspend fun getAllQuiz() {
@@ -505,10 +523,10 @@ class RepositoryFBImpl @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun waitForReadToBecomeTrue(): Boolean = try {
-        withTimeout(60000L) {
+        withTimeout(DELAY_TIMEOUT_SYNTH_FB) {
             suspendCancellableCoroutine { continuation ->
                 val database = FirebaseDatabase.getInstance()
-                val myRef = database.getReference("players/read")
+                val myRef = database.getReference(PATH_LIST_READ)
 
                 val listener = object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -517,7 +535,7 @@ class RepositoryFBImpl @Inject constructor(
                             setRead(false)
                             myRef.removeEventListener(this)
                             continuation.resume(true) {}
-                        }
+                        } else loadText.value = (context.getString(com.tpov.schoolquiz.R.string.fb_load_text_weit_unlock_server))
                     }
 
                     override fun onCancelled(databaseError: DatabaseError) {
@@ -538,33 +556,39 @@ class RepositoryFBImpl @Inject constructor(
 
     private fun setRead(value: Boolean) {
         val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("players/read")
+        val myRef = database.getReference(PATH_LIST_READ)
         myRef.setValue(value)
     }
 
     override suspend fun setAllQuiz() {
+        val lockObject = Object()
+
         log("setAllQuiz")
         if (waitForReadToBecomeTrue()) {
+
             log("setAllQuiz waitForReadToBecomeTrue")
 
             val database = FirebaseDatabase.getInstance()
-            loadText.postValue("Отправка квестов на сервер")
+            loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_send_quizz))
 
             log("setAllQuiz 22 ${dao.getQuizList(getTpovId())}")
             var maxIdQuiz = 0
-            dao.getQuizEvent().forEach {
+            var i = 0
+
+            val quizEvent = dao.getQuizEvent()
+            quizEvent.forEach {
                 val eventQuiz = it.event
                 val quizRef = database.getReference(
-                    if (eventQuiz == 1) "quiz1/${getTpovId()}" else "quiz$eventQuiz"
+                    if (eventQuiz == 1) "$PATH_USER_QUIZ/${getTpovId()}" else "$PATH_QUIZ$eventQuiz"
                 )
 
                 log("setAllQuiz 3")
-                val profileRef = FirebaseDatabase.getInstance().getReference("players/idQuiz")
+                val profileRef = FirebaseDatabase.getInstance().getReference(PATH_ID_QUIZ)
                 profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
 
                         log("setAllQuiz 4")
-                        val newIdQuiz = if (it.id!! < 100) {
+                        val newIdQuiz = if (it.id!! < BARRIER_QUIZ_ID_LOCAL_AND_REMOVE) {
                             val id = if (maxIdQuiz == 0) snapshot.getValue(Int::class.java)?.plus(1)
                             else maxIdQuiz + 1
                             profileRef.setValue(id)
@@ -577,10 +601,11 @@ class RepositoryFBImpl @Inject constructor(
                                 override fun onDataChange(snapshot: DataSnapshot) {
 
                                     val newVersionQuiz =
-                                        snapshot.child("versionQuiz").getValue(Int::class.java)
+                                        snapshot.child(KEY_VERSION_QUIZ).getValue(Int::class.java)
                                             ?: -1
 
                                     log("setAllQuiz: $it")
+                                    log("setAllQuiz: $newVersionQuiz = ${getVersionQuiz(newIdQuiz.toString())}")
                                     if (newVersionQuiz <= getVersionQuiz(newIdQuiz.toString())) {
 
                                         log("setAllQuiz setQuiz ")
@@ -593,9 +618,9 @@ class RepositoryFBImpl @Inject constructor(
                                             event = eventQuiz,
                                             numQ = it.numQ,
                                             numHQ = it.numHQ,
-                                            starsAllPlayer = snapshot.child("starsAllPlayer")
+                                            starsAllPlayer = snapshot.child(KEY_STARS_ALL_PLAYER)
                                                 .getValue(Int::class.java) ?: 0,
-                                            starsPlayer = snapshot.child("starsPlayer")
+                                            starsPlayer = snapshot.child(KEY_STARS_PLAYER)
                                                 .getValue(Int::class.java) ?: 0,
                                             ratingPlayer = it.ratingPlayer,
                                             userName = it.userName,
@@ -603,23 +628,39 @@ class RepositoryFBImpl @Inject constructor(
 
                                         )
                                         quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
-                                        if (isQuizForEvent(newQuiz)) database.getReference("quiz${eventQuiz - 1}")
+                                        database.getReference("$PATH_QUIZ${eventQuiz - 1}")
                                             .child(newIdQuiz.toString()).setValue(null)
+                                            .addOnSuccessListener { item ->
+                                                if (isInsertQuizAfterSet(newQuiz)) dao.insertQuiz(
+                                                    newQuiz.toQuizEntity(
+                                                        newIdQuiz!!,
+                                                        it.stars,
+                                                        it.starsAll,
+                                                        it.rating,
+                                                        it.picture
+                                                    )
+                                                )
+                                            }.addOnFailureListener { item ->
+                                                if (isInsertQuizAfterSet(newQuiz)) dao.insertQuiz(
+                                                    newQuiz.toQuizEntity(
+                                                        newIdQuiz!!,
+                                                        it.stars,
+                                                        it.starsAll,
+                                                        it.rating,
+                                                        it.picture
+                                                    )
+                                                )
+                                            }
                                         quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
                                         dao.deleteQuizById(it.id!!)
 
-                                        if (isInsertQuizAfterSet(newQuiz)) dao.insertQuiz(
-                                            newQuiz.toQuizEntity(
-                                                newIdQuiz!!,
-                                                it.stars,
-                                                it.starsAll,
-                                                it.rating,
-                                                it.picture
-                                            )
-                                        )
                                         setQuestions(newIdQuiz, eventQuiz, it.id!!, newQuiz)
                                         setQuestionDetails(newIdQuiz, eventQuiz, it.id!!, newQuiz)
                                         setQuizResults(it)
+
+                                        i++
+                                        setLoadPB(i, quizEvent.size)
+                                        if (i == quizEvent.size) synthLiveData.postValue(++synth)
                                     }
                                 }
 
@@ -637,13 +678,11 @@ class RepositoryFBImpl @Inject constructor(
                 while (true) {
                     var exit = true
                     dao.getQuizList(getTpovId()).forEach {
-                        if (it.id!! < 100) exit = false
+                        if (it.id!! < BARRIER_QUIZ_ID_LOCAL_AND_REMOVE) exit = false
                     }
 
                     if (exit) {
                         setRead(true)
-                        loadText.postValue("")
-                        synthLiveData.postValue(++synth)
 
                         break
                     }
@@ -654,98 +693,132 @@ class RepositoryFBImpl @Inject constructor(
     }
 
     private fun setQuizResults(quiz: QuizEntity) {
-            val quizRatingMap = mapOf(
-                "rating" to quiz.ratingPlayer,
-                "stars" to quiz.stars,
-                "starsAll" to quiz.starsAll
-            )
-        if (quiz.ratingPlayer != 0) FirebaseDatabase.getInstance().getReference("players/quiz/${quiz.id}/${getTpovId()}")
+        val quizRatingMap = mapOf(
+            KEY_RATING to quiz.ratingPlayer,
+            KEY_STARS to quiz.stars,
+            KEY_STARS_ALL to quiz.starsAll
+        )
+        if (quiz.ratingPlayer != 0) FirebaseDatabase.getInstance()
+            .getReference("$PATH_PLAYERS_QUIZ/${quiz.id}/${getTpovId()}")
             .updateChildren(quizRatingMap)
     }
 
-    private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == 1 || quiz.event in 5..8
-            || quiz.event in 2..4 && quiz.tpovId != getTpovId() && quiz.ratingPlayer == 0
+    private fun isInsertQuizAfterSet(quiz: Quiz): Boolean = quiz.event == EVENT_QUIZ_FOR_USER || quiz.event in EVENT_QUIZ_ARENA..EVENT_QUIZ_HOME
+            || quiz.event in EVENT_QUIZ_FOR_TESTER..EVENT_QUIZ_FOR_ADMIN && quiz.tpovId != getTpovId() && quiz.ratingPlayer == 0
 
     private fun setQuestions(newIdQuiz: Int?, eventQuiz: Int?, id: Int, quiz: Quiz) {
         val questionRef = FirebaseDatabase.getInstance().getReference(
-            if (eventQuiz != 1) "question$eventQuiz/$newIdQuiz"
-            else "question1/${getTpovId()}/$newIdQuiz"
+            if (eventQuiz != EVENT_QUIZ_FOR_USER) "$PATH_QUESTION$eventQuiz/$newIdQuiz"
+            else "$PATH_USER_QUESTION/${getTpovId()}/$newIdQuiz"
         )
-log("setQuestions 1")
-        if (isQuizForEvent(quiz)) FirebaseDatabase.getInstance()
-            .getReference( "question${quiz.event - 1}").child(newIdQuiz.toString()).setValue(null)
+        log("setQuestions 1")
 
-        dao.getQuestionByIdQuiz(id).forEach {
-            log("setQuestions 2: $it")
-            questionRef
-                .child(if (it.hardQuestion) "-${it.numQuestion}" else "${it.numQuestion}")
-                .child(if (it.lvlTranslate < 100) "-${it.language}" else "${it.language}")
-                .setValue(it.toQuestion())
+        if (isQuizForEvent(quiz)) {
+            FirebaseDatabase.getInstance()
+                .getReference("question${quiz.event - 1}")
+                .child(newIdQuiz.toString())
+                .setValue(null)
+        }
 
-            dao.deleteQuestion(id)
-            CoroutineScope(Dispatchers.IO).launch {
-                if (isInsertQuizAfterSet(quiz)) dao.insertQuestion(it.copy(id = newIdQuiz))
+        CoroutineScope(Dispatchers.Main).launch {
+            val deferred = async(Dispatchers.IO) {
+                // Весь ваш код, который вы хотите выполнить асинхронно
+                dao.getQuestionByIdQuiz(id).forEach {
+                    log("setQuestions 2: $it")
+                    questionRef
+                        .child(if (it.hardQuestion) "-${it.numQuestion}" else "${it.numQuestion}")
+                        .child(if (it.lvlTranslate < BARRIER_QUIZ_ID_LOCAL_AND_REMOVE) "$SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG${it.language}" else it.language)
+                        .setValue(it.toQuestion())
+                    dao.deleteQuestion(id)
+                    delay(100)
+                    if (isInsertQuizAfterSet(quiz)) dao.insertQuestion(it.copy(idQuiz = newIdQuiz!!))
+                }
             }
+
+            // Этот код не будет выполнен, пока не завершится deferred
+            deferred.await()
+            // Теперь вы можете продолжить выполнение других задач
         }
     }
 
     private fun setQuestionDetails(newIdQuiz: Int?, eventQuiz: Int?, id: Int, quiz: Quiz) {
         val questionDetailRef = FirebaseDatabase.getInstance().getReference(
-            if (eventQuiz != 1) "questionDetail$eventQuiz/$newIdQuiz"
-            else "question1/${getTpovId()}/$newIdQuiz"
+            "$PATH_QUESTION_DETAIL$eventQuiz/${getTpovId()}/$newIdQuiz"
         )
 
+        log("setQuestionDetails $newIdQuiz $eventQuiz $id $quiz")
         if (isQuizForEvent(quiz)) FirebaseDatabase.getInstance()
-            .getReference( "questionDetail${eventQuiz?.minus(1)}")
+            .getReference("$PATH_QUESTION_DETAIL${eventQuiz?.minus(1)}")
+            .child(getTpovId().toString())
             .child(newIdQuiz.toString()).setValue(null)
+        CoroutineScope(Dispatchers.IO).launch {
+            log("setQuestionDetails 2")
+            val listQuestionDetail = dao.getQuestionDetailByIdQuiz(id)
+            listQuestionDetail.forEach { qd ->
+                log("setQuestionDetails 3 $qd")
+                if (!qd.synthFB) {
+                    log("setQuestionDetails 4")
+                    dao.deleteQuestionDetail(qd.id!!)
+                    log("setQuestionDetails 1 ${dao.getQuestionDetailByIdQuiz(id)}")
 
-        CoroutineScope(Dispatchers.Main).launch {
-            dao.getQuestionDetailByIdQuiz(id).forEach {
-                questionDetailRef.setValue(it)
-
-                dao.deleteQuestionDetailByIdQuiz(id)
-                if (isInsertQuizAfterSet(quiz)) dao.insertQuizDetail(it.copy(id = newIdQuiz))
+                    questionDetailRef.push().setValue(qd).addOnSuccessListener {
+                        if (isInsertQuizAfterSet(quiz)) dao.insertQuizDetail(
+                            qd.copy(
+                                idQuiz = newIdQuiz!!,
+                                synthFB = true
+                            )
+                        )
+                        log("setQuestionDetails addOnSuccessListener")
+                    }.addOnFailureListener {
+                        if (isInsertQuizAfterSet(quiz)) dao.insertQuizDetail(
+                            qd.copy(
+                                idQuiz = newIdQuiz!!,
+                                synthFB = true
+                            )
+                        )
+                        log("setQuestionDetails addOnFailureListener")
+                    }
+                }
             }
         }
     }
 
     private fun setReadToFalse() {
         val database = FirebaseDatabase.getInstance()
-        val myRef = database.getReference("players/read")
+        val myRef = database.getReference(PATH_LIST_READ)
         myRef.setValue(false)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun getQuiz(
         vararg pathQuiz: String? = arrayOf(
-            "quiz1/${getTpovId()}",
-            if (dao.getProfile(getTpovId()).tester!! >= 100
-                || dao.getProfile(getTpovId()).developer!! >= 100
-            ) "quiz2" else null,
-            if (dao.getProfile(getTpovId()).moderator!! >= 100
-                || dao.getProfile(getTpovId()).developer!! >= 100
-            ) "quiz3" else null,
-            if (dao.getProfile(getTpovId()).admin!! >= 100
-                || dao.getProfile(getTpovId()).developer!! >= 100
-            ) "quiz4" else null,
-            "quiz5", "quiz6", "quiz7", "quiz8"
+            "$PATH_USER_QUIZ/${getTpovId()}",
+            if (dao.getProfile(getTpovId()).tester!! >= LVL_TESTER_1_LVL
+                || dao.getProfile(getTpovId()).developer!! >= LVL_DEVELOPER_1_LVL
+            ) PATH_TESTER_QUIZ else null,
+            if (dao.getProfile(getTpovId()).moderator!! >= LVL_MODERATOR_1_LVL
+                || dao.getProfile(getTpovId()).developer!! >= LVL_DEVELOPER_1_LVL
+            ) PATH_MODERATOR_QUIZ else null,
+            if (dao.getProfile(getTpovId()).admin!! >= LVL_ADMIN_1_LVL
+                || dao.getProfile(getTpovId()).developer!! >= LVL_DEVELOPER_1_LVL
+            ) PATH_ADMIN_QUIZ else null,
+            PATH_ARENA_QUIZ, PATH_TOURNIRE_QUIZ, PATH_TOURNIRE_LEADER_QUIZ, PATH_HOME_QUIZ
         ), getQuestionDetails: Boolean = true
     ) {
-        loadText.postValue("Загрузка квестов")
+        loadText.postValue("")
         log("wdwdwdw 1")
-
         if (waitForReadToBecomeTrue()) { // Мы дождались, пока read станет true
             log("wdwdwdw 2, pathQuiz: $pathQuiz")
-
             pathQuiz.forEach { quizItem ->
                 val database = FirebaseDatabase.getInstance()
-                val quizRef = database.getReference(quizItem ?: "quiz8" )
+                val quizRef = database.getReference(quizItem ?: PATH_HOME_QUIZ)
 
+                var i = 0
                 log("wdwdwdw 3, quizItem: $quizItem")
                 quizRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         for (quizSnapshot in dataSnapshot.children) {
-
+                            i++
                             val idQuiz = quizSnapshot.key?.toInt() ?: 0
                             val quiz = quizSnapshot.getValue(Quiz::class.java)
 
@@ -753,14 +826,14 @@ log("setQuestions 1")
 
                             val maxLvlTranslate = try {
                                 var max = 0
-                                quiz?.languages?.split('|')?.forEach {
-                                    val newMax = it.split('-')[1].toInt()
+                                quiz?.languages?.split(SPLIT_BETWEEN_LANGUAGES)?.forEach {
+                                    val newMax = it.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)[1].toInt()
                                     if (newMax > max) max = newMax
                                 }
                                 max
                             } catch (e: Exception) {
                                 try {
-                                    quiz?.languages?.split('-')!![1].toInt()
+                                    quiz?.languages?.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)!![1].toInt()
                                 } catch (e: Exception) {
                                     0
                                 }
@@ -772,23 +845,40 @@ log("setQuestions 1")
                             log("wdwdwdw 6 2: ${(isQuizForEvent(quiz)) && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
                             log("wdwdwdw 6 3: ${quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1}")
                             log("wdwdwdw 6 4: ${maxLvlTranslate >= 100}")
-                            log("wdwdwdw 6 4: ${this@RepositoryFBImpl.isQuizPublic(quiz)}")
+                            log("wdwdwdw 6 5: ${getQuestionDetails}")
+                            log("wdwdwdw 6 6: ${this@RepositoryFBImpl.isQuizPublic(quiz)}")
 
-                            if (((isQuizPublic(quiz) && maxLvlTranslate >= 100 || (isQuizForEvent(
+                            if (
+                                ((isQuizPublic(quiz) && maxLvlTranslate >= LVL_TRANSLATOR_1_LVL || isQuizForEvent(
                                     quiz
-                                )))
-                                        && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)
-                                        || quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1)
-                            ) savePictureToLocalDirectory(quiz.picture) {
+                                ))
+                                        && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1 || getQuestionDetails)
+                                        || quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == EVENT_QUIZ_FOR_USER)
+                            ) savePictureToLocalDirectory(quiz!!.picture) {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    withContext(Dispatchers.IO) {
+                                        deleteQuiz(idQuiz) // Предположим, это suspend функция
+                                        dao.insertQuiz(
+                                            quiz.toQuizEntity(
+                                                idQuiz,
+                                                0,
+                                                0,
+                                                0,
+                                                it
+                                            )
+                                        ) // Предположим, это тоже suspend функция
+                                    }
+                                }
 
-                                dao.insertQuiz(quiz.toQuizEntity(idQuiz, 0, 0, 0, it))
                                 log("wdwdwdw INSERT")
-                                getQuestions(quizItem ?: "quiz8", idQuiz)
-                                if (getQuestionDetails) getQuestionDetails(quizItem ?: "quiz8")
+                                getQuestions(quizItem ?: PATH_HOME_QUIZ, idQuiz)
+                                if (getQuestionDetails) getQuestionDetails(quizItem ?: PATH_HOME_QUIZ)
                                 setVersionQuiz(idQuiz.toString(), quiz.versionQuiz)
-                                if (quiz.event != 8) synthLiveData.value = ++synth
-                                loadText.postValue("")
                             }
+                            log("ioioioio $i ${dataSnapshot.childrenCount.toInt()}")
+                            setLoadPB(i, dataSnapshot.childrenCount.toInt())
+                            if (i == dataSnapshot.childrenCount.toInt()) synthLiveData.value =
+                                ++synth
                         }
                     }
 
@@ -797,30 +887,33 @@ log("setQuestions 1")
                     }
                 })
             }
-            setRead(true) // Устанавливаем read обратно в false
-            loadText.postValue("")
-        } else {
-            loadText.postValue("Сервер занят, ждем..")
-        }
+            setRead(true)
+        } else loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_server_load))
     }
 
-    private fun isQuizPublic(quiz: Quiz?): Boolean = quiz?.event in 5..8
+    private fun deleteQuiz(idQuiz: Int) {
+        dao.deleteQuizById(idQuiz)
+        dao.deleteQuestionByIdQuiz(idQuiz)
+        dao.deleteQuestionDetailByIdQuizAndSynthFB(idQuiz)
+    }
+
+    private fun isQuizPublic(quiz: Quiz?): Boolean = quiz?.event in EVENT_QUIZ_ARENA..EVENT_QUIZ_HOME
 
     private fun isQuizForEvent(quiz: Quiz?): Boolean =
         this.isQuizPrivate(quiz) && quiz?.ratingPlayer != 1
 
-    private fun isQuizPrivate(quiz: Quiz?): Boolean = quiz?.event in 1..4
+    private fun isQuizPrivate(quiz: Quiz?): Boolean = quiz?.event in EVENT_QUIZ_FOR_USER..EVENT_QUIZ_FOR_ADMIN
 
     fun getQuestions(eventQuiz: String, idQuiz: Int) {
         val pathQuestion = when (eventQuiz) {
-            "quiz2" -> "question2/$idQuiz"
-            "quiz3" -> "question3/$idQuiz"
-            "quiz4" -> "question4/$idQuiz"
-            "quiz5" -> "question5/$idQuiz"
-            "quiz6" -> "question6/$idQuiz"
-            "quiz7" -> "question7/$idQuiz"
-            "quiz8" -> "question8/$idQuiz"
-            else -> "question1/${getTpovId()}/$idQuiz"
+            PATH_TESTER_QUIZ -> "$PATH_TESTER_QUESTION/$idQuiz"
+            PATH_MODERATOR_QUIZ -> "$PATH_MODERATOR_QUESTION/$idQuiz"
+            PATH_ADMIN_QUIZ -> "$PATH_ADMIN_QUESTION/$idQuiz"
+            PATH_ARENA_QUIZ -> "$PATH_ARENA_QUESTION/$idQuiz"
+            PATH_TOURNIRE_QUIZ -> "$PATH_TOURNIRE_QUESTION/$idQuiz"
+            PATH_TOURNIRE_LEADER_QUIZ -> "$PATH_TOURNIRE_LEADER_QUESTION/$idQuiz"
+            PATH_HOME_QUIZ -> "$PATH_HOME_QUESTION/$idQuiz"
+            else -> "$PATH_USER_QUESTION/${getTpovId()}/$idQuiz"
         }
 
         val database = FirebaseDatabase.getInstance()
@@ -862,28 +955,33 @@ log("setQuestions 1")
 
     fun getQuestionDetails(pathQuiz: String) {
         val pathQuestionDetail = when (pathQuiz) {
-            "quiz2" -> "questionDetail2"
-            "quiz3" -> "questionDetail3"
-            "quiz4" -> "questionDetail4"
-            "quiz5" -> "questionDetail5"
-            "quiz6" -> "questionDetail6"
-            "quiz7" -> "questionDetail7"
-            "quiz8" -> "questionDetail8"
-            else -> "questionDetail1/${getTpovId()}"
+            PATH_TESTER_QUIZ -> "$PATH_TESTER_QUESTION_DETAIL/${getTpovId()}"
+            PATH_MODERATOR_QUIZ -> "$PATH_MODERATOR_QUESTION_DETAIL/${getTpovId()}"
+            PATH_ADMIN_QUIZ -> "$PATH_ADMIN_QUESTION_DETAIL/${getTpovId()}"
+            PATH_ARENA_QUIZ -> "$PATH_ARENA_QUESTION_DETAIL/${getTpovId()}"
+            PATH_TOURNIRE_QUIZ -> "$PATH_TOURNIRE_QUESTION_DETAIL/${getTpovId()}"
+            PATH_TOURNIRE_LEADER_QUIZ -> "$PATH_TOURNIRE_LEADER_QUESTION_DETAIL/${getTpovId()}"
+            PATH_HOME_QUIZ -> "$PATH_HOME_QUESTION_DETAIL/${getTpovId()}"
+            else -> "$PATH_USER_QUESTION_DETAIL/${getTpovId()}"
         }
 
+        log("24545 1 $pathQuestionDetail")
         val database = FirebaseDatabase.getInstance()
         val questionDetailRef = database.getReference(pathQuestionDetail)
         questionDetailRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                for (idQuizSnapshot in dataSnapshot.children) {
-                    for ((index, numQuestionDetailSnapshot) in idQuizSnapshot.children.withIndex()) {
+            override fun onDataChange(tpovIdSnapshot: DataSnapshot) {
+                log("24545 2 ${tpovIdSnapshot.key}")
+                for (idQuizSnapshot in tpovIdSnapshot.children) {
+                    log("24545 3 ${idQuizSnapshot.key}")
+                    for (idQuizNumSnapshot in idQuizSnapshot.children) {
+                        log("24545 4 ${idQuizNumSnapshot.key}")
+
                         val questionDetail =
-                            numQuestionDetailSnapshot.getValue(QuestionDetail::class.java)
+                            idQuizNumSnapshot.getValue(QuestionDetail::class.java)
 
                         dao.insertQuizDetail(
                             questionDetail?.toQuestionDetailEntity(
-                                index,
+                                id = null,
                                 idQuizSnapshot.key?.toInt()!!,
                                 true
                             )!!
@@ -896,6 +994,7 @@ log("setQuestions 1")
 
             override fun onCancelled(error: DatabaseError) {
 
+                log("24545 error: $error $pathQuestionDetail")
             }
         })
     }

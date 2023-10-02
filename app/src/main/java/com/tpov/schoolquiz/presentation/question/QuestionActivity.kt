@@ -24,14 +24,14 @@ import com.tpov.schoolquiz.*
 import com.tpov.schoolquiz.data.Services.MusicService
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.ActivityQuestionBinding
-import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.android.synthetic.main.activity_question.*
 import kotlinx.coroutines.*
 import javax.inject.Inject
-import kotlin.math.floor
 
 private const val REQUEST_CODE_CHEAT = 0
 
@@ -105,13 +105,12 @@ class QuestionActivity : AppCompatActivity() {
                 viewModel.falseButton()
                 setStateTimer(true)
                 setVisibleButtonsNext()
-
             }
 
             cheatButton.setOnClickListener { view ->
                 log("okokowkdowd 1")
-                if (viewModel.getProfile().countLife!! > 0 && !viewModel.hardQuestion
-                    || viewModel.getProfile().countGoldLife!! > 0 && viewModel.hardQuestion
+                if (viewModel.getProfile().count!! >= COUNT_LIFE_POINTS_IN_LIFE && !viewModel.hardQuestion
+                    || viewModel.getProfile().countGold!! >= COUNT_LIFE_POINTS_IN_LIFE && viewModel.hardQuestion
                 ) {
                     val answerIsTrue =
                         viewModel.questionListThis[viewModel.currentIndex].answerQuestion
@@ -122,7 +121,7 @@ class QuestionActivity : AppCompatActivity() {
                         ActivityOptions.makeClipRevealAnimation(view, 0, 0, view.width, view.height)
                     startActivityForResult(intent, REQUEST_CODE_CHEAT, options.toBundle())
                 } else {
-                    Toast.makeText(this@QuestionActivity, "Недостаточно жизней", Toast.LENGTH_LONG)
+                    Toast.makeText(this@QuestionActivity, getString(R.string.question_zero_life), Toast.LENGTH_LONG)
                         .show()
                 }
             }
@@ -145,17 +144,17 @@ class QuestionActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Toast.makeText(
                     this@QuestionActivity,
-                    "Вопросы не были загружены, попробуйте их перевести",
+                    getString(R.string.question_error_get_questions),
                     Toast.LENGTH_LONG
                 ).show()
                 Toast.makeText(
                     this@QuestionActivity,
-                    "Вам начислена компенсация 33% жизней",
+                    getString(R.string.question_error_get_questions_and_compensation),
                     Toast.LENGTH_LONG
                 ).show()
                 viewModel.updateProfileUseCase(
                     viewModel.getProfile()
-                        .copy(count = viewModel.getProfile().count?.plus(33))
+                        .copy(count = viewModel.getProfile().count?.plus(COAST_LIFE_HOME_QUIZ))
                 )
                 viewModel.timer?.cancel()
                 finish()
@@ -224,7 +223,6 @@ class QuestionActivity : AppCompatActivity() {
                 textView.text = spannableText
                 delay(delayInMillis)
 
-                // Возвращаем цвет буквы к исходному (черный в данном случае)
                 spannableText.setSpan(
                     ForegroundColorSpan(Color.BLACK),
                     start,
@@ -242,7 +240,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
 
-        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event == 7) binding.viewBackground.background =
+        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event == EVENT_QUIZ_TOURNIRE_LEADER) binding.viewBackground.background =
             getDrawable(R.mipmap.back_question_event5)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =
@@ -270,14 +268,14 @@ class QuestionActivity : AppCompatActivity() {
             if (nextQuestion) {
                 log("setStateTimer currentIndex + 1: ${viewModel.codeAnswer[viewModel.currentIndex + 1]}")
 
-                if (viewModel.codeAnswer[viewModel.currentIndex + 1] == '0') {
+                if (viewModel.codeAnswer[viewModel.currentIndex + 1] == UNANSWERED_IN_CODE_ANSWER) {
                     startTimer()
                 } else viewModel.timer?.cancel()
 
             } else {
                 log("setStateTimer currentIndex - 1: ${viewModel.codeAnswer[viewModel.currentIndex - 1]}")
 
-                if (viewModel.codeAnswer[viewModel.currentIndex - 1] == '0') {
+                if (viewModel.codeAnswer[viewModel.currentIndex - 1] == UNANSWERED_IN_CODE_ANSWER) {
 
                     startTimer()
                 } else viewModel.timer?.cancel()
@@ -295,15 +293,15 @@ class QuestionActivity : AppCompatActivity() {
         ) {
             override fun onTick(millisUntilFinished: Long) {
                 binding.tvTimer.text = viewModel.formatTime(millisUntilFinished)
-                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                if (viewModel.formatTime(millisUntilFinished)[3] == UNANSWERED_IN_CODE_ANSWER && viewModel.formatTime(
                         millisUntilFinished
                     )[4] == '3'
                 ) anim321(3) //Анимация для цифры 3
-                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                if (viewModel.formatTime(millisUntilFinished)[3] == UNANSWERED_IN_CODE_ANSWER && viewModel.formatTime(
                         millisUntilFinished
                     )[4] == '2'
                 ) anim321(2) //2
-                if (viewModel.formatTime(millisUntilFinished)[3] == '0' && viewModel.formatTime(
+                if (viewModel.formatTime(millisUntilFinished)[3] == UNANSWERED_IN_CODE_ANSWER && viewModel.formatTime(
                         millisUntilFinished
                     )[4] == '1'
                 ) anim321(1) //1
@@ -428,13 +426,15 @@ class QuestionActivity : AppCompatActivity() {
                     EXTRA_ANSWER_SHOW,
                     false
                 )
-            ) viewModel.updateProfileUseCase(
-                viewModel.getProfileUseCase(getTpovId()).copy(
-                    countLife = viewModel.getProfileUseCase(
-                        getTpovId()
-                    ).countLife
-                )
-            )
+            ) {
+
+                if (!viewModel.hardQuestion) viewModel.updateProfileUseCase(viewModel.getProfileUseCase(getTpovId())
+                    .copy(count = viewModel.getProfileUseCase(getTpovId()).count?.minus(COUNT_LIFE_POINTS_IN_LIFE)
+                    ))
+                else viewModel.updateProfileUseCase(viewModel.getProfileUseCase(getTpovId())
+                    .copy(countGold = viewModel.getProfileUseCase(getTpovId()).countGold?.minus(COUNT_LIFE_POINTS_IN_LIFE)
+                    ))
+            }
         } else if (requestCode == UPDATE_CURRENT_INDEX) {
             viewModel.currentIndex = data.getIntExtra(EXTRA_UPDATE_CURRENT_INDEX, 0)
 
@@ -475,12 +475,9 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun updateDataView() {
         binding.tvPercent.text = (viewModel.persent).toString()
-        binding.tvPointsLife.text = (floor(
-            viewModel.getProfileUseCase(getTpovId()).count?.toDouble()?.div(1000.0) ?: 0.0
-        )).toInt().toString()
-        binding.tvPointsGoldLife.text = (floor(
-            viewModel.getProfileUseCase(getTpovId()).countGold?.toDouble()?.div(1000.0) ?: 0.0
-        )).toInt().toString()
+        if (!viewModel.hardQuestion)
+            binding.tvPointsLife.text = (viewModel.getProfile().count?.div(COUNT_LIFE_POINTS_IN_LIFE)).toString()
+        else binding.tvPointsGoldLife.text = (viewModel.getProfile().countGold?.div(COUNT_LIFE_POINTS_IN_LIFE)).toString()
 
     }
 
@@ -515,7 +512,7 @@ class QuestionActivity : AppCompatActivity() {
             }
 
             override fun onAnimationEnd(p0: Animation?) {
-                setBlockButton(viewModel.codeAnswer[viewModel.currentIndex] == '0')
+                setBlockButton(viewModel.codeAnswer[viewModel.currentIndex] == UNANSWERED_IN_CODE_ANSWER)
 
                 //todo освободить кнопки
             }
@@ -560,7 +557,7 @@ class QuestionActivity : AppCompatActivity() {
             }
 
             override fun onAnimationEnd(p0: Animation?) {
-                setBlockButton(viewModel.codeAnswer[viewModel.currentIndex] == '0')
+                setBlockButton(viewModel.codeAnswer[viewModel.currentIndex] == UNANSWERED_IN_CODE_ANSWER)
 
                 //todo освободить кнопки
             }
@@ -581,6 +578,6 @@ class QuestionActivity : AppCompatActivity() {
         const val RESULT_TRANSLATE = 2
         const val RESULT_OK = 1
 
-        const val DELAY_SHOW_TEXT = 50L
+        const val DELAY_SHOW_TEXT = DELAY_SHOW_TEXT_IN_QUESTIONACTIVITY
     }
 }

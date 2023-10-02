@@ -198,7 +198,7 @@ class ProfileFragment : BaseFragment() {
 
                     2 -> {
                         if (!isExecuted[1]) {
-                            CoroutineScope(Dispatchers.IO).launch { viewModel.getProfile() }
+                            CoroutineScope(Dispatchers.IO).launch { viewModel.getSynthProfile() }
                             log("fun viewModel.getSynth start: $number")
                             isExecuted[1] = true
                         }

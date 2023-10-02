@@ -15,7 +15,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.LanguageEntity
 import com.tpov.schoolquiz.data.model.Qualification
+import com.tpov.schoolquiz.presentation.DEFAULT_INVINSTATION
+import com.tpov.schoolquiz.presentation.DEFAULT_LVL_QUALIFAICATION
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils.getLanguageShortCode
 import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesWithCheckBox
 import com.tpov.schoolquiz.presentation.custom.Logcat
@@ -176,7 +179,7 @@ class AutorisationFragment : BaseFragment() {
 
         buttonSetLanguageProfile.setOnClickListener {
             val builder = AlertDialog.Builder(context)
-            builder.setTitle("Выберите языки")
+            builder.setTitle(getString(R.string.dialog_autorisation_language_title))
             builder.setMultiChoiceItems(languageNames, checkedItems) { _, which, isChecked ->
                 checkedItems[which] = isChecked
             }
@@ -193,10 +196,10 @@ class AutorisationFragment : BaseFragment() {
                         )
                     }
                 }
-                result = selectedLanguages.joinToString("|") { it.name }
+                result = selectedLanguages.joinToString(SPLIT_BETWEEN_LANGUAGES) { it.name }
                 textLanguageProfile.text = result
             }
-            builder.setNegativeButton("Отмена", null)
+            builder.setNegativeButton(getString(R.string.dialog_cancel), null)
 
             val dialog = builder.create()
 
@@ -262,7 +265,7 @@ class AutorisationFragment : BaseFragment() {
                 try {
                     invitation.text.toString().toInt()
                 } catch (e: Exception) {
-                    0
+                    DEFAULT_INVINSTATION
                 }
             )
         }
@@ -270,20 +273,20 @@ class AutorisationFragment : BaseFragment() {
         var obs = false
         viewModel.someData.observe(viewLifecycleOwner) {
             log("onViewCreated someData.observe()")
-
-            if (it > 0) {
+            val FIRST_START = 0
+            if (it > FIRST_START) {
                 if (!obs) {
                     val profile = viewModel.getProfile()
                     var startActivity = false
                     while (!startActivity) {
                         try {
                             val qualification = Qualification(
-                                profile.tester ?: 0,
-                                profile.moderator ?: 0,
-                                profile.sponsor ?: 0,
-                                profile.translater ?: 0,
-                                profile.admin ?: 0,
-                                profile.developer ?: 0
+                                profile.tester ?: DEFAULT_LVL_QUALIFAICATION,
+                                profile.moderator ?: DEFAULT_LVL_QUALIFAICATION,
+                                profile.sponsor ?: DEFAULT_LVL_QUALIFAICATION,
+                                profile.translater ?: DEFAULT_LVL_QUALIFAICATION,
+                                profile.admin ?: DEFAULT_LVL_QUALIFAICATION,
+                                profile.developer ?: DEFAULT_LVL_QUALIFAICATION
                             )
 
                             log("onViewCreated qualification: $qualification")

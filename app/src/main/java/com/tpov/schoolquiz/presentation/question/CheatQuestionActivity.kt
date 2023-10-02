@@ -1,13 +1,13 @@
 package com.tpov.schoolquiz.presentation.question
 
-import androidx.appcompat.app.AppCompatActivity
 import android.app.Activity
-import android.os.Bundle
-import android.widget.Button
-import android.content.Intent
-import android.widget.TextView
 import android.content.Context
+import android.content.Intent
+import android.os.Bundle
 import android.view.MenuItem
+import android.widget.Button
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.tpov.schoolquiz.R
 import kotlinx.coroutines.InternalCoroutinesApi
 
@@ -55,7 +55,7 @@ class CheatActivity : AppCompatActivity() {
         setResult(Activity.RESULT_OK, data)
     }
 
-    private fun actionBarSettings() {       //Кнопка назад в баре
+    private fun actionBarSettings() {
         val ab = supportActionBar
         ab?.setDisplayHomeAsUpEnabled(true)
     }

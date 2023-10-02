@@ -14,7 +14,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.schoolquiz.presentation.DEFAULT_RATING_QUIZ
+import com.tpov.schoolquiz.presentation.DEFAULT_TPOVID
 import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ2
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ3
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ4
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ_TRANSLATE1
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
@@ -52,7 +58,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         mainViewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
 
         val sharedPref = context?.getSharedPreferences("profile", Context.MODE_PRIVATE)
-        val tpovId = sharedPref?.getInt("tpovId", 0) ?: 0
+        val tpovId = sharedPref?.getInt("tpovId", DEFAULT_TPOVID) ?: DEFAULT_TPOVID
         log("fun onViewCreated, tpovId: $tpovId")
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -67,9 +73,9 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         eventViewModel.updateEventList.observe(viewLifecycleOwner) {
 
             val eventAdapter = EventAdapter(
-                eventViewModel.quiz2List.filter { it.ratingPlayer == 0 },
-                eventViewModel.quiz3List.filter { it.ratingPlayer == 0 },
-                eventViewModel.quiz4List.filter { it.ratingPlayer == 0 },
+                eventViewModel.quiz2List.filter { it.ratingPlayer == DEFAULT_RATING_QUIZ },
+                eventViewModel.quiz3List.filter { it.ratingPlayer == DEFAULT_RATING_QUIZ },
+                eventViewModel.quiz4List.filter { it.ratingPlayer == DEFAULT_RATING_QUIZ },
                 emptyList(),// eventViewModel.translate1Question,
                 emptyList(),//eventViewModel.translate2Question,
                 emptyList(),//eventViewModel.translateEditQuestion,
@@ -108,9 +114,9 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onQuiz2Clicked(quizId: Int) {
         log("fun onQuiz2Clicked")
 
-        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < COAST_LIFE_QUIZ2) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
+            context?.getString(R.string.not_enough_lives, COAST_LIFE_QUIZ2),
             Toast.LENGTH_LONG
         ).show()
         else {
@@ -118,16 +124,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             if (foundQuestionList(quizId, false)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
-                        .copy(count = eventViewModel.getProfileCount()!! - 15)
+                        .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ2)
                 )
                 val intent = Intent(activity, QuestionActivity::class.java)
                 intent.putExtra(QuestionActivity.NAME_USER, "user")
                 intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
                 intent.putExtra(QuestionActivity.HARD_QUESTION, false)
                 startActivity(intent)
-            } else {
-                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG).show()
-            }
+            } else Toast.makeText(context, context?.getString(R.string.quiz_not_translated), Toast.LENGTH_LONG).show()
         }
         lifecycleScope.launch(Dispatchers.IO) {
             eventViewModel.getQuizList()
@@ -139,18 +143,14 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     @OptIn(InternalCoroutinesApi::class)
     private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean?): Boolean {
 
-        log("kokol 1hardQuestion: $hardQuestion")
-
         val questionThisListAll = mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
             .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
             .sortedBy { it.numQuestion }
 
-        log("kokol 2questionThisListAll: $questionThisListAll")
         var listMap = mutableMapOf<Int, Boolean>()
         listMap = getMap(questionThisListAll, listMap)
         val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
 
-        log("kokol 3questionByLocal: $questionByLocal")
         val questionListThis =
             if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
             else getListQuestionByProfileLang(
@@ -158,12 +158,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 listMap
             )
 
-        log("kokol 4didFoundAllQuestion: ${didFoundAllQuestion(questionByLocal, listMap)}")
-        log("kokol 5getListQuestionByProfileLang: ${getListQuestionByProfileLang(
-            questionThisListAll,
-            listMap
-        )}")
-        log("kokol 6questionListThis: $questionListThis")
         return didFoundAllQuestion(questionListThis, listMap)
 
     }
@@ -219,12 +213,6 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     ): Boolean {
         var foundQuestion = listMap.isNotEmpty()
 
-        questionList.forEach {
-
-            log("kokol question: ${it.numQuestion}. ${it.nameQuestion}")
-        }
-
-        log("kokol foundQuestion: $foundQuestion")
         listMap.forEach {
             try {
                 if (questionList[it.key - 1].id == null) foundQuestion = false
@@ -242,18 +230,12 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         val userLocalization: String = getUserLocalization(requireContext())
 
         val questionList = ArrayList<QuestionEntity>()
-        log("filteredList listMap $listMap")
-        log("filteredList questionThisListAll ${questionThisListAll.size}")
 
         listMap.forEach { map ->
             val filteredList = questionThisListAll
                 .filter { it.numQuestion == map.key }
                 .filter { it.language == userLocalization }
 
-            log("filteredList 1 $filteredList")
-            log("filteredList 2 $questionThisListAll")
-            log("filteredList 3 map.key: ${map.key}")
-            log("filteredList 3 userLocalization: ${userLocalization}")
             if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
         }
 
@@ -262,19 +244,17 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onQuiz3Clicked(quizId: Int) {
-        log("fun onQuiz3Clicked")
-        log("fun onQuiz2Clicked")
 
-        if (eventViewModel.getProfileCount()!! < 15) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < COAST_LIFE_QUIZ3) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 15% жизни",
+            context?.getString(R.string.not_enough_lives, COAST_LIFE_QUIZ3),
             Toast.LENGTH_LONG
         ).show()
         else {
             if (foundQuestionList(quizId, true)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
-                        .copy(count = eventViewModel.getProfileCount()!! - 15)
+                        .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ3)
                 )
                 val intent = Intent(activity, QuestionActivity::class.java)
                 intent.putExtra(QuestionActivity.NAME_USER, "user")
@@ -282,7 +262,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 intent.putExtra(QuestionActivity.HARD_QUESTION, true)
                 startActivity(intent)
             } else {
-                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
+                Toast.makeText(context, context?.getString(R.string.quiz_not_translated), Toast.LENGTH_LONG)
                     .show()
             }
         }
@@ -297,16 +277,16 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onQuiz4Clicked(quizId: Int) {
 
         log("fun onQuiz2Clicked")
-        if (eventViewModel.getProfileCount()!! < 20) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < COAST_LIFE_QUIZ4) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 20% жизни",
+            context?.getString(R.string.not_enough_lives, COAST_LIFE_QUIZ4),
             Toast.LENGTH_LONG
         ).show()
         else {
             if (foundQuestionList(quizId, null)) {
                 eventViewModel.updateProfileUseCase(
                     eventViewModel.getProfile()
-                        .copy(count = eventViewModel.getProfileCount()!! - 20)
+                        .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ4)
                 )
                 log("fun onQuiz4Clicked")
                 val intent = Intent(activity, QuestionActivity::class.java)
@@ -314,10 +294,8 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
                 intent.putExtra(QuestionActivity.ID_QUIZ, quizId)
                 intent.putExtra(QuestionActivity.HARD_QUESTION, false)
                 startActivity(intent)
-            } else {
-                Toast.makeText(context, "Квест не переведен на ваш язык", Toast.LENGTH_LONG)
+            } else Toast.makeText(context, context?.getString(R.string.quiz_not_translated), Toast.LENGTH_LONG)
                     .show()
-            }
         }
         lifecycleScope.launch(Dispatchers.IO) {
             eventViewModel.getQuizList()
@@ -330,23 +308,21 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     override fun onTranslate1EventClicked(questionId: Int) {
 
         log("fun onQuiz2Clicked")
-        if (eventViewModel.getProfileCount()!! < 10) Toast.makeText(
+        if (eventViewModel.getProfileCount()!! < COAST_LIFE_QUIZ_TRANSLATE1) Toast.makeText(
             activity,
-            "Недостаточно жизней. На прохождение квеста тратиться 10% жизни",
+            context?.getString(R.string.not_enough_lives, COAST_LIFE_QUIZ_TRANSLATE1),
             Toast.LENGTH_LONG
         ).show()
         else {
             eventViewModel.updateProfileUseCase(
                 eventViewModel.getProfile()
-                    .copy(count = eventViewModel.getProfileCount()!! - 10)
+                    .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ_TRANSLATE1)
             )
 
             FragmentManager.setFragment(
                 TranslateQuestionFragment.newInstance(-1, questionId),
                 requireActivity() as MainActivity
             )
-            log("fun onTranslate1EventClicked")
-
         }
         lifecycleScope.launch(Dispatchers.IO) {
             eventViewModel.getQuizList()

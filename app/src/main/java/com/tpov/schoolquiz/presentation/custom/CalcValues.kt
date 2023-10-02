@@ -34,7 +34,7 @@ object CalcValues {
         }
 
         when (event) {
-            1 -> counts /= 10
+            1 -> counts /= 5
             2 -> counts = profile.tester?.times(2)!!
             3 -> counts = profile.moderator?.times(3)!!
             4 -> counts = profile.admin?.times(4)!!

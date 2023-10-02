@@ -21,7 +21,7 @@
             android:layout_marginLeft="8dp"
             android:layout_height="wrap_content"
             android:textSize="10sp"
-            android:text="Средний результат всх игроков: 120/120" />
+            android:text="@string/popup_1_text" />
         <TextView
             android:id="@+id/tv_popup_2"
             android:layout_width="match_parent"
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
             android:backgroundTint="@color/black"
-            android:text="lang" />
+            android:text="@string/language_question" />
 
         <LinearLayout
             android:id="@+id/l_b"
@@ -117,7 +117,7 @@
             android:textColor="@color/Cyan"
             tools:foreground="@color/nullColor"
             android:background="@color/nullColor"
-            android:text="Translate" />
+            android:text="@string/translate_title" />
 
         <LinearLayout
             android:layout_width="match_parent"

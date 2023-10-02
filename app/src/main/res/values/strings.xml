@@ -13,12 +13,63 @@
         <item>Желтый</item>
     </string-array>
 
-    <string-array name="languages">
-        <item>Русский</item>
-        <item>Украинский</item>
-        <item>Английский</item>
-        <item>Французкий</item>
-    </string-array>
+    <!-- General -->
+    <string name="arena_translate_title">Send to Arena</string>
+    <string name="translate_negative">Cancel</string>
+    <string name="send_to_arena_text">This quest will be made publicly available for all players after successful verification.</string>
+    <string name="no_translated_quest_found">No Translated Quest Found</string>
+    <string name="paid_attempt_title">Paid Attempt</string>
+    <string name="paid_attempt_message">A fee is charged for fair play.</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="not_enough_lives">Not enough lives. %d%% life is spent on completing the quest.</string>
+    <string name="userguide_chat_rules_title">Chat Rules:</string>
+    <string name="userguide_chat_rules_text"> - Do not insult \n - Do not spam \n - Help</string>
+
+    <!-- Pop-up Menu -->
+    <string name="popup_menu_num_easy_questions">Number of Easy Questions: %1$d</string>
+    <string name="popup_menu_num_hard_questions">Number of Hard Questions: %1$d</string>
+    <string name="popup_menu_date_created">Date Created: %1$s</string>
+    <string name="popup_menu_rating">Quest Rating: %1$d/%2$d</string>
+    <string name="popup_menu_best_result">Your Best Result: %1$d/%2$d</string>
+    <string name="popup_menu_average_result">Your Average Result: %1$d/%2$d</string>
+    <string name="popup_menu_avg_all_players">Average Result of All Players: %1$d/%2$d</string>
+    <string name="popup_menu_best_all_players">Best Result of All Players: %1$d/%2$d</string>
+    <string name="popup_menu_quiz_version">Quest Version: %1$d</string>
+    <string name="do_translate_massage">Translation in Progress</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_edit">Edit</string>
+    <string name="dialog_delete">Delete</string>
+    <string name="dialog_send">Send</string>
+    <string name="dialog_autorisation_language_title">Choose Languages</string>
+
+    <!-- Players -->
+    <string name="dialog_player_send_point_title">Send Data</string>
+    <string name="dialog_player_send_point_massage">Message</string>
+    <string name="dialog_player_send_point_trophy">Allocate Trophies</string>
+    <string name="dialog_player_send_point_nolic">Allocate Zeroes</string>
+    <string name="dialog_player_send_point_gold">Allocate Gold</string>
+    <string name="dialog_player_send_point_skill">Allocate Experience</string>
+    <string name="dialog_player_send_point_box">Allocate Boxes</string>
+
+    <!-- Network -->
+    <string name="network_description">Here lies the connection to the outside world, quests from other players, chat, tournaments, and much more.</string>
+    <string name="network_title">Network</string>
+    <string name="profile_data_error">Profile data error occurred, please wait (%1$d)</string>
+
+    <!-- User Guide -->
+    <string name="userguide_new_qualif_player_legend">You`ve earned the title - Legend</string>
+    <string name="userguide_new_qualif_player_expert">You`ve earned the title - Expert</string>
+    <string name="userguide_new_qualif_player_gransmaster">You`ve earned the title - Grandmaster</string>
+    <string name="userguide_new_qualif_player_veteran">You`ve earned the title - Veteran</string>
+    <string name="userguide_new_qualif_player_amateur">You`ve earned the title - Amateur</string>
+    <string name="userguide_new_qualif_player_beginner">You`ve earned the title - Beginner</string>
+    <string name="userguide_new_qualif_player_player">You`ve earned the title - Player</string>
+    <string name="userguide_massage_add_gold">Gold added: %1$i things</string>
+    <string name="userguide_massage_add_nolic">Zeroes added: %1$i things</string>
+    <string name="userguide_massage_add_trophy">Trophies added: %1$i things</string>
+    <string name="userguide_massage_add_skill">Experience added: %1$i things</string>
+    <string name="userguide_title_add_points">Reward from Developers</string>
 
     <string name="true_button">True</string>
     <string name="false_button">False</string>
@@ -64,7 +115,6 @@
     <string name="time_format_key">time_format_key</string>
     <string name="chose_time_format">Chose time format</string>
     <string name="remove_ads">Remove ads</string>
-    <string name="remove_summary">Remove ads</string>
     <string name="load_api_question">Load api question</string>
 
     <string name="start_massage_1">Quiz – is a true–false quest, which initially has basic questions with the possibility of adding your own, answering which you earn points 1–100.</string>
@@ -80,54 +130,206 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="start_massage_6">In the future, various school questions and new opportunities will be added. You can also share your questions in the review, the best questions will probably be added to the application. And also, you can support the author with a rating of 5, or remove ads, and you will have everything true ^)</string>
 
     <string name="FrontActivity_num_chack_norice">Remaining questions-days offline</string>
-    <string name="tv_auto_update_question">Question auto-update</string>
     <string name="list_question">A list of questions</string>
     <string name="dialog_text_delete">Delete text?</string>
     <string name="dialog_short_text_delete">delete</string>
     <string name="dialog_short_text_share">Share</string>
     <string name="dialog_text_share">Share text</string>
-    <string name="prompt_email">email</string>
-    <string name="prompt_password">password</string>
     <string name="action_sign_in_short">invitation</string>
-    <string name="action_sign_in">Login</string>
+    <string name="account_registration_language">Languages</string>
     <string name="action_registration">registration</string>
     <string name="menu_network">Network</string>
     <string name="welcome" translatable="false">"Welcome!"</string>
     <string name="invalid_username" translatable="false">Not a valid username</string>
     <string name="invalid_password" translatable="false">Password must be >5 characters</string>
-    <string name="login_failed" translatable="false">"Login failed"</string>
-    <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your birthday (01.01.2001)</string>
+    <string name="login_failed">"Login failed"</string>
     <string name="prompt_nickname">Nickname</string>
     <string name="prompt_city">Your city</string>
-    <string name="prompt_invitation">Инвайд-код (не обязательно)</string>
-    <string name="app_name">SchoolQuiz</string>
-    <string name="nav_home">Главные квесты</string>
-    <string name="nav_my_quiz">Мои квесты</string>
-    <string name="nav_settings">Настройки</string>
-    <string name="nav_chat">Чат</string>
-    <string name="nav_enter">Вход</string>
-    <string name="nav_exit">Выход</string>
-    <string name="nav_task">Задачи</string>
-    <string name="nav_profile">Профиль</string>
-    <string name="nav_contact">Контакты</string>
-    <string name="nav_downloads">Загрузки</string>
-    <string name="nav_global">Арена</string>
-    <string name="nav_news">Новости</string>
-    <string name="nav_leaders">Лидеры</string>
-    <string name="nav_players">Игроки</string>
-    <string name="nav_friends">Друзья</string>
-    <string name="nav_massages">Cообщения</string>
-    <string name="nav_reports">Отчеты</string>
+    <string name="app_name" translatable="false">SchoolQuiz</string>
+    <string name="app_name_full" translatable="false">SchoolQuiz3.0</string>
+
     <string name="login_mode">login</string>
     <string name="registration_mode">regestration</string>
-    <string name="add_language">Добавить язык</string>
-    <string name="save_translation">Сохранить перевод</string>
-    <string name="translated_question_hint">Перевод</string>
-    <string name="source_question_hint">Название квеста</string>
-    <string name="delete_resource">Удалить</string>
-    <string name="downloads_section">Загрузки</string>
-    <string name="profile_section">Профиль</string>
-    <string name="select_nick_color">Цвет ника</string>
+
+    <string name="translation_success">Translation completed successfully</string>
+    <string name="translation_failed">Translation completed failed</string>
+
+    <string name="userguide_new_qualif_player_title">Your skill = %1$d</string>
+
+    <string name="userguide_new_qualif_translate1" translatable="false">Translator 1 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_translate2" translatable="false">Translator 2 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_translate3" translatable="false">Translator 3 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_tester1" translatable="false">Tester 1 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_tester2" translatable="false">Tester 2 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_tester3" translatable="false">Tester 3 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_moderator1" translatable="false">Moderator 1 lvl: %1$i points</string>
+    <string name="userguide_new_qualif_moderator2" translatable="false">Moderator 2 lvl: %1$i points</string>
+    <string name="userguide_new_qualif_moderator3" translatable="false">Moderator 3 lvl: %1$i points</string>
+    <string name="userguide_new_qualif_admin1" translatable="false">Admin 1 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_admin2" translatable="false">Admin 2 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_admin3" translatable="false">Admin 3 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_developer1" translatable="false">Developer 1 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_developer2" translatable="false">Developer 2 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_developer3" translatable="false">Developer 3 lvl: %1%i points</string>
+    <string name="error_get_life_counts">Error get life counts</string>
+    <string name="new_qualification">New qualification</string>
+    <string name="userguide_title_developer_massage">Developer massage</string>
+
+    <string name="error_get_box_day">Error get box day</string>
+    <string name="error_get_profile">Error get profile</string>
+
+    <string name="permission_to_access_contacts_is_denied">Permission to access contacts is denied</string>
+
+    <string name="dialog_cancel">Cancel</string>
+
+    <string name="shop_fragment_get_box_for_ad_text">Get a box for 10 ads</string>
+    <string name="shop_fragment_get_box_for_ad_show">Show</string>
+    <string name="shop_fragment_buy_life_text">Buy 1 life</string>
+    <string name="shop_fragment_button_buy">Buy</string>
+    <string name="shop_fragment_buy_life_gold_text">Buy 1 gold life</string>
+    <string name="shop_fragment_buy_one_place_text">Buy 1 place for create quiz</string>
+   <string name="dialog_autorisation_login_errir">error login, try again</string>
+    <string name="dialog_create_acc_copy_acc_error">Failed to send verification email.</string>
+   <string name="toast_error_found_question">Error found questions</string>
+    <string name="toast_ad_use_limit">You`ve reached the daily limit</string>
+    <string name="toast_ad_error_load">Ad failed to load: %1$s</string>
+    <string name="toast_ad_loaded">AdLoaded</string>
+    <string name="userguide_massage_text_legend">Hello my friend, you have traversed a challenging path from Rookie to Legend, overcoming all obstacles and hardships. I wish you unbounded success in life, just as in this game. \n We too have traveled a difficult path to create conditions for our amazing players to reach this milestone. I write this text during the alpha version of the quest, but I hope we will see the day when our players become Legends. Thank you for your significant contribution to our community; each one of you is truly important. I can offer you to join us at work, perhaps you can unleash your full potential here too. Good luck!</string>
+    <string name="popup_1_text">Average score of all players: 120/120</string>
+    <string name="create_question_dialog_save">Save</string>
+    <string name="create_question_language">Language</string>
+    <string name="create_question_dialog_add_question">Add Question</string>
+    <string name="create_question_dialog_chb_hard">Hard</string>
+    <string name="toast_ad_add_box">A box has been credited to you</string>
+    <string name="toast_ad_not_enough_gold">Not enough gold</string>
+    <string name="toast_ad_not_enough_nolic">Not enough nolic</string>
+    <string name="toast_ad_dialog_title">Confirmation</string>
+    <string name="toast_ad_dialog_massage">Are you sure you want to perform this action?</string>
+    <string name="toast_ad_dialog_positive">Yes</string>
+    <string name="toast_ad_dialog_negative">No</string>
+    <string name="question_zero_life">Insufficient lives</string>
+    <string name="question_result_text">Result</string>
+    <string name="question_result_grade">Rate the quest</string>
+    <string name="question_result_help_translate">Help with translation</string>
+    <string name="question_error_get_questions">Questions were not loaded, try to translate them</string>
+    <string name="question_error_get_questions_and_compensation">You have been credited 33% of lives as compensation</string>
+    <string name="dialog_create_acc_copy_acc">Your account is being copied and created on the server</string>
+    <string name="dialog_autorisation_create_acc">Switching to a new account, the old one is saved on the phone</string>
+    <string name="dialog_error_db">"Database error, wait for the developers to fix it"</string>
+    <string name="userguide_title_text_legend_massage">Congratulations from the game developer</string>
+    <string name="userguide_title_text_translate_massage">Quest translation</string>
+    <string name="nav_leaders">Leaders</string>
+    <string name="nav_players">Players</string>
+    <string name="nav_friends">Friends</string>
+    <string name="nav_massages">Messages</string>
+    <string name="nav_reports">Reports</string>
+
+    <string name="userguide_massage_text_profiles_open">You can view other players` profiles using various filters</string>
+
+    <string name="userguide_massage_text_best_player_open">You can view the list of best players in this game by different criteria</string>
+
+    <string name="userguide_massage_text_user_quiz_open">You can create your own quizzes</string>
+
+    <string name="userguide_massage_text_arena_open">Arena - here you can find quests from other players, which are open to all players</string>
+
+    <string name="userguide_massage_text_menu_functuions">You`re doing great! This game has a lot more to offer. As you gain experience, various features will become available. Keep going!</string>
+
+    <string name="userguide_massage_text_hello">Welcome to the True or False quiz. Are you ready to shake things up? Choose the quest that you like the most.</string>
+
+    <string name="userguide_massage_text_translate">This is an indicator showing whether the quest is translated into your language. You can click on it. \n - Blue: quest is well-translated \n - Yellow: quest is translated by a translator \n - Gray: quest is translated</string>
+
+    <string name="fb_load_text_load_leaders">Loading leaders</string>
+
+    <string name="fb_load_text_load_chat">Loading chat</string>
+
+    <string name="fb_load_text_load_profile">Loading profile</string>
+
+    <string name="fb_load_text_load_quiz">Loading quizzes</string>
+
+    <string name="fb_load_text_send_profile">Sending profile</string>
+
+    <string name="fb_load_text_send_quizz">Sending quizzes to the server</string>
+
+    <string name="fb_load_text_send_profile_error">Error sending profile</string>
+
+    <string name="fb_load_text_get_profile_error">Error loading profile</string>
+
+    <string name="fb_load_text_weit_unlock_server">Awaiting server unlock</string>
+
+    <string name="fb_load_text_error">Profile loading error</string>
+
+    <string name="fb_load_server_load">Awaiting server access</string>
+
+    <string name="fb_load_text_load_new_massage">New messages: %1$d</string>
+
+    <string name="flash_card_layout_front_1">The profile card shows how strong you are compared to the best player in percentage terms by different parameters.</string>
+
+    <string name="flash_card_layout_front_2">Green graph shows how good you are as a player, how well you play \n Red - how much you contribute to the game, how important you are to the game</string>
+
+    <string name="flash_card_layout_front_3">For example: for a player who plays better than everyone else, the graph will be completely filled with green, and for a player who helps the developers the most, contributes to the game, it will be all red</string>
+    <string name="tv_auto_update_question">Auto update question</string>
+    <string name="activity_cheat_answer">Answer</string>
+    <string name="create_question_dialog_name_quiz">Name quiz</string>
+    <string name="create_question_dialog_name_question">Name question</string>
+    <string name="create_question_dialog_cancel">Cancel</string>
+    <string name="chat_type_a_message">Type a message</string>
+    <string name="chat_type_a_send">Send</string>
+
+    <string name="prompt_email">email</string>
+    <string name="prompt_password">password</string>
+    <string name="action_sign_in">Login</string>
+    <string name="prompt_name">Your name</string>
+    <string name="prompt_years">Your years (01.01.2001)</string>
+    <string name="prompt_invitation">Invitation code (optional)</string>
+    <string name="nav_home">Main quests</string>
+    <string name="nav_my_quiz">My quests</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_chat">"Chat "</string>
+    <string name="nav_enter">Login</string>
+    <string name="nav_exit">"Logout "</string>
+    <string name="nav_task">"Tasks "</string>
+    <string name="nav_profile">"Profile "</string>
+    <string name="nav_contact">"Contacts "</string>
+    <string name="nav_downloads">"Downloads "</string>
+    <string name="nav_global">Arena</string>
+    <string name="nav_news">"News "</string>
+    <string name="add_language">Add Language</string>
+    <string name="save_translation">Save Translation</string>
+    <string name="translated_question_hint">Translation</string>
+    <string name="source_question_hint">Quest Name</string>
+    <string name="delete_resource">Delete</string>
+    <string name="downloads_section">Downloads</string>
+    <string name="profile_section">Profile</string>
+    <string name="select_nick_color">Nickname Color</string>
+    <string name="thropy1">Player who took 1st place in the tournament</string>
+    <string name="thropy2">Player who took 2st place in the tournament</string>
+    <string name="thropy3">Player who took 3st place in the tournament</string>
+    <string name="thropy_error">Decryption Error of Trophy</string>
+    <string name="education">Training</string>
+    <string name="beginner">"Beginner "</string>
+    <string name="player">Player</string>
+    <string name="amateur">"Гравець "</string>
+    <string name="veteran">"Veteran "</string>
+    <string name="expert">"Expert "</string>
+    <string name="legend">"Legend "</string>
+    <string name="grandmaster">Grandmaster</string>
+    <string name="language_question">" Language of the Question"</string>
+    <string name="language_quiz">" Language of the Quest "</string>
+    <string name="soon___">Soon</string>
+    <string name="quiz_not_translated">Quest is not translated into your language</string>
+    <string name="quizz_not_translated">Failed to find questions that can be translated</string>
+    <string name="all_quiz_loaded">All available questions are loaded</string>
+    <string name="search_title">"Search "</string>
+    <string name="search_message">Take a random quest from this list</string>
+    <string name="send_to_arena_title">Send to Arena</string>
+    <string name="send_to_arena_negative">"Cancel "</string>
+    <string name="translate_title">Translate</string>
+    <string name="translate_message">Translation services are paid</string>
+    <string name="shop_fragment_text_donate">Support us as much as you see fit</string>
+    <string name="shop_fragment_donate">GooglePlay</string>
+    <string name="donate_coffe">Сoffe</string>
+    <string name="donate_сake">Торт</string>
+    <string name="donate_team_meal">Lunch for the team</string>
+
 
 </resources>

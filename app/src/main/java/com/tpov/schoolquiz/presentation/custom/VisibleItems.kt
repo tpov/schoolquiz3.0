@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.custom
 
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
+import com.tpov.schoolquiz.presentation.*
 
 object VisibleItems {
 
@@ -16,14 +17,18 @@ object VisibleItems {
             items.add(R.string.nav_global to R.drawable.baseline_public_24)
         }
 
-        if (skill >= 2_0000) {
+        if (skill >= COUNT_SKILL_BEGINNER) {
         }
 
         if (skill >= 6_0000) {
 
         }
 
-        if (qualification.translator >= 100 || qualification.tester >= 100 || qualification.admin >= 100 || qualification.moderator >= 100 || qualification.developer >= 100) {
+        if (qualification.translator >= LVL_TRANSLATOR_1_LVL
+            || qualification.tester >= LVL_TESTER_1_LVL
+            || qualification.admin >= LVL_ADMIN_1_LVL
+            || qualification.moderator >= LVL_MODERATOR_1_LVL
+            || qualification.developer >= LVL_DEVELOPER_1_LVL) {
             items.add(
                 R.string.nav_profile to R.drawable.nav_profile
             )
@@ -33,7 +38,7 @@ object VisibleItems {
         }
 
 
-        if (qualification.developer >= 100) {
+        if (qualification.developer >= LVL_DEVELOPER_1_LVL) {
             items.add(R.string.nav_leaders to R.drawable.nav_leader)
             items.add(R.string.nav_players to R.drawable.nav_user)
             items.add(R.string.nav_news to R.drawable.ic_new)
@@ -58,7 +63,7 @@ object VisibleItems {
         }
 
 
-        if (qualification.developer >= 100) {
+        if (qualification.developer >= LVL_DEVELOPER_1_LVL) {
             items.add(R.string.nav_downloads to R.drawable.baseline_download_24)
             items.add(R.string.nav_settings to R.drawable.ic_settings)
         }

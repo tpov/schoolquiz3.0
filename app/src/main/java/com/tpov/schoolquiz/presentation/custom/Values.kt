@@ -6,6 +6,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesSkill.COUNT_COLOR_8
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
 import java.util.*
@@ -24,26 +26,24 @@ object Values {
 
     fun getNameThropy(language: String): String {
         return when (language) {
-            //🥇🥈️🥉🎖🏅🏆🎗️🎃🎄🎁🎧🎞️📀🪙⭐🏆🎯🎓🏰❤
-            "\uD83E\uDD47" -> "занявший 1 место в турнире"
-            "\uD83E\uDD48" -> "Игрок занявший 2 место в турнире"
-            "\uD83E\uDD49" -> "занявший 3 место в турнире"
-            "Немецкий" -> "de"
-            "Испанский" -> "es"
-            else -> Locale.getDefault().language
+            //🎖🏅🏆🎗️🎃🎄🎁🎧🎞️📀🪙⭐🏆🎯🎓🏰❤
+            THROPHY1 -> context.getString(R.string.thropy1)
+            THROPHY2 -> context.getString(R.string.thropy2)
+            THROPHY3 -> context.getString(R.string.thropy2)
+            else -> context.getString(R.string.thropy_error)
         }
     }
 
-    fun getMapStars(): Map<Double, String> {
+    fun getMapStars(): Map<Int, String> {
         return mapOf(
-            0.0 to "Обучение",
-            0.2 to "Новичек",
-            2.0 to "Игрок",
-            6.0 to "Любитель",
-            13.0 to "Ветеран",
-            25.0 to "Гроссместер",
-            50.0 to "Єксперт",
-            100.0 to "Легенда",
+            COUNT_SKILL_EDUCATION to context.getString(R.string.education),
+            COUNT_SKILL_BEGINNER to context.getString(R.string.beginner),
+            COUNT_SKILL_PLAYER to context.getString(R.string.player),
+            COUNT_SKILL_AMATEUR to context.getString(R.string.amateur),
+            COUNT_SKILL_VETERAN to context.getString(R.string.veteran),
+            COUNT_SKILL_GRANDMASTER to context.getString(R.string.grandmaster),
+            COUNT_SKILL_EXPERT to context.getString(R.string.expert),
+            COUNT_SKILL_LEGEND to context.getString(R.string.legend),
         )
     }
 
@@ -65,17 +65,14 @@ object Values {
     }
 
     fun getImportance(profile: ProfileEntity): Int {
-        log("profile.datePremium!! > TimeManager.getCurrentTime():  ${profile.datePremium!! > TimeManager.getCurrentTime()}")
-        log("TimeManager.getCurrentTime():  ${TimeManager.getCurrentTime()}")
-        log("profile.datePremium:  ${profile.datePremium}")
-        return if (profile.pointsSkill!! < 1_0000) 8
-        else if (profile.tester!! >= 100) 2
-        else if (profile.translater!! >= 100) 3
-        else if (profile.moderator!! >= 100) 5
-        else if (profile.admin!! >= 100) 0
-        else if (profile.developer!! >= 100) 6
-        else if (profile.datePremium > TimeManager.getCurrentTime()) 7
-        else if (profile.pointsSkill >= 1000_0000 ) 4
+        return if (profile.pointsSkill!! < COUNT_COLOR_8) 8
+        else if (profile.tester!! >= LVL_TESTER_1_LVL) 2
+        else if (profile.translater!! >= LVL_TRANSLATOR_1_LVL) 3
+        else if (profile.moderator!! >= LVL_MODERATOR_1_LVL) 5
+        else if (profile.admin!! >= LVL_ADMIN_1_LVL) 0
+        else if (profile.developer!! >= LVL_DEVELOPER_1_LVL) 6
+        else if (profile.datePremium!! > TimeManager.getCurrentTime()) 7
+        else if (profile.pointsSkill >= COUNT_SKILL_LEGEND) 4
         else 1
     }
 

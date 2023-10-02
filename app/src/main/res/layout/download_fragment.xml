@@ -7,14 +7,12 @@
     android:paddingTop="110dp"
     android:orientation="vertical">
 
-    <!-- RecyclerView для отображения скачанных ресурсов -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewDownloadedResources"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
-    <!-- Информация о базе данных Room -->
     <TextView
         android:id="@+id/tvDatabaseInfo"
         android:layout_width="wrap_content"

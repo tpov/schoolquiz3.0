@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.schoolquiz.presentation.custom.Logcat
 import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
 import kotlinx.coroutines.*
@@ -59,13 +60,11 @@ class EventViewModel @Inject constructor(
 
     suspend fun loadQuests() {
         log("loadQuests")
-        // Здесь загружайте список квестов и устанавливайте значение для questsLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
 
     suspend fun loadQuestion(idQuestion: Int) {
         log("getQuestionListUseCase() :${getQuestionListUseCase()}")
-        // Здесь загружайте вопрос и устанавливайте значение для questionLiveData
         questionLiveData.value = getQuestionListUseCase()
     }
 
@@ -197,15 +196,11 @@ class EventViewModel @Inject constructor(
             if (currentMinLvlTranslate == null || lvlTranslate < currentMinLvlTranslate) {
                 wordsMap[word] = lvlTranslate
             }
-            val result = wordsMap.entries.joinToString(separator = "|") { entry ->
+            val result = wordsMap.entries.joinToString(separator = SPLIT_BETWEEN_LANGUAGES) { entry ->
                 "${entry.key}-${entry.value}"
             }
-
-
         }
-
     }
-
 
     private fun hasTpovIdZeroAtEnd(infoTranslater: String): String {
         return if (infoTranslater.endsWith("${getTpovId()}|")) infoTranslater
@@ -219,12 +214,12 @@ class EventViewModel @Inject constructor(
 
     private fun parseInfoTranslater(infoTranslater: String): Map<String, String> {
 
-        val keyValuePairs = infoTranslater.split("|")
+        val keyValuePairs = infoTranslater.split(SPLIT_BETWEEN_LANGUAGES)
         val infoMap = mutableMapOf<String, String>()
 
         for (pair in keyValuePairs) {
             try {
-                val (key, value) = pair.split("|").map { it.trim() }
+                val (key, value) = pair.split(SPLIT_BETWEEN_LANGUAGES).map { it.trim() }
                 if (key.isNotBlank()) {
                     infoMap[key] = value
                 }
@@ -238,7 +233,6 @@ class EventViewModel @Inject constructor(
     private fun getProfileLvlTranslate(): Int {
         return getProfileUseCase(getTpovId()).translater ?: 0
     }
-
 }
 
 @OptIn(InternalCoroutinesApi::class)

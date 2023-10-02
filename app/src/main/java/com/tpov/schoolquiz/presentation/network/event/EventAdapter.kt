@@ -12,7 +12,8 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.presentation.custom.CoastValuesNolic.COEF_COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
 import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
@@ -219,9 +220,9 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         ) {
         val alertDialog = AlertDialog.Builder(context)
-            .setTitle("Перевести")
-            .setMessage("Сервисы перевода платные")
-            .setPositiveButton("(-) $nolics ноликов") { _, _ ->
+            .setTitle(context.getString(R.string.translate_title))
+            .setMessage(context.getString(R.string.translate_message))
+            .setPositiveButton("(-) $nolics nolics") { _, _ ->
                 mainViewModel.updateProfileUseCase(
                     mainViewModel.getProfile().copy(
                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
@@ -232,7 +233,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 translateText(viewModel, context, quizEntity)}
                 popupWindow.dismiss()
             }
-            .setNegativeButton("Посмотреть рекламу", null)
+            .setNegativeButton(context.getString(R.string.translate_negative), null)
             .create()
 
         alertDialog.setOnShowListener { dialog ->
@@ -312,13 +313,13 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 }
 
                 val languageString = quizEntity.languages // Получите строку языков из quizEntity
-                val languageItems = languageString.split("|") // Разделите строку на элементы
+                val languageItems = languageString.split(SPLIT_BETWEEN_LANGUAGES) // Разделите строку на элементы
 
                 val languageMap =
-                    mutableMapOf<String?, Int?>() // Создайте пустой Map для хранения соответствия язык-число
+                    mutableMapOf<String?, Int?>()
 
                 for (item in languageItems) {
-                    val parts = item.split("-") // Разделите элемент на ключ и значение
+                    val parts = item.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG) // Разделите элемент на ключ и значение
                     if (parts.size == 2) {
                         val language = parts[0]
                         val value = parts[1].toIntOrNull()
@@ -337,7 +338,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 try {
                     tvPopup1.text = "lvl: ${languageMap.keys.toList()[0]}"
                 } catch (e: Exception) {
-                    tvPopup1.text = "Квест еще не переведен на ваш язык"
+                    tvPopup1.text = context.getString(R.string.quiz_not_translated)
                 }
                 spListPopup1.adapter = adapter
                 spListPopup1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -376,15 +377,35 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 spListPopup1.visibility = View.GONE
                 bPopup1.visibility = View.GONE
 
-                tvPopup2.text = "К-во легких вопросов: ${quizEntity.numQ}"
-                tvPopup1.text = "К-во сложных вопросов: ${quizEntity.numHQ}"
-                tvPopup3.text = "Дата создания: ${quizEntity.data}"
-                tvPopup4.text = "Рейтинг квеста: ${quizEntity.ratingPlayer}/3"
-                tvPopup5.text = "Ваш лучший результат: ${quizEntity.stars}/120"
-                tvPopup6.text = "Ваш средний результат: ${quizEntity.starsAll}/120"
-                tvPopup7.text = "Средний результат всх игроков: ${quizEntity.starsAllPlayer}/120"
-                tvPopup8.text = "Лучший результат всех игроков: ${quizEntity.starsPlayer}/120"
-                tvPopup9.text = "Версия квеста: ${quizEntity.versionQuiz}"
+                tvPopup2.text = context.getString(R.string.popup_menu_num_easy_questions, quizEntity.numQ)
+                tvPopup1.text = context.getString(R.string.popup_menu_num_hard_questions, quizEntity.numHQ)
+                tvPopup3.text = context.getString(R.string.popup_menu_date_created, quizEntity.data)
+                tvPopup4.text = context.getString(R.string.popup_menu_rating,
+                    quizEntity.ratingPlayer / RATING_QUIZ_ALL_POINTS_IN_FB,
+                    COUNT_STARS_QUIZ_RATING
+                )
+                tvPopup5.text = context.getString(
+                    R.string.popup_menu_best_result,
+                    quizEntity.stars,
+                    MAX_PERCENT_HARD_QUIZ_FULL
+                )
+                tvPopup6.text = context.getString(
+                    R.string.popup_menu_average_result,
+                    quizEntity.starsAll,
+                    MAX_PERCENT_HARD_QUIZ_FULL
+                )
+                tvPopup7.text = context.getString(
+                    R.string.popup_menu_avg_all_players,
+                    quizEntity.starsAllPlayer,
+                    MAX_PERCENT_HARD_QUIZ_FULL
+                )
+                tvPopup8.text = context.getString(
+                    R.string.popup_menu_best_all_players,
+                    quizEntity.starsPlayer,
+                    MAX_PERCENT_HARD_QUIZ_FULL
+                )
+                tvPopup9.text = context.getString(R.string.popup_menu_quiz_version, quizEntity.versionQuiz)
+
             }
 
             popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
@@ -422,8 +443,8 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             val imageQuiz = itemView.findViewById<ImageView>(R.id.imageView)
 
             val lvlTranslate = viewModel.findValueForDeviceLocale(quiz.id!!)
-            if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
             if (quiz.picture != "") Picasso.get().load(quiz.picture).into(imageQuiz)
@@ -470,8 +491,8 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             val imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
             val lvlTranslate = viewModel.findValueForDeviceLocale(quiz.id!!)
-            if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
             val ratingBar = itemView.findViewById<RatingBar>(R.id.ratingBar)
             ratingBar.visibility = View.GONE
@@ -520,8 +541,8 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             var imvTranslateBindQuiz4 = itemView.findViewById<ImageView>(R.id.imv_translate)
             val lvlTranslate = viewModel.findValueForDeviceLocale(quiz.id!!)
-            if (lvlTranslate < 100) imvTranslateBindQuiz4.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < 200) imvTranslateBindQuiz4.setColorFilter(Color.YELLOW)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslateBindQuiz4.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslateBindQuiz4.setColorFilter(Color.YELLOW)
             else imvTranslateBindQuiz4.setColorFilter(Color.BLUE)
             val ratingBar = itemView.findViewById<RatingBar>(R.id.ratingBar)
             val imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
@@ -561,8 +582,8 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             var imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
             val lvlTranslate = viewModel.findValueForDeviceLocale(question.idQuiz)
-            if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
             imvTranslate.imageAlpha = 85
             imvTranslate.setOnTouchListener { view, event ->
@@ -598,8 +619,8 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             val lvlTranslate = viewModel.findValueForDeviceLocale(question.idQuiz)
             var imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
-            if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
             imvTranslate.imageAlpha = 85
             imvTranslate.setOnTouchListener { view, event ->
@@ -633,8 +654,8 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             itemView.findViewById<AppCompatCheckBox>(R.id.chb_type_quiz).visibility = View.GONE
             val lvlTranslate = viewModel.findValueForDeviceLocale(question.idQuiz)
             var imvTranslate = itemView.findViewById<ImageView>(R.id.imv_translate)
-            if (lvlTranslate < 100) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < 200) imvTranslate.setColorFilter(Color.YELLOW)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
             imvTranslate.imageAlpha = 85

@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.FragmentTranslateQuestionBinding
 import com.tpov.schoolquiz.presentation.MainApp
@@ -115,7 +116,7 @@ class TranslateQuestionFragment : BaseFragment() {
             } else {
                 Toast.makeText(
                     activity,
-                    "Не удалось найти вопросы, которые можно перевести",
+                    getString(R.string.quizz_not_translated),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -138,7 +139,7 @@ class TranslateQuestionFragment : BaseFragment() {
                 else {
                     Toast.makeText(
                         activity,
-                        "Не удалось найти вопросы, которые можно перевести",
+                        getString(R.string.quizz_not_translated),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -197,7 +198,7 @@ class TranslateQuestionFragment : BaseFragment() {
         } else {
             Toast.makeText(
                 activity,
-                "Все доступные вопросы загружены",
+                getString(R.string.all_quiz_loaded),
                 Toast.LENGTH_SHORT
             ).show()
             requireActivity().supportFragmentManager.beginTransaction().remove(this)

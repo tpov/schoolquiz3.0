@@ -370,7 +370,7 @@
                         android:layout_marginLeft="12dp"
                         android:layout_marginTop="2dp"
                         android:layout_marginRight="12dp"
-                        android:text="Соединение с сервером"
+                        android:text=""
                         android:visibility="gone" />
 
                     <ProgressBar

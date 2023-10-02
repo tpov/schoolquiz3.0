@@ -1,0 +1,862 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 7.3.1" type="baseline" client="gradle" dependencies="false" name="AGP (7.3.1)" variant="fatal" version="7.3.1">
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light2&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light2&quot;>Тихий океан больше Атлантического океана.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="2"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light2&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light2&quot;>Тихий океан більший за Атлантичний океан.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="2"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light3&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light3&quot;>Суэцкий канал соединяет Красное море и Индийский океан.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="3"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light3&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light3&quot;>Суецький канал з`єднує Червоне море та Індійський океан.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="3"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light4&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light4&quot;>Исток реки Нил находится в Египте.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="4"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light4&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light4&quot;>Витік річки Ніл знаходиться в Єгипті.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="4"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light5&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light5&quot;>Река Амазонка - самая длинная река в Америке.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light5&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light5&quot;>Річка Амазонка – найдовша річка в Америці.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light6&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light6&quot;>Озеро Байкал - старейшее и самое глубокое пресноводное озеро в мире.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="6"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light6&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light6&quot;>Озеро Байкал - найстаріше та найглибше прісноводне озеро у світі.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="6"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light7&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light7&quot;>Самая длинная река в России — Лена.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="8"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light7&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light7&quot;>Найдовша річка в росії – Лена.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="8"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light8&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light8&quot;>Штаб-квартира ООН находится в Нью-Йорке.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="9"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light8&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light8&quot;>Штаб-квартира ООН знаходиться у Нью-Йорку.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="9"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light9&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light9&quot;>Габороне — столица Габона.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="10"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light9&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light9&quot;>Габороне - столиця Габону.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="10"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light10&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light10&quot;>Сицилию омывает Средиземное море.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="11"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light10&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light10&quot;>Сицилію омиває Середземне море.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="11"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light11&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light11&quot;>Столица Ирландии — Дублин.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="12"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light11&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light11&quot;>Столиця Ірландії - Дублін.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="12"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light12&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light12&quot;>Раньше Париж носил название Лютеция.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="13"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light12&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light12&quot;>Раніше Париж звався Лютеція.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="13"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light13&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light13&quot;>Атлас – это цепь горных хребтов, расположенная в Европе.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="14"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light13&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light13&quot;>Атлас – це ланцюг гірських хребтів, розташований у Європі.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="14"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light14&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light14&quot;>В Китае, несмотря на его внушительные размеры, всего один часовой пояс.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="15"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light14&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light14&quot;>У Китаї, незважаючи на його значні розміри, лише один часовий пояс.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="15"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light15&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light15&quot;>Пирамиды майя города Чичен-Ица находятся в Перу.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="16"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light15&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light15&quot;>Піраміди майя міста Чичен-Іца знаходяться в Перу.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="16"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light16&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light16&quot;>Рейкьявик — столица Исландии.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="17"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light16&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light16&quot;>Рейк`явік - столиця Ісландії.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="17"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light17&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light17&quot;>Самая холодная точка мира, где постоянно проживают люди, — российское село Оймякон.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="18"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light17&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light17&quot;>Найхолодніша точка світу, де постійно проживають люди, — російське село Ойм`якон.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="18"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light18&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light18&quot;>Украина - самая большая страна, которая полностью находится в Европе.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="19"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light18&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light18&quot;>Україна - найбільша країна, яка повністю розташована в Європі.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="19"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light19&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light19&quot;>Германская империя - это тоже самое, что и Третий Рейх.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="20"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light19&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light19&quot;>Німецька імперія - це теж саме, що й Третій Рейх.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="20"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light20&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light20&quot;>Каспийское море - самое солёное озеро в мире.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="21"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_light20&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_light20&quot;>Каспійське море - найсолоніше озеро в світі.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="21"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard1&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard1&quot;>Большенство бельгейцев живут в сельской местности.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="23"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard1&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard1&quot;>Більшість бельгейців живуть у сільській місцевості.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="23"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard2&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard2&quot;>В прибалтийских странах ни одна женщина не избиралась на пост президента.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard2&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard2&quot;>У прибалтійських країнах жодна жінка не обиралася на пост президента.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard3&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard3&quot;>Андорра - единственное княжество в мире.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="25"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard3&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard3&quot;>Андорра – єдине князівство у світі.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="25"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard4&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard4&quot;>Название государства Бельгия происходит от названия древнего племени.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="26"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard4&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard4&quot;>Назва держави Бельгія походить від назви стародавнього племені.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="26"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard5&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard5&quot;>Внутри Италии находятся два независимых государства.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="27"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard5&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard5&quot;>Усередині Італії знаходяться дві незалежні держави.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="27"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard6&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard6&quot;>В Европе нет стран, которые не имеют выхода к морю.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="28"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard6&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard6&quot;>У Європі немає країн, які не мають виходу на море.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="28"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard7&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard7&quot;>В Дублине нет ни одного парка.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="29"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard7&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard7&quot;>У Дубліні немає жодного парку.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="29"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard8&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard8&quot;>Сан-Марино претендует на звание старейшого суверенного государства в мире.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="30"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard8&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard8&quot;>Сан-Маріно претендує на звання найстарішої суверенної держави у світі.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="30"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard9&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard9&quot;>Великобритания - единственная европейская страна с левосторонним движением.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="31"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard9&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard9&quot;>Великобританія – єдина європейська країна з лівостороннім рухом.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="31"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard10&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard10&quot;>В Шотладнии очень жаркий климат.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="32"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard10&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard10&quot;>У Шотладнії дуже спекотний клімат.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="32"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard11&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard11&quot;>Самая большая ирландская церковь находится в Дублине.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="33"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard11&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard11&quot;>Найбільша ірландська церква знаходиться у Дубліні.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="33"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard12&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard12&quot;>В парижском Пантеоне не захоронено ни одной женжины.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="34"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard12&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard12&quot;>У паризькому Пантеоні не поховано жодної жінки.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="34"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard13&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard13&quot;>В Бельгии почти нет никаких фабрик и заводов.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="35"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard13&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard13&quot;>У Бельгії майже немає жодних фабрик та заводів.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="35"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard14&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard14&quot;>Неаполь - самый большой город в Италии.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="36"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard14&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard14&quot;>Неаполь – найбільше місто в Італії.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="36"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard15&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard15&quot;>В Англии есть город, в названии которого присутсвует воскликательный знак(!).&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="37"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard15&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard15&quot;>В Англії є місто, в назві якого присутній знак оклику (!).&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="37"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard16&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard16&quot;>Швеция - самая маленькая скандинавская страна.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="38"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard16&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard16&quot;>Швеція – найменша скандинавська країна.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="38"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard17&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard17&quot;>Швейцария не брала участи во второй мировой войне&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="39"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard17&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard17&quot;>Швейцарія не брала участі у другій світовій війні&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="39"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard18&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard18&quot;>Раньше корейский полуостров была под контролем Японии&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="40"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard18&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard18&quot;>Раніше корейський півострів був під контролем Японії.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="40"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard19&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard19&quot;>США забрала Аляску войной&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="41"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard19&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard19&quot;>США забрала Аляску війною.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="41"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard20&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard20&quot;>Вьетнам победил у войне с США благодаря численности населения&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-ru/strings.xml"
+            line="42"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;question_hard20&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;question_hard20&quot;>В`єтнам переміг у війні зі США завдяки чисельності населення&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-uk/strings.xml"
+            line="42"
+            column="13"/>
+    </issue>
+
+</issues>

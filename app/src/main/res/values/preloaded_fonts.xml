@@ -3,7 +3,10 @@
     <array name="preloaded_fonts" translatable="false">
         <item>@font/alex_brush</item>
         <item>@font/annie_use_your_telescope</item>
+        <item>@font/architects_daughter</item>
+        <item>@font/cutive_mono</item>
         <item>@font/diplomata_sc</item>
+        <item>@font/roboto_mono_thin</item>
         <item>@font/rochester</item>
     </array>
 </resources>
