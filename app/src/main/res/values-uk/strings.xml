@@ -303,6 +303,7 @@
     <string name="translate_message">"Послуги перекладу платні "</string>
     <string name="shop_fragment_text_donate">Підтримайте нас, скільки вважаєте за потрібне</string>
     <string name="shop_fragment_donate">GooglePlay</string>
+    <string name="shop_fragment_donate_title">Ви можете донатити кілька разів</string>
     <string name="donate_coffe">Коффе</string>
     <string name="donate_сake">Торт</string>
     <string name="donate_team_meal">Обід для команди</string>

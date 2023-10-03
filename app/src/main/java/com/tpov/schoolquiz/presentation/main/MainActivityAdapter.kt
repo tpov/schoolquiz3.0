@@ -263,20 +263,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }*/
 
             imvTranslate.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
-                    // Rating bar clicked, handle the event here
-                    // You can call your method to show the translation popup/dialog
+                if (event.action == MotionEvent.ACTION_UP)
                     showPopupInfo(quizEntity, event, POPUP_TRANSLATE, viewModel)
-                }
                 true
             }
 
             ratingBar.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
-                    // Rating bar clicked, handle the event here
-                    // You can call your method to show the translation popup/dialog
+                if (event.action == MotionEvent.ACTION_UP)
                     showPopupInfo(quizEntity, event, POPUP_STARS, viewModel)
-                }
                 true
             }
 
@@ -423,9 +417,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             viewModel: MainActivityViewModel
         ) {
             val context = itemView.context
-            // Create the popup window
-            val inflater =
-                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val popupView = inflater.inflate(R.layout.translation_popup_layout, null)
             val popupWindow = PopupWindow(
                 popupView,
@@ -434,7 +426,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 true
             )
 
-            // Configure the popup window
             val tvPopup1 = popupView.findViewById<TextView>(R.id.tv_popup_1)
             val tvPopup2 = popupView.findViewById<TextView>(R.id.tv_popup_2)
             val tvPopup3 = popupView.findViewById<TextView>(R.id.tv_popup_3)

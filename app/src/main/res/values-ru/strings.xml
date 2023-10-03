@@ -274,6 +274,7 @@
     <string name="userguide_title_developer_massage">Сообщение разработчика</string>
     <string name="shop_fragment_text_donate">Поддержите нас, сколько считаете нужным</string>
     <string name="shop_fragment_donate">GooglePlay</string>
+    <string name="shop_fragment_donate_title">Вы можете донатить несколько раз</string>
     <string name="donate_coffe">Коффе</string>
     <string name="donate_сake">Торт</string>
     <string name="donate_team_meal">Обед для команды</string>

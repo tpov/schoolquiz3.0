@@ -133,6 +133,8 @@
                     android:background="@null"
                     android:elevation="12dp"
                     android:gravity="center"
+                    android:scrollHorizontally="true"
+                    android:scrollbars="horizontal"
                     android:inputType="textAutoCorrect"
                     android:paddingLeft="4dp"
                     android:text="name quiz very long name"

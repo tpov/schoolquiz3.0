@@ -1,9 +1,10 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Base application theme. -->
     <style name="Theme.GeoQuiz" parent="Theme.AppCompat.Light">
+
         <!-- Primary brand color. -->
         <!-- Secondary brand color. -->
-
+        <item name="android:fontFamily">@font/cutive_mono</item>
         <item name="android:colorPrimary">@color/white</item>
         <item name="android:colorPrimaryDark">@color/design3_main_end</item> //Цвет статуса бара
         <item name="android:colorAccent">#FFFFFF</item>    //текст

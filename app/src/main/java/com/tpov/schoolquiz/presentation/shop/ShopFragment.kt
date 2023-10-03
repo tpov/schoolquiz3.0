@@ -39,6 +39,7 @@ import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCount
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
+import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.schoolquiz.secure.secureCode.getAdUnitId
 import kotlinx.android.synthetic.main.info_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -49,6 +50,7 @@ class ShopFragment : BaseFragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
+    private lateinit var billingClient: BillingClient
 
     @OptIn(InternalCoroutinesApi::class)
     private val component by lazy {
@@ -81,6 +83,53 @@ class ShopFragment : BaseFragment() {
         return binding.root
     }
 
+    private fun querySkuDetails() {
+        val params = SkuDetailsParams.newBuilder()
+            .setSkusList(listOf("donate_1", "donate_5", "donate_20"))
+            .setType(BillingClient.SkuType.INAPP)
+        billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
+            log("skuDetailsList $skuDetailsList")
+            log("skuDetailsList ${skuDetailsList?.sortedBy { it.priceAmountMicros  }}")
+            if (skuDetailsList != null) setupDonateButton(skuDetailsList.sortedBy { it.priceAmountMicros  })
+        }
+    }
+
+    private fun setupDonateButton(skuDetailsList: List<SkuDetails>) {
+        binding.bDonate.setOnClickListener {
+            billingClient.startConnection(object : BillingClientStateListener {
+                override fun onBillingSetupFinished(billingResult: BillingResult) {
+                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+
+                        val params = listOf(
+                            "1$" to skuDetailsList[0].description,
+                            "5$" to skuDetailsList[1].description,
+                            "20$" to skuDetailsList[2].description
+                        ).map { "${it.first} -> ${it.second}" }.toTypedArray()
+
+                        val alertDialog = AlertDialog.Builder(requireContext())
+                            .setTitle(getString(R.string.shop_fragment_donate_title))
+                            .setItems(params) { dialog, which ->
+                                val selectedSkuDetails = skuDetailsList[which]
+                                val flowParams = BillingFlowParams.newBuilder()
+                                    .setSkuDetails(selectedSkuDetails)
+                                    .build()
+                                billingClient.launchBillingFlow(requireActivity(), flowParams)
+                            }
+                            .create()
+
+                        alertDialog.show()
+                        alertDialog.window?.setBackgroundDrawableResource(R.color.grey)
+
+                    }
+                }
+
+                override fun onBillingServiceDisconnected() {
+                    // Handle error here
+                }
+            })
+        }
+
+    }
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -92,50 +141,30 @@ class ShopFragment : BaseFragment() {
         context?.let { MobileAds.initialize(it) {} }
         loadRewardedAd()
 
-        binding.bDonate.setOnClickListener {
-            var billingClient = BillingClient.newBuilder(requireContext())
-                .setListener { billingResult, purchases ->
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null)
-                        Toast.makeText(context, "Thank you!!!", Toast.LENGTH_SHORT).show()
-                    else Toast.makeText(context, "Error donation :(", Toast.LENGTH_SHORT).show()
+        // Инициализация BillingClient
+        billingClient = BillingClient.newBuilder(requireContext())
+            .setListener { billingResult, purchases ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+                    Toast.makeText(context, "Thank you!!!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Error donation :(", Toast.LENGTH_SHORT).show()
                 }
-                .enablePendingPurchases()
-                .build()
+            }
+            .enablePendingPurchases()
+            .build()
 
-            billingClient.startConnection(object : BillingClientStateListener {
-                override fun onBillingSetupFinished(billingResult: BillingResult) {
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        // Запрос доступных SKU
-                        val params = SkuDetailsParams.newBuilder()
-                        params.setSkusList(listOf(getString(R.string.donate_coffe), getString(R.string.donate_сake), getString(R.string.donate_team_meal)))
-                            .setType(BillingClient.SkuType.INAPP)
-                        billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
-                            binding.bDonate.setOnClickListener {
-                                val options = arrayOf("1$", "5$", "10$")
-                                AlertDialog.Builder(requireContext())
-                                    .setTitle("Вы можете донатить несколько раз")
-                                    .setItems(options) { _, which ->
-                                        val selectedSku = when (which) {
-                                            0 -> "donate_1"
-                                            1 -> "donate_5"
-                                            2 -> "donate_10"
-                                            else -> return@setItems
-                                        }
-                                        val flowParams = BillingFlowParams.newBuilder()
-                                            .setSkuDetails(skuDetailsList?.find { it.sku == selectedSku }!!)
-                                            .build()
-                                        billingClient.launchBillingFlow(requireActivity(), flowParams)
-                                    }
-                                    .show()
-                            }
-                        }
-                    }
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    querySkuDetails()
                 }
-                override fun onBillingServiceDisconnected() {
-                    Toast.makeText(context, "Error donate", Toast.LENGTH_SHORT).show()
-                }
-            })
-        }
+            }
+
+            override fun onBillingServiceDisconnected() {
+            }
+        })
+
+
 
         binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
         binding.btnBuyAd.setOnClickListener {

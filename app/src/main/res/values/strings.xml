@@ -330,6 +330,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="donate_coffe">Сoffe</string>
     <string name="donate_сake">Торт</string>
     <string name="donate_team_meal">Lunch for the team</string>
+    <string name="shop_fragment_donate_title">You can donate several times</string>
 
 
 </resources>
