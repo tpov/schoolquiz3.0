@@ -1,4 +1,39 @@
 ![image](https://github.com/tpov/schoolquiz3.0/assets/33009369/4475578c-a2a4-4d1b-bbcc-8988c38fd600)# SchoolQuiz (alfa)
+### SchoolQuiz 3.0
+SchoolQuiz 3.0 is a mobile app for hosting quizzes. Users can choose from various question themes such as Geography, Space, Mathematics, and many more. The app also features a rating system and the ability to watch ads for bonuses.
+
+#### Main Features:
+
+- Quizzes on various topics.
+- Rating system to track progress.
+- Earn bonuses by watching ads.
+- User profile with diverse statistics.
+- Create your own quiz questions.
+- Chat to interact with other users.
+- Qualifications for additional features and roles.
+- Automatic question translation for international users.
+
+#### Libraries Used:
+
+- Userguide - Your own library for creating user guides and instructions.
+
+#### How to Start:
+
+Clone the repository:
+```bash
+git clone https://github.com/tpov/schoolquiz3.0.git
+```
+
+Navigate to the project directory:
+```bash
+cd schoolquiz3.0
+```
+
+(If needed) Install all required dependencies.
+
+#### Google Play Link:
+[SchoolQuiz on Google Play](#)
+
 
 Добро пожаловать в SchoolQuiz – квест "Правда-ложь"! Этот захватывающий квест готов потрясти ваши мозговые извилины и заставить их работать на полную мощность. И так, отправляемся в мир знаний!
 
@@ -27,41 +62,4 @@
 
 Ну что, готовы к приключению и море смеха? Погнали, Info Quiz – квест "Правда-ложь" ждет вас!
 
-
-[SchoolQuiz3_GitHub_Description.md](https://github.com/tpov/schoolquiz3.0/files/12819465/SchoolQuiz3_GitHub_Description.md)
-
-### SchoolQuiz 3.0
-SchoolQuiz 3.0 is a mobile app for hosting quizzes. Users can choose from various question themes such as Geography, Space, Mathematics, and many more. The app also features a rating system and the ability to watch ads for bonuses.
-
-#### Main Features:
-
-- Quizzes on various topics.
-- Rating system to track progress.
-- Earn bonuses by watching ads.
-- User profile with diverse statistics.
-- Create your own quiz questions.
-- Chat to interact with other users.
-- Qualifications for additional features and roles.
-- Automatic question translation for international users.
-
-#### Libraries Used:
-
-- Userguide - Your own library for creating user guides and instructions.
-
-#### How to Start:
-
-Clone the repository:
-\```bash
-git clone https://github.com/tpov/schoolquiz3.0.git
-\```
-
-Navigate to the project directory:
-```bash
-cd schoolquiz3.0
-```
-
-(If needed) Install all required dependencies.
-
-#### Google Play Link:
-[SchoolQuiz on Google Play](#)
 
