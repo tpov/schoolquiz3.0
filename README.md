@@ -31,7 +31,6 @@ cd schoolquiz3.0
 (If needed) Install all required dependencies.
 
 #### Google Play Link:
-[SchoolQuiz on Google Play](#)
 [![SchoolQuiz on Google Play]([URL_картинки](https://github.com/tpov/schoolquiz3.0/assets/33009369/3b525c5f-4b34-43ed-8157-a7db50afedcf))](https://play.google.com/store/apps/details?id=com.tpov.schoolquiz)
 
 
