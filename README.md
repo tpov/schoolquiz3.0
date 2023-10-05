@@ -31,7 +31,7 @@ cd schoolquiz3.0
 (If needed) Install all required dependencies.
 
 #### Google Play Link:
-[![SchoolQuiz on Google Play](https://github.com/tpov/schoolquiz3.0/blob/main/assets/33009369/3b525c5f-4b34-43ed-8157-a7db50afedcf.png)](https://play.google.com/store/apps/details?id=com.tpov.schoolquiz)
+[![SchoolQuiz on Google Play](https://raw.githubusercontent.com/tpov/schoolquiz3.0/main/assets/33009369/3b525c5f-4b34-43ed-8157-a7db50afedcf.png)](https://play.google.com/store/apps/details?id=com.tpov.schoolquiz)
 
 Добро пожаловать в SchoolQuiz – квест "Правда-ложь"! Этот захватывающий квест готов потрясти ваши мозговые извилины и заставить их работать на полную мощность. И так, отправляемся в мир знаний!
 
