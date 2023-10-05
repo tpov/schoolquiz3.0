@@ -38,4 +38,4 @@ SchoolQuiz 3.0 - это мобильное приложение для пров�
 Возможность зарабатывать бонусы, просматривая рекламу.
 Пользовательский профиль с различной статистикой.
 Ссылка на Google Play:
-[SchoolQuiz на Google Play](https://play.google.com/store/apps/details?id=com.tpov.schoolquiz)https://play.google.com/store/apps/details?id=com.tpov.schoolquiz
+[SchoolQuiz на Google Play](https://play.google.com/store/apps/details?id=com.tpov.schoolquiz)
