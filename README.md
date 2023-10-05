@@ -1,4 +1,4 @@
-# SchoolQuiz (alfa)
+![image](https://github.com/tpov/schoolquiz3.0/assets/33009369/4475578c-a2a4-4d1b-bbcc-8988c38fd600)# SchoolQuiz (alfa)
 
 Добро пожаловать в SchoolQuiz – квест "Правда-ложь"! Этот захватывающий квест готов потрясти ваши мозговые извилины и заставить их работать на полную мощность. И так, отправляемся в мир знаний!
 
@@ -56,9 +56,9 @@ git clone https://github.com/tpov/schoolquiz3.0.git
 \```
 
 Navigate to the project directory:
-\```bash
+```bash
 cd schoolquiz3.0
-\```
+```
 
 (If needed) Install all required dependencies.
 
