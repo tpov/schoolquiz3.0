@@ -29,3 +29,39 @@
 
 
 [SchoolQuiz3_GitHub_Description.md](https://github.com/tpov/schoolquiz3.0/files/12819465/SchoolQuiz3_GitHub_Description.md)
+
+### SchoolQuiz 3.0
+SchoolQuiz 3.0 is a mobile app for hosting quizzes. Users can choose from various question themes such as Geography, Space, Mathematics, and many more. The app also features a rating system and the ability to watch ads for bonuses.
+
+#### Main Features:
+
+- Quizzes on various topics.
+- Rating system to track progress.
+- Earn bonuses by watching ads.
+- User profile with diverse statistics.
+- Create your own quiz questions.
+- Chat to interact with other users.
+- Qualifications for additional features and roles.
+- Automatic question translation for international users.
+
+#### Libraries Used:
+
+- Userguide - Your own library for creating user guides and instructions.
+
+#### How to Start:
+
+Clone the repository:
+\```bash
+git clone https://github.com/tpov/schoolquiz3.0.git
+\```
+
+Navigate to the project directory:
+\```bash
+cd schoolquiz3.0
+\```
+
+(If needed) Install all required dependencies.
+
+#### Google Play Link:
+[SchoolQuiz on Google Play](#)
+
