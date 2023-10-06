@@ -266,13 +266,6 @@
       <option name="presentableId" value="Default" />
       <updated>1678092861294</updated>
     </task>
-    <task id="LOCAL-00028" summary="Create create question dialog">
-      <created>1682950533561</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1682950533561</updated>
-    </task>
     <task id="LOCAL-00029" summary="add create question">
       <created>1683196789093</created>
       <option name="number" value="00029" />
@@ -609,7 +602,14 @@
       <option name="project" value="LOCAL" />
       <updated>1696329706795</updated>
     </task>
-    <option name="localTasksCounter" value="77" />
+    <task id="LOCAL-00077" summary="Edit: design chat (background, item view)">
+      <created>1696581932490</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1696581932490</updated>
+    </task>
+    <option name="localTasksCounter" value="78" />
     <servers />
   </component>
   <component name="UnknownFeatures">
