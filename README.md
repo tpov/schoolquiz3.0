@@ -33,7 +33,7 @@ cd schoolquiz3.0
 #### Google Play Link:
 <p align="left">
   <a href="https://play.google.com/store/apps/details?id=com.tpov.schoolquiz">
-    <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/33009369/273196784-cb73ab71-3377-4053-8cad-4061fec9b2bd.png" width="200px" alt="schoolquiz app logo" />
+    <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/33009369/273196784-cb73ab71-3377-4053-8cad-4061fec9b2bd.png" width="300px" alt="schoolquiz app logo" />
   </a>
 </p>
 Добро пожаловать в SchoolQuiz – квест "Правда-ложь"! Этот захватывающий квест готов потрясти ваши мозговые извилины и заставить их работать на полную мощность. И так, отправляемся в мир знаний!
