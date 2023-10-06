@@ -857,7 +857,7 @@ class RepositoryFBImpl @Inject constructor(
                             ) savePictureToLocalDirectory(quiz!!.picture) {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     withContext(Dispatchers.IO) {
-                                        deleteQuiz(idQuiz) // Предположим, это suspend функция
+                                        deleteQuiz(idQuiz)
                                         dao.insertQuiz(
                                             quiz.toQuizEntity(
                                                 idQuiz,
@@ -866,7 +866,7 @@ class RepositoryFBImpl @Inject constructor(
                                                 0,
                                                 it
                                             )
-                                        ) // Предположим, это тоже suspend функция
+                                        )
                                     }
                                 }
 

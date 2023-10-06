@@ -339,6 +339,11 @@ class MainActivity : AppCompatActivity() {
             layerDrawableGold.findDrawableByLayerId(android.R.id.progress).level =
                 (it?.countGold ?: 0) * COUNT_LIFE_POINTS_IN_LIFE
 
+            if (count < PERCENT_1STAR_QUIZ_SHORT) userguide.addNotification(ID_USERGUIDE_NOTIFICATION_LIFE,
+                titleText = getString(R.string.info_life_1_title),
+                text = getString(R.string.info_life_1_massage),
+                icon = resources.getDrawable(R.drawable.baseline_favorite_24)
+            )
             if (it?.countGoldLife == 1) {
                 imageViewGold.visibility = View.VISIBLE
             } else imageViewGold.visibility = View.GONE
@@ -567,21 +572,17 @@ class MainActivity : AppCompatActivity() {
 
         binding.drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
-                // Вычисляем на сколько нужно сдвинуть элемент LinearLayout
                 val slideX = drawerView.width * slideOffset
                 binding.cv.translationX = slideX
             }
 
             override fun onDrawerOpened(drawerView: View) {
-                // Вызывается при открытии шторки
             }
 
             override fun onDrawerClosed(drawerView: View) {
-                // Вызывается при закрытии шторки
             }
 
             override fun onDrawerStateChanged(newState: Int) {
-                // Вызывается при изменении состояния шторки
             }
         })
 
@@ -1034,10 +1035,19 @@ class MainActivity : AppCompatActivity() {
                         text = " - ${profile.addMassage}",
                         titleText = getString(R.string.userguide_title_developer_massage)
                     )
+                    val packageInfo = packageManager.getPackageInfo(packageName, 0)
+                    val versionCode = packageInfo.versionCode
+                    log("versionCode ${versionCode == 30015}")
+
+                    userguide.addGuideNewVersion(
+                        getString(R.string.commit_3_0_17),
+                        packageInfo.versionName,
+                        resources.getDrawable(R.drawable.nav_chat),
+                        Options(countKeyVersion = 30015).toString()
+                    )
 
                     val countSmsPoints = getCountMassageIdAndReset()
 
-                    log("lklklkl 1 $countSmsPoints")
                     log("lklklkl 2 ${getSkillByCountInChat(countSmsPoints)}")
                     viewModel.updateProfileUseCase(
                         profile.copy(

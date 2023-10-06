@@ -1,5 +1,9 @@
 <resources>
     <!-- ... -->
+    <string name="commit_3_0_17">
+        1- Edit design chat
+    </string>
+
     <string-array name="nick_colors">
         <item>Красный</item>
         <item>Зеленый</item>
@@ -182,7 +186,7 @@ In general, the timer starts if you read an unanswered question.</string>
 
     <string name="dialog_cancel">Cancel</string>
 
-    <string name="shop_fragment_get_box_for_ad_text">Get a box for 10 ads</string>
+    <string name="shop_fragment_get_box_for_ad_text">Get a box for 5 ads</string>
     <string name="shop_fragment_get_box_for_ad_show">Show</string>
     <string name="shop_fragment_buy_life_text">Buy 1 life</string>
     <string name="shop_fragment_button_buy">Buy</string>
@@ -331,6 +335,8 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="donate_сake">Торт</string>
     <string name="donate_team_meal">Lunch for the team</string>
     <string name="shop_fragment_donate_title">You can donate several times</string>
+    <string name="info_life_1_title">Life</string>
+    <string name="info_life_1_massage">Part of life is spent trying to complete a quest (33%), a whole life is spent trying to find out the answer to an easy question. \n- Lives are restored over time, 1 life in about an hour (you don’t have to be in the game itself, you can close it). Initially, 1 slot for life is available, in the store you can buy up to 5 slots (that is, 5 lives)</string>
 
 
 </resources>

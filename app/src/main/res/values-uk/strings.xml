@@ -1,5 +1,9 @@
 <resources>
     <!-- Загальні -->
+    <string name="commit_3_0_17">
+        1- Изменен дизайн чата
+    </string>
+
     <string name="arena_translate_title">Відправити на Арену</string>
     <string name="translate_negative">Скасувати</string>
     <string name="send_to_arena_text">Цей квест буде зроблений загальнодоступним для всіх гравців після успішної перевірки.</string>
@@ -64,7 +68,7 @@
 
     <string name="dialog_cancel">Скасувати</string>
 
-    <string name="shop_fragment_get_box_for_ad_text">Отримайте коробку за 10 реклам</string>
+    <string name="shop_fragment_get_box_for_ad_text">Отримайте коробку за 5 реклам</string>
     <string name="shop_fragment_get_box_for_ad_show">Показати</string>
     <string name="shop_fragment_buy_life_text">Купити 1 життя</string>
     <string name="shop_fragment_button_buy">Купити</string>
@@ -307,4 +311,6 @@
     <string name="donate_coffe">Коффе</string>
     <string name="donate_сake">Торт</string>
     <string name="donate_team_meal">Обід для команди</string>
+    <string name="info_life_1_title">Життя</string>
+    <string name="info_life_1_massage">Частину життя витрачають на те, щоб виконати квест (33%), все життя витрачають на те, щоб знайти відповідь на легке запитання. \\n- Життя відновлюються з часом, 1 життя приблизно за годину (вам не обов’язково бути в самій грі, її можна закрити). Спочатку доступний 1 слот для життя, в магазині можна купити до 5 слотів (тобто 5 життів)</string>
 </resources>

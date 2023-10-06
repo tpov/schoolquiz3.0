@@ -5,6 +5,8 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -56,6 +58,8 @@ class ShopFragment : BaseFragment() {
     private val component by lazy {
         (requireActivity().application as MainApp).component
     }
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var runnable: Runnable
     private lateinit var binding: ShopFragmentBinding
 
     @OptIn(InternalCoroutinesApi::class)
@@ -119,12 +123,11 @@ class ShopFragment : BaseFragment() {
 
                         alertDialog.show()
                         alertDialog.window?.setBackgroundDrawableResource(R.color.grey)
-
                     }
                 }
 
                 override fun onBillingServiceDisconnected() {
-                    // Handle error here
+                    Toast.makeText(context, "Error donation ServiceDisconnected :(", Toast.LENGTH_SHORT).show()
                 }
             })
         }
@@ -139,9 +142,7 @@ class ShopFragment : BaseFragment() {
         var userBalanceGold = profile.pointsGold ?: 0
 
         context?.let { MobileAds.initialize(it) {} }
-        loadRewardedAd()
 
-        // Инициализация BillingClient
         billingClient = BillingClient.newBuilder(requireContext())
             .setListener { billingResult, purchases ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
@@ -164,42 +165,39 @@ class ShopFragment : BaseFragment() {
             }
         })
 
-
-
         binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
         binding.btnBuyAd.setOnClickListener {
-
             if (getCountShowAd() >= COUNT_MAX_SHOW_AD) {
-                Toast.makeText(context, getString(R.string.toast_ad_use_limit), Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(context, getString(R.string.toast_ad_use_limit), Toast.LENGTH_SHORT).show()
             } else {
+                // Progress dots animation
+                var dotCount = 0
+                runnable = Runnable {
+                    val dots = StringBuilder()
+                    for (i in 0..dotCount) {
+                        dots.append(".")
+                    }
+                    binding.btnBuyAd.text = dots.toString()
+
+                    dotCount = (dotCount + 1) % 4
+                    handler.postDelayed(runnable, 500)
+                    if(::mRewardedAd.isInitialized) {
+                   showAd()
+                        }
+
+
+                }
+                handler.post(runnable)
+
+                binding.btnBuyAd.alpha = 0.5f
+                binding.btnBuyAd.isEnabled = false
+                binding.btnBuyAd.isClickable = false
+
                 if(::mRewardedAd.isInitialized) {
-                    mRewardedAd.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
-                            Log.d("AdFragment", "Ad dismissed")
-                            loadRewardedAd() // Загрузите новую рекламу после закрытия текущей
-                            binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
-                        }
-
-                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            Toast.makeText(context, getString(R.string.toast_ad_error_load, adError.message), Toast.LENGTH_SHORT).show()
-
-                            com.tpov.schoolquiz.presentation.question.log("error 3")
-                        }
-
-                        override fun onAdShowedFullScreenContent() {
-                        }
-                    }
-
-                    mRewardedAd.show(requireActivity()) {
-                        SharedPreferencesManager.addCountShowAd()
-                        if (getCountShowAd() == COUNT_MAX_SHOW_AD) addBoxToAccount()
-                        else loadRewardedAd()
-                    }
+                   showAd()
                 } else {
-                    Toast.makeText(context, getString(R.string.toast_ad_error_load), Toast.LENGTH_SHORT).show()
-
-                    com.tpov.schoolquiz.presentation.question.log("error 2")
+                    Toast.makeText(context, "Load...", Toast.LENGTH_SHORT).show()
+                    loadRewardedAd()
                 }
             }
         }
@@ -337,6 +335,42 @@ class ShopFragment : BaseFragment() {
             }
         }
 
+    }
+
+    private fun showAd() {
+        mRewardedAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                Log.d("AdFragment", "Ad dismissed")
+                handler.removeCallbacks(runnable)
+
+                var timeLeft = DELAY_TIMER_SHOW_AD
+                runnable = Runnable {
+                    binding.btnBuyAd.text = "$timeLeft s"
+                    if (timeLeft == 0) {
+                        handler.removeCallbacks(runnable)
+                        binding.btnBuyAd.isEnabled = true
+                        binding.btnBuyAd.isClickable = true
+                        binding.btnBuyAd.alpha = 1.0f
+                        binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
+                    } else {
+                        timeLeft--
+                        handler.postDelayed(runnable, 1000)
+                    }
+                }
+                handler.post(runnable)
+            }
+
+            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+            }
+
+            override fun onAdShowedFullScreenContent() {
+            }
+        }
+        mRewardedAd.show(requireActivity()) {
+            SharedPreferencesManager.addCountShowAd()
+            if (getCountShowAd() == COUNT_MAX_SHOW_AD) addBoxToAccount()
+            else loadRewardedAd()
+        }
     }
 
     private fun showDialogWithCallbacks(

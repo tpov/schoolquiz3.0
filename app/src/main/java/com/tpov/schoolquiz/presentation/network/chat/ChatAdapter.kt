@@ -1,11 +1,13 @@
 package com.tpov.schoolquiz.presentation.network.chat
 
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
@@ -27,8 +29,16 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
+        if (position > 0 && getItem(position).user == getItem(position - 1).user) {
+            holder.hideUserInfo()
+        } else {
+            holder.showUserInfo()
+        }
+
         holder.bind(getItem(position))
     }
+
+
     //todo date -> StickyHeader
     inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val timeTextView: TextView = itemView.findViewById(R.id.messageTimeTextView)
@@ -37,6 +47,27 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
         private val iconImageView: ImageView = itemView.findViewById(R.id.messageIconImageView)
         private val vUserMassage1: View = itemView.findViewById(R.id.v_user_massage1)
         private val vUserMassage2: View = itemView.findViewById(R.id.v_user_massage2)
+        private val textContainer: LinearLayout = itemView.findViewById(R.id.textContainer)
+        private val main_Linear_layout: LinearLayout = itemView.findViewById(R.id.main_Linear_layout)
+
+        fun hideUserInfo() {
+            timeTextView.visibility = View.GONE
+            userTextView.visibility = View.GONE
+            iconImageView.visibility = View.GONE
+           messageTextView.setPadding(150, 0, 0, 0)
+            main_Linear_layout.setPadding(30, 0, 30, 0)
+        }
+
+        fun showUserInfo() {
+            timeTextView.visibility = View.VISIBLE
+            userTextView.visibility = View.VISIBLE
+            iconImageView.visibility = View.VISIBLE
+            userTextView.paintFlags = userTextView.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+            messageTextView.setPadding(0, 0, 0, 0)
+            main_Linear_layout.setPadding(30, 30, 30, 0)
+
+        }
+
 
         fun bind(chat: Chat) {
             timeTextView.text = chat.time

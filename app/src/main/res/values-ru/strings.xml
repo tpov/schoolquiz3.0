@@ -1,5 +1,8 @@
 <resources>
 
+<string name="commit_3_0_17">
+        1- Змінений дизайн чату
+    </string>
     <string name="true_button">Верно</string>
     <string name="false_button">Не верно</string>
     <string name="next_button">След.</string>
@@ -114,7 +117,7 @@
 
     <string name="dialog_cancel">Отмена</string>
 
-    <string name="shop_fragment_get_box_for_ad_text">Получить коробку за 10 объявлений</string>
+    <string name="shop_fragment_get_box_for_ad_text">Получить коробку за 5 объявлений</string>
     <string name="shop_fragment_get_box_for_ad_show">Показать</string>
     <string name="shop_fragment_buy_life_text">Купить 1 жизнь</string>
     <string name="shop_fragment_button_buy">Купить</string>
@@ -278,4 +281,6 @@
     <string name="donate_coffe">Коффе</string>
     <string name="donate_сake">Торт</string>
     <string name="donate_team_meal">Обед для команды</string>
+    <string name="info_life_1_title">Жизнь</string>
+    <string name="info_life_1_massage">Часть жизни тратяться при попытке пройти квест (33%), целая жизнь тратиться что-бы узнать ответ на легкий вопрос. \\n- Жизни восстанавливаются со временем, 1 жизнь примерно за час (не обязательно быть в самой игре, можно закрыть). Изначально доступен 1 слот для жизни, в магазине можно купить до 5 слотов (то есть 5 жизней)</string>
 </resources>
