@@ -1,7 +1,11 @@
 <resources>
     <!-- ... -->
-    <string name="commit_3_0_17">
-        1- Edit design chat
+    <string name="commit_3_0_18">
+        1- Fix get box after show ads
+2 - Add scroll name quiz
+3 - Fix arena (checking for lives)
+4 - Fix update result quiz
+4 - Fix close userguide when click outside
     </string>
 
     <string-array name="nick_colors">

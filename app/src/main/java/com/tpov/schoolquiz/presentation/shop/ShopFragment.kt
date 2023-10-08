@@ -93,8 +93,8 @@ class ShopFragment : BaseFragment() {
             .setType(BillingClient.SkuType.INAPP)
         billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
             log("skuDetailsList $skuDetailsList")
-            log("skuDetailsList ${skuDetailsList?.sortedBy { it.priceAmountMicros  }}")
-            if (skuDetailsList != null) setupDonateButton(skuDetailsList.sortedBy { it.priceAmountMicros  })
+            log("skuDetailsList ${skuDetailsList?.sortedBy { it.priceAmountMicros }}")
+            if (skuDetailsList != null) setupDonateButton(skuDetailsList.sortedBy { it.priceAmountMicros })
         }
     }
 
@@ -127,7 +127,11 @@ class ShopFragment : BaseFragment() {
                 }
 
                 override fun onBillingServiceDisconnected() {
-                    Toast.makeText(context, "Error donation ServiceDisconnected :(", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Error donation ServiceDisconnected :(",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             })
         }
@@ -147,9 +151,7 @@ class ShopFragment : BaseFragment() {
             .setListener { billingResult, purchases ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     Toast.makeText(context, "Thank you!!!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "Error donation :(", Toast.LENGTH_SHORT).show()
-                }
+                } else Toast.makeText(context, "Error donation :(", Toast.LENGTH_SHORT).show()
             }
             .enablePendingPurchases()
             .build()
@@ -168,7 +170,8 @@ class ShopFragment : BaseFragment() {
         binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
         binding.btnBuyAd.setOnClickListener {
             if (getCountShowAd() >= COUNT_MAX_SHOW_AD) {
-                Toast.makeText(context, getString(R.string.toast_ad_use_limit), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.toast_ad_use_limit), Toast.LENGTH_SHORT)
+                    .show()
             } else {
                 // Progress dots animation
                 var dotCount = 0
@@ -179,13 +182,10 @@ class ShopFragment : BaseFragment() {
                     }
                     binding.btnBuyAd.text = dots.toString()
 
-                    dotCount = (dotCount + 1) % 4
+                    dotCount =
+                        (dotCount + 1) % 4                                                   //4 dots on button
                     handler.postDelayed(runnable, 500)
-                    if(::mRewardedAd.isInitialized) {
-                   showAd()
-                        }
-
-
+                    if (::mRewardedAd.isInitialized) showAd()
                 }
                 handler.post(runnable)
 
@@ -193,9 +193,8 @@ class ShopFragment : BaseFragment() {
                 binding.btnBuyAd.isEnabled = false
                 binding.btnBuyAd.isClickable = false
 
-                if(::mRewardedAd.isInitialized) {
-                   showAd()
-                } else {
+                if (::mRewardedAd.isInitialized) showAd()
+                else {
                     Toast.makeText(context, "Load...", Toast.LENGTH_SHORT).show()
                     loadRewardedAd()
                 }
@@ -252,7 +251,8 @@ class ShopFragment : BaseFragment() {
         }
 
         val currentGoldLives = profile.countGold
-        binding.bBuyLifeGold.text = "${if (currentGoldLives == 1) "-" else "$currentGoldLives golds" }"
+        binding.bBuyLifeGold.text =
+            "${if (currentGoldLives == 1) "-" else "$currentGoldLives golds"}"
         binding.bBuyLifeGold.setOnClickListener {
             if (currentGoldLives != COUNT_MAX_LIFE_GOLD && COAST_LIFE_GOLD <= userBalanceGold) {
                 showDialogWithCallbacks(
@@ -282,7 +282,7 @@ class ShopFragment : BaseFragment() {
             }
         }
 
-        var   placeCost = when (profile.buyQuizPlace) {
+        var placeCost = when (profile.buyQuizPlace) {
             1 -> COAST_SIZE_FOR_QUIZ2
             2 -> COAST_SIZE_FOR_QUIZ3
             3 -> COAST_SIZE_FOR_QUIZ4
@@ -323,18 +323,20 @@ class ShopFragment : BaseFragment() {
                             else -> 10
                         }
 
-                        binding.bPlaceForQuiz.text = "${if (placeCost == 10) "-" else "$placeCost nolics"} "
+                        binding.bPlaceForQuiz.text =
+                            "${if (placeCost == 10) "-" else "$placeCost nolics"} "
                     },
                     onCancel = {
                     }
                 )
 
             } else {
-                Toast.makeText(context,
-                    getString(R.string.toast_ad_not_enough_nolic), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    getString(R.string.toast_ad_not_enough_nolic), Toast.LENGTH_SHORT
+                ).show()
             }
         }
-
     }
 
     private fun showAd() {
@@ -369,7 +371,6 @@ class ShopFragment : BaseFragment() {
         mRewardedAd.show(requireActivity()) {
             SharedPreferencesManager.addCountShowAd()
             if (getCountShowAd() == COUNT_MAX_SHOW_AD) addBoxToAccount()
-            else loadRewardedAd()
         }
     }
 
@@ -407,15 +408,23 @@ class ShopFragment : BaseFragment() {
             adRequest,
             object : RewardedAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    com.tpov.schoolquiz.presentation.question.log("error 1 $adError")
-                    Toast.makeText(requireContext(), getString(R.string.toast_ad_error_load, adError.message), Toast.LENGTH_SHORT).show()
+                    log("error 1 $adError")
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.toast_ad_error_load, adError.message),
+                        Toast.LENGTH_SHORT
+                    ).show()
 
                 }
 
                 override fun onAdLoaded(rewardedAd: RewardedAd) {
-                    Toast.makeText(requireContext(), getString(R.string.toast_ad_loaded), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.toast_ad_loaded),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     this@ShopFragment.mRewardedAd = rewardedAd
-                    com.tpov.schoolquiz.presentation.question.log("error 1.1 $rewardedAd")
+                    log("error 1.1 $rewardedAd")
                 }
             })
     }
@@ -423,7 +432,7 @@ class ShopFragment : BaseFragment() {
 
     @OptIn(InternalCoroutinesApi::class)
     private fun addBoxToAccount() {
-        val profile =  profileViewModel.getProfile()
+        val profile = profileViewModel.getProfile()
         val countBox = profile.countBox
         profileViewModel.updateProfile(profile.copy(countBox = countBox?.plus(1)))
         Toast.makeText(context, getString(R.string.toast_ad_add_box), Toast.LENGTH_SHORT).show()

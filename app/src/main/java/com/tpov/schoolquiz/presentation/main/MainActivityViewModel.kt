@@ -353,6 +353,7 @@ class MainActivityViewModel @Inject constructor(
         return profile.timeInGamesInChat ?: 0
     }
 
+    //This is WTF
     suspend fun setPercentResultAllQuiz() {
         localUseCase.getQuizEvent().forEach { quiz ->
             var perc = mutableListOf<Int>()
@@ -364,7 +365,7 @@ class MainActivityViewModel @Inject constructor(
             localUseCase.getQuestionDetailList().forEach {
                 log("sdsdsds 1,1 it.idQuiz: ${it.idQuiz} == quiz.id: ${quiz.id} -> ${it.idQuiz == quiz.id}")
                 log("sdsdsds 1,2. getTpovId(): ${getTpovId()}, quiz.tpovId: ${quiz.tpovId} -> ${getTpovId() == quiz.tpovId}")
-                if (it.idQuiz == quiz.id && getTpovId() == quiz.tpovId) {
+                if (it.idQuiz == quiz.id) {
                     log("sdsdsds 2. $it")
                     var i = 0
                     var j = 0
@@ -378,6 +379,7 @@ class MainActivityViewModel @Inject constructor(
                     log("sdsdsds 4. j:${j}")
 
                     if (!it.hardQuiz) {
+                        log("sdsdsds 4.5.hardQuiz: ${it.codeAnswer}")
                         try {
                             if (((100 * i) / j) > maxPersent) maxPersent = ((100 * i) / j)
                             perc.add(((100 * i) / j))

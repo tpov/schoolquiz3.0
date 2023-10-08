@@ -1040,7 +1040,7 @@ class MainActivity : AppCompatActivity() {
                     log("versionCode ${versionCode == 30015}")
 
                     userguide.addGuideNewVersion(
-                        getString(R.string.commit_3_0_17),
+                        getString(R.string.commit_3_0_18),
                         packageInfo.versionName,
                         resources.getDrawable(R.drawable.nav_chat),
                         Options(countKeyVersion = 30015).toString()

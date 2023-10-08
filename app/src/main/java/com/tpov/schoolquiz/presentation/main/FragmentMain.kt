@@ -181,7 +181,15 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
 
         binding.fabSearch.setOnClickListener {
-            dialogNolics(-1, false, COAST_RANDOM_QUIZ8)
+            if (mainViewModel.getProfileCount()!! < COAST_LIFE_HOME_QUIZ) {
+                val toastMessage = getString(R.string.not_enough_lives, COAST_LIFE_ARENA_QUIZ)
+                Toast.makeText(
+                    activity,
+                    toastMessage,
+                    Toast.LENGTH_LONG
+                ).show()
+
+            } else dialogNolics(-1, false, COAST_RANDOM_QUIZ8)
         }
     }
 
@@ -375,7 +383,10 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                                 val intent = Intent(activity, QuestionActivity::class.java)
                                 intent.putExtra(NAME_USER, "user")
                                 intent.putExtra(ID_QUIZ, randQuiz.id)
-                                intent.putExtra(HARD_QUESTION, randQuiz.stars >= MAX_PERCENT_LIGHT_QUIZ_FULL)
+                                intent.putExtra(
+                                    HARD_QUESTION,
+                                    randQuiz.stars >= MAX_PERCENT_LIGHT_QUIZ_FULL
+                                )
                                 startActivityForResult(intent, REQUEST_CODE)
                             }
                             .setNegativeButton(R.string.cancel_button, null)
@@ -463,13 +474,13 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                         if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)
                                 .isNullOrEmpty()
                         ) mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
-                                mainViewModel.insertQuestion(
-                                    it.copy(
-                                        id = null,
-                                        idQuiz = quiz.id ?: 0
-                                    )
+                            mainViewModel.insertQuestion(
+                                it.copy(
+                                    id = null,
+                                    idQuiz = quiz.id ?: 0
                                 )
-                            }
+                            )
+                        }
                     }
                 }
                 var setQuestion = false

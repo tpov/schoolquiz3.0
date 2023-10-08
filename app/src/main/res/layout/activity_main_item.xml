@@ -124,24 +124,25 @@
                 android:orientation="horizontal">
 
 
-                <Button
+                <TextView
                     android:id="@+id/main_title_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_weight="1"
-                    android:background="@null"
                     android:elevation="12dp"
                     android:gravity="center"
-                    android:scrollHorizontally="true"
-                    android:scrollbars="horizontal"
-                    android:inputType="textAutoCorrect"
+                    android:layout_weight="1"
                     android:paddingLeft="4dp"
                     android:text="name quiz very long name"
                     android:textColor="@color/white"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:transformPivotX="12dp" />
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:singleLine="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:background="?android:attr/selectableItemBackground" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"

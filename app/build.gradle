@@ -22,8 +22,8 @@ android {
         applicationId "com.tpov.schoolquiz"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 3_00_17
-        versionName "3.0.17-rc"
+        versionCode 3_00_18
+        versionName "3.0.18-rc"
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -155,7 +155,7 @@ dependencies {
     implementation "org.jetbrains.anko:anko-commons:0.10.8"
     implementation 'com.wajahatkarim:EasyFlipView:3.0.3'
 
-    implementation 'com.github.tpov:Userguide:1.4.3-alfa2'
+    implementation 'com.github.tpov:Userguide:1.4.3-alfa3'
 
 
 }

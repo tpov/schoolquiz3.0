@@ -249,6 +249,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             log("daegrjg, ${quizEntity.ratingPlayer.toFloat()}")
             ratingBar.rating = quizEntity.ratingPlayer.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
             mainTitleButton.text = quizEntity.nameQuiz
+
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
