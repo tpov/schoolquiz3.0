@@ -14,7 +14,7 @@ SchoolQuiz 3.0 is a mobile app for hosting quizzes. Users can choose from variou
 
 #### Libraries Used:
 
-- Userguide - Your own library for creating user guides and instructions.
+- Userguide - Our own library for creating user guides and instructions.
 
 #### How to Start:
 
