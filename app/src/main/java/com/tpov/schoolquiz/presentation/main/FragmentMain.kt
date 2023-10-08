@@ -19,12 +19,12 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding
 import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_QUIZ8
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_RANDOM_QUIZ8
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_QUIZ8
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_RANDOM_QUIZ8
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
@@ -139,7 +139,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             Toast.makeText(activity, R.string.soon___, Toast.LENGTH_SHORT).show()
         }
 
-        mainViewModel.getEventLiveDataUseCase().observe(viewLifecycleOwner) { quizList ->
+        mainViewModel.localUseCase.getEventLiveData().observe(viewLifecycleOwner) { quizList ->
             val filteredList = quizList.filter {
                 when (isMyQuiz) {
                     EVENT_QUIZ_HOME -> it.event == isMyQuiz
@@ -215,7 +215,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 if (mainViewModel.getQuizById(id).event == EVENT_QUIZ_ARENA) {
                     dialogNolics(id, typeQuestion, COAST_QUIZ8)
                 } else {
-                    mainViewModel.updateProfileUseCase(
+                    mainViewModel.localUseCase.updateProfile(
                         mainViewModel.getProfile()
                             .copy(count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ)
                     )
@@ -233,7 +233,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean): Boolean {
 
         val questionThisListAll =
-            mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
+            mainViewModel.localUseCase.getQuestionListByIdQuiz(idQuiz)
                 .filter { it.hardQuestion == hardQuestion }
 
         log("kokol size questionThisListAll: ${questionThisListAll.size}")
@@ -365,7 +365,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                             .setMessage(R.string.search_message)
                             .setPositiveButton("(-) $nolics nolics") { dialog, which ->
 
-                                mainViewModel.updateProfileUseCase(
+                                mainViewModel.localUseCase.updateProfile(
                                     mainViewModel.getProfile().copy(
                                         count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ,
                                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
@@ -407,7 +407,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 .setTitle(R.string.paid_attempt_title)
                 .setMessage(R.string.paid_attempt_message)
                 .setPositiveButton("(-) $nolics nolics") { dialog, which ->
-                    mainViewModel.updateProfileUseCase(
+                    mainViewModel.localUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             count = mainViewModel.getProfileCount()!! - COAST_LIFE_ARENA_QUIZ,
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
@@ -452,7 +452,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun sendItem(id: Int) {
         var quizEntity = mainViewModel.getQuizById(id)
 
-        mainViewModel.updateQuizUseCase(quizEntity.copy(showItemMenu = false))
+        mainViewModel.localUseCase.updateQuiz(quizEntity.copy(showItemMenu = false))
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
         lifecycleScope.launchWhenStarted {

@@ -23,8 +23,8 @@ import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.presentation.MainApp
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log

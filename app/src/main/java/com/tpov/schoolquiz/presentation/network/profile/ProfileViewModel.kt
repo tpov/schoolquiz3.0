@@ -4,9 +4,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.domain.*
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.domain.LocalUseCase
+import com.tpov.schoolquiz.domain.RemoveUseCase
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -14,64 +15,53 @@ import javax.inject.Inject
 
 @InternalCoroutinesApi
 class ProfileViewModel @Inject constructor(
-    private val setProfileFBUseCase: SetProfileFBUseCase,
-    private val getProfileFBUseCase: GetProfileFBUseCase,
-    private val getTpovIdFBUseCase: GetTpovIdFBUseCase,
-    private val getQuiz8UseCase: GetQuiz8UseCase,
-    private val getQuizUseCase: GetQuizUseCase,
-    private val setQuizUseCase: SetQuizUseCase,
-    private val getSynthUseCase: GetSynthUseCase,
-    private val deleteAllQuizUseCase: DeleteAllQuizUseCase,
-    private val getProfileUseCase: GetProfileUseCase,
-    val getPlayersDBUseCase: GetPlayersDBUseCase,
-    private val getPlayersListUseCase: GetPlayersListUseCase,
-    private val updateProfileUseCase: UpdateProfileUseCase
-
+    private val localUseCase: LocalUseCase,
+    private val removeUseCase: RemoveUseCase
 ) : ViewModel() {
 
     var addQuestion = MutableLiveData<Int>()
     var addInfoQuestion = MutableLiveData<Int>()
     var addQuiz = MutableLiveData<Int>()
-    var synth = getSynthUseCase()
+    var synth = removeUseCase.getSynth()
 
-   fun getPlayer() = getPlayersDBUseCase()
+   fun getPlayer() = localUseCase.getPlayersDB()
        .filter { it.id == SharedPreferencesManager.getTpovId() }[0]
 
     fun getTpovId() {
-        getTpovIdFBUseCase()
+        removeUseCase.getTpovIdFB()
     }
 
     fun setQuizFB() {
         log("fun setQuizFB()")
         viewModelScope.launch(Dispatchers.IO) {
-            setQuizUseCase()
+            removeUseCase.setQuiz()
         }
     }
 
     fun setProfile() {
         log("fun setProfile()")
-        setProfileFBUseCase()
+        removeUseCase.setProfileFB()
     }
 
     fun getSynthProfile() {
         log("fun getProfile()")
-        getProfileFBUseCase()
+        removeUseCase.getProfileFB()
     }
 
     fun updateProfile(profile: ProfileEntity) {
-        updateProfileUseCase(profile)
+        localUseCase.updateProfile(profile)
     }
 
-    fun getProfile() = getProfileUseCase(SharedPreferencesManager.getTpovId())
+    fun getProfile() = localUseCase.getProfile(SharedPreferencesManager.getTpovId())
 
     suspend fun getQuizzFB() {
         log("fun getQuizzFB()")
-        getQuizUseCase()
+        removeUseCase.getQuiz()
     }
 
     fun getPlayersList() {
         log("getPlayersList()")
-        getPlayersListUseCase()
+        removeUseCase.getPlayersList()
     }
 
     fun log(m: String) {
@@ -79,6 +69,6 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun getDeleteAllQuiz() {
-        deleteAllQuizUseCase()
+        removeUseCase.deleteAllQuiz()
     }
 }

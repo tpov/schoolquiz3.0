@@ -16,9 +16,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.fierbase.Chat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.Values.context
-import com.tpov.schoolquiz.presentation.custom.Values.getColorNickname
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.Values.context
+import com.tpov.schoolquiz.presentation.core.Values.getColorNickname
 
 class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallback()) {
 
@@ -90,7 +90,6 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
             else View.GONE
             vUserMassage2.visibility = if (chat.tpovId == getTpovId()) View.VISIBLE
             else View.GONE
-            // Здесь вы можете загрузить изображение иконки с помощью библиотеки, например, Glide или Picasso
              Glide.with(itemView).load(chat.icon).into(iconImageView)
         }
     }

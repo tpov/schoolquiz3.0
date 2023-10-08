@@ -17,12 +17,12 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.presentation.DEFAULT_RATING_QUIZ
 import com.tpov.schoolquiz.presentation.DEFAULT_TPOVID
 import com.tpov.schoolquiz.presentation.MainApp
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ2
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ3
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ4
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ_TRANSLATE1
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ2
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ3
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ4
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_QUIZ_TRANSLATE1
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -122,7 +122,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         else {
             log("foundQuestionList(quizId, false) ${foundQuestionList(quizId, false)}")
             if (foundQuestionList(quizId, false)) {
-                eventViewModel.updateProfileUseCase(
+                eventViewModel.localUseCase.updateProfile(
                     eventViewModel.getProfile()
                         .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ2)
                 )
@@ -143,7 +143,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
     @OptIn(InternalCoroutinesApi::class)
     private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean?): Boolean {
 
-        val questionThisListAll = mainViewModel.getQuestionByIdQuizUseCase(idQuiz)
+        val questionThisListAll = mainViewModel.localUseCase.getQuestionListByIdQuiz(idQuiz)
             .filter { if (hardQuestion != null) it.hardQuestion == hardQuestion else true }
             .sortedBy { it.numQuestion }
 
@@ -252,7 +252,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         ).show()
         else {
             if (foundQuestionList(quizId, true)) {
-                eventViewModel.updateProfileUseCase(
+                eventViewModel.localUseCase.updateProfile(
                     eventViewModel.getProfile()
                         .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ3)
                 )
@@ -284,7 +284,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
         ).show()
         else {
             if (foundQuestionList(quizId, null)) {
-                eventViewModel.updateProfileUseCase(
+                eventViewModel.localUseCase.updateProfile(
                     eventViewModel.getProfile()
                         .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ4)
                 )
@@ -314,7 +314,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
+            eventViewModel.localUseCase.updateProfile(
                 eventViewModel.getProfile()
                     .copy(count = eventViewModel.getProfileCount()!! - COAST_LIFE_QUIZ_TRANSLATE1)
             )
@@ -341,7 +341,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
+            eventViewModel.localUseCase.updateProfile(
                 eventViewModel.getProfile()
                     .copy(count = eventViewModel.getProfileCount()!! - 15)
             )
@@ -368,7 +368,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
+            eventViewModel.localUseCase.updateProfile(
                 eventViewModel.getProfile()
                     .copy(count = eventViewModel.getProfileCount()!! - 10)
             )
@@ -395,7 +395,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
+            eventViewModel.localUseCase.updateProfile(
                 eventViewModel.getProfile()
                     .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
@@ -417,7 +417,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
+            eventViewModel.localUseCase.updateProfile(
                 eventViewModel.getProfile()
                     .copy(count = eventViewModel.getProfileCount()!! - 50)
             )
@@ -439,7 +439,7 @@ class EventFragment : BaseFragment(), EventAdapter.ListenerEvent {
             Toast.LENGTH_LONG
         ).show()
         else {
-            eventViewModel.updateProfileUseCase(
+            eventViewModel.localUseCase.updateProfile(
                 eventViewModel.getProfile()
                     .copy(count = eventViewModel.getProfileCount()!! - 50)
             )

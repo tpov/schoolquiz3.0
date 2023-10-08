@@ -13,8 +13,8 @@ import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
-import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.core.TranslateGoogle.translateText
 import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -223,7 +223,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             .setTitle(context.getString(R.string.translate_title))
             .setMessage(context.getString(R.string.translate_message))
             .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                mainViewModel.updateProfileUseCase(
+                mainViewModel.localUseCase.updateProfile(
                     mainViewModel.getProfile().copy(
                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                     )

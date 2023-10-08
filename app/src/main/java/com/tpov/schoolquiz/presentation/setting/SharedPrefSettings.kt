@@ -2,7 +2,7 @@ package com.tpov.schoolquiz.presentation.setting
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.core.Logcat
 
 object SharedPrefSettings {
     private const val PREFS_ICON = "icon_profile"

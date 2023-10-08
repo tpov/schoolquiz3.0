@@ -8,18 +8,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.*
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setTpovId
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
 
 class AutorisationViewModel @Inject constructor(
-    val insertProfileUseCase: InsertProfileUseCase,
-    private val updateProfileUseCase: UpdateProfileUseCase,
-    private val getProfileUseCase: GetProfileUseCase
+    val localUseCase: LocalUseCase
 ) : ViewModel() {
 
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
@@ -48,7 +46,7 @@ class AutorisationViewModel @Inject constructor(
     }
 
     fun getProfile(): ProfileEntity {
-        return getProfileUseCase(getTpovId())
+        return localUseCase.getProfile(getTpovId())
     }
 
     fun createAcc(
@@ -73,7 +71,7 @@ class AutorisationViewModel @Inject constructor(
 
                     val tpovId = getTpovId()
 
-                    var pr = getProfileUseCase(tpovId)
+                    var pr = localUseCase.getProfile(tpovId)
                     log("createAcc try: ${pr.dateSynch}")
                     if ( try {
                         pr.dateSynch!!.isNotEmpty()
@@ -136,7 +134,7 @@ class AutorisationViewModel @Inject constructor(
                             "Ваш аккаунт копируется и создается на сервер.",
                             Toast.LENGTH_LONG
                         ).show()
-                        updateProfileUseCase(profile!!)
+                        localUseCase.updateProfile(profile!!)
                     }
 
                     updateProfile()
@@ -159,7 +157,7 @@ class AutorisationViewModel @Inject constructor(
 
     private fun insertProfile(profile: Profile) {
         log("fun insertProfile")
-        insertProfileUseCase(profile.toProfileEntity(0, 100))
+        localUseCase.insertProfile(profile.toProfileEntity(0, 100))
     }
 
     @OptIn(InternalCoroutinesApi::class)

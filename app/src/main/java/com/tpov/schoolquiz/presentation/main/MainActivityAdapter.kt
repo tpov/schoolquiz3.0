@@ -16,12 +16,12 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.ResizeAndCrop
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.TranslateGoogle.translateText
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +84,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 .setTitle(context.getString(R.string.send_to_arena_title))
                 .setMessage(context.getString(R.string.send_to_arena_text))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.updateProfileUseCase(
+                    mainViewModel.localUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )
@@ -382,7 +382,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 .setTitle(context.getString(R.string.translate_title))
                 .setMessage(context.getString(R.string.translate_message))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.updateProfileUseCase(
+                    mainViewModel.localUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )

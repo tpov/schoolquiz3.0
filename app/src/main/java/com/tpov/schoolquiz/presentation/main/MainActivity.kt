@@ -43,25 +43,25 @@ import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.*
 import com.tpov.schoolquiz.presentation.contact.Contacts
-import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByCountInChat
-import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
-import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.NewValue.setNewSkill
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountMassageIdAndReset
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
-import com.tpov.schoolquiz.presentation.custom.Values
-import com.tpov.schoolquiz.presentation.custom.Values.context
-import com.tpov.schoolquiz.presentation.custom.Values.getColorNickname
-import com.tpov.schoolquiz.presentation.custom.Values.getImportance
-import com.tpov.schoolquiz.presentation.custom.Values.init
-import com.tpov.schoolquiz.presentation.custom.Values.loadProgress
-import com.tpov.schoolquiz.presentation.custom.Values.loadText
+import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByCountInChat
+import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInChat
+import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInGame
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountMassageIdAndReset
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountStartApp
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setCountStartApp
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setTpovId
+import com.tpov.schoolquiz.presentation.core.Values
+import com.tpov.schoolquiz.presentation.core.Values.context
+import com.tpov.schoolquiz.presentation.core.Values.getColorNickname
+import com.tpov.schoolquiz.presentation.core.Values.getImportance
+import com.tpov.schoolquiz.presentation.core.Values.init
+import com.tpov.schoolquiz.presentation.core.Values.loadProgress
+import com.tpov.schoolquiz.presentation.core.Values.loadText
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -1049,7 +1049,7 @@ class MainActivity : AppCompatActivity() {
                     val countSmsPoints = getCountMassageIdAndReset()
 
                     log("lklklkl 2 ${getSkillByCountInChat(countSmsPoints)}")
-                    viewModel.updateProfileUseCase(
+                    viewModel.localUseCase.updateProfile(
                         profile.copy(
                             count = calcCount(
                                 profile.count,

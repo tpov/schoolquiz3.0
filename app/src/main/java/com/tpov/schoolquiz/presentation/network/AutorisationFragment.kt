@@ -19,10 +19,10 @@ import com.tpov.schoolquiz.presentation.DEFAULT_INVINSTATION
 import com.tpov.schoolquiz.presentation.DEFAULT_LVL_QUALIFAICATION
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
-import com.tpov.schoolquiz.presentation.custom.LanguageUtils.getLanguageShortCode
-import com.tpov.schoolquiz.presentation.custom.LanguageUtils.languagesWithCheckBox
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.core.LanguageUtils.getLanguageShortCode
+import com.tpov.schoolquiz.presentation.core.LanguageUtils.languagesWithCheckBox
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.main.MainActivity
