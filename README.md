@@ -1,6 +1,8 @@
 ### SchoolQuiz 3.0
 SchoolQuiz 3.0 is a mobile app for hosting quizzes. Users can choose from various question themes such as Geography, Space, Mathematics, and many more. The app also features a rating system and the ability to watch ads for bonuses.
 
+![Diagram](https://github.com/tpov/schoolquiz3.0/assets/33009369/c28a62e5-76bd-458e-8bc3-bde8f59ceb8d)
+
 #### Main Features:
 
 - Quizzes on various topics.
