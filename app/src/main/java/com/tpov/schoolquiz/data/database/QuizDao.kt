@@ -3,7 +3,7 @@ package com.tpov.schoolquiz.data.database
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.tpov.schoolquiz.data.database.entities.*
-import com.tpov.schoolquiz.presentation.custom.Logcat
+import com.tpov.schoolquiz.presentation.core.Logcat
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 

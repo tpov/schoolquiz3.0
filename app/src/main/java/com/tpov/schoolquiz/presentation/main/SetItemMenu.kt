@@ -7,9 +7,9 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.VisibleItems.getShowItemsMenuHome
-import com.tpov.schoolquiz.presentation.custom.VisibleItems.getShowItemsMenuNetwork
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.VisibleItems.getShowItemsMenuHome
+import com.tpov.schoolquiz.presentation.core.VisibleItems.getShowItemsMenuNetwork
 import kotlinx.android.synthetic.main.info_fragment.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 

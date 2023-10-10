@@ -37,7 +37,7 @@
 
             android:orientation="vertical">
 
-            <com.tpov.schoolquiz.presentation.custom.CustomProgressBar
+            <com.tpov.schoolquiz.presentation.core.CustomProgressBar
                 android:id="@+id/customProgressBar"
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />

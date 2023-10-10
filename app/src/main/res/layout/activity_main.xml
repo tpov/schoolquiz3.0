@@ -339,7 +339,7 @@
                                 android:id="@+id/imv_premiun"
                                 android:layout_width="30dp"
                                 android:layout_height="30dp"
-                                app:srcCompat="@drawable/ic_premium" />
+                                app:srcCompat="@drawable/back_chat" />
 
                             <TextView
                                 android:id="@+id/tv_count_premiun"

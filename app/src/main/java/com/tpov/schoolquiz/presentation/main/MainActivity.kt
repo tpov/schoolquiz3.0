@@ -43,25 +43,25 @@ import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.*
 import com.tpov.schoolquiz.presentation.contact.Contacts
-import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByCountInChat
-import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInChat
-import com.tpov.schoolquiz.presentation.custom.CalcValues.getSkillByTimeInGame
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.NewValue.setNewSkill
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountMassageIdAndReset
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountStartApp
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setCountStartApp
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
-import com.tpov.schoolquiz.presentation.custom.Values
-import com.tpov.schoolquiz.presentation.custom.Values.context
-import com.tpov.schoolquiz.presentation.custom.Values.getColorNickname
-import com.tpov.schoolquiz.presentation.custom.Values.getImportance
-import com.tpov.schoolquiz.presentation.custom.Values.init
-import com.tpov.schoolquiz.presentation.custom.Values.loadProgress
-import com.tpov.schoolquiz.presentation.custom.Values.loadText
+import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByCountInChat
+import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInChat
+import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInGame
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountMassageIdAndReset
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountStartApp
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setCountStartApp
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setTpovId
+import com.tpov.schoolquiz.presentation.core.Values
+import com.tpov.schoolquiz.presentation.core.Values.context
+import com.tpov.schoolquiz.presentation.core.Values.getColorNickname
+import com.tpov.schoolquiz.presentation.core.Values.getImportance
+import com.tpov.schoolquiz.presentation.core.Values.init
+import com.tpov.schoolquiz.presentation.core.Values.loadProgress
+import com.tpov.schoolquiz.presentation.core.Values.loadText
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.FragmentManager
@@ -339,6 +339,11 @@ class MainActivity : AppCompatActivity() {
             layerDrawableGold.findDrawableByLayerId(android.R.id.progress).level =
                 (it?.countGold ?: 0) * COUNT_LIFE_POINTS_IN_LIFE
 
+            if (count < PERCENT_1STAR_QUIZ_SHORT) userguide.addNotification(ID_USERGUIDE_NOTIFICATION_LIFE,
+                titleText = getString(R.string.info_life_1_title),
+                text = getString(R.string.info_life_1_massage),
+                icon = resources.getDrawable(R.drawable.baseline_favorite_24)
+            )
             if (it?.countGoldLife == 1) {
                 imageViewGold.visibility = View.VISIBLE
             } else imageViewGold.visibility = View.GONE
@@ -567,21 +572,17 @@ class MainActivity : AppCompatActivity() {
 
         binding.drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
-                // Вычисляем на сколько нужно сдвинуть элемент LinearLayout
                 val slideX = drawerView.width * slideOffset
                 binding.cv.translationX = slideX
             }
 
             override fun onDrawerOpened(drawerView: View) {
-                // Вызывается при открытии шторки
             }
 
             override fun onDrawerClosed(drawerView: View) {
-                // Вызывается при закрытии шторки
             }
 
             override fun onDrawerStateChanged(newState: Int) {
-                // Вызывается при изменении состояния шторки
             }
         })
 
@@ -1034,12 +1035,21 @@ class MainActivity : AppCompatActivity() {
                         text = " - ${profile.addMassage}",
                         titleText = getString(R.string.userguide_title_developer_massage)
                     )
+                    val packageInfo = packageManager.getPackageInfo(packageName, 0)
+                    val versionCode = packageInfo.versionCode
+                    log("versionCode ${versionCode == 30015}")
+
+                    userguide.addGuideNewVersion(
+                        getString(R.string.commit_3_0_18),
+                        packageInfo.versionName,
+                        resources.getDrawable(R.drawable.nav_chat),
+                        Options(countKeyVersion = 30015).toString()
+                    )
 
                     val countSmsPoints = getCountMassageIdAndReset()
 
-                    log("lklklkl 1 $countSmsPoints")
                     log("lklklkl 2 ${getSkillByCountInChat(countSmsPoints)}")
-                    viewModel.updateProfileUseCase(
+                    viewModel.localUseCase.updateProfile(
                         profile.copy(
                             count = calcCount(
                                 profile.count,

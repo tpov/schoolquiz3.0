@@ -5,6 +5,8 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -19,26 +21,27 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ShopFragmentBinding
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesGold.COAST_LIFE_GOLD
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_LIFE1
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_LIFE2
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_LIFE3
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_LIFE4
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_LIFE5
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ10
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ2
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ3
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ4
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ5
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ6
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ7
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ8
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ9
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getCountShowAd
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesGold.COAST_LIFE_GOLD
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_LIFE1
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_LIFE2
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_LIFE3
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_LIFE4
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_LIFE5
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ10
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ2
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ3
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ4
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ5
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ6
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ7
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ8
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SIZE_FOR_QUIZ9
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountShowAd
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
+import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.schoolquiz.secure.secureCode.getAdUnitId
 import kotlinx.android.synthetic.main.info_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -49,11 +52,14 @@ class ShopFragment : BaseFragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelFactory
+    private lateinit var billingClient: BillingClient
 
     @OptIn(InternalCoroutinesApi::class)
     private val component by lazy {
         (requireActivity().application as MainApp).component
     }
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var runnable: Runnable
     private lateinit var binding: ShopFragmentBinding
 
     @OptIn(InternalCoroutinesApi::class)
@@ -81,6 +87,56 @@ class ShopFragment : BaseFragment() {
         return binding.root
     }
 
+    private fun querySkuDetails() {
+        val params = SkuDetailsParams.newBuilder()
+            .setSkusList(listOf("donate_1", "donate_5", "donate_20"))
+            .setType(BillingClient.SkuType.INAPP)
+        billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
+            log("skuDetailsList $skuDetailsList")
+            log("skuDetailsList ${skuDetailsList?.sortedBy { it.priceAmountMicros }}")
+            if (skuDetailsList != null) setupDonateButton(skuDetailsList.sortedBy { it.priceAmountMicros })
+        }
+    }
+
+    private fun setupDonateButton(skuDetailsList: List<SkuDetails>) {
+        binding.bDonate.setOnClickListener {
+            billingClient.startConnection(object : BillingClientStateListener {
+                override fun onBillingSetupFinished(billingResult: BillingResult) {
+                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+
+                        val params = listOf(
+                            "1$" to skuDetailsList[0].description,
+                            "5$" to skuDetailsList[1].description,
+                            "20$" to skuDetailsList[2].description
+                        ).map { "${it.first} -> ${it.second}" }.toTypedArray()
+
+                        val alertDialog = AlertDialog.Builder(requireContext())
+                            .setTitle(getString(R.string.shop_fragment_donate_title))
+                            .setItems(params) { dialog, which ->
+                                val selectedSkuDetails = skuDetailsList[which]
+                                val flowParams = BillingFlowParams.newBuilder()
+                                    .setSkuDetails(selectedSkuDetails)
+                                    .build()
+                                billingClient.launchBillingFlow(requireActivity(), flowParams)
+                            }
+                            .create()
+
+                        alertDialog.show()
+                        alertDialog.window?.setBackgroundDrawableResource(R.color.grey)
+                    }
+                }
+
+                override fun onBillingServiceDisconnected() {
+                    Toast.makeText(
+                        context,
+                        "Error donation ServiceDisconnected :(",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            })
+        }
+
+    }
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -90,87 +146,57 @@ class ShopFragment : BaseFragment() {
         var userBalanceGold = profile.pointsGold ?: 0
 
         context?.let { MobileAds.initialize(it) {} }
-        loadRewardedAd()
 
-        binding.bDonate.setOnClickListener {
-            var billingClient = BillingClient.newBuilder(requireContext())
-                .setListener { billingResult, purchases ->
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null)
-                        Toast.makeText(context, "Thank you!!!", Toast.LENGTH_SHORT).show()
-                    else Toast.makeText(context, "Error donation :(", Toast.LENGTH_SHORT).show()
-                }
-                .enablePendingPurchases()
-                .build()
+        billingClient = BillingClient.newBuilder(requireContext())
+            .setListener { billingResult, purchases ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+                    Toast.makeText(context, "Thank you!!!", Toast.LENGTH_SHORT).show()
+                } else Toast.makeText(context, "Error donation :(", Toast.LENGTH_SHORT).show()
+            }
+            .enablePendingPurchases()
+            .build()
 
-            billingClient.startConnection(object : BillingClientStateListener {
-                override fun onBillingSetupFinished(billingResult: BillingResult) {
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        // Запрос доступных SKU
-                        val params = SkuDetailsParams.newBuilder()
-                        params.setSkusList(listOf(getString(R.string.donate_coffe), getString(R.string.donate_сake), getString(R.string.donate_team_meal)))
-                            .setType(BillingClient.SkuType.INAPP)
-                        billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
-                            binding.bDonate.setOnClickListener {
-                                val options = arrayOf("1$", "5$", "10$")
-                                AlertDialog.Builder(requireContext())
-                                    .setTitle("Вы можете донатить несколько раз")
-                                    .setItems(options) { _, which ->
-                                        val selectedSku = when (which) {
-                                            0 -> "donate_1"
-                                            1 -> "donate_5"
-                                            2 -> "donate_10"
-                                            else -> return@setItems
-                                        }
-                                        val flowParams = BillingFlowParams.newBuilder()
-                                            .setSkuDetails(skuDetailsList?.find { it.sku == selectedSku }!!)
-                                            .build()
-                                        billingClient.launchBillingFlow(requireActivity(), flowParams)
-                                    }
-                                    .show()
-                            }
-                        }
-                    }
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    querySkuDetails()
                 }
-                override fun onBillingServiceDisconnected() {
-                    Toast.makeText(context, "Error donate", Toast.LENGTH_SHORT).show()
-                }
-            })
-        }
+            }
+
+            override fun onBillingServiceDisconnected() {
+            }
+        })
 
         binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
         binding.btnBuyAd.setOnClickListener {
-
             if (getCountShowAd() >= COUNT_MAX_SHOW_AD) {
                 Toast.makeText(context, getString(R.string.toast_ad_use_limit), Toast.LENGTH_SHORT)
                     .show()
             } else {
-                if(::mRewardedAd.isInitialized) {
-                    mRewardedAd.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
-                            Log.d("AdFragment", "Ad dismissed")
-                            loadRewardedAd() // Загрузите новую рекламу после закрытия текущей
-                            binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
-                        }
-
-                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            Toast.makeText(context, getString(R.string.toast_ad_error_load, adError.message), Toast.LENGTH_SHORT).show()
-
-                            com.tpov.schoolquiz.presentation.question.log("error 3")
-                        }
-
-                        override fun onAdShowedFullScreenContent() {
-                        }
+                // Progress dots animation
+                var dotCount = 0
+                runnable = Runnable {
+                    val dots = StringBuilder()
+                    for (i in 0..dotCount) {
+                        dots.append(".")
                     }
+                    binding.btnBuyAd.text = dots.toString()
 
-                    mRewardedAd.show(requireActivity()) {
-                        SharedPreferencesManager.addCountShowAd()
-                        if (getCountShowAd() == COUNT_MAX_SHOW_AD) addBoxToAccount()
-                        else loadRewardedAd()
-                    }
-                } else {
-                    Toast.makeText(context, getString(R.string.toast_ad_error_load), Toast.LENGTH_SHORT).show()
+                    dotCount =
+                        (dotCount + 1) % 4                                                   //4 dots on button
+                    handler.postDelayed(runnable, 500)
+                    if (::mRewardedAd.isInitialized) showAd()
+                }
+                handler.post(runnable)
 
-                    com.tpov.schoolquiz.presentation.question.log("error 2")
+                binding.btnBuyAd.alpha = 0.5f
+                binding.btnBuyAd.isEnabled = false
+                binding.btnBuyAd.isClickable = false
+
+                if (::mRewardedAd.isInitialized) showAd()
+                else {
+                    Toast.makeText(context, "Load...", Toast.LENGTH_SHORT).show()
+                    loadRewardedAd()
                 }
             }
         }
@@ -225,7 +251,8 @@ class ShopFragment : BaseFragment() {
         }
 
         val currentGoldLives = profile.countGold
-        binding.bBuyLifeGold.text = "${if (currentGoldLives == 1) "-" else "$currentGoldLives golds" }"
+        binding.bBuyLifeGold.text =
+            "${if (currentGoldLives == 1) "-" else "$currentGoldLives golds"}"
         binding.bBuyLifeGold.setOnClickListener {
             if (currentGoldLives != COUNT_MAX_LIFE_GOLD && COAST_LIFE_GOLD <= userBalanceGold) {
                 showDialogWithCallbacks(
@@ -255,7 +282,7 @@ class ShopFragment : BaseFragment() {
             }
         }
 
-        var   placeCost = when (profile.buyQuizPlace) {
+        var placeCost = when (profile.buyQuizPlace) {
             1 -> COAST_SIZE_FOR_QUIZ2
             2 -> COAST_SIZE_FOR_QUIZ3
             3 -> COAST_SIZE_FOR_QUIZ4
@@ -296,18 +323,55 @@ class ShopFragment : BaseFragment() {
                             else -> 10
                         }
 
-                        binding.bPlaceForQuiz.text = "${if (placeCost == 10) "-" else "$placeCost nolics"} "
+                        binding.bPlaceForQuiz.text =
+                            "${if (placeCost == 10) "-" else "$placeCost nolics"} "
                     },
                     onCancel = {
                     }
                 )
 
             } else {
-                Toast.makeText(context,
-                    getString(R.string.toast_ad_not_enough_nolic), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    getString(R.string.toast_ad_not_enough_nolic), Toast.LENGTH_SHORT
+                ).show()
             }
         }
+    }
 
+    private fun showAd() {
+        mRewardedAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                Log.d("AdFragment", "Ad dismissed")
+                handler.removeCallbacks(runnable)
+
+                var timeLeft = DELAY_TIMER_SHOW_AD
+                runnable = Runnable {
+                    binding.btnBuyAd.text = "$timeLeft s"
+                    if (timeLeft == 0) {
+                        handler.removeCallbacks(runnable)
+                        binding.btnBuyAd.isEnabled = true
+                        binding.btnBuyAd.isClickable = true
+                        binding.btnBuyAd.alpha = 1.0f
+                        binding.btnBuyAd.text = "Show ${COUNT_MAX_SHOW_AD - getCountShowAd()}"
+                    } else {
+                        timeLeft--
+                        handler.postDelayed(runnable, 1000)
+                    }
+                }
+                handler.post(runnable)
+            }
+
+            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+            }
+
+            override fun onAdShowedFullScreenContent() {
+            }
+        }
+        mRewardedAd.show(requireActivity()) {
+            SharedPreferencesManager.addCountShowAd()
+            if (getCountShowAd() == COUNT_MAX_SHOW_AD) addBoxToAccount()
+        }
     }
 
     private fun showDialogWithCallbacks(
@@ -344,15 +408,23 @@ class ShopFragment : BaseFragment() {
             adRequest,
             object : RewardedAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    com.tpov.schoolquiz.presentation.question.log("error 1 $adError")
-                    Toast.makeText(requireContext(), getString(R.string.toast_ad_error_load, adError.message), Toast.LENGTH_SHORT).show()
+                    log("error 1 $adError")
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.toast_ad_error_load, adError.message),
+                        Toast.LENGTH_SHORT
+                    ).show()
 
                 }
 
                 override fun onAdLoaded(rewardedAd: RewardedAd) {
-                    Toast.makeText(requireContext(), getString(R.string.toast_ad_loaded), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.toast_ad_loaded),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     this@ShopFragment.mRewardedAd = rewardedAd
-                    com.tpov.schoolquiz.presentation.question.log("error 1.1 $rewardedAd")
+                    log("error 1.1 $rewardedAd")
                 }
             })
     }
@@ -360,7 +432,7 @@ class ShopFragment : BaseFragment() {
 
     @OptIn(InternalCoroutinesApi::class)
     private fun addBoxToAccount() {
-        val profile =  profileViewModel.getProfile()
+        val profile = profileViewModel.getProfile()
         val countBox = profile.countBox
         profileViewModel.updateProfile(profile.copy(countBox = countBox?.plus(1)))
         Toast.makeText(context, getString(R.string.toast_ad_add_box), Toast.LENGTH_SHORT).show()

@@ -11,13 +11,13 @@ import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*
 import com.tpov.schoolquiz.domain.repository.RepositoryFB
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.*
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getVersionQuiz
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setTpovId
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.setVersionQuiz
-import com.tpov.schoolquiz.presentation.custom.Values.loadProgress
-import com.tpov.schoolquiz.presentation.custom.Values.loadText
+import com.tpov.schoolquiz.presentation.core.*
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getVersionQuiz
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setTpovId
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setVersionQuiz
+import com.tpov.schoolquiz.presentation.core.Values.loadProgress
+import com.tpov.schoolquiz.presentation.core.Values.loadText
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -857,7 +857,7 @@ class RepositoryFBImpl @Inject constructor(
                             ) savePictureToLocalDirectory(quiz!!.picture) {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     withContext(Dispatchers.IO) {
-                                        deleteQuiz(idQuiz) // Предположим, это suspend функция
+                                        deleteQuiz(idQuiz)
                                         dao.insertQuiz(
                                             quiz.toQuizEntity(
                                                 idQuiz,
@@ -866,7 +866,7 @@ class RepositoryFBImpl @Inject constructor(
                                                 0,
                                                 it
                                             )
-                                        ) // Предположим, это тоже suspend функция
+                                        )
                                     }
                                 }
 

@@ -11,8 +11,8 @@ import android.widget.RatingBar
 import android.widget.TextView
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.presentation.custom.CalcValues
-import com.tpov.schoolquiz.presentation.custom.CustomProgressBar
+import com.tpov.schoolquiz.presentation.core.CalcValues
+import com.tpov.schoolquiz.presentation.core.CustomProgressBar
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 

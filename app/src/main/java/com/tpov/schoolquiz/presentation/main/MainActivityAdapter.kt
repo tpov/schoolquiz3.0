@@ -16,12 +16,12 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.ResizeAndCrop
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.TranslateGoogle.translateText
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.ResizeAndCrop
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.TranslateGoogle.translateText
 import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +84,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 .setTitle(context.getString(R.string.send_to_arena_title))
                 .setMessage(context.getString(R.string.send_to_arena_text))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.updateProfileUseCase(
+                    mainViewModel.localUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )
@@ -249,6 +249,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             log("daegrjg, ${quizEntity.ratingPlayer.toFloat()}")
             ratingBar.rating = quizEntity.ratingPlayer.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
             mainTitleButton.text = quizEntity.nameQuiz
+
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
@@ -263,20 +264,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }*/
 
             imvTranslate.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
-                    // Rating bar clicked, handle the event here
-                    // You can call your method to show the translation popup/dialog
+                if (event.action == MotionEvent.ACTION_UP)
                     showPopupInfo(quizEntity, event, POPUP_TRANSLATE, viewModel)
-                }
                 true
             }
 
             ratingBar.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
-                    // Rating bar clicked, handle the event here
-                    // You can call your method to show the translation popup/dialog
+                if (event.action == MotionEvent.ACTION_UP)
                     showPopupInfo(quizEntity, event, POPUP_STARS, viewModel)
-                }
                 true
             }
 
@@ -388,7 +383,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 .setTitle(context.getString(R.string.translate_title))
                 .setMessage(context.getString(R.string.translate_message))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.updateProfileUseCase(
+                    mainViewModel.localUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )
@@ -423,9 +418,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             viewModel: MainActivityViewModel
         ) {
             val context = itemView.context
-            // Create the popup window
-            val inflater =
-                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val popupView = inflater.inflate(R.layout.translation_popup_layout, null)
             val popupWindow = PopupWindow(
                 popupView,
@@ -434,7 +427,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 true
             )
 
-            // Configure the popup window
             val tvPopup1 = popupView.findViewById<TextView>(R.id.tv_popup_1)
             val tvPopup2 = popupView.findViewById<TextView>(R.id.tv_popup_2)
             val tvPopup3 = popupView.findViewById<TextView>(R.id.tv_popup_3)

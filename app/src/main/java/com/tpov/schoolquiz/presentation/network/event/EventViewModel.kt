@@ -9,24 +9,16 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.domain.*
 import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
-import com.tpov.schoolquiz.presentation.custom.Logcat
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
 
 class EventViewModel @Inject constructor(
-    private val getQuizEventUseCase: GetQuizEventUseCase,
-    private val getEventTranslateUseCase: GetEventTranslateUseCase,
-    private val getProfileUseCase: GetProfileUseCase,
-    private val getQuestionListUseCase: GetQuestionListUseCase,
-    val updateProfileUseCase: UpdateProfileUseCase,
-    val updateQuestionUseCase: UpdateQuestionUseCase,
-    val insertQuestionUseCase: InsertQuestionUseCase,
-    val getQuizByIdUseCase: GetQuizByIdUseCase,
-    private val updateQuizUseCase: UpdateQuizUseCase,
-    private val deleteQuestionUseCase: DeleteQuestionUseCase
+    val localUseCase: LocalUseCase
 ) : ViewModel() {
+
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
     var quiz3List: MutableList<QuizEntity> = arrayListOf()
     var quiz4List: MutableList<QuizEntity> = arrayListOf()
@@ -44,28 +36,28 @@ class EventViewModel @Inject constructor(
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
     suspend fun getQuestionItem(idQuestion: Int) =
-        getQuestionListUseCase().filter { it.id == idQuestion }
+        localUseCase.getQuestionList().filter { it.id == idQuestion }
 
     suspend fun getQuestionList(numQuestion: Int, idQuiz: Int) =
-        getQuestionListUseCase().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion }
+        localUseCase.getQuestionList().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion }
 
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
     }
 
     private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
-        log("getProfileUseCaseFun getProfileUseCase(tpovId):${getProfileUseCase(tpovId)}")
-        return getProfileUseCase(tpovId)
+        log("getProfileUseCaseFun getProfileUseCase(tpovId):${localUseCase.getProfile(tpovId)}")
+        return localUseCase.getProfile(tpovId)
     }
 
     suspend fun loadQuests() {
         log("loadQuests")
-        questionLiveData.value = getQuestionListUseCase()
+        questionLiveData.value = localUseCase.getQuestionList()
     }
 
     suspend fun loadQuestion(idQuestion: Int) {
-        log("getQuestionListUseCase() :${getQuestionListUseCase()}")
-        questionLiveData.value = getQuestionListUseCase()
+        log("localUseCase.getQuestionList() :${localUseCase.getQuestionList()}")
+        questionLiveData.value = localUseCase.getQuestionList()
     }
 
 
@@ -76,7 +68,7 @@ class EventViewModel @Inject constructor(
             quiz2List.clear()
             quiz3List.clear()
             quiz4List.clear()
-            getQuizEventUseCase().forEach {
+            localUseCase.getQuizEvent().forEach {
                 log("getQuizList ${it.event}: $it")
                 when (it.event) {
                     2 -> quiz2List.add(it)
@@ -94,18 +86,18 @@ class EventViewModel @Inject constructor(
     }
 
     fun getTranslateList(tpovId: Int) {
-        log("getTranslateList getEventTranslateUseCase().size: ${getEventTranslateUseCase().size}")
+        log("getTranslateList localUseCase.getEventTranslate().size: ${localUseCase.getEventTranslate().size}")
 
-        getEventTranslateUseCase()
+        localUseCase.getEventTranslate()
             .groupBy { it.idQuiz }
             .flatMap { (_, questions) ->
                 questions.filter { question ->
-                    question.language !in getProfileUseCase(tpovId).languages!!.split("|") ||
-                            question.lvlTranslate < (getProfileUseCase(tpovId).translater)!! - 50
+                    question.language !in localUseCase.getProfile(tpovId).languages!!.split("|") ||
+                            question.lvlTranslate < (localUseCase.getProfile(tpovId).translater)!! - 50
                 }
             }
             .forEach { question ->
-                if (question.language !in getProfileUseCase(tpovId).languages!!.split("|")
+                if (question.language !in localUseCase.getProfile(tpovId).languages!!.split("|")
                     && !translateEditQuestion.any {
                         it.numQuestion == question.numQuestion &&
                                 it.idQuiz == question.idQuiz &&
@@ -140,13 +132,13 @@ class EventViewModel @Inject constructor(
     }
 
     fun getProfileCount(): Int? {
-        val profile = getProfileUseCase(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.count
     }
 
     fun getTpovIdQuiz(id: Int): Int {
-        return getQuizByIdUseCase(id).tpovId
+        return localUseCase.getQuizById(id).tpovId
     }
 
     fun getEventDeveloper() {
@@ -160,7 +152,7 @@ class EventViewModel @Inject constructor(
     fun saveQuestions(updatedQuestions: List<QuestionEntity>, activity: FragmentActivity?) {
         val questionFirst = updatedQuestions[0]
         val idQuiz = questionFirst.idQuiz
-        val quiz = getQuizByIdUseCase(idQuiz)
+        val quiz = localUseCase.getQuizById(idQuiz)
         val wordsMap = mutableMapOf<String, Int>()
 
         updatedQuestions.forEach {
@@ -177,8 +169,8 @@ class EventViewModel @Inject constructor(
             log("dwadwad21: ${it.nameQuestion}")
 
             CoroutineScope(Dispatchers.IO).launch {
-                if (it.nameQuestion == "") deleteQuestionUseCase(it.id!!)
-                else insertQuestionUseCase(
+                if (it.nameQuestion == "") localUseCase.deleteQuestion(it.id!!)
+                else localUseCase.insertQuestion(
                     it.copy(
                         numQuestion = questionFirst.numQuestion,
                         answerQuestion = questionFirst.answerQuestion,
@@ -231,7 +223,7 @@ class EventViewModel @Inject constructor(
     }
 
     private fun getProfileLvlTranslate(): Int {
-        return getProfileUseCase(getTpovId()).translater ?: 0
+        return localUseCase.getProfile(getTpovId()).translater ?: 0
     }
 }
 

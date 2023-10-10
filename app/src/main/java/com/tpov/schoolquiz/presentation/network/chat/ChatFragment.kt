@@ -18,9 +18,9 @@ import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.fierbase.Chat
 import com.tpov.schoolquiz.databinding.FragmentChatBinding
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.Values.getImportance
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.Values.getImportance
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
@@ -150,7 +150,7 @@ class ChatFragment : BaseFragment() {
 
     override fun onPause() {
         super.onPause()
-        chatViewModel.removeChatListener()
+        chatViewModel.removeUseCase.removeChatListenerChat()
     }
 
 
@@ -159,7 +159,6 @@ class ChatFragment : BaseFragment() {
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 val layoutManager = binding?.chatRecyclerView?.layoutManager as LinearLayoutManager
                 val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
-                // Проверяем, находится ли пользователь ниже 5 последних элементов
                 if (chatAdapter.itemCount != 0 && lastVisibleItemPosition >= chatAdapter.itemCount - 6) {
                     binding?.chatRecyclerView?.smoothScrollToPosition(chatAdapter.itemCount - 1)
                 }

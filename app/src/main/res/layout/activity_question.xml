@@ -12,6 +12,7 @@
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -332,8 +333,8 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:layout_margin="8dp"
-                app:srcCompat="@drawable/ic_help"
-                android:backgroundTint="#00FFFFFF" />
+                android:backgroundTint="#00FFFFFF"
+                app:srcCompat="@drawable/ic_help" />
 
             <Button
                 android:id="@+id/true_button"

@@ -25,9 +25,9 @@ import com.tpov.schoolquiz.data.Services.MusicService
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.ActivityQuestionBinding
 import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.custom.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.custom.SharedPreferencesManager.updateProfile
+import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.android.synthetic.main.activity_question.*
 import kotlinx.coroutines.*
@@ -152,7 +152,7 @@ class QuestionActivity : AppCompatActivity() {
                     getString(R.string.question_error_get_questions_and_compensation),
                     Toast.LENGTH_LONG
                 ).show()
-                viewModel.updateProfileUseCase(
+                viewModel.localUseCase.updateProfile(
                     viewModel.getProfile()
                         .copy(count = viewModel.getProfile().count?.plus(COAST_LIFE_HOME_QUIZ))
                 )
@@ -240,7 +240,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
 
-        if (viewModel.getQuizByIdUseCase(viewModel.idQuiz).event == EVENT_QUIZ_TOURNIRE_LEADER) binding.viewBackground.background =
+        if (viewModel.localUseCase.getQuizById(viewModel.idQuiz).event == EVENT_QUIZ_TOURNIRE_LEADER) binding.viewBackground.background =
             getDrawable(R.mipmap.back_question_event5)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =
@@ -352,15 +352,15 @@ class QuestionActivity : AppCompatActivity() {
     private fun insertQuestionsNewEvent() {
 
         CoroutineScope(Dispatchers.Main).launch {
-            viewModel.getQuizLiveDataUseCase.getQuizUseCase(viewModel.tpovId.toInt())
+            viewModel.localUseCase.getQuizLiveData(viewModel.tpovId.toInt())
                 .observe(this@QuestionActivity) { list ->
 
                     list.forEach { quiz ->
 
                         CoroutineScope(Dispatchers.IO).launch {
-                            if (viewModel.getQuestionByIdQuizUseCase(quiz.id!!).isNullOrEmpty()) {
-                                viewModel.getQuestionByIdQuizUseCase(quiz.id!!).forEach {
-                                    viewModel.insertQuestionUseCase(
+                            if (viewModel.localUseCase.getQuestionListByIdQuiz(quiz.id!!).isNullOrEmpty()) {
+                                viewModel.localUseCase.getQuestionListByIdQuiz(quiz.id!!).forEach {
+                                    viewModel.localUseCase.insertQuestion(
                                         it.copy(
                                             id = null,
                                             idQuiz = quiz.id!!
@@ -428,11 +428,11 @@ class QuestionActivity : AppCompatActivity() {
                 )
             ) {
 
-                if (!viewModel.hardQuestion) viewModel.updateProfileUseCase(viewModel.getProfileUseCase(getTpovId())
-                    .copy(count = viewModel.getProfileUseCase(getTpovId()).count?.minus(COUNT_LIFE_POINTS_IN_LIFE)
+                if (!viewModel.hardQuestion) viewModel.localUseCase.updateProfile(viewModel.localUseCase.getProfile(getTpovId())
+                    .copy(count = viewModel.localUseCase.getProfile(getTpovId()).count?.minus(COUNT_LIFE_POINTS_IN_LIFE)
                     ))
-                else viewModel.updateProfileUseCase(viewModel.getProfileUseCase(getTpovId())
-                    .copy(countGold = viewModel.getProfileUseCase(getTpovId()).countGold?.minus(COUNT_LIFE_POINTS_IN_LIFE)
+                else viewModel.localUseCase.updateProfile(viewModel.localUseCase.getProfile(getTpovId())
+                    .copy(countGold = viewModel.localUseCase.getProfile(getTpovId()).countGold?.minus(COUNT_LIFE_POINTS_IN_LIFE)
                     ))
             }
         } else if (requestCode == UPDATE_CURRENT_INDEX) {

@@ -7,7 +7,6 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
         android:layout_width="match_parent"
-        android:paddingTop="106dp"
         android:layout_height="wrap_content"
         android:layout_above="@+id/messageInputLayout" />
 
