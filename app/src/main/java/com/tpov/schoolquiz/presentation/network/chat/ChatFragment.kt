@@ -150,7 +150,7 @@ class ChatFragment : BaseFragment() {
 
     override fun onPause() {
         super.onPause()
-        chatViewModel.removeUseCase.removeChatListenerChat()
+        chatViewModel.chatUseCase.remoteChatListener()
     }
 
 

@@ -25,6 +25,7 @@ import com.tpov.schoolquiz.data.database.entities.PlayersEntity
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.schoolquiz.presentation.core.Values.synthLiveData
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
@@ -183,12 +184,12 @@ class ProfileFragment : BaseFragment() {
 
         log("fun viewModel.getSynth getTpovId: ${getTpovId()}")
         if (SharedPreferencesManager.canSyncProfile() || getTpovId() == 0)
-            viewModel.synth.observe(viewLifecycleOwner) { number ->
+            synthLiveData.observe(viewLifecycleOwner) { number ->
                 log("fun viewModel.getSynth.observe: $number")
 
                 when (number) {
                     1 -> {
-                        if (!isExecuted[0]) { // проверяем, выполнялось ли число 0 ранее
+                        if (!isExecuted[0]) {
                             CoroutineScope(Dispatchers.IO).launch { viewModel.setProfile() }
                             log("fun viewModel.getSynth start: $number")
                             isExecuted[0] =

@@ -223,7 +223,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             .setTitle(context.getString(R.string.translate_title))
             .setMessage(context.getString(R.string.translate_message))
             .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                mainViewModel.localUseCase.updateProfile(
+                mainViewModel.profileUseCase.updateProfile(
                     mainViewModel.getProfile().copy(
                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                     )

@@ -80,13 +80,16 @@ class DownloadFragment : BaseFragment() {
     private fun loadDatabaseInfo() {
         lifecycleScope.launch {
             val quizDatabase = QuizDatabase.getDatabase(requireContext())
-            val quizDao = quizDatabase.getQuizDao()
+            val questionDetailDatabase = quizDatabase.getQuestionDetailDao()
+            val questionDatabase = quizDatabase.getQuestionDao()
+            val profileDatabase = quizDatabase.getProfileDao()
+            val chatDatabase = quizDatabase.getChatDao()
 
-            val questionDetailCount = quizDao.getQuestionDetailCount()
-            val questionCount = quizDao.getQuestionCount()
-            val quizCount = quizDao.getQuizCount()
-            val profileCount = quizDao.getProfileCount()
-            val chatCount = quizDao.getChatCount()
+            val questionDetailCount = questionDetailDatabase.getQuestionDetailCount()
+            val questionCount = questionDatabase.getQuestionCount()
+            val quizCount = quizDatabase.getQuizDao()
+            val profileCount = profileDatabase.getProfileCount()
+            val chatCount = chatDatabase.getChatCount()
 
             val databaseInfo = """
             QuestionDetailEntity count: $questionDetailCount

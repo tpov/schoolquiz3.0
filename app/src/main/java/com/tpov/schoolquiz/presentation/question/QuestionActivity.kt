@@ -152,7 +152,7 @@ class QuestionActivity : AppCompatActivity() {
                     getString(R.string.question_error_get_questions_and_compensation),
                     Toast.LENGTH_LONG
                 ).show()
-                viewModel.localUseCase.updateProfile(
+                viewModel.profileUseCase.updateProfile(
                     viewModel.getProfile()
                         .copy(count = viewModel.getProfile().count?.plus(COAST_LIFE_HOME_QUIZ))
                 )
@@ -240,7 +240,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.hardQuestion = intent.getBooleanExtra(HARD_QUESTION, false)
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
 
-        if (viewModel.localUseCase.getQuizById(viewModel.idQuiz).event == EVENT_QUIZ_TOURNIRE_LEADER) binding.viewBackground.background =
+        if (viewModel.quizUseCase.getQuiz(viewModel.idQuiz).event == EVENT_QUIZ_TOURNIRE_LEADER) binding.viewBackground.background =
             getDrawable(R.mipmap.back_question_event5)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =
@@ -352,15 +352,15 @@ class QuestionActivity : AppCompatActivity() {
     private fun insertQuestionsNewEvent() {
 
         CoroutineScope(Dispatchers.Main).launch {
-            viewModel.localUseCase.getQuizLiveData(viewModel.tpovId.toInt())
+            viewModel.quizUseCase.getQuizListLiveData(viewModel.tpovId.toInt())
                 .observe(this@QuestionActivity) { list ->
 
                     list.forEach { quiz ->
 
                         CoroutineScope(Dispatchers.IO).launch {
-                            if (viewModel.localUseCase.getQuestionListByIdQuiz(quiz.id!!).isNullOrEmpty()) {
-                                viewModel.localUseCase.getQuestionListByIdQuiz(quiz.id!!).forEach {
-                                    viewModel.localUseCase.insertQuestion(
+                            if (viewModel.questionUseCase.getQuestionsByIdQuiz(quiz.id!!).isNullOrEmpty()) {
+                                viewModel.questionUseCase.getQuestionsByIdQuiz(quiz.id!!).forEach {
+                                    viewModel.questionUseCase.insertQuestion(
                                         it.copy(
                                             id = null,
                                             idQuiz = quiz.id!!
@@ -428,11 +428,11 @@ class QuestionActivity : AppCompatActivity() {
                 )
             ) {
 
-                if (!viewModel.hardQuestion) viewModel.localUseCase.updateProfile(viewModel.localUseCase.getProfile(getTpovId())
-                    .copy(count = viewModel.localUseCase.getProfile(getTpovId()).count?.minus(COUNT_LIFE_POINTS_IN_LIFE)
+                if (!viewModel.hardQuestion) viewModel.profileUseCase.updateProfile(viewModel.profileUseCase.getProfile(getTpovId())
+                    .copy(count = viewModel.profileUseCase.getProfile(getTpovId()).count?.minus(COUNT_LIFE_POINTS_IN_LIFE)
                     ))
-                else viewModel.localUseCase.updateProfile(viewModel.localUseCase.getProfile(getTpovId())
-                    .copy(countGold = viewModel.localUseCase.getProfile(getTpovId()).countGold?.minus(COUNT_LIFE_POINTS_IN_LIFE)
+                else viewModel.profileUseCase.updateProfile(viewModel.profileUseCase.getProfile(getTpovId())
+                    .copy(countGold = viewModel.profileUseCase.getProfile(getTpovId()).countGold?.minus(COUNT_LIFE_POINTS_IN_LIFE)
                     ))
             }
         } else if (requestCode == UPDATE_CURRENT_INDEX) {

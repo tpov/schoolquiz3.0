@@ -14,10 +14,18 @@ import java.util.*
 
 @SuppressLint("StaticFieldLeak")
 object Values {
+    lateinit var context: Context
 
+    var synthLiveData = MutableLiveData<Int>()
     var loadText: MutableLiveData<String> = MutableLiveData()
     var loadProgress: MutableLiveData<Int> = MutableLiveData()
-    lateinit var context: Context
+    var synth = 0
+
+    @Synchronized
+    fun setLoadPB(value: Int, max: Int) {
+        log("ioioioio fun ${(value * 100) / max}%")
+        Values.loadProgress.value = ((value * 100) / max)
+    }
 
 
     fun init(context: Context) {

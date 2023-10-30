@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.tpov.schoolquiz.data.custom.Converters
 import com.tpov.schoolquiz.data.database.entities.*
 import kotlinx.coroutines.InternalCoroutinesApi
 
@@ -16,6 +17,12 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @TypeConverters(Converters::class)
 abstract class QuizDatabase : RoomDatabase() {
     abstract fun getQuizDao(): QuizDao
+    abstract fun getQuestionDao(): QuestionDao
+    abstract fun getQuestionDetailDao(): QuestionDetailDao
+    abstract fun getProfileDao(): ProfileDao
+    abstract fun getChatDao(): ChatDao
+    abstract fun getDataDao(): DataDao
+    abstract fun getPlayersDao(): PlayersDao
 
     companion object {
         @Volatile

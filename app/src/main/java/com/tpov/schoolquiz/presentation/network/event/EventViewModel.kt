@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.presentation.network.event
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
@@ -16,7 +17,9 @@ import javax.inject.Inject
 
 
 class EventViewModel @Inject constructor(
-    val localUseCase: LocalUseCase
+    val questionUseCase: QuestionUseCase,
+    val profileUseCase: ProfileUseCase,
+    val quizUseCase: QuizUseCase
 ) : ViewModel() {
 
     var quiz2List: MutableList<QuizEntity> = arrayListOf()
@@ -36,28 +39,29 @@ class EventViewModel @Inject constructor(
     val questionLiveData: MutableLiveData<List<QuestionEntity>?> = MutableLiveData()
 
     suspend fun getQuestionItem(idQuestion: Int) =
-        localUseCase.getQuestionList().filter { it.id == idQuestion }
+        questionUseCase.getQuestionList().filter { it.id == idQuestion }
 
     suspend fun getQuestionList(numQuestion: Int, idQuiz: Int) =
-        localUseCase.getQuestionList().filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion }
+        questionUseCase.getQuestionList()
+            .filter { it.idQuiz == idQuiz && it.numQuestion == numQuestion }
 
     fun getProfile(): ProfileEntity {
         return getProfileUseCaseFun(getTpovId())
     }
 
     private fun getProfileUseCaseFun(tpovId: Int): ProfileEntity {
-        log("getProfileUseCaseFun getProfileUseCase(tpovId):${localUseCase.getProfile(tpovId)}")
-        return localUseCase.getProfile(tpovId)
+        log("getProfileUseCaseFun getProfileUseCase(tpovId):${profileUseCase.getProfile(tpovId)}")
+        return profileUseCase.getProfile(tpovId)
     }
 
     suspend fun loadQuests() {
         log("loadQuests")
-        questionLiveData.value = localUseCase.getQuestionList()
+        questionLiveData.value = questionUseCase.getQuestionList()
     }
 
     suspend fun loadQuestion(idQuestion: Int) {
-        log("localUseCase.getQuestionList() :${localUseCase.getQuestionList()}")
-        questionLiveData.value = localUseCase.getQuestionList()
+        log("localUseCase.getQuestionList() :${questionUseCase.getQuestionList()}")
+        questionLiveData.value = questionUseCase.getQuestionList()
     }
 
 
@@ -68,7 +72,7 @@ class EventViewModel @Inject constructor(
             quiz2List.clear()
             quiz3List.clear()
             quiz4List.clear()
-            localUseCase.getQuizEvent().forEach {
+            quizUseCase.getQuizList().forEach {
                 log("getQuizList ${it.event}: $it")
                 when (it.event) {
                     2 -> quiz2List.add(it)
@@ -86,59 +90,71 @@ class EventViewModel @Inject constructor(
     }
 
     fun getTranslateList(tpovId: Int) {
-        log("getTranslateList localUseCase.getEventTranslate().size: ${localUseCase.getEventTranslate().size}")
-
-        localUseCase.getEventTranslate()
-            .groupBy { it.idQuiz }
-            .flatMap { (_, questions) ->
-                questions.filter { question ->
-                    question.language !in localUseCase.getProfile(tpovId).languages!!.split("|") ||
-                            question.lvlTranslate < (localUseCase.getProfile(tpovId).translater)!! - 50
-                }
-            }
-            .forEach { question ->
-                if (question.language !in localUseCase.getProfile(tpovId).languages!!.split("|")
-                    && !translateEditQuestion.any {
-                        it.numQuestion == question.numQuestion &&
-                                it.idQuiz == question.idQuiz &&
-                                it.hardQuestion == question.hardQuestion
+        viewModelScope.launch {
+        log("getTranslateList localUseCase.getEventTranslate().size: ${questionUseCase.getQuestionList().size}")
+            questionUseCase.getQuestionList()
+                .groupBy { it.idQuiz }
+                .flatMap { (_, questions) ->
+                    questions.filter { question ->
+                        question.language !in profileUseCase.getProfile(tpovId).languages!!.split("|") ||
+                                question.lvlTranslate < (profileUseCase.getProfile(tpovId).translater)!! - 50
                     }
-                ) {
-                    translateEditQuestion.add(question)
-                    log("getTranslateList translateEditQuestion.add(question): ${translateEditQuestion.add(question)}")
-
-                } else if (question.lvlTranslate > 200 &&
-                    !translate2Question.any {
-                        it.numQuestion == question.numQuestion &&
-                                it.idQuiz == question.idQuiz &&
-                                it.hardQuestion == question.hardQuestion
-                    }
-                ) {
-                    translate2Question.add(question)
-
-                } else if (!translate1Question.any {
-                        it.numQuestion == question.numQuestion &&
-                                it.idQuiz == question.idQuiz &&
-                                it.hardQuestion == question.hardQuestion
-                    }) {
-
-                    log("getTranslateList translate1Question.add(question): ${translate1Question.add(question)}")
-                    translate1Question.add(question)
                 }
+                .forEach { question ->
+                    if (question.language !in profileUseCase.getProfile(tpovId).languages!!.split("|")
+                        && !translateEditQuestion.any {
+                            it.numQuestion == question.numQuestion &&
+                                    it.idQuiz == question.idQuiz &&
+                                    it.hardQuestion == question.hardQuestion
+                        }
+                    ) {
+                        translateEditQuestion.add(question)
+                        log(
+                            "getTranslateList translateEditQuestion.add(question): ${
+                                translateEditQuestion.add(
+                                    question
+                                )
+                            }"
+                        )
 
-                updateEventList.postValue(valUpdateEventList++)
-            }
+                    } else if (question.lvlTranslate > 200 &&
+                        !translate2Question.any {
+                            it.numQuestion == question.numQuestion &&
+                                    it.idQuiz == question.idQuiz &&
+                                    it.hardQuestion == question.hardQuestion
+                        }
+                    ) {
+                        translate2Question.add(question)
 
+                    } else if (!translate1Question.any {
+                            it.numQuestion == question.numQuestion &&
+                                    it.idQuiz == question.idQuiz &&
+                                    it.hardQuestion == question.hardQuestion
+                        }) {
+
+                        log(
+                            "getTranslateList translate1Question.add(question): ${
+                                translate1Question.add(
+                                    question
+                                )
+                            }"
+                        )
+                        translate1Question.add(question)
+                    }
+
+                    updateEventList.postValue(valUpdateEventList++)
+                }
+        }
     }
 
     fun getProfileCount(): Int? {
-        val profile = localUseCase.getProfile(getTpovId())
+        val profile = profileUseCase.getProfile(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.count
     }
 
     fun getTpovIdQuiz(id: Int): Int {
-        return localUseCase.getQuizById(id).tpovId
+        return quizUseCase.getQuiz(id).tpovId
     }
 
     fun getEventDeveloper() {
@@ -152,7 +168,7 @@ class EventViewModel @Inject constructor(
     fun saveQuestions(updatedQuestions: List<QuestionEntity>, activity: FragmentActivity?) {
         val questionFirst = updatedQuestions[0]
         val idQuiz = questionFirst.idQuiz
-        val quiz = localUseCase.getQuizById(idQuiz)
+        val quiz = quizUseCase.getQuiz(idQuiz)
         val wordsMap = mutableMapOf<String, Int>()
 
         updatedQuestions.forEach {
@@ -169,8 +185,8 @@ class EventViewModel @Inject constructor(
             log("dwadwad21: ${it.nameQuestion}")
 
             CoroutineScope(Dispatchers.IO).launch {
-                if (it.nameQuestion == "") localUseCase.deleteQuestion(it.id!!)
-                else localUseCase.insertQuestion(
+                if (it.nameQuestion == "") questionUseCase.deleteQuestion(it.id!!)
+                else questionUseCase.insertQuestion(
                     it.copy(
                         numQuestion = questionFirst.numQuestion,
                         answerQuestion = questionFirst.answerQuestion,
@@ -188,9 +204,10 @@ class EventViewModel @Inject constructor(
             if (currentMinLvlTranslate == null || lvlTranslate < currentMinLvlTranslate) {
                 wordsMap[word] = lvlTranslate
             }
-            val result = wordsMap.entries.joinToString(separator = SPLIT_BETWEEN_LANGUAGES) { entry ->
-                "${entry.key}-${entry.value}"
-            }
+            val result =
+                wordsMap.entries.joinToString(separator = SPLIT_BETWEEN_LANGUAGES) { entry ->
+                    "${entry.key}-${entry.value}"
+                }
         }
     }
 
@@ -223,7 +240,7 @@ class EventViewModel @Inject constructor(
     }
 
     private fun getProfileLvlTranslate(): Int {
-        return localUseCase.getProfile(getTpovId()).translater ?: 0
+        return profileUseCase.getProfile(getTpovId()).translater ?: 0
     }
 }
 

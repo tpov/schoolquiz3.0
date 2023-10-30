@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 
 class AutorisationViewModel @Inject constructor(
-    val localUseCase: LocalUseCase
+    private val profileUseCase: ProfileUseCase
 ) : ViewModel() {
 
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
@@ -46,7 +46,7 @@ class AutorisationViewModel @Inject constructor(
     }
 
     fun getProfile(): ProfileEntity {
-        return localUseCase.getProfile(getTpovId())
+        return profileUseCase.getProfile(getTpovId())
     }
 
     fun createAcc(
@@ -71,7 +71,7 @@ class AutorisationViewModel @Inject constructor(
 
                     val tpovId = getTpovId()
 
-                    var pr = localUseCase.getProfile(tpovId)
+                    var pr = profileUseCase.getProfile(tpovId)
                     log("createAcc try: ${pr.dateSynch}")
                     if ( try {
                         pr.dateSynch!!.isNotEmpty()
@@ -134,7 +134,7 @@ class AutorisationViewModel @Inject constructor(
                             "Ваш аккаунт копируется и создается на сервер.",
                             Toast.LENGTH_LONG
                         ).show()
-                        localUseCase.updateProfile(profile!!)
+                        profileUseCase.updateProfile(profile!!)
                     }
 
                     updateProfile()
@@ -157,7 +157,7 @@ class AutorisationViewModel @Inject constructor(
 
     private fun insertProfile(profile: Profile) {
         log("fun insertProfile")
-        localUseCase.insertProfile(profile.toProfileEntity(0, 100))
+        profileUseCase.insertProfile(profile.toProfileEntity(0, 100))
     }
 
     @OptIn(InternalCoroutinesApi::class)

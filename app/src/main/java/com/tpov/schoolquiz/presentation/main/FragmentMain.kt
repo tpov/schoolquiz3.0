@@ -139,7 +139,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             Toast.makeText(activity, R.string.soon___, Toast.LENGTH_SHORT).show()
         }
 
-        mainViewModel.localUseCase.getEventLiveData().observe(viewLifecycleOwner) { quizList ->
+        mainViewModel.quizUseCase.getQuizListLiveData().observe(viewLifecycleOwner) { quizList ->
             val filteredList = quizList.filter {
                 when (isMyQuiz) {
                     EVENT_QUIZ_HOME -> it.event == isMyQuiz
@@ -223,7 +223,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 if (mainViewModel.getQuizById(id).event == EVENT_QUIZ_ARENA) {
                     dialogNolics(id, typeQuestion, COAST_QUIZ8)
                 } else {
-                    mainViewModel.localUseCase.updateProfile(
+                    mainViewModel.profileUseCase.updateProfile(
                         mainViewModel.getProfile()
                             .copy(count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ)
                     )
@@ -241,7 +241,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean): Boolean {
 
         val questionThisListAll =
-            mainViewModel.localUseCase.getQuestionListByIdQuiz(idQuiz)
+            mainViewModel.questionUseCase.getQuestionsByIdQuiz(idQuiz)
                 .filter { it.hardQuestion == hardQuestion }
 
         log("kokol size questionThisListAll: ${questionThisListAll.size}")
@@ -373,7 +373,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                             .setMessage(R.string.search_message)
                             .setPositiveButton("(-) $nolics nolics") { dialog, which ->
 
-                                mainViewModel.localUseCase.updateProfile(
+                                mainViewModel.profileUseCase.updateProfile(
                                     mainViewModel.getProfile().copy(
                                         count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ,
                                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
@@ -418,7 +418,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 .setTitle(R.string.paid_attempt_title)
                 .setMessage(R.string.paid_attempt_message)
                 .setPositiveButton("(-) $nolics nolics") { dialog, which ->
-                    mainViewModel.localUseCase.updateProfile(
+                    mainViewModel.profileUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             count = mainViewModel.getProfileCount()!! - COAST_LIFE_ARENA_QUIZ,
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
@@ -463,7 +463,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun sendItem(id: Int) {
         var quizEntity = mainViewModel.getQuizById(id)
 
-        mainViewModel.localUseCase.updateQuiz(quizEntity.copy(showItemMenu = false))
+        mainViewModel.quizUseCase.updateQuiz(quizEntity.copy(showItemMenu = false))
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
         lifecycleScope.launchWhenStarted {
@@ -493,6 +493,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
     }
 
+    @Deprecated("Reason for deprecation")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 

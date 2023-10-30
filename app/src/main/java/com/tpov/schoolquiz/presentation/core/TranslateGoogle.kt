@@ -95,7 +95,7 @@ object TranslateGoogle {
                 setLoadPB(countTranslateQuestion, numSizeList)
             }
             val profile = viewModel.getProfile()
-            viewModel.localUseCase.updateProfile(profile.copy(
+            viewModel.profileUseCase.updateProfile(profile.copy(
                 addMassage = context.getString(R.string.translation_failed),
                 addPointsNolics = profile.addPointsNolics?.plus(nolicResult)))
             nolicResult = 0

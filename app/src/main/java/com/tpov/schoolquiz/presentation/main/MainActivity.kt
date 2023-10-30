@@ -322,7 +322,7 @@ class MainActivity : AppCompatActivity() {
         binding.tvName.text = ""
 
         numDayPrizeBox = viewModel.synthPrizeBoxDay(viewModel.getProfile()) ?: 0
-        viewModel.getProfileFBLiveData.observe(this) {
+        viewModel.getProfileFBLiveData().observe(this) {
             log("it: $it")
             showNotification(it?.pointsSkill)
             var count = (it?.count ?: 0) * COUNT_LIFE_POINTS_IN_LIFE
@@ -1049,7 +1049,7 @@ class MainActivity : AppCompatActivity() {
                     val countSmsPoints = getCountMassageIdAndReset()
 
                     log("lklklkl 2 ${getSkillByCountInChat(countSmsPoints)}")
-                    viewModel.localUseCase.updateProfile(
+                    viewModel.profileUseCase.updateProfile(
                         profile.copy(
                             count = calcCount(
                                 profile.count,

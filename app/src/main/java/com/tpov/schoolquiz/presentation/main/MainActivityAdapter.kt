@@ -84,7 +84,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 .setTitle(context.getString(R.string.send_to_arena_title))
                 .setMessage(context.getString(R.string.send_to_arena_text))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.localUseCase.updateProfile(
+                    mainViewModel.profileUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )
@@ -383,7 +383,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 .setTitle(context.getString(R.string.translate_title))
                 .setMessage(context.getString(R.string.translate_message))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.localUseCase.updateProfile(
+                    mainViewModel.profileUseCase.updateProfile(
                         mainViewModel.getProfile().copy(
                             pointsNolics = mainViewModel.getProfileNolic()!! - nolics
                         )

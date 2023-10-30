@@ -102,7 +102,7 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
                             getTypeText(binding.rbLightQuestion).toBoolean(),
                             -1,
                             lang,
-                            mainActivityViewModel.getProfileFBLiveData.value?.translater ?: -1,
+                            mainActivityViewModel.getProfileFBLiveData().value?.translater ?: -1,
                             getTpovId().toString()
                         )
                     )
