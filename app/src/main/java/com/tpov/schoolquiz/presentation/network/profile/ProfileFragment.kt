@@ -30,7 +30,6 @@ import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.wajahatkarim3.easyflipview.EasyFlipView
-import kotlinx.android.synthetic.main.profile_item.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi

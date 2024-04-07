@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.main
 
-import android.Manifest.permission.*
+import android.Manifest.permission.READ_CONTACTS
+import android.Manifest.permission.WRITE_CONTACTS
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
@@ -22,9 +23,21 @@ import android.os.Looper
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
-import android.view.*
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -41,7 +54,22 @@ import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.ADD_INITIAL_DELAY
+import com.tpov.schoolquiz.presentation.COUNT_LIFE_POINTS_IN_LIFE
+import com.tpov.schoolquiz.presentation.DEFAULT_TPOVID_COOL_START
+import com.tpov.schoolquiz.presentation.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
+import com.tpov.schoolquiz.presentation.DELAY_SHOW_TEXT_IN_MAINACTIVITY_PB
+import com.tpov.schoolquiz.presentation.DURATION_ANIMATION_COUNTS
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
+import com.tpov.schoolquiz.presentation.ID_USERGUIDE_NOTIFICATION_LIFE
+import com.tpov.schoolquiz.presentation.INITIAL_DELAY
+import com.tpov.schoolquiz.presentation.INTERVAL_SYNTH_VIEW_PROFILE
+import com.tpov.schoolquiz.presentation.MIN_VALUE_SKILL_POINTS
+import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.PERCENT_1STAR_QUIZ_SHORT
+import com.tpov.schoolquiz.presentation.REPEAT_DELAY
+import com.tpov.schoolquiz.presentation.Y_ROTATE_ANIMATION_DURATION
 import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByCountInChat
 import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInChat
@@ -49,6 +77,7 @@ import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.schoolquiz.presentation.core.Logcat
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
+import com.tpov.schoolquiz.presentation.core.NotificationHelper
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountMassageIdAndReset
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountStartApp
@@ -90,13 +119,15 @@ import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
-import com.tpov.userguide.Options
 import com.tpov.userguide.UserGuide
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main_item.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
-import java.util.*
+import java.util.Timer
+import java.util.TimerTask
 import javax.inject.Inject
 
 /**
@@ -324,7 +355,7 @@ class MainActivity : AppCompatActivity() {
         numDayPrizeBox = viewModel.synthPrizeBoxDay(viewModel.getProfile()) ?: 0
         viewModel.getProfileFBLiveData().observe(this) {
             log("it: $it")
-            showNotification(it?.pointsSkill)
+            NotificationHelper(this).showNotificationAll(it?.pointsSkill)
             var count = (it?.count ?: 0) * COUNT_LIFE_POINTS_IN_LIFE
             layerDrawable1.findDrawableByLayerId(android.R.id.progress).level = count
             count -= VALUE_COUNT_LIFE
@@ -414,7 +445,7 @@ class MainActivity : AppCompatActivity() {
                             R.color.default_nick_color6
                         ) -> {
                             binding.progressBar2.progressDrawable.setColorFilter(
-                                Color.WHITE,  // ваш цвет
+                                Color.WHITE,  //  цвет
                                 PorterDuff.Mode.SRC_IN  // режим наложения
                             )
                             Color.WHITE
@@ -435,7 +466,7 @@ class MainActivity : AppCompatActivity() {
 
                 binding.tvName.setTypeface(null, Typeface.BOLD)
             } catch (e: Exception) {
-                log("ererrerer---------------------------------------------------")
+                log("Error")
             }
 
             val animationDuration = DURATION_ANIMATION_COUNTS
@@ -488,50 +519,38 @@ class MainActivity : AppCompatActivity() {
             setNewSkill(it?.pointsSkill)
         }
 
-        pb_life1.setOnTouchListener { view, event ->
+        binding.pbLife1.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                // Rating bar clicked, handle the event here
-                // You can call your method to show the translation popup/dialog
                 showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
             }
             true
         }
-        pb_life2.setOnTouchListener { _, event ->
+        binding.pbLife2.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                // Rating bar clicked, handle the event here
-                // You can call your method to show the translation popup/dialog
                 showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
             }
             true
         }
-        pb_life3.setOnTouchListener { view, event ->
+        binding.pbLife3.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                // Rating bar clicked, handle the event here
-                // You can call your method to show the translation popup/dialog
                 showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
             }
             true
         }
-        pb_life4.setOnTouchListener { view, event ->
+        binding.pbLife4.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                // Rating bar clicked, handle the event here
-                // You can call your method to show the translation popup/dialog
                 showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
             }
             true
         }
-        pb_life5.setOnTouchListener { view, event ->
+        binding.pbLife5.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                // Rating bar clicked, handle the event here
-                // You can call your method to show the translation popup/dialog
                 showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
             }
             true
         }
-        pb_life_gold1.setOnTouchListener { view, event ->
+        binding.pbLifeGold1.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                // Rating bar clicked, handle the event here
-                // You can call your method to show the translation popup/dialog
                 showPopupInfo(event, MainActivityAdapter.POPUP_LIFE_GOLD)
             }
             true
@@ -682,122 +701,7 @@ class MainActivity : AppCompatActivity() {
         createTimer()
     }
 
-    @SuppressLint("UseCompatLoadingForDrawables")
-    private fun showNotification(skill: Int?) {
-        val userguide = UserGuide(this)
-        userguide.setCounterValue(skill ?: 0)
 
-        var i = 100
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_massage_text_legend),
-            titleText = getString(R.string.userguide_title_text_legend_massage),
-            options = Options(countKey = COUNT_SKILL_LEGEND),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_new_qualif_player_legend),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_LEGEND),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_new_qualif_player_expert),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_EXPERT),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_new_qualif_player_gransmaster),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_GRANDMASTER),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_new_qualif_player_player),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_VETERAN),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_massage_text_profiles_open),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_AMATEUR),
-            icon = resources.getDrawable(R.drawable.nav_user)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_new_qualif_player_player),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_AMATEUR),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_massage_text_best_player_open),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_BEGINNER),
-            icon = resources.getDrawable(R.drawable.nav_leader)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_new_qualif_player_player),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_PLAYER),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        /////////////////////////////
-
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_new_qualif_player_beginner),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_BEGINNER),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_massage_text_user_quiz_open),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_BEGINNER),
-            icon = resources.getDrawable(R.drawable.nav_my_quiz)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_massage_text_arena_open),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_BEGINNER),
-            icon = resources.getDrawable(R.drawable.baseline_public_24)
-        )
-        userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_massage_text_menu_functuions),
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            options = Options(countKey = COUNT_SKILL_USERGUIDE_1),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-
-        /////////////////////////////////////////
-        if (skill != 0) userguide.addNotification(
-            ++i,
-            text = getString(R.string.userguide_massage_text_translate),
-            titleText = getString(R.string.userguide_title_text_translate_massage),
-            icon = getDrawable(R.drawable.ic_translate),
-        )
-
-        if (skill != 0) userguide.addNotification(
-            ++i,
-            titleText = getString(R.string.userguide_new_qualif_player_title, skill),
-            text = getString(R.string.userguide_massage_text_hello),
-            icon = resources.getDrawable(R.drawable.star_full)
-        )
-
-    }
 
     private fun getPersonalMassage(): List<ChatEntity> {
         return viewModel.getMassage()
@@ -935,116 +839,10 @@ class MainActivity : AppCompatActivity() {
             mainHandler.post {
                 try {
                     val profile = viewModel.getProfile()
-                    val userguide = UserGuide(this)
-                    var i = 0
 
-                    if ((profile.translater
-                            ?: 0) >= LVL_TRANSLATOR_1_LVL
-                    ) userguide.addNotification(
-                        ++i,
-                        text = getString(
-                            R.string.userguide_new_qualif_translate1,
-                            profile.translater
-                        ),
-                        titleText = getString(R.string.new_qualification),
-                        icon = resources.getDrawable(R.drawable.star_full)
-                    )
-                    if ((profile.translater
-                            ?: 0) >= LVL_TRANSLATOR_2_LVL
-                    ) userguide.addNotification(
-                        ++i,
-                        titleText = getString(R.string.new_qualification),
-                        text = getString(
-                            R.string.userguide_new_qualif_translate2,
-                            profile.translater
-                        ),
-                        icon = resources.getDrawable(R.drawable.star_full)
-                    )
-                    if ((profile.translater
-                            ?: 0) >= LVL_TRANSLATOR_3_LVL
-                    ) userguide.addNotification(
-                        ++i,
-                        titleText = getString(R.string.new_qualification),
-                        text = getString(
-                            R.string.userguide_new_qualif_translate3,
-                            profile.translater
-                        ),
-                        icon = resources.getDrawable(R.drawable.star_full)
-                    )
-                    if ((profile.tester ?: 0) >= LVL_TESTER_1_LVL) userguide.addNotification(
-                        ++i,
-                        titleText = getString(R.string.new_qualification),
-                        text = getString(R.string.userguide_new_qualif_tester1, profile.translater),
-                        icon = resources.getDrawable(R.drawable.star_full)
-                    )
-                    if ((profile.moderator ?: 0) >= LVL_MODERATOR_1_LVL) userguide.addNotification(
-                        ++i,
-                        text = getString(
-                            R.string.userguide_new_qualif_moderator1,
-                            profile.translater
-                        ),
-                        titleText = getString(R.string.new_qualification),
-                        icon = resources.getDrawable(R.drawable.star_full)
-                    )
-                    if ((profile.admin ?: 0) >= LVL_ADMIN_1_LVL) userguide.addNotification(
-                        ++i,
-                        text = getString(R.string.userguide_new_qualif_admin1, profile.translater),
-                        titleText = getString(R.string.new_qualification),
-                        icon = resources.getDrawable(R.drawable.star_full)
-                    )
-                    if ((profile.developer ?: 0) >= LVL_DEVELOPER_1_LVL) userguide.addNotification(
-                        ++i,
-                        text = getString(
-                            R.string.userguide_new_qualif_developer1,
-                            profile.translater
-                        ),
-                        titleText = getString(R.string.new_qualification),
-                        icon = resources.getDrawable(R.drawable.star_full)
-                    )
-
-                    if ((profile.addPointsGold ?: 0) != 0) userguide.addNotification(
-                        ++i,
-                        text = getString(R.string.userguide_massage_add_gold, profile.addPointsGold),
-                        titleText = getString(R.string.userguide_title_add_points),
-                        icon = resources.getDrawable(R.drawable.ic_gold)
-                    )
-
-                    if ((profile.addPointsNolics ?: 0) != 0) userguide.addNotification(
-                        ++i,
-                        text = getString(R.string.userguide_massage_add_nolic, profile.addPointsNolics),
-                        titleText = getString(R.string.userguide_title_add_points),
-                        icon = resources.getDrawable(R.drawable.ic_gold)
-                    )
-
-                    if ((profile.addPointsSkill ?: 0) != 0) userguide.addNotification(
-                        ++i,
-                        text = getString(R.string.userguide_massage_add_skill, profile.addPointsSkill),
-                        titleText = getString(R.string.userguide_title_add_points),
-                        icon = resources.getDrawable(R.drawable.ic_gold)
-                    )
-
-                    if (profile.addTrophy != "") userguide.addNotification(
-                        ++i,
-                        text = getString(R.string.userguide_massage_add_trophy, profile.addTrophy),
-                        titleText = getString(R.string.userguide_title_add_points),
-                        icon = resources.getDrawable(R.drawable.baseline_favorite_24)
-                    )
-
-                    if (profile.addMassage != "") userguide.addNotification(
-                        ++i,
-                        text = " - ${profile.addMassage}",
-                        titleText = getString(R.string.userguide_title_developer_massage)
-                    )
+                    NotificationHelper(this).updateProfile(profile)
                     val packageInfo = packageManager.getPackageInfo(packageName, 0)
-                    val versionCode = packageInfo.versionCode
-                    log("versionCode ${versionCode == 30015}")
-
-                    userguide.addGuideNewVersion(
-                        getString(R.string.commit_3_0_18),
-                        packageInfo.versionName,
-                        resources.getDrawable(R.drawable.nav_chat),
-                        Options(countKeyVersion = 30015).toString()
-                    )
+                    NotificationHelper(this).newVersion(packageInfo.versionName)
 
                     val countSmsPoints = getCountMassageIdAndReset()
 
@@ -1449,19 +1247,18 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    //Окраживаем квадратики в красный и зеленый в зависимости сколько осталось запасных вопросов-дня
     private fun loadNumBoxDay() = with(binding) {
         log("numberBox setValue numDayPrizeBox: $numDayPrizeBox")
-        if (numDayPrizeBox > 0) textView10.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 1) textView9.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 2) textView8.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 3) textView7.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 4) textView6.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 5) textView5.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 6) textView4.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 7) textView3.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 8) textView2.setBackgroundResource(R.color.num_chack_norice_green)
-        if (numDayPrizeBox > 9) textView.setBackgroundResource(R.color.num_chack_norice_green)
+        if (numDayPrizeBox > 0) textView10.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 1) textView9.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 2) textView8.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 3) textView7.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 4) textView6.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 5) textView5.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 6) textView4.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 7) textView3.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 8) textView2.setBackgroundResource(R.color.green)
+        if (numDayPrizeBox > 9) textView.setBackgroundResource(R.color.green)
     }
 
     fun replaceFragment(fragment: Fragment) {
@@ -1492,10 +1289,8 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 log("ContactList123: 2.1")
-                // Contacts permission is granted, proceed with accessing the contacts provider
                 clickNavMenuContact(profile, qualification)
             } else {
-                // Contacts permission is denied, handle this situation accordingly
                 Toast.makeText(
                     this,
                     "Contacts permission is required to use this app",
@@ -1535,7 +1330,7 @@ class MainActivity : AppCompatActivity() {
             R.id.menu_home -> {
                 if (fr1 != 1) {
 
-                    swipeRefreshLayout.isEnabled = true
+                    binding.swipeRefreshLayout.isEnabled = true
                     SetItemMenu.setHomeMenu(
                         binding, MENU_HOME, this,
                         profile.pointsSkill ?: 0,
@@ -1544,13 +1339,6 @@ class MainActivity : AppCompatActivity() {
                     fr1 = 1
                 }
             }
-//
-//            R.id.menu_adb -> {
-//                if (fr1 != 2) {
-//
-//                    fr1 = 2
-//                }
-//            }
 //
 //            R.id.menu_info -> {
 //                if (fr1 != 4) {
@@ -1562,7 +1350,7 @@ class MainActivity : AppCompatActivity() {
             R.id.menu_network -> {
                 if (fr1 != 2) {
 
-                    swipeRefreshLayout.isEnabled = false
+                    binding.swipeRefreshLayout.isEnabled = false
                     SetItemMenu.setNetworkMenu(
                         binding, MENU_PROFILE, this,
                         profile.pointsSkill ?: 0,
@@ -1634,7 +1422,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startProfile() {
-        swipeRefreshLayout.isEnabled = false
+        binding.swipeRefreshLayout.isEnabled = false
         val profile = viewModel.getProfile()
         val qualification = Qualification(
             profile.tester ?: 0,
@@ -1653,7 +1441,7 @@ class MainActivity : AppCompatActivity() {
         val user = FirebaseAuth.getInstance()
         if (user.currentUser != null) {
             log("setButtonNavListener() Аккаунт зареган")
-            swipeRefreshLayout.isEnabled = false
+            binding.swipeRefreshLayout.isEnabled = false
             FragmentManager.setFragment(ProfileFragment.newInstance(), this)
 
         } else {
@@ -1678,4 +1466,3 @@ class MainActivity : AppCompatActivity() {
         const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
     }
 }
-

@@ -38,7 +38,6 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
         holder.bind(getItem(position))
     }
 
-
     //todo date -> StickyHeader
     inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val timeTextView: TextView = itemView.findViewById(R.id.messageTimeTextView)
@@ -54,8 +53,18 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
             timeTextView.visibility = View.GONE
             userTextView.visibility = View.GONE
             iconImageView.visibility = View.GONE
-           messageTextView.setPadding(150, 0, 0, 0)
-            main_Linear_layout.setPadding(30, 0, 30, 0)
+            val layoutParams = messageTextView.layoutParams as ViewGroup.MarginLayoutParams
+            layoutParams.leftMargin = 16
+            layoutParams.rightMargin = 0
+            layoutParams.topMargin = 0
+            layoutParams.bottomMargin = 0
+            messageTextView.layoutParams = layoutParams
+            val mainLayoutParams = main_Linear_layout.layoutParams as ViewGroup.MarginLayoutParams
+            mainLayoutParams.leftMargin = 30
+            mainLayoutParams.rightMargin = 30
+            mainLayoutParams.topMargin = 0
+            mainLayoutParams.bottomMargin = 0
+            main_Linear_layout.layoutParams = mainLayoutParams
         }
 
         fun showUserInfo() {
@@ -63,11 +72,19 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
             userTextView.visibility = View.VISIBLE
             iconImageView.visibility = View.VISIBLE
             userTextView.paintFlags = userTextView.paintFlags or Paint.UNDERLINE_TEXT_FLAG
-            messageTextView.setPadding(0, 0, 0, 0)
-            main_Linear_layout.setPadding(30, 30, 30, 0)
-
+            val layoutParams = messageTextView.layoutParams as ViewGroup.MarginLayoutParams
+            layoutParams.leftMargin = 0
+            layoutParams.rightMargin = 0
+            layoutParams.topMargin = 0
+            layoutParams.bottomMargin = 0
+            messageTextView.layoutParams = layoutParams
+            val mainLayoutParams = main_Linear_layout.layoutParams as ViewGroup.MarginLayoutParams
+            mainLayoutParams.leftMargin = 30
+            mainLayoutParams.rightMargin = 30
+            mainLayoutParams.topMargin = 30
+            mainLayoutParams.bottomMargin = 0
+            main_Linear_layout.layoutParams = mainLayoutParams
         }
-
 
         fun bind(chat: Chat) {
             timeTextView.text = chat.time
@@ -77,7 +94,6 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
             userTextView.setTextColor(getColorNickname(chat.importance))
             if (chat.importance == 7) messageTextView.setTextColor(Color.YELLOW)
 
-
             userTextView.setShadowLayer(8F, 0F, 0F,
                 when (userTextView.currentTextColor) {
                     ContextCompat.getColor(context, R.color.default_nick_color6) -> Color.WHITE
@@ -85,12 +101,13 @@ class ChatAdapter : ListAdapter<Chat, ChatAdapter.ChatViewHolder>(ChatDiffCallba
                     else -> Color.TRANSPARENT
                 }
             )
+
+            iconImageView.setImageResource(R.drawable.common_google_signin_btn_icon_disabled)
             userTextView.setTypeface(null, Typeface.BOLD)
             vUserMassage1.visibility = if (chat.tpovId == getTpovId()) View.VISIBLE
             else View.GONE
             vUserMassage2.visibility = if (chat.tpovId == getTpovId()) View.VISIBLE
             else View.GONE
-             Glide.with(itemView).load(chat.icon).into(iconImageView)
         }
     }
 

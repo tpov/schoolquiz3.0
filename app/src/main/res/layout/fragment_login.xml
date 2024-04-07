@@ -6,9 +6,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingLeft="16dp"
-    android:paddingTop="108dp"
+    android:paddingTop="132dp"
     android:paddingRight="16dp"
-    android:paddingBottom="16dp">
+    android:paddingBottom="86dp">
 
     <ScrollView
         android:id="@+id/scrollView2"
@@ -36,7 +36,7 @@
                 android:inputType="textEmailAddress"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey" />
+                android:textColorHint="@color/contour" />
 
             <EditText
                 android:id="@+id/password"
@@ -51,7 +51,7 @@
                 android:inputType="textPassword"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey" />
+                android:textColorHint="@color/contour" />
 
             <EditText
                 android:id="@+id/loginName"
@@ -65,7 +65,7 @@
                 android:imeOptions="actionDone"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -81,7 +81,7 @@
                 android:imeOptions="actionDone"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -97,7 +97,7 @@
                 android:imeOptions="actionDone"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -140,7 +140,7 @@
                 android:inputType="date"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -157,7 +157,7 @@
                 android:inputType="numberDecimal"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -206,7 +206,7 @@
         android:enabled="true"
         android:text="@string/action_sign_in"
         android:textColor="@color/white"
-        android:textColorHint="@color/grey"
+        android:textColorHint="@color/contour"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/registration"
         app:layout_constraintStart_toStartOf="parent"
@@ -220,7 +220,7 @@
         android:enabled="true"
         android:text="@string/action_registration"
         android:textColor="@color/white"
-        android:textColorHint="@color/grey"
+        android:textColorHint="@color/contour"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -236,7 +236,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:textColor="@color/white"
-        android:textColorHint="@color/grey"
+        android:textColorHint="@color/contour"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/mode_radio_group"
         app:layout_constraintEnd_toEndOf="parent"

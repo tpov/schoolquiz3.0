@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingTop="16dp"
-    android:background="@color/nullColor"
+    android:background="@null"
     android:orientation="vertical">
 
     <LinearLayout
@@ -15,7 +15,7 @@
             android:id="@+id/question_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/num_chack_norice_red"
+            android:textColor="@color/red"
             android:textSize="18dp"
             android:textStyle="bold"
             android:text="1." />
@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:textColor="#FFE700"
-            android:background="@color/nullColor"
+            android:background="@null"
             android:hint="@string/create_question_dialog_name_question" />
     </LinearLayout>
 
@@ -82,7 +82,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/num_chack_norice_red"
+        android:background="@color/red"
         android:orientation="vertical">
 
     </LinearLayout>

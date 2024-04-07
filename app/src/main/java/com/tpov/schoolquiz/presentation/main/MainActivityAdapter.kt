@@ -22,7 +22,6 @@ import com.tpov.schoolquiz.presentation.core.Logcat
 import com.tpov.schoolquiz.presentation.core.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.core.TranslateGoogle.translateText
-import kotlinx.android.synthetic.main.activity_main_item.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -102,7 +101,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 positiveButton.setTextColor(Color.WHITE)
                 negativeButton.setTextColor(Color.YELLOW)
 
-                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
             }
             alertDialog.show()
         }
@@ -163,7 +162,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
                 val widthInDp = 100
                 val heightInDp = 75
-                val radius = 25
+                val radius = 10
 
                 val widthInPx = dpToPx(widthInDp, context)
                 val heightInPx = dpToPx(heightInDp, context)
@@ -324,9 +323,9 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
             log("sefefefe, $lvlTranslate")
-            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
-            else imvTranslate.setColorFilter(Color.BLUE)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.WHITE)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(R.color.gold)
+            else imvTranslate.setColorFilter(R.color.contour)
             if (quizEntity.stars <= MAX_PERCENT_LIGHT_QUIZ_FULL) ratingBar.rating =
                 (quizEntity.stars.toFloat() / 50F)
             else ratingBar.rating = (((quizEntity.stars.toFloat() - 100F) / 20F) + 2F)
@@ -405,7 +404,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 positiveButton.setTextColor(Color.WHITE)
                 negativeButton.setTextColor(Color.YELLOW)
 
-                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
             }
             alertDialog.show()
         }

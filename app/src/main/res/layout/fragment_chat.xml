@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@mipmap/back_chat"
+    android:background="@drawable/back_main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingTop="140dp"
+    android:paddingBottom="72dp">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
@@ -14,6 +16,7 @@
         android:id="@+id/messageInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal">
 

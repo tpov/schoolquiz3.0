@@ -29,7 +29,6 @@ import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_L
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import kotlinx.android.synthetic.main.activity_question.*
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
@@ -126,11 +125,11 @@ class QuestionActivity : AppCompatActivity() {
                 }
             }
 
-            tv_pref.setOnClickListener {
+            tvPref.setOnClickListener {
                 setVisibleButtonsPref()
                 prefButton()
             }
-            tv_next.setOnClickListener {
+            tvNext.setOnClickListener {
                 setVisibleButtonsNext()
                 nextButton()
             }
@@ -215,7 +214,7 @@ class QuestionActivity : AppCompatActivity() {
                 val start = spannableText.length
                 spannableText.append(char.toString())
                 spannableText.setSpan(
-                    ForegroundColorSpan(Color.WHITE),
+                    ForegroundColorSpan(getColor(R.color.contour)),
                     start,
                     start + 1,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -224,7 +223,7 @@ class QuestionActivity : AppCompatActivity() {
                 delay(delayInMillis)
 
                 spannableText.setSpan(
-                    ForegroundColorSpan(Color.BLACK),
+                    ForegroundColorSpan(Color.WHITE),
                     start,
                     start + 1,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -241,11 +240,11 @@ class QuestionActivity : AppCompatActivity() {
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
 
         if (viewModel.quizUseCase.getQuiz(viewModel.idQuiz).event == EVENT_QUIZ_TOURNIRE_LEADER) binding.viewBackground.background =
-            getDrawable(R.mipmap.back_question_event5)
+            getDrawable(R.drawable.back_arena_question)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =
-                getDrawable(R.mipmap.back_question_light)
-            else binding.viewBackground.background = getDrawable(R.mipmap.back_question_hard)
+                getDrawable(R.drawable.back_light_question)
+            else binding.viewBackground.background = getDrawable(R.drawable.back_hard_question)
         }
     }
 

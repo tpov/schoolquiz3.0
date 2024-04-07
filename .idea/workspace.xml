@@ -10,39 +10,115 @@
         <target>android-33-ext4</target>
       </config>
     </shared>
+    <layouts>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main_item.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_question.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_question_item.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/chat_item.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/create_question_dialog.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/flash_card_layout_back.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_chat.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_contact.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_login.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_profile.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_title.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/info_fragment.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_translated_question.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/profile_item.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/question_create_item.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/result_dialog.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/title_header.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/translation_popup_layout.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/menu/menu_title_activity.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
+    </layouts>
   </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Fix show ads&#10;Edit scroll name quiz&#10;Fix arena (checking for lives)&#10;Fix update result quiz&#10;Fix close userguide when click outside">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryChatImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryDataImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryPlayersImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryProfileImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryQuestionDetailImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryQuestionImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryQuizImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/ChatDao.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/DataDao.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/PlayersDao.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/ProfileDao.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuestionDao.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuestionDetailDao.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/ChatUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/DataUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/PlayersUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/ProfileUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/QuestionDetailUserCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/QuestionUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/QuizUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryChat.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryData.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryPlayers.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryProfile.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryQuestion.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryQuestionDetail.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryQuiz.kt" afterDir="false" />
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Redesign4.0 (main) night&#10;Update gradle">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/NotificationHelper.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" afterDir="false" />
@@ -51,43 +127,19 @@
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryDBImpl.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryFBImpl.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/Converters.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/custom/Converters.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuizDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuizDao.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuizDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database/QuizDatabase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/DBModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/DBModule.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/LocalUseCase.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/RemoveUseCase.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryDB.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/domain/repository/RepositoryFB.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/TranslateGoogle.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/TranslateGoogle.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/Values.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/Values.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialogTerminal.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionDialogTerminal.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dowload/DownloadFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dowload/DownloadFragment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/FragmentMain.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/FragmentMain.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryQuizImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/RepositoryQuizImpl.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityAdapter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivityViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/AutorisationViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/chat/ChatFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/chat/ChatFragment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/chat/ChatViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/chat/ChatViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventAdapter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventFragment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/profile/ProfileFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/profile/ProfileFragment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/profile/ProfileViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/profile/ProfileViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionViewModel.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[C:\Users\tpovd\.android\avd\Pixel_3a_API_34_extension_level_7_x86_64.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -119,12 +171,12 @@
         <option value="Python Script" />
         <option value="valueResourceFile" />
         <option value="Kotlin Data Class" />
-        <option value="resourceFile" />
         <option value="layoutResourceFile" />
         <option value="Class" />
-        <option value="Kotlin Object" />
         <option value="Kotlin Interface" />
+        <option value="Kotlin Object" />
         <option value="Kotlin Class" />
+        <option value="resourceFile" />
       </list>
     </option>
   </component>
@@ -173,52 +225,45 @@
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="ProjectErrors" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="2MdM8qyqboV1nJrQXz70kLiA3XM" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="ApkExportedModule" value="schoolquiz.app" />
-    <property name="BundleExportedModule" value="schoolquiz.app" />
-    <property name="ExportApk.ApkPath" value="E:\Programming\Android\schoolquiz3.0" />
-    <property name="ExportApk.BuildVariants" value="release" />
-    <property name="Git.Branch.Popup.ShowAllRemotes" value="true" />
-    <property name="PROJECT_TRUSTED_KEY" value="true" />
-    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
-    <property name="android-custom-viewC:/Users/oleg1/.gradle/caches/modules-2/files-2.1/androidx.recyclerview/recyclerview/1.2.1/f0f93e67af3f7417bdd560d5142f6dec4fe629c3/recyclerview-1.2.1-sources.jar!/androidx/recyclerview/widget/RecyclerView.java_SELECTED" value="RecyclerView" />
-    <property name="android-custom-viewC:/Users/oleg1/AppData/Local/Android/Sdk/sources/android-33/android/view/View.java_SELECTED" value="View" />
-    <property name="android-custom-viewC:/Users/oleg1/AppData/Local/Android/Sdk/sources/android-33/android/widget/TextView.java_SELECTED" value="TextView" />
-    <property name="android-custom-viewC:/Users/oleg1/AppData/Local/Android/Sdk/sources/android-33/android/widget/TextView.java_TextView_DIMENSIONS" value="1080&#10;1920" />
-    <property name="android-custom-viewE:/Programming/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/core/CustomProgressBar.kt_SELECTED" value="CustomProgressBar" />
-    <property name="android-custom-viewE:/Programming/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/core/CustomRoundedImageView.kt_SELECTED" value="CustomRoundedImageView" />
-    <property name="android-custom-viewE:/Programming/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/custom/CustomProgressBar.kt_SELECTED" value="CustomProgressBar" />
-    <property name="android-custom-viewE:/Programming/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/custom/CustomRoundedImageView.kt_SELECTED" value="CustomRoundedImageView" />
-    <property name="android-custom-viewE:/Программирование/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/custom/CustomProgressBar.kt_SELECTED" value="CustomProgressBar" />
-    <property name="android-custom-viewE:/Программирование/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/custom/CustomRoundedImageView.kt_SELECTED" value="CustomRoundedImageView" />
-    <property name="cidr.known.project.marker" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/data/database" />
-    <property name="project.structure.last.edited" value="SDK Location" />
-    <property name="project.structure.proportion" value="0.17" />
-    <property name="project.structure.side.proportion" value="0.0" />
-    <property name="settings.editor.selected.configurable" value="reference.settings.project.statistic.project.settings" />
-  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "android-custom-viewD:/Programming/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/core/CustomProgressBar.kt_SELECTED": "CustomProgressBar",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "Merging master",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "D:/Programming/Android/schoolquiz3.0/app/src/main/res/drawable",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.17",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "experimental"
+  }
+}]]></component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Properties" />
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Programming\Android\schoolquiz3.0\app\src\main\res\drawable" />
       <recent name="E:\Programming\Android\schoolquiz3.0\app\src\main\java\com\tpov\schoolquiz\data\database" />
       <recent name="E:\Programming\Android\schoolquiz3.0\app\src\main\java\com\tpov\schoolquiz\data\database\entities" />
       <recent name="E:\SchoolQuiz\app\src\main\res\xml" />
       <recent name="E:\SchoolQuiz\app\src\main\res" />
-      <recent name="E:\SchoolQuiz\app\src\main\res\drawable" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="E:\Программирование\Android\schoolquiz3.0\app\src\main\res\mipmap-hdpi" />
@@ -274,6 +319,8 @@
         <option name="WORKING_DIR" value="" />
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Auto>
       <Hybrid>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -281,14 +328,21 @@
         <option name="WORKING_DIR" value="" />
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Hybrid>
-      <Java />
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
       <Native>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
         <option name="SHOW_STATIC_VARS" value="true" />
         <option name="WORKING_DIR" value="" />
         <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
         <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
       </Native>
       <Profilers>
         <option name="ADVANCED_PROFILING_ENABLED" value="false" />
@@ -297,7 +351,6 @@
         <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
         <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
         <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
-        <option name="PROFILING_MODE" value="NOT_SET" />
       </Profilers>
       <option name="DEEP_LINK" value="" />
       <option name="ACTIVITY_CLASS" value="" />
@@ -683,10 +736,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Add get massage" />
-    <MESSAGE value="Add translate UserGuide" />
-    <MESSAGE value="Add refactoring get all quiz" />
-    <MESSAGE value="Create load text progress bar in FBImpl" />
     <MESSAGE value="Edit refactoring set all quiz" />
     <MESSAGE value="gitignore" />
     <MESSAGE value="Fix set read in FB after getQuiz (false -&gt; true)" />
@@ -708,7 +757,11 @@
     <MESSAGE value="Edit: rename class" />
     <MESSAGE value="Edit: rename class&#10;Refactoring: UseCase" />
     <MESSAGE value="Fix show ads&#10;Edit scroll name quiz&#10;Fix arena (checking for lives)&#10;Fix update result quiz&#10;Fix close userguide when click outside" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix show ads&#10;Edit scroll name quiz&#10;Fix arena (checking for lives)&#10;Fix update result quiz&#10;Fix close userguide when click outside" />
+    <MESSAGE value="Refactoring domain" />
+    <MESSAGE value="Redesign4.0 night" />
+    <MESSAGE value="Redesign4.0 (main) night" />
+    <MESSAGE value="Redesign4.0 (main) night&#10;Update gradle" />
+    <option name="LAST_COMMIT_MESSAGE" value="Redesign4.0 (main) night&#10;Update gradle" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

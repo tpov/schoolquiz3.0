@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.tpov.schoolquiz">
-    <meta-data
-        android:name="com.google.android.gms.ads.APPLICATION_ID"
-        android:value="ca-app-pub-8813769623682903~9713893471"/>
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -29,8 +26,6 @@
         <activity android:name="com.tpov.schoolquiz.presentation.question.QuestionActivity" />
         <activity android:name="com.tpov.schoolquiz.presentation.question.QuestionListActivity" />
         <activity android:name="com.tpov.schoolquiz.presentation.question.CheatActivity" />
-        <activity android:name="com.tpov.schoolquiz.presentation.settings.SettingsActivity" />
-        <activity android:name="com.tpov.schoolquiz.presentation.main.info.InfoActivity" />
         <activity
             android:name="com.tpov.schoolquiz.presentation.splashscreen.SplashScreen"
             android:exported="true">
@@ -42,6 +37,10 @@
         </activity>
         <service android:name="com.tpov.schoolquiz.data.Services.MusicService"/>
 
+        <property
+            android:name="android.adservices.AD_SERVICES_CONFIG"
+            android:resource="@xml/ga_ad_services_config"
+            tools:replace="android:resource" />
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-8813769623682903~9713893471"/>

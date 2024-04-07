@@ -12,15 +12,60 @@ import com.tpov.schoolquiz.data.database.QuestionDao
 import com.tpov.schoolquiz.data.database.QuestionDetailDao
 import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.data.fierbase.*
+import com.tpov.schoolquiz.data.fierbase.Quiz
+import com.tpov.schoolquiz.data.fierbase.toQuizEntity
 import com.tpov.schoolquiz.domain.repository.RepositoryQuiz
-import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.core.*
+import com.tpov.schoolquiz.presentation.BARRIER_QUIZ_ID_LOCAL_AND_REMOVE
+import com.tpov.schoolquiz.presentation.DELAY_TIMEOUT_SYNTH_FB
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_FOR_ADMIN
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_FOR_TESTER
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_FOR_USER
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
+import com.tpov.schoolquiz.presentation.LVL_ADMIN_1_LVL
+import com.tpov.schoolquiz.presentation.LVL_DEVELOPER_1_LVL
+import com.tpov.schoolquiz.presentation.LVL_MODERATOR_1_LVL
+import com.tpov.schoolquiz.presentation.LVL_TESTER_1_LVL
+import com.tpov.schoolquiz.presentation.LVL_TRANSLATOR_1_LVL
+import com.tpov.schoolquiz.presentation.QUIZ_VERSION_DEFAULT
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG
+import com.tpov.schoolquiz.presentation.core.KEY_RATING
+import com.tpov.schoolquiz.presentation.core.KEY_STARS
+import com.tpov.schoolquiz.presentation.core.KEY_STARS_ALL
+import com.tpov.schoolquiz.presentation.core.KEY_STARS_ALL_PLAYER
+import com.tpov.schoolquiz.presentation.core.KEY_STARS_PLAYER
+import com.tpov.schoolquiz.presentation.core.KEY_VERSION_QUIZ
+import com.tpov.schoolquiz.presentation.core.Logcat
+import com.tpov.schoolquiz.presentation.core.PATH_ADMIN_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_ARENA_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_HOME_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_ID_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_LIST_READ
+import com.tpov.schoolquiz.presentation.core.PATH_MODERATOR_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_PHOTO
+import com.tpov.schoolquiz.presentation.core.PATH_PLAYERS_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_TESTER_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_TOURNIRE_LEADER_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_TOURNIRE_QUIZ
+import com.tpov.schoolquiz.presentation.core.PATH_USER_QUIZ
+import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.core.Values
 import com.tpov.schoolquiz.presentation.core.Values.context
 import com.tpov.schoolquiz.presentation.core.Values.setLoadPB
 import com.tpov.schoolquiz.presentation.core.Values.synth
 import com.tpov.schoolquiz.presentation.core.Values.synthLiveData
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import javax.inject.Inject
 
@@ -61,7 +106,6 @@ class RepositoryQuizImpl @Inject constructor(
             .getReference("$PATH_PLAYERS_QUIZ/${quiz.id}/${SharedPreferencesManager.getTpovId()}")
             .updateChildren(quizRatingMap)
     }
-
 
 
     private fun isInsertQuizAfterSet(quiz: Quiz): Boolean =
@@ -156,7 +200,6 @@ class RepositoryQuizImpl @Inject constructor(
                             val quiz = quizSnapshot.getValue(Quiz::class.java)
 
                             log("wdwdwdw 6 quiz${quiz?.event}: $quiz")
-
                             val maxLvlTranslate = try {
                                 var max = 0
                                 quiz?.languages?.split(SPLIT_BETWEEN_LANGUAGES)?.forEach {
@@ -166,27 +209,16 @@ class RepositoryQuizImpl @Inject constructor(
                                 }
                                 max
                             } catch (e: Exception) {
-                                try {
-                                    quiz?.languages?.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)!![1].toInt()
-                                } catch (e: Exception) {
-                                    0
-                                }
+                                try {quiz?.languages?.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)!![1].toInt()
+                                } catch (e: Exception) {0}
                             }
-
                             val quizVersionLocal =
                                 SharedPreferencesManager.getVersionQuiz(idQuiz.toString())
 
-                            log("wdwdwdw 6 1: ${this@RepositoryQuizImpl.isQuizPublic(quiz) && maxLvlTranslate >= 100 && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
-                            log("wdwdwdw 6 2: ${(isQuizForEvent(quiz)) && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1)}")
-                            log("wdwdwdw 6 3: ${quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == 1}")
-                            log("wdwdwdw 6 4: ${maxLvlTranslate >= 100}")
-                            log("wdwdwdw 6 5: ${getQuestionDetails}")
-                            log("wdwdwdw 6 6: ${this@RepositoryQuizImpl.isQuizPublic(quiz)}")
-
                             if (
-                                ((isQuizPublic(quiz) && maxLvlTranslate >= LVL_TRANSLATOR_1_LVL || isQuizForEvent(
-                                    quiz
-                                ))
+                                (((quiz?.event in EVENT_QUIZ_ARENA..EVENT_QUIZ_HOME)
+                                        && maxLvlTranslate >= LVL_TRANSLATOR_1_LVL || ((quiz?.event in EVENT_QUIZ_FOR_USER..EVENT_QUIZ_FOR_ADMIN)
+                                        && quiz?.ratingPlayer != 1))
                                         && (quiz?.versionQuiz!! > quizVersionLocal || quizVersionLocal == -1 || getQuestionDetails)
                                         || quizVersionLocal == QUIZ_VERSION_DEFAULT && quiz?.event == EVENT_QUIZ_FOR_USER)
                             ) savePictureToLocalDirectory(quiz!!.picture) {
@@ -206,8 +238,12 @@ class RepositoryQuizImpl @Inject constructor(
                                 }
 
                                 log("wdwdwdw INSERT")
-                                RepositoryQuestionImpl(questionDao).getQuestions(quizItem ?: PATH_HOME_QUIZ, idQuiz)
-                                if (getQuestionDetails) RepositoryQuestionDetailImpl(questionDetailDao).getQuestionDetails(
+                                RepositoryQuestionImpl(questionDao).getQuestions(
+                                    quizItem ?: PATH_HOME_QUIZ, idQuiz
+                                )
+                                if (getQuestionDetails) RepositoryQuestionDetailImpl(
+                                    questionDetailDao
+                                ).getQuestionDetails(
                                     quizItem ?: PATH_HOME_QUIZ
                                 )
                                 SharedPreferencesManager.setVersionQuiz(
@@ -231,13 +267,10 @@ class RepositoryQuizImpl @Inject constructor(
         } else Values.loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_server_load))
     }
 
-    private fun isQuizPublic(quiz: Quiz?): Boolean =
-        quiz?.event in EVENT_QUIZ_ARENA..EVENT_QUIZ_HOME
-
     override fun getQuiz(id: Int) = quizDao.getQuizById(id)
 
-    override fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int)
-    = quizDao.getIdQuizByNameQuizDB(nameQuiz, tpovId) ?: 0
+    override fun getIdQuizByNameQuiz(nameQuiz: String, tpovId: Int) =
+        quizDao.getIdQuizByNameQuizDB(nameQuiz, tpovId) ?: 0
 
     override suspend fun getQuizListLiveData(id: Int) = quizDao.getQuizLiveDataDB(id)
 
@@ -368,8 +401,18 @@ class RepositoryQuizImpl @Inject constructor(
                                         quizRef.child(newIdQuiz.toString()).setValue(newQuiz)
                                         quizDao.deleteQuizById(it.id!!)
 
-                                        RepositoryQuestionImpl(questionDao).setQuestions(newIdQuiz, eventQuiz, it.id!!, newQuiz)
-                                        RepositoryQuestionDetailImpl(questionDetailDao).setQuestionDetails(newIdQuiz, eventQuiz, it.id!!, newQuiz)
+                                        RepositoryQuestionImpl(questionDao).setQuestions(
+                                            newIdQuiz,
+                                            eventQuiz,
+                                            it.id!!,
+                                            newQuiz
+                                        )
+                                        RepositoryQuestionDetailImpl(questionDetailDao).setQuestionDetails(
+                                            newIdQuiz,
+                                            eventQuiz,
+                                            it.id!!,
+                                            newQuiz
+                                        )
                                         setQuizResults(it)
 
                                         i++
@@ -409,13 +452,6 @@ class RepositoryQuizImpl @Inject constructor(
     override suspend fun downloadQuizes() {
         getQuiz()
     }
-
-    private fun isQuizForEvent(quiz: Quiz?): Boolean =
-        this.isQuizPrivate(quiz) && quiz?.ratingPlayer != 1
-
-    private fun isQuizPrivate(quiz: Quiz?): Boolean =
-        quiz?.event in EVENT_QUIZ_FOR_USER..EVENT_QUIZ_FOR_ADMIN
-
 
     val database = FirebaseDatabase.getInstance()
 

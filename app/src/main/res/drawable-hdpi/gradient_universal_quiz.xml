@@ -14,5 +14,5 @@
         android:endY="100"
         android:angle="45"
         android:startColor="#BF002593"
-        android:endColor="@color/nullColor" />
+        android:endColor="@null" />
 </shape>

@@ -6,25 +6,26 @@
         <!-- Secondary brand color. -->
         <item name="android:fontFamily">@font/cutive_mono</item>
         <item name="android:colorPrimary">@color/white</item>
-        <item name="android:colorPrimaryDark">@color/design3_main_end</item> //Цвет статуса бара
+        <item name="android:colorPrimaryDark">@color/back_main_top</item> //Цвет статуса бара
         <item name="android:colorAccent">#FFFFFF</item>    //текст
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="colorControlNormal">#FFFFFF</item>
         <item name="colorControlHighlight">#66FF0000</item> //Волновой єффект єлемента меню
         <item name="android:actionBarStyle">@style/MyActionBar</item>
         <!-- Secondary brand color. -->
-        <!-- Status bar color. -->
-        <!-- Status bar color. -->
-        <!-- Customize your theme here. -->
-    </style>
 
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
     <style name="MyActionBar" parent="@style/Widget.AppCompat.ActionBar">
         <item name="android:colorPrimaryDark">#FFFFFF</item>
         <item name="android:colorPrimary">#FFFFFF</item>
     </style>
 
     <style name="RatingBar" parent="Theme.AppCompat">
-        <item name="android:colorControlActivated">@color/ratingBar</item>
+        <item name="android:colorControlActivated">@color/gold</item>
         <item name="android:textColorSecondary">#000000</item>
     </style>
     <style name="RatingBarFavorite" parent="Theme.AppCompat">
@@ -38,16 +39,14 @@
     </style>
     <style name="AppTheme" parent="Theme.AppCompat">
         <item name="android:textColorSecondary">#FFFFFF</item>
-        <item name="colorControlNormal">@color/design3_main_end</item>
+        <item name="colorControlNormal">@color/back_main_top</item>
+
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
     </style>
 
-    <style name="CustomTheme" parent="Theme.AppCompat">
-        <item name="android:textColorSecondary">@color/white</item>
-        <item name="android:colorPrimary">@color/white</item>
-        <item name="android:colorPrimaryDark">@color/white</item>
-        <item name="android:colorAccent">@color/white</item>
-        <item name="android:background">#FFFFFF</item>
-    </style>
 
     <!-- Стиль текста в терминале -->
     <style name="TerminalText">

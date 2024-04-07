@@ -244,7 +244,7 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             positiveButton.setTextColor(Color.WHITE)
             negativeButton.setTextColor(Color.YELLOW)
 
-            dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+            dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
         }
         alertDialog.show()
     }

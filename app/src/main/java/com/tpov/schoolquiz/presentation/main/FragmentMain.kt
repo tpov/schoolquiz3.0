@@ -10,14 +10,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.databinding.TitleFragmentBinding
-import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
+import com.tpov.schoolquiz.databinding.FragmentTitleBinding
+import com.tpov.schoolquiz.databinding.FragmentTitleBinding.inflate
 import com.tpov.schoolquiz.presentation.*
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
@@ -33,7 +35,6 @@ import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD_QUESTION
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
-import kotlinx.android.synthetic.main.title_fragment.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -61,7 +62,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
     private lateinit var adapter: MainActivityAdapter
 
-    private lateinit var binding: TitleFragmentBinding
+    private lateinit var binding: FragmentTitleBinding
     private var createQuiz = false
 
     override fun onAttach(context: Context) {
@@ -82,7 +83,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         adapter = MainActivityAdapter(this, requireContext(), mainViewModel)
         binding.rcView.layoutManager = LinearLayoutManager(activity)
         binding.rcView.adapter = adapter
-        rcView.itemAnimator = RotateInItemAnimator()
+        binding.rcView.itemAnimator = RotateInItemAnimator()
         // Обработка нажатия на кнопку удаления
         adapter.onDeleteButtonClick = { quizEntity ->
             // Ваш код для удаления или выполнения других действий с элементом
@@ -94,7 +95,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         lifecycleScope.launchWhenStarted {
             val countPlace = mainViewModel.getCountPlaceForUserQuiz()
-            tv_number_place_user_quiz.text = countPlace.toString()
+                view.findViewById<TextView>(R.id.tv_number_place_user_quiz).text = countPlace.toString()
 
             if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
                 binding.fabAddItem.isClickable = false
@@ -159,7 +160,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
 
             log("fgjesdriofjeskl observe it: $it")
-            tv_number_place_user_quiz.text = it.toString()
+                view.findViewById<TextView>(R.id.tv_number_place_user_quiz).text = it.toString()
             if (it <= 0) {
                 binding.fabAddItem.isClickable = false
                 binding.fabAddItem.isEnabled = false
@@ -400,7 +401,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                             positiveButton.setTextColor(Color.WHITE)
                             negativeButton.setTextColor(Color.YELLOW)
 
-                            dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                            dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
                         }
 
                         alertDialog.show()
@@ -441,7 +442,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 positiveButton.setTextColor(Color.WHITE)
                 negativeButton.setTextColor(Color.YELLOW)
 
-                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
             }
 
             alertDialog.show()

@@ -205,7 +205,7 @@ class AutorisationFragment : BaseFragment() {
 
             dialog.setOnShowListener {
                 val dialogWindow = dialog.window
-                dialogWindow?.setBackgroundDrawableResource(R.color.grey)
+                dialogWindow?.setBackgroundDrawableResource(R.color.contour)
             }
 
             dialog.show()
@@ -341,7 +341,7 @@ class AutorisationFragment : BaseFragment() {
 
     private fun updateButtonTextColor(button: Button, active: Boolean) {
         val textColor = if (active) {
-            resources.getColor(R.color.num_chack_norice_green, null)
+            resources.getColor(R.color.green, null)
         } else {
             resources.getColor(R.color.white, null)
         }

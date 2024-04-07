@@ -1,21 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <style name="CustomTheme" parent="Theme.AppCompat">
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:colorPrimary">@color/white</item>
+        <item name="android:colorPrimaryDark">@color/white</item>
+        <item name="android:colorAccent">@color/white</item>
+        <item name="android:background">#FFFFFF</item>
+    </style>
     <style name="CustomDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:background">@color/design3_main_start</item>
+        <item name="android:background">@color/back_main_top</item>
     </style>
 
-    <style name="CustomCardStyle" parent="Widget.MaterialComponents.CardView">
-        <item name="android:layout_width">75dp</item>
-        <item name="android:layout_height">26dp</item>
-        <item name="cardCornerRadius">12dp</item>
-        <item name="cardBackgroundColor">#BF797A59</item>
-        <item name="cardElevation">4dp</item>
-        <item name="contentPaddingLeft">8dp</item>
-        <item name="android:layout_marginLeft">16dp</item>
-        <item name="contentPaddingRight">8dp</item>
-        <item name="android:layout_marginRight">16dp</item>
-        <!-- Другие атрибуты стиля, если нужно -->
-    </style>
     <!-- styles.xml -->
     <style name="DialogAnimationCreateQuestion">
         <item name="android:windowEnterAnimation">@anim/slide_in_horizontal</item>

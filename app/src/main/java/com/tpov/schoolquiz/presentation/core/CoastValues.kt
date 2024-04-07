@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.presentation.core
 
 object CoastValues {
-
     object CoastValuesNolics {
         const val COEF_COAST_GOOGLE_TRANSLATE = 15
         const val COAST_LIFE1 = 1000

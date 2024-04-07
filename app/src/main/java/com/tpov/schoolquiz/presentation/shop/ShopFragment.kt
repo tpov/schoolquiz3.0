@@ -43,9 +43,7 @@ import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.schoolquiz.secure.secureCode.getAdUnitId
-import kotlinx.android.synthetic.main.info_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.*
 import javax.inject.Inject
 
 class ShopFragment : BaseFragment() {
@@ -122,7 +120,7 @@ class ShopFragment : BaseFragment() {
                             .create()
 
                         alertDialog.show()
-                        alertDialog.window?.setBackgroundDrawableResource(R.color.grey)
+                        alertDialog.window?.setBackgroundDrawableResource(R.color.contour)
                     }
                 }
 

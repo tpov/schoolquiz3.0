@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="left"
-    android:background="@mipmap/back_question_light"
+    android:background="@drawable/back_light_question"
     android:foregroundGravity="left"
     android:orientation="vertical">
 
@@ -36,20 +36,17 @@
             <TextView
                 android:id="@+id/tvTimer"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="45dp"
                 android:layout_marginTop="32dp"
-                android:background="#BF9DA6E6"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:background="@drawable/back_item_main"
+                android:padding="8dp"
                 android:text="00:00"
-                android:textSize="20dp" />
+                android:textColor="@color/white"
+                android:textSize="24sp" />
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.3"
-            android:orientation="vertical">
-
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -59,17 +56,18 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-            <androidx.cardview.widget.CardView style="@style/CustomCardStyle">
-
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="80dp"
+                    android:layout_height="35dp"
+                    android:layout_margin="16dp"
+                    android:background="@drawable/back_item_main"
                     android:orientation="horizontal">
 
                     <ImageView
                         android:id="@+id/imageView3"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
+                        android:layout_margin="4dp"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         app:srcCompat="@drawable/percent_icon" />
@@ -84,18 +82,16 @@
                         android:gravity="center"
                         android:padding="4dp"
                         android:text="0"
-                        android:textSize="14dp" />
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/imv_life"
-                style="@style/CustomCardStyle">
-
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:id="@+id/imv_life"
+                    android:layout_width="80dp"
+                    android:layout_height="35dp"
+                    android:layout_margin="16dp"
+                    android:background="@drawable/back_item_main"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -103,6 +99,7 @@
                         android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:layout_weight="1"
+                        android:layout_margin="4dp"
                         app:srcCompat="@drawable/baseline_favorite_24" />
 
                     <TextView
@@ -111,27 +108,26 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_weight="1"
-                        android:background="#33A89B54"
-                        android:text=""
-                        android:textSize="14dp" />
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:text=""/>
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/imv_life_gold"
-                style="@style/CustomCardStyle"
-                android:visibility="gone">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:id="@+id/imv_life_gold"
+                    android:layout_width="80dp"
+                    android:layout_height="35dp"
+                    android:background="@drawable/back_item_main"
+                    android:layout_margin="16dp"
+                    android:visibility="gone"
                     android:orientation="horizontal">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
+                        android:layout_margin="4dp"
                         android:layout_weight="1"
                         app:srcCompat="@drawable/baseline_favorite_24_gold" />
 
@@ -141,24 +137,24 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_weight="1"
-                        android:background="#33A89B54"
                         android:text="1"
-                        android:textSize="14dp" />
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
                 </LinearLayout>
 
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView style="@style/CustomCardStyle">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="80dp"
+                    android:layout_height="35dp"
+                    android:layout_margin="16dp"
+                    android:background="@drawable/back_item_main"
                     android:orientation="horizontal">
 
                     <ImageView
                         android:id="@+id/imageView5"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
+                        android:layout_margin="4dp"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         app:srcCompat="@drawable/last_question_icon" />
@@ -168,13 +164,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:background="#33A89B54"
+                        android:layout_weight="1"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
                         android:gravity="center"
-                        android:text=""
-                        android:textSize="14dp" />
+                        android:text="" />
                 </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
 
@@ -189,16 +184,16 @@
                 android:id="@+id/question_text_view"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
                 android:layout_weight="1"
-                android:background="#BF9DA6E6"
+                android:background="@drawable/back_item_main"
                 android:elevation="-10dp"
                 android:gravity="center"
-                android:padding="20px"
+                android:padding="16dp"
                 android:text="ERROR"
-                android:textColor="#001901"
-                android:textSize="13dp"
+                android:textColor="@color/white"
+                android:textSize="22sp"
                 tools:layout_conversion_absoluteHeight="0dp"
                 tools:layout_conversion_absoluteWidth="0dp" />
 
@@ -212,13 +207,12 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-            <androidx.cardview.widget.CardView style="@style/CustomCardStyle">
-
-
                 <LinearLayout
                     android:id="@+id/tv_pref"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="80dp"
+                    android:layout_height="35dp"
+                    android:background="@drawable/back_item_main"
+                    android:layout_margin="16dp"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -227,6 +221,7 @@
                         android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:layout_weight="1"
+                        android:layout_margin="4dp"
                         app:srcCompat="@drawable/arrow_left" />
 
                     <TextView
@@ -234,26 +229,24 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_weight="1"
-                        android:background="#33A89B54"
                         android:text="@string/pref_button"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
+                        android:textColor="@color/white"
+                        android:textSize="14sp" />
                 </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView style="@style/CustomCardStyle">
 
                 <LinearLayout
                     android:id="@+id/imv_list_question"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="80dp"
+                    android:layout_height="35dp"
+                    android:background="@drawable/back_item_main"
+                    android:layout_margin="16dp"
                     android:orientation="horizontal">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="26dp"
                         android:layout_gravity="center"
+                        android:layout_margin="4dp"
                         android:layout_weight="1"
                         app:srcCompat="@drawable/nav_task" />
 
@@ -263,20 +256,17 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_weight="1"
-                        android:background="#33A89B54"
-                        android:text="15"
-                        android:textSize="14dp" />
+                        android:text="152"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"/>
                 </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView style="@style/CustomCardStyle">
-
 
                 <LinearLayout
                     android:id="@+id/tv_next"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="80dp"
+                    android:layout_height="35dp"
+                    android:background="@drawable/back_item_main"
+                    android:layout_margin="16dp"
                     android:orientation="horizontal">
 
                     <TextView
@@ -284,30 +274,21 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:layout_weight="1"
-                        android:background="#33A89B54"
+                        android:gravity="right"
                         android:text="@string/next_button"
-                        android:textSize="10dp"
-                        android:textStyle="bold" />
+                        android:textColor="@color/white"
+                        android:textSize="14sp" />
 
                     <ImageView
                         android:id="@+id/imv_next"
-                        android:layout_width="25dp"
+                        android:layout_width="20dp"
+                        android:layout_margin="4dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
                         android:layout_weight="1"
                         app:srcCompat="@drawable/arrow_right" />
 
                 </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.3"
-            android:orientation="vertical">
 
         </LinearLayout>
 
@@ -322,7 +303,7 @@
                 android:id="@+id/false_button"
                 android:layout_width="150dp"
                 android:layout_height="100dp"
-                android:backgroundTint="#AE4848"
+                android:backgroundTint="#784848"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:text="@string/false_button"
@@ -340,7 +321,7 @@
                 android:id="@+id/true_button"
                 android:layout_width="150dp"
                 android:layout_height="100dp"
-                android:backgroundTint="#50A557"
+                android:backgroundTint="#507857"
                 android:elevation="20dp"
                 android:text="@string/true_button"
                 android:textSize="14dp" />
