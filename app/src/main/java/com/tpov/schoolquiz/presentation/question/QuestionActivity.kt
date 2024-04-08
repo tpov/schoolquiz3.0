@@ -225,7 +225,8 @@ class QuestionActivity : AppCompatActivity() {
                 val start = spannableText.length
                 spannableText.append(char.toString())
                 spannableText.setSpan(
-                    ForegroundColorSpan(getColor(R.color.contour)),
+                    if (viewModel.hardQuestion) ForegroundColorSpan(Color.RED)
+                    else ForegroundColorSpan(Color.GREEN),
                     start,
                     start + 1,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -552,8 +553,6 @@ class QuestionActivity : AppCompatActivity() {
             }
 
             override fun onAnimationEnd(p0: Animation?) {
-                binding.questionTextView.visibility = View.GONE
-
                 Log.d(
                     "dawdasd",
                     "questionListThis: ${viewModel.currentIndex + 1}, ${viewModel.numQuestion}"

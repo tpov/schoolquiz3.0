@@ -197,7 +197,7 @@
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="16dp"
-                android:text="ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR "
+                android:text="ERROR  ERROR ERROR ERROR ERROR "
                 android:textColor="@color/white"
                 android:textSize="20sp" />
         </LinearLayout>
