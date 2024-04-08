@@ -8,6 +8,7 @@
     <color name="red">#870000</color>
 
     <color name="contour">#0C7FCF</color>
+    <color name="contour_unable">#0C4678</color>
     <color name="back_item">#191919</color>
 
     <color name="back_main_top">#191928</color>
