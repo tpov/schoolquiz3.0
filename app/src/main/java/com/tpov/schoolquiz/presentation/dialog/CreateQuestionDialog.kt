@@ -26,9 +26,12 @@ import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.*
-import org.w3c.dom.Text
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
 class CreateQuestionDialog : DialogFragment() {
 
@@ -97,7 +100,7 @@ class CreateQuestionDialog : DialogFragment() {
 
         val questionTitle = questionItemView.findViewById<EditText>(R.id.question_title)
 
-        questionItemView.findViewById<Button>(R.id.language_selector).setOnClickListener {
+        questionItemView.findViewById<TextView>(R.id.language_selector).setOnClickListener {
             showLanguageDialog(questionItemView)
         }
 
@@ -128,7 +131,7 @@ class CreateQuestionDialog : DialogFragment() {
                                 questionItemView.findViewById<TextView>(R.id.language_selector).text = languageFullName
                             } else {
                                 val languageFullName = LanguageUtils.getLanguageFullName(language)
-                                questionItemView.findViewById<Button>(R.id.language_selector).text = languageFullName
+                                questionItemView.findViewById<TextView>(R.id.language_selector).text = languageFullName
                             }
                         }
                         .addOnFailureListener {
@@ -137,7 +140,7 @@ class CreateQuestionDialog : DialogFragment() {
                             lang = userLanguageCode
 
                             val languageFullName = LanguageUtils.getLanguageFullName(lang)
-                            questionItemView.findViewById<Button>(R.id.language_selector).text = languageFullName
+                            questionItemView.findViewById<TextView>(R.id.language_selector).text = languageFullName
                         }
                 }
             }
@@ -146,7 +149,7 @@ class CreateQuestionDialog : DialogFragment() {
         })
 
         numQuestion++
-        questionItemView.findViewById<Button>(R.id.question_number).text = numQuestion.toString()
+        questionItemView.findViewById<TextView>(R.id.question_number).text = numQuestion.toString()
         questionsContainer.addView(questionItemView)
         questionTitle.requestFocus()
         return questionItemView
@@ -217,7 +220,7 @@ class CreateQuestionDialog : DialogFragment() {
             val questionItemView = questionsContainer.getChildAt(i)
 
             val questionTitle = questionItemView.findViewById<TextView>(R.id.question_title).text.toString()
-            val questionAnswer = questionItemView.findViewById<CheckBox>(R.id.true_button).isChecked
+            val questionAnswer = questionItemView.findViewById<RadioButton>(R.id.true_button).isChecked
             val questionHard = questionItemView.findViewById<CheckBox>(R.id.hard_question_checkbox).isChecked
 
             if (questionHard) numHQ++

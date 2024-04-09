@@ -207,6 +207,10 @@ class QuestionActivity : AppCompatActivity() {
                     startActivityForResult(questionActivityIntent, UPDATE_CURRENT_INDEX)
                 }
             }
+
+            viewModel.closeActivityEvent.observe(this@QuestionActivity) {
+                finish()
+            }
         }
 
         updateDataView()
@@ -532,7 +536,6 @@ class QuestionActivity : AppCompatActivity() {
 
             override fun onAnimationEnd(p0: Animation?) {
                 setBlockButton(viewModel.codeAnswer[viewModel.currentIndex] == UNANSWERED_IN_CODE_ANSWER)
-
                 //todo освободить кнопки
             }
 

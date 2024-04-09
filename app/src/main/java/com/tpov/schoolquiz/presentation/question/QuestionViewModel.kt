@@ -18,7 +18,18 @@ import com.tpov.schoolquiz.domain.ProfileUseCase
 import com.tpov.schoolquiz.domain.QuestionDetailUserCase
 import com.tpov.schoolquiz.domain.QuestionUseCase
 import com.tpov.schoolquiz.domain.QuizUseCase
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.CORRECTLY_ANSWERED_IN_CODE_ANSWER
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_FOR_ADMIN
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_FOR_MODERATOR
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_FOR_TESTER
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_FOR_USER
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_TOURNIRE
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_TOURNIRE_LEADER
+import com.tpov.schoolquiz.presentation.INCORRECTLY_ANSWERED_IN_CODE_ANSWER
+import com.tpov.schoolquiz.presentation.RATING_QUIZ_EVENT_BED
+import com.tpov.schoolquiz.presentation.UNANSWERED_IN_CODE_ANSWER
 import com.tpov.schoolquiz.presentation.core.CalcValues
 import com.tpov.schoolquiz.presentation.core.Logcat
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getNolic
@@ -63,6 +74,13 @@ class QuestionViewModel @Inject constructor(
     var firstQuestionDetail = true
 
     var numTrueQuestion = 0
+
+    private val _closeActivityEvent = MutableLiveData<Unit>()
+    val closeActivityEvent: LiveData<Unit> = _closeActivityEvent
+
+    fun onCloseActivity() {
+        _closeActivityEvent.value = Unit
+    }
 
     private val _shouldCloseLiveData = MutableLiveData<Int>()
     val shouldCloseLiveData: LiveData<Int> = _shouldCloseLiveData
@@ -469,7 +487,9 @@ class QuestionViewModel @Inject constructor(
             profile = profileUseCase.getProfile(getTpovId())
         )
         resultDialog.show()
+        onCloseActivity()
     }
+
 
     private fun saveResult(rating: Int, result: Int) {
         profileUseCase.updateProfile(
