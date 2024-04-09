@@ -28,10 +28,10 @@ class NotificationHelper(private val context: Context) {
 
     fun newVersion(versionApp: String) {
         userguide.addGuideNewVersion(
-            context.getString(R.string.commit_3_0_18),
+            context.getString(R.string.commit_3_0_19),
             versionApp,
-            context.resources.getDrawable(R.drawable.nav_chat),
-            Options(countKeyVersion = 30015).toString()
+            context.resources.getDrawable(R.mipmap.ic_launcher),
+            Options(countKeyVersion = 30019).toString()
         )
     }
 

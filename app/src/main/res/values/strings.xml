@@ -1,11 +1,9 @@
 <resources>
     <!-- ... -->
-    <string name="commit_3_0_18">
-        1- Fix get box after show ads
-2 - Add scroll name quiz
-3 - Fix arena (checking for lives)
-4 - Fix update result quiz
-4 - Fix close userguide when click outside
+    <string name="commit_3_0_19">
+       1 - Design 4.0 (Main Screens)
+2 - Minor bug fixes
+3 - Improved animation in QuestionActivity
     </string>
 
     <string-array name="nick_colors">
