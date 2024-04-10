@@ -29,7 +29,7 @@
 
     <!-- Для CardView -->
     <style name="ShopCardViewStyle">
-        <item name="cardBackgroundColor">#3E958E</item>
+        <item name="cardBackgroundColor">@color/back_item</item>
         <item name="cardCornerRadius">8dp</item>
     </style>
 

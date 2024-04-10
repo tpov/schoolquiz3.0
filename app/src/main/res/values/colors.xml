@@ -11,11 +11,11 @@
     <color name="contour_unable">#0C4678</color>
     <color name="back_item">#191919</color>
 
-    <color name="back_main_top">#191928</color>
-    <color name="back_main_center">#323232</color>
-    <color name="back_light_question_center">#324432</color>
-    <color name="back_hard_question_center">#443232</color>
-    <color name="back_arena_question_center">#323244</color>
+    <color name="back_main_top">#232337</color>
+    <color name="back_main_center">#3C3C3C</color>
+    <color name="back_light_question_center">#3C503C</color>
+    <color name="back_hard_question_center">#503C3C</color>
+    <color name="back_arena_question_center">#3C3C50</color>
 
     <color name="back_menu_top">#323232</color>
     <color name="back_menu_bottom">#070E00</color>

@@ -16,14 +16,14 @@
         android:id="@+id/num_question_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:text="num_question_view" />
 
     <TextView
         android:id="@+id/short_question_text_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:text="short_question_text_view" />
 
     <LinearLayout

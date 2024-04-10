@@ -7,10 +7,10 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
@@ -20,7 +20,11 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.FragmentTitleBinding
 import com.tpov.schoolquiz.databinding.FragmentTitleBinding.inflate
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.BARRIER_QUIZ_ID_LOCAL_AND_REMOVE
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
+import com.tpov.schoolquiz.presentation.MAX_PERCENT_LIGHT_QUIZ_FULL
+import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_QUIZ8
@@ -39,7 +43,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -370,7 +374,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                         }.random()
 
                         val alertDialog = AlertDialog.Builder(activity)
-                            .setTitle(R.string.search_title)
+                            .setTitle(Html.fromHtml("<font color='#FFFF00'>" + getString(R.string.search_title) + "</font>"))
                             .setMessage(R.string.search_message)
                             .setPositiveButton("(-) $nolics nolics") { dialog, which ->
 
@@ -390,18 +394,21 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                                 )
                                 startActivityForResult(intent, REQUEST_CODE)
                             }
+
                             .setNegativeButton(R.string.cancel_button, null)
                             .create()
 
                         alertDialog.setOnShowListener { dialog ->
-                            val positiveButton =
-                                (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                            val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                             val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                            val messageTextView = dialog.findViewById<TextView>(android.R.id.message)
 
                             positiveButton.setTextColor(Color.WHITE)
-                            negativeButton.setTextColor(Color.YELLOW)
+                            negativeButton.setTextColor(Color.WHITE)
 
-                            dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
+                            messageTextView?.setTextColor(Color.WHITE)
+
+                            dialog.window?.setBackgroundDrawableResource(R.drawable.back_item_main)
                         }
 
                         alertDialog.show()
@@ -416,7 +423,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
         } else {
             val alertDialog = AlertDialog.Builder(activity)
-                .setTitle(R.string.paid_attempt_title)
+                .setTitle(Html.fromHtml("<font color='#FFFF00'>" + getString(R.string.paid_attempt_title) + "</font>"))
                 .setMessage(R.string.paid_attempt_message)
                 .setPositiveButton("(-) $nolics nolics") { dialog, which ->
                     mainViewModel.profileUseCase.updateProfile(
@@ -435,12 +442,14 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
-                val positiveButton =
-                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                 val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                val messageTextView = dialog.findViewById<TextView>(android.R.id.message)
 
                 positiveButton.setTextColor(Color.WHITE)
-                negativeButton.setTextColor(Color.YELLOW)
+                negativeButton.setTextColor(Color.WHITE)
+
+                messageTextView?.setTextColor(Color.WHITE)
 
                 dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
             }

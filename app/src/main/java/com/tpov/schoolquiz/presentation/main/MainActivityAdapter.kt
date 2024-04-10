@@ -2,9 +2,23 @@ package com.tpov.schoolquiz.presentation.main
 
 import android.app.AlertDialog
 import android.content.Context
-import android.graphics.*
-import android.view.*
-import android.widget.*
+import android.graphics.Color
+import android.text.Html
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.PopupMenu
+import android.widget.PopupWindow
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -15,7 +29,18 @@ import com.bumptech.glide.request.RequestOptions
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.COUNT_STARS_QUIZ_RATING
+import com.tpov.schoolquiz.presentation.DEFAULT_INFO_TRANSLATOR_BY_GOOGLE_TRANSL
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
+import com.tpov.schoolquiz.presentation.LVL_TRANSLATOR_1_LVL
+import com.tpov.schoolquiz.presentation.LVL_TRANSLATOR_2_LVL
+import com.tpov.schoolquiz.presentation.MAX_PERCENT_HARD_QUIZ_FULL
+import com.tpov.schoolquiz.presentation.MAX_PERCENT_LIGHT_QUIZ_FULL
+import com.tpov.schoolquiz.presentation.PERCENT_1STAR_QUIZ_SHORT
+import com.tpov.schoolquiz.presentation.RATING_QUIZ_ALL_POINTS_IN_FB
+import com.tpov.schoolquiz.presentation.RATING_QUIZ_ARENA_IN_TOP
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.core.Logcat
@@ -27,7 +52,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.*
+import java.util.Locale
 
 class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
@@ -80,29 +105,24 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             id: Int
         ) {
             val alertDialog = AlertDialog.Builder(context)
-                .setTitle(context.getString(R.string.send_to_arena_title))
+                .setTitle(Html.fromHtml("<font color='#FFFFFF'>" + context.getString(R.string.send_to_arena_title) + "</font>"))
                 .setMessage(context.getString(R.string.send_to_arena_text))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.profileUseCase.updateProfile(
-                        mainViewModel.getProfile().copy(
-                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
-                        )
-                    )
-                    listener.sendItem(id)
+                    // Ваш код обработчика нажатия кнопки "Положительно"
                 }
                 .setNegativeButton(context.getString(R.string.send_to_arena_negative), null)
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
-                val positiveButton =
-                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                 val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
                 positiveButton.setTextColor(Color.WHITE)
-                negativeButton.setTextColor(Color.YELLOW)
+                negativeButton.setTextColor(Color.WHITE) // Установите белый цвет для кнопок отмены
 
                 dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
             }
+
             alertDialog.show()
         }
 
