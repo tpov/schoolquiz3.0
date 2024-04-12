@@ -114,9 +114,9 @@
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             android:layout_gravity="center"
-            android:textColor="@color/Cyan"
-            tools:foreground="@color/nullColor"
-            android:background="@color/nullColor"
+            android:textColor="@color/contour"
+            tools:foreground="@null"
+            android:background="@null"
             android:text="@string/translate_title" />
 
         <LinearLayout

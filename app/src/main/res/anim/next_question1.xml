@@ -4,10 +4,10 @@
         android:interpolator="@android:anim/accelerate_interpolator"
         android:fromXDelta="0"
         android:fromYDelta="0"
-        android:factor="10"
-        android:duration="100"
+        android:factor="100"
+        android:duration="300"
         android:startOffset="0"
-        android:toXDelta="-1000"
+        android:toXDelta="-1300"
         android:toYDelta="0">
     </translate>
 </set>

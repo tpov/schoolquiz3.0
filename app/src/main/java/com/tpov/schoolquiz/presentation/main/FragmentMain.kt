@@ -7,18 +7,24 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.databinding.TitleFragmentBinding
-import com.tpov.schoolquiz.databinding.TitleFragmentBinding.inflate
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.databinding.FragmentTitleBinding
+import com.tpov.schoolquiz.databinding.FragmentTitleBinding.inflate
+import com.tpov.schoolquiz.presentation.BARRIER_QUIZ_ID_LOCAL_AND_REMOVE
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
+import com.tpov.schoolquiz.presentation.MAX_PERCENT_LIGHT_QUIZ_FULL
+import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_QUIZ8
@@ -33,12 +39,11 @@ import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD_QUESTION
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
-import kotlinx.android.synthetic.main.title_fragment.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -61,7 +66,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
     private lateinit var adapter: MainActivityAdapter
 
-    private lateinit var binding: TitleFragmentBinding
+    private lateinit var binding: FragmentTitleBinding
     private var createQuiz = false
 
     override fun onAttach(context: Context) {
@@ -82,7 +87,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         adapter = MainActivityAdapter(this, requireContext(), mainViewModel)
         binding.rcView.layoutManager = LinearLayoutManager(activity)
         binding.rcView.adapter = adapter
-        rcView.itemAnimator = RotateInItemAnimator()
+        binding.rcView.itemAnimator = RotateInItemAnimator()
         // Обработка нажатия на кнопку удаления
         adapter.onDeleteButtonClick = { quizEntity ->
             // Ваш код для удаления или выполнения других действий с элементом
@@ -94,7 +99,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         lifecycleScope.launchWhenStarted {
             val countPlace = mainViewModel.getCountPlaceForUserQuiz()
-            tv_number_place_user_quiz.text = countPlace.toString()
+                view.findViewById<TextView>(R.id.tv_number_place_user_quiz).text = countPlace.toString()
 
             if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
                 binding.fabAddItem.isClickable = false
@@ -159,7 +164,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
 
             log("fgjesdriofjeskl observe it: $it")
-            tv_number_place_user_quiz.text = it.toString()
+                view.findViewById<TextView>(R.id.tv_number_place_user_quiz).text = it.toString()
             if (it <= 0) {
                 binding.fabAddItem.isClickable = false
                 binding.fabAddItem.isEnabled = false
@@ -369,7 +374,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                         }.random()
 
                         val alertDialog = AlertDialog.Builder(activity)
-                            .setTitle(R.string.search_title)
+                            .setTitle(Html.fromHtml("<font color='#FFFF00'>" + getString(R.string.search_title) + "</font>"))
                             .setMessage(R.string.search_message)
                             .setPositiveButton("(-) $nolics nolics") { dialog, which ->
 
@@ -389,18 +394,21 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                                 )
                                 startActivityForResult(intent, REQUEST_CODE)
                             }
+
                             .setNegativeButton(R.string.cancel_button, null)
                             .create()
 
                         alertDialog.setOnShowListener { dialog ->
-                            val positiveButton =
-                                (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                            val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                             val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                            val messageTextView = dialog.findViewById<TextView>(android.R.id.message)
 
                             positiveButton.setTextColor(Color.WHITE)
-                            negativeButton.setTextColor(Color.YELLOW)
+                            negativeButton.setTextColor(Color.WHITE)
 
-                            dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                            messageTextView?.setTextColor(Color.WHITE)
+
+                            dialog.window?.setBackgroundDrawableResource(R.drawable.back_item_main)
                         }
 
                         alertDialog.show()
@@ -415,7 +423,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
         } else {
             val alertDialog = AlertDialog.Builder(activity)
-                .setTitle(R.string.paid_attempt_title)
+                .setTitle(Html.fromHtml("<font color='#FFFF00'>" + getString(R.string.paid_attempt_title) + "</font>"))
                 .setMessage(R.string.paid_attempt_message)
                 .setPositiveButton("(-) $nolics nolics") { dialog, which ->
                     mainViewModel.profileUseCase.updateProfile(
@@ -434,14 +442,16 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
-                val positiveButton =
-                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                 val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                val messageTextView = dialog.findViewById<TextView>(android.R.id.message)
 
                 positiveButton.setTextColor(Color.WHITE)
-                negativeButton.setTextColor(Color.YELLOW)
+                negativeButton.setTextColor(Color.WHITE)
 
-                dialog.window?.setBackgroundDrawableResource(R.color.design3_top_start)
+                messageTextView?.setTextColor(Color.WHITE)
+
+                dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
             }
 
             alertDialog.show()

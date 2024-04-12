@@ -154,7 +154,6 @@ class ProfileAdapter(
                 val skill = convertToInt(addSkill.text.toString())
                 val box = convertToInt(addBox.text.toString())
 
-
                 sendData(message, trophy, nolic, gold, skill, box, holder, player.id ?: 0)
 
                 dialog.dismiss()
@@ -162,7 +161,7 @@ class ProfileAdapter(
             builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
 
             val dialog = builder.create()
-            dialog.window?.setBackgroundDrawableResource(R.color.grey)
+            dialog.window?.setBackgroundDrawableResource(R.color.contour)
             dialog.show()
         }
 

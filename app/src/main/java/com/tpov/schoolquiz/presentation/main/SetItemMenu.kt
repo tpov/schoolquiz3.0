@@ -10,7 +10,6 @@ import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.core.Logcat
 import com.tpov.schoolquiz.presentation.core.VisibleItems.getShowItemsMenuHome
 import com.tpov.schoolquiz.presentation.core.VisibleItems.getShowItemsMenuNetwork
-import kotlinx.android.synthetic.main.info_fragment.view.*
 import kotlinx.coroutines.InternalCoroutinesApi
 
 object SetItemMenu {

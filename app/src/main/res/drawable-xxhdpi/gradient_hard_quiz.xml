@@ -3,8 +3,8 @@
     android:shape="rectangle">
 
 
-    <corners android:bottomLeftRadius="25dp"
-        android:topLeftRadius="25dp"/>
+    <corners android:bottomLeftRadius="10dp"
+        android:topLeftRadius="10dp"/>
 
     <gradient
         android:type="linear"
@@ -12,7 +12,7 @@
         android:startY="0"
         android:endX="100"
         android:endY="100"
-        android:angle="45"
-        android:startColor="@color/num_chack_norice_red"
-        android:endColor="@color/nullColor" />
+        android:angle="0"
+        android:startColor="@color/red"
+        android:endColor="@null" />
 </shape>

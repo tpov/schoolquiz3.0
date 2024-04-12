@@ -32,7 +32,7 @@
                 android:id="@+id/tv_rating"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/ratingBar"
+                android:textColor="@color/gold"
                 android:textStyle="bold"
                 android:layout_margin="12dp"
                 android:layout_gravity="center"
@@ -57,7 +57,7 @@
                         android:layout_weight="1"
                         android:layout_gravity="center"
                         android:layout_height="10dp"
-                        android:background="@color/num_chack_norice_green"/>
+                        android:background="@color/green"/>
 
                     <TextView
                         android:id="@+id/tv_history_titul_player"
@@ -73,7 +73,7 @@
                         android:layout_gravity="center"
                         android:layout_height="10dp"
                         android:layout_weight="1"
-                        android:background="@color/num_chack_norice_red"/>
+                        android:background="@color/red"/>
 
                     <TextView
                         android:id="@+id/tv_history_titul_qualification"

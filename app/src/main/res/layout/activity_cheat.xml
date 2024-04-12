@@ -3,7 +3,7 @@
     android:id="@+id/back"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/back_cheater_bun"
+    android:background="@drawable/back_main"
     android:gravity="center"
     android:orientation="vertical"
     tools:context="com.tpov.schoolquiz.presentation.question.CheatActivity">
@@ -11,7 +11,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#BF0758FF"
+        android:background="@drawable/back_item_main_unable"
         android:padding="24dp"
         android:text="@string/warning_text"
         android:textColor="#FFFFFF" />
@@ -28,6 +28,9 @@
         android:id="@+id/show_answer_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:padding="16dp"
+        android:background="@drawable/back_item_main"
         android:text="@string/show_answer_button" />
 
 </LinearLayout>

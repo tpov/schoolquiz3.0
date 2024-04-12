@@ -7,10 +7,12 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
@@ -24,10 +26,12 @@ import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.android.synthetic.main.create_question_dialog.view.*
-import kotlinx.android.synthetic.main.question_create_item.view.*
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
 class CreateQuestionDialog : DialogFragment() {
 
@@ -51,8 +55,9 @@ class CreateQuestionDialog : DialogFragment() {
         questionsContainer = dialogView.findViewById(R.id.questions_container)
 
         if (id != -1) {
-            dialogView.quiz_title.setText(mainActivityViewModel.getQuizById(id).nameQuiz)
-            dialogView.add_question_button.setOnClickListener {
+
+            dialogView.findViewById<EditText>(R.id.quiz_title).setText(mainActivityViewModel.getQuizById(id).nameQuiz)
+            dialogView.findViewById<Button>(R.id.add_question_button).setOnClickListener {
                 addQuestionItem()
             }
 
@@ -72,16 +77,16 @@ class CreateQuestionDialog : DialogFragment() {
         alertDialog.window?.attributes?.windowAnimations = R.style.DialogAnimationCreateQuestion
         alertDialog.show()
 
-        dialogView.add_question_button.setOnClickListener {
+        dialogView.findViewById<Button>(R.id.add_question_button).setOnClickListener {
             addQuestionItem()
         }
 
-        dialogView.save_question_button.setOnClickListener {
+        dialogView.findViewById<Button>(R.id.save_question_button).setOnClickListener {
             createQuestions()
             dismiss()
         }
 
-        dialogView.cancel_question_button.setOnClickListener {
+        dialogView.findViewById<Button>(R.id.cancel_question_button).setOnClickListener {
             dismiss()
         }
 
@@ -95,12 +100,12 @@ class CreateQuestionDialog : DialogFragment() {
 
         val questionTitle = questionItemView.findViewById<EditText>(R.id.question_title)
 
-        questionItemView.language_selector.setOnClickListener {
+        questionItemView.findViewById<TextView>(R.id.language_selector).setOnClickListener {
             showLanguageDialog(questionItemView)
         }
 
-            dialogView.save_question_button.isClickable = true
-            dialogView.save_question_button.isEnabled = true
+            dialogView.findViewById<Button>(R.id.save_question_button).isClickable = true
+            dialogView.findViewById<Button>(R.id.save_question_button).isEnabled = true
 
         // Добавляем TextWatcher к questionTitle
         questionTitle.addTextChangedListener(object : TextWatcher {
@@ -123,10 +128,10 @@ class CreateQuestionDialog : DialogFragment() {
 
                                 val languageFullName =
                                     LanguageUtils.getLanguageFullName(userLanguageCode)
-                                questionItemView.language_selector.text = languageFullName
+                                questionItemView.findViewById<TextView>(R.id.language_selector).text = languageFullName
                             } else {
                                 val languageFullName = LanguageUtils.getLanguageFullName(language)
-                                questionItemView.language_selector.text = languageFullName
+                                questionItemView.findViewById<TextView>(R.id.language_selector).text = languageFullName
                             }
                         }
                         .addOnFailureListener {
@@ -135,7 +140,7 @@ class CreateQuestionDialog : DialogFragment() {
                             lang = userLanguageCode
 
                             val languageFullName = LanguageUtils.getLanguageFullName(lang)
-                            questionItemView.language_selector.text = languageFullName
+                            questionItemView.findViewById<TextView>(R.id.language_selector).text = languageFullName
                         }
                 }
             }
@@ -144,7 +149,7 @@ class CreateQuestionDialog : DialogFragment() {
         })
 
         numQuestion++
-        questionItemView.question_number.text = numQuestion.toString()
+        questionItemView.findViewById<TextView>(R.id.question_number).text = numQuestion.toString()
         questionsContainer.addView(questionItemView)
         questionTitle.requestFocus()
         return questionItemView
@@ -172,7 +177,7 @@ class CreateQuestionDialog : DialogFragment() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Язык вопроса")
         builder.setItems(LanguageUtils.languagesFullNames) { dialog, which ->
-            questionItemView.language_selector.text = LanguageUtils.languagesFullNames[which]
+            questionItemView.findViewById<Button>(R.id.language_selector).text = LanguageUtils.languagesFullNames[which]
             dialog.dismiss()
         }
         builder.show()
@@ -214,14 +219,14 @@ class CreateQuestionDialog : DialogFragment() {
         for (i in 0 until questionsContainer.childCount) {
             val questionItemView = questionsContainer.getChildAt(i)
 
-            val questionTitle = questionItemView.question_title.text.toString()
-            val questionAnswer = questionItemView.true_button.isChecked
-            val questionHard = questionItemView.hard_question_checkbox.isChecked
+            val questionTitle = questionItemView.findViewById<TextView>(R.id.question_title).text.toString()
+            val questionAnswer = questionItemView.findViewById<RadioButton>(R.id.true_button).isChecked
+            val questionHard = questionItemView.findViewById<CheckBox>(R.id.hard_question_checkbox).isChecked
 
             if (questionHard) numHQ++
             else numLQ++
 
-            val questionLanguage = questionItemView.language_selector.text.toString()
+            val questionLanguage = questionItemView.findViewById<TextView>(R.id.language_selector).text.toString()
             val language = LanguageUtils.getLanguageShortCode(questionLanguage)
 
             questions.add(
@@ -247,7 +252,7 @@ class CreateQuestionDialog : DialogFragment() {
         }
 
         // Создание QuizEntity
-        val nameQuiz = dialogView.quiz_title.text.toString()
+        val nameQuiz = dialogView.findViewById<TextView>(R.id.quiz_title).text.toString()
         val currentTime = TimeManager.getCurrentTime()
 
         val questionMap: MutableMap<Int, MutableSet<String>> = mutableMapOf()

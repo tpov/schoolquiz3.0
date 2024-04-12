@@ -11,26 +11,36 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.util.Log
-import android.view.*
+import android.view.Menu
+import android.view.View
+import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.widget.*
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import androidx.lifecycle.ViewModelProvider
-import com.tpov.schoolquiz.*
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.Services.MusicService
 import com.tpov.schoolquiz.data.database.log
 import com.tpov.schoolquiz.databinding.ActivityQuestionBinding
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.COUNT_LIFE_POINTS_IN_LIFE
+import com.tpov.schoolquiz.presentation.DELAY_SHOW_TEXT_IN_QUESTIONACTIVITY
+import com.tpov.schoolquiz.presentation.EVENT_QUIZ_TOURNIRE_LEADER
+import com.tpov.schoolquiz.presentation.MainApp
+import com.tpov.schoolquiz.presentation.UNANSWERED_IN_CODE_ANSWER
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.updateProfile
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
-import kotlinx.android.synthetic.main.activity_question.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val REQUEST_CODE_CHEAT = 0
@@ -126,11 +136,11 @@ class QuestionActivity : AppCompatActivity() {
                 }
             }
 
-            tv_pref.setOnClickListener {
+            tvPref.setOnClickListener {
                 setVisibleButtonsPref()
                 prefButton()
             }
-            tv_next.setOnClickListener {
+            tvNext.setOnClickListener {
                 setVisibleButtonsNext()
                 nextButton()
             }
@@ -197,6 +207,10 @@ class QuestionActivity : AppCompatActivity() {
                     startActivityForResult(questionActivityIntent, UPDATE_CURRENT_INDEX)
                 }
             }
+
+            viewModel.closeActivityEvent.observe(this@QuestionActivity) {
+                finish()
+            }
         }
 
         updateDataView()
@@ -215,7 +229,8 @@ class QuestionActivity : AppCompatActivity() {
                 val start = spannableText.length
                 spannableText.append(char.toString())
                 spannableText.setSpan(
-                    ForegroundColorSpan(Color.WHITE),
+                    if (viewModel.hardQuestion) ForegroundColorSpan(Color.RED)
+                    else ForegroundColorSpan(Color.GREEN),
                     start,
                     start + 1,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -224,7 +239,7 @@ class QuestionActivity : AppCompatActivity() {
                 delay(delayInMillis)
 
                 spannableText.setSpan(
-                    ForegroundColorSpan(Color.BLACK),
+                    ForegroundColorSpan(Color.WHITE),
                     start,
                     start + 1,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -241,11 +256,11 @@ class QuestionActivity : AppCompatActivity() {
         log("fun synthInputData userName: ${viewModel.userName}, idQuiz: ${viewModel.idQuiz}, hardQuestion: ${viewModel.hardQuestion}")
 
         if (viewModel.quizUseCase.getQuiz(viewModel.idQuiz).event == EVENT_QUIZ_TOURNIRE_LEADER) binding.viewBackground.background =
-            getDrawable(R.mipmap.back_question_event5)
+            getDrawable(R.drawable.back_arena_question)
         else {
             if (!viewModel.hardQuestion) binding.viewBackground.background =
-                getDrawable(R.mipmap.back_question_light)
-            else binding.viewBackground.background = getDrawable(R.mipmap.back_question_hard)
+                getDrawable(R.drawable.back_light_question)
+            else binding.viewBackground.background = getDrawable(R.drawable.back_hard_question)
         }
     }
 
@@ -350,16 +365,14 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun insertQuestionsNewEvent() {
-
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.quizUseCase.getQuizListLiveData(viewModel.tpovId.toInt())
                 .observe(this@QuestionActivity) { list ->
-
                     list.forEach { quiz ->
-
                         CoroutineScope(Dispatchers.IO).launch {
                             if (viewModel.questionUseCase.getQuestionsByIdQuiz(quiz.id!!).isNullOrEmpty()) {
                                 viewModel.questionUseCase.getQuestionsByIdQuiz(quiz.id!!).forEach {
+                                    Log.d("123321", "Єтот код работает!")
                                     viewModel.questionUseCase.insertQuestion(
                                         it.copy(
                                             id = null,
@@ -455,6 +468,17 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun setBlockButton(state: Boolean) = with(binding) {
+        if (state) {
+            trueButton.setBackgroundResource(R.drawable.back_item_main_true)
+            falseButton.setBackgroundResource(R.drawable.back_item_main_false)
+            trueButton.setTextColor(Color.WHITE)
+            falseButton.setTextColor(Color.WHITE)
+        } else {
+            trueButton.setBackgroundResource(R.drawable.back_item_main_unable)
+            falseButton.setBackgroundResource(R.drawable.back_item_main_unable)
+            trueButton.setTextColor(Color.GRAY)
+            falseButton.setTextColor(Color.GRAY)
+        }
         falseButton.isEnabled = state
         falseButton.isClickable = state
         trueButton.isEnabled = state
@@ -513,7 +537,6 @@ class QuestionActivity : AppCompatActivity() {
 
             override fun onAnimationEnd(p0: Animation?) {
                 setBlockButton(viewModel.codeAnswer[viewModel.currentIndex] == UNANSWERED_IN_CODE_ANSWER)
-
                 //todo освободить кнопки
             }
 
@@ -534,8 +557,6 @@ class QuestionActivity : AppCompatActivity() {
             }
 
             override fun onAnimationEnd(p0: Animation?) {
-                binding.questionTextView.visibility = View.GONE
-
                 Log.d(
                     "dawdasd",
                     "questionListThis: ${viewModel.currentIndex + 1}, ${viewModel.numQuestion}"

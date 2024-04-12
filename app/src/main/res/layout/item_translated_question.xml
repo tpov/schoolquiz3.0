@@ -56,7 +56,7 @@
             android:layout_height="wrap_content"
             android:hint="Name Question"
             android:textColor="@color/white"
-            android:textColorHint="@color/grey" />
+            android:textColorHint="@color/contour" />
 
     </LinearLayout>
 

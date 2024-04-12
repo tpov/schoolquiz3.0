@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="1dp"
-    android:background="@mipmap/back_main"
+    android:background="@drawable/back_main"
     android:orientation="vertical"
     android:paddingTop="15dp"
     tools:ignore="MissingDefaultResource">

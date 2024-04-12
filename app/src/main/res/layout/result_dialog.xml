@@ -120,7 +120,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:visibility="gone"
-            android:background="@color/nullColor"
+            android:background="@null"
             android:text="@string/question_result_help_translate" />
 
     </LinearLayout>

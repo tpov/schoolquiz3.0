@@ -6,9 +6,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingLeft="16dp"
-    android:paddingTop="108dp"
+    android:paddingTop="132dp"
     android:paddingRight="16dp"
-    android:paddingBottom="16dp">
+    android:paddingBottom="86dp">
 
     <ScrollView
         android:id="@+id/scrollView2"
@@ -32,11 +32,13 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="24dp"
+                android:background="@drawable/back_item_main_unable"
+                android:padding="8dp"
                 android:hint="@string/prompt_email"
                 android:inputType="textEmailAddress"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey" />
+                android:textColorHint="@color/contour" />
 
             <EditText
                 android:id="@+id/password"
@@ -45,13 +47,15 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
+                android:background="@drawable/back_item_main_unable"
+                android:padding="8dp"
                 android:hint="@string/prompt_password"
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionDone"
                 android:inputType="textPassword"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey" />
+                android:textColorHint="@color/contour" />
 
             <EditText
                 android:id="@+id/loginName"
@@ -60,12 +64,14 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
+                android:background="@drawable/back_item_main_unable"
+                android:padding="8dp"
                 android:hint="@string/prompt_name"
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionDone"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -76,12 +82,14 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
+                android:background="@drawable/back_item_main_unable"
+                android:padding="8dp"
                 android:hint="@string/prompt_nickname"
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionDone"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -92,12 +100,14 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
+                android:background="@drawable/back_item_main_unable"
+                android:padding="8dp"
                 android:hint="@string/prompt_city"
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionDone"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -107,6 +117,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
+                android:background="@drawable/back_item_main_unable"
                 android:layout_marginEnd="24dp"
                 android:orientation="horizontal"
                 android:visibility="gone"
@@ -116,6 +127,8 @@
                     android:id="@+id/b_set_translate_profile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:textColor="@color/contour"
                     android:text="@string/account_registration_language" />
 
                 <TextView
@@ -123,7 +136,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=""
-                    android:textColor="@color/white" />
+                    android:textColor="@color/contour" />
 
             </LinearLayout>
 
@@ -134,13 +147,15 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
+                android:background="@drawable/back_item_main_unable"
+                android:padding="8dp"
                 android:hint="@string/prompt_years"
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionDone"
                 android:inputType="date"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -151,13 +166,15 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
+                android:background="@drawable/back_item_main_unable"
+                android:padding="8dp"
                 android:hint="@string/prompt_invitation"
                 android:imeActionLabel="@string/action_sign_in_short"
                 android:imeOptions="actionDone"
                 android:inputType="numberDecimal"
                 android:selectAllOnFocus="true"
                 android:textColor="@color/white"
-                android:textColorHint="@color/grey"
+                android:textColorHint="@color/contour"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -205,8 +222,10 @@
         android:layout_gravity="start"
         android:enabled="true"
         android:text="@string/action_sign_in"
-        android:textColor="@color/white"
-        android:textColorHint="@color/grey"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:textColor="@color/green"
+        android:textColorHint="@color/contour"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/registration"
         app:layout_constraintStart_toStartOf="parent"
@@ -220,8 +239,10 @@
         android:enabled="true"
         android:text="@string/action_registration"
         android:textColor="@color/white"
-        android:textColorHint="@color/grey"
+        android:textColorHint="@color/contour"
         android:visibility="gone"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/login"
@@ -236,7 +257,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:textColor="@color/white"
-        android:textColorHint="@color/grey"
+        android:textColorHint="@color/contour"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/mode_radio_group"
         app:layout_constraintEnd_toEndOf="parent"

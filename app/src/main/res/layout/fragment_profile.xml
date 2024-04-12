@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingTop="106dp"
+        android:paddingTop="132dp"
         android:paddingBottom="100dp">
 
         <LinearLayout
@@ -24,7 +24,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/dp_dialog_background"
+                android:background="@drawable/back_menu"
                 android:orientation="horizontal">
 
                 <TextView
