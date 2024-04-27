@@ -3,8 +3,21 @@ package com.tpov.schoolquiz.presentation.network.event
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
-import android.view.*
-import android.widget.*
+import android.text.Html
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.RatingBar
+import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
@@ -12,7 +25,13 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.COUNT_STARS_QUIZ_RATING
+import com.tpov.schoolquiz.presentation.LVL_TRANSLATOR_1_LVL
+import com.tpov.schoolquiz.presentation.LVL_TRANSLATOR_2_LVL
+import com.tpov.schoolquiz.presentation.MAX_PERCENT_HARD_QUIZ_FULL
+import com.tpov.schoolquiz.presentation.RATING_QUIZ_ALL_POINTS_IN_FB
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.core.TranslateGoogle.translateText
 import com.tpov.schoolquiz.presentation.main.MainActivityAdapter
@@ -21,7 +40,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
-import java.util.*
 
 interface DataObserver {
     fun onDataUpdated()
@@ -220,9 +238,10 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         ) {
         val alertDialog = AlertDialog.Builder(context)
-            .setTitle(context.getString(R.string.translate_title))
+            .setTitle(Html.fromHtml("<font color='#FFFFFF'>" + context.getString(R.string.translate_title) + "</font>"))
             .setMessage(context.getString(R.string.translate_message))
             .setPositiveButton("(-) $nolics nolics") { _, _ ->
+                // Ваш код обработчика нажатия кнопки "Положительно"
                 mainViewModel.profileUseCase.updateProfile(
                     mainViewModel.getProfile().copy(
                         pointsNolics = mainViewModel.getProfileNolic()!! - nolics
@@ -230,23 +249,25 @@ class EventAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 )
 
                 CoroutineScope(Dispatchers.IO).launch {
-                translateText(viewModel, context, quizEntity)}
+                    translateText(viewModel, context, quizEntity)
+                }
                 popupWindow.dismiss()
             }
             .setNegativeButton(context.getString(R.string.translate_negative), null)
             .create()
 
         alertDialog.setOnShowListener { dialog ->
-            val positiveButton =
-                (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+            val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
             val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
             positiveButton.setTextColor(Color.WHITE)
-            negativeButton.setTextColor(Color.YELLOW)
+            negativeButton.setTextColor(Color.WHITE) // Установите белый цвет для кнопок отмены
 
             dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
         }
+
         alertDialog.show()
+
     }
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

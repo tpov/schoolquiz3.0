@@ -1014,7 +1014,6 @@ class MainActivity : AppCompatActivity() {
         }, initialDelay)
     }
 
-    // Использование функции в вашем коде
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         return super.onPrepareOptionsMenu(menu)
     }
