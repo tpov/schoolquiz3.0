@@ -14,7 +14,6 @@ import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
 import kotlinx.coroutines.InternalCoroutinesApi
-import org.jetbrains.anko.runOnUiThread
 import java.util.*
 
 object TranslateGoogle {

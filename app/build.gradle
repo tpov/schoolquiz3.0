@@ -75,43 +75,48 @@ android {
 }
 
 dependencies {
-    implementation project(':Userguide')
+    implementation project(':userguide')
+    implementation project(':settings')
+    implementation project(':common')
+    implementation project(':shop')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
 
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
     implementation 'androidx.navigation:navigation-fragment-ktx:2.7.7'
     implementation 'androidx.navigation:navigation-ui-ktx:2.7.7'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.7.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.4'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4'
     implementation 'androidx.preference:preference-ktx:1.2.1'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.android.billingclient:billing:6.2.0'
-    implementation 'com.google.android.gms:play-services-ads:23.0.0'
+    implementation 'com.android.billingclient:billing:7.0.0'
+    implementation 'com.google.android.gms:play-services-ads:23.2.0'
     implementation 'androidx.gridlayout:gridlayout:1.0.0'
 
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.10'
-    implementation 'com.squareup.retrofit2:converter-gson:2.7.0'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.18'
+    implementation 'com.squareup.retrofit2:converter-gson:2.8.1'
     implementation 'androidx.work:work-runtime-ktx:2.9.0'
-    implementation 'androidx.annotation:annotation:1.7.1'
-    implementation 'androidx.databinding:databinding-runtime:8.3.1'
+    implementation 'androidx.annotation:annotation:1.8.1'
+    implementation 'androidx.databinding:databinding-runtime:8.5.1'
     implementation 'com.google.mlkit:language-id-common:16.1.0'
 
     def lifecycle_version = "2.2.0"
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    //noinspection GradleDependency
     implementation "androidx.lifecycle:lifecycle-common:$lifecycle_version"
+    //noinspection GradleDependency
     implementation "androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version"
 
     implementation 'junit:junit:4.13.2'
-    implementation 'androidx.test.ext:junit:1.1.5'
-    implementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'androidx.test.ext:junit:1.2.1'
+    implementation 'androidx.test.espresso:espresso-core:3.6.1'
 
     implementation 'com.google.dagger:dagger:2.48.1'
     kapt 'com.google.dagger:dagger-compiler:2.48.1'
@@ -130,21 +135,21 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
-    implementation platform('com.google.firebase:firebase-bom:32.8.0')
+    implementation platform('com.google.firebase:firebase-bom:33.1.2')
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.firebase:firebase-storage-ktx'
     implementation 'com.google.cloud:google-cloud-translate:2.2.0'
-    implementation 'com.google.firebase:firebase-firestore-ktx:24.11.0'
-    implementation 'com.google.firebase:firebase-database-ktx:20.3.1'
-    implementation 'com.google.firebase:firebase-analytics:21.6.1'
+    implementation 'com.google.firebase:firebase-firestore-ktx:25.0.0'
+    implementation 'com.google.firebase:firebase-database-ktx:21.0.0'
+    implementation 'com.google.firebase:firebase-analytics:22.0.2'
 
 
     implementation("com.google.protobuf:protobuf-javalite:3.22.3") {
         exclude group: "com.google.protobuf", module: "protobuf-java"
     }
     implementation 'com.google.mlkit:language-id:17.0.5'
-    implementation 'com.google.android.gms:play-services-ads:23.0.0'
+    implementation 'com.google.android.gms:play-services-ads:23.2.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation "org.jetbrains.kotlin:kotlin-parcelize-runtime:$kotlin_version"
 
@@ -155,7 +160,6 @@ dependencies {
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation "org.jetbrains.anko:anko-commons:0.10.8"
     implementation 'com.wajahatkarim:EasyFlipView:3.0.3'
 }
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

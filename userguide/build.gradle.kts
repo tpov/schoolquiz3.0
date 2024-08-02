@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    namespace = "com.tpov.shop"
+    namespace = "com.tpov.userguide"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.tpov.shop"
-        minSdk = 34
+        applicationId = "com.tpov.userguide"
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
