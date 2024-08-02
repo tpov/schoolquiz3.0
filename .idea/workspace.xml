@@ -3,9 +3,7 @@
   <component name="AndroidLayouts">
     <shared>
       <config>
-        <device id="_android_virtual_device_id_Small_Phone_API_30" />
         <device id="_device_class_phone" />
-        <device id="_device_class_tablet" />
         <device id="_device_class_foldable" />
         <device id="_device_class_desktop" />
         <locale>uk</locale>
@@ -18,99 +16,29 @@
           <theme>@style/Theme.GeoQuiz</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main_item.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_question.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_question_item.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/chat_item.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/create_question_dialog.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/flash_card_layout_back.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_chat.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_contact.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_login.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_profile.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_title.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/info_fragment.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/item_translated_question.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/profile_item.xml">
-        <config>
-          <theme>@style/Theme.GeoQuiz</theme>
-        </config>
-      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/question_create_item.xml">
         <config>
           <theme>@style/Theme.GeoQuiz</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/result_dialog.xml">
+      <layout url="file://$PROJECT_DIR$/settings/src/main/res/layout/preference_time_picker.xml">
         <config>
-          <theme>@style/Theme.GeoQuiz</theme>
+          <theme>@style/Theme.Schoolquiz</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/title_header.xml">
+      <layout url="file://$PROJECT_DIR$/settings/src/main/res/layout/settings_activity.xml">
         <config>
-          <theme>@style/Theme.GeoQuiz</theme>
+          <theme>@style/Theme.Schoolquiz</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/translation_popup_layout.xml">
+      <layout url="file://$PROJECT_DIR$/settings/src/main/res/menu/settings_menu.xml">
         <config>
-          <theme>@style/Theme.GeoQuiz</theme>
+          <theme>@style/Theme.Schoolquiz</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/menu/menu_title_activity.xml">
+      <layout url="file://$PROJECT_DIR$/settings/src/main/res/xml/root_preferences.xml">
         <config>
-          <theme>@style/Theme.GeoQuiz</theme>
+          <theme>@style/Theme.Schoolquiz</theme>
         </config>
       </layout>
     </layouts>
@@ -120,7 +48,41 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Fix close questionActivity after open resultDialog">
-      <change afterPath="$PROJECT_DIR$/app/release/app-release.aab" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/java/com/tpov/setting/Constants.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/java/com/tpov/setting/data/PreferencesManager.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/java/com/tpov/setting/presentation/ProfileEditModel.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/java/com/tpov/setting/presentation/TimePickerPreference.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/res/drawable/ic_advanced.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/res/drawable/ic_dont_save.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/res/drawable/ic_profile.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/res/drawable/ic_save.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/res/drawable/ic_sync.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/res/layout/preference_time_picker.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/settings/src/main/res/menu/settings_menu.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/checksums/checksums.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/checksums/md5-checksums.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/checksums/sha1-checksums.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/dependencies-accessors/dependencies-accessors.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/dependencies-accessors/gc.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/executionHistory/executionHistory.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileChanges/last-build.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/fileHashes.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/fileHashes/resourceHashesCache.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/7.6/gc.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/checksums/checksums.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/checksums/md5-checksums.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/checksums/sha1-checksums.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/dependencies-accessors/dependencies-accessors.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/dependencies-accessors/gc.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/executionHistory/executionHistory.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/executionHistory/executionHistory.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/fileChanges/last-build.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/fileHashes/fileHashes.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/fileHashes/fileHashes.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/fileHashes/resourceHashesCache.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.4/gc.properties" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
@@ -130,15 +92,54 @@
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/kotlinc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/kotlinc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_10_2023_8_31__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_10_2023_8_31__Changes_.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/NotificationHelper.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/NotificationHelper.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/network/event/EventAdapter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values-ru/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values-ru/strings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values-uk/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values-uk/strings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/question/QuestionViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_arena_question.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_arena_question.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_hard_question.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_hard_question.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_item_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_item_main.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_item_main_false.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_item_main_false.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_item_main_true.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_item_main_true.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_item_main_unable.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_item_main_unable.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_light_question.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_light_question.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_main.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_menu.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_menu.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/back_profile_table.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/back_profile_table.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_background_dialog.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_background_dialog.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_background_bottom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_background_bottom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_background_gradient_main_bottom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_background_gradient_main_bottom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_card_bottom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_card_bottom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_gradient_main_bottom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_gradient_main_bottom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_main.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_main_90.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_main_90.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_top_45.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_top_45.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/db_design3_top_90.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/db_design3_top_90.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/default_background.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/default_background.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/dp_dialog_background.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/drawable/dp_dialog_background.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/core/SettingConfigObject.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/core/SettingConfigObject.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/SettingConfigModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/SettingConfigModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradlew" beforeDir="false" afterPath="$PROJECT_DIR$/gradlew" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/src/main/java/com/tpov/setting/presentation/SettingsActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/settings/src/main/java/com/tpov/setting/presentation/SettingsActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/src/main/res/layout/settings_activity.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/src/main/res/layout/settings_activity.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/src/main/res/values/arrays.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/src/main/res/values/arrays.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/src/main/res/xml/root_preferences.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/src/main/res/xml/root_preferences.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -148,7 +149,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[C:\Users\tpovd\.android\avd\Pixel_7_Pro_API_34.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -178,24 +179,25 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
-        <option value="valueResourceFile" />
-        <option value="Kotlin Data Class" />
-        <option value="layoutResourceFile" />
         <option value="Class" />
-        <option value="Kotlin Interface" />
         <option value="Kotlin Object" />
-        <option value="Kotlin Class" />
+        <option value="Kotlin Data Class" />
+        <option value="Kotlin File" />
         <option value="resourceFile" />
+        <option value="valueResourceFile" />
+        <option value="layoutResourceFile" />
+        <option value="Kotlin Class" />
       </list>
     </option>
   </component>
   <component name="GenerateSignedApkSettings">
-    <option name="KEY_STORE_PATH" value="D:\Programming\Android\Schoolquiz3.0.jks" />
+    <option name="EXPORT_PRIVATE_KEY" value="false" />
+    <option name="KEY_STORE_PATH" value="E:\Программирование\Android\Schoolquiz3.0.jks" />
     <option name="KEY_ALIAS" value="key0" />
     <option name="REMEMBER_PASSWORDS" value="true" />
   </component>
   <component name="Git.Merge.Settings">
-    <option name="BRANCH" value="protorype/bugfix" />
+    <option name="BRANCH" value="origin/master" />
   </component>
   <component name="Git.Rebase.Settings">
     <option name="NEW_BASE" value="alfa/schoolquiz3.0" />
@@ -208,7 +210,7 @@
     </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="8b8ce032a1032512a42f5e01bd0a1ce066994e97" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -233,10 +235,10 @@
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 5
+  &quot;associatedIndex&quot;: 8
 }</component>
   <component name="ProjectId" id="2MdM8qyqboV1nJrQXz70kLiA3XM" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -244,45 +246,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;BundleExportedModule&quot;: &quot;schoolquiz.app&quot;,
-    &quot;ExportBundle.BundlePathForschoolquiz.app&quot;: &quot;D:\\Programming\\Android\\schoolquiz3.0\\app&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;android-custom-viewD:/Programming/Android/schoolquiz3.0/app/src/main/java/com/tpov/schoolquiz/presentation/core/CustomProgressBar.kt_SELECTED&quot;: &quot;CustomProgressBar&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Rebasing main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Programming/Android/schoolquiz3.0&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;experimental&quot;
-  },
-  &quot;keyToStringList&quot;: {
-    &quot;ExportApk.BuildVariants&quot;: [
-      &quot;release&quot;
-    ]
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "Rebasing SchoolQuiz4.0",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "D:/Programming/Android",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.17",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "org.sourcelab.intellij.BuildMonitor.extensionPoints.settings.accountSettings.AccountApplicationSettings"
   }
-}</component>
+}]]></component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Properties" />
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\Programming\Android\schoolquiz3.0\app\src\main\res\drawable" />
-      <recent name="E:\Programming\Android\schoolquiz3.0\app\src\main\java\com\tpov\schoolquiz\data\database" />
-      <recent name="E:\Programming\Android\schoolquiz3.0\app\src\main\java\com\tpov\schoolquiz\data\database\entities" />
       <recent name="E:\SchoolQuiz\app\src\main\res\xml" />
       <recent name="E:\SchoolQuiz\app\src\main\res" />
+      <recent name="E:\SchoolQuiz\app\src\main\res\drawable" />
+      <recent name="E:\Программирование\Android\schoolquiz3.0\app\src\main\res\drawable-hdpi" />
+      <recent name="E:\Программирование\Android\schoolquiz3.0\app\src\main\res\drawable" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="E:\Программирование\Android\schoolquiz3.0\app\src\main\res\mipmap-hdpi" />
+      <recent name="D:\Programming\Android\schoolquiz3.0\common\src\main\res\drawable" />
       <recent name="E:\SchoolQuiz\app\src\main\res\mipmap-hdpi" />
       <recent name="E:\Программирование\Android\schoolquiz3.0\app" />
       <recent name="E:\Программирование\Android\schoolquiz3.0\app\src\main\res\drawable-hdpi" />
@@ -292,25 +285,288 @@
       <recent name="com.tpov.schoolquiz.data.model" />
     </key>
     <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
-      <recent name="com.tpov.schoolquiz.data.custom" />
-      <recent name="com.tpov.schoolquiz.data" />
+      <recent name="com.tpov.setting.presentation" />
       <recent name="com.tpov.schoolquiz.secure" />
       <recent name="com.tpov.schoolquiz.presentation.network.event" />
     </key>
-    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
-      <recent name="com.tpov.schoolquiz.data.database" />
-    </key>
     <key name="CopyKotlinDeclarationDialog.RECENTS_KEY">
-      <recent name="com.tpov.schoolquiz.data.database" />
       <recent name="com.tpov.schoolquiz.domain" />
       <recent name="com.tpov.schoolquiz.presentation.network.arena" />
       <recent name="com.tpov.schoolquiz.presentation.network.event" />
       <recent name="com.tpov.schoolquiz.data.fierbase" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Android App.shop">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
       <module name="schoolquiz.app.main" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="common" type="AndroidRunConfigurationType" factoryName="Android App">
+      <module name="schoolquiz.common.main" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="setting" type="AndroidRunConfigurationType" factoryName="Android App">
+      <module name="schoolquiz.setting.main" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="settings" type="AndroidRunConfigurationType" factoryName="Android App">
+      <module name="schoolquiz.settings.main" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="shop" type="AndroidRunConfigurationType" factoryName="Android App">
+      <module name="schoolquiz.shop.main" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
       <option name="DEPLOY_AS_INSTANT" value="false" />
@@ -385,6 +641,90 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1678092861294</updated>
+    </task>
+    <task id="LOCAL-00018" summary="edit merge front fragment - arena fragment">
+      <created>1681471483540</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1681471483540</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Create setting and info">
+      <created>1681725319556</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1681725319556</updated>
+    </task>
+    <task id="LOCAL-00020" summary="fix main images">
+      <created>1681982264179</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1681982264179</updated>
+    </task>
+    <task id="LOCAL-00021" summary="fix main images">
+      <created>1681982665577</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1681982665577</updated>
+    </task>
+    <task id="LOCAL-00022" summary="fix main images (center gravity)">
+      <created>1681984258945</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1681984258945</updated>
+    </task>
+    <task id="LOCAL-00023" summary="fix main images (center gravity)">
+      <created>1681984507809</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1681984507809</updated>
+    </task>
+    <task id="LOCAL-00024" summary="fix main images (center gravity)&#10;fix questionActivity &lt;- question8">
+      <created>1681988419524</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1681988419524</updated>
+    </task>
+    <task id="LOCAL-00025" summary="fix main images (center gravity)&#10;fix questionActivity &lt;- question8">
+      <created>1681996293308</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1681996293308</updated>
+    </task>
+    <task id="LOCAL-00026" summary="fix timer">
+      <created>1682359780573</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1682359780573</updated>
+    </task>
+    <task id="LOCAL-00027" summary="fix timer">
+      <created>1682620234799</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1682620234799</updated>
+    </task>
+    <task id="LOCAL-00028" summary="Create create question dialog">
+      <created>1682950533561</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1682950533561</updated>
+    </task>
+    <task id="LOCAL-00029" summary="add create question">
+      <created>1683196789093</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1683196789093</updated>
     </task>
     <task id="LOCAL-00030" summary="Delete swipe item question&#10;Add swipe menu">
       <created>1683267960195</created>
@@ -645,91 +985,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <task id="LOCAL-00067" summary="Fix crash create quiz">
-      <created>1692182286004</created>
-      <option name="number" value="00067" />
-      <option name="presentableId" value="LOCAL-00067" />
-      <option name="project" value="LOCAL" />
-      <updated>1692182286004</updated>
-    </task>
-    <task id="LOCAL-00068" summary="Fix crash create quiz">
-      <created>1693297296183</created>
-      <option name="number" value="00068" />
-      <option name="presentableId" value="LOCAL-00068" />
-      <option name="project" value="LOCAL" />
-      <updated>1693297296183</updated>
-    </task>
-    <task id="LOCAL-00069" summary="Fix get many questions in 1 quiz">
-      <created>1693988614506</created>
-      <option name="number" value="00069" />
-      <option name="presentableId" value="LOCAL-00069" />
-      <option name="project" value="LOCAL" />
-      <updated>1693988614506</updated>
-    </task>
-    <task id="LOCAL-00070" summary="Fix get question with language '-'&#10;Fix don`t get quiz5678 if lang &lt; 100">
-      <created>1694014199575</created>
-      <option name="number" value="00070" />
-      <option name="presentableId" value="LOCAL-00070" />
-      <option name="project" value="LOCAL" />
-      <updated>1694014199575</updated>
-    </task>
-    <task id="LOCAL-00071" summary="Fix set new idQuiz">
-      <created>1694100655208</created>
-      <option name="number" value="00071" />
-      <option name="presentableId" value="LOCAL-00071" />
-      <option name="project" value="LOCAL" />
-      <updated>1694100655209</updated>
-    </task>
-    <task id="LOCAL-00072" summary="Fix getQuiz1234&#10;Fix setQuiz event">
-      <created>1694340497339</created>
-      <option name="number" value="00072" />
-      <option name="presentableId" value="LOCAL-00072" />
-      <option name="project" value="LOCAL" />
-      <updated>1694340497339</updated>
-    </task>
-    <task id="LOCAL-00073" summary="Edit do not create new quiz after event">
-      <created>1694418516940</created>
-      <option name="number" value="00073" />
-      <option name="presentableId" value="LOCAL-00073" />
-      <option name="project" value="LOCAL" />
-      <updated>1694418516941</updated>
-    </task>
-    <task id="LOCAL-00074" summary="Edit do not create new quiz after event">
-      <created>1694587903219</created>
-      <option name="number" value="00074" />
-      <option name="presentableId" value="LOCAL-00074" />
-      <option name="project" value="LOCAL" />
-      <updated>1694587903220</updated>
-    </task>
-    <task id="LOCAL-00075" summary="Fix calc max stars in quiz">
-      <created>1695049579404</created>
-      <option name="number" value="00075" />
-      <option name="presentableId" value="LOCAL-00075" />
-      <option name="project" value="LOCAL" />
-      <updated>1695049579405</updated>
-    </task>
-    <task id="LOCAL-00076" summary="Add scroll nameQuiz &#10;Add main font\&#10;Add scroll name item name quiz">
-      <created>1696329706795</created>
-      <option name="number" value="00076" />
-      <option name="presentableId" value="LOCAL-00076" />
-      <option name="project" value="LOCAL" />
-      <updated>1696329706795</updated>
-    </task>
-    <task id="LOCAL-00077" summary="Edit: design chat (background, item view)">
-      <created>1696581932490</created>
-      <option name="number" value="00077" />
-      <option name="presentableId" value="LOCAL-00077" />
-      <option name="project" value="LOCAL" />
-      <updated>1696581932490</updated>
-    </task>
-    <task id="LOCAL-00078" summary="Edit: design chat (background, item view)">
-      <created>1696582204385</created>
-      <option name="number" value="00078" />
-      <option name="presentableId" value="LOCAL-00078" />
-      <option name="project" value="LOCAL" />
-      <updated>1696582204385</updated>
-    </task>
-    <option name="localTasksCounter" value="82" />
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -752,32 +1008,32 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
+    <MESSAGE value="Edit Create quiz" />
+    <MESSAGE value="Fix Create quiz dialog" />
+    <MESSAGE value="Fix show quiz8 when create acc" />
+    <MESSAGE value="Fix translate" />
+    <MESSAGE value="Fix send quiz" />
+    <MESSAGE value="Edit logic get question list in start question activity" />
+    <MESSAGE value="Edit logic get question list in start question activity&#10;Fix localisation time" />
+    <MESSAGE value="Fix chat get sms&#10;Add test found question before game" />
+    <MESSAGE value="Fix send quiz8 rating" />
+    <MESSAGE value="Edit design" />
+    <MESSAGE value="Edit design main activity item amd top bar" />
+    <MESSAGE value="Edit design main activity item amd top bar&#10;Hide translate help" />
+    <MESSAGE value="Add views in question activity" />
+    <MESSAGE value="Add synth all question detail with user" />
+    <MESSAGE value="Hotfix" />
+    <MESSAGE value="Create design rofile" />
+    <MESSAGE value="Add profile fragment prototype" />
+    <MESSAGE value="Add get massage" />
+    <MESSAGE value="Add translate UserGuide" />
+    <MESSAGE value="Add refactoring get all quiz" />
+    <MESSAGE value="Create load text progress bar in FBImpl" />
+    <MESSAGE value="Edit refactoring set all quiz" />
+    <MESSAGE value="gitignore" />
     <MESSAGE value="Fix set read in FB after getQuiz (false -&gt; true)" />
     <MESSAGE value="Fix crash create quiz" />
-    <MESSAGE value="Fix set quizz &#10;Fix syth network in 1 day" />
-    <MESSAGE value="Fix get many questions in 1 quiz" />
-    <MESSAGE value="Fix get question with language '-'&#10;Fix don`t get quiz5678 if lang &lt; 100" />
-    <MESSAGE value="Fix set new idQuiz" />
-    <MESSAGE value="Fix getQuiz1234&#10;Fix setQuiz event" />
-    <MESSAGE value="Edit do not create new quiz after event" />
-    <MESSAGE value="Edit: login 2 acc" />
-    <MESSAGE value="Fix setTpovId in 2 acc" />
-    <MESSAGE value="Edit chat color, marker user sms" />
-    <MESSAGE value="Fix calc max stars in quiz" />
-    <MESSAGE value="Refactofing strings&#10;Add localization ua/ru/en&#10;Fix delete questionDetail after synth FB&#10;Fix set/get questionDetail&#10;Fix edit question (size view, load quiz)&#10;Add Shop Fragment&#10;Fix life in question activity" />
-    <MESSAGE value="Add scroll nameQuiz &#10;Add main font\&#10;Add scroll name item name quiz" />
-    <MESSAGE value="Edit show ad, set timer" />
-    <MESSAGE value="Edit: design chat (background, item view)" />
-    <MESSAGE value="Edit: rename class" />
-    <MESSAGE value="Edit: rename class&#10;Refactoring: UseCase" />
-    <MESSAGE value="Fix show ads&#10;Edit scroll name quiz&#10;Fix arena (checking for lives)&#10;Fix update result quiz&#10;Fix close userguide when click outside" />
-    <MESSAGE value="Refactoring domain" />
-    <MESSAGE value="Redesign4.0 night" />
-    <MESSAGE value="Redesign4.0 (main) night" />
-    <MESSAGE value="Redesign4.0 (main) night&#10;Update gradle" />
-    <MESSAGE value="Redesign4.0 (questionActivity) night" />
-    <MESSAGE value="Fix close questionActivity after open resultDialog" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix close questionActivity after open resultDialog" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix crash create quiz" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

@@ -372,7 +372,6 @@ class QuestionActivity : AppCompatActivity() {
                         CoroutineScope(Dispatchers.IO).launch {
                             if (viewModel.questionUseCase.getQuestionsByIdQuiz(quiz.id!!).isNullOrEmpty()) {
                                 viewModel.questionUseCase.getQuestionsByIdQuiz(quiz.id!!).forEach {
-                                    Log.d("123321", "Єтот код работает!")
                                     viewModel.questionUseCase.insertQuestion(
                                         it.copy(
                                             id = null,

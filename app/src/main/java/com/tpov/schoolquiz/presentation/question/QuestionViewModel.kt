@@ -184,14 +184,13 @@ class QuestionViewModel @Inject constructor(
         return null
     }
 
-    private fun errorLoadQuestion(): String {
+    private fun errorLoadQuestion() {
         Toast.makeText(
             getApplication(),
             context.getString(R.string.dialog_error_db),
             Toast.LENGTH_LONG
         ).show()
 
-        return ""
     }
 
     private fun getUserLocalization(context: Context): String {

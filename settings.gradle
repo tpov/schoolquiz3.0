@@ -1,2 +1,6 @@
 include ':app'
 rootProject.name = "schoolquiz"
+include ':settings'
+include ':Userguide'
+include ':common'
+include ':shop'

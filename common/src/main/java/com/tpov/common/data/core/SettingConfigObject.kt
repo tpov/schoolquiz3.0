@@ -1,16 +1,14 @@
 package com.tpov.common.data.core
 
-import com.tpov.common.data.model.SettingConfig
+import com.tpov.common.data.model.SettingConfigModel
 
-object Settings {
-
-    private var _settings: SettingConfig = SettingConfig()
-
-    var settingsConfig: SettingConfig
+object SettingConfigObject {
+    private var _settings: SettingConfigModel = SettingConfigModel.default()
+    var settingsConfig: SettingConfigModel
         get() = _settings
-        set(value) { _settings = value }
+        private set(value) { _settings = value }
 
-    fun setSettings(newSettings: SettingConfig) {
+    fun setSettings(newSettings: SettingConfigModel) {
         settingsConfig = newSettings
     }
 }

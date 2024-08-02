@@ -1,12 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Reply Preference -->
-    <string-array name="reply_entries">
-        <item>Reply</item>
-        <item>Reply to all</item>
+
+    <string-array name="profile_sync_frequency">
+        <item>3 раза в день</item>
+        <item>1 раз в день</item>
+        <item>1 раз в неделю</item>
     </string-array>
 
-    <string-array name="reply_values">
-        <item>reply</item>
-        <item>reply_all</item>
+    <string-array name="quests_sync_frequency">
+        <item>3 раза в день</item>
+        <item>1 раз в день</item>
+        <item>1 раз в неделю</item>
+    </string-array>
+
+    <string-array name="event_notifications_frequency">
+        <item>3 раза в день</item>
+        <item>1 раз в день</item>
+        <item>1 раз в неделю</item>
+    </string-array>
+
+    <string-array name="days_of_week">
+        <item>Понедельник</item>
+        <item>Вторник</item>
+        <item>Среда</item>
+        <item>Четверг</item>
+        <item>Пятница</item>
+        <item>Суббота</item>
+        <item>Воскресенье</item>
+    </string-array>
+
+    <string-array name="notification_frequency_entries">
+        <item>Никогда</item>
+        <item>Только важные</item>
+        <item>Все</item>
+    </string-array>
+    <string-array name="notification_frequency_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
     </string-array>
 </resources>

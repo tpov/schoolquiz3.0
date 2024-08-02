@@ -4,8 +4,8 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="gold">#FFD600</color>
-    <color name="green">#00803A</color>
-    <color name="red">#870000</color>
+    <color name="green">#3CAF50</color>
+    <color name="red">#F44336</color>
 
     <color name="contour">#0C7FCF</color>
     <color name="contour_unable">#0C4678</color>

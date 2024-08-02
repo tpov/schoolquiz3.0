@@ -17,4 +17,27 @@
     <string name="attachment_summary_on">Automatically download attachments for incoming emails
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="settings_title">Settings</string>
+    <string name="profile_settings_header">Профиль</string>
+    <string name="login_title">Логин</string>
+    <string name="name_title">Имя</string>
+    <string name="password_title">Пароль</string>
+    <string name="nickname_title">Ник</string>
+    <string name="birthday_title">День рождения</string>
+    <string name="city_title">Город</string>
+    <string name="logo">Логотип</string>
+    <string name="languages">Язык</string>
+    <string name="notifications_title">Уведомления</string>
+    <string name="synchronization_settings_header">Синхронизация данных</string>
+    <string name="local_profile_sync_frequency_title">Частота синхронизации профиля</string>
+    <string name="local_quests_sync_frequency_title">Частота синхронизации квестов</string>
+    <string name="remote_profile_sync_frequency_title">Частота синхронизации профиля с сервером</string>
+    <string name="remote_quests_sync_frequency_title">Частота синхронизации квестов с сервера</string>
+    <string name="other_settings_header">Другие настройки</string>
+    <string name="event_notifications_frequency_title">Часота уведомлений о событий</string>
+    <string name="lessons_frequency_title">Частота занятий</string>
+    <string name="save_button_title">Сохранить</string>
+    <string name="back_button_title">Не сохранять</string>
+    <string name="quests_sync_frequency">quests_sync_frequency</string>
+    <string name="profile_sync_frequency">profile_sync_frequency</string>
 </resources>

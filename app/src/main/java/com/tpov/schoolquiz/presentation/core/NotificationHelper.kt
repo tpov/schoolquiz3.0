@@ -2,7 +2,6 @@ package com.tpov.schoolquiz.presentation.core
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.presentation.COUNT_SKILL_AMATEUR
@@ -28,7 +27,6 @@ class NotificationHelper(private val context: Context) {
     private var counterValue: Int = 0
 
     fun newVersion(versionApp: String) {
-        Log.d("newVersion", versionApp)
         userguide.addGuideNewVersion(
             context.getString(R.string.commit_3_1_00),
             versionApp,
