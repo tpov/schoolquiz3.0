@@ -9,11 +9,11 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
+import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.presentation.core.CalcValues
 import com.tpov.schoolquiz.presentation.core.CustomProgressBar
-import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import kotlinx.coroutines.InternalCoroutinesApi
 
 

@@ -23,9 +23,9 @@
 
         <activity
             android:name="com.tpov.schoolquiz.presentation.main.MainActivity"/>
-        <activity android:name="com.tpov.schoolquiz.presentation.question.QuestionActivity" />
-        <activity android:name="com.tpov.schoolquiz.presentation.question.QuestionListActivity" />
-        <activity android:name="com.tpov.schoolquiz.presentation.question.CheatActivity" />
+        <activity android:name="com.tpov.schoolquiz.com.tpov.common.presentation.question.QuestionActivity" />
+        <activity android:name="com.tpov.schoolquiz.com.tpov.common.presentation.question.QuestionListActivity" />
+        <activity android:name="com.tpov.schoolquiz.com.tpov.common.presentation.question.CheatActivity" />
         <activity
             android:name="com.tpov.schoolquiz.presentation.splashscreen.SplashScreen"
             android:exported="true">

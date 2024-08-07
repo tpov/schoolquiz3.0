@@ -8,7 +8,7 @@ import com.tpov.network.network.chat.ChatViewModel
 import com.tpov.network.network.event.EventViewModel
 import com.tpov.network.network.profile.ProfileViewModel
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
-import com.tpov.schoolquiz.presentation.question.QuestionViewModel
+import com.tpov.common.presentation.question.QuestionViewModel
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap

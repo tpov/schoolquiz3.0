@@ -5,6 +5,10 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.domain.QuestionUseCase
+import com.tpov.common.domain.QuizUseCase
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.*
 import com.tpov.schoolquiz.data.fierbase.*

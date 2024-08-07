@@ -14,9 +14,13 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.presentation.question.QuestionActivity
+import com.tpov.common.presentation.question.QuestionActivity.Companion.HARD_QUESTION
+import com.tpov.common.presentation.question.QuestionActivity.Companion.ID_QUIZ
+import com.tpov.common.presentation.question.QuestionActivity.Companion.NAME_USER
 import com.tpov.network.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.FragmentTitleBinding
 import com.tpov.schoolquiz.presentation.BARRIER_QUIZ_ID_LOCAL_AND_REMOVE
 import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
@@ -29,10 +33,6 @@ import com.tpov.schoolquiz.presentation.core.Logcat
 import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.question.QuestionActivity
-import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD_QUESTION
-import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
-import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.NAME_USER
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi

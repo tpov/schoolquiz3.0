@@ -5,8 +5,8 @@ import com.google.cloud.translate.TranslateOptions
 import com.google.cloud.translate.Translation
 import com.tpov.network.network.event.log
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.schoolquiz.presentation.DEFAULT_INFO_TRANSLATOR_BY_GOOGLE_TRANSL
 import com.tpov.schoolquiz.presentation.LVL_GOOGLE_TRANSLATOR
 import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES

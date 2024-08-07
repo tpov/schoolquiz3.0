@@ -17,14 +17,14 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.mlkit.nl.languageid.LanguageIdentification
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.presentation.question.log
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.presentation.core.Errors.errorGetLvlTranslate
 import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
-import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

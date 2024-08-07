@@ -2,7 +2,7 @@ package com.tpov.shoppinglist.utils
 
 import android.content.Intent
 import android.util.Log
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
+import com.tpov.common.data.model.local.QuestionEntity
 
 object ShareHelper {
     fun shareShopList(nameQuiz: String, id: List<QuestionEntity>, nameAnswerQuestion: Boolean): Intent {

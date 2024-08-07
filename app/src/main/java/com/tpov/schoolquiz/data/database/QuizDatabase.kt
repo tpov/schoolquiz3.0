@@ -5,8 +5,16 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.tpov.schoolquiz.data.custom.Converters
-import com.tpov.schoolquiz.data.database.entities.*
+import com.tpov.common.data.custom.Converters
+import com.tpov.common.data.dao.QuestionDao
+import com.tpov.common.data.dao.QuestionDetailDao
+import com.tpov.common.data.dao.QuizDao
+import com.tpov.common.data.model.local.QuestionDetailEntity
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.schoolquiz.data.database.entities.ChatEntity
+import com.tpov.schoolquiz.data.database.entities.PlayersEntity
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import kotlinx.coroutines.InternalCoroutinesApi
 
 @Database(

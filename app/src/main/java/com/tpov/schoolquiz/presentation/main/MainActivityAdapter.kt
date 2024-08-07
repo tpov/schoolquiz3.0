@@ -25,8 +25,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
 import com.bumptech.glide.request.RequestOptions
+import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
 import com.tpov.schoolquiz.presentation.COUNT_STARS_QUIZ_RATING
 import com.tpov.schoolquiz.presentation.DEFAULT_INFO_TRANSLATOR_BY_GOOGLE_TRANSL

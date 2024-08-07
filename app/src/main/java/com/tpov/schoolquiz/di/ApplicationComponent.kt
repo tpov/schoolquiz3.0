@@ -1,6 +1,9 @@
 package com.tpov.schoolquiz.di
 
 import android.app.Application
+import com.tpov.common.di.DBModule
+import com.tpov.common.presentation.question.QuestionActivity
+import com.tpov.common.presentation.question.QuestionListActivity
 import com.tpov.network.network.AutorisationFragment
 import com.tpov.network.network.chat.ChatFragment
 import com.tpov.network.network.chat.ChatViewModel
@@ -10,8 +13,6 @@ import com.tpov.network.network.event.TranslateQuestionFragment
 import com.tpov.network.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.main.FragmentMain
 import com.tpov.schoolquiz.presentation.main.MainActivity
-import com.tpov.schoolquiz.presentation.question.QuestionActivity
-import com.tpov.schoolquiz.presentation.question.QuestionListActivity
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import dagger.BindsInstance
 import dagger.Component

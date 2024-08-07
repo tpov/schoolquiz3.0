@@ -21,9 +21,9 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.languageid.LanguageIdentification
 import com.google.mlkit.nl.languageid.LanguageIdentifier
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.data.database.entities.QuestionEntity
-import com.tpov.schoolquiz.data.database.entities.QuizEntity
 import com.tpov.schoolquiz.databinding.CreateQuestionDialogTerminalBinding
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel

@@ -6,7 +6,7 @@
     android:background="@drawable/back_main"
     android:gravity="center"
     android:orientation="vertical"
-    tools:context="com.tpov.schoolquiz.presentation.question.CheatActivity">
+    tools:context="com.tpov.schoolquiz.com.tpov.common.presentation.question.CheatActivity">
 
     <TextView
         android:layout_width="wrap_content"
