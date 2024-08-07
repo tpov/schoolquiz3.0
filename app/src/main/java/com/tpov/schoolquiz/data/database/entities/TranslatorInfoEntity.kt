@@ -28,7 +28,7 @@ data class TranslatorInfoEntity(
     val idLastTranslator: Int,
 
     @ColumnInfo(name = "language")
-    val language: Int,
+    val language: String,
 
     @ColumnInfo(name = "lvlTranslator")
     val lvlTranslator: Int,
