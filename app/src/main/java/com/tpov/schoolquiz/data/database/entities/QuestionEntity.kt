@@ -16,8 +16,14 @@ data class QuestionEntity(
     @ColumnInfo(name = "nameQuestion")
     var nameQuestion: String,
 
-    @ColumnInfo(name = "answerQuestion")
-    val answerQuestion: Boolean,
+    @ColumnInfo(name = "pictureQuestion")
+    var pathPictureQuestion: String,
+
+    @ColumnInfo(name = "answer")
+    val answer: Int,
+
+    @ColumnInfo(name = "nameAnswers")
+    val nameAnswers: String,
 
     @ColumnInfo(name = "hardQuestion")
     val hardQuestion: Boolean,
@@ -29,9 +35,5 @@ data class QuestionEntity(
     var language: String,
 
     @ColumnInfo(name = "lvlTranslate")
-    var lvlTranslate: Int,
-
-    @ColumnInfo(name = "infoTranslater")
-    var infoTranslater: String,
-
+    var lvlTranslate: Int
 )

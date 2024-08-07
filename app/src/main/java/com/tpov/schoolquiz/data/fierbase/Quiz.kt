@@ -15,13 +15,11 @@ data class Quiz (
     var numQ: Int,
     var numHQ: Int,
     var starsAllPlayer: Int,
-    var starsPlayer: Int,
-    var ratingPlayer: Int,
     var userName: String,
     var languages: String
 ) {
     constructor() : this(
-        "", 0, "", -1, "", -1, 0, 0, 0, 0, 0,"", ""
+        "", 0, "", -1, "", -1, 0, 0, 0,"", ""
     )
 }
 
@@ -30,9 +28,10 @@ fun Quiz.toQuizEntity(
     stars: Int,
     starsAll: Int,
     rating: Int,
+    ratingPlayer: Int,
+    starsPlayer: Int,
     picture: String?
 ): QuizEntity {
-    if (event in 1..4) ratingPlayer = 0
     log("wdwdwdw event: $event, ratingPlayer: $ratingPlayer")
     return QuizEntity(
         id = id,

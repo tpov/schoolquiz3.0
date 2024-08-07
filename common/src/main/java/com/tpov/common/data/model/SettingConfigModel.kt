@@ -1,5 +1,4 @@
 package com.tpov.common.data.model
-
 data class SettingConfigModel(
     var login: String,
     var password: String,
@@ -17,6 +16,44 @@ data class SettingConfigModel(
     var lessonsFrequencyDays: Set<String>
 ) {
     companion object {
-        internal fun default() = SettingConfigModel("", "", "", "", "", "", -1, "", "1", "1", false, "1", "00:00", emptySet())
+        fun default() = SettingConfigModel("", "", "", "", "", "", -1, "", "1", "1", false, "1", "00:00", emptySet())
+
+        fun fromMap(map: Map<String, Any>): SettingConfigModel {
+            return SettingConfigModel(
+                login = map["login"] as? String ?: "",
+                password = map["password"] as? String ?: "",
+                name = map["name"] as? String ?: "",
+                nickname = map["nickname"] as? String ?: "",
+                birthday = map["birthday"] as? String ?: "",
+                city = map["city"] as? String ?: "",
+                logo = (map["logo"] as? Long)?.toInt() ?: -1, // Firebase может возвращать Int как Long
+                languages = map["languages"] as? String ?: "",
+                profileSyncFrequency = map["profileSyncFrequency"] as? String ?: "1",
+                questsSyncFrequency = map["questsSyncFrequency"] as? String ?: "1",
+                notificationsEnabled = map["notificationsEnabled"] as? Boolean ?: false,
+                eventNotificationsFrequency = map["eventNotificationsFrequency"] as? String ?: "1",
+                lessonsFrequencyTime = map["lessonsFrequencyTime"] as? String ?: "00:00",
+                lessonsFrequencyDays = (map["lessonsFrequencyDays"] as? List<String>)?.toSet() ?: emptySet()
+            )
+        }
+    }
+
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+            "login" to login,
+            "password" to password,
+            "name" to name,
+            "nickname" to nickname,
+            "birthday" to birthday,
+            "city" to city,
+            "logo" to logo,
+            "languages" to languages,
+            "profileSyncFrequency" to profileSyncFrequency,
+            "questsSyncFrequency" to questsSyncFrequency,
+            "notificationsEnabled" to notificationsEnabled,
+            "eventNotificationsFrequency" to eventNotificationsFrequency,
+            "lessonsFrequencyTime" to lessonsFrequencyTime,
+            "lessonsFrequencyDays" to lessonsFrequencyDays.toList()
+        )
     }
 }

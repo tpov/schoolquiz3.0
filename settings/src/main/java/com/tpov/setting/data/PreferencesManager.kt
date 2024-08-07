@@ -4,47 +4,49 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.tpov.common.data.model.SettingConfigModel
+import com.tpov.setting.R
 
-class PreferencesManager(context: Context) {
+class PreferencesManager(var context: Context) {
 
     private val preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
     fun saveSettings(config: SettingConfigModel) {
         preferences.edit().apply {
-            putString(SettingsKeys.LOGIN, config.login)
-            putString(SettingsKeys.PASSWORD, config.password)
-            putString(SettingsKeys.NAME, config.name)
-            putString(SettingsKeys.NICKNAME, config.nickname)
-            putString(SettingsKeys.BIRTHDAY, config.birthday)
-            putString(SettingsKeys.CITY, config.city)
-            putInt(SettingsKeys.LOGO, config.logo)
-            putString(SettingsKeys.LANGUAGES, config.languages)
-            putString(SettingsKeys.PROFILE_SYNC_FREQUENCY, config.profileSyncFrequency)
-            putString(SettingsKeys.QUESTS_SYNC_FREQUENCY, config.questsSyncFrequency)
-            putBoolean(SettingsKeys.NOTIFICATIONS, config.notificationsEnabled)
-            putString(SettingsKeys.EVENT_NOTIFICATIONS_FREQUENCY, config.eventNotificationsFrequency)
-            putString(SettingsKeys.LESSONS_FREQUENCY_TIME, config.lessonsFrequencyTime)
-            putStringSet(SettingsKeys.LESSONS_FREQUENCY_DAYS, config.lessonsFrequencyDays)
+            putString(context.getString(R.string.key_login), config.login)
+            putString(context.getString(R.string.key_password), config.password)
+            putString(context.getString(R.string.key_name), config.name)
+            putString(context.getString(R.string.key_nickname), config.nickname)
+            putString(context.getString(R.string.key_birthday), config.birthday)
+            putString(context.getString(R.string.key_city), config.city)
+            putInt(context.getString(R.string.key_logo), config.logo)
+            putString(context.getString(R.string.key_languages), config.languages)
+            putString(context.getString(R.string.key_profile_sync_frequency), config.profileSyncFrequency)
+            putString(context.getString(R.string.key_quests_sync_frequency), config.questsSyncFrequency)
+            putBoolean(context.getString(R.string.key_notifications), config.notificationsEnabled)
+            putString(context.getString(R.string.key_event_notifications_frequency), config.eventNotificationsFrequency)
+            putString(context.getString(R.string.key_lessons_frequency_time), config.lessonsFrequencyTime)
+            putStringSet(context.getString(R.string.key_lessons_frequency_days), config.lessonsFrequencyDays)
             apply()
         }
     }
 
     fun getSettings(): SettingConfigModel {
+        val defaultConfig = SettingConfigModel.default()
         return SettingConfigModel(
-            preferences.getString(SettingsKeys.LOGIN, "") ?: "",
-            preferences.getString(SettingsKeys.PASSWORD, "") ?: "",
-            preferences.getString(SettingsKeys.NAME, "") ?: "",
-            preferences.getString(SettingsKeys.NICKNAME, "") ?: "",
-            preferences.getString(SettingsKeys.BIRTHDAY, "") ?: "",
-            preferences.getString(SettingsKeys.CITY, "") ?: "",
-            preferences.getInt(SettingsKeys.LOGO, -1),
-            preferences.getString(SettingsKeys.LANGUAGES, "") ?: "",
-            preferences.getString(SettingsKeys.PROFILE_SYNC_FREQUENCY, "1") ?: "1",
-            preferences.getString(SettingsKeys.QUESTS_SYNC_FREQUENCY, "1") ?: "1",
-            preferences.getBoolean(SettingsKeys.NOTIFICATIONS, false),
-            preferences.getString(SettingsKeys.EVENT_NOTIFICATIONS_FREQUENCY, "1") ?: "1",
-            preferences.getString(SettingsKeys.LESSONS_FREQUENCY_TIME, "00:00") ?: "00:00",
-            preferences.getStringSet(SettingsKeys.LESSONS_FREQUENCY_DAYS, emptySet()) ?: emptySet()
+            preferences.getString(context.getString(R.string.key_login), defaultConfig.login) ?: defaultConfig.login,
+            preferences.getString(context.getString(R.string.key_password), defaultConfig.password) ?: defaultConfig.password,
+            preferences.getString(context.getString(R.string.key_name), defaultConfig.name) ?: defaultConfig.name,
+            preferences.getString(context.getString(R.string.key_nickname), defaultConfig.nickname) ?: defaultConfig.nickname,
+            preferences.getString(context.getString(R.string.key_birthday), defaultConfig.birthday) ?: defaultConfig.birthday,
+            preferences.getString(context.getString(R.string.key_city), defaultConfig.city) ?: defaultConfig.city,
+            preferences.getInt(context.getString(R.string.key_logo), defaultConfig.logo),
+            preferences.getString(context.getString(R.string.key_languages), defaultConfig.languages) ?: defaultConfig.languages,
+            preferences.getString(context.getString(R.string.key_profile_sync_frequency), defaultConfig.profileSyncFrequency) ?: defaultConfig.profileSyncFrequency,
+            preferences.getString(context.getString(R.string.key_quests_sync_frequency), defaultConfig.questsSyncFrequency) ?: defaultConfig.questsSyncFrequency,
+            preferences.getBoolean(context.getString(R.string.key_notifications), defaultConfig.notificationsEnabled),
+            preferences.getString(context.getString(R.string.key_event_notifications_frequency), defaultConfig.eventNotificationsFrequency) ?: defaultConfig.eventNotificationsFrequency,
+            preferences.getString(context.getString(R.string.key_lessons_frequency_time), defaultConfig.lessonsFrequencyTime) ?: defaultConfig.lessonsFrequencyTime,
+            preferences.getStringSet(context.getString(R.string.key_lessons_frequency_days), defaultConfig.lessonsFrequencyDays) ?: defaultConfig.lessonsFrequencyDays
         )
     }
 }

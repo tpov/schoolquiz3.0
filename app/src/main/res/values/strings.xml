@@ -1,10 +1,11 @@
 <resources>
     <!-- ... -->
-    <string name="commit_3_1_00">
-       1 - Design 4.0 (Main Screens) \n
-2 - Minor bug fixes \n
-3 - Improved animation in QuestionActivity \n
-        !! - This is a test version of the application, crashes, bugs with translation, bugs with the synchronization of questions and the account and chat are possible
+    <string name="commit_3_0_18">
+        1- Fix get box after show ads
+2 - Add scroll name quiz
+3 - Fix arena (checking for lives)
+4 - Fix update result quiz
+4 - Fix close userguide when click outside
     </string>
 
     <string-array name="nick_colors">

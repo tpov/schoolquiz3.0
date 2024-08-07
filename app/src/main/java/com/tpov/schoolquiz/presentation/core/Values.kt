@@ -4,11 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
+import com.tpov.network.network.event.log
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.presentation.*
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesSkill.COUNT_COLOR_8
-import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.shoppinglist.utils.TimeManager
 import java.util.*
 
@@ -23,7 +23,7 @@ object Values {
 
     @Synchronized
     fun setLoadPB(value: Int, max: Int) {
-        log("ioioioio fun ${(value * 100) / max}%")
+        com.tpov.network.network.event.log("ioioioio fun ${(value * 100) / max}%")
         Values.loadProgress.value = ((value * 100) / max)
     }
 
@@ -57,7 +57,7 @@ object Values {
 
     fun getColorNickname(importance: Int): Int {
 
-        log("importance:  $importance")
+        com.tpov.network.network.event.log("importance:  $importance")
         return when (importance) {
             0 -> ContextCompat.getColor(context, R.color.default_nick_color0)
             1 -> ContextCompat.getColor(context, R.color.default_nick_color1)

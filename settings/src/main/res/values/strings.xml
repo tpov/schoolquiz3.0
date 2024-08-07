@@ -38,6 +38,42 @@
     <string name="lessons_frequency_title">Частота занятий</string>
     <string name="save_button_title">Сохранить</string>
     <string name="back_button_title">Не сохранять</string>
-    <string name="quests_sync_frequency">quests_sync_frequency</string>
-    <string name="profile_sync_frequency">profile_sync_frequency</string>
+    <string name="key_quests_sync_frequency">quests_sync_frequency</string>
+    <string name="key_profile_sync_frequency">profile_sync_frequency</string>
+    <string name="key_login">login</string>
+    <string name="key_password">password</string>
+    <string name="key_name">name</string>
+    <string name="key_nickname">nickname</string>
+    <string name="key_birthday">birthday</string>
+    <string name="key_city">city</string>
+    <string name="key_logo">logo</string>
+    <string name="key_languages">languages</string>
+    <string name="key_notifications">notifications</string>
+    <string name="key_event_notifications_frequency">event_notifications_frequency</string>
+    <string name="key_lessons_frequency_time">lessons_frequency_time</string>
+    <string name="key_lessons_frequency_days">lessons_frequency_days</string>
+    <string name="lessons_frequency_time_title">Выберите время занятий</string>
+    <string name="lessons_frequency_days_title">Дата занятий</string>
+    <string name="key_save">key_save_button</string>
+
+    <string name="logo_title">Логотип</string>
+    <string name="languages_title">Языки</string>
+    <string name="text_login">Введите ваш логин</string>
+
+    <!-- Summaries -->
+    <string name="summary_login">Введите ваш логин</string>
+    <string name="summary_password">Введите ваш пароль</string>
+    <string name="summary_name">Введите ваше имя</string>
+    <string name="summary_nickname">Введите ваш никнейм</string>
+    <string name="summary_birthday">Введите вашу дату рождения</string>
+    <string name="summary_city">Введите ваш город</string>
+    <string name="summary_logo">Введите ID вашего логотипа</string>
+    <string name="summary_languages">Введите языки, которыми вы владеете</string>
+    <string name="summary_profile_sync_frequency">Выберите частоту синхронизации локального профиля</string>
+    <string name="summary_quests_sync_frequency">Выберите частоту синхронизации локальных заданий</string>
+    <string name="summary_notifications">Включить или выключить уведомления</string>
+    <string name="summary_event_notifications_frequency">Выберите частоту уведомлений о событиях</string>
+    <string name="summary_lessons_frequency_time">Выберите время занятий</string>
+    <string name="summary_lessons_frequency_days">Выберите дни недели для занятий</string>
+
 </resources>

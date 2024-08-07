@@ -19,6 +19,12 @@
         <item>1 раз в неделю</item>
     </string-array>
 
+    <string-array name="sync_frequency_entries">
+        <item>3 раза в день</item>
+        <item>1 раз в день</item>
+        <item>1 раз в неделю</item>
+    </string-array>
+
     <string-array name="days_of_week">
         <item>Понедельник</item>
         <item>Вторник</item>
@@ -34,7 +40,8 @@
         <item>Только важные</item>
         <item>Все</item>
     </string-array>
-    <string-array name="notification_frequency_values">
+
+    <string-array name="sync_frequency_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>

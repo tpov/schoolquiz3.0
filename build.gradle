@@ -1,8 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        agp_version1 = '8.3.1'
-        agp_version = '7.4.2'
+        agp_version = '8.3.1'
         ksp_version = "1.5.31-1.0.0"
     }
     ext.kotlin_version = "1.9.20"
@@ -14,9 +13,9 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:$agp_version1"
+        classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.4.2'
+        classpath 'com.google.gms:google-services:4.4.1'
     }
 }
 

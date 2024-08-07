@@ -29,7 +29,7 @@ import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
 import com.tpov.shoppinglist.utils.TimeManager
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.*
+import java.util.Locale
 
 class CreateQuestionDialogTerminal() : DialogFragment() {
 
@@ -100,7 +100,7 @@ class CreateQuestionDialogTerminal() : DialogFragment() {
                             getTypeText(binding.rbLightQuestion).toBoolean(),
                             -1,
                             lang,
-                            mainActivityViewModel.getProfileFBLiveData().value?.translater ?: -1,
+                            mainActivityViewModel.getProfileFBLiveData.value?.translater ?: -1,
                             getTpovId().toString()
                         )
                     )

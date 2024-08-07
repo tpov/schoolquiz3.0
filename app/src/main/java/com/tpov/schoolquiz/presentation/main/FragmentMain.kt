@@ -7,34 +7,28 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
-import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.tpov.network.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.databinding.FragmentTitleBinding
-import com.tpov.schoolquiz.databinding.FragmentTitleBinding.inflate
 import com.tpov.schoolquiz.presentation.BARRIER_QUIZ_ID_LOCAL_AND_REMOVE
 import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
-import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
 import com.tpov.schoolquiz.presentation.MAX_PERCENT_LIGHT_QUIZ_FULL
 import com.tpov.schoolquiz.presentation.MainApp
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
-import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_QUIZ8
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_RANDOM_QUIZ8
 import com.tpov.schoolquiz.presentation.core.Logcat
-import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.HARD_QUESTION
 import com.tpov.schoolquiz.presentation.question.QuestionActivity.Companion.ID_QUIZ
@@ -99,7 +93,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
         lifecycleScope.launchWhenStarted {
             val countPlace = mainViewModel.getCountPlaceForUserQuiz()
-                view.findViewById<TextView>(R.id.tv_number_place_user_quiz).text = countPlace.toString()
+            binding.tvNumberPlaceUserQuiz.text = countPlace.toString()
 
             if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
                 binding.fabAddItem.isClickable = false
@@ -144,27 +138,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             Toast.makeText(activity, R.string.soon___, Toast.LENGTH_SHORT).show()
         }
 
-        mainViewModel.quizUseCase.getQuizListLiveData().observe(viewLifecycleOwner) { quizList ->
-            val filteredList = quizList.filter {
-                when (isMyQuiz) {
-                    EVENT_QUIZ_HOME -> it.event == isMyQuiz
-                    EVENT_QUIZ_ARENA -> it.event == isMyQuiz
-                    else -> it.event == isMyQuiz && it.tpovId == getTpovId()
-                }
-            }
-
-            val sortedList = if (isMyQuiz == EVENT_QUIZ_ARENA) {
-                filteredList.sortedBy { -it.ratingPlayer }
-            } else {
-                filteredList
-            }
-            adapter.submitList(sortedList)
-        }
 
         mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
 
             log("fgjesdriofjeskl observe it: $it")
-                view.findViewById<TextView>(R.id.tv_number_place_user_quiz).text = it.toString()
+            binding.tvNumberPlaceUserQuiz.text = it.toString()
             if (it <= 0) {
                 binding.fabAddItem.isClickable = false
                 binding.fabAddItem.isEnabled = false
@@ -203,7 +181,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = inflate(inflater, container, false)
+        binding = FragmentTitleBinding.inflate(inflater, container, false)
 
         return binding.root
     }
@@ -223,54 +201,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             ).show()
 
         } else {
-            if (foundQuestionList(id, typeQuestion)) {
-
-                if (mainViewModel.getQuizById(id).event == EVENT_QUIZ_ARENA) {
-                    dialogNolics(id, typeQuestion, COAST_QUIZ8)
-                } else {
-                    mainViewModel.profileUseCase.updateProfile(
-                        mainViewModel.getProfile()
-                            .copy(count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ)
-                    )
-                    val intent = Intent(activity, QuestionActivity::class.java)
-                    intent.putExtra(NAME_USER, "user")
-                    intent.putExtra(ID_QUIZ, id)
-                    intent.putExtra(HARD_QUESTION, typeQuestion)
-                    startActivityForResult(intent, REQUEST_CODE)
-                }
-
-            } else Toast.makeText(context, R.string.quiz_not_translated, Toast.LENGTH_LONG).show()
         }
     }
-
-    private fun foundQuestionList(idQuiz: Int, hardQuestion: Boolean): Boolean {
-
-        val questionThisListAll =
-            mainViewModel.questionUseCase.getQuestionsByIdQuiz(idQuiz)
-                .filter { it.hardQuestion == hardQuestion }
-
-        log("kokol size questionThisListAll: ${questionThisListAll.size}")
-        var listMap = mutableMapOf<Int, Boolean>()
-
-        listMap = getMap(questionThisListAll, listMap)
-
-        log("kokol size listMap: ${listMap.size}")
-        val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
-
-        log("kokol size questionByLocal: ${questionByLocal.size}")
-        val questionListThis =
-            if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
-            else getListQuestionByProfileLang(
-                questionThisListAll,
-                listMap
-            )
-
-        log("kokol size questionListThis: ${questionListThis.size}")
-        return didFoundAllQuestion(questionListThis, listMap)
-
-    }
-
-
     private fun getMap(
         listQuestionEntity: List<QuestionEntity>,
         listMap: MutableMap<Int, Boolean>
@@ -374,16 +306,9 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                         }.random()
 
                         val alertDialog = AlertDialog.Builder(activity)
-                            .setTitle(Html.fromHtml("<font color='#FFFF00'>" + getString(R.string.search_title) + "</font>"))
+                            .setTitle(R.string.search_title)
                             .setMessage(R.string.search_message)
                             .setPositiveButton("(-) $nolics nolics") { dialog, which ->
-
-                                mainViewModel.profileUseCase.updateProfile(
-                                    mainViewModel.getProfile().copy(
-                                        count = mainViewModel.getProfileCount()!! - COAST_LIFE_HOME_QUIZ,
-                                        pointsNolics = mainViewModel.getProfileNolic()!! - nolics
-                                    )
-                                )
 
                                 val intent = Intent(activity, QuestionActivity::class.java)
                                 intent.putExtra(NAME_USER, "user")
@@ -394,21 +319,18 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                                 )
                                 startActivityForResult(intent, REQUEST_CODE)
                             }
-
                             .setNegativeButton(R.string.cancel_button, null)
                             .create()
 
                         alertDialog.setOnShowListener { dialog ->
-                            val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                            val positiveButton =
+                                (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                             val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                            val messageTextView = dialog.findViewById<TextView>(android.R.id.message)
 
                             positiveButton.setTextColor(Color.WHITE)
-                            negativeButton.setTextColor(Color.WHITE)
+                            negativeButton.setTextColor(Color.YELLOW)
 
-                            messageTextView?.setTextColor(Color.WHITE)
-
-                            dialog.window?.setBackgroundDrawableResource(R.drawable.back_item_main)
+                            dialog.window?.setBackgroundDrawableResource(R.drawable.db_design3_main)
                         }
 
                         alertDialog.show()
@@ -423,15 +345,9 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
         } else {
             val alertDialog = AlertDialog.Builder(activity)
-                .setTitle(Html.fromHtml("<font color='#FFFF00'>" + getString(R.string.paid_attempt_title) + "</font>"))
+                .setTitle(R.string.paid_attempt_title)
                 .setMessage(R.string.paid_attempt_message)
                 .setPositiveButton("(-) $nolics nolics") { dialog, which ->
-                    mainViewModel.profileUseCase.updateProfile(
-                        mainViewModel.getProfile().copy(
-                            count = mainViewModel.getProfileCount()!! - COAST_LIFE_ARENA_QUIZ,
-                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
-                        )
-                    )
                     val intent = Intent(activity, QuestionActivity::class.java)
                     intent.putExtra(NAME_USER, "user")
                     intent.putExtra(ID_QUIZ, id)
@@ -442,16 +358,14 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
-                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val positiveButton =
+                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                 val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                val messageTextView = dialog.findViewById<TextView>(android.R.id.message)
 
                 positiveButton.setTextColor(Color.WHITE)
-                negativeButton.setTextColor(Color.WHITE)
+                negativeButton.setTextColor(Color.YELLOW)
 
-                messageTextView?.setTextColor(Color.WHITE)
-
-                dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
+                dialog.window?.setBackgroundDrawableResource(R.drawable.db_design3_main)
             }
 
             alertDialog.show()
@@ -473,7 +387,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     override fun sendItem(id: Int) {
         var quizEntity = mainViewModel.getQuizById(id)
 
-        mainViewModel.quizUseCase.updateQuiz(quizEntity.copy(showItemMenu = false))
         mainViewModel.insertQuizEvent(quizEntity)
         oldIdQuizEvent1 = quizEntity.id ?: 0
         lifecycleScope.launchWhenStarted {
@@ -503,7 +416,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         }
     }
 
-    @Deprecated("Reason for deprecation")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -513,7 +425,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 val idQuiz = it.getIntExtra("idQuiz", 0)
 
                 if (translate) (requireActivity() as MainActivity).replaceFragment(
-                    TranslateQuestionFragment.newInstance(idQuiz, -1)
+                    com.tpov.network.network.event.TranslateQuestionFragment.newInstance(idQuiz, -1)
                 )
             }
         }

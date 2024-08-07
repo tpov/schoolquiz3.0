@@ -1,20 +1,21 @@
 package com.tpov.schoolquiz.presentation.core
 
 import android.content.Context
-import android.widget.Toast
 import com.google.cloud.translate.TranslateOptions
 import com.google.cloud.translate.Translation
+import com.tpov.network.network.event.log
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.QuizEntity
-import com.tpov.schoolquiz.presentation.*
+import com.tpov.schoolquiz.presentation.DEFAULT_INFO_TRANSLATOR_BY_GOOGLE_TRANSL
+import com.tpov.schoolquiz.presentation.LVL_GOOGLE_TRANSLATOR
+import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.core.Values.loadText
 import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
-import com.tpov.schoolquiz.presentation.network.event.log
 import com.tpov.schoolquiz.secure.secureCode.getTranslateKey
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.*
+import java.util.Locale
 
 object TranslateGoogle {
     var nolicResult = 0
@@ -33,18 +34,18 @@ object TranslateGoogle {
         val questionHardMap: MutableMap<Int, QuestionEntity> = mutableMapOf()
 
         for (question in questionList) {
-            log("dawdawdf $question")
+            com.tpov.network.network.event.log("dawdawdf $question")
             val existingQuestion = questionMap[question.numQuestion]
             val existingHardQuestion = questionHardMap[question.numQuestion]
 
             if (!question.hardQuestion) {
                 if (existingQuestion == null || question.lvlTranslate > existingQuestion.lvlTranslate) {
-                    log("dawdawdf add !hardQuestion")
+                    com.tpov.network.network.event.log("dawdawdf add !hardQuestion")
                     questionMap[question.numQuestion] = question
                 }
             } else {
                 if (existingHardQuestion == null || question.lvlTranslate > existingHardQuestion.lvlTranslate) {
-                    log("dawdawdf add hardQuestion")
+                    com.tpov.network.network.event.log("dawdawdf add hardQuestion")
                     questionHardMap[question.numQuestion] = question
                 }
             }
@@ -70,39 +71,11 @@ object TranslateGoogle {
             val filteredQuestions = mutableListOf<QuestionEntity>()
             filteredQuestions.addAll(trueQuestionsMap.values)
             filteredQuestions.addAll(falseQuestionsMap.values)
-
-
-            translateToUserLanguage(filteredQuestionList).forEach {
-                countTranslateQuestion++
-                viewModel.insertQuestion(it.copy(id = null))
-                log("dawdawdf $i")
-                i--
-                if (i == 0) context.runOnUiThread {
-                    viewModel.updateQuiz(
-                        quizEntity.copy(
-                            languages = removeDuplicateWordsFromLanguages(
-                                if (quizEntity.languages.isNotEmpty()) "${quizEntity.languages}$SPLIT_BETWEEN_LANGUAGES${Locale.getDefault().language}$SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG$LVL_GOOGLE_TRANSLATOR"
-                                else "${Locale.getDefault().language}$SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG$LVL_GOOGLE_TRANSLATOR"
-                            ), versionQuiz = quizEntity.versionQuiz + 1
-                        )
-                    )
-
-                    loadText.postValue("")
-                    Toast.makeText(context, R.string.translation_success, Toast.LENGTH_SHORT)
-                        .show()
-                }
-                setLoadPB(countTranslateQuestion, numSizeList)
-            }
-            val profile = viewModel.getProfile()
-            viewModel.profileUseCase.updateProfile(profile.copy(
-                addMassage = context.getString(R.string.translation_failed),
-                addPointsNolics = profile.addPointsNolics?.plus(nolicResult)))
-            nolicResult = 0
-        }.start()
+        }
     }
 
     private fun setLoadPB(value: Int, max: Int) {
-        log("ioioioio fun ${(value * 100) / max}%")
+        com.tpov.network.network.event.log("ioioioio fun ${(value * 100) / max}%")
         Values.loadProgress.postValue((value * 100) / max)
     }
 
@@ -115,7 +88,7 @@ object TranslateGoogle {
 
         val translatedQuestionList: MutableList<QuestionEntity> = mutableListOf()
 
-        log("dawdawdf questionList:$questionList ")
+        com.tpov.network.network.event.log("dawdawdf questionList:$questionList ")
         for (question in questionList) {
             // Получаем текст для перевода
             val textToTranslate = question.nameQuestion
@@ -123,7 +96,7 @@ object TranslateGoogle {
 
             val userLanguage: String = Locale.getDefault().language
 
-            log("dawdawdf question $question")
+            com.tpov.network.network.event.log("dawdawdf question $question")
             try {
                 if (sourceLanguage != userLanguage) {
                     val translation: Translation = translate!!.translate(
@@ -135,8 +108,8 @@ object TranslateGoogle {
                             userLanguage
                         )
                     )
-                    log("dawdawdf translation:$translation")
-                    log("dawdawdf translation.translatedText:${translation.translatedText}")
+                    com.tpov.network.network.event.log("dawdawdf translation:$translation")
+                    com.tpov.network.network.event.log("dawdawdf translation.translatedText:${translation.translatedText}")
                     translatedQuestionList.add(
                         question.copy(
                             nameQuestion = translation.translatedText,
@@ -147,7 +120,7 @@ object TranslateGoogle {
                     )
                 } else nolicResult += COEF_COAST_GOOGLE_TRANSLATE
             } catch (e: Exception) {
-                log("dawdawdf error: $e")
+                com.tpov.network.network.event.log("dawdawdf error: $e")
             }
 
         }

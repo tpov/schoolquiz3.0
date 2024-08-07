@@ -18,6 +18,7 @@ import com.android.billingclient.api.*
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.tpov.network.network.profile.ProfileViewModel
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ShopFragmentBinding
 import com.tpov.schoolquiz.presentation.*
@@ -40,10 +41,11 @@ import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountShowAd
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
 import com.tpov.schoolquiz.presentation.question.log
 import com.tpov.schoolquiz.secure.secureCode.getAdUnitId
+import kotlinx.android.synthetic.main.info_fragment.*
 import kotlinx.coroutines.InternalCoroutinesApi
+import java.util.*
 import javax.inject.Inject
 
 class ShopFragment : BaseFragment() {
@@ -61,7 +63,7 @@ class ShopFragment : BaseFragment() {
     private lateinit var binding: ShopFragmentBinding
 
     @OptIn(InternalCoroutinesApi::class)
-    private val profileViewModel: ProfileViewModel by activityViewModels { viewModelFactory }
+    private val profileViewModel: com.tpov.network.network.profile.ProfileViewModel by activityViewModels { viewModelFactory }
 
     private lateinit var mRewardedAd: RewardedAd
 
@@ -120,7 +122,7 @@ class ShopFragment : BaseFragment() {
                             .create()
 
                         alertDialog.show()
-                        alertDialog.window?.setBackgroundDrawableResource(R.color.contour)
+                        alertDialog.window?.setBackgroundDrawableResource(R.color.grey)
                     }
                 }
 

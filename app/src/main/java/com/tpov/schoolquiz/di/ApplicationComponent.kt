@@ -1,15 +1,15 @@
 package com.tpov.schoolquiz.di
 
 import android.app.Application
+import com.tpov.network.network.AutorisationFragment
+import com.tpov.network.network.chat.ChatFragment
+import com.tpov.network.network.chat.ChatViewModel
+import com.tpov.network.network.event.EventFragment
+import com.tpov.network.network.event.EventViewModel
+import com.tpov.network.network.event.TranslateQuestionFragment
+import com.tpov.network.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.main.FragmentMain
 import com.tpov.schoolquiz.presentation.main.MainActivity
-import com.tpov.schoolquiz.presentation.network.AutorisationFragment
-import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
-import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
-import com.tpov.schoolquiz.presentation.network.event.EventFragment
-import com.tpov.schoolquiz.presentation.network.event.EventViewModel
-import com.tpov.schoolquiz.presentation.network.event.TranslateQuestionFragment
-import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
 import com.tpov.schoolquiz.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.presentation.question.QuestionListActivity
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
@@ -35,21 +35,21 @@ interface ApplicationComponent {
 
     fun inject(activity: MainActivity)
 
-    fun inject(profileFragment: ProfileFragment)
+    fun inject(profileFragment: com.tpov.network.network.profile.ProfileFragment)
 
-    fun inject(autorisationFragment: AutorisationFragment)
+    fun inject(autorisationFragment: com.tpov.network.network.AutorisationFragment)
 
-    fun inject(chatFragment: ChatFragment)
+    fun inject(chatFragment: com.tpov.network.network.chat.ChatFragment)
 
-    fun inject(chatViewModel: ChatViewModel)
+    fun inject(chatViewModel: com.tpov.network.network.chat.ChatViewModel)
 
-    fun inject(eventViewModel: EventViewModel)
+    fun inject(eventViewModel: com.tpov.network.network.event.EventViewModel)
 
-    fun inject(eventFragment: EventFragment)
+    fun inject(eventFragment: com.tpov.network.network.event.EventFragment)
 
     fun inject(shopFragment: ShopFragment)
 
-    fun inject(translateQuestionFragment: TranslateQuestionFragment)
+    fun inject(translateQuestionFragment: com.tpov.network.network.event.TranslateQuestionFragment)
 
 
     @Component.Factory

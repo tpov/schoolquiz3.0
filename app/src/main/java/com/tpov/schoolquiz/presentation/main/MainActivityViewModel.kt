@@ -22,11 +22,10 @@ import javax.inject.Inject
 @InternalCoroutinesApi
 class MainActivityViewModel @Inject constructor(
     private val context: Context,
-    val profileUseCase: ProfileUseCase,
-    val quizUseCase: QuizUseCase,
-    val questionUseCase: QuestionUseCase,
-    val playersUseCase: PlayersUseCase,
-    val questionDetailUserCase: QuestionDetailUserCase
+    private val profileUseCase: ProfileUseCase,
+    private val quizUseCase: QuizUseCase,
+    private val questionUseCase: QuestionUseCase,
+    private val playersUseCase: PlayersUseCase
 ) : ViewModel() {
 
     var oldId = 0
@@ -36,11 +35,9 @@ class MainActivityViewModel @Inject constructor(
 
     fun countPlaceLiveData() = placeLiveData
 
-    fun getProfileFBLiveData(): LiveData<ProfileEntity?>  {
-        return tpovIdLiveData.switchMap { tpovId ->
-            log("getProfileFBLiveData tpovId: $tpovId")
-            profileUseCase.getProfileFlow(tpovId).asLiveData()
-        }
+    val getProfileFBLiveData: LiveData<ProfileEntity?> = tpovIdLiveData.switchMap { tpovId ->
+        log("getProfileFBLiveData tpovId: $tpovId")
+        profileUseCase.getProfileFlow(tpovId).asLiveData()
     }
 
     fun getQuizById(position: Int): QuizEntity {
@@ -88,7 +85,7 @@ class MainActivityViewModel @Inject constructor(
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            quizUseCase.downloadQuizHome()
+            quizUseCase.getQuizList()
         }
     }
 
@@ -164,13 +161,13 @@ class MainActivityViewModel @Inject constructor(
         log("fun setQuestionsFB")
 
         CoroutineScope(Dispatchers.IO).launch {
-            quizUseCase.unloadQuiz()
+            quizUseCase.
         }
     }
 
-    private suspend fun getQuizListLiveData(): LiveData<List<QuizEntity>> {
+    suspend fun getQuizListLiveData(): LiveData<List<QuizEntity>> {
         log("fun getQuizList tpovId: ${getTpovId()}")
-        return quizUseCase.getQuizListLiveData(getTpovId())
+        return localUseCase.getQuizLiveData(getTpovId())
     }
 
     suspend fun getQuizLiveData(): LiveData<List<QuizEntity>> {
@@ -178,7 +175,7 @@ class MainActivityViewModel @Inject constructor(
     }
 
     suspend fun getQuizList(): List<QuizEntity> {
-        return quizUseCase.getQuizList()
+        return localUseCase.getQuizEvent()
     }
 
     fun getProfile(): ProfileEntity {
@@ -187,7 +184,7 @@ class MainActivityViewModel @Inject constructor(
 
     suspend fun getCountPlaceForUserQuiz(): Int {
         return try {
-            val placeQuiz = profileUseCase.getProfile(getTpovId()).buyQuizPlace
+            val placeQuiz = localUseCase.getProfile(getTpovId()).buyQuizPlace
             val countUserQuiz =
                 getQuizList().filter { it.event == EVENT_QUIZ_FOR_USER && it.tpovId == getTpovId() }
             placeQuiz?.minus(countUserQuiz.size)!!
@@ -206,14 +203,14 @@ class MainActivityViewModel @Inject constructor(
     }
 
     private fun getProfileFun(tpovId: Int): ProfileEntity {
-        log("getProfileFun getProfile(tpovId):${profileUseCase.getProfile(tpovId)}")
-        return profileUseCase.getProfile(tpovId)
+        log("getProfileFun getProfile(tpovId):${localUseCase.getProfile(tpovId)}")
+        return localUseCase.getProfile(tpovId)
     }
 
     fun getNewIdQuiz(): Int {
         var i = 0
         runBlocking {
-            quizUseCase.getQuizList(getTpovId()).forEach {
+            localUseCase.getQuizList(getTpovId()).forEach {
                 log("getNewIdQuiz: it: ${it.id}")
                 if (it.id!! in (i + 1)..BARRIER_QUIZ_ID_LOCAL_AND_REMOVE) {
                     i = it.id!!
@@ -223,7 +220,7 @@ class MainActivityViewModel @Inject constructor(
         return i + 1
     }
 
-    fun getIdQuizByNameQuiz(nameQuiz: String) = quizUseCase.getIdQuizByNameQuiz(
+    fun getIdQuizByNameQuiz(nameQuiz: String) = localUseCase.getIdQuizByNameQuiz(
         nameQuiz, getTpovId()
     )
 
@@ -232,12 +229,12 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun deleteQuiz(id: Int) {
-        quizUseCase.deleteQuiz(id)
-        questionUseCase.deleteQuestionByIdQuiz(id)
+        localUseCase.deleteQuiz(id)
+        localUseCase.deleteQuestionByIdQuiz(id)
     }
 
     fun deleteQuestion(idQuiz: Int) {
-        questionUseCase.deleteQuestionByIdQuiz(idQuiz)
+        localUseCase.deleteQuestionByIdQuiz(idQuiz)
     }
 
     fun findValueForDeviceLocale(id: Int): Int {
@@ -265,25 +262,25 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun getProfileCount(): Int? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.count
     }
 
     fun getProfileCountGold(): Int? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.countGold
     }
 
     fun getProfileCountGoldLife(): Int? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         log("getProfileCount(): $profile, ${getTpovId()}")
         return profile.countGoldLife
     }
 
     fun getProfileNolic(): Int? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
 
         return profile.pointsNolics
     }
@@ -314,7 +311,7 @@ class MainActivityViewModel @Inject constructor(
             coundDayBox = days, countBox = profile.countBox?.plus(
                 addBox
             ), timeLastOpenBox = TimeManager.getCurrentTime()
-        )?.let { profileUseCase.updateProfile(it) }
+        )?.let { localUseCase.updateProfile(it) }
         return days
     }
 
@@ -325,17 +322,17 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun getProfileCountLife(): Int? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         return profile.countLife
     }
 
     fun getProfileDateCloseAp(): String? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         return profile.dateCloseApp
     }
 
     fun getCountChat(): Int {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         return profile.timeInGamesSmsPoints ?: 0
     }
 
@@ -344,30 +341,30 @@ class MainActivityViewModel @Inject constructor(
     }
 
     fun getProfileTimeInGame(): Int? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         return profile.timeInGamesInQuiz
     }
 
     fun getProfileSkill(): Int? {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         return profile.pointsSkill
     }
 
     fun getProfileTimeInChat(): Int {
-        val profile = profileUseCase.getProfile(getTpovId())
+        val profile = localUseCase.getProfile(getTpovId())
         return profile.timeInGamesInChat ?: 0
     }
 
     //This is WTF
     suspend fun setPercentResultAllQuiz() {
-        quizUseCase.getQuizList().forEach { quiz ->
+        localUseCase.getQuizEvent().forEach { quiz ->
             var perc = mutableListOf<Int>()
             var persentAll = 0
             var maxPersent = 0
 
             log("sdsdsds 1.${quiz.nameQuiz}")
-            log("sdsdsds 1. getQuestionDetailList(): ${questionDetailUserCase.getQuestionDetailList()}")
-            questionDetailUserCase.getQuestionDetailList().forEach {
+            log("sdsdsds 1. getQuestionDetailList(): ${localUseCase.getQuestionDetailList()}")
+            localUseCase.getQuestionDetailList().forEach {
                 log("sdsdsds 1,1 it.idQuiz: ${it.idQuiz} == quiz.id: ${quiz.id} -> ${it.idQuiz == quiz.id}")
                 log("sdsdsds 1,2. getTpovId(): ${getTpovId()}, quiz.tpovId: ${quiz.tpovId} -> ${getTpovId() == quiz.tpovId}")
                 if (it.idQuiz == quiz.id) {

@@ -6,22 +6,22 @@ import com.tpov.schoolquiz.data.database.entities.QuestionEntity
 @IgnoreExtraProperties
 data class Question (
     val nameQuestion: String,
-    val answerQuestion: Boolean,
-    val typeQuestion: Boolean,
-    val lvlTranslate: Int,
-    val infoTranslater: String
+    val answer: Int,
+    val nameAnswers: String,
+    val pathPictureQuestion: String,
+    val hardQuestion: Boolean,
 ) {
     constructor() : this(
-        "", false, false, 0, ""
+        "", 0, "", "",  false
     )
 }
 
 fun QuestionEntity.toQuestion(): Question {
     return Question(
         nameQuestion = this.nameQuestion,
-        answerQuestion = this.answerQuestion,
-        typeQuestion = this.hardQuestion,
-        lvlTranslate = this.lvlTranslate,
-        infoTranslater = this.infoTranslater
+        answer = this.answer,
+        nameAnswers = this.nameAnswers,
+        pathPictureQuestion = this.pathPictureQuestion,
+        hardQuestion = this.hardQuestion
     )
 }

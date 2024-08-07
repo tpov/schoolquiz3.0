@@ -1,6 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <color name="back_main_green">#3CAF50</color>
     <color name="back_main_red">#F44336</color>
+
+
+    <color name="bright_green">#00FF00</color>
+    <color name="yellow">#FFFF00</color>
+    <color name="blue">#0000FF</color>
+    <color name="red">#FF0000</color>
+
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gold">#FFD600</color>
+
+    <color name="contour">#0C7FCF</color>
+    <color name="contour_unable">#0C4678</color>
+    <color name="back_item">#191919</color>
+
+    <color name="back_main_top">#232337</color>
+    <color name="back_main_center">#3C3C3C</color>
+    <color name="back_light_question_center">#3C503C</color>
+    <color name="back_hard_question_center">#503C3C</color>
+    <color name="back_arena_question_center">#3C3C50</color>
+
+    <color name="back_menu_top">#323232</color>
+    <color name="back_menu_bottom">#070E00</color>
+
+    <color name="button_color_start">#5A5A7A</color>
+    <color name="button_color_end">#3A3A5A</color>
+    <color name="button_text_color">#FFFFFF</color>
+    <color name="dialog_background">#2C2C3C</color>
+    <color name="dialog_text_color">#E0E0E0</color>
+    <color name="shadow_color">#000000</color>
 </resources>

@@ -3,7 +3,6 @@ package com.tpov.schoolquiz.presentation.main
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
-import android.text.Html
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -105,24 +104,25 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             id: Int
         ) {
             val alertDialog = AlertDialog.Builder(context)
-                .setTitle(Html.fromHtml("<font color='#FFFFFF'>" + context.getString(R.string.send_to_arena_title) + "</font>"))
+                .setTitle(context.getString(R.string.send_to_arena_title))
                 .setMessage(context.getString(R.string.send_to_arena_text))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    // Ваш код обработчика нажатия кнопки "Положительно"
+
+                    listener.sendItem(id)
                 }
                 .setNegativeButton(context.getString(R.string.send_to_arena_negative), null)
                 .create()
 
             alertDialog.setOnShowListener { dialog ->
-                val positiveButton = (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
+                val positiveButton =
+                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
                 val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
                 positiveButton.setTextColor(Color.WHITE)
-                negativeButton.setTextColor(Color.WHITE) // Установите белый цвет для кнопок отмены
+                negativeButton.setTextColor(Color.YELLOW)
 
-                dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
+                dialog.window?.setBackgroundDrawableResource(R.drawable.db_design3_main)
             }
-
             alertDialog.show()
         }
 
@@ -182,7 +182,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
                 val widthInDp = 100
                 val heightInDp = 75
-                val radius = 10
+                val radius = 25
 
                 val widthInPx = dpToPx(widthInDp, context)
                 val heightInPx = dpToPx(heightInDp, context)
@@ -343,9 +343,9 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
 
             log("sefefefe, $lvlTranslate")
-            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.WHITE)
-            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(R.color.gold)
-            else imvTranslate.setColorFilter(R.color.contour)
+            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
+            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
+            else imvTranslate.setColorFilter(Color.BLUE)
             if (quizEntity.stars <= MAX_PERCENT_LIGHT_QUIZ_FULL) ratingBar.rating =
                 (quizEntity.stars.toFloat() / 50F)
             else ratingBar.rating = (((quizEntity.stars.toFloat() - 100F) / 20F) + 2F)
@@ -402,11 +402,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 .setTitle(context.getString(R.string.translate_title))
                 .setMessage(context.getString(R.string.translate_message))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-                    mainViewModel.profileUseCase.updateProfile(
-                        mainViewModel.getProfile().copy(
-                            pointsNolics = mainViewModel.getProfileNolic()!! - nolics
-                        )
-                    )
+
 
                     CoroutineScope(Dispatchers.IO).launch {
                         translateText(mainViewModel, context, quizEntity)
@@ -424,7 +420,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 positiveButton.setTextColor(Color.WHITE)
                 negativeButton.setTextColor(Color.YELLOW)
 
-                dialog.window?.setBackgroundDrawableResource(R.color.back_main_top)
+                dialog.window?.setBackgroundDrawableResource(R.drawable.db_design3_main)
             }
             alertDialog.show()
         }

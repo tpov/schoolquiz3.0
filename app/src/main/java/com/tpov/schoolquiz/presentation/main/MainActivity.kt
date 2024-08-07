@@ -18,8 +18,6 @@ import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
@@ -49,6 +47,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.firebase.auth.FirebaseAuth
+import com.tpov.network.network.AutorisationFragment
+import com.tpov.network.network.chat.ChatFragment
+import com.tpov.network.network.event.EventFragment
+import com.tpov.network.network.profile.ProfileFragment
+import com.tpov.network.network.profile.UsersFragment
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ChatEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
@@ -62,30 +65,22 @@ import com.tpov.schoolquiz.presentation.DELAY_SHOW_TEXT_IN_MAINACTIVITY_PB
 import com.tpov.schoolquiz.presentation.DURATION_ANIMATION_COUNTS
 import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
 import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
-import com.tpov.schoolquiz.presentation.ID_USERGUIDE_NOTIFICATION_LIFE
 import com.tpov.schoolquiz.presentation.INITIAL_DELAY
 import com.tpov.schoolquiz.presentation.INTERVAL_SYNTH_VIEW_PROFILE
 import com.tpov.schoolquiz.presentation.MIN_VALUE_SKILL_POINTS
 import com.tpov.schoolquiz.presentation.MainApp
-import com.tpov.schoolquiz.presentation.PERCENT_1STAR_QUIZ_SHORT
 import com.tpov.schoolquiz.presentation.REPEAT_DELAY
 import com.tpov.schoolquiz.presentation.Y_ROTATE_ANIMATION_DURATION
 import com.tpov.schoolquiz.presentation.contact.Contacts
-import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByCountInChat
-import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInChat
-import com.tpov.schoolquiz.presentation.core.CalcValues.getSkillByTimeInGame
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.schoolquiz.presentation.core.Logcat
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
-import com.tpov.schoolquiz.presentation.core.NotificationHelper
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountMassageIdAndReset
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getCountStartApp
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setCountStartApp
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.setTpovId
 import com.tpov.schoolquiz.presentation.core.Values
-import com.tpov.schoolquiz.presentation.core.Values.context
 import com.tpov.schoolquiz.presentation.core.Values.getColorNickname
 import com.tpov.schoolquiz.presentation.core.Values.getImportance
 import com.tpov.schoolquiz.presentation.core.Values.init
@@ -111,15 +106,9 @@ import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_REPORT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_SETTING
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_USERS
 import com.tpov.schoolquiz.presentation.main.info.InfoFragment
-import com.tpov.schoolquiz.presentation.network.AutorisationFragment
-import com.tpov.schoolquiz.presentation.network.chat.ChatFragment
-import com.tpov.schoolquiz.presentation.network.event.EventFragment
-import com.tpov.schoolquiz.presentation.network.profile.ProfileFragment
-import com.tpov.schoolquiz.presentation.network.profile.UsersFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.schoolquiz.presentation.shop.ShopFragment
 import com.tpov.shoppinglist.utils.TimeManager
-import com.tpov.userguide.UserGuide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -226,16 +215,6 @@ class MainActivity : AppCompatActivity() {
 
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName: String = pInfo.versionName
-
-        val userguide = UserGuide(this)
-
-
-        userguide.addGuide(
-            findViewById(R.id.menu_network),
-            context.getString(R.string.network_description),
-            context.getString(R.string.network_title),
-            icon = getDrawable(R.drawable.ic_settings),
-            callback = { startProfile() })
 
         binding.imbManu.setOnClickListener {
             binding.drawerLayout.openDrawer(GravityCompat.START)
@@ -353,9 +332,8 @@ class MainActivity : AppCompatActivity() {
         binding.tvName.text = ""
 
         numDayPrizeBox = viewModel.synthPrizeBoxDay(viewModel.getProfile()) ?: 0
-        viewModel.getProfileFBLiveData().observe(this) {
+        viewModel.getProfileFBLiveData.observe(this) {
             log("it: $it")
-            NotificationHelper(this).showNotificationAll(it?.pointsSkill)
             var count = (it?.count ?: 0) * COUNT_LIFE_POINTS_IN_LIFE
             layerDrawable1.findDrawableByLayerId(android.R.id.progress).level = count
             count -= VALUE_COUNT_LIFE
@@ -370,11 +348,7 @@ class MainActivity : AppCompatActivity() {
             layerDrawableGold.findDrawableByLayerId(android.R.id.progress).level =
                 (it?.countGold ?: 0) * COUNT_LIFE_POINTS_IN_LIFE
 
-            if (count < PERCENT_1STAR_QUIZ_SHORT) userguide.addNotification(ID_USERGUIDE_NOTIFICATION_LIFE,
-                titleText = getString(R.string.info_life_1_title),
-                text = getString(R.string.info_life_1_massage),
-                icon = resources.getDrawable(R.drawable.baseline_favorite_24)
-            )
+
             if (it?.countGoldLife == 1) {
                 imageViewGold.visibility = View.VISIBLE
             } else imageViewGold.visibility = View.GONE
@@ -445,7 +419,7 @@ class MainActivity : AppCompatActivity() {
                             R.color.default_nick_color6
                         ) -> {
                             binding.progressBar2.progressDrawable.setColorFilter(
-                                Color.WHITE,  //  цвет
+                                Color.WHITE,  // ваш цвет
                                 PorterDuff.Mode.SRC_IN  // режим наложения
                             )
                             Color.WHITE
@@ -466,7 +440,7 @@ class MainActivity : AppCompatActivity() {
 
                 binding.tvName.setTypeface(null, Typeface.BOLD)
             } catch (e: Exception) {
-                log("Error")
+                log("ererrerer---------------------------------------------------")
             }
 
             val animationDuration = DURATION_ANIMATION_COUNTS
@@ -519,42 +493,6 @@ class MainActivity : AppCompatActivity() {
             setNewSkill(it?.pointsSkill)
         }
 
-        binding.pbLife1.setOnTouchListener { view, event ->
-            if (event.action == MotionEvent.ACTION_UP) {
-                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
-            }
-            true
-        }
-        binding.pbLife2.setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_UP) {
-                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
-            }
-            true
-        }
-        binding.pbLife3.setOnTouchListener { view, event ->
-            if (event.action == MotionEvent.ACTION_UP) {
-                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
-            }
-            true
-        }
-        binding.pbLife4.setOnTouchListener { view, event ->
-            if (event.action == MotionEvent.ACTION_UP) {
-                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
-            }
-            true
-        }
-        binding.pbLife5.setOnTouchListener { view, event ->
-            if (event.action == MotionEvent.ACTION_UP) {
-                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE)
-            }
-            true
-        }
-        binding.pbLifeGold1.setOnTouchListener { view, event ->
-            if (event.action == MotionEvent.ACTION_UP) {
-                showPopupInfo(event, MainActivityAdapter.POPUP_LIFE_GOLD)
-            }
-            true
-        }
         setButtonNavListener()
 
         val profile = viewModel.getProfile()
@@ -702,7 +640,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     private fun getPersonalMassage(): List<ChatEntity> {
         return viewModel.getMassage()
     }
@@ -823,7 +760,6 @@ class MainActivity : AppCompatActivity() {
         val delay = 0L // Delay before the timer starts executing the task (in milliseconds)
         val task = object : TimerTask() {
             override fun run() {
-                updateProfileCount(INTERVAL_SYNTH_VIEW_PROFILE)
             }
         }
 
@@ -831,74 +767,7 @@ class MainActivity : AppCompatActivity() {
         timer?.scheduleAtFixedRate(task, delay, INTERVAL_SYNTH_VIEW_PROFILE)
     }
 
-    @SuppressLint("UseCompatLoadingForDrawables")
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun updateProfileCount(period: Long) {
-        try {
-            val mainHandler = Handler(Looper.getMainLooper())
-            mainHandler.post {
-                try {
-                    val profile = viewModel.getProfile()
 
-                    NotificationHelper(this).updateProfile(profile)
-                    val packageInfo = packageManager.getPackageInfo(packageName, 0)
-                    NotificationHelper(this).newVersion(packageInfo.versionName)
-
-                    val countSmsPoints = getCountMassageIdAndReset()
-
-                    log("lklklkl 2 ${getSkillByCountInChat(countSmsPoints)}")
-                    viewModel.profileUseCase.updateProfile(
-                        profile.copy(
-                            count = calcCount(
-                                profile.count,
-                                profile.countLife,
-                                profile.dateCloseApp
-                            ),
-                            dateCloseApp = TimeManager.getCurrentTime(),
-                            pointsSkill = (profile.pointsSkill!!.plus(
-                                if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                                    getSkillByTimeInChat(period.toInt())
-                                } else {
-                                    getSkillByTimeInGame(period.toInt())
-                                }
-                            ).plus(profile.addPointsNolics ?: 0)
-                                .plus(getSkillByCountInChat(countSmsPoints))),
-                            pointsGold = profile.pointsGold?.plus(profile.addPointsGold ?: 0),
-                            pointsNolics = profile.pointsNolics?.plus(profile.addPointsNolics ?: 0),
-                            trophy = profile.trophy + profile.addTrophy,
-                            timeInGamesInQuiz = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                                profile.timeInGamesInQuiz
-                            } else {
-                                profile.timeInGamesInQuiz
-                                    ?.plus(1)
-                            },
-
-                            timeInGamesInChat = if (supportFragmentManager.findFragmentById(R.id.title_fragment) is ChatFragment) {
-                                profile.timeInGamesInChat
-                                    ?.plus(1)
-                            } else {
-                                profile.timeInGamesInChat
-                            },
-
-                            timeInGamesSmsPoints = profile.timeInGamesSmsPoints?.plus(
-                                countSmsPoints
-                            ),
-
-                            addPointsGold = 0,
-                            addPointsNolics = 0,
-                            addPointsSkill = 0,
-                            addTrophy = "",
-                            addMassage = ""
-                        )
-                    )
-                } catch (e: Exception) {
-
-                }
-            }
-        } catch (e: Exception) {
-
-        }
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun calcCount(count: Int?, countLife: Int?, dateCloseApp: String?): Int {
@@ -1014,6 +883,7 @@ class MainActivity : AppCompatActivity() {
         }, initialDelay)
     }
 
+    // Использование функции в вашем коде
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         return super.onPrepareOptionsMenu(menu)
     }
@@ -1040,7 +910,7 @@ class MainActivity : AppCompatActivity() {
 
             when (menuItem.toString()) {
                 resources.getString(R.string.nav_profile) -> {
-                    FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+                    FragmentManager.setFragment(com.tpov.network.network.profile.ProfileFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(
                         binding,
                         MENU_PROFILE,
@@ -1050,7 +920,7 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
                 resources.getString(R.string.nav_chat) -> {
-                    FragmentManager.setFragment(ChatFragment.newInstance(), this)
+                    FragmentManager.setFragment(com.tpov.network.network.chat.ChatFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(
                         binding,
                         MENU_CHAT,
@@ -1170,7 +1040,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_players) -> {
-                    FragmentManager.setFragment(UsersFragment.newInstance(), this)
+                    FragmentManager.setFragment(com.tpov.network.network.profile.UsersFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(
                         binding, MENU_USERS, this,
                         profile.pointsSkill ?: 0,
@@ -1188,7 +1058,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resources.getString(R.string.nav_task) -> {
-                    FragmentManager.setFragment(EventFragment.newInstance(), this)
+                    FragmentManager.setFragment(com.tpov.network.network.event.EventFragment.newInstance(), this)
                     SetItemMenu.setNetworkMenu(
                         binding, MENU_EVENT, this,
                         profile.pointsSkill ?: 0,
@@ -1246,6 +1116,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    //Окраживаем квадратики в красный и зеленый в зависимости сколько осталось запасных вопросов-дня
     private fun loadNumBoxDay() = with(binding) {
         log("numberBox setValue numDayPrizeBox: $numDayPrizeBox")
         if (numDayPrizeBox > 0) textView10.setBackgroundResource(R.color.green)
@@ -1288,8 +1159,10 @@ class MainActivity : AppCompatActivity() {
                 )
 
                 log("ContactList123: 2.1")
+                // Contacts permission is granted, proceed with accessing the contacts provider
                 clickNavMenuContact(profile, qualification)
             } else {
+                // Contacts permission is denied, handle this situation accordingly
                 Toast.makeText(
                     this,
                     "Contacts permission is required to use this app",
@@ -1338,6 +1211,13 @@ class MainActivity : AppCompatActivity() {
                     fr1 = 1
                 }
             }
+//
+//            R.id.menu_adb -> {
+//                if (fr1 != 2) {
+//
+//                    fr1 = 2
+//                }
+//            }
 //
 //            R.id.menu_info -> {
 //                if (fr1 != 4) {
@@ -1441,7 +1321,7 @@ class MainActivity : AppCompatActivity() {
         if (user.currentUser != null) {
             log("setButtonNavListener() Аккаунт зареган")
             binding.swipeRefreshLayout.isEnabled = false
-            FragmentManager.setFragment(ProfileFragment.newInstance(), this)
+            FragmentManager.setFragment(com.tpov.network.network.profile.ProfileFragment.newInstance(), this)
 
         } else {
 
@@ -1451,7 +1331,7 @@ class MainActivity : AppCompatActivity() {
                 "Error",
                 Toast.LENGTH_LONG
             ).show()
-            FragmentManager.setFragment(AutorisationFragment.newInstance(), this)
+            FragmentManager.setFragment(com.tpov.network.network.AutorisationFragment.newInstance(), this)
         }
 
     }
@@ -1465,3 +1345,4 @@ class MainActivity : AppCompatActivity() {
         const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
     }
 }
+

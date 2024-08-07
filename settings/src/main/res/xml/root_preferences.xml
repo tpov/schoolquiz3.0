@@ -1,101 +1,102 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="@string/profile_settings_header">
+    <PreferenceCategory android:layout="@layout/custom_preference_category_blue_gradient">
 
         <EditTextPreference
-            app:key="login"
+            app:key="@string/key_login"
             app:title="@string/login_title"
-            app:summary="Введите ваш логин"
+            app:summary="@string/summary_login"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="password"
+            app:key="@string/key_password"
             app:title="@string/password_title"
-            app:summary="Введите ваш пароль"
+            app:summary="@string/summary_password"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="name"
+            app:key="@string/key_name"
             app:title="@string/name_title"
-            app:summary="Введите ваше имя"
+            app:summary="@string/summary_name"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="nickname"
+            app:key="@string/key_nickname"
             app:title="@string/nickname_title"
-            app:summary="Введите ваш никнейм"
+            app:summary="@string/summary_nickname"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="birthday"
+            app:key="@string/key_birthday"
             app:title="@string/birthday_title"
-            app:summary="Введите вашу дату рождения"
+            app:summary="@string/summary_birthday"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="city"
+            app:key="@string/key_city"
             app:title="@string/city_title"
-            app:summary="Введите ваш город"
+            app:summary="@string/summary_city"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="logo"
-            app:title="@string/logo"
-            app:summary="Введите ID вашего логотипа"
+            app:key="@string/key_logo"
+            app:title="@string/logo_title"
+            app:summary="@string/summary_logo"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="languages"
-            app:title="@string/languages"
-            app:summary="Введите языки, которыми вы владеете"
+            app:key="@string/key_languages"
+            app:title="@string/languages_title"
+            app:summary="@string/summary_languages"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/synchronization_settings_header">
+    <PreferenceCategory android:layout="@layout/custom_preference_category_green_gradient">
 
         <ListPreference
-            app:key="@string/profile_sync_frequency"
+            app:key="@string/key_profile_sync_frequency"
             app:title="@string/local_profile_sync_frequency_title"
-            app:summary="Выберите частоту синхронизации локального профиля"
+            app:summary="@string/summary_profile_sync_frequency"
             app:entries="@array/sync_frequency_entries"
             app:entryValues="@array/sync_frequency_values"
-            app:defaultValue="1" />
+            app:defaultValue="2" />
 
         <ListPreference
-            app:key="@string/quests_sync_frequency"
+            app:key="@string/key_quests_sync_frequency"
             app:title="@string/local_quests_sync_frequency_title"
-            app:summary="Выберите частоту синхронизации локальных заданий"
+            app:summary="@string/summary_quests_sync_frequency"
             app:entries="@array/sync_frequency_entries"
             app:entryValues="@array/sync_frequency_values"
-            app:defaultValue="1" />
+            app:defaultValue="2" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/other_settings_header">
+    <PreferenceCategory android:layout="@layout/custom_preference_category_yellow_gradient">
 
         <SwitchPreferenceCompat
-            app:key="notifications"
+            app:key="@string/key_notifications"
             app:title="@string/notifications_title"
-            app:summary="Включить или выключить уведомления" />
+            app:summary="@string/summary_notifications" />
 
         <ListPreference
-            app:key="event_notifications_frequency"
+            app:key="@string/key_event_notifications_frequency"
             app:title="@string/event_notifications_frequency_title"
-            app:summary="Выберите частоту уведомлений о событиях"
+            app:summary="@string/summary_event_notifications_frequency"
             app:entries="@array/notification_frequency_entries"
-            app:entryValues="@array/notification_frequency_values"
-            app:defaultValue="1" />
+            app:entryValues="@array/sync_frequency_values"
+            app:defaultValue="2" />
 
         <com.tpov.setting.TimePickerPreference
-            app:key="lessons_frequency_time"
+            app:key="@string/key_lessons_frequency_time"
             app:title="@string/lessons_frequency_time_title"
-            app:summary="Выберите время занятий" />
+            app:summary="@string/summary_lessons_frequency_time" />
 
         <MultiSelectListPreference
-            app:key="lessons_frequency_days"
+            app:key="@string/key_lessons_frequency_days"
             app:title="@string/lessons_frequency_days_title"
-            app:summary="Выберите дни недели для занятий"
+            app:summary="@string/summary_lessons_frequency_days"
             app:entries="@array/days_of_week"
             app:entryValues="@array/days_of_week" />
 

@@ -10,7 +10,7 @@ import androidx.preference.DialogPreference
 import androidx.preference.PreferenceDialogFragmentCompat
 import com.tpov.setting.R
 
-class TimePickerPreference(context: Context, attrs: AttributeSet) : DialogPreference(context, attrs) {
+internal class TimePickerPreference(context: Context, attrs: AttributeSet) : DialogPreference(context, attrs) {
 
     var time: String = "00:00"
         set(value) {
@@ -27,7 +27,7 @@ class TimePickerPreference(context: Context, attrs: AttributeSet) : DialogPrefer
     }
 }
 
-class TimePickerPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() {
+internal class TimePickerPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() {
 
     private lateinit var timePicker: TimePicker
 
