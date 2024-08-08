@@ -2,6 +2,7 @@ package com.tpov.common.data
 
 import android.net.Uri
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.dao.QuestionDao
 import com.tpov.common.data.model.local.QuestionEntity

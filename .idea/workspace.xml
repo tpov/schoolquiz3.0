@@ -47,15 +47,22 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Create repository Common (quiz)">
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add code with remote picture in quizzes">
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStuctureImpl.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureData.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureRatingData.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/StructureUseCase.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryStructure.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/common/build.gradle.kts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuestionImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuestionImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuizImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuizImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuestionEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuestionEntity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/Question.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/Question.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuestion.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuestion.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuiz.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuiz.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/SettingConfigModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/SettingConfigModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuizEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuizEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/QuizUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/QuizUseCase.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -91,13 +98,13 @@
       <list>
         <option value="Python Script" />
         <option value="Class" />
-        <option value="Kotlin Data Class" />
         <option value="Kotlin File" />
         <option value="resourceFile" />
         <option value="valueResourceFile" />
         <option value="layoutResourceFile" />
-        <option value="Kotlin Class" />
         <option value="Kotlin Object" />
+        <option value="Kotlin Class" />
+        <option value="Kotlin Data Class" />
       </list>
     </option>
   </component>
@@ -215,18 +222,18 @@
       <recent name="com.tpov.schoolquiz.data.model" />
     </key>
     <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
-      <recent name="com.tpov.common.domain" />
       <recent name="com.tpov.common.domain.repository" />
+      <recent name="com.tpov.common.domain" />
       <recent name="com.tpov.common.data" />
       <recent name="com.tpov.common.data.model" />
       <recent name="com.tpov.common.data.model.local" />
     </key>
     <key name="CopyKotlinDeclarationDialog.RECENTS_KEY">
+      <recent name="com.tpov.common.data" />
       <recent name="com.tpov.common.data.core" />
       <recent name="com.tpov.common.data.dao" />
       <recent name="com.tpov.schoolquiz.domain" />
       <recent name="com.tpov.schoolquiz.presentation.network.arena" />
-      <recent name="com.tpov.schoolquiz.presentation.network.event" />
     </key>
   </component>
   <component name="RunManager" selected="Android App.userguide">
@@ -985,7 +992,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <option name="localTasksCounter" value="70" />
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -1008,8 +1015,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Fix show quiz8 when create acc" />
-    <MESSAGE value="Fix translate" />
     <MESSAGE value="Fix send quiz" />
     <MESSAGE value="Edit logic get question list in start question activity" />
     <MESSAGE value="Edit logic get question list in start question activity&#10;Fix localisation time" />
@@ -1033,7 +1038,9 @@
     <MESSAGE value="Fix crash create quiz" />
     <MESSAGE value="Add info translator entity" />
     <MESSAGE value="Create repository Common (quiz)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Create repository Common (quiz)" />
+    <MESSAGE value="Add code with picture in quizzes" />
+    <MESSAGE value="Add code with remote picture in quizzes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add code with remote picture in quizzes" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

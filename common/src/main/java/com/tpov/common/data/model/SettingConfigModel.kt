@@ -1,5 +1,6 @@
 package com.tpov.common.data.model
 data class SettingConfigModel(
+    var tpovId: Int,
     var login: String,
     var password: String,
     var name: String,
@@ -16,10 +17,11 @@ data class SettingConfigModel(
     var lessonsFrequencyDays: Set<String>
 ) {
     companion object {
-        fun default() = SettingConfigModel("", "", "", "", "", "", -1, "", "1", "1", false, "1", "00:00", emptySet())
+        fun default() = SettingConfigModel(0,"", "", "", "", "", "", -1, "", "1", "1", false, "1", "00:00", emptySet())
 
         fun fromMap(map: Map<String, Any>): SettingConfigModel {
             return SettingConfigModel(
+                tpovId = map["tpovId"] as Int,
                 login = map["login"] as? String ?: "",
                 password = map["password"] as? String ?: "",
                 name = map["name"] as? String ?: "",
@@ -40,6 +42,7 @@ data class SettingConfigModel(
 
     fun toMap(): Map<String, Any> {
         return mapOf(
+            "tpovId" to tpovId,
             "login" to login,
             "password" to password,
             "name" to name,

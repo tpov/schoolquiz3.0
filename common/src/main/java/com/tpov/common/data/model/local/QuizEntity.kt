@@ -24,14 +24,14 @@ data class QuizEntity(
     @ColumnInfo(name = "userName")
     val userName: String,
 
-    @ColumnInfo(name = "data")
-    val data: String,
+    @ColumnInfo(name = "dataUpdate")
+    val dataUpdate: String,
 
-    @ColumnInfo(name = "stars")
-    val stars: Int,
+    @ColumnInfo(name = "starsMaxLocal")
+    val starsMaxLocal: Int,
 
-    @ColumnInfo(name = "starsPlayer")
-    val starsPlayer: Int,
+    @ColumnInfo(name = "starsRemote")
+    val starsMaxRemote: Int,
 
     @ColumnInfo(name = "numQ")
     val numQ: Int,
@@ -39,11 +39,11 @@ data class QuizEntity(
     @ColumnInfo(name = "numHQ")
     val numHQ: Int,
 
-    @ColumnInfo(name = "starsAll")
-    val starsAll: Int,
+    @ColumnInfo(name = "starsAverageLocal")
+    val starsAverageLocal: Int,
 
-    @ColumnInfo(name = "starsAllPlayer")
-    val starsAllPlayer: Int,
+    @ColumnInfo(name = "starsAverageRemote")
+    val starsAverageRemote: Int,
 
     @ColumnInfo(name = "versionQuiz")
     val versionQuiz: Int,
@@ -54,14 +54,11 @@ data class QuizEntity(
     @ColumnInfo(name = "event")
     var event: Int,
 
-    @ColumnInfo(name = "rating")
-    val rating: Int,
+    @ColumnInfo(name = "ratingLocal")
+    val ratingLocal: Int,
 
-    @ColumnInfo(name = "ratingPlayer")
-    val ratingPlayer: Int,
-
-    @ColumnInfo(name = "showDeleteButton")
-    var showItemMenu: Boolean = false,
+    @ColumnInfo(name = "ratingRemote")
+    val ratingRemote: Int,
 
     @ColumnInfo(name = "tpovId")
     var tpovId: Int,
