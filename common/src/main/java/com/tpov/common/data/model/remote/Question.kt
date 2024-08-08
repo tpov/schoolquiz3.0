@@ -1,6 +1,6 @@
 package com.tpov.common.data.model.remote
 
-import com.google.firebase.database.IgnoreExtraProperties
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.tpov.common.data.model.local.QuestionEntity
 
 @IgnoreExtraProperties
@@ -8,7 +8,7 @@ data class Question (
     val nameQuestion: String,
     val answer: Int,
     val nameAnswers: String,
-    val pathPictureQuestion: String,
+    val pathPictureQuestion: String?,
     val hardQuestion: Boolean,
 ) {
     constructor() : this(

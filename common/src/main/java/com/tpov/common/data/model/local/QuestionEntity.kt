@@ -17,7 +17,7 @@ data class QuestionEntity(
     var nameQuestion: String,
 
     @ColumnInfo(name = "pictureQuestion")
-    var pathPictureQuestion: String,
+    var pathPictureQuestion: String?,
 
     @ColumnInfo(name = "answer")
     val answer: Int,

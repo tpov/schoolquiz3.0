@@ -51,4 +51,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("com.google.firebase:firebase-database:20.0.3")
+    androidTestImplementation("com.google.firebase:firebase-storage-ktx:20.0.0")
+    androidTestImplementation("com.google.firebase:firebase-auth-ktx:22.0.0")
+    androidTestImplementation("com.google.firebase:firebase-firestore-ktx:24.0.0")
 }
