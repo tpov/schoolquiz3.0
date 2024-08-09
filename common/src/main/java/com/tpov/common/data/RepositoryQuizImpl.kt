@@ -7,7 +7,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.dao.QuizDao
 import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.remote.Quiz
+import com.tpov.common.data.model.remote.QuizRemote
 import com.tpov.common.domain.repository.RepositoryQuiz
 import kotlinx.coroutines.tasks.await
 import java.io.File
@@ -26,7 +26,7 @@ class RepositoryQuizImpl @Inject constructor(
         categoryId: Int,
         subcategoryId: Int,
         subsubcategoryId: Int
-    ): List<Quiz> {
+    ): List<QuizRemote> {
 
         var collectionReference = baseCollection
             .document("quiz$typeId")
@@ -40,14 +40,14 @@ class RepositoryQuizImpl @Inject constructor(
 
         if (typeId == 1) collectionReference =
             collectionReference.document(tpovId.toString()).collection(tpovId.toString())
-        val quizzes = collectionReference.get().await().documents
-            .mapNotNull { it.toObject(Quiz::class.java) }
+        val quizRemotes = collectionReference.get().await().documents
+            .mapNotNull { it.toObject(QuizRemote::class.java) }
 
-        quizzes.forEach { quiz ->
+        quizRemotes.forEach { quiz ->
             downloadPhotoToLocalPath(quiz.picture)
         }
 
-        return quizzes
+        return quizRemotes
     }
 
     override suspend fun getQuizzes() = quizDao.getQuiz()
@@ -61,7 +61,7 @@ class RepositoryQuizImpl @Inject constructor(
     }
 
     override suspend fun pushQuiz(
-        quiz: Quiz,
+        quizRemote: QuizRemote,
         idQuiz: Int,
         categoryId: Int,
         subcategoryId: Int,
@@ -70,12 +70,12 @@ class RepositoryQuizImpl @Inject constructor(
         var id = idQuiz
         if (id < 100) id = fetchLastQuizId()
 
-        quiz.picture?.let { uploadPhotoToServer(it) }
+        quizRemote.picture?.let { uploadPhotoToServer(it) }
 
         firestore.runTransaction { transaction ->
             var docRef = baseCollection
-                .document("quiz${quiz.event}")
-                .collection("quiz${quiz.event}")
+                .document("quiz${quizRemote.event}")
+                .collection("quiz${quizRemote.event}")
                 .document(categoryId.toString())
                 .collection(categoryId.toString())
                 .document(subcategoryId.toString())
@@ -83,11 +83,11 @@ class RepositoryQuizImpl @Inject constructor(
                 .document(subsubcategoryId.toString())
                 .collection(subsubcategoryId.toString())
 
-            if (quiz.event == 1) {
-                docRef = docRef.document(quiz.event.toString()).collection(quiz.event.toString())
+            if (quizRemote.event == 1) {
+                docRef = docRef.document(quizRemote.event.toString()).collection(quizRemote.event.toString())
             }
 
-            transaction.set(docRef.document(id.toString()), quiz)
+            transaction.set(docRef.document(id.toString()), quizRemote)
         }.await()
     }
 
@@ -123,10 +123,10 @@ class RepositoryQuizImpl @Inject constructor(
         quizDao.deleteQuizById(idQuiz)
     }
 
-    override suspend fun deleteRemoteQuizById(quiz: Quiz, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int) {
+    override suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int) {
         var docRef = baseCollection
-            .document("quiz${quiz.event}")
-            .collection("quiz${quiz.event}")
+            .document("quiz${quizRemote.event}")
+            .collection("quiz${quizRemote.event}")
             .document(categoryId.toString())
             .collection(categoryId.toString())
             .document(subcategoryId.toString())
@@ -134,10 +134,10 @@ class RepositoryQuizImpl @Inject constructor(
             .document(subsubcategoryId.toString())
             .collection(subsubcategoryId.toString())
 
-        if (quiz.event == 1) docRef = docRef.document(quiz.event.toString()).collection(quiz.event.toString())
+        if (quizRemote.event == 1) docRef = docRef.document(quizRemote.event.toString()).collection(quizRemote.event.toString())
         docRef.document(idQuiz.toString()).delete().await()
 
-        quiz.picture?.let { deletePhotoFromServer(it) }
+        quizRemote.picture?.let { deletePhotoFromServer(it) }
     }
 
     private suspend fun deletePhotoFromServer(pathPhoto: String) {

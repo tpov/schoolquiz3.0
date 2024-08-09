@@ -6,8 +6,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.dao.QuestionDao
 import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.remote.Question
-import com.tpov.common.data.model.remote.toQuestion
+import com.tpov.common.data.model.remote.QuestionRemote
 import com.tpov.common.domain.repository.RepositoryQuestion
 import kotlinx.coroutines.tasks.await
 import java.io.File
@@ -22,32 +21,47 @@ class RepositoryQuestionImpl @Inject constructor(
     private val baseCollection = firestore.collection("questions")
 
     override suspend fun fetchQuestion(
-        typeId: Int,
+        event: Int,
         categoryId: String,
         subcategoryId: String,
-        pathLanguage: String,
+        language: String,
         idQuiz: Int
-    ): List<Question> {
-        var collectionReference = baseCollection
-            .document("question$typeId")
-            .collection("question$typeId")
+    ): List<QuestionEntity> {
+
+        var baseCollectionReference = baseCollection
+            .document("question$event")
+            .collection("question$event")
             .document(idQuiz.toString())
             .collection(idQuiz.toString())
-            .document(pathLanguage)
-            .collection(pathLanguage)
 
-        if (typeId == 1) collectionReference =
-            collectionReference.document(tpovId.toString()).collection(tpovId.toString())
+        if (event == 1) {
+            baseCollectionReference = baseCollectionReference
+                .document(tpovId.toString())
+                .collection(tpovId.toString())
+        }
 
-        val questions = collectionReference
-            .get()
-            .await()
-            .documents
-            .mapNotNull { it.toObject(Question::class.java) }
+        val questionRemotes = mutableListOf<QuestionEntity>()
 
-        questions.forEach { it.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) } }
+        val questionDirectories = baseCollectionReference.get().await().documents
 
-        return questions
+        for (questionDirectory in questionDirectories) {
+            val numQuestionStr = questionDirectory.id
+            val numQuestion = numQuestionStr.toIntOrNull() ?: 0
+            val hardQuestion = numQuestion < 0
+            val languageCollection = baseCollectionReference
+                .document(numQuestionStr)
+                .collection(language)
+            val documents = languageCollection.get().await().documents
+            val questions = documents.mapNotNull {
+                it.toObject(QuestionRemote::class.java)
+                    ?.toQuizEntity(numQuestion = numQuestion, hardQuestion = hardQuestion, id = 0, idQuiz = idQuiz, language = language)
+            }
+
+            questionRemotes.addAll(questions)
+        }
+
+        questionRemotes.forEach { it.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) } }
+        return questionRemotes
     }
 
     override suspend fun getQuestionByIdQuiz(idQuiz: Int) = questionDao.getQuestionByIdQuiz(idQuiz)
@@ -64,15 +78,18 @@ class RepositoryQuestionImpl @Inject constructor(
             .collection("question${event}")
             .document(questionEntity.idQuiz.toString())
             .collection(questionEntity.idQuiz.toString())
-            .document(pathLanguage)
-            .collection(pathLanguage)
 
-        if (event == 1) docRef = docRef.document(tpovId.toString()).collection(tpovId.toString())
+        if (event == 1) {
+            docRef = docRef
+                .document(tpovId.toString())
+                .collection(tpovId.toString())
+        }
 
         val questionNumber = if (questionEntity.hardQuestion) "-${questionEntity.numQuestion}"
         else questionEntity.numQuestion.toString()
 
-        docRef.document(questionNumber).set(questionEntity.toQuestion()).await()
+        docRef = docRef.document(questionNumber).collection(pathLanguage)
+        docRef.document(pathLanguage).set(questionEntity.toQuestionRemote()).await()
     }
 
     override suspend fun updateQuestion(questionEntity: QuestionEntity) {
@@ -90,6 +107,7 @@ class RepositoryQuestionImpl @Inject constructor(
         numQuestion: Int,
         hardQuestion: Boolean
     ) {
+
         var collectionReference = baseCollection
             .document("question$typeId")
             .collection("question$typeId")
@@ -104,13 +122,13 @@ class RepositoryQuestionImpl @Inject constructor(
                 .collection(tpovId.toString())
         }
 
-        val questions = collectionReference
+        val questionRemotes = collectionReference
             .get()
             .await()
             .documents
-            .mapNotNull { it.toObject(Question::class.java) }
+            .mapNotNull { it.toObject(QuestionRemote::class.java) }
 
-        questions.forEach { question ->
+        questionRemotes.forEach { question ->
             question.pathPictureQuestion?.let { deletePhotoFromServer(it) }
 
             val questionNumber = if (question.hardQuestion) "-$numQuestion"

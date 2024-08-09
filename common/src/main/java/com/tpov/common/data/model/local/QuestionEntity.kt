@@ -3,6 +3,7 @@ package com.tpov.common.data.model.local
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.tpov.common.data.model.remote.QuestionRemote
 
 
 @Entity(tableName = "question_entity")
@@ -36,4 +37,14 @@ data class QuestionEntity(
 
     @ColumnInfo(name = "lvlTranslate")
     var lvlTranslate: Int
-)
+) {
+    fun toQuestionRemote(): QuestionRemote {
+        return QuestionRemote(
+            nameQuestion = this.nameQuestion,
+            answer = this.answer,
+            nameAnswers = this.nameAnswers,
+            pathPictureQuestion = this.pathPictureQuestion,
+            hardQuestion = this.hardQuestion
+        )
+    }
+}

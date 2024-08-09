@@ -13,9 +13,17 @@ data class StructureRatingDataEntity(
     val idSubsubCategory: Int,
     val idQuiz: Int,
     var tpovId: Int,
-    var rating: Int,
+    val starsMaxLocal: Int,
+    val ratingLocal: Int,
 ) {
     fun toStructureRatingData() = StructureRatingData(
-        idEvent, idCategory, idSubCategory, idSubsubCategory, idQuiz, rating, tpovId
+        idEvent = idEvent,
+        idCategory = idCategory,
+        idSubCategory = idSubCategory,
+        idSubsubCategory = idSubsubCategory,
+        idQuiz = idQuiz,
+        tpovId = tpovId,
+        starsMaxLocal = starsMaxLocal,
+        ratingLocal = ratingLocal
     )
 }

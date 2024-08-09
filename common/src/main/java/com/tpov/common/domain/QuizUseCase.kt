@@ -45,7 +45,7 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
         subcategoryId: Int,
         subsubcategoryId: Int
     ) {
-        repositoryQuiz.pushQuiz(quizEntity.toQuiz(), idQuiz, categoryId, subcategoryId, subsubcategoryId)
+        repositoryQuiz.pushQuiz(quizEntity.toQuizRemote(), idQuiz, categoryId, subcategoryId, subsubcategoryId)
     }
 
     suspend fun getQuizzes(): List<QuizEntity>? {
@@ -57,7 +57,7 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
     }
 
     suspend fun deleteRemoteQuizById(quizEntity: QuizEntity, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int) {
-        repositoryQuiz.deleteRemoteQuizById(quizEntity.toQuiz(), idQuiz, categoryId, subcategoryId, subsubcategoryId)
+        repositoryQuiz.deleteRemoteQuizById(quizEntity.toQuizRemote(), idQuiz, categoryId, subcategoryId, subsubcategoryId)
     }
 
 }

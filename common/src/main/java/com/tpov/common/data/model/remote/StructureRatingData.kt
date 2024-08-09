@@ -8,8 +8,9 @@ data class StructureRatingData(
     val idSubCategory: Int,
     val idSubsubCategory: Int,
     val idQuiz: Int,
-    var rating: Int,
-    var tpovId: Int
+    var tpovId: Int,
+    var starsMaxLocal: Int,
+    val ratingLocal: Int,
 ) {
     fun toMap(): Map<String, Any> {
         val dataMap = mutableMapOf<String, Any>()
@@ -19,13 +20,22 @@ data class StructureRatingData(
         if (idSubCategory != 0) dataMap["idSubCategory"] = idSubCategory
         if (idSubsubCategory != 0) dataMap["idSubsubCategory"] = idSubsubCategory
         if (idQuiz != 0) dataMap["idQuiz"] = idQuiz
-        if (rating != 0) dataMap["rating"] = rating
         if (tpovId != 0) dataMap["tpovId"] = tpovId
+        if (starsMaxLocal != 0) dataMap["starsMaxLocal"] = starsMaxLocal
+        if (ratingLocal != 0) dataMap["ratingLocal"] = ratingLocal
 
         return dataMap
     }
 
     fun toStructureRatingDataEntity() = StructureRatingDataEntity(
-        0, idEvent, idCategory, idSubCategory, idSubsubCategory, idQuiz, rating, tpovId
+        id = 0,
+        idEvent = idEvent,
+        idCategory = idCategory,
+        idSubCategory = idSubCategory,
+        idSubsubCategory = idSubsubCategory,
+        idQuiz = idQuiz,
+        ratingLocal = ratingLocal,
+        tpovId = tpovId,
+        starsMaxLocal = starsMaxLocal
     )
 }
