@@ -3,6 +3,7 @@ package com.tpov.common.data.model.local
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.tpov.common.data.model.remote.Quiz
 
 @Entity(tableName = "quiz_entity")
 data class QuizEntity(
@@ -66,6 +67,24 @@ data class QuizEntity(
     @ColumnInfo(name = "languages")
     var languages: String
 ) {
+
+    fun toQuiz(): Quiz {
+        return Quiz(
+            nameQuiz = this.nameQuiz,
+            userName = this.userName,
+            dataUpdate = this.dataUpdate,
+            starsMaxRemote = this.starsMaxRemote,
+            numQ = this.numQ,
+            numHQ = this.numHQ,
+            starsAverageRemote = this.starsAverageRemote,
+            versionQuiz = this.versionQuiz,
+            picture = this.picture ?: "",
+            event = this.event,
+            ratingRemote = this.ratingRemote,
+            tpovId = this.tpovId,
+            languages = this.languages
+        )
+    }
     constructor() : this(
         0, 0,0,0, "", "", "", 0, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, false, 0, ""
     )

@@ -23,27 +23,24 @@ class RepositoryQuizImpl @Inject constructor(
 
     override suspend fun fetchQuizzes(
         typeId: Int,
-        categoryId: String,
-        subcategoryId: String,
-        subsubcategoryId: String
+        categoryId: Int,
+        subcategoryId: Int,
+        subsubcategoryId: Int
     ): List<Quiz> {
+
         var collectionReference = baseCollection
             .document("quiz$typeId")
             .collection("quiz$typeId")
-            .document(categoryId)
-            .collection(categoryId)
-            .document(subcategoryId)
-            .collection(subcategoryId)
-            .document(subsubcategoryId)
-            .collection(subsubcategoryId)
+            .document(categoryId.toString())
+            .collection(categoryId.toString())
+            .document(subcategoryId.toString())
+            .collection(subcategoryId.toString())
+            .document(subsubcategoryId.toString())
+            .collection(subsubcategoryId.toString())
 
         if (typeId == 1) collectionReference =
             collectionReference.document(tpovId.toString()).collection(tpovId.toString())
-
-        val quizzes = collectionReference
-            .get()
-            .await()
-            .documents
+        val quizzes = collectionReference.get().await().documents
             .mapNotNull { it.toObject(Quiz::class.java) }
 
         quizzes.forEach { quiz ->
@@ -63,59 +60,62 @@ class RepositoryQuizImpl @Inject constructor(
         quizDao.insertQuiz(quiz)
     }
 
-    override suspend fun pushQuiz(quiz: QuizEntity) {
-        if (quiz.id == null || quiz.id!! < 100) quiz.id = fetchLastQuizId()
+    override suspend fun pushQuiz(
+        quiz: Quiz,
+        idQuiz: Int,
+        categoryId: Int,
+        subcategoryId: Int,
+        subsubcategoryId: Int
+    ) {
+        var id = idQuiz
+        if (id < 100) id = fetchLastQuizId()
 
-        quiz.picture?.let {
-            uploadPhotoToServer(it)
-        }
+        quiz.picture?.let { uploadPhotoToServer(it) }
 
         firestore.runTransaction { transaction ->
             var docRef = baseCollection
                 .document("quiz${quiz.event}")
                 .collection("quiz${quiz.event}")
-                .document(quiz.idCategory.toString())
-                .collection(quiz.idCategory.toString())
-                .document(quiz.idSubcategory.toString())
-                .collection(quiz.idSubcategory.toString())
-                .document(quiz.idSubsubcategory.toString())
-                .collection(quiz.idSubsubcategory.toString())
+                .document(categoryId.toString())
+                .collection(categoryId.toString())
+                .document(subcategoryId.toString())
+                .collection(subcategoryId.toString())
+                .document(subsubcategoryId.toString())
+                .collection(subsubcategoryId.toString())
 
             if (quiz.event == 1) {
                 docRef = docRef.document(quiz.event.toString()).collection(quiz.event.toString())
             }
 
-            transaction.set(docRef.document(quiz.id.toString()), quiz)
+            transaction.set(docRef.document(id.toString()), quiz)
         }.await()
     }
 
     private suspend fun uploadPhotoToServer(pathPhoto: String) {
-        val storageRef = storage.getInstance().reference
-        val localFile = File(pathPhoto)
-        val photoRef = storageRef.child("quizPhoto/$pathPhoto/${localFile.name}.jpg")
 
-        photoRef.putFile(Uri.fromFile(localFile)).await()
+        if (pathPhoto.isNotBlank()) {
+            val storageRef = storage.getInstance().reference
+            val localFile = File(pathPhoto)
+            val photoRef = storageRef.child("quizPhoto/$pathPhoto/${localFile.name}.jpg")
+
+            photoRef.putFile(Uri.fromFile(localFile)).await()
+        }
     }
 
-    private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
-        val storageRef = storage.getInstance().reference
-        val photoRef = storageRef.child(pathPhoto)
-        val localFile = File(pathPhoto,  File(pathPhoto).name)
+    private suspend fun downloadPhotoToLocalPath(pathPhoto: String) {
+        if (pathPhoto.isNotBlank()) {
+            val storageRef = storage.getInstance().reference
+            val photoRef = storageRef.child(pathPhoto)
+            val localFile = File(pathPhoto, File(pathPhoto).name)
 
-        return try {
             photoRef.getFile(localFile).await()
             localFile.absolutePath
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 
     private suspend fun fetchLastQuizId(): Int {
-        val snapshot =
-            baseCollection.orderBy("id", Query.Direction.DESCENDING).limit(1).get().await()
-        return if (!snapshot.isEmpty) (snapshot.documents.firstOrNull()?.getLong("id")
-            ?: 99).toInt() + 1
+        val snapshot = baseCollection.orderBy("id", Query.Direction.DESCENDING).limit(1).get().await()
+        return if (!snapshot.isEmpty) (snapshot.documents.firstOrNull()?.getLong("id") ?: 99).toInt() + 1
         else 100
     }
 
@@ -123,26 +123,22 @@ class RepositoryQuizImpl @Inject constructor(
         quizDao.deleteQuizById(idQuiz)
     }
 
-    override suspend fun deleteRemoteQuizById(quiz: QuizEntity) {
+    override suspend fun deleteRemoteQuizById(quiz: Quiz, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int) {
         var docRef = baseCollection
             .document("quiz${quiz.event}")
             .collection("quiz${quiz.event}")
-            .document(quiz.idCategory.toString())
-            .collection(quiz.idCategory.toString())
-            .document(quiz.idSubcategory.toString())
-            .collection(quiz.idSubcategory.toString())
-            .document(quiz.idSubsubcategory.toString())
-            .collection(quiz.idSubsubcategory.toString())
+            .document(categoryId.toString())
+            .collection(categoryId.toString())
+            .document(subcategoryId.toString())
+            .collection(subcategoryId.toString())
+            .document(subsubcategoryId.toString())
+            .collection(subsubcategoryId.toString())
 
-        if (quiz.event == 1) docRef =
-            docRef.document(quiz.event.toString()).collection(quiz.event.toString())
-        docRef.document(quiz.id.toString()).delete().await()
+        if (quiz.event == 1) docRef = docRef.document(quiz.event.toString()).collection(quiz.event.toString())
+        docRef.document(idQuiz.toString()).delete().await()
 
-        quiz.picture?.let {
-            deletePhotoFromServer(it)
-        }
+        quiz.picture?.let { deletePhotoFromServer(it) }
     }
-
 
     private suspend fun deletePhotoFromServer(pathPhoto: String) {
         val storageRef = storage.getInstance().reference
