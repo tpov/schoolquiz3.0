@@ -48,9 +48,7 @@ class RepositoryQuestionImpl @Inject constructor(
             val numQuestionStr = questionDirectory.id
             val numQuestion = numQuestionStr.toIntOrNull() ?: 0
             val hardQuestion = numQuestion < 0
-            val languageCollection = baseCollectionReference
-                .document(numQuestionStr)
-                .collection(language)
+            val languageCollection = baseCollectionReference.document(numQuestionStr).collection(language)
             val documents = languageCollection.get().await().documents
             val questions = documents.mapNotNull {
                 it.toObject(QuestionRemote::class.java)
