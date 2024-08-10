@@ -94,7 +94,7 @@ class RepositoryQuizImpl @Inject constructor(
     private suspend fun uploadPhotoToServer(pathPhoto: String) {
 
         if (pathPhoto.isNotBlank()) {
-            val storageRef = storage.getInstance().reference
+            val storageRef = storage.reference
             val localFile = File(pathPhoto)
             val photoRef = storageRef.child("quizPhoto/$pathPhoto/${localFile.name}.jpg")
 
@@ -104,7 +104,7 @@ class RepositoryQuizImpl @Inject constructor(
 
     private suspend fun downloadPhotoToLocalPath(pathPhoto: String) {
         if (pathPhoto.isNotBlank()) {
-            val storageRef = storage.getInstance().reference
+            val storageRef = storage.reference
             val photoRef = storageRef.child(pathPhoto)
             val localFile = File(pathPhoto, File(pathPhoto).name)
 
@@ -141,7 +141,7 @@ class RepositoryQuizImpl @Inject constructor(
     }
 
     private suspend fun deletePhotoFromServer(pathPhoto: String) {
-        val storageRef = storage.getInstance().reference
+        val storageRef = storage.reference
         val photoRef = storageRef.child(pathPhoto)
 
         try {

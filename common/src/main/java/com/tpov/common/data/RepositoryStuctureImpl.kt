@@ -3,7 +3,7 @@ package com.tpov.common.data
 import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.data.dao.StructureRatingDataDao
 import com.tpov.common.data.model.remote.StructureData
-import com.tpov.common.data.model.remote.StructureRatingData
+import com.tpov.common.data.model.remote.StructureLocalData
 import com.tpov.common.domain.repository.RepositoryStructure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +31,7 @@ class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun pushStructureRating(ratingData: StructureRatingData) {
+    override suspend fun pushStructureRating(ratingData: StructureLocalData) {
         try {
             val dataMap = ratingData.toMap()
 
@@ -52,7 +52,7 @@ class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    private suspend fun saveFailedRatingLocally(ratingData: StructureRatingData) {
+    private suspend fun saveFailedRatingLocally(ratingData: StructureLocalData) {
         structureRatingDataDao.insert(ratingData.toStructureRatingDataEntity())
     }
 

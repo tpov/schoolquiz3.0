@@ -59,4 +59,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1")
+    testImplementation("org.mockito:mockito-core:3.3.3")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:2.2.0")
+    testImplementation("org.mockito:mockito-inline:3.3.3")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+
 }

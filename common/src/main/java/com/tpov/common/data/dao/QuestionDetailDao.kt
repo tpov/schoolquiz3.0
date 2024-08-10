@@ -32,8 +32,8 @@ interface QuestionDetailDao {
     @Query("DELETE FROM question_detail_entity WHERE idQuiz IS :id")
     fun deleteQuestionDetailByIdQuiz(id: Int)
 
-    @Query("DELETE FROM question_detail_entity WHERE idQuiz = :id AND synthFB = :isTrue")
-    fun deleteQuestionDetailByIdQuizAndSynth(id: Int, isTrue: Boolean = true)
+    @Query("DELETE FROM question_detail_entity WHERE idQuiz = :id AND synth = :synth")
+    fun deleteQuestionDetailByIdQuizAndSynth(id: Int, synth: Boolean = true)
 
     @Query("DELETE FROM question_detail_entity WHERE id IS :id")
     fun deleteQuestionDetail(id: Int)

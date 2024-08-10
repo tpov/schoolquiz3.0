@@ -1,628 +1,169 @@
 package com.tpov.common.presentation.question
 
 import android.app.Application
-import android.content.Context
-import android.content.res.Configuration
-import android.os.CountDownTimer
-import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.presentation.*
-import com.tpov.schoolquiz.presentation.core.CalcValues
-import com.tpov.schoolquiz.presentation.core.Logcat
-import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getNolic
-import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getSkill
-import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.dialog.ResultDialog
-import com.tpov.shoppinglist.utils.TimeManager
+import com.tpov.common.data.model.remote.StructureLocalData
+import com.tpov.common.domain.QuestionDetailUseCase
+import com.tpov.common.domain.QuestionUseCase
+import com.tpov.common.domain.QuizUseCase
+import com.tpov.common.domain.StructureUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 @InternalCoroutinesApi
 class QuestionViewModel @Inject constructor(
-    application: Application,
+    var application: Application,
+    var quizUseCase: QuizUseCase,
+    var questionUseCase: QuestionUseCase,
+    var questionDetailUseCase: QuestionDetailUseCase,
+    val structureUseCase: StructureUseCase
 ) : AndroidViewModel(application) {
 
-    private lateinit var context: Context
-    var timer: CountDownTimer? = null
+    var numQuestions: Int? = null
+    var hardQuiz: Boolean? = null
 
-    var codeAnswer = ""         //Отображает состояние квеста для всех вопросов
-    var currentIndex = 0      //Номер вопроса, который виден пользователю
-    var numQuestion = 0
-    var hardQuestion = false
-    var userName = ""
-    var idQuiz = 0
-    var newIdQuizVar = 0
-    var createQuestionDetail = true
-    var leftAnswer = 0
-    var idThisQuestionDetail = 0
-    var persent = 0
-    var maxPersent = 0
-    var persentAll = 0
-    var questionListThis = listOf<QuestionEntity>()
-    lateinit var questionDetailListThis: List<QuestionDetailEntity>
-    lateinit var quizThis: QuizEntity
-    lateinit var tpovId: String
-    var resultTranslate = true
-    var persentPlayerAll = 0
-    var firstQuestionDetail = true
+    var event: Int? = null
+    var starsAverageLocal: Int? = null
+    var starsMaxLocal: Int? = null
+    var starsMaxRemote: Int? = null
+    var ratingLocal: Int? = null
 
-    var numTrueQuestion = 0
+    var oldCurrentQuestion = 0
+    var codeAnswer = ""
 
-    private val _shouldCloseLiveData = MutableLiveData<Int>()
-    val shouldCloseLiveData: LiveData<Int> = _shouldCloseLiveData
+    val result: StateFlow<Int?> get() = _result
+    private val _result = MutableStateFlow<Int?>(0)
+    val currentQuestion: StateFlow<Int?> get() = _currentQuestion
+    private val _currentQuestion = MutableStateFlow<Int?>(0)
 
-    private val _setPetcentPBLiveData = MutableLiveData<Int>()
-    val setPetcentPBLiveData: LiveData<Int> = _setPetcentPBLiveData
+    val quiz: StateFlow<QuizEntity?> get() = _quiz
+    private val _quiz = MutableStateFlow<QuizEntity?>(null)
+    val questionList: StateFlow<List<QuestionEntity>?> get() = _questionList
+    private val _questionList = MutableStateFlow<List<QuestionEntity>?>(null)
+    val questionDetailList: StateFlow<List<QuestionDetailEntity>?> get() = _questionDetailList
+    private val _questionDetailList = MutableStateFlow<List<QuestionDetailEntity>?>(null)
 
-    private val _setPercentiveData = MutableLiveData<Int>()
-    val setPercentiveData: LiveData<Int> = _setPercentiveData
-
-    private val _setLeftAnswerLiveData = MutableLiveData<Int>()
-    val setLeftAnswerLiveData: LiveData<Int> = _setLeftAnswerLiveData
-
-    private fun someAction(result: Int) {
-        _shouldCloseLiveData.postValue(result)
+    fun initValues(hardQuizValue: Boolean) {
+        hardQuiz = hardQuizValue
     }
 
-    fun getProfile(): ProfileEntity {
-        return localUseCase.getProfile(getTpovId())
+//--------------------------------------------USE CASES------------------------------
+
+    fun saveQuizResult() = viewModelScope.launch(Dispatchers.IO) {
+        quizUseCase.saveQuiz(_quiz.value.copy(starsMaxLocal, ))
+    }
+    fun getQuizById(idQuiz: Int) = viewModelScope.launch(Dispatchers.IO) {
+        _quiz.value = quizUseCase.getQuizById(idQuiz)
     }
 
-    fun synthWithDB(context: Context) {
-        initConst(context)
-        getQuestionsList()
-        initVariable()
+//    fun saveQuestion(questionEntity: QuestionEntity) = viewModelScope.launch(Dispatchers.IO) {
+//        questionUseCase.saveQuestion(questionEntity)
+//    }
+
+    fun getQuestionList(idQuiz: Int, languagesUser: String) = viewModelScope.launch(Dispatchers.IO) {
+        val filterQuestionByIdQuiz = questionUseCase.getQuestionByIdQuiz(idQuiz)
+        val filterQuestionByHardQuiz = filterQuestionByHardQuiz(filterQuestionByIdQuiz, hardQuiz ?: notFoundInitTypeHardQuestion())
+        var filterQuestionByLanguage = filterQuestionByMainLanguageUser(filterQuestionByHardQuiz)
+        if (filterQuestionByIdQuiz.size < (numQuestions ?: notFoundNumberQuestionByTypeHardQuiz())) filterQuestionByLanguage =
+            filterQuestionByOtherLanguageUser(filterQuestionByHardQuiz, languagesUser, numQuestions ?: notFoundNumberQuestionByTypeHardQuiz())
+        if (filterQuestionByLanguage.isEmpty()) notFountQuestionByLanguageUser()
+        else _questionList.value = filterQuestionByLanguage
     }
 
-    private fun initConst(context: Context) {
-        this.context = context
-        tpovId = getTpovId().toString()
+    fun getQuestionDetailByIdQuiz(idQuiz: Int) = viewModelScope.launch(Dispatchers.IO) {
+        _questionDetailList.value = questionDetailUseCase.getQuestionDetailByIdQuiz(idQuiz)
     }
 
-    private fun initVariable() {
-
-//todo fix crash after answer oldQuestion
-        //questionDetailListThis.forEach {
-        //if (it.hardQuiz == this.hardQuestion) {
-        //    if (getUpdateAnswer(it.codeAnswer)) initOldQuestionDetail(it)
-        //}
-        //}
-        //if (createQuestionDetail) initNewQuestionDetail()
-
-        initNewQuestionDetail() //delete after fix
-    }
-
-    private fun initNewQuestionDetail() {
-
-        this.codeAnswer = getCodeAnswer(questionListThis.size)
-        this.currentIndex = 0
-        this.leftAnswer = questionListThis.size
-        this.numQuestion = questionListThis.size
-        this.persentPlayerAll = localUseCase.getQuizById(idQuiz).starsAllPlayer
-
-        localUseCase.insertInfoQuestion(
-            QuestionDetailEntity(
-                null,
-                idQuiz,
-                TimeManager.getCurrentTime(),
-                codeAnswer,
-                hardQuestion,
-                false
-            )
-        )
-
-        localUseCase.getQuestionDetailList().forEach {
-            if (it.hardQuiz == this.hardQuestion) {
-                firstQuestionDetail = false
-                if (getUpdateAnswer(it.codeAnswer)) this.idThisQuestionDetail = it.id!!
-            }
+    fun saveQuestionDetail(questionDetailEntity: QuestionDetailEntity) =
+        viewModelScope.launch(Dispatchers.IO) {
+            questionDetailUseCase.saveQuestionDetail(questionDetailEntity)
         }
-    }
 
-    private fun getCodeAnswer(size: Int): String {
-        var newCodeAnswer = ""
-        for (i in 0 until size) {
-            newCodeAnswer += UNANSWERED_IN_CODE_ANSWER
+    fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity) =
+        viewModelScope.launch(Dispatchers.IO) {
+            questionDetailUseCase.updateQuestionDetail(questionDetailEntity)
         }
-        return newCodeAnswer
-    }
 
-    private fun initOldQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
-        createQuestionDetail = false
-
-        try {
-            this.codeAnswer = questionDetailEntity.codeAnswer!!
-            this.currentIndex = getCurrentIndex(questionDetailEntity.codeAnswer)!!
-            this.leftAnswer = getLeftAnswer(questionDetailEntity.codeAnswer)
-            this.numQuestion = leftAnswer
-            this.idThisQuestionDetail = questionDetailEntity.id!!
-            this.idQuiz = questionDetailEntity.idQuiz
-            this.persentPlayerAll = localUseCase.getQuizById(idQuiz).starsAllPlayer
-        } catch (e: Exception) {
-            errorLoadQuestion()
+    fun pushStructureLocalData(ratingData: StructureLocalData) =
+        viewModelScope.launch(Dispatchers.IO) {
+            structureUseCase.pushStructureLocalData(ratingData)
         }
-    }
-
-    private fun getCurrentIndex(codeAnswer: String?): Int? {
-        if (codeAnswer == null || codeAnswer == "") return 0
-        for (i in codeAnswer.indices) {
-            if (codeAnswer[i] == UNANSWERED_IN_CODE_ANSWER) return i
+    fun deleteQuestionDetailById(id: Int?): String {
+        viewModelScope.launch(Dispatchers.IO) {
+            //questionDetailUseCase.deleteQuestionDetailById(id)
         }
-        return null
-    }
-
-    private fun errorLoadQuestion(): String {
-        Toast.makeText(
-            getApplication(),
-            context.getString(R.string.dialog_error_db),
-            Toast.LENGTH_LONG
-        ).show()
-
         return ""
     }
 
-    private fun getUserLocalization(context: Context): String {
-        val config: Configuration = context.resources.configuration
-        return config.locale.language
-    }
 
-    private fun getQuestionsList() {
+    //--------------------------------------------OTHER FUN---------------------------------
+    private fun filterQuestionByHardQuiz(questionEntityList: List<QuestionEntity>, hardQuiz: Boolean) =
+        questionEntityList.filter { it.hardQuestion == hardQuiz }
 
-        val questionThisListAll = localUseCase.getQuestionListByIdQuiz(idQuiz)
-            .filter { it.hardQuestion == hardQuestion }
-            .sortedBy { it.numQuestion }
+    private fun filterQuestionByMainLanguageUser(questionList: List<QuestionEntity>) =
+        questionList.filter { it.language == Locale.getDefault().language }
 
-        var listMap = mutableMapOf<Int, Boolean>()
-
-        listMap = getMap(questionThisListAll, listMap)
-        log("okokoko, listMap:$listMap")
-
-
-        val questionByLocal = getListQuestionListByLocal(listMap, questionThisListAll)
-
-        this.questionListThis =
-            if (didFoundAllQuestion(questionByLocal, listMap)) questionByLocal
-            else getListQuestionByProfileLang(
-                questionThisListAll,
-                listMap
-            )
-        Questionlist.questionListThis = ArrayList(this.questionListThis.sortedBy { it.numQuestion })
-
-        if (!didFoundAllQuestion(this.questionListThis, listMap)) Toast.makeText(
-            context,
-            context.getString(R.string.toast_error_found_question),
-            Toast.LENGTH_LONG
-        ).show()
-        getQuestionDetail()
-
-        quizThis = localUseCase.getQuizById(idQuiz)
-    }
-
-    private fun getListQuestionByProfileLang(
-        questionThisListAll: List<QuestionEntity>,
-        listMap: MutableMap<Int, Boolean>
-    ): ArrayList<QuestionEntity> {
-        val userLocalization: String = getUserLocalization(context)
-        val availableLanguages = localUseCase.getProfile(getTpovId()).languages
-
-        val questionList = ArrayList<QuestionEntity>()
-
-        listMap.forEach { map ->
-            var filteredList = questionThisListAll
-                .filter { it.numQuestion == map.key }
-                .filter { it.language == userLocalization }
-
-            if (filteredList.isNotEmpty()) {
-                questionList.add(filteredList[0])
-            } else {
-                filteredList = questionThisListAll
-                    .filter { it.numQuestion == map.key }
-                    .filter { availableLanguages?.contains(it.language) ?: false }
-
-                if (filteredList.isNotEmpty()) {
-                    questionList.add(filteredList[0])
-                }
-            }
+    private fun filterQuestionByOtherLanguageUser(questionList: List<QuestionEntity>, languages: String, numQuestion: Int): List<QuestionEntity> {
+        for (language in languages.split("|")) {
+            val questionsForLanguage = questionList.filter { it.language == language }
+            if (questionsForLanguage.size >= numQuestion) return questionsForLanguage
         }
-        return questionList
+        return emptyList()
     }
 
-    private fun didFoundAllQuestion(
-        questionList: List<QuestionEntity>,
-        listMap: MutableMap<Int, Boolean>
-    ): Boolean {
-        var fountQuestion = true
+    fun initQuizValues() {
+        numQuestions = if (hardQuiz ?: notFoundInitTypeHardQuestion()) quiz.value?.numHQ ?: notFoundNumberQuestionByTypeHardQuiz()
+        else quiz.value?.numQ ?: notFoundNumberQuestionByTypeHardQuiz()
 
-        log("okokoko listMap: $listMap")
-        questionList.forEach {
-            log("okokoko questionList: $it")
-        }
-        listMap.forEach {
-            try {
-                if (questionList[it.key - 1].id == null) fountQuestion = false
-            } catch (e: Exception) {
-                fountQuestion = false
-            }
-        }
-        log("okokoko fountQuestion: $fountQuestion")
-        return fountQuestion
+        event = quiz.value?.event
+        starsAverageLocal = quiz.value?.starsAverageLocal
+        starsMaxLocal = quiz.value?.starsMaxLocal
+        starsMaxRemote = quiz.value?.starsMaxRemote
+        ratingLocal = quiz.value?.ratingLocal
     }
 
-    private fun getListQuestionListByLocal(
-        listMap: MutableMap<Int, Boolean>,
-        questionThisListAll: List<QuestionEntity>
-    ): ArrayList<QuestionEntity> {
-        val userLocalization: String = getUserLocalization(context)
-
-        val questionList = ArrayList<QuestionEntity>()
-        listMap.forEach { map ->
-            val filteredList = questionThisListAll
-                .filter { it.numQuestion == map.key }
-                .filter { it.language == userLocalization }
-
-            if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
-        }
-
-        log("okokoko, questionList:$questionList")
-        return questionList
+    fun initQuestionValues() {
+        _currentQuestion.value = 0
     }
 
-    private fun getQuestionDetail() {
-        var listQuestionDetail = mutableListOf<QuestionDetailEntity>()
-        localUseCase.getQuestionDetailList().forEach {
-            if (it.idQuiz == this.idQuiz && it.hardQuiz == this.hardQuestion) listQuestionDetail.add(
-                it
-            )
-        }
-        questionDetailListThis = listQuestionDetail
+    private fun calculateResultByCodeAnswer(codeAnswerThis: String) = codeAnswerThis.map {
+            (((it.toInt() - '1'.toInt()) / 8.0) * 100).toInt() }.average().toInt()
+
+    private fun calculateStarsMaxLocal() = questionDetailList.value?.maxOf {
+            calculateResultByCodeAnswer(it.codeAnswer
+                ?: deleteQuestionDetailById(it.id))} ?: 0
+
+    private fun calculateStarsAverageLocal() = questionDetailList.value?.map {
+        calculateResultByCodeAnswer(it.codeAnswer ?: deleteQuestionDetailById(it.id))
+    }?.average()?.toInt() ?: 0
+
+    fun result() {
+        starsMaxLocal = calculateStarsMaxLocal()
+        starsAverageLocal = calculateStarsAverageLocal()
+        _result.value = calculateResultByCodeAnswer(codeAnswer)
     }
 
-    private fun getMap(
-        listQuestionEntity: List<QuestionEntity>,
-        listMap: MutableMap<Int, Boolean>
-    ): MutableMap<Int, Boolean> {
-        listQuestionEntity.forEach {
-            listMap[it.numQuestion] = false
-        }
-        return listMap
+    //--------------------------------Exceptions------------------------
+    fun notFountQuestionByLanguageUser() {
+
     }
 
-    private fun translateForGoogleTranslate() {
-        Toast.makeText(context, "Ошибка сравнивания вопросов", Toast.LENGTH_LONG).show()
+    fun notFoundNumberQuestionByTypeHardQuiz(): Int {
+
+        return 0
     }
 
-    private fun getUpdateAnswer(codeAnswer: String?): Boolean {
-        if (codeAnswer == null || codeAnswer == "") return false
-        codeAnswer.forEach {
-            if (it == UNANSWERED_IN_CODE_ANSWER) return true
-        }
+    fun notFoundInitTypeHardQuestion(): Boolean {
+
         return false
     }
-
-    fun trueButton() {
-        if (questionListThis[currentIndex].answerQuestion) setTrueAnswer()
-        else setFalseAnswer()
-    }
-
-    private fun setFalseAnswer() {
-        log("setFalseAnswer")
-        var codeAnswer = ""
-        var i = 0
-        repeat(this.codeAnswer.length) {
-            codeAnswer += if (i == currentIndex) INCORRECTLY_ANSWERED_IN_CODE_ANSWER
-            else this.codeAnswer[i]
-            i++
-        }
-        this.codeAnswer = codeAnswer
-
-        leftAnswer--
-
-        updateQuestionDetail()
-    }
-
-    private fun updateQuestionDetail() {
-        log("updateQuestionDetail()")
-        localUseCase.updateQuestionDetail(
-            QuestionDetailEntity(
-                idThisQuestionDetail,
-                idQuiz,
-                TimeManager.getCurrentTime(),
-                codeAnswer,
-                hardQuestion,
-                false
-            )
-        )
-        setPercentResult()
-        _setPetcentPBLiveData.value =
-            (((numQuestion - leftAnswer).toDouble() / numQuestion) * 100).toInt()
-        _setPercentiveData.value = persent
-        _setLeftAnswerLiveData.value = leftAnswer
-        if (leftAnswer == 0) result()
-    }
-
-    private fun setTrueAnswer() {
-        log("setTrueAnswer")
-        var codeAnswer = ""
-        var i = 0
-        repeat(this.codeAnswer.length) {
-            codeAnswer += if (i == currentIndex) CORRECTLY_ANSWERED_IN_CODE_ANSWER
-            else this.codeAnswer[i]
-            i++
-        }
-
-        log("setTrueAnswer codeAnswer: ${codeAnswer}")
-        log("setTrueAnswer this.codeAnswer: ${this.codeAnswer}")
-        this.codeAnswer = codeAnswer
-
-        leftAnswer--
-
-        updateQuestionDetail()
-    }
-
-    fun falseButton() {
-        if (!questionListThis[currentIndex].answerQuestion) setTrueAnswer()
-        else setFalseAnswer()
-    }
-
-    private fun getLeftAnswer(codeAnswer: String?): Int {
-        if (codeAnswer == "" || codeAnswer == null) return numQuestion
-        var i = 0
-        codeAnswer.forEach {
-            if (it == UNANSWERED_IN_CODE_ANSWER) i++
-        }
-        return i
-    }
-
-    private fun result() {
-        setPercentResult()
-        Log.d("iofjerdklgj", "starsPercentAll ${persent}")
-        showResultDialog()
-    }
-
-    private fun setPercentResult() {
-        var i = 0
-        codeAnswer.forEach {
-            if (it == CORRECTLY_ANSWERED_IN_CODE_ANSWER) i++
-        }
-        numTrueQuestion = i
-
-        i = 0
-        var j = 0
-        var iThis = 0
-        var perc = mutableListOf<Int>()
-        maxPersent = 0
-
-        log("questionDetailListThis: $questionDetailListThis")
-        questionDetailListThis.forEach {
-            i = 0
-            j = 0
-            it.codeAnswer?.forEach { item ->
-                if (item == CORRECTLY_ANSWERED_IN_CODE_ANSWER) i++
-                j++
-            }
-            if (try {
-                    ((100 * i) / j)
-                } catch (e: Exception) {
-                    0
-                } > maxPersent
-            ) maxPersent = ((100 * i) / j)
-            try {
-                perc.add(((100 * i) / j))
-            } catch (e: Exception) {
-                perc.add(0)
-            }
-        }
-        j = 0
-        i = 0
-        perc.forEach {
-            i += it
-        }
-
-        persentAll = try {
-            i / perc.size
-        } catch (e: Exception) {
-            0
-        }
-
-        j = 0
-        i = 0
-        codeAnswer.forEach {
-            if (it == CORRECTLY_ANSWERED_IN_CODE_ANSWER) {
-                i++
-            }
-            j++
-        }
-        persent = ((100 * i) / j)
-    }
-
-    private fun showResultDialog() {
-        val resultDialog = ResultDialog(
-            hardQuestion,
-            quizThis.event,
-            quizThis.rating,
-            this.persent,
-            this.persentAll,
-            this.persentPlayerAll,
-            this.firstQuestionDetail,
-            onDismissListener = { rating, result ->
-                saveResult(rating, result)
-            },
-            onRatingSelected = { _ ->
-                // Do something when the rating is selected
-            },
-            context = context, // Pass the context of the activity or fragment
-            profile = localUseCase.getProfile(getTpovId())
-        )
-        resultDialog.show()
-    }
-
-    private fun saveResult(rating: Int, result: Int) {
-        localUseCase.updateProfile(
-            localUseCase.getProfile(getTpovId()).copy(
-                timeInGamesCountQuestions = localUseCase.getProfile(getTpovId()).timeInGamesCountQuestions?.plus(
-                    numQuestion
-                ),
-                timeInGamesCountTrueQuestion = localUseCase.getProfile(getTpovId()).timeInGamesCountTrueQuestion.plus(
-                    numTrueQuestion
-                ) ?: 0,
-                pointsNolics = (getNolic() + CalcValues.getValueNolicForGame(
-                    hardQuestion,
-                    persent,
-                    quizThis.event,
-                    firstQuestionDetail,
-                    localUseCase.getProfile(getTpovId())
-                )),
-                pointsSkill = (getSkill() + CalcValues.getValueSkillForFame(
-                    hardQuestion,
-                    persent,
-                    quizThis.event,
-                    firstQuestionDetail,
-                    localUseCase.getProfile(getTpovId())
-                ))
-            )
-        )
-
-        var perc = mutableListOf<Int>()
-        log("saveResult getQuestionDetailList(): ${localUseCase.getQuestionDetailList()}")
-        localUseCase.getQuestionDetailList().forEach {
-            log("saveResult all detail: ${it}, it.idQuiz: ${it.idQuiz}, this.idQuiz: ${this@QuestionViewModel.idQuiz}")
-
-            var i = 0
-            var j = 0
-            if (it.idQuiz == this.idQuiz) {
-
-                it.codeAnswer?.forEach { item ->
-                    if (item == CORRECTLY_ANSWERED_IN_CODE_ANSWER) i++
-                    j++
-                }
-
-                if (!it.hardQuiz) {
-                    try {
-                        if (((100 * i) / j) > maxPersent) maxPersent = ((100 * i) / j)
-                        perc.add(((100 * i) / j))
-                    } catch (e: Exception) {
-                        perc.add(0)
-                    }
-                } else {
-                    try {
-                        if ((((100 * i) / j) / 5) + 100 > maxPersent) maxPersent =
-                            (((100 * i) / j) / 5) + 100
-                        perc.add((((100 * i) / j) / 5) + 100)
-                    } catch (e: Exception) {
-                        perc.add(0)
-                    }
-                }
-
-                var i = 0
-                perc.forEach { itemPerc ->
-                    i += itemPerc
-                }
-                persentAll = i / perc.size
-
-                log("saveResult $maxPersent")
-
-            }
-        }
-
-        when (quizThis.event) {
-            EVENT_QUIZ_FOR_USER,
-            EVENT_QUIZ_ARENA,
-            EVENT_QUIZ_TOURNIRE,
-            EVENT_QUIZ_TOURNIRE_LEADER,
-            EVENT_QUIZ_HOME -> localUseCase.updateQuiz(
-                quizThis.copy(
-                    stars = maxPersent,
-                    starsAll = persentAll,
-                    rating = rating
-                )
-            )
-
-            EVENT_QUIZ_FOR_TESTER,
-            EVENT_QUIZ_FOR_MODERATOR,
-            EVENT_QUIZ_FOR_ADMIN -> updateEvent(rating)
-
-        }
-
-        someAction(result)
-        Log.d("ku65k", "rating $rating")
-    }
-
-    private fun getNewIdQuiz(): Int {
-        log("getNewIdQuiz()")
-        var i = 0
-        runBlocking {
-            log("getNewIdQuiz 1")
-            localUseCase.getQuizEvent().forEach {
-                log("getNewIdQuiz: it: ${it.id}")
-                if (it.id!! in (i + 1)..100) {
-                    i = it.id!!
-                }
-            }
-        }
-        return i + 1
-    }
-
-    private fun updateEvent(rating: Int) {
-
-        newIdQuizVar = idQuiz
-        log("DSEFSE, id: $newIdQuizVar")
-        localUseCase.insertQuiz(
-            quizThis.copy(
-                id = newIdQuizVar,
-                ratingPlayer = rating,
-                event = getEvent(rating),
-                starsAll = 0,
-                stars = 0,
-                versionQuiz = quizThis.versionQuiz + 1
-            )
-        )
-
-        localUseCase.deleteQuestionDetailByIdQuiz(idQuiz)
-        insertQuizPlayers()
-
-    }
-
-    private fun getEvent(rating: Int) = if (rating == RATING_QUIZ_EVENT_BED) quizThis.event
-                                        else quizThis.event + RATING_QUIZ_EVENT_BED
-
-    private fun insertQuizPlayers() {
-
-    }
-
-    fun getCurrentTimer(typeQuestion: Boolean): Int {
-        return if (typeQuestion) TIME_HARD_QUESTION
-        else TIME_LIGHT_QUESTION
-    }
-
-    fun formatTime(millisUntilFinished: Long): String {
-        val seconds = millisUntilFinished / MILLIS_IN_SECONDS
-        val minutes = seconds / SECONDS_IN_MINUTES
-        val leftSeconds = seconds - (minutes * SECONDS_IN_MINUTES)
-        return String.format("%02d:%02d", minutes, leftSeconds)
-    }
-
-    companion object {
-        const val MILLIS_IN_SECONDS = 1000L
-        private const val SECONDS_IN_MINUTES = 60
-
-        private const val TIME_HARD_QUESTION = 10
-        private const val TIME_LIGHT_QUESTION = 20
-
-        private const val MAX_PERCENT = 100
-        private const val COEF_PERCENT_HARD_QUIZ =
-            20 //Это нужно что-бы посчитать проценты сложных вопросов
-    }
-}
-
-fun log(m: String) {
-    Logcat.log(m, "Question", Logcat.LOG_VIEW_MODEL)
 }

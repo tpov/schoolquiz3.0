@@ -51,6 +51,9 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
     suspend fun getQuizzes(): List<QuizEntity>? {
         return repositoryQuiz.getQuizzes()
     }
+    suspend fun getQuizById(id: Int): QuizEntity? {
+        return getQuizzes()?.filter { it.id == id }?.get(0)
+    }
 
     suspend fun deleteQuizById(idQuiz: Int) {
         repositoryQuiz.deleteQuizById(idQuiz)

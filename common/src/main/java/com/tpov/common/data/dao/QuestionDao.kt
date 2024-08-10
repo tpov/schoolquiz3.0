@@ -36,28 +36,28 @@ interface QuestionDao {
         return getQuestionByIdQuizDB(id)
     }
 
-    @Query("SELECT * FROM new_user_table")
+    @Query("SELECT * FROM question_entity")
     suspend fun getQuestionListDB(): List<QuestionEntity>
 
-    @Query("SELECT * FROM new_user_table WHERE idQuiz LIKE :nameQuiz")
+    @Query("SELECT * FROM question_entity WHERE idQuiz LIKE :nameQuiz")
     suspend fun getQuestionByIdQuizDB(nameQuiz: String): List<QuestionEntity>
 
-    @Query("SELECT * FROM new_user_table WHERE idQuiz = :id")
+    @Query("SELECT * FROM question_entity WHERE idQuiz = :id")
     fun getQuestionByIdQuizDB(id: Int): List<QuestionEntity>
 
-    @Query("DELETE FROM new_user_table WHERE idQuiz IS :id")
+    @Query("DELETE FROM question_entity WHERE idQuiz IS :id")
     fun deleteQuestionByIdQuizDB(id: Int)
 
     fun deleteQuestionByIdQuiz(id: Int) {
         deleteQuestionByIdQuizDB(id)
     }
 
-    @Query("DELETE FROM table_data WHERE id IS :id")
+    @Query("DELETE FROM question_entity WHERE id IS :id")
     fun deleteQuestion(id: Int)
 
     @Update
     fun updateQuestion(questionEntity: QuestionEntity)
 
-    @Query("SELECT COUNT(*) FROM new_user_table")
+    @Query("SELECT COUNT(*) FROM question_entity")
     fun getQuestionCount(): Int
-    }
+}
