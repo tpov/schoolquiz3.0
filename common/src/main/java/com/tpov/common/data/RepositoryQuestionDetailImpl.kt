@@ -4,7 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.dao.QuestionDetailDao
 import com.tpov.common.data.model.local.QuestionDetailEntity
-import com.tpov.common.data.model.remote.QuestionDetail
+import com.tpov.common.data.model.remote.QuestionDetailRemote
 import com.tpov.common.domain.repository.RepositoryQuestionDetail
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -22,7 +22,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         subcategoryId: String,
         subsubcategoryId: String,
         idQuiz: Int
-    ): List<QuestionDetail> {
+    ): List<QuestionDetailRemote> {
         val collectionReference = baseCollection
             .document("questionDetail$typeId")
             .collection("questionDetail$typeId")
@@ -35,7 +35,30 @@ class RepositoryQuestionDetailImpl @Inject constructor(
             .get()
             .await()
             .documents
-            .mapNotNull { it.toObject(QuestionDetail::class.java) }
+            .mapNotNull { it.toObject(QuestionDetailRemote::class.java) }
+    }
+
+    override suspend fun pushQuestionDetail(
+        id: Int,
+        event: Int,
+        categoryId: String,
+        subcategoryId: String,
+        subsubcategoryId: String,
+        idQuiz: Int,
+        questionDetailRemote: QuestionDetailRemote
+    ) {
+            val collectionReference = baseCollection
+                .document("questionDetail$event")
+                .collection("questionDetail$event")
+                .document(idQuiz.toString())
+                .collection(idQuiz.toString())
+                .document(tpovId.toString())
+                .collection(tpovId.toString())
+
+            collectionReference
+                .add(questionDetailRemote)
+                .await()
+        questionDetailDao.updateQuizDetail(questionDetailDao.getQuestionDetail(id).copy(synth = true))
     }
 
     override suspend fun getQuestionDetailByIdQuiz(idQuiz: Int) = questionDetailDao.getQuestionDetailByIdQuiz(idQuiz)

@@ -26,6 +26,8 @@ interface QuestionDetailDao {
 
     @Query("DELETE FROM question_detail_entity WHERE idQuiz IS :id")
     fun deleteQuestionByIdQuiz(id: Int)
+    @Query("SELECT * FROM question_detail_entity WHERE id IS :id")
+    fun getQuestionDetail(id: Int): QuestionDetailEntity
 
     @Query("DELETE FROM question_detail_entity WHERE idQuiz IS :id")
     fun deleteQuestionDetailByIdQuiz(id: Int)

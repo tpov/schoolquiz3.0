@@ -78,9 +78,7 @@ class RepositoryQuestionImpl @Inject constructor(
             .collection(questionEntity.idQuiz.toString())
 
         if (event == 1) {
-            docRef = docRef
-                .document(tpovId.toString())
-                .collection(tpovId.toString())
+            docRef = docRef.document(tpovId.toString()).collection(tpovId.toString())
         }
 
         val questionNumber = if (questionEntity.hardQuestion) "-${questionEntity.numQuestion}"
@@ -129,7 +127,7 @@ class RepositoryQuestionImpl @Inject constructor(
         questionRemotes.forEach { question ->
             question.pathPictureQuestion?.let { deletePhotoFromServer(it) }
 
-            val questionNumber = if (question.hardQuestion) "-$numQuestion"
+            val questionNumber = if (hardQuestion) "-$numQuestion"
             else numQuestion.toString()
 
             collectionReference.document(questionNumber).delete().await()
