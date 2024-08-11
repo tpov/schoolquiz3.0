@@ -29,7 +29,7 @@ data class QuizEntity(
     val dataUpdate: String = "",
 
     @ColumnInfo(name = "starsMaxLocal")
-    val starsMaxLocal: Int = 0,
+    var starsMaxLocal: Int = 0,
 
     @ColumnInfo(name = "starsRemote")
     val starsMaxRemote: Int = 0,
@@ -41,7 +41,7 @@ data class QuizEntity(
     val numHQ: Int = 0,
 
     @ColumnInfo(name = "starsAverageLocal")
-    val starsAverageLocal: Int = 0,
+    var starsAverageLocal: Int = 0,
 
     @ColumnInfo(name = "starsAverageRemote")
     val starsAverageRemote: Int = 0,

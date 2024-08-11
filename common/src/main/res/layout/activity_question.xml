@@ -20,10 +20,10 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="2"
+            android:layout_weight="5"
             android:gravity="center|top"
             android:orientation="vertical"
-            android:paddingTop="32dp">
+            android:paddingTop="8dp">
 
             <ProgressBar
                 android:id="@+id/pbAnswer"
@@ -51,16 +51,17 @@
                 android:textColor="@color/white"
                 android:textSize="24sp"
                 android:textStyle="bold" />
+
             <View
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
+
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0.1"
             android:foregroundGravity="center"
             android:gravity="center"
             android:orientation="horizontal">
@@ -88,7 +89,7 @@
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:foregroundGravity="center"
-                    android:gravity="center"
+                    android:gravity="left"
                     android:padding="4dp"
                     android:text="0"
                     android:textColor="@color/white"
@@ -117,7 +118,8 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_weight="1"
-                    android:text=""
+                    android:gravity="left"
+                    android:text="0"
                     android:textColor="@color/white"
                     android:textSize="16sp" />
             </LinearLayout>
@@ -173,31 +175,43 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_weight="1"
-                    android:gravity="center"
-                    android:text=""
+                    android:gravity="left"
+                    android:text="0"
                     android:textColor="@color/white"
                     android:textSize="16sp" />
             </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/ll_show_question"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="12"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/back_item_main"
             android:gravity="center"
-            android:orientation="horizontal">
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/imv_photo_qeustion"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:scaleType="fitXY"
+                tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
             <TextView
-                android:id="@+id/question_text_view"
-                android:layout_width="0dp"
+                android:id="@+id/tv_question_text"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_weight="1"
-                android:background="@drawable/back_item_main"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="16dp"
-                android:text="ERROR  ERROR ERROR ERROR ERROR "
+                android:text="ERROR  ERROR ERROR ERROR ERROR ERRORERROR  ERROR ERROR ERROR "
                 android:textColor="@color/white"
                 android:textSize="20sp" />
         </LinearLayout>
@@ -205,7 +219,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0.1"
             android:foregroundGravity="center"
             android:gravity="center"
             android:orientation="horizontal">
@@ -293,24 +306,200 @@
             </LinearLayout>
         </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/ll_10_answer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="13"
+        android:visibility="visible"
+        android:gravity="center|bottom"
+        android:orientation="vertical"
+        android:paddingBottom="8dp">
+
         <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/b_1"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/b_2"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/b_3"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/b_4"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+
+            <Button
+                android:id="@+id/b_5"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/b_6"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/b_7"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/b_8"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="123456789012345"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/ll_4_answer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="8dp"
-            android:layout_weight="3"
+            android:layout_weight="15"
+            android:visibility="gone"
             android:gravity="center|bottom"
             android:orientation="vertical"
             android:paddingBottom="8dp">
 
-            <View
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.9" />
-
             <Button
-                android:id="@+id/true_button"
+                android:id="@+id/botton_1"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="50dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="16dp"
@@ -319,65 +508,74 @@
                 android:elevation="20dp"
                 android:text="@string/true_button"
                 android:textColor="@color/white"
-                android:textSize="14dp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <View
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.1" />
 
             <Button
-                android:id="@+id/false_button"
+                android:id="@+id/botton_2"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="50dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_false"
+                android:background="@drawable/back_item_main_true"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="16dp"
                 android:text="@string/false_button"
                 android:textColor="@color/white"
-                android:textSize="14dp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <View
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.1" />
-            <ImageButton
-                android:id="@+id/cheat_button"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_margin="8dp"
-                android:backgroundTint="#00FFFFFF"
-                app:srcCompat="@drawable/ic_help" />
 
-            <View
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1.1" />
+            <Button
+                android:id="@+id/botton_3"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="@string/false_button"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+
+            <Button
+                android:id="@+id/botton_4"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/back_item_main_true"
+                android:elevation="10dp"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="@string/false_button"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
         </LinearLayout>
 
-
+        <ImageButton
+            android:id="@+id/cheat_button"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_margin="4dp"
+            android:layout_gravity="center"
+            android:backgroundTint="#00FFFFFF"
+            app:srcCompat="@drawable/ic_help" />
     </LinearLayout>
-
-
-    <TextView
-        android:id="@+id/vAndroid"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/vandroid"
-        android:textColor="@color/white"
-        android:textSize="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_conversion_absoluteHeight="15dp"
-        tools:layout_conversion_absoluteWidth="300dp" />
 
     <TextView
         android:id="@+id/tv_3_2_1"

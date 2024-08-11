@@ -16,6 +16,8 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
@@ -30,20 +32,18 @@ class QuestionViewModel @Inject constructor(
 
     var numQuestions: Int? = null
     var hardQuiz: Boolean? = null
-
-    var event: Int? = null
-    var starsAverageLocal: Int? = null
-    var starsMaxLocal: Int? = null
-    var starsMaxRemote: Int? = null
-    var ratingLocal: Int? = null
+    var idQuiz: Int? = null
+    var life: Int? = null
 
     var oldCurrentQuestion = 0
     var codeAnswer = ""
 
+    val unknownCurrentQuestion = -1
+
     val result: StateFlow<Int?> get() = _result
-    private val _result = MutableStateFlow<Int?>(0)
+    private val _result = MutableStateFlow<Int?>(unknownCurrentQuestion)
     val currentQuestion: StateFlow<Int?> get() = _currentQuestion
-    private val _currentQuestion = MutableStateFlow<Int?>(0)
+    private val _currentQuestion = MutableStateFlow<Int?>(-1)
 
     val quiz: StateFlow<QuizEntity?> get() = _quiz
     private val _quiz = MutableStateFlow<QuizEntity?>(null)
@@ -52,41 +52,51 @@ class QuestionViewModel @Inject constructor(
     val questionDetailList: StateFlow<List<QuestionDetailEntity>?> get() = _questionDetailList
     private val _questionDetailList = MutableStateFlow<List<QuestionDetailEntity>?>(null)
 
-    fun initValues(hardQuizValue: Boolean) {
-        hardQuiz = hardQuizValue
-    }
+    val questionDetail: StateFlow<QuestionDetailEntity?> get() = _questionDetail
+    private val _questionDetail = MutableStateFlow<QuestionDetailEntity?>(null)
 
-//--------------------------------------------USE CASES------------------------------
+//--------------------------------------------USE CASES---------------------------------------------
 
     fun saveQuizResult() = viewModelScope.launch(Dispatchers.IO) {
-        quizUseCase.saveQuiz(_quiz.value.copy(starsMaxLocal, ))
+        quizUseCase.saveQuiz(_quiz.value?.copy(
+            starsMaxLocal = quiz.value?.starsMaxLocal ?: _quiz.value?.starsMaxLocal ?: notFoundQuizValue(),
+            starsAverageLocal = quiz.value?.starsAverageLocal ?: _quiz.value?.starsAverageLocal ?: notFoundQuizValue(),
+            ratingLocal = quiz.value?.ratingLocal ?: _quiz.value?.ratingLocal ?: notFoundQuizValue()) ?: notFoundQuiz())
     }
-    fun getQuizById(idQuiz: Int) = viewModelScope.launch(Dispatchers.IO) {
-        _quiz.value = quizUseCase.getQuizById(idQuiz)
+
+    fun getQuizById() = viewModelScope.launch(Dispatchers.IO) {
+        _quiz.value = quizUseCase.getQuizById(idQuiz ?: notFoundInputData())
     }
 
 //    fun saveQuestion(questionEntity: QuestionEntity) = viewModelScope.launch(Dispatchers.IO) {
 //        questionUseCase.saveQuestion(questionEntity)
 //    }
 
-    fun getQuestionList(idQuiz: Int, languagesUser: String) = viewModelScope.launch(Dispatchers.IO) {
-        val filterQuestionByIdQuiz = questionUseCase.getQuestionByIdQuiz(idQuiz)
+    fun getQuestionList(languagesUser: String) = viewModelScope.launch(Dispatchers.IO) {
+        val filterQuestionByIdQuiz = questionUseCase.getQuestionByIdQuiz(idQuiz ?: notFoundInputData())
         val filterQuestionByHardQuiz = filterQuestionByHardQuiz(filterQuestionByIdQuiz, hardQuiz ?: notFoundInitTypeHardQuestion())
         var filterQuestionByLanguage = filterQuestionByMainLanguageUser(filterQuestionByHardQuiz)
-        if (filterQuestionByIdQuiz.size < (numQuestions ?: notFoundNumberQuestionByTypeHardQuiz())) filterQuestionByLanguage =
-            filterQuestionByOtherLanguageUser(filterQuestionByHardQuiz, languagesUser, numQuestions ?: notFoundNumberQuestionByTypeHardQuiz())
+        if (filterQuestionByLanguage.size < (numQuestions ?: notFoundNumberQuestionByTypeHardQuiz()))
+            filterQuestionByLanguage = filterQuestionByOtherLanguageUser(filterQuestionByHardQuiz, languagesUser, numQuestions ?: notFoundNumberQuestionByTypeHardQuiz())
         if (filterQuestionByLanguage.isEmpty()) notFountQuestionByLanguageUser()
-        else _questionList.value = filterQuestionByLanguage
+        else _questionList.value = filterQuestionByLanguage.sortedBy { it.numQuestion }
     }
 
-    fun getQuestionDetailByIdQuiz(idQuiz: Int) = viewModelScope.launch(Dispatchers.IO) {
-        _questionDetailList.value = questionDetailUseCase.getQuestionDetailByIdQuiz(idQuiz)
+    fun getQuestionDetailByIdQuiz() = viewModelScope.launch(Dispatchers.IO) {
+        _questionDetailList.value = questionDetailUseCase.getQuestionDetailByIdQuiz(idQuiz ?: notFoundInputData())
+            ?.filter { it.hardQuiz == hardQuiz } ?: listOf(QuestionDetailEntity(0, idQuiz ?: notFoundInputData(), getDataToday(),
+            "0".repeat(numQuestions ?: notFoundQuizValue()),
+            hardQuiz ?: notFoundInitTypeHardQuestion(), false))
     }
 
-    fun saveQuestionDetail(questionDetailEntity: QuestionDetailEntity) =
-        viewModelScope.launch(Dispatchers.IO) {
-            questionDetailUseCase.saveQuestionDetail(questionDetailEntity)
+    fun saveQuestionDetail() = viewModelScope.launch(Dispatchers.IO) {
+            questionDetailUseCase.saveQuestionDetail(QuestionDetailEntity(
+                0, idQuiz ?: notFoundQuizValue(), getDataToday(), codeAnswer,
+                hardQuiz ?: notFoundQuizValue().toString().toBoolean(), false))
         }
+
+
+    private fun getDataToday() = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
     fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity) =
         viewModelScope.launch(Dispatchers.IO) {
@@ -124,15 +134,18 @@ class QuestionViewModel @Inject constructor(
         numQuestions = if (hardQuiz ?: notFoundInitTypeHardQuestion()) quiz.value?.numHQ ?: notFoundNumberQuestionByTypeHardQuiz()
         else quiz.value?.numQ ?: notFoundNumberQuestionByTypeHardQuiz()
 
-        event = quiz.value?.event
-        starsAverageLocal = quiz.value?.starsAverageLocal
-        starsMaxLocal = quiz.value?.starsMaxLocal
-        starsMaxRemote = quiz.value?.starsMaxRemote
-        ratingLocal = quiz.value?.ratingLocal
     }
 
     fun initQuestionValues() {
         _currentQuestion.value = 0
+    }
+
+    fun initQuestionDetail() {
+        _questionDetail.value = questionDetailList.value?.find { questionDetail ->
+            questionDetail.codeAnswer?.any { it == '0' } ?: false
+        } ?: QuestionDetailEntity(0, idQuiz ?: notFoundInputData(), getDataToday(),
+            "0".repeat(numQuestions ?: notFoundQuizValue()),
+            hardQuiz ?: notFoundInitTypeHardQuestion(), false)
     }
 
     private fun calculateResultByCodeAnswer(codeAnswerThis: String) = codeAnswerThis.map {
@@ -147,13 +160,24 @@ class QuestionViewModel @Inject constructor(
     }?.average()?.toInt() ?: 0
 
     fun result() {
-        starsMaxLocal = calculateStarsMaxLocal()
-        starsAverageLocal = calculateStarsAverageLocal()
+        _quiz.value.starsMaxLocal = calculateStarsMaxLocal()
+        _quiz.value.starsAverageLocal = calculateStarsAverageLocal()
         _result.value = calculateResultByCodeAnswer(codeAnswer)
+
+        saveQuestionDetail()
     }
 
     //--------------------------------Exceptions------------------------
     fun notFountQuestionByLanguageUser() {
+
+    }
+   fun notFoundQuiz(): QuizEntity {
+
+    }
+    fun notFoundInputData(): Int {
+
+    }
+    fun notFoundQuizValue(): Int {
 
     }
 
