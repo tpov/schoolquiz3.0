@@ -30,6 +30,8 @@ class QuestionViewModel @Inject constructor(
     val structureUseCase: StructureUseCase
 ) : AndroidViewModel(application) {
 
+    var newAnswerOrder: Int = 0
+    var originalAnswerOrder: Int = 0
     var numQuestions: Int? = null
     var hardQuiz: Boolean? = null
     var idQuiz: Int? = null
@@ -158,6 +160,19 @@ class QuestionViewModel @Inject constructor(
     private fun calculateStarsAverageLocal() = questionDetailList.value?.map {
         calculateResultByCodeAnswer(it.codeAnswer ?: deleteQuestionDetailById(it.id))
     }?.average()?.toInt() ?: 0
+
+    fun setNewCurrentQuestion(current: Int) {
+        _currentQuestion.value = current
+    }
+
+    fun setNextCurrentQuestion(current: Int) {
+        if
+        _currentQuestion.value = current
+    }
+
+    fun setPrefCurrentQuestion(current: Int) {
+        _currentQuestion.value = current
+    }
 
     fun result() {
         _quiz.value.starsMaxLocal = calculateStarsMaxLocal()
