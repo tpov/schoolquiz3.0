@@ -30,7 +30,7 @@ import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_L
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
 import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_RANDOM_QUIZ8
 import com.tpov.schoolquiz.presentation.core.Logcat
-import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
+import com.tpov.schoolquiz.presentation.dialog.CreateQuestionFragment
 import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import kotlinx.coroutines.CoroutineScope
@@ -157,8 +157,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             // Добавление нового элемента в список
             val fragmentManager = activity?.supportFragmentManager
             fragmentManager?.let {
-                val dialogFragment: CreateQuestionDialog =
-                    CreateQuestionDialog.newInstance(CreateQuestionDialog.NAME, -1)
+                val dialogFragment: CreateQuestionFragment =
+                    CreateQuestionFragment.newInstance(CreateQuestionFragment.NAME, -1)
                 dialogFragment.show(fragmentManager, "create_question_dialog")
             }
         }
@@ -378,8 +378,8 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         log("editItem: $id")
         val fragmentManager = activity?.supportFragmentManager
         fragmentManager?.let {
-            val dialogFragment: CreateQuestionDialog =
-                CreateQuestionDialog.newInstance(CreateQuestionDialog.NAME, id)
+            val dialogFragment: CreateQuestionFragment =
+                CreateQuestionFragment.newInstance(CreateQuestionFragment.NAME, id)
             dialogFragment.show(fragmentManager, "create_question_dialog")
         }
     }

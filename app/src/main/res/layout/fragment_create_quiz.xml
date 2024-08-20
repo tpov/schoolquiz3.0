@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/back_main">
+
+    <EditText
+        android:id="@+id/tv_quiz_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="16dp"
+        android:text="Quiz name"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Spinner
+        android:id="@+id/sp_category"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
+
+    <Spinner
+        android:id="@+id/sp_sub_category"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@+id/sp_category"
+        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
+
+    <Spinner
+        android:id="@+id/sp_subsub_category"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/sp_sub_category"
+        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
+
+    <EditText
+        android:id="@+id/tv_category"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
+
+
+    <EditText
+        android:id="@+id/tv_sub_category"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@+id/tv_category"
+        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
+
+
+    <EditText
+        android:id="@+id/tv_subsub_category"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_sub_category"
+        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
+
+    <View
+        android:id="@+id/stroce"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@color/contour"
+        android:layout_margin="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/b_load_image"
+        app:layout_constraintTop_toBottomOf="@+id/sp_subsub_category">
+
+    </View>
+
+    <ImageView
+        android:id="@+id/imv_question"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/b_load_image"
+        app:layout_constraintEnd_toStartOf="@+id/b_load_image"
+        app:layout_constraintTop_toTopOf="@+id/b_load_image"
+        tools:srcCompat="@drawable/ic_launcher_foreground" />
+
+    <Button
+        android:id="@+id/b_load_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="null"
+        android:text="Загрузить фото"
+        android:textColor="@color/contour"
+        app:layout_constraintBottom_toTopOf="@+id/scv_question"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/stroce" />
+
+    <TextView
+        android:id="@+id/tv_num_question"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Вопрос 1/n"
+        android:layout_marginLeft="16dp"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/b_load_image"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/b_load_image" />
+
+    <ScrollView
+        android:id="@+id/scv_question"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imv_question">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/ll_question"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/tv_question_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_weight="1"
+                    android:maxLines="3"
+                    android:text="Question text"
+                    android:textColor="@color/white" />
+
+                <Spinner
+                    android:id="@+id/sp_language_question"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:backgroundTint="@color/black" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/ll_answer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_margin="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/stroce2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/b_answer1"
+                android:layout_width="0dp"
+                android:layout_height="45dp"
+                android:layout_weight="1"
+                android:padding="8dp"
+                android:gravity="center"
+                android:text="Ответ 1"
+                android:textAllCaps="false"
+                android:textColor="@color/white"/>
+
+            <EditText
+                android:id="@+id/b_answer2"
+                android:layout_width="0dp"
+                android:layout_height="45dp"
+                android:layout_weight="1"
+                android:padding="8dp"
+                android:gravity="center"
+                android:layout_marginLeft="8dp"
+                android:text="Ответ 2"
+                android:textAllCaps="false"
+                android:textColor="@color/white" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/stroce2"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@color/contour"
+        android:layout_margin="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/b_add_question">
+
+    </View>
+    <Button
+        android:id="@+id/b_reset"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="16dp"
+        android:padding="8dp"
+        android:outlineProvider="none"
+        android:background="@drawable/back_item_main_false"
+        android:text="Сбросить"
+        android:textAllCaps="false"
+        android:textColor="@color/red"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/b_save" />
+
+    <Button
+        android:id="@+id/b_add_question"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="+ Вопрос"
+        android:textAllCaps="false"
+        android:textColor="@color/contour"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/b_add_translate"
+        app:layout_constraintBottom_toTopOf="@+id/b_reset" />
+
+    <Button
+        android:id="@+id/b_add_answer"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginBottom="16dp"
+        android:text="+ Ответ"
+        android:textAllCaps="false"
+        android:textColor="@color/contour"
+        android:textSize="12sp"
+        app:layout_constraintStart_toEndOf="@+id/b_add_translate"
+        app:layout_constraintBottom_toTopOf="@+id/b_reset" />
+
+    <Button
+        android:id="@+id/b_add_gap"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:layout_marginRight="16dp"
+        android:text="+ Пропуск"
+        android:textAllCaps="false"
+        android:textColor="@color/contour"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/b_reset"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/b_add_answer" />
+
+    <Button
+        android:id="@+id/b_add_translate"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:text="+ Перевод"
+        android:textAllCaps="false"
+        android:textColor="@color/contour"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/b_reset"
+        app:layout_constraintStart_toEndOf="@+id/b_add_question" />
+
+    <Button
+        android:id="@+id/b_save"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:padding="8dp"
+        android:background="@drawable/back_item_main_true"
+        android:text="Создать"
+        android:textAllCaps="false"
+        android:textColor="@color/back_main_green"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/b_reset" />
+</androidx.constraintlayout.widget.ConstraintLayout>
