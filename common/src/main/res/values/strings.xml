@@ -1,3 +1,27 @@
 <resources>
     <string name="app_name">Common</string>
+
+    <string name="next_button">Next</string>
+    <string name="pref_button">Prev</string>
+
+    <string name="true_button">Верно</string>
+    <string name="false_button">Не верно</string>
+    <string name="delete_resource">delete\n</string>
+    <string name="question_result_text">Результат</string>
+    <string name="question_result_grade">Оцените квест</string>
+    <string name="question_result_help_translate">Помочь с переводом</string>
+
+    <string name="thropy1">Player who took 1st place in the tournament</string>
+    <string name="thropy2">Player who took 2st place in the tournament</string>
+    <string name="thropy3">Player who took 3st place in the tournament</string>
+    <string name="thropy_error">Ошибка разшифровка трофея</string>
+
+    <string name="education">Обучение</string>
+    <string name="beginner">Новичек</string>
+    <string name="player">Игрок</string>
+    <string name="amateur">Любитель</string>
+    <string name="veteran">Ветеран</string>
+    <string name="expert">Єксперт</string>
+    <string name="legend">Легенда</string>
+    <string name="grandmaster">Гроссместер</string>
 </resources>

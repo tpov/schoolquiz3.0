@@ -8,15 +8,9 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Button
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.PopupWindow
-import android.widget.Spinner
-import android.widget.TextView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.DiffUtil
@@ -25,33 +19,26 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
 import com.bumptech.glide.request.RequestOptions
+import com.tpov.common.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
+import com.tpov.common.EVENT_QUIZ_ARENA
+import com.tpov.common.EVENT_QUIZ_HOME
+import com.tpov.common.LVL_TRANSLATOR_1_LVL
+import com.tpov.common.LVL_TRANSLATOR_2_LVL
+import com.tpov.common.MAX_PERCENT_HARD_QUIZ_FULL
+import com.tpov.common.MAX_PERCENT_LIGHT_QUIZ_FULL
+import com.tpov.common.PERCENT_1STAR_QUIZ_SHORT
+import com.tpov.common.RATING_QUIZ_ARENA_IN_TOP
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
-import com.tpov.schoolquiz.presentation.COUNT_STARS_QUIZ_RATING
-import com.tpov.schoolquiz.presentation.DEFAULT_INFO_TRANSLATOR_BY_GOOGLE_TRANSL
-import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
-import com.tpov.schoolquiz.presentation.EVENT_QUIZ_HOME
-import com.tpov.schoolquiz.presentation.LVL_TRANSLATOR_1_LVL
-import com.tpov.schoolquiz.presentation.LVL_TRANSLATOR_2_LVL
-import com.tpov.schoolquiz.presentation.MAX_PERCENT_HARD_QUIZ_FULL
-import com.tpov.schoolquiz.presentation.MAX_PERCENT_LIGHT_QUIZ_FULL
-import com.tpov.schoolquiz.presentation.PERCENT_1STAR_QUIZ_SHORT
-import com.tpov.schoolquiz.presentation.RATING_QUIZ_ALL_POINTS_IN_FB
-import com.tpov.schoolquiz.presentation.RATING_QUIZ_ARENA_IN_TOP
-import com.tpov.schoolquiz.presentation.SPLIT_BETWEEN_LANGUAGES
-import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
-import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COEF_COAST_GOOGLE_TRANSLATE
 import com.tpov.schoolquiz.presentation.core.Logcat
 import com.tpov.schoolquiz.presentation.core.ResizeAndCrop
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
-import com.tpov.schoolquiz.presentation.core.TranslateGoogle.translateText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.Locale
 
 class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
@@ -198,8 +185,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                                 ResizeAndCrop(widthInPx, heightInPx),
                                 GranularRoundedCorners(0f, radinPx.toFloat(), radinPx.toFloat(), 0f)
                             )
-                    )
-                    .into(imageView)
+                    ).into(imageView)
 
             } catch (e: Exception) {
                 log("onBindViewHolder Exception $e")
@@ -231,14 +217,14 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             chbTypeQuiz.isChecked = false
 
-            if (quizEntity.stars >= MAX_PERCENT_LIGHT_QUIZ_FULL) {
+            if (quizEntity.starsMaxLocal >= MAX_PERCENT_LIGHT_QUIZ_FULL) {
                 log("quizEntity.stars 1")
                 imvGradLightQuiz.visibility = View.VISIBLE
                 imvGradHardQuiz.visibility = View.GONE
                 chbTypeQuiz.isChecked = true
             }
 
-            if (quizEntity.ratingPlayer >= RATING_QUIZ_ARENA_IN_TOP) {
+            if (quizEntity.ratingLocal >= RATING_QUIZ_ARENA_IN_TOP) {
                 log("quizEntity.stars 2")
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.VISIBLE
@@ -251,13 +237,13 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }
 
             chbTypeQuiz.visibility = View.VISIBLE
-            chbTypeQuiz.isChecked = quizEntity.stars >= MAX_PERCENT_LIGHT_QUIZ_FULL
+            chbTypeQuiz.isChecked = quizEntity.starsMaxLocal >= MAX_PERCENT_LIGHT_QUIZ_FULL
 
             imvTranslate.imageAlpha = 85
-            ratingBar.rating = (quizEntity.ratingPlayer.toFloat() / PERCENT_1STAR_QUIZ_SHORT)
+            ratingBar.rating = (quizEntity.ratingLocal.toFloat() / PERCENT_1STAR_QUIZ_SHORT)
 
-            log("sefefefe, ${(quizEntity.ratingPlayer.toFloat() * 100 / PERCENT_1STAR_QUIZ_SHORT)}")
-            val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
+            log("sefefefe, ${(quizEntity.ratingLocal.toFloat() * 100 / PERCENT_1STAR_QUIZ_SHORT)}")
+            val lvlTranslate = 100
 
             //imvTranslate
             log("sefefefe, $lvlTranslate")
@@ -265,22 +251,13 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
-            log("daegrjg, ${quizEntity.ratingPlayer.toFloat()}")
-            ratingBar.rating = quizEntity.ratingPlayer.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
+            log("daegrjg, ${quizEntity.ratingLocal.toFloat()}")
+            ratingBar.rating = quizEntity.ratingLocal.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
             mainTitleButton.text = quizEntity.nameQuiz
 
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
-            /*imvGradHardQuiz.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }
-            imvGradLightQuiz.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }
-            imvTranslate.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }*/
 
             imvTranslate.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP)
@@ -297,7 +274,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             tvName.visibility = View.VISIBLE
             tvTime.visibility = View.VISIBLE
             tvName.text = quizEntity.userName
-            tvTime.text = quizEntity.data
+            tvTime.text = quizEntity.dataUpdate
         }
 
         @OptIn(InternalCoroutinesApi::class)
@@ -307,12 +284,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             viewModel: MainActivityViewModel,
             listener: Listener
         ) {
-            if (quizEntity.stars == MAX_PERCENT_LIGHT_QUIZ_FULL) {
+            if (quizEntity.starsMaxLocal == MAX_PERCENT_LIGHT_QUIZ_FULL) {
                 Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
             }
 
             log("quizEntity.stars")
-            when (quizEntity.stars) {
+            when (quizEntity.starsMaxLocal) {
                 in MAX_PERCENT_LIGHT_QUIZ_FULL until MAX_PERCENT_HARD_QUIZ_FULL -> {
                     log("quizEntity.stars 1")
                     imvGradLightQuiz.visibility = View.VISIBLE
@@ -340,17 +317,17 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             imvTranslate.imageAlpha = 85
 
-            val lvlTranslate = viewModel.findValueForDeviceLocale(quizEntity.id!!)
+            val lvlTranslate = 100
 
             log("sefefefe, $lvlTranslate")
             if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
             else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
-            if (quizEntity.stars <= MAX_PERCENT_LIGHT_QUIZ_FULL) ratingBar.rating =
-                (quizEntity.stars.toFloat() / 50F)
-            else ratingBar.rating = (((quizEntity.stars.toFloat() - 100F) / 20F) + 2F)
+            if (quizEntity.starsMaxLocal <= MAX_PERCENT_LIGHT_QUIZ_FULL) ratingBar.rating =
+                (quizEntity.starsMaxLocal.toFloat() / 50F)
+            else ratingBar.rating = (((quizEntity.starsMaxLocal.toFloat() - 100F) / 20F) + 2F)
 
-            log("sefefefe ${(quizEntity.stars.toFloat() / 50F) }, ${ratingBar.rating}")
+            log("sefefefe ${(quizEntity.starsMaxLocal.toFloat() / 50F) }, ${ratingBar.rating}")
 
 
             imvTranslate.setOnTouchListener { view, event ->
@@ -405,7 +382,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
 
                     CoroutineScope(Dispatchers.IO).launch {
-                        translateText(mainViewModel, context, quizEntity)
+
                     }
                     popupWindow.dismiss()
                 }
@@ -441,154 +418,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 true
             )
-
-            val tvPopup1 = popupView.findViewById<TextView>(R.id.tv_popup_1)
-            val tvPopup2 = popupView.findViewById<TextView>(R.id.tv_popup_2)
-            val tvPopup3 = popupView.findViewById<TextView>(R.id.tv_popup_3)
-            val tvPopup4 = popupView.findViewById<TextView>(R.id.tv_popup_4)
-            val tvPopup5 = popupView.findViewById<TextView>(R.id.tv_popup_5)
-            val tvPopup6 = popupView.findViewById<TextView>(R.id.tv_popup_6)
-            val tvPopup7 = popupView.findViewById<TextView>(R.id.tv_popup_7)
-            val tvPopup8 = popupView.findViewById<TextView>(R.id.tv_popup_8)
-            val tvPopup9 = popupView.findViewById<TextView>(R.id.tv_popup_9)
-            val spListPopup1 = popupView.findViewById<Spinner>(R.id.sp_list_popup_1)
-            val bPopup1 = popupView.findViewById<Button>(R.id.b_popup_1)
-            val layoutSp = popupView.findViewById<LinearLayout>(R.id.l_sp)
-            val layoutB = popupView.findViewById<LinearLayout>(R.id.l_b)
-
-            if (popupType == POPUP_TRANSLATE) {
-                tvPopup1.visibility = View.VISIBLE
-                spListPopup1.visibility = View.VISIBLE
-                bPopup1.visibility = View.VISIBLE
-
-                layoutB.visibility = View.VISIBLE
-                layoutSp.visibility = View.VISIBLE
-
-                tvPopup2.visibility = View.GONE
-                tvPopup3.visibility = View.GONE
-                tvPopup4.visibility = View.GONE
-                tvPopup5.visibility = View.GONE
-                tvPopup6.visibility = View.GONE
-                tvPopup7.visibility = View.GONE
-                tvPopup8.visibility = View.GONE
-                tvPopup9.visibility = View.GONE
-
-                bPopup1.setOnClickListener {
-                    // Perform translation logic here
-                    showDialogTranslate(
-                        context,
-                        viewModel,
-                        (quizEntity.numHQ + quizEntity.numQ) * COEF_COAST_GOOGLE_TRANSLATE,
-                        quizEntity,
-                        popupWindow
-                    )
-                }
-
-                val languageString = quizEntity.languages // Получите строку языков из quizEntity
-                val languageItems =
-                    languageString.split(SPLIT_BETWEEN_LANGUAGES) // Разделите строку на элементы
-
-                val languageMap =
-                    mutableMapOf<String?, Int?>() // Создайте пустой Map для хранения соответствия язык-число
-
-                if (languageItems.isNotEmpty()) {
-                    for (item in languageItems) {
-                        val parts =
-                            item.split(DEFAULT_INFO_TRANSLATOR_BY_GOOGLE_TRANSL) // Разделите элемент на ключ и значение
-                        if (parts.size == 2) {
-                            val language = parts[0].toLowerCase()
-                            val value = parts[1].toIntOrNull()
-                            if (value != null) {
-                                languageMap[language] =
-                                    value // Добавьте соответствие язык-число в Map
-                            }
-                        }
-                    }
-                }
-                val adapter = ArrayAdapter(
-                    context,
-                    android.R.layout.simple_spinner_item,
-                    languageMap.keys.toList()
-                )
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                log("festgfsdrgdrto,  $tvPopup1")
-                try {
-                    tvPopup1.text = "lvl translate:: ${languageMap.values.toList()[0]}"
-                    binding.mainTitleButton.isClickable = true
-                    binding.mainTitleButton.isEnabled = true
-                } catch (e: Exception) {
-                    tvPopup1.text = context.getString(R.string.quiz_not_translated)
-                    binding.mainTitleButton.isClickable = false
-                    binding.mainTitleButton.isEnabled = false
-                }
-                spListPopup1.adapter = adapter
-                spListPopup1.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                    override fun onItemSelected(
-                        parent: AdapterView<*>,
-                        view: View?,
-                        position: Int,
-                        id: Long
-                    ) {
-                        val selectedLanguage =
-                            spListPopup1.selectedItem.toString().lowercase(Locale.ROOT)
-                        val selectedValue = languageMap[selectedLanguage]
-                        if (selectedValue != null) {
-                            tvPopup1.text = "lvl translate: $selectedValue"
-                        }
-                    }
-
-                    override fun onNothingSelected(parent: AdapterView<*>?) {
-                    }
-                }
-            } else if (popupType == POPUP_STARS) {
-                tvPopup1.visibility = View.VISIBLE
-                tvPopup2.visibility = View.VISIBLE
-                tvPopup3.visibility = View.VISIBLE
-                tvPopup4.visibility = View.VISIBLE
-                tvPopup5.visibility = View.VISIBLE
-                tvPopup6.visibility = View.VISIBLE
-                tvPopup7.visibility = View.VISIBLE
-                tvPopup8.visibility = View.VISIBLE
-                tvPopup9.visibility = View.VISIBLE
-
-
-                layoutB.visibility = View.GONE
-                layoutSp.visibility = View.GONE
-
-                spListPopup1.visibility = View.GONE
-                bPopup1.visibility = View.GONE
-
-                tvPopup2.text = context.getString(R.string.popup_menu_num_easy_questions, quizEntity.numQ)
-                tvPopup1.text = context.getString(R.string.popup_menu_num_hard_questions, quizEntity.numHQ)
-                tvPopup3.text = context.getString(R.string.popup_menu_date_created, quizEntity.data)
-                tvPopup4.text = context.getString(
-                    R.string.popup_menu_rating,
-                    quizEntity.ratingPlayer / RATING_QUIZ_ALL_POINTS_IN_FB,
-                    COUNT_STARS_QUIZ_RATING
-                )
-                tvPopup5.text = context.getString(
-                    R.string.popup_menu_best_result,
-                    quizEntity.stars,
-                    MAX_PERCENT_HARD_QUIZ_FULL
-                )
-                tvPopup6.text = context.getString(
-                    R.string.popup_menu_average_result,
-                    quizEntity.starsAll,
-                    MAX_PERCENT_HARD_QUIZ_FULL
-                )
-                tvPopup7.text = context.getString(
-                    R.string.popup_menu_avg_all_players,
-                    quizEntity.starsAllPlayer,
-                    MAX_PERCENT_HARD_QUIZ_FULL
-                )
-                tvPopup8.text = context.getString(
-                    R.string.popup_menu_best_all_players,
-                    quizEntity.starsPlayer,
-                    MAX_PERCENT_HARD_QUIZ_FULL
-                )
-                tvPopup9.text = context.getString(R.string.popup_menu_quiz_version, quizEntity.versionQuiz)
-
-            }
 
             popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
             val popupWidth = popupView.measuredWidth

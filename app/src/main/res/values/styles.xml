@@ -27,41 +27,7 @@
     </style>
 
 
-    <!-- Для CardView -->
-    <style name="ShopCardViewStyle">
-        <item name="cardBackgroundColor">@color/back_item</item>
-        <item name="cardCornerRadius">8dp</item>
-    </style>
 
-    <!-- Для LinearLayout -->
-    <style name="ShopLinearLayoutStyle">
-        <item name="android:padding">11dp</item>
-        <item name="android:orientation">horizontal</item>
-    </style>
 
-    <!-- Для ImageView -->
-    <style name="ShopImageViewStyle">
-        <item name="android:layout_width">60dp</item>
-        <item name="android:layout_height">60dp</item>
-    </style>
-
-    <!-- Для TextView -->
-    <style name="ShopTextViewStyle">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:layout_gravity">center</item>
-        <item name="android:textColor">#FFFFFF</item>
-        <item name="android:paddingStart">8dp</item>
-        <item name="android:paddingEnd">16dp</item>
-    </style>
-
-    <!-- Для Button -->
-    <style name="ShopButtonStyle">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_gravity">center</item>
-        <item name="android:background">#FFC107</item>
-    </style>
 
 </resources>

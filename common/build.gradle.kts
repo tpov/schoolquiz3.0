@@ -24,13 +24,6 @@ android {
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
 }
 
 dependencies {
@@ -65,4 +58,13 @@ dependencies {
     testImplementation("org.mockito:mockito-inline:3.3.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
+    implementation (platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation ("com.google.firebase:firebase-database")
+    implementation ("com.google.firebase:firebase-storage-ktx")
+    implementation ("com.google.cloud:google-cloud-translate:2.27.0")
+    implementation ("com.google.firebase:firebase-firestore-ktx:25.0.0")
+    implementation ("com.google.firebase:firebase-database-ktx:21.0.0")
+    implementation ("com.google.firebase:firebase-analytics:22.0.2")
+    kapt ("com.google.dagger:dagger-compiler:2.48.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 }

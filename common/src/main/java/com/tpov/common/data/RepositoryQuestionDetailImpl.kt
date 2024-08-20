@@ -2,7 +2,7 @@ package com.tpov.common.data
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.data.core.Core.tpovId
-import com.tpov.common.data.dao.QuestionDetailDao
+import com.tpov.common.data.database.QuestionDetailDao
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.remote.QuestionDetailRemote
 import com.tpov.common.domain.repository.RepositoryQuestionDetail

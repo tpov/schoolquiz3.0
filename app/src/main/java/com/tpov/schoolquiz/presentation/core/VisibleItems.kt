@@ -1,8 +1,13 @@
 package com.tpov.schoolquiz.presentation.core
 
+import com.tpov.common.COUNT_SKILL_BEGINNER
+import com.tpov.common.LVL_ADMIN_1_LVL
+import com.tpov.common.LVL_DEVELOPER_1_LVL
+import com.tpov.common.LVL_MODERATOR_1_LVL
+import com.tpov.common.LVL_TESTER_1_LVL
+import com.tpov.common.LVL_TRANSLATOR_1_LVL
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
-import com.tpov.schoolquiz.presentation.*
 
 object VisibleItems {
 
@@ -26,7 +31,8 @@ object VisibleItems {
             || qualification.tester >= LVL_TESTER_1_LVL
             || qualification.admin >= LVL_ADMIN_1_LVL
             || qualification.moderator >= LVL_MODERATOR_1_LVL
-            || qualification.developer >= LVL_DEVELOPER_1_LVL) {
+            || qualification.developer >= LVL_DEVELOPER_1_LVL
+        ) {
             items.add(
                 R.string.nav_profile to R.drawable.nav_profile
             )
@@ -64,7 +70,6 @@ object VisibleItems {
             items.add(R.string.nav_downloads to R.drawable.baseline_download_24)
             items.add(R.string.nav_settings to R.drawable.ic_settings)
         }
-
 
         return items
     }

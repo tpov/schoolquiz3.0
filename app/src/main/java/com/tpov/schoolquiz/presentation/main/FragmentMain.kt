@@ -19,26 +19,11 @@ import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.common.presentation.question.QuestionActivity.Companion.HARD_QUESTION
 import com.tpov.common.presentation.question.QuestionActivity.Companion.ID_QUIZ
 import com.tpov.common.presentation.question.QuestionActivity.Companion.NAME_USER
-import com.tpov.network.network.event.TranslateQuestionFragment
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.FragmentTitleBinding
-import com.tpov.schoolquiz.presentation.BARRIER_QUIZ_ID_LOCAL_AND_REMOVE
-import com.tpov.schoolquiz.presentation.EVENT_QUIZ_ARENA
-import com.tpov.schoolquiz.presentation.MAX_PERCENT_LIGHT_QUIZ_FULL
-import com.tpov.schoolquiz.presentation.MainApp
-import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_ARENA_QUIZ
-import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesLife.COAST_LIFE_HOME_QUIZ
-import com.tpov.schoolquiz.presentation.core.CoastValues.CoastValuesNolics.COAST_RANDOM_QUIZ8
 import com.tpov.schoolquiz.presentation.core.Logcat
-import com.tpov.schoolquiz.presentation.dialog.CreateQuestionDialog
-import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import com.tpov.schoolquiz.presentation.fragment.BaseFragment
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
-import java.util.Locale
-import javax.inject.Inject
 
 @InternalCoroutinesApi
 class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
@@ -50,12 +35,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
 
     private lateinit var mainViewModel: MainActivityViewModel
 
-    @Inject
-    lateinit var viewModelFactory: ViewModelFactory
-    private val component by lazy {
-        (requireActivity().application as MainApp).component
-    }
-
     private var oldIdQuizEvent1 = 0
 
     private lateinit var adapter: MainActivityAdapter
@@ -64,7 +43,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     private var createQuiz = false
 
     override fun onAttach(context: Context) {
-        component.inject(this)
         super.onAttach(context)
     }
 
@@ -76,7 +54,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         super.onViewCreated(view, savedInstanceState)
 
         mainViewModel =
-            ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
+            ViewModelProvider(this)[MainActivityViewModel::class.java]
 
         adapter = MainActivityAdapter(this, requireContext(), mainViewModel)
         binding.rcView.layoutManager = LinearLayoutManager(activity)
@@ -84,22 +62,10 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         binding.rcView.itemAnimator = RotateInItemAnimator()
         // Обработка нажатия на кнопку удаления
         adapter.onDeleteButtonClick = { quizEntity ->
-            // Ваш код для удаления или выполнения других действий с элементом
-            mainViewModel.deleteQuiz(quizEntity.itemId.toInt())
         }
 
-        mainViewModel.getProfile()
         val isMyQuiz = arguments?.getInt(ARG_IS_MY_QUIZ, 1)
 
-        lifecycleScope.launchWhenStarted {
-            val countPlace = mainViewModel.getCountPlaceForUserQuiz()
-            binding.tvNumberPlaceUserQuiz.text = countPlace.toString()
-
-            if (mainViewModel.getCountPlaceForUserQuiz() <= 0) {
-                binding.fabAddItem.isClickable = false
-                binding.fabAddItem.isEnabled = false
-            }
-        }
 
         when (isMyQuiz) {
             1 -> {
@@ -127,27 +93,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             }
         }
 
-        val countBox = mainViewModel.getProfileCountBox()
-        if (countBox != 0) {
-            binding.tvNumberBox.text = countBox.toString()
-        } else {
-            binding.fabBox.visibility = View.GONE
-        }
-
         binding.fabBox.setOnClickListener {
             Toast.makeText(activity, R.string.soon___, Toast.LENGTH_SHORT).show()
         }
 
 
-        mainViewModel.countPlaceLiveData().observe(viewLifecycleOwner) {
-
-            log("fgjesdriofjeskl observe it: $it")
-            binding.tvNumberPlaceUserQuiz.text = it.toString()
-            if (it <= 0) {
-                binding.fabAddItem.isClickable = false
-                binding.fabAddItem.isEnabled = false
-            }
-        }
     }
 
     override fun onResume() {
@@ -157,23 +107,10 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             // Добавление нового элемента в список
             val fragmentManager = activity?.supportFragmentManager
             fragmentManager?.let {
-                val dialogFragment: CreateQuestionDialog =
-                    CreateQuestionDialog.newInstance(CreateQuestionDialog.NAME, -1)
-                dialogFragment.show(fragmentManager, "create_question_dialog")
+
             }
         }
 
-        binding.fabSearch.setOnClickListener {
-            if (mainViewModel.getProfileCount()!! < COAST_LIFE_HOME_QUIZ) {
-                val toastMessage = getString(R.string.not_enough_lives, COAST_LIFE_ARENA_QUIZ)
-                Toast.makeText(
-                    activity,
-                    toastMessage,
-                    Toast.LENGTH_LONG
-                ).show()
-
-            } else dialogNolics(-1, false, COAST_RANDOM_QUIZ8)
-        }
     }
 
     override fun onCreateView(
@@ -187,21 +124,11 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     }
 
     override fun deleteItem(id: Int) {
-        mainViewModel.deleteQuiz(id)
     }
 
     override fun onClick(id: Int, typeQuestion: Boolean) {
         log("onClick mainViewModel.getQuizById(id).event")
-        if (mainViewModel.getProfileCount()!! < COAST_LIFE_HOME_QUIZ) {
-            val toastMessage = getString(R.string.not_enough_lives, COAST_LIFE_ARENA_QUIZ)
-            Toast.makeText(
-                activity,
-                toastMessage,
-                Toast.LENGTH_LONG
-            ).show()
 
-        } else {
-        }
     }
     private fun getMap(
         listQuestionEntity: List<QuestionEntity>,
@@ -225,7 +152,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         listMap: MutableMap<Int, Boolean>
     ): ArrayList<QuestionEntity> {
         val userLocalization: String = getUserLocalization(requireContext())
-        val availableLanguages = mainViewModel.getProfile().languages
 
         val questionList = ArrayList<QuestionEntity>()
 
@@ -239,7 +165,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
             } else {
                 filteredList = questionThisListAll
                     .filter { it.numQuestion == map.key }
-                    .filter { availableLanguages?.contains(it.language) ?: false }
 
                 if (filteredList.isNotEmpty()) {
                     questionList.add(filteredList[0])
@@ -298,50 +223,7 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
     ) {
         if (id == -1) {
             lifecycleScope.launchWhenStarted {
-                if (mainViewModel.getQuizList().isNotEmpty()) {
-                    try {
 
-                        val randQuiz = mainViewModel.getQuizList().filter {
-                            it.event == EVENT_QUIZ_ARENA && it.languages.contains(Locale.getDefault().language)
-                        }.random()
-
-                        val alertDialog = AlertDialog.Builder(activity)
-                            .setTitle(R.string.search_title)
-                            .setMessage(R.string.search_message)
-                            .setPositiveButton("(-) $nolics nolics") { dialog, which ->
-
-                                val intent = Intent(activity, QuestionActivity::class.java)
-                                intent.putExtra(NAME_USER, "user")
-                                intent.putExtra(ID_QUIZ, randQuiz.id)
-                                intent.putExtra(
-                                    HARD_QUESTION,
-                                    randQuiz.stars >= MAX_PERCENT_LIGHT_QUIZ_FULL
-                                )
-                                startActivityForResult(intent, REQUEST_CODE)
-                            }
-                            .setNegativeButton(R.string.cancel_button, null)
-                            .create()
-
-                        alertDialog.setOnShowListener { dialog ->
-                            val positiveButton =
-                                (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
-                            val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-                            positiveButton.setTextColor(Color.WHITE)
-                            negativeButton.setTextColor(Color.YELLOW)
-
-                            dialog.window?.setBackgroundDrawableResource(R.drawable.db_design3_main)
-                        }
-
-                        alertDialog.show()
-                    } catch (e: Exception) {
-                        Toast.makeText(
-                            requireContext(),
-                            R.string.no_translated_quest_found,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
             }
         } else {
             val alertDialog = AlertDialog.Builder(activity)
@@ -378,42 +260,12 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         log("editItem: $id")
         val fragmentManager = activity?.supportFragmentManager
         fragmentManager?.let {
-            val dialogFragment: CreateQuestionDialog =
-                CreateQuestionDialog.newInstance(CreateQuestionDialog.NAME, id)
-            dialogFragment.show(fragmentManager, "create_question_dialog")
+
         }
     }
 
     override fun sendItem(id: Int) {
-        var quizEntity = mainViewModel.getQuizById(id)
 
-        mainViewModel.insertQuizEvent(quizEntity)
-        oldIdQuizEvent1 = quizEntity.id ?: 0
-        lifecycleScope.launchWhenStarted {
-            mainViewModel.getQuizLiveData().observe(this@FragmentMain) { list ->
-                log("getQuizLiveData.observe")
-                CoroutineScope(Dispatchers.IO).launch {
-                    list.forEach { quiz ->
-                        if (mainViewModel.getQuestionListByIdQuiz(quiz.id ?: 0)
-                                .isNullOrEmpty()
-                        ) mainViewModel.getQuestionListByIdQuiz(oldIdQuizEvent1).forEach {
-                            mainViewModel.insertQuestion(
-                                it.copy(
-                                    id = null,
-                                    idQuiz = quiz.id ?: 0
-                                )
-                            )
-                        }
-                    }
-                }
-                var setQuestion = false
-                if (list.isEmpty()) setQuestion = true
-                list.forEach { item ->
-                    if (item.id!! < BARRIER_QUIZ_ID_LOCAL_AND_REMOVE) setQuestion = true
-                }
-                if (!setQuestion) mainViewModel.setQuestionsFB()
-            }
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -424,9 +276,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
                 val translate = it.getBooleanExtra("translate", false)
                 val idQuiz = it.getIntExtra("idQuiz", 0)
 
-                if (translate) (requireActivity() as MainActivity).replaceFragment(
-                    com.tpov.network.network.event.TranslateQuestionFragment.newInstance(idQuiz, -1)
-                )
             }
         }
     }

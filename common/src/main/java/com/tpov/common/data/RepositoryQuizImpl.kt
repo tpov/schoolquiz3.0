@@ -5,7 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.core.Core.tpovId
-import com.tpov.common.data.dao.QuizDao
+import com.tpov.common.data.database.QuizDao
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.remote.QuizRemote
 import com.tpov.common.domain.repository.RepositoryQuiz

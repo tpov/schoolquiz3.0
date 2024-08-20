@@ -9,11 +9,11 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
+import com.tpov.common.data.core.CustomProgressBar
 import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.presentation.core.CalcValues
-import com.tpov.schoolquiz.presentation.core.CustomProgressBar
 import kotlinx.coroutines.InternalCoroutinesApi
 
 
@@ -25,7 +25,7 @@ class ResultDialog(
     private val starsPercentAll: Int,
     private val starsPlayersAll: Int,
     private val firstQuestionDetail: Boolean,
-    private val onDismissListener: ((Int, Int) -> Unit)? = null, // определение переменной с значением по умолчанию
+    private val onDismissListener: ((Int, Int) -> Unit)? = null,
     private val onRatingSelected: ((Int) -> Unit)? = null,
     context: Context,
     private val profile: ProfileEntity

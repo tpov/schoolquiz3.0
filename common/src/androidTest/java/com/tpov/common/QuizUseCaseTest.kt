@@ -9,9 +9,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
+import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 @RunWith(MockitoJUnitRunner::class)
@@ -29,7 +29,7 @@ class QuizUseCaseTest {
     }
 
     @Test
-    fun `fetchQuiz fetches and transforms quizzes correctly`() = runTest {
+    fun fetchQuizFetchesAndTransformsQuizzesCorrectly() = runTest {
         val typeId = 1
         val categoryId = 1
         val subcategoryId = 1
@@ -48,7 +48,7 @@ class QuizUseCaseTest {
     }
 
     @Test
-    fun `insertQuiz inserts quiz into repository`() = runTest {
+    fun insertQuizInsertsQuizIntoRepository() = runTest {
         val quizEntity = QuizEntity(id = 1)
 
         quizUseCase.insertQuiz(quizEntity)
@@ -57,7 +57,7 @@ class QuizUseCaseTest {
     }
 
     @Test
-    fun `deleteQuizById deletes quiz by id`() = runTest {
+    fun deleteQuizByIdDeletesQuizById() = runTest {
         val idQuiz = 1
 
         quizUseCase.deleteQuizById(idQuiz)
@@ -66,7 +66,7 @@ class QuizUseCaseTest {
     }
 
     @Test
-    fun `saveQuiz saves quiz into repository`() = runTest {
+    fun saveQuizSavesQuizIntoRepository() = runTest {
         val quizEntity = QuizEntity(id = 1)
 
         quizUseCase.saveQuiz(quizEntity)
@@ -75,7 +75,7 @@ class QuizUseCaseTest {
     }
 
     @Test
-    fun `pushQuiz pushes quiz to remote database`() = runTest {
+    fun pushQuizPushesQuizToRemoteDatabase() = runTest {
         val quizEntity = QuizEntity(id = 1)
         val idQuiz = 1
         val categoryId = 1

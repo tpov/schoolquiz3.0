@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.presentation.core
 
-import com.tpov.schoolquiz.data.model.LanguageEntity
-import java.util.*
+import com.tpov.common.presentation.model.LanguageEntity
+import java.util.Locale
 
 object LanguageUtils {
     val languagesShortCodes = arrayOf(

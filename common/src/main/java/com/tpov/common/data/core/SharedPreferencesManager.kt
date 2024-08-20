@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.tpov.common.data.utils.TimeManager
 import java.time.LocalDate
-import java.util.*
 import java.util.prefs.Preferences
 
 object SharedPreferencesManager {
@@ -29,9 +29,6 @@ object SharedPreferencesManager {
         val prefs = Preferences.userRoot().node("com.tpov.schoolquiz.synth_day")
         val lastSyncDateStr = prefs.get(PREF_KEY_LAST_SYNC_DATE, null)
         val currentDate = LocalDate.now()
-
-        log("lastSyncDateStr $lastSyncDateStr")
-        log("currentDate $currentDate")
 
         if (lastSyncDateStr == null || lastSyncDateStr != currentDate.toString()) {
             prefs.put(PREF_KEY_LAST_SYNC_DATE, currentDate.toString())
@@ -122,7 +119,6 @@ object SharedPreferencesManager {
         if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
-        log("wededeefef chat: time2 ${time}")
         val editor = sharedPreferencesQuiz.edit()
         editor.putString("massageTime", time)
         editor.apply()
@@ -133,14 +129,11 @@ object SharedPreferencesManager {
         if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
-        log("wededeefef chat: gettime ${sharedPreferencesQuiz.getString("massageTime", "0")}")
         return sharedPreferencesQuiz.getString("massageTime", "0") ?: "0"
     }
 
     fun setVersionQuiz(key: String, value: Int) {
         val tpovId = getTpovId()
-        log("fun getVersionQuiz tpovId: $tpovId")
-        log("fun setVersionQuiz key: $key|$tpovId, value: $value")
 
         if (!SharedPreferencesManager::sharedPreferencesQuiz.isInitialized) {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
@@ -199,11 +192,6 @@ object SharedPreferencesManager {
         premium: String,
         nick: String
     ) {
-        log("skill: $skill")
-        log("nolic: $nolic")
-        log("gold: $gold")
-        log("premium: $premium")
-        log("nick: $nick")
 
         val editor = sharedPreferencesCounts.edit()
         editor.putInt("countSkill", skill)
@@ -247,9 +235,5 @@ object SharedPreferencesManager {
             throw IllegalStateException("SharedPreferencesManager is not initialized")
         }
         return sharedPreferencesCounts.getInt("countNolic", 0)
-    }
-
-    private fun log(msg: String) {
-        Logcat.log(msg, "SharedPreference", Logcat.LOG_FRAGMENT)
     }
 }

@@ -1,7 +1,7 @@
 package com.tpov.common.data
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.common.data.dao.StructureRatingDataDao
+import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.data.model.remote.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
 import com.tpov.common.domain.repository.RepositoryStructure

@@ -3,8 +3,8 @@ buildscript {
     ext {
         agp_version = '8.3.1'
         ksp_version = "1.5.31-1.0.0"
+        kotlin_version = "1.9.20"
     }
-    ext.kotlin_version = "1.9.20"
     repositories {
         gradlePluginPortal()
         google()
@@ -26,6 +26,72 @@ allprojects {
         google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
+    }
+}
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('com.android.application') || project.plugins.hasPlugin('com.android.library')) {
+            android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_11
+                    targetCompatibility JavaVersion.VERSION_11
+                }
+                packagingOptions {
+                    exclude 'META-INF/INDEX.LIST'
+                    exclude 'META-INF/DEPENDENCIES'
+                }
+                kotlinOptions {
+                    jvmTarget = "11"
+                }
+
+                buildFeatures {
+                    viewBinding true
+                }
+            }
+            dependencies {
+                def lifecycle_version = "2.2.0"
+
+                // Exclude conflicting protobuf dependencies
+                configurations.all {
+                    exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
+                    exclude group: 'com.google.firebase', module: 'protolite-well-known-types'
+                    exclude group: 'com.google.api.grpc', module: 'proto-google-common-protos'
+                    resolutionStrategy {
+                        force 'com.google.protobuf:protobuf-java:3.24.0'
+                    }
+                }
+
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+                implementation 'androidx.core:core-ktx:1.13.1'
+                implementation 'androidx.appcompat:appcompat:1.7.0'
+
+                implementation 'junit:junit:4.13.2'
+                implementation 'androidx.test.ext:junit:1.2.1'
+                implementation 'androidx.test.espresso:espresso-core:3.6.1'
+
+                // ViewModel and LiveData
+                implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+                implementation "androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version"
+
+                implementation 'androidx.room:room-ktx:2.6.1'
+                implementation 'androidx.room:room-runtime:2.6.1'
+                implementation 'androidx.room:room-common:2.6.1'
+                implementation 'androidx.room:room-testing:2.6.1'
+
+                implementation 'com.google.dagger:dagger:2.48.1'
+
+                testImplementation 'org.mockito:mockito-core:5.4.0'
+                testImplementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
+                testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+                implementation 'org.mockito:mockito-core:5.4.0'
+                implementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
+                implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+
+                androidTestImplementation 'org.mockito:mockito-android:5.4.0'
+
+            }
+        }
     }
 }
 
