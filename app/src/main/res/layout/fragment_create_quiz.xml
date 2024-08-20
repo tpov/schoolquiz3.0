@@ -96,7 +96,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:background="null"
+        android:background="@null"
         android:text="Загрузить фото"
         android:textColor="@color/contour"
         app:layout_constraintBottom_toTopOf="@+id/scv_question"

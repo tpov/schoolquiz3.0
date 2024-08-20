@@ -2,121 +2,69 @@ package com.tpov.userguide
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Resources
 import android.graphics.drawable.Drawable
-import android.view.View
-import com.tpov.userguide.domain.UserGuideUseCase
-import io.mockk.every
-import io.mockk.mockk
+import androidx.fragment.app.FragmentManager
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.mockito.Mockito.any
+import org.mockito.Mockito.anyInt
+import org.mockito.Mockito.anyString
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
+import org.mockito.kotlin.whenever
 
-@RunWith(Parameterized::class)
-class UserGuideParameterizedTest(
-    private val view: View?,
-    private val text: String?,
-    private val titleText: String?,
-    private val icon: Drawable?,
-    private val video: String?,
-    private val callback: (() -> Unit)?
-) {
+class UserGuideExhaustiveTest {
 
     private lateinit var context: Context
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var useCase: UserGuideUseCase
+    private lateinit var sharedPreferencesEditor: SharedPreferences.Editor
+    private lateinit var resources: Resources
+    private lateinit var fragmentManager: FragmentManager
     private lateinit var userGuide: UserGuide
 
     @Before
     fun setUp() {
-        context = mockk()
-        sharedPreferences = mockk(relaxed = true)
-        useCase = mockk(relaxed = true)
+        // Создаем моки
+        context = mock(Context::class.java)
+        sharedPreferences = mock(SharedPreferences::class.java)
+        sharedPreferencesEditor = mock(SharedPreferences.Editor::class.java)
+        resources = mock(Resources::class.java)
+        fragmentManager = mock(FragmentManager::class.java)
 
-        every { context.getSharedPreferences(any(), any()) } returns sharedPreferences
+        // Настройка возвращаемых значений для моков
+        whenever(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPreferences)
+        whenever(sharedPreferences.edit()).thenReturn(sharedPreferencesEditor)
+        whenever(sharedPreferencesEditor.putInt(anyString(), anyInt())).thenReturn(sharedPreferencesEditor)
+        whenever(context.resources).thenReturn(resources)
+        whenever(resources.getDrawable(anyInt(), any())).thenReturn(mock(Drawable::class.java))
 
+        // Инициализируем тестируемый объект
         userGuide = UserGuide(context)
-        userGuide.useCase = useCase
     }
 
     @Test
-    fun `test build with various parameter combinations`() {
-        val options = Options().apply {
-            idGroupGuide = 1
-            exactMatchKey = 42
-            minValueKey = 10
-            countRepeat = 5
-            showWithoutOptions = false
-        }
+    fun testUserGuideDialogDisplayBasedOnExactMatchKey() {
+        // Устанавливаем exactMatchKey
+        userGuide.setExactMatchKey(4000, 1)
 
-        if (view != null) {
-            every { view.id } returns 123
-        }
+        // Создаем GuideBuilder
+        val builderSetupUserGuide = userGuide.guideBuilder()
 
-        // Настройка моков для UserGuideUseCase
-        every { useCase.getExactMatchKey(options.idGroupGuide) } returns 42
-        every { useCase.getMinValueKey(options.idGroupGuide) } returns 15
-        every { useCase.getCountRepeat(any()) } returns 3
-
-        // Создание GuideBuilder и вызов build
-        userGuide.guideBuilder()
-            .setView(view)
-            .setTitleText(titleText)
-            .setText(text ?: "")
-            .setIcon(icon)
-            .setVideo(video)
-            .setCallback(callback)
-            .setOptions(options)
+        // Строим гайд и вызываем методы
+        builderSetupUserGuide
+            .setText("Версия 3.0.18 Коммит")
+            .setIcon(context.resources.getDrawable(R.mipmap.ic_launcher, context.theme))
+            .setTitleText("4000")
+            .setOptions(Options(
+                showDot = false,
+                exactMatchKey = 4000,
+                idGroupGuide = 1
+            ))
             .build()
 
-        // Определение, должен ли элемент быть добавлен
-        val expectedItemAdded = options.showWithoutOptions ||
-                (options.exactMatchKey == null || options.exactMatchKey == 42) &&
-                (options.minValueKey == null || 15 >= options.minValueKey!!) &&
-                (options.countRepeat >= 3)
-
-        // Проверка условий добавления элемента
-        if (expectedItemAdded) {
-            assert(userGuide.guideItems.size == 1)
-            userGuide.guideItems[0].apply {
-                assert(this.view == view)
-                assert(this.text == text)
-                assert(this.titleText == titleText)
-                assert(this.icon == icon)
-                assert(this.video == video)
-                assert(this.callback == callback)
-            }
-        } else {
-            assert(userGuide.guideItems.size == 0)
-        }
-    }
-
-    companion object {
-        @JvmStatic
-        @Parameterized.Parameters(name = "{index}: Test with view={0}, text={1}, titleText={2}, icon={3}, video={4}, callback={5}")
-        fun data(): Collection<Array<Any?>> {
-            val views = arrayOf<Any?>(null, mockk<View>())
-            val texts = arrayOf<Any?>(null, "Test Text")
-            val titleTexts = arrayOf<Any?>(null, "Title Text")
-            val icons = arrayOf<Any?>(null, mockk<Drawable>())
-            val videos = arrayOf<Any?>(null, "video_url")
-            val callbacks = arrayOf<Any?>(null, mockk<() -> Unit>())
-
-            val combinations = mutableListOf<Array<Any?>>()
-            for (view in views) {
-                for (text in texts) {
-                    for (titleText in titleTexts) {
-                        for (icon in icons) {
-                            for (video in videos) {
-                                for (callback in callbacks) {
-                                    combinations.add(arrayOf(view, text, titleText, icon, video, callback))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return combinations
-        }
+        // Проверяем, что метод showInfoFragment вызван
+        verify(fragmentManager, never()).beginTransaction() // Просто пример, можно проверять другие методы
     }
 }

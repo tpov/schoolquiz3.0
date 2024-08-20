@@ -5,10 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.tpov.schoolquiz.databinding.FragmentCreateQuizBinding
 
 class CreateQuestionFragment : Fragment() {
 
-    private var _binding: FragmentCreateQuestionBinding? = null
+    private var _binding: FragmentCreateQuizBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -16,7 +17,7 @@ class CreateQuestionFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentCreateQuestionBinding.inflate(inflater, container, false)
+        _binding = FragmentCreateQuizBinding.inflate(inflater, container, false)
         return binding.root
     }
 

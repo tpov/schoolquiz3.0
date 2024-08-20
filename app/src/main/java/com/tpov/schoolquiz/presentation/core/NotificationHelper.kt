@@ -26,6 +26,10 @@ class NotificationHelper(private val context: Context) {
     private val builderGuide = userguide.guideBuilder()
     private val builderUpdateProfile = userguide.guideBuilder()
 
+    init {
+        userguide.setExactMatchKey(4000, 1)
+    }
+
     @SuppressLint("UseCompatLoadingForDrawables")
     fun setupUserGuide(versionApp: String) {
         builderSetupUserGuide
