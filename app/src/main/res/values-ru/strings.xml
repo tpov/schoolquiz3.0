@@ -7,15 +7,12 @@
 4 – Исправление результатов викторины после обновления
 4 - Исправлено закрытие руководства при нажатии извне
     </string>
-    <string name="true_button">Верно</string>
-    <string name="false_button">Не верно</string>
     <string name="next_button">След.</string>
     <string name="pref_button">Пред.</string>
     <string name="correct_toast">Верно!!</string>
     <string name="incorrect_toast">Не верно!!</string>
     <string name="null_toast">Вопросов не осталось</string>
 
-    <string name="prompt_invitation">Инвайд-код (не обязательно)</string>
     <string name="load_front_list">Синхронизация встроенных вопросов</string>
     <string name="nav_home">Главные квесты</string>
     <string name="nav_my_quiz">Мои квесты</string>
@@ -37,19 +34,6 @@
     <string name="downloads_section">Загрузки</string>
     <string name="profile_section">Профиль</string>
     <string name="select_nick_color">Цвет ника</string>
-    <string name="thropy1">Игрок занявший 1 место в турнир</string>
-    <string name="thropy2">Игрок занявший 2 место в турнире</string>
-    <string name="thropy3">Игрок занявший 3 место в турнире</string>
-    <string name="thropy_error">Ошибка разшифровка трофея</string>
-
-    <string name="education">Обучение</string>
-    <string name="beginner">Новичек</string>
-    <string name="player">Игрок</string>
-    <string name="amateur">Любитель</string>
-    <string name="veteran">Ветеран</string>
-    <string name="expert">Єксперт</string>
-    <string name="legend">Легенда</string>
-    <string name="grandmaster">Гроссместер</string>
 
     <string name="language_question">Язык вопроса</string>
     <string name="language_quiz">Язык квеста</string>
@@ -260,19 +244,6 @@
     <string name="dialog_short_text_share">Share</string>
     <string name="dialog_text_share">Share text</string>
     <string name="menu_network">Сеть</string>
-    <string name="prompt_email">email</string>
-    <string name="prompt_password">password</string>
-    <string name="action_sign_in_short">out email</string>
-    <string name="action_sign_in">Вход</string>
-    <string name="action_registration">Регистрация</string>
-    <string name="prompt_name">Your name</string>
-    <string name="prompt_years">Your years (01.01.2001)</string>
-    <string name="account_registration_language">Язык</string>
-    <string name="login_failed" translatable="false">Логин не верный</string>
-    <string name="prompt_nickname">" Псевдоним"</string>
-    <string name="prompt_city">Город</string>
-    <string name="login_mode">логин</string>
-    <string name="registration_mode">регистрация</string>
     <string name="translation_success">Перевод успешно завершен</string>
     <string name="translation_failed">Перевод завершен, не удалось</string>
     <string name="userguide_new_qualif_player_title">Ваш опыт  = %1$d</string>

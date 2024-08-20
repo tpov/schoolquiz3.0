@@ -2,15 +2,15 @@ package com.tpov.schoolquiz.presentation.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.tpov.common.COUNT_SKILL_AMATEUR
+import com.tpov.common.COUNT_SKILL_BEGINNER
+import com.tpov.common.COUNT_SKILL_EXPERT
+import com.tpov.common.COUNT_SKILL_GRANDMASTER
+import com.tpov.common.COUNT_SKILL_LEGEND
+import com.tpov.common.COUNT_SKILL_PLAYER
+import com.tpov.common.COUNT_SKILL_USERGUIDE_1
+import com.tpov.common.COUNT_SKILL_VETERAN
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_AMATEUR
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_BEGINNER
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_EXPERT
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_GRANDMASTER
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_LEGEND
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_PLAYER
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_USERGUIDE_1
-import com.tpov.schoolquiz.presentation.COUNT_SKILL_VETERAN
 import com.tpov.schoolquiz.presentation.main.MainActivity
 import com.tpov.userguide.Options
 import com.tpov.userguide.UserGuide
@@ -68,7 +68,7 @@ class NotificationHelper(private val context: Context) {
     private fun newQualification(text: String, valueSkill: Int) {
         builderNewQualification.setTitleText("Новая квалификация")
             .setText(text)
-            .setIcon(context.getDrawable(R.drawable.back_chat))
+            .setIcon(context.getDrawable(com.tpov.common.R.drawable.back_main))
             .setOptions(Options(showDot = false, minValueKey = valueSkill, idGroupGuide = "newQualification".hashCode()))
     }
 

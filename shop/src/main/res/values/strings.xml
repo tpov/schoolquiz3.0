@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Shop</string>
+    <string name="shop_fragment_buy_one_place_text">Купить 1 место для создания викторины</string>
+    <string name="shop_fragment_button_buy">Купить</string>
+    <string name="shop_fragment_text_donate">Поддержите нас, сколько считаете нужным</string>
+    <string name="shop_fragment_donate">GooglePlay</string>
+    <string name="shop_fragment_get_box_for_ad_text">Получить коробку за 5 объявлений</string>
+    <string name="shop_fragment_get_box_for_ad_show">Показать</string>
+    <string name="shop_fragment_buy_life_text">Купить 1 жизнь</string>
+    <string name="shop_fragment_buy_life_gold_text">Купить 1 золотую жизнь</string>
 </resources>

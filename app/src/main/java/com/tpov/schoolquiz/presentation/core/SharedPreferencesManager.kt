@@ -4,9 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.tpov.shoppinglist.utils.TimeManager
+import com.tpov.common.data.utils.TimeManager
 import java.time.LocalDate
-import java.util.*
 import java.util.prefs.Preferences
 
 object SharedPreferencesManager {

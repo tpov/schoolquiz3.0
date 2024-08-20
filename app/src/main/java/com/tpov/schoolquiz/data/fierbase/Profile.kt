@@ -1,8 +1,8 @@
 package com.tpov.schoolquiz.data.fierbase
 
 import com.google.firebase.database.IgnoreExtraProperties
+import com.tpov.common.data.utils.TimeManager
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.shoppinglist.utils.TimeManager
 
 @IgnoreExtraProperties
 data class Profile constructor(

@@ -23,12 +23,12 @@ import javax.inject.Inject
 
 @InternalCoroutinesApi
 class QuestionViewModel @Inject constructor(
-    var application: Application,
+    var app: Application,
     var quizUseCase: QuizUseCase,
     var questionUseCase: QuestionUseCase,
     var questionDetailUseCase: QuestionDetailUseCase,
     val structureUseCase: StructureUseCase
-) : AndroidViewModel(application) {
+) : AndroidViewModel(app) {
 
     var newAnswerOrder: Int = 0
     var originalAnswerOrder: Int = 0
@@ -166,7 +166,6 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun setNextCurrentQuestion(current: Int) {
-        if
         _currentQuestion.value = current
     }
 
@@ -175,8 +174,8 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun result() {
-        _quiz.value.starsMaxLocal = calculateStarsMaxLocal()
-        _quiz.value.starsAverageLocal = calculateStarsAverageLocal()
+        _quiz.value?.starsMaxLocal = calculateStarsMaxLocal()
+        _quiz.value?.starsAverageLocal = calculateStarsAverageLocal()
         _result.value = calculateResultByCodeAnswer(codeAnswer)
 
         saveQuestionDetail()
@@ -187,13 +186,14 @@ class QuestionViewModel @Inject constructor(
 
     }
    fun notFoundQuiz(): QuizEntity {
-
+return QuizEntity()
     }
     fun notFoundInputData(): Int {
-
+return 0
     }
     fun notFoundQuizValue(): Int {
 
+        return 0
     }
 
     fun notFoundNumberQuestionByTypeHardQuiz(): Int {

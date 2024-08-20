@@ -47,30 +47,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
     configurations {
         all {
-            exclude module: 'protobuf-java'
             exclude module: 'protobuf-javalite'
             exclude module: 'httpclient'
             exclude module: 'httpcore'
         }
     }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
 
     buildFeatures {
         viewBinding true
-    }
-
-    packagingOptions {
-        pickFirst 'google/protobuf/type.proto'
-        exclude 'com/google/api/Advice.class'
-        exclude 'META-INF/INDEX.LIST'
     }
 }
 
@@ -81,10 +67,8 @@ dependencies {
     implementation project(':common')
     implementation project(':shop')
     implementation project(':settings')
+    implementation project(':network')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.13.1'
-    implementation 'androidx.appcompat:appcompat:1.7.0'
 
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //Библиотека Руум
@@ -109,42 +93,9 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.8.1'
     implementation 'androidx.databinding:databinding-runtime:8.5.1'
     implementation 'com.google.mlkit:language-id-common:16.1.0'
-    def lifecycle_version = "2.2.0"
-
-    // ViewModel and LiveData
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
-    kapt "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
-    // optional - ReactiveStreams support for LiveData
-    implementation "androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version"
-
-    implementation 'junit:junit:4.13.2'
-    implementation 'androidx.test.ext:junit:1.2.1'
-    implementation 'androidx.test.espresso:espresso-core:3.6.1'
-
-    implementation 'com.google.dagger:dagger:2.48.1'
-    kapt 'com.google.dagger:dagger-compiler:2.48.1'
-
-    implementation 'androidx.room:room-ktx:2.6.1'
-    implementation 'androidx.room:room-runtime:2.6.1'
-    implementation 'androidx.room:room-common:2.6.1'
-    implementation 'androidx.room:room-testing:2.6.1'
-    kapt 'androidx.room:room-compiler:2.6.1'
 
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
 
-    implementation platform('com.google.firebase:firebase-bom:33.1.2')
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-database'
-    implementation 'com.google.firebase:firebase-storage-ktx'
-    implementation 'com.google.cloud:google-cloud-translate:2.27.0'
-    implementation 'com.google.firebase:firebase-firestore-ktx:25.0.0'
-    implementation 'com.google.firebase:firebase-database-ktx:21.0.0'
-    implementation 'com.google.firebase:firebase-analytics:22.0.2'
-
-
-    implementation("com.google.protobuf:protobuf-javalite:3.24.0") {
-        exclude group: "com.google.protobuf", module: "protobuf-java"
-    }
     implementation 'com.google.mlkit:language-id:17.0.5'
     implementation 'com.google.android.gms:play-services-ads:23.2.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
@@ -153,12 +104,13 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'jp.wasabeef:picasso-transformations:2.4.0'
     implementation 'com.github.bumptech.glide:glide:4.13.2'
+    implementation 'com.google.firebase:firebase-auth-ktx:23.0.0'
+    implementation project(':network')
+    implementation 'com.google.firebase:firebase-database-ktx:21.0.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'com.wajahatkarim:EasyFlipView:3.0.3'
-
-
 }
+
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

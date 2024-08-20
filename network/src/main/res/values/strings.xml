@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">network</string>
+    <string name="flash_card_layout_front_1">Карточка профиля отображает насколько вы сильные по сравнению с лучшим игроков в процентном соотношении по разным параметрам.</string>
+    <string name="flash_card_layout_front_2">Зеленый график отображает насколько вы хороши как игрок, насколько хорошо играете \\n Красный - насколько вы большой вклад делаете в игру, насколько вы важны игре</string>
+    <string name="flash_card_layout_front_3">Например: у игрока который играет лучше всех - график полностью заполенный зеленым, а у игрока который больше всех помогает разработчикам, вносит вклад в игру - будет весь красный</string>
+    <string name="chat_type_a_message">Введите сообщение</string>
+    <string name="chat_type_a_send">Отправить</string>
+    <string name="prompt_email">Email</string>
+
+    <string name="prompt_password">password</string>
+    <string name="action_sign_in_short">out email</string>
+    <string name="action_sign_in">Вход</string>
+    <string name="action_registration">Регистрация</string>
+    <string name="prompt_name">Your name</string>
+    <string name="prompt_years">Your years (01.01.2001)</string>
+    <string name="account_registration_language">Язык</string>
+    <string name="login_failed" translatable="false">Логин не верный</string>
+    <string name="prompt_nickname">" Псевдоним"</string>
+    <string name="prompt_city">Город</string>
+    <string name="login_mode">логин</string>
+    <string name="registration_mode">регистрация</string>
+    <string name="prompt_invitation">Инвайд-код (не обязательно)</string>
+    <string name="dialog_autorisation_language_title">Выберите языки\n</string>
 </resources>

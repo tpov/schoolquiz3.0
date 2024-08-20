@@ -20,17 +20,4 @@
     <color name="back_main_green">#3CAF50</color>
     <color name="back_main_red">#F44336</color>
 
-
-    <color name="back_menu_top">#323232</color>
-    <color name="back_menu_bottom">#070E00</color>
-
-    <color name="default_nick_color1">#FFFFFF</color>
-    <color name="default_nick_color2">#9ACD32</color> <!--  (Желтая зелень)-->
-    <color name="default_nick_color3">#4682B4</color> <!--  (Стальной синий)-->
-    <color name="default_nick_color4">#20B2AA</color> <!--  (Светло-морской)-->
-    <color name="default_nick_color0">#B8860B</color> <!--  (Темно-золотой)-->
-    <color name="default_nick_color5">#FF6347</color> <!--  (Томатный)-->
-    <color name="default_nick_color6">#000000</color>
-    <color name="default_nick_color7">#FFD700</color> <!--  (Золотой)-->
-    <color name="default_nick_color8">#939E8D</color>
 </resources>

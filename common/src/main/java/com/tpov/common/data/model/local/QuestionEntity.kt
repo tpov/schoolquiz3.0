@@ -38,13 +38,11 @@ data class QuestionEntity(
     @ColumnInfo(name = "lvlTranslate")
     var lvlTranslate: Int
 ) {
-    fun toQuestionRemote(): QuestionRemote {
-        return QuestionRemote(
-            nameQuestion = this.nameQuestion,
-            answer = this.answer,
-            nameAnswers = this.nameAnswers,
-            pathPictureQuestion = this.pathPictureQuestion,
-            hardQuestion = this.hardQuestion
-        )
-    }
+    fun toQuestionRemote() = QuestionRemote(
+        answer = this.answer,
+        nameAnswers = this.nameAnswers,
+        pathPictureQuestion = this.pathPictureQuestion,
+        nameQuestion = this.nameAnswers,
+        lvlTranslate = this.lvlTranslate
+    )
 }

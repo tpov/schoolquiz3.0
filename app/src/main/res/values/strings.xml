@@ -81,8 +81,6 @@
 
     <string name="true_button">True</string>
     <string name="false_button">False</string>
-    <string name="next_button">Next</string>
-    <string name="pref_button">Prev</string>
     <string name="correct_toast">Correct!!</string>
     <string name="incorrect_toast">Incorrect!!</string>
     <string name="null_toast">Null questions</string>
@@ -309,9 +307,6 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="downloads_section">Downloads</string>
     <string name="profile_section">Profile</string>
     <string name="select_nick_color">Nickname Color</string>
-    <string name="thropy1">Player who took 1st place in the tournament</string>
-    <string name="thropy2">Player who took 2st place in the tournament</string>
-    <string name="thropy3">Player who took 3st place in the tournament</string>
     <string name="thropy_error">Decryption Error of Trophy</string>
     <string name="education">Training</string>
     <string name="beginner">"Beginner "</string>

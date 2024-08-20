@@ -12,6 +12,7 @@ class PreferencesManager(var context: Context) {
 
     fun saveSettings(config: SettingConfigModel) {
         preferences.edit().apply {
+            putInt("tpovId", config.tpovId)
             putString(context.getString(R.string.key_login), config.login)
             putString(context.getString(R.string.key_password), config.password)
             putString(context.getString(R.string.key_name), config.name)
@@ -33,6 +34,7 @@ class PreferencesManager(var context: Context) {
     fun getSettings(): SettingConfigModel {
         val defaultConfig = SettingConfigModel.default()
         return SettingConfigModel(
+            preferences.getInt("tpovId", 0),
             preferences.getString(context.getString(R.string.key_login), defaultConfig.login) ?: defaultConfig.login,
             preferences.getString(context.getString(R.string.key_password), defaultConfig.password) ?: defaultConfig.password,
             preferences.getString(context.getString(R.string.key_name), defaultConfig.name) ?: defaultConfig.name,
