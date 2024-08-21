@@ -45,4 +45,5 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.15.1")
     implementation(project(":userguide"))
     kapt("com.github.bumptech.glide:compiler:4.15.1")
+    kapt ("com.google.dagger:dagger-compiler:2.48.1")
 }

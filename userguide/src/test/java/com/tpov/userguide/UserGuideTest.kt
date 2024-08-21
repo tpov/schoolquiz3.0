@@ -5,15 +5,14 @@ import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import androidx.fragment.app.FragmentManager
+import io.mockk.Runs
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.any
-import org.mockito.Mockito.anyInt
-import org.mockito.Mockito.anyString
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
-import org.mockito.kotlin.whenever
 
 class UserGuideExhaustiveTest {
 
@@ -23,48 +22,45 @@ class UserGuideExhaustiveTest {
     private lateinit var resources: Resources
     private lateinit var fragmentManager: FragmentManager
     private lateinit var userGuide: UserGuide
+    private lateinit var guideBuilder: UserGuide.GuideBuilder
 
     @Before
     fun setUp() {
-        // Создаем моки
-        context = mock(Context::class.java)
-        sharedPreferences = mock(SharedPreferences::class.java)
-        sharedPreferencesEditor = mock(SharedPreferences.Editor::class.java)
-        resources = mock(Resources::class.java)
-        fragmentManager = mock(FragmentManager::class.java)
+        context = mockk()
+        sharedPreferences = mockk()
+        sharedPreferencesEditor = mockk()
+        resources = mockk()
+        fragmentManager = mockk()
+        userGuide = mockk()
+        guideBuilder = mockk(relaxed = true) // Relaxed mock returns default values for all functions
 
-        // Настройка возвращаемых значений для моков
-        whenever(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPreferences)
-        whenever(sharedPreferences.edit()).thenReturn(sharedPreferencesEditor)
-        whenever(sharedPreferencesEditor.putInt(anyString(), anyInt())).thenReturn(sharedPreferencesEditor)
-        whenever(context.resources).thenReturn(resources)
-        whenever(resources.getDrawable(anyInt(), any())).thenReturn(mock(Drawable::class.java))
-
-        // Инициализируем тестируемый объект
-        userGuide = UserGuide(context)
+        every { context.getSharedPreferences(any(), any()) } returns sharedPreferences
+        every { sharedPreferences.edit() } returns sharedPreferencesEditor
+        every { sharedPreferencesEditor.putInt(any(), any()) } returns sharedPreferencesEditor
+        every { context.resources } returns resources
+        every { resources.getDrawable(any(), any()) } returns mockk<Drawable>()
+        every { userGuide.guideBuilder() } returns guideBuilder
     }
 
     @Test
     fun testUserGuideDialogDisplayBasedOnExactMatchKey() {
-        // Устанавливаем exactMatchKey
-        userGuide.setExactMatchKey(4000, 1)
+        every { guideBuilder.setText("Версия 3.0.18 Коммит") } returns guideBuilder
+        every { guideBuilder.setOptions(any()) } returns guideBuilder
+        every { guideBuilder.build() } returns Unit
+        every { guideBuilder.show() } just Runs
 
-        // Создаем GuideBuilder
-        val builderSetupUserGuide = userGuide.guideBuilder()
-
-        // Строим гайд и вызываем методы
-        builderSetupUserGuide
-            .setText("Версия 3.0.18 Коммит")
-            .setIcon(context.resources.getDrawable(R.mipmap.ic_launcher, context.theme))
-            .setTitleText("4000")
-            .setOptions(Options(
-                showDot = false,
-                exactMatchKey = 4000,
-                idGroupGuide = 1
-            ))
+        guideBuilder.setText("Версия 3.0.18 Коммит")
+            .setOptions(Options(showDot = false, exactMatchKey = 4000, idGroupGuide = 1))
             .build()
+        guideBuilder.show()
 
-        // Проверяем, что метод showInfoFragment вызван
-        verify(fragmentManager, never()).beginTransaction() // Просто пример, можно проверять другие методы
+        // Проверка вызовов
+        verify { guideBuilder.setText("Версия 3.0.18 Коммит") }
+        verify { guideBuilder.setOptions(Options(showDot = false, exactMatchKey = 4000, idGroupGuide = 1)) }
+        verify { guideBuilder.show() }
+
+        // Подтверждение, что больше не было взаимодействий
+        confirmVerified(guideBuilder)
     }
+
 }

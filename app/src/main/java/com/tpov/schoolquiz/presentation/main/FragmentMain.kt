@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,11 +23,10 @@ import com.tpov.common.presentation.question.QuestionActivity.Companion.NAME_USE
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.FragmentTitleBinding
 import com.tpov.schoolquiz.presentation.core.Logcat
-import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 
 @InternalCoroutinesApi
-class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
+class FragmentMain : Fragment(), MainActivityAdapter.Listener {
 
     @OptIn(InternalCoroutinesApi::class)
     fun log(m: String) {
@@ -46,9 +46,6 @@ class FragmentMain : BaseFragment(), MainActivityAdapter.Listener {
         super.onAttach(context)
     }
 
-    override fun onClickNew(name: String, stars: Int) {
-
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

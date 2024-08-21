@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.di
 
 import android.app.Application
-import com.tpov.common.di.CommonComponent
+import com.tpov.schoolquiz.presentation.DaggerWorkerFactory
 import dagger.BindsInstance
 import dagger.Component
 import javax.inject.Singleton
@@ -10,8 +10,8 @@ import javax.inject.Singleton
 @Component(modules = [AppModule::class])
 interface ApplicationComponent {
 
-    fun commonComponent(): CommonComponent.Factory
     fun inject(application: Application)
+    fun workerFactory(): DaggerWorkerFactory
 
     @Component.Factory
     interface Factory {

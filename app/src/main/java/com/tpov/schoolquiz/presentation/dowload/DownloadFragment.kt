@@ -5,16 +5,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.tpov.schoolquiz.data.database.MainDatabase
 import com.tpov.schoolquiz.databinding.DownloadFragmentBinding
-import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import java.io.File
 
-class DownloadFragment : BaseFragment() {
+class DownloadFragment : Fragment() {
 
     private lateinit var binding: DownloadFragmentBinding
     private lateinit var downloadedResourcesAdapter: DownloadedResourcesAdapter
@@ -78,28 +77,8 @@ class DownloadFragment : BaseFragment() {
 
     @OptIn(InternalCoroutinesApi::class)
     private fun loadDatabaseInfo() {
-        lifecycleScope.launch {
-            val mainDatabase = MainDatabase.getDatabase(requireContext())
-            val questionDetailDatabase = mainDatabase.getQuestionDetailDao()
-            val questionDatabase = mainDatabase.getQuestionDao()
-            val profileDatabase = mainDatabase.getProfileDao()
-
-            val questionDetailCount = questionDetailDatabase.getQuestionDetailCount()
-            val questionCount = questionDatabase.getQuestionCount()
-            val quizCount = mainDatabase.getQuizDao()
-            val profileCount = profileDatabase.getProfileCount()
-
-            val databaseInfo = """
-            QuestionDetailEntity count: $questionDetailCount
-            QuestionEntity count: $questionCount
-            QuizEntity count: $quizCount
-            ProfileEntity count: $profileCount
-        """.trimIndent()
-
-            binding.tvDatabaseInfo.text = databaseInfo
         }
     }
-}
 
 data class DownloadedResource(
     val fileName: String,

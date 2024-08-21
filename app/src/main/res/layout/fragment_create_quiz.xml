@@ -10,8 +10,8 @@
         android:id="@+id/tv_quiz_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
         android:layout_margin="16dp"
+        android:gravity="center"
         android:text="Quiz name"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
@@ -74,8 +74,8 @@
         android:id="@+id/stroce"
         android:layout_width="match_parent"
         android:layout_height="3dp"
-        android:background="@color/contour"
         android:layout_margin="16dp"
+        android:background="@color/contour"
         app:layout_constraintBottom_toTopOf="@+id/b_load_image"
         app:layout_constraintTop_toBottomOf="@+id/sp_subsub_category">
 
@@ -89,26 +89,25 @@
         app:layout_constraintBottom_toBottomOf="@+id/b_load_image"
         app:layout_constraintEnd_toStartOf="@+id/b_load_image"
         app:layout_constraintTop_toTopOf="@+id/b_load_image"
-        tools:srcCompat="@drawable/ic_launcher_foreground" />
+        tools:srcCompat="@drawable/db_design3_main" />
 
-    <Button
+
+    <ImageView
         android:id="@+id/b_load_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:background="@null"
-        android:text="Загрузить фото"
-        android:textColor="@color/contour"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginRight="16dp"
         app:layout_constraintBottom_toTopOf="@+id/scv_question"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/stroce" />
+        app:layout_constraintTop_toBottomOf="@+id/stroce"
+        app:srcCompat="@drawable/ic_upload" />
 
-    <TextView
+    <Spinner
         android:id="@+id/tv_num_question"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Вопрос 1/n"
         android:layout_marginLeft="16dp"
+        android:text="Question 1/n"
         android:textColor="@color/white"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="@+id/b_load_image"
@@ -159,8 +158,8 @@
         android:id="@+id/ll_answer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:layout_margin="16dp"
+        android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/stroce2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -175,21 +174,21 @@
                 android:layout_width="0dp"
                 android:layout_height="45dp"
                 android:layout_weight="1"
-                android:padding="8dp"
                 android:gravity="center"
-                android:text="Ответ 1"
+                android:padding="8dp"
+                android:text="Answer 1"
                 android:textAllCaps="false"
-                android:textColor="@color/white"/>
+                android:textColor="@color/white" />
 
             <EditText
                 android:id="@+id/b_answer2"
                 android:layout_width="0dp"
                 android:layout_height="45dp"
-                android:layout_weight="1"
-                android:padding="8dp"
-                android:gravity="center"
                 android:layout_marginLeft="8dp"
-                android:text="Ответ 2"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="Answer 2"
                 android:textAllCaps="false"
                 android:textColor="@color/white" />
 
@@ -200,11 +199,23 @@
         android:id="@+id/stroce2"
         android:layout_width="match_parent"
         android:layout_height="3dp"
-        android:background="@color/contour"
         android:layout_margin="16dp"
+        android:background="@color/contour"
         app:layout_constraintBottom_toTopOf="@+id/b_add_question">
 
     </View>
+
+    <CheckBox
+        android:id="@+id/checkBox2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hard question"
+        android:textColor="@color/back_main_red"
+        app:layout_constraintBottom_toBottomOf="@+id/imv_question"
+        app:layout_constraintEnd_toStartOf="@+id/imv_question"
+        app:layout_constraintStart_toEndOf="@+id/tv_num_question"
+        app:layout_constraintTop_toTopOf="@+id/imv_question" />
+
     <Button
         android:id="@+id/b_reset"
         android:layout_width="0dp"
@@ -212,58 +223,62 @@
         android:layout_marginLeft="16dp"
         android:layout_marginRight="4dp"
         android:layout_marginBottom="16dp"
-        android:padding="8dp"
-        android:outlineProvider="none"
         android:background="@drawable/back_item_main_false"
-        android:text="Сбросить"
+        android:outlineProvider="none"
+        android:padding="8dp"
+        android:text="Reset"
+        android:textStyle="bold"
         android:textAllCaps="false"
         android:textColor="@color/red"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/b_save" />
+        app:layout_constraintEnd_toStartOf="@id/b_save"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/b_add_question"
         android:layout_width="0dp"
         android:layout_height="45dp"
-        android:background="@drawable/back_item_main"
-        android:padding="8dp"
         android:layout_marginLeft="16dp"
         android:layout_marginBottom="16dp"
-        android:text="+ Вопрос"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:text="+ Question"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/b_reset"
         app:layout_constraintEnd_toStartOf="@+id/b_add_translate"
-        app:layout_constraintBottom_toTopOf="@+id/b_reset" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/b_add_answer"
         android:layout_width="0dp"
         android:layout_height="45dp"
-        android:background="@drawable/back_item_main"
-        android:padding="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginBottom="16dp"
-        android:text="+ Ответ"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:text="+ Answer"
+        android:textStyle="bold"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
-        app:layout_constraintStart_toEndOf="@+id/b_add_translate"
-        app:layout_constraintBottom_toTopOf="@+id/b_reset" />
+        app:layout_constraintBottom_toTopOf="@+id/b_reset"
+        app:layout_constraintStart_toEndOf="@+id/b_add_translate" />
 
     <Button
         android:id="@+id/b_add_gap"
         android:layout_width="0dp"
         android:layout_height="45dp"
         android:layout_marginLeft="8dp"
+        android:layout_marginRight="16dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/back_item_main"
         android:padding="8dp"
-        android:layout_marginRight="16dp"
-        android:text="+ Пропуск"
+        android:text="+ Gap"
         android:textAllCaps="false"
+        android:textStyle="bold"
         android:textColor="@color/contour"
         android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@+id/b_reset"
@@ -278,7 +293,8 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/back_item_main"
         android:padding="8dp"
-        android:text="+ Перевод"
+        android:text="+ Translate"
+        android:textStyle="bold"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
@@ -292,9 +308,10 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="16dp"
-        android:padding="8dp"
+        android:textStyle="bold"
         android:background="@drawable/back_item_main_true"
-        android:text="Создать"
+        android:padding="8dp"
+        android:text="Create"
         android:textAllCaps="false"
         android:textColor="@color/back_main_green"
         app:layout_constraintBottom_toBottomOf="parent"

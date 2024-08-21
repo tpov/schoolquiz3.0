@@ -7,4 +7,7 @@ class ChatUseCase @Inject constructor(private val repositoryChat: RepositoryChat
     fun getChatFlow() = repositoryChat.getChatFlow()
 
     fun remoteChatListener() = repositoryChat.remoteChatListener()
+    fun checkForNewMessages(): Boolean {
+return false
+    }
 }

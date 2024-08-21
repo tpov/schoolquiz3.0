@@ -24,4 +24,11 @@
     <string name="expert">Єксперт</string>
     <string name="legend">Легенда</string>
     <string name="grandmaster">Гроссместер</string>
+
+    <string-array name="category_array">
+        <item>SchoolQuiz</item>
+        <item>GameQuiz</item>
+        <item>Surveys</item>
+        <item>Course Quizzes</item>
+    </string-array>
 </resources>

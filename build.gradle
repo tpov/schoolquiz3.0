@@ -79,7 +79,7 @@ subprojects {
                 implementation 'androidx.room:room-common:2.6.1'
                 implementation 'androidx.room:room-testing:2.6.1'
 
-                implementation 'com.google.dagger:dagger:2.48.1'
+                implementation 'com.google.dagger:dagger:2.49'
 
                 testImplementation 'org.mockito:mockito-core:5.4.0'
                 testImplementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
@@ -89,6 +89,9 @@ subprojects {
                 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
 
                 androidTestImplementation 'org.mockito:mockito-android:5.4.0'
+                testImplementation 'org.robolectric:robolectric:4.9'
+
+                implementation ("androidx.work:work-runtime-ktx:2.9.1")
 
             }
         }

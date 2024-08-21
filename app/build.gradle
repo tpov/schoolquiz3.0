@@ -89,7 +89,6 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    implementation 'androidx.work:work-runtime-ktx:2.9.0'
     implementation 'androidx.annotation:annotation:1.8.1'
     implementation 'androidx.databinding:databinding-runtime:8.5.1'
     implementation 'com.google.mlkit:language-id-common:16.1.0'
@@ -107,10 +106,15 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth-ktx:23.0.0'
     implementation project(':network')
     implementation 'com.google.firebase:firebase-database-ktx:21.0.0'
+    implementation 'androidx.hilt:hilt-common:1.2.0'
+    implementation 'com.google.firebase:firebase-firestore-ktx:25.0.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    kapt 'com.google.dagger:dagger-compiler:2.48.1'
+
 }
 
 configurations.implementation.exclude(group: 'com.google.firebase', module: 'protolite-well-known-types')

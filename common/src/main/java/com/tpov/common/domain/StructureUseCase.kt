@@ -16,4 +16,10 @@ class StructureUseCase @Inject constructor(private val repositoryStuctureImpl: R
         repositoryStuctureImpl.retryFailedRatings()
     }
 
+    suspend fun syncData(): Boolean {
+        // Логика синхронизации данных
+        // Возвращает true, если синхронизация успешна и есть изменения
+        // Возвращает false, если синхронизация успешна, но изменений нет
+        return true // или false
+    }
 }

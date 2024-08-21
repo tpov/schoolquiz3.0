@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 apply plugin: 'maven-publish'
 
@@ -53,5 +54,6 @@ dependencies {
     implementation "androidx.media3:media3-ui:1.4.0"
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.3")
+    kapt("com.google.dagger:dagger-compiler:2.48.1")
 }
 

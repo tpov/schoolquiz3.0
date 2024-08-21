@@ -7,10 +7,10 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import androidx.fragment.app.Fragment
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.presentation.fragment.BaseFragment
 
-class SettingsFragment : BaseFragment() {
+class SettingsFragment : Fragment() {
 
     private lateinit var appSettings: AppSettings
 
