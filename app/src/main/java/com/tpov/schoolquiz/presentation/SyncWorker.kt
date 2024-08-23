@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
@@ -33,11 +34,15 @@ class SyncWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        return@withContext try {
+        try {
+            Log.d("SyncWorker", "Starting sync work...")
             val isSuccess = structureUseCase.syncData()
 
             if (isSuccess) {
+                Log.d("SyncWorker", "Sync successful")
                 showNotification("Sync Complete", "Data was successfully synchronized.")
+            } else {
+                Log.d("SyncWorker", "Sync failed")
             }
 
             val outputData = Data.Builder()
@@ -46,9 +51,11 @@ class SyncWorker @AssistedInject constructor(
 
             Result.success(outputData)
         } catch (e: Exception) {
+            Log.e("SyncWorker", "Sync failed with exception", e)
             Result.retry()
         }
     }
+
 
     @SuppressLint("MissingPermission")
     private fun showNotification(title: String, message: String) {
@@ -83,8 +90,8 @@ class SyncWorker @AssistedInject constructor(
     interface Factory : ChildWorkerFactory
 }
 
-class AppWorkerFactory @Inject constructor(private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>
-
+class AppWorkerFactory @Inject constructor(
+    private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -93,7 +100,7 @@ class AppWorkerFactory @Inject constructor(private val workerFactories: Map<Clas
         workerParameters: WorkerParameters
     ): ListenableWorker? {
         val entry = workerFactories.entries.find {
-            Class.forName(workerClassName) == it.key
+            Class.forName(workerClassName).isAssignableFrom(it.key)
         }
 
         val factoryProvider = entry?.value ?: return null

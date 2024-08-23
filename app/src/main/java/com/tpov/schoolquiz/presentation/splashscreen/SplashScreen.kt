@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivitySplashScreenBinding
 import com.tpov.schoolquiz.presentation.AppWorkerFactory
@@ -34,6 +35,7 @@ class SplashScreen : AppCompatActivity() {
         binding = ActivitySplashScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        (application as MainApp).applicationComponent.inject(application)
         setupPeriodicSync() // Настраиваем периодическую синхронизацию
         createAnimation()
     }
@@ -86,7 +88,7 @@ class SplashScreen : AppCompatActivity() {
 
     private fun setupPeriodicSync() {
 
-        val syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(1, TimeUnit.DAYS)
+        val syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(1, TimeUnit.MINUTES)
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
