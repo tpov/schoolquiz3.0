@@ -7,7 +7,6 @@ import com.tpov.common.data.custom.Converters
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.database.QuestionDetailDao
 import com.tpov.common.data.database.QuizDao
-import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
@@ -24,5 +23,4 @@ abstract class MainDatabase : RoomDatabase() {
     abstract fun getQuestionDao(): QuestionDao
     abstract fun getQuestionDetailDao(): QuestionDetailDao
     abstract fun getProfileDao(): ProfileDao
-    abstract fun getStructureRatingDataDao(): StructureRatingDataDao
 }

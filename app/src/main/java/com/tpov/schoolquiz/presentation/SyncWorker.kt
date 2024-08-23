@@ -12,14 +12,17 @@ import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import com.squareup.inject.assisted.Assisted
+import com.squareup.inject.assisted.AssistedInject
 import com.tpov.common.domain.StructureUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import javax.inject.Provider
 
-class SyncWorker(
-    context: Context,
-    workerParams: WorkerParameters,
+class SyncWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted private val workerParams: WorkerParameters,
     private val structureUseCase: StructureUseCase
 ) : CoroutineWorker(context, workerParams) {
 
@@ -75,10 +78,13 @@ class SyncWorker(
             notificationManager.createNotificationChannel(channel)
         }
     }
+
+    @AssistedInject.Factory
+    interface Factory : ChildWorkerFactory
 }
 
-class DaggerWorkerFactory @Inject constructor(
-    private val structureUseCase: StructureUseCase
+class AppWorkerFactory @Inject constructor(private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>
+
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -86,10 +92,15 @@ class DaggerWorkerFactory @Inject constructor(
         workerClassName: String,
         workerParameters: WorkerParameters
     ): ListenableWorker? {
-        return when (workerClassName) {
-            SyncWorker::class.java.name ->
-                SyncWorker(appContext, workerParameters, structureUseCase)
-            else -> null
+        val entry = workerFactories.entries.find {
+            Class.forName(workerClassName) == it.key
         }
+
+        val factoryProvider = entry?.value ?: return null
+        return factoryProvider.get().create(appContext, workerParameters)
     }
+}
+
+interface ChildWorkerFactory {
+    fun create(context: Context, workerParams: WorkerParameters): ListenableWorker
 }

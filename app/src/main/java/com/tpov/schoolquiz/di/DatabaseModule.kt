@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.di
 
 import android.app.Application
 import androidx.room.Room
+import com.tpov.common.data.database.CommonDatabase
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.database.QuestionDetailDao
 import com.tpov.common.data.database.QuizDao
@@ -27,6 +28,17 @@ class DatabaseModule {
     }
 
     @Provides
+    @Singleton
+    fun provideCommonDatabase(application: Application): CommonDatabase {
+        return Room.databaseBuilder(
+            application,
+            CommonDatabase::class.java,
+            "CommonData.db"
+        ).fallbackToDestructiveMigration()
+            .build()
+    }
+
+    @Provides
     fun provideQuizDao(database: MainDatabase): QuizDao {
         return database.getQuizDao()
     }
@@ -46,7 +58,7 @@ class DatabaseModule {
         return database.getProfileDao()
     }
     @Provides
-    fun provideStructureRatingDataDao(database: MainDatabase): StructureRatingDataDao {
+    fun provideStructureRatingDataDao(database: CommonDatabase): StructureRatingDataDao {
         return database.getStructureRatingDataDao()
     }
 }

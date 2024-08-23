@@ -55,5 +55,6 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.3")
     kapt("com.google.dagger:dagger-compiler:2.48.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 }
 

@@ -13,7 +13,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivitySplashScreenBinding
-import com.tpov.schoolquiz.presentation.DaggerWorkerFactory
+import com.tpov.schoolquiz.presentation.AppWorkerFactory
 import com.tpov.schoolquiz.presentation.SyncWorker
 import com.tpov.schoolquiz.presentation.main.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -25,7 +25,7 @@ import javax.inject.Inject
 class SplashScreen : AppCompatActivity() {
 
     @Inject
-    lateinit var daggerWorkerFactory: DaggerWorkerFactory
+    lateinit var daggerWorkerFactory: AppWorkerFactory
     private lateinit var binding: ActivitySplashScreenBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -46,4 +46,5 @@ dependencies {
     implementation(project(":userguide"))
     kapt("com.github.bumptech.glide:compiler:4.15.1")
     kapt ("com.google.dagger:dagger-compiler:2.48.1")
+    kapt ("androidx.room:room-compiler:2.6.1")
 }

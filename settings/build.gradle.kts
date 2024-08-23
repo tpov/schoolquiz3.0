@@ -38,4 +38,5 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 
     kapt("com.google.dagger:dagger-compiler:2.48.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 }

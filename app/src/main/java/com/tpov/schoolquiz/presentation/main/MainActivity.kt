@@ -41,7 +41,6 @@ import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.factory.ViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -50,7 +49,6 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Timer
 import java.util.TimerTask
-import javax.inject.Inject
 
 /**
  * This is the main screen of the application, it consists of a panel that shows how much spare is left.
@@ -61,8 +59,6 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
 
-    @Inject
-    lateinit var viewModelFactory: ViewModelFactory
     lateinit var viewModel: MainActivityViewModel
 
     private var recreateActivity: Boolean = false
@@ -112,7 +108,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViewModel() {
-        viewModel = ViewModelProvider(this, viewModelFactory)[MainActivityViewModel::class.java]
+        viewModel = ViewModelProvider(this)[MainActivityViewModel::class.java]
 
     }
 
