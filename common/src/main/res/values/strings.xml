@@ -25,6 +25,14 @@
     <string name="legend">Легенда</string>
     <string name="grandmaster">Гроссместер</string>
 
+    <string name="translate_negative">Отмена</string>
+    <string name="translate_message">Сервисы перевода платные</string>
+    <string name="go_hard_question">Вам доступны сложные вопросы</string>
+    <string name="send_to_arena_text">Этот квест будет отправлен в открытый доступ для всех игроков, после успешной проверки.</string>
+    <string name="send_to_arena_title">Отправить на арену</string>
+    <string name="send_to_arena_negative">Отмена</string>
+    <string name="translate_title">Перевести</string>
+
     <string-array name="category_array">
         <item>SchoolQuiz</item>
         <item>GameQuiz</item>

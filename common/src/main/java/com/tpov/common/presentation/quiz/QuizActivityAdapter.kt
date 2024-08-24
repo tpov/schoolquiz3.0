@@ -1,9 +1,8 @@
-package com.tpov.schoolquiz.presentation.main
+package com.tpov.common.presentation.quiz
 
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -27,25 +26,24 @@ import com.tpov.common.LVL_TRANSLATOR_2_LVL
 import com.tpov.common.MAX_PERCENT_HARD_QUIZ_FULL
 import com.tpov.common.MAX_PERCENT_LIGHT_QUIZ_FULL
 import com.tpov.common.PERCENT_1STAR_QUIZ_SHORT
+import com.tpov.common.R
 import com.tpov.common.RATING_QUIZ_ARENA_IN_TOP
+import com.tpov.common.data.core.SharedPreferencesManager.getTpovId
 import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.databinding.ActivityMainItemBinding
-import com.tpov.schoolquiz.presentation.core.Logcat
-import com.tpov.schoolquiz.presentation.core.ResizeAndCrop
-import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager.getTpovId
+import com.tpov.common.databinding.ActivityQuizItemBinding
+import com.tpov.common.presentation.utils.ResizeAndCrop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import java.io.File
 
-class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
+class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
     private val context: Context,
-    private val viewModel: MainActivityViewModel
+    private val viewModel: QuizActivityViewModel
 ) :
-    ListAdapter<QuizEntity, MainActivityAdapter.ItemHolder>(ItemComparator()) {
+    ListAdapter<QuizEntity, QuizActivityAdapter.ItemHolder>(ItemComparator()) {
     var onDeleteButtonClick: ((RecyclerView.ViewHolder) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
@@ -72,21 +70,17 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     class ItemHolder(view: View, private val listener: Listener) : RecyclerView.ViewHolder(view),
         View.OnTouchListener {
 
-        @OptIn(InternalCoroutinesApi::class)
-        fun log(msg: String) {
-            Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)
-        }
 
         val constraintLayout: ConstraintLayout = itemView.findViewById(R.id.constraint_layout)
 
-        private val binding = ActivityMainItemBinding.bind(view)
+        private val binding = ActivityQuizItemBinding.bind(view)
         val imvGradLightQuiz: ImageView = itemView.findViewById(R.id.imv_gradient_light_quiz)
         val imvGradHardQuiz: ImageView = itemView.findViewById(R.id.imv_grafient_hard_quiz)
 
         @OptIn(InternalCoroutinesApi::class)
         private fun showDialog(
             context: Context,
-            mainViewModel: MainActivityViewModel,
+            mainViewModel: QuizActivityViewModel,
             nolics: Int,
             id: Int
         ) {
@@ -118,7 +112,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             view: View,
             id: Int,
             context: Context,
-            mainViewModel: MainActivityViewModel
+            mainViewModel: QuizActivityViewModel
         ) {
             val popupMenu = PopupMenu(view.context, view)
             popupMenu.inflate(R.menu.popup_menu)
@@ -150,7 +144,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             quizEntity: QuizEntity,
             listener: Listener,
             context: Context,
-            mainViewModel: MainActivityViewModel
+            mainViewModel: QuizActivityViewModel
         ) = with(binding) {
 
             if (quizEntity.event != EVENT_QUIZ_HOME) constraintLayout.setOnLongClickListener {
@@ -188,7 +182,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                     ).into(imageView)
 
             } catch (e: Exception) {
-                log("onBindViewHolder Exception $e")
             }
 
             var goHardQuiz =
@@ -204,13 +197,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         }
 
         @OptIn(InternalCoroutinesApi::class)
-        private fun ActivityMainItemBinding.initViewQuiz5(
+        private fun ActivityQuizItemBinding.initViewQuiz5(
             quizEntity: QuizEntity,
-            viewModel: MainActivityViewModel,
+            viewModel: QuizActivityViewModel,
             listener: Listener
         ) {
 
-            log("quizEntity.stars 3")
             chbTypeQuiz.visibility = View.GONE
             imvGradLightQuiz.visibility = View.GONE
             imvGradHardQuiz.visibility = View.GONE
@@ -218,14 +210,12 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             chbTypeQuiz.isChecked = false
 
             if (quizEntity.starsMaxLocal >= MAX_PERCENT_LIGHT_QUIZ_FULL) {
-                log("quizEntity.stars 1")
                 imvGradLightQuiz.visibility = View.VISIBLE
                 imvGradHardQuiz.visibility = View.GONE
                 chbTypeQuiz.isChecked = true
             }
 
             if (quizEntity.ratingLocal >= RATING_QUIZ_ARENA_IN_TOP) {
-                log("quizEntity.stars 2")
                 imvGradLightQuiz.visibility = View.GONE
                 imvGradHardQuiz.visibility = View.VISIBLE
             }
@@ -242,16 +232,13 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             imvTranslate.imageAlpha = 85
             ratingBar.rating = (quizEntity.ratingLocal.toFloat() / PERCENT_1STAR_QUIZ_SHORT)
 
-            log("sefefefe, ${(quizEntity.ratingLocal.toFloat() * 100 / PERCENT_1STAR_QUIZ_SHORT)}")
             val lvlTranslate = 100
 
             //imvTranslate
-            log("sefefefe, $lvlTranslate")
             if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
             else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
 
-            log("daegrjg, ${quizEntity.ratingLocal.toFloat()}")
             ratingBar.rating = quizEntity.ratingLocal.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
             mainTitleButton.text = quizEntity.nameQuiz
 
@@ -278,20 +265,18 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         }
 
         @OptIn(InternalCoroutinesApi::class)
-        private fun ActivityMainItemBinding.initView(
+        private fun ActivityQuizItemBinding.initView(
             quizEntity: QuizEntity,
             goHardQuiz: String,
-            viewModel: MainActivityViewModel,
+            viewModel: QuizActivityViewModel,
             listener: Listener
         ) {
             if (quizEntity.starsMaxLocal == MAX_PERCENT_LIGHT_QUIZ_FULL) {
                 Toast.makeText(binding.root.context, goHardQuiz, Toast.LENGTH_SHORT).show()
             }
 
-            log("quizEntity.stars")
             when (quizEntity.starsMaxLocal) {
                 in MAX_PERCENT_LIGHT_QUIZ_FULL until MAX_PERCENT_HARD_QUIZ_FULL -> {
-                    log("quizEntity.stars 1")
                     imvGradLightQuiz.visibility = View.VISIBLE
                     imvGradHardQuiz.visibility = View.GONE
                     if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
@@ -299,7 +284,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
                 }
                 MAX_PERCENT_HARD_QUIZ_FULL -> {
-                    log("quizEntity.stars 2")
                     if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
                     imvGradLightQuiz.visibility = View.GONE
                     imvGradHardQuiz.visibility = View.VISIBLE
@@ -307,7 +291,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
                 }
                 else -> {
-                    log("quizEntity.stars 3")
                     chbTypeQuiz.visibility = View.GONE
                     imvGradLightQuiz.visibility = View.GONE
                     imvGradHardQuiz.visibility = View.GONE
@@ -319,7 +302,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             val lvlTranslate = 100
 
-            log("sefefefe, $lvlTranslate")
             if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
             else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
             else imvTranslate.setColorFilter(Color.BLUE)
@@ -327,7 +309,6 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 (quizEntity.starsMaxLocal.toFloat() / 50F)
             else ratingBar.rating = (((quizEntity.starsMaxLocal.toFloat() - 100F) / 20F) + 2F)
 
-            log("sefefefe ${(quizEntity.starsMaxLocal.toFloat() / 50F) }, ${ratingBar.rating}")
 
 
             imvTranslate.setOnTouchListener { view, event ->
@@ -352,16 +333,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }/*
-            imvGradHardQuiz.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
             }
-            imvGradLightQuiz.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }
-            imvTranslate.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }*/
 
         }
 
@@ -369,7 +341,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         @OptIn(InternalCoroutinesApi::class)
         private fun showDialogTranslate(
             context: Context,
-            mainViewModel: MainActivityViewModel,
+            mainViewModel: QuizActivityViewModel,
             nolics: Int,
             quizEntity: QuizEntity,
             popupWindow: PopupWindow,
@@ -407,31 +379,10 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             quizEntity: QuizEntity,
             event: MotionEvent,
             popupType: Int,
-            viewModel: MainActivityViewModel
+            viewModel: QuizActivityViewModel
         ) {
-            val context = itemView.context
-            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            val popupView = inflater.inflate(R.layout.translation_popup_layout, null)
-            val popupWindow = PopupWindow(
-                popupView,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                true
-            )
 
-            popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-            val popupWidth = popupView.measuredWidth
-            val popupHeight = popupView.measuredHeight
-            val touchX = event.rawX
-            val touchY = event.rawY
-            popupWindow.width = popupWidth.toInt()
-            popupWindow.height = popupHeight
-            popupWindow.showAtLocation(
-                itemView,
-                Gravity.NO_GRAVITY,
-                touchX.toInt() + 16,
-                touchY.toInt() + 16
-            )
+
         }
 
         companion object {
@@ -439,7 +390,7 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             fun create(parent: ViewGroup, listener: Listener): ItemHolder {
                 return ItemHolder(
                     LayoutInflater.from(parent.context)
-                        .inflate(R.layout.activity_main_item, parent, false),
+                        .inflate(R.layout.activity_quiz_item, parent, false),
                     listener
                 )
             }
@@ -466,8 +417,4 @@ class MainActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
     }
 
-    @OptIn(InternalCoroutinesApi::class)
-    fun log(msg: String) {
-        Logcat.log(msg, "MainActivityAdapter", Logcat.LOG_ACTIVITY)
-    }
 }

@@ -69,12 +69,10 @@ object SetItemMenu {
 
     fun setNetworkMenu(
         binding: ActivityMainBinding,
-        fr2: Int,
         context: Context,
         skill: Int,
         qualification: Qualification
     ) {
-        log("fun setNetworkMenu() remove menu: $fr2")
         val menu = binding.navigationView.menu
         menu.clear() // Очистите текущее меню
 

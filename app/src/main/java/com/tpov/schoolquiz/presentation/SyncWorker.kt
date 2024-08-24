@@ -35,18 +35,16 @@ class SyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            Log.d("SyncWorker", "Starting sync work...")
-            val isSuccess = structureUseCase.syncData()
+            val updatedQuizList = structureUseCase.syncData()
 
-            if (isSuccess) {
-                Log.d("SyncWorker", "Sync successful")
-                showNotification("Sync Complete", "Data was successfully synchronized.")
+            if (updatedQuizList.isNotEmpty()) {
+                showNotification("Sync Complete", "Updated ${updatedQuizList.size} quizzes.")
             } else {
-                Log.d("SyncWorker", "Sync failed")
+                showNotification("Sync Complete", "No new data to synchronize.")
             }
 
             val outputData = Data.Builder()
-                .putBoolean(KEY_SYNC_SUCCESS, isSuccess)
+                .putBoolean(KEY_SYNC_SUCCESS, true)
                 .build()
 
             Result.success(outputData)
@@ -55,6 +53,7 @@ class SyncWorker @AssistedInject constructor(
             Result.retry()
         }
     }
+
 
 
     @SuppressLint("MissingPermission")

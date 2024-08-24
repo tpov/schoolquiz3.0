@@ -1,63 +1,131 @@
 package com.tpov.common.data.model.remote
 
-import com.tpov.common.data.model.local.QuizEntity
-
 data class StructureData(
     val event: List<EventData>,
-)
+) {
+    fun toStructureDataLocal() = com.tpov.common.data.model.local.StructureData(
+        event = event.map { it.toEventDataLocal() }
+    )
+}
 
 data class EventData(
     val id: Int,
     val category: List<CategoryData>,
-)
+) {
+    fun toEventDataLocal(): com.tpov.common.data.model.local.EventData {
+        return com.tpov.common.data.model.local.EventData(
+            id = id,
+            category = category.map { it.toCategoryDataLocal() },
+            isShowArchive = false,
+            isShowDownload = false
+        )
+    }
+}
 
 data class CategoryData(
     val id: Int,
     val subcategory: List<SubCategoryData>,
-
     val nameQuiz: String,
     val dataUpdate: String,
-    val starsMaxLocal: Int,
     val starsMaxRemote: Int,
-    val versionQuiz: Int,
     val picture: String?,
-    val ratingRemote: Int,
-    val ratingLocal: Int,
-)
+    val ratingRemote: Int
+) {
+    fun toCategoryDataLocal(): com.tpov.common.data.model.local.CategoryData {
+        return com.tpov.common.data.model.local.CategoryData(
+            id = id,
+            subcategory = subcategory.map { it.toSubCategoryDataLocal() },
+            nameQuiz = nameQuiz,
+            dataUpdate = dataUpdate,
+            starsMaxLocal = 0,
+            starsMaxRemote = starsMaxRemote,
+            picture = picture,
+            ratingRemote = ratingRemote,
+            ratingLocal = 0,
+            isShowArchive = false,
+            isShowDownload = false
+        )
+    }
+}
 
 data class SubCategoryData(
     val id: Int,
     val subSubcategory: List<SubsubCategoryData>,
-
     val nameQuiz: String,
     val dataUpdate: String,
     val userName: String,
-    val starsMaxLocal: Int,
     val starsMaxRemote: Int,
-    val versionQuiz: Int,
     val picture: String?,
     val ratingRemote: Int,
-    val ratingLocal: Int,
-)
+) {
+    fun toSubCategoryDataLocal(): com.tpov.common.data.model.local.SubCategoryData {
+        return com.tpov.common.data.model.local.SubCategoryData(
+            id = id,
+            subSubcategory = subSubcategory.map { it.toSubsubCategoryDataLocal() },
+            nameQuiz = nameQuiz,
+            dataUpdate = dataUpdate,
+            userName = userName,
+            starsMaxLocal = 0,
+            starsMaxRemote = starsMaxRemote,
+            picture = picture,
+            ratingRemote = ratingRemote,
+            ratingLocal = 0,
+            isShowArchive = false,
+            isShowDownload = false
+        )
+    }
+}
 
 data class SubsubCategoryData(
     val id: Int,
     val quizData: List<QuizData>,
-
     val nameQuiz: String,
     val dataUpdate: String,
     val userName: String,
-    val starsMaxLocal: Int,
     val starsMaxRemote: Int,
-    val versionQuiz: Int,
     val picture: String?,
     val ratingRemote: Int,
-    val ratingLocal: Int,
-)
+) {
+    fun toSubsubCategoryDataLocal(): com.tpov.common.data.model.local.SubsubCategoryData {
+        return com.tpov.common.data.model.local.SubsubCategoryData(
+            id = id,
+            quizData = quizData.map { it.toQuizDataLocal() },
+            nameQuiz = nameQuiz,
+            dataUpdate = dataUpdate,
+            userName = userName,
+            starsMaxLocal = 0,
+            starsMaxRemote = starsMaxRemote,
+            picture = picture,
+            ratingRemote = ratingRemote,
+            ratingLocal = 0,
+            isShowArchive = false,
+            isShowDownload = false
+        )
+    }
+}
 
 data class QuizData(
     val idQuiz: Int,
-    val quizEntity: QuizEntity?,
     val nameQuiz: String,
-    val ratingRemote: Int
-)
+    val ratingRemote: Int,
+    val dataUpdate: String,
+    val userName: String,
+    val picture: String,
+    val starsMaxRemote: Int
+) {
+    fun toQuizDataLocal(): com.tpov.common.data.model.local.QuizData {
+        return com.tpov.common.data.model.local.QuizData(
+            idQuiz = idQuiz,
+            nameQuiz = nameQuiz,
+            ratingRemote = ratingRemote,
+            ratingLocal = 0,
+            isShowArchive = false,
+            isShowDownload = false,
+            dataUpdate = dataUpdate,
+            userName = userName,
+            starsMaxLocal = 0,
+            picture = picture,
+            starsMaxRemote = starsMaxRemote
+        )
+    }
+}

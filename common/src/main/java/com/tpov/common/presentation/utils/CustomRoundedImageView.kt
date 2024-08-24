@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.core
+package com.tpov.common.presentation.utils
 
 import android.content.Context
 import android.graphics.Canvas

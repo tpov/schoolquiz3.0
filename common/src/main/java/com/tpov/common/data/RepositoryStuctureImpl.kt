@@ -1,6 +1,8 @@
 package com.tpov.common.data
 
+import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.gson.Gson
 import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.data.model.remote.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
@@ -9,14 +11,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class RepositoryStuctureImpl @Inject constructor(
     private val structureRatingDataDao: StructureRatingDataDao,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val context: Context
 ) : RepositoryStructure {
 
-    override suspend fun fetchQuizzes(): StructureData {
+    private val gson = Gson()
+    private val fileName = "structure_data.json"
+    private val ratingFileName = "structure_rating.json"
+
+    override suspend fun fetchStructureData(): StructureData {
         return try {
             val documentSnapshot =
                 firestore.collection("structureData").document("structureData").get().await()
@@ -49,6 +57,41 @@ class RepositoryStuctureImpl @Inject constructor(
             CoroutineScope(Dispatchers.IO).launch {
                 saveFailedRatingLocally(ratingData)
             }
+        }
+    }
+
+    override suspend fun saveStructureData(structureData: com.tpov.common.data.model.local.StructureData) {
+        withContext(Dispatchers.IO) {
+            val json = gson.toJson(structureData)
+            context.openFileOutput(fileName, Context.MODE_PRIVATE).use {
+                it.write(json.toByteArray())
+            }
+        }
+    }
+
+    override suspend fun saveListUpdateQuiz(list: List<String>) {
+        val sharedPreferences = context.getSharedPreferences("QuizUpdates", Context.MODE_PRIVATE)
+        with(sharedPreferences.edit()) {
+            putString("UpdatedQuizzes", list.joinToString(","))
+            apply()
+        }
+    }
+
+    override suspend fun loadListUpdateQuiz(): List<String> {
+        val sharedPreferences = context.getSharedPreferences("QuizUpdates", Context.MODE_PRIVATE)
+        val data = sharedPreferences.getString("UpdatedQuizzes", "")
+        return data?.split(",")?.filterNot { it.isEmpty() } ?: emptyList()
+    }
+
+    override suspend fun loadStructureData(): com.tpov.common.data.model.local.StructureData? {
+        return withContext(Dispatchers.IO) {
+            val file = context.getFileStreamPath(ratingFileName)
+            (if (file.exists()) {
+                gson.fromJson(
+                    context.openFileInput(ratingFileName).bufferedReader().use { it.readText() },
+                    com.tpov.common.data.model.local.StructureData::class.java
+                )
+            } else null)
         }
     }
 

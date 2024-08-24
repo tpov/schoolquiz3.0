@@ -35,12 +35,24 @@ import com.tpov.common.COUNT_LIFE_POINTS_IN_LIFE
 import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
+import com.tpov.common.presentation.quiz.QuizActivityViewModel
+import com.tpov.common.presentation.quiz.QuizFragment
+import com.tpov.network.presentation.AutorisationFragment
+import com.tpov.network.presentation.chat.ChatFragment
+import com.tpov.network.presentation.friend.FriendsFragment
+import com.tpov.network.presentation.leaders.LeadersFragment
+import com.tpov.network.presentation.referal.ReferralProgramFragment
+import com.tpov.network.presentation.roles.RolesFragment
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
+import com.tpov.schoolquiz.presentation.about.AboutFragment
 import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
+import com.tpov.schoolquiz.presentation.setting.SettingsFragment
+import com.tpov.shop.presentation.ShopFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -57,10 +69,9 @@ import java.util.TimerTask
 
 @InternalCoroutinesApi
 class MainActivity : AppCompatActivity() {
+
     lateinit var binding: ActivityMainBinding
-
-    lateinit var viewModel: MainActivityViewModel
-
+    lateinit var viewModel: QuizActivityViewModel
     private var recreateActivity: Boolean = false
 
     override fun onDestroy() {
@@ -80,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         setupUI()
         initViewModel()
         setupDrawerLayout()
+        initBottomMenu()
         setupAnimations()
         createTimer()
     }
@@ -108,8 +120,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViewModel() {
-        viewModel = ViewModelProvider(this)[MainActivityViewModel::class.java]
-
+        viewModel = ViewModelProvider(this)[QuizActivityViewModel::class.java]
     }
 
     private fun updateUI(profile: ProfileEntity?) {
@@ -211,12 +222,73 @@ class MainActivity : AppCompatActivity() {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
                 val slideX = drawerView.width * slideOffset
                 binding.cv.translationX = slideX
+
+                // Пример взаимодействия с другими элементами
+                binding.progressBar2.alpha = 1 - slideOffset // Меняем прозрачность ProgressBar в зависимости от открытия меню
+                binding.tvPbLoad.translationX = slideX / 2 // Перемещаем текст в зависимости от открытия меню
             }
 
             override fun onDrawerOpened(drawerView: View) {}
             override fun onDrawerClosed(drawerView: View) {}
             override fun onDrawerStateChanged(newState: Int) {}
         })
+
+        binding.navigationView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.title) {
+                getString(R.string.nav_home) -> switchFragment(MainFragment())
+                getString(R.string.nav_my_quests) -> switchFragment(QuizFragment())
+                getString(R.string.nav_downloads) -> switchFragment(DownloadFragment())
+                getString(R.string.nav_settings) -> switchFragment(SettingsFragment())
+                getString(R.string.nav_tasks) -> switchFragment(QuizFragment())
+                getString(R.string.nav_about) -> switchFragment(AboutFragment())
+
+                getString(R.string.nav_chat) -> switchFragment(ChatFragment())
+                getString(R.string.nav_arena) -> switchFragment(QuizFragment())
+                getString(R.string.nav_leaders) -> switchFragment(LeadersFragment())
+                getString(R.string.nav_tournament) -> switchFragment(QuizFragment())
+                getString(R.string.nav_archive) -> switchFragment(QuizFragment())
+                getString(R.string.nav_referral_program) -> switchFragment(ReferralProgramFragment())
+                getString(R.string.nav_friends) -> switchFragment(FriendsFragment())
+                getString(R.string.nav_roles) -> switchFragment(RolesFragment())
+                getString(R.string.nav_logout) -> {
+                    logout()
+                }
+                else -> false
+            }
+            binding.drawerLayout.closeDrawers()
+            true
+        }
+    }
+
+    private fun logout() {
+
+    }
+
+    private fun initBottomMenu() {
+        binding.bNav.setOnNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.menu_home -> switchFragment(MainFragment())
+                R.id.menu_adb -> switchFragment(ShopFragment())
+                R.id.menu_info -> startInfoFragment()
+                R.id.menu_network -> {
+                    switchFragment(AutorisationFragment())
+                    //SetItemMenu.setNetworkMenu(binding, )
+                }
+                else -> false
+            }
+            true
+        }
+    }
+
+    private fun startInfoFragment() {
+
+    }
+
+    private fun switchFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.title_fragment, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun setupAnimations() {

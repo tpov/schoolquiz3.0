@@ -46,8 +46,7 @@
             app:srcCompat="@drawable/ic_baseline_drive_folder_upload_24" />
     </LinearLayout>
 
-    <com.tpov.schoolquiz.presentation.core.CustomRoundedImageView
-
+    <com.tpov.common.presentation.utils.CustomRoundedImageView
         android:id="@+id/constraint_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -303,6 +302,6 @@
 
         </LinearLayout>
 
-    </com.tpov.schoolquiz.presentation.core.CustomRoundedImageView>
+    </com.tpov.common.presentation.utils.CustomRoundedImageView>
 
 </RelativeLayout>

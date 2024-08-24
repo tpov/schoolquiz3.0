@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.main
+package com.tpov.common.data.utils
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter

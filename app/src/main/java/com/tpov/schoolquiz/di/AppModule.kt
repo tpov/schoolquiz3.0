@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.di
 
+import android.app.Application
+import android.content.Context
 import androidx.work.ListenableWorker
 import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.inject.assisted.dagger2.AssistedModule
@@ -23,6 +25,10 @@ class AppModule {
 
     @Provides
     @Singleton
+    fun provideApplicationContext(application: Application): Context = application
+
+    @Provides
+    @Singleton
     fun provideStructureUseCase(repositoryStuctureImpl: RepositoryStuctureImpl): StructureUseCase {
         return StructureUseCase(repositoryStuctureImpl)
     }
@@ -31,9 +37,10 @@ class AppModule {
     @Singleton
     fun provideRepositoryStructureImpl(
         structureRatingDataDao: StructureRatingDataDao,
-        firestore: FirebaseFirestore
+        firestore: FirebaseFirestore,
+        context: Context
     ): RepositoryStuctureImpl {
-        return RepositoryStuctureImpl(structureRatingDataDao, firestore)
+        return RepositoryStuctureImpl(structureRatingDataDao, firestore, context)
     }
 
     @Provides
