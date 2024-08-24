@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.tpov.shop.test.shop-mergeDebugAndroidTestResources-40:/values-hdpi-v4/values-hdpi-v4.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\tpovd\\.gradle\\caches\\transforms-4\\8ec63e5eaba47d2674ca8af109b67930\\transformed\\appcompat-1.7.0\\res\\values-hdpi-v4\\values-hdpi-v4.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "6",
+                        "endColumns": "13",
+                        "endOffsets": "327"
+                    }
+                }
+            ]
+        }
+    ]
+}

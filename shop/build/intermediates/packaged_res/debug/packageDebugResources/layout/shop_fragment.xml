@@ -1,0 +1,150 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#252525">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="108dp"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/adCard"
+            style="@style/ShopCardViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                style="@style/ShopLinearLayoutStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    style="@style/ShopImageViewStyle"
+                    android:src="@drawable/ic_box" />
+
+                <TextView
+                    style="@style/ShopTextViewStyle"
+                    android:text="@string/shop_fragment_get_box_for_ad_text" />
+
+                <Button
+                    android:id="@+id/btnBuyAd"
+                    style="@style/ShopButtonStyle"
+                    android:text="@string/shop_fragment_get_box_for_ad_show" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/buy_life"
+            style="@style/ShopCardViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                style="@style/ShopLinearLayoutStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    style="@style/ShopImageViewStyle"
+                    android:src="@drawable/baseline_favorite_24" />
+
+                <TextView
+                    style="@style/ShopTextViewStyle"
+                    android:text="@string/shop_fragment_buy_life_text" />
+
+                <Button
+                    android:id="@+id/b_buy_life"
+                    style="@style/ShopButtonStyle"
+                    android:text="@string/shop_fragment_button_buy" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_buy_life_gold"
+            style="@style/ShopCardViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                style="@style/ShopLinearLayoutStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    style="@style/ShopImageViewStyle"
+                    android:src="@drawable/baseline_favorite_24_gold" />
+
+                <TextView
+                    style="@style/ShopTextViewStyle"
+                    android:text="@string/shop_fragment_buy_life_gold_text" />
+
+                <Button
+                    android:id="@+id/b_buy_life_gold"
+                    style="@style/ShopButtonStyle"
+                    android:text="@string/shop_fragment_button_buy" />
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_place_for_quiz"
+            style="@style/ShopCardViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                style="@style/ShopLinearLayoutStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    style="@style/ShopImageViewStyle"
+                    android:src="@drawable/ic_baseline_add_circle_24" />
+
+                <TextView
+                    style="@style/ShopTextViewStyle"
+                    android:text="@string/shop_fragment_buy_one_place_text" />
+
+                <Button
+                    android:id="@+id/b_place_for_quiz"
+                    style="@style/ShopButtonStyle"
+                    android:text="@string/shop_fragment_button_buy" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_donate"
+            style="@style/ShopCardViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                style="@style/ShopLinearLayoutStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    style="@style/ShopImageViewStyle"
+                    android:src="@drawable/ic_donate" />
+
+                <TextView
+                    style="@style/ShopTextViewStyle"
+                    android:text="@string/shop_fragment_text_donate" />
+
+                <Button
+                    android:id="@+id/b_donate"
+                    style="@style/ShopButtonStyle"
+                    android:text="@string/shop_fragment_donate" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>
