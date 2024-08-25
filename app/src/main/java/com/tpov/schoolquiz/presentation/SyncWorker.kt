@@ -15,6 +15,7 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.tpov.common.domain.StructureUseCase
 import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -89,8 +90,11 @@ class SyncWorker @AssistedInject constructor(
         }
     }
 
-    @AssistedInject.Factory
-    interface Factory : ChildWorkerFactory
+    @AssistedFactory
+    interface Factory : ChildWorkerFactory {
+        override fun create(context: Context, workerParams: WorkerParameters): SyncWorker
+    }
+
 }
 
 class AppWorkerFactory @Inject constructor(
@@ -102,15 +106,11 @@ class AppWorkerFactory @Inject constructor(
         workerClassName: String,
         workerParameters: WorkerParameters
     ): ListenableWorker? {
-        val entry = workerFactories.entries.find {
-            Class.forName(workerClassName).isAssignableFrom(it.key)
-        }
-
-        val factoryProvider = entry?.value ?: return null
+        val factoryProvider = workerFactories[Class.forName(workerClassName)] ?: return null
         return factoryProvider.get().create(appContext, workerParameters)
     }
 }
 
 interface ChildWorkerFactory {
-    fun create(context: Context, workerParams: WorkerParameters): ListenableWorker
+    fun create(context: Context, workerParams: WorkerParameters): SyncWorker
 }

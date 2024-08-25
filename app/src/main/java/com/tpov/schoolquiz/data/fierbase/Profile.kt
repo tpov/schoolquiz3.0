@@ -13,6 +13,7 @@ data class Profile constructor(
     val birthday: String,
     val points: Points,
     val datePremium: String,
+    val dateBanned: String,
     val buy: Buy,
     val trophy: String,
     val friends: String,
@@ -35,6 +36,7 @@ data class Profile constructor(
         "",
         "",
         Points( 0, 0, 0),
+        "",
         "",
         Buy(0, "", "", ""),
         "",
@@ -155,13 +157,14 @@ fun ProfileEntity.toProfile(): Profile {
         login = this.login!!,
         name = this.name ?: "",
         nickname = this.nickname!!,
-        birthday = this.birthday!!,
+        birthday = this.birthday,
         points = Points(
-            gold = this.pointsGold!!,
+            gold = this.pointsGold,
             skill = this.pointsSkill!!,
             nolics = this.pointsNolics!!
         ),
-        datePremium = this.datePremium!!,
+        datePremium = this.datePremium,
+        dateBanned = this.dateBanned,
         buy = Buy(
             quizPlace = this.buyQuizPlace!!,
             theme = this.buyTheme!!,
@@ -257,9 +260,10 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         countGoldLife = this.life.countGoldLife,
         countLife = this.life.countLife,
         dateCloseApp = TimeManager.getCurrentTime(),
-        timeInGamesCountQuestions = this.timeInGames.countQuestions,
+        timeInGamesCountQuestions = this.timeInGames.countQuestions!!,
         timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion,
         timeInQuizRating = this.timeInGames.timeInQuizRating,
         commander = this.comander,
+        dateBanned = this.dateBanned
     )
 }

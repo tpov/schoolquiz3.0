@@ -8,7 +8,6 @@ plugins {
 }
 
 android {
-
     namespace = "com.tpov.schoolquiz"
     lint {
         baseline = file("lint-baseline.xml")
@@ -61,7 +60,6 @@ android {
     }
 }
 
-// TODO Очистить то, что дублируется
 dependencies {
 
     implementation project(':userguide')
@@ -70,10 +68,8 @@ dependencies {
     implementation project(':settings')
     implementation project(':network')
 
-
     implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //Библиотека Руум
-
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.7.7'
     implementation 'androidx.navigation:navigation-ui-ktx:2.7.7'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.4'
@@ -109,15 +105,19 @@ dependencies {
     implementation 'com.google.firebase:firebase-database-ktx:21.0.0'
     implementation 'androidx.hilt:hilt-common:1.2.0'
     implementation 'com.google.firebase:firebase-firestore-ktx:25.0.0'
+    implementation 'com.google.firebase:firebase-storage-ktx:21.0.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.13.2'
     implementation 'jp.wasabeef:glide-transformations:4.3.0'
 
     implementation 'com.google.code.gson:gson:2.10.1'
 
     kapt "androidx.room:room-compiler:2.6.1"
-    kapt 'com.google.dagger:dagger-compiler:2.48.1'
-    implementation 'com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0'
-    kapt 'com.squareup.inject:assisted-inject-processor-dagger2:0.6.0'
+    kapt 'com.google.dagger:dagger-compiler:2.49'
+    implementation 'com.squareup.inject:assisted-inject-annotations-dagger2:0.8.1'
+    kapt 'com.squareup.inject:assisted-inject-processor-dagger2:0.8.1'
+
+        implementation 'com.google.guava:guava:30.1-jre'
+
 
 }
 

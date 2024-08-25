@@ -61,6 +61,7 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Timer
 import java.util.TimerTask
+import javax.inject.Inject
 
 /**
  * This is the main screen of the application, it consists of a panel that shows how much spare is left.
@@ -70,6 +71,8 @@ import java.util.TimerTask
 @InternalCoroutinesApi
 class MainActivity : AppCompatActivity() {
 
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
     lateinit var binding: ActivityMainBinding
     lateinit var viewModel: MainViewModel
     private var recreateActivity: Boolean = false
@@ -170,7 +173,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViewModel() {
-        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
     }
 
     private fun updateUI(profile: ProfileEntity?) {

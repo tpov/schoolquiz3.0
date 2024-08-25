@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.di
 
 import android.app.Application
 import com.tpov.schoolquiz.presentation.AppWorkerFactory
+import com.tpov.schoolquiz.presentation.main.MainActivity
 import com.tpov.schoolquiz.presentation.main.MainFragment
 import com.tpov.schoolquiz.presentation.splashscreen.SplashScreen
 import dagger.BindsInstance
@@ -10,13 +11,14 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Singleton
 
 
+@OptIn(InternalCoroutinesApi::class)
 @Singleton
-@Component(modules = [AppModule::class, WorkerBindingModule::class, AssistedInjectModule::class, ViewModelModule::class ])
+@Component(modules = [AppModule::class, ViewModelModule::class, WorkerModule::class])
 interface ApplicationComponent {
     fun inject(application: Application)
-    @OptIn(InternalCoroutinesApi::class)
     fun inject(splashScreen: SplashScreen)
     fun inject(mainFragment: MainFragment)
+    fun inject(mainActivity: MainActivity)
     fun workerFactory(): AppWorkerFactory
 
     @Component.Factory

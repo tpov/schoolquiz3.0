@@ -1,6 +1,7 @@
 package com.tpov.common.data
 
 import android.content.Context
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import com.tpov.common.data.database.StructureRatingDataDao
@@ -24,20 +25,24 @@ class RepositoryStuctureImpl @Inject constructor(
     private val fileName = "structure_data.json"
     private val ratingFileName = "structure_rating.json"
 
-    override suspend fun fetchStructureData(): StructureData {
+    override suspend fun fetchStructureData(): StructureData? {
         return try {
-            val documentSnapshot =
-                firestore.collection("structureData").document("structureData").get().await()
+            val documentSnapshot = firestore.collection("structureData")
+                .document("structureData")
+                .get().await()
             if (documentSnapshot.exists()) {
-                documentSnapshot.toObject(StructureData::class.java)
-                    ?: throw Exception("Data parsing error")
+                documentSnapshot.toObject(StructureData::class.java) ?: throw Exception("Data parsing error")
             } else {
-                throw Exception("No such document")
+                Log.d("Firestore", "Document 'structureData' does not exist, returning null.")
+                null // Возвращаем null, если документ не найден
             }
         } catch (e: Exception) {
+            Log.e("Firestore", "Error fetching document: ${e.message}")
             throw Exception("Error fetching data", e)
         }
     }
+
+
 
     override suspend fun pushStructureRating(ratingData: StructureLocalData) {
         try {

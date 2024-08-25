@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import com.tpov.schoolquiz.presentation.main.ViewModelFactory
 import dagger.Binds
+import dagger.MapKey
 import dagger.Module
 import dagger.multibindings.IntoMap
+import kotlin.reflect.KClass
 
 @Module
 abstract class ViewModelModule {
@@ -19,3 +21,8 @@ abstract class ViewModelModule {
     @ViewModelKey(MainViewModel::class)
     abstract fun bindMainViewModel(viewModel: MainViewModel): ViewModel
 }
+@MustBeDocumented
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MapKey
+annotation class ViewModelKey(val value: KClass<out ViewModel>)

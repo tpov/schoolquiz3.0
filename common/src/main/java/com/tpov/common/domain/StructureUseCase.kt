@@ -1,5 +1,6 @@
 package com.tpov.common.domain
 
+import android.util.Log
 import com.tpov.common.data.RepositoryStuctureImpl
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
@@ -18,18 +19,46 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
     }
 
     suspend fun syncData(): List<String> {
-        val dataRemote = repositoryStructureImpl.fetchStructureData()
-        val dataLocal = repositoryStructureImpl.loadStructureData()
-        val newDataLocalEmpty = dataRemote.toStructureDataLocal()
+        Log.d("SyncData", "Starting data synchronization")
+
+        val dataRemote = try {
+            repositoryStructureImpl.fetchStructureData()
+        } catch (e: Exception) {
+            Log.e("SyncData", "Error fetching remote data: ${e.message}")
+            throw e
+        }
+        Log.d("SyncData", "Remote data fetched: $dataRemote")
+
+        val dataLocal = try {
+            repositoryStructureImpl.loadStructureData()
+        } catch (e: Exception) {
+            Log.e("SyncData", "Error loading local data: ${e.message}")
+            throw e
+        }
+        Log.d("SyncData", "Local data loaded: $dataLocal")
+
+        val newDataLocalEmpty = dataRemote?.toStructureDataLocal()
+        Log.d("SyncData", "Converted remote data to local format: $newDataLocalEmpty")
+
         val changedQuizzes = mutableListOf<String>()
 
         val newDataLocal: StructureData = if (dataLocal == null) {
-            newDataLocalEmpty
+            Log.d("SyncData", "No local data found, using new data")
+            newDataLocalEmpty!!
         } else {
-            mergeData(dataLocal, newDataLocalEmpty, changedQuizzes)
+            Log.d("SyncData", "Merging local and new data")
+            mergeData(dataLocal, newDataLocalEmpty!!, changedQuizzes)
         }
 
-        repositoryStructureImpl.saveStructureData(newDataLocal)
+        try {
+            repositoryStructureImpl.saveStructureData(newDataLocal)
+            Log.d("SyncData", "Data saved successfully")
+        } catch (e: Exception) {
+            Log.e("SyncData", "Error saving data: ${e.message}")
+            throw e
+        }
+
+        Log.d("SyncData", "Data synchronization completed with changes: $changedQuizzes")
         return changedQuizzes
     }
 

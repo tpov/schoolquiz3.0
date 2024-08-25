@@ -33,11 +33,10 @@ class MainViewModel @Inject constructor(
     private val profileUseCase: ProfileUseCase
 ) : ViewModel() {
 
-    private val _categoryData = MutableLiveData<List<CategoryData>>()
     val categoryData: LiveData<List<CategoryData>> get() = _categoryData
-
-    private val _profileState = MutableStateFlow<ProfileEntity?>(null)
+    private val _categoryData = MutableLiveData<List<CategoryData>>()
     val profileState: StateFlow<ProfileEntity?> get() = _profileState
+    private val _profileState = MutableStateFlow<ProfileEntity?>(null)
 
     var firstStartApp = false
 
