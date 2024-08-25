@@ -22,8 +22,8 @@ class RepositoryQuestionImpl @Inject constructor(
 
     override suspend fun fetchQuestion(
         event: Int,
-        categoryId: String,
-        subcategoryId: String,
+        categoryId: Int,
+        subcategoryId: Int,
         language: String,
         idQuiz: Int
     ): List<QuestionEntity> {
@@ -48,8 +48,18 @@ class RepositoryQuestionImpl @Inject constructor(
             val numQuestionStr = questionDirectory.id
             val numQuestion = numQuestionStr.toIntOrNull() ?: 0
             val hardQuestion = numQuestion < 0
-            val languageCollection = baseCollectionReference.document(numQuestionStr).collection(language)
-            val documents = languageCollection.get().await().documents
+
+            val languageCollection = baseCollectionReference.document(numQuestionStr).collection(
+                language
+            )
+            var documents = languageCollection.get().await().documents
+
+            if (documents.isEmpty() && questionDirectories.isNotEmpty()) {
+                val firstLanguage = questionDirectories.first().id
+                val firstLanguageCollection = baseCollectionReference.document(numQuestionStr).collection(firstLanguage)
+                documents = firstLanguageCollection.get().await().documents
+            }
+
             val questions = documents.mapNotNull {
                 it.toObject(QuestionRemote::class.java)
                     ?.toQuizEntity(numQuestion = numQuestion, hardQuestion = hardQuestion, id = 0, idQuiz = idQuiz, language = language)

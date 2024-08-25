@@ -13,9 +13,9 @@ import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import com.squareup.inject.assisted.Assisted
-import com.squareup.inject.assisted.AssistedInject
 import com.tpov.common.domain.StructureUseCase
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -53,8 +53,6 @@ class SyncWorker @AssistedInject constructor(
             Result.retry()
         }
     }
-
-
 
     @SuppressLint("MissingPermission")
     private fun showNotification(title: String, message: String) {

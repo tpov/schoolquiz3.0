@@ -44,7 +44,11 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.loadHomeCategory()
+            val listNewQuiz = viewModel.loadHomeCategory()
+            if (viewModel.firstStartApp) {
+                viewModel.loadQuizByStructure(listNewQuiz)
+                viewModel.createProfile()
+            }
         }
     }
 }

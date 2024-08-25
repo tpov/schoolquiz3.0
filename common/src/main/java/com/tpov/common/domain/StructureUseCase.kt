@@ -50,7 +50,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
                                             quizData = newSubsub.quizData.map { newQuiz ->
                                                 val localQuiz = localSubsub?.quizData?.find { it.idQuiz == newQuiz.idQuiz }
                                                 if (localQuiz != null && newQuiz.dataUpdate != localQuiz.dataUpdate) {
-                                                    changedQuizzes.add("${newEvent.id}/${newCategory.nameQuiz}/${newSubcategory.nameQuiz}/${newSubsub.nameQuiz}/${newQuiz.nameQuiz}")
+                                                    changedQuizzes.add("${newEvent.id}|${newCategory.id}|${newSubcategory.id}|${newSubsub.id}|${newQuiz.idQuiz}")
                                                 }
                                                 newQuiz.copy(
                                                     ratingLocal = localQuiz?.ratingLocal ?: newQuiz.ratingLocal,

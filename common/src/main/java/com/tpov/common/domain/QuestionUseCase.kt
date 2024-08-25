@@ -7,8 +7,8 @@ import javax.inject.Inject
 class QuestionUseCase @Inject constructor(private val repositoryQuestion: RepositoryQuestion) {
     suspend fun fetchQuestion(
         typeId: Int,
-        categoryId: String,
-        subcategoryId: String,
+        categoryId: Int,
+        subcategoryId: Int,
         pathLanguage: String,
         idQuiz: Int
     ) = repositoryQuestion.fetchQuestion(

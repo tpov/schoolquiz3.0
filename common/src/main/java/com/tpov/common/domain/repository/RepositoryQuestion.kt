@@ -5,8 +5,8 @@ import com.tpov.common.data.model.local.QuestionEntity
 interface RepositoryQuestion {
     suspend fun fetchQuestion(
         event: Int,
-        categoryId: String,
-        subcategoryId: String,
+        categoryId: Int,
+        subcategoryId: Int,
         pathLanguage: String,
         idQuiz: Int
     ): List<QuestionEntity>

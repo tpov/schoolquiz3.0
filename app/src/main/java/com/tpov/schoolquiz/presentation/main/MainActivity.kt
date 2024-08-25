@@ -31,6 +31,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.tpov.common.COUNT_LIFE_POINTS_IN_LIFE
 import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
@@ -71,7 +72,7 @@ import java.util.TimerTask
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
-    lateinit var viewModel: QuizActivityViewModel
+    lateinit var viewModel: MainViewModel
     private var recreateActivity: Boolean = false
 
     override fun onDestroy() {
@@ -94,6 +95,56 @@ class MainActivity : AppCompatActivity() {
         initBottomMenu()
         setupAnimations()
         createTimer()
+        updateProfile()
+    }
+
+    private fun updateProfile() {
+        lifecycleScope.launch {
+            viewModel.profileState.collect { profile ->
+                if (profile != null) {
+                    with(profile) {
+                        nickname
+                        datePremium
+                        dateBanned
+                        trophy
+                        pointsGold
+                        pointsSkill
+                        pointsNolics
+                        buyQuizPlace
+                        buyTheme
+
+                        countBox
+                        timeLastOpenBox
+                        coundDayBox
+                        countLife
+                        count
+                        countGoldLife
+                        countGold
+                        if (addPointsGold != 0 ||
+                            addPointsSkill != 0 ||
+                            addPointsNolics != 0 ||
+                            addTrophy.isNotEmpty() ||
+                            addMassage.isNotEmpty()
+                        ) {
+
+                            val updatedProfile = profile.copy(
+                                pointsGold = pointsGold + addPointsGold,
+                                pointsSkill = pointsSkill + addPointsSkill,
+                                pointsNolics = pointsNolics + addPointsNolics,
+                                trophy = trophy + addTrophy,
+                                addPointsGold = 0,
+                                addPointsSkill = 0,
+                                addPointsNolics = 0,
+                                addTrophy = "",
+                                addMassage = ""
+                            )
+
+                            viewModel.updateProfile(updatedProfile)
+                        }
+                    }
+                } else Toast.makeText(applicationContext, "profile not created", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun setupUI() {
