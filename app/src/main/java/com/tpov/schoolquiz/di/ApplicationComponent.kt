@@ -11,7 +11,7 @@ import javax.inject.Singleton
 
 
 @Singleton
-@Component(modules = [AppModule::class, WorkerBindingModule::class, AssistedInjectModule::class, ViewModelModule::class])
+@Component(modules = [AppModule::class, WorkerBindingModule::class, AssistedInjectModule::class, ViewModelModule::class ])
 interface ApplicationComponent {
     fun inject(application: Application)
     @OptIn(InternalCoroutinesApi::class)

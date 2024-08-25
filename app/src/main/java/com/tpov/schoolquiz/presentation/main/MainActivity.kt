@@ -36,7 +36,6 @@ import com.tpov.common.COUNT_LIFE_POINTS_IN_LIFE
 import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
-import com.tpov.common.presentation.quiz.QuizActivityViewModel
 import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.network.presentation.AutorisationFragment
 import com.tpov.network.presentation.chat.ChatFragment
@@ -171,7 +170,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViewModel() {
-        viewModel = ViewModelProvider(this)[QuizActivityViewModel::class.java]
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
     }
 
     private fun updateUI(profile: ProfileEntity?) {

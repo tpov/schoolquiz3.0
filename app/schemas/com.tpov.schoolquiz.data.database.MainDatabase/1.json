@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4308201a6854879e67b31eb483198b37",
+    "identityHash": "570c4349dbf3f1294157841e3ef529fb",
     "entities": [
       {
         "tableName": "question_detail_entity",
@@ -264,7 +264,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER, `login` TEXT, `name` TEXT, `nickname` TEXT, `birthday` TEXT, `datePremium` TEXT, `trophy` TEXT, `friends` TEXT, `city` TEXT, `logo` INTEGER, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER, `timeInGamesInChat` INTEGER, `timeInGamesSmsPoints` INTEGER, `timeInGamesCountQuestions` INTEGER, `timeInGamesCountTrueQuestion` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER, `pointsSkill` INTEGER, `pointsNolics` INTEGER, `buyQuizPlace` INTEGER, `buyTheme` TEXT, `buyMusic` TEXT, `buyLogo` TEXT, `addPointsGold` INTEGER, `addPointsSkill` INTEGER, `addPointsNolics` INTEGER, `addTrophy` TEXT, `addMassage` TEXT, `dataCreateAcc` TEXT, `dateSynch` TEXT, `dateCloseApp` TEXT, `idFirebase` TEXT, `languages` TEXT, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER, `moderator` INTEGER, `admin` INTEGER, `developer` INTEGER, `countBox` INTEGER, `timeLastOpenBox` TEXT, `coundDayBox` INTEGER, `countLife` INTEGER, `count` INTEGER, `countGoldLife` INTEGER, `countGold` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT, `name` TEXT NOT NULL, `nickname` TEXT, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `dateBanned` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `timeInGamesCountQuestions` INTEGER NOT NULL, `timeInGamesCountTrueQuestion` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `addMassage` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `dateCloseApp` TEXT NOT NULL, `idFirebase` TEXT, `languages` TEXT NOT NULL, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT NOT NULL, `coundDayBox` INTEGER NOT NULL, `countLife` INTEGER NOT NULL, `count` INTEGER NOT NULL, `countGoldLife` INTEGER NOT NULL, `countGold` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -276,7 +276,7 @@
             "fieldPath": "tpovId",
             "columnName": "tpovId",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "login",
@@ -288,7 +288,7 @@
             "fieldPath": "name",
             "columnName": "name",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "nickname",
@@ -300,37 +300,43 @@
             "fieldPath": "birthday",
             "columnName": "birthday",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "datePremium",
             "columnName": "datePremium",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateBanned",
+            "columnName": "dateBanned",
+            "affinity": "TEXT",
+            "notNull": true
           },
           {
             "fieldPath": "trophy",
             "columnName": "trophy",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "friends",
             "columnName": "friends",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "city",
             "columnName": "city",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "logo",
             "columnName": "logo",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "commander",
@@ -342,25 +348,25 @@
             "fieldPath": "timeInGamesInQuiz",
             "columnName": "timeInGamesInQuiz",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "timeInGamesInChat",
             "columnName": "timeInGamesInChat",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "timeInGamesSmsPoints",
             "columnName": "timeInGamesSmsPoints",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "timeInGamesCountQuestions",
             "columnName": "timeInGamesCountQuestions",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "timeInGamesCountTrueQuestion",
@@ -378,91 +384,91 @@
             "fieldPath": "pointsGold",
             "columnName": "pointsGold",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "pointsSkill",
             "columnName": "pointsSkill",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "pointsNolics",
             "columnName": "pointsNolics",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "buyQuizPlace",
             "columnName": "buyQuizPlace",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "buyTheme",
             "columnName": "buyTheme",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "buyMusic",
             "columnName": "buyMusic",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "buyLogo",
             "columnName": "buyLogo",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "addPointsGold",
             "columnName": "addPointsGold",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "addPointsSkill",
             "columnName": "addPointsSkill",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "addPointsNolics",
             "columnName": "addPointsNolics",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "addTrophy",
             "columnName": "addTrophy",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "addMassage",
             "columnName": "addMassage",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "dataCreateAcc",
             "columnName": "dataCreateAcc",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "dateSynch",
             "columnName": "dateSynch",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "dateCloseApp",
             "columnName": "dateCloseApp",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "idFirebase",
@@ -474,7 +480,7 @@
             "fieldPath": "languages",
             "columnName": "languages",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "sponsor",
@@ -492,67 +498,67 @@
             "fieldPath": "translater",
             "columnName": "translater",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "moderator",
             "columnName": "moderator",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "admin",
             "columnName": "admin",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "developer",
             "columnName": "developer",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "countBox",
             "columnName": "countBox",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "timeLastOpenBox",
             "columnName": "timeLastOpenBox",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "coundDayBox",
             "columnName": "coundDayBox",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "countLife",
             "columnName": "countLife",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "count",
             "columnName": "count",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "countGoldLife",
             "columnName": "countGoldLife",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "countGold",
             "columnName": "countGold",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -568,7 +574,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4308201a6854879e67b31eb483198b37')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '570c4349dbf3f1294157841e3ef529fb')"
     ]
   }
 }

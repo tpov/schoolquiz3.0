@@ -35,18 +35,24 @@ class SyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
+            Log.d("SyncWorker", "Sync started")
+
             val updatedQuizList = structureUseCase.syncData()
 
             if (updatedQuizList.isNotEmpty()) {
-                showNotification("Sync Complete", "Updated ${updatedQuizList.size} quizzes.")
+                val quizCount = updatedQuizList.size
+                Log.d("SyncWorker", "Sync completed with $quizCount updated quizzes")
+                showNotification("Sync Complete", "Updated $quizCount quizzes.")
             } else {
+                Log.d("SyncWorker", "Sync completed with no new data to synchronize")
                 showNotification("Sync Complete", "No new data to synchronize.")
             }
 
             val outputData = Data.Builder()
-                .putBoolean(KEY_SYNC_SUCCESS, true)
-                .build()
+                    .putBoolean(KEY_SYNC_SUCCESS, true)
+                    .build()
 
+            Log.d("SyncWorker", "Sync successful")
             Result.success(outputData)
         } catch (e: Exception) {
             Log.e("SyncWorker", "Sync failed with exception", e)

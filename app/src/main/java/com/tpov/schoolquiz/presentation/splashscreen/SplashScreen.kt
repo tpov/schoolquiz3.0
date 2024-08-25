@@ -35,8 +35,8 @@ class SplashScreen : AppCompatActivity() {
         binding = ActivitySplashScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        (application as MainApp).applicationComponent.inject(application)
-        setupPeriodicSync() // Настраиваем периодическую синхронизацию
+        (application as MainApp).applicationComponent.inject(this)
+        setupPeriodicSync()
         createAnimation()
     }
 

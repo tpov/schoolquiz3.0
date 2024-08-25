@@ -11,7 +11,8 @@ import com.bumptech.glide.Glide
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.schoolquiz.R
 
-class MainAdapter(private val items: List<CategoryData>) : RecyclerView.Adapter<MainAdapter.MainViewHolder>() {
+class MainAdapter(private val items: List<CategoryData>,
+                  private val listener: OnItemClickListener) : RecyclerView.Adapter<MainAdapter.MainViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MainViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_main_fragment, parent, false)
@@ -20,6 +21,9 @@ class MainAdapter(private val items: List<CategoryData>) : RecyclerView.Adapter<
 
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {
         holder.bind(items[position])
+        holder.itemView.setOnClickListener {
+            listener.onItemClick(items[position])
+        }
     }
 
     override fun getItemCount(): Int = items.size
@@ -37,4 +41,8 @@ class MainAdapter(private val items: List<CategoryData>) : RecyclerView.Adapter<
             } ?: imageView.setImageResource(R.drawable.db_design3_main)
         }
     }
+}
+
+interface OnItemClickListener {
+    fun onItemClick(category: CategoryData)
 }

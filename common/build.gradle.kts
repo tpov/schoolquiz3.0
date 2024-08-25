@@ -17,7 +17,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -58,9 +58,7 @@ dependencies {
     testImplementation("org.mockito:mockito-inline:3.3.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
-    implementation (platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation ("com.google.firebase:firebase-database")
-    implementation ("com.google.firebase:firebase-storage-ktx")
     implementation ("com.google.cloud:google-cloud-translate:2.27.0")
     implementation ("com.google.firebase:firebase-firestore-ktx:25.0.0")
     implementation ("com.google.firebase:firebase-database-ktx:21.0.0")
@@ -71,4 +69,7 @@ dependencies {
 
     implementation ("com.github.bumptech.glide:glide:4.15.1")
     kapt ("com.github.bumptech.glide:compiler:4.15.1")
+
+    implementation ("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
+    kapt ("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
 }
