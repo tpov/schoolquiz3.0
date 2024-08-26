@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.model.local.CategoryData
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.domain.QuestionUseCase
 import com.tpov.common.domain.QuizUseCase
@@ -39,6 +41,11 @@ class MainViewModel @Inject constructor(
     private val _categoryData = MutableLiveData<List<CategoryData>>()
     val profileState: StateFlow<ProfileEntity?> get() = _profileState
     private val _profileState = MutableStateFlow<ProfileEntity?>(null)
+
+    val quizData: StateFlow<QuizEntity?> get() = _quizData
+    private val _quizData = MutableStateFlow<QuizEntity?>(null)
+    val questionData: StateFlow<List<QuestionEntity>?> get() = _questionData
+    private val _questionData = MutableStateFlow<List<QuestionEntity>?>(null)
 
     var firstStartApp = false
 
@@ -85,16 +92,18 @@ class MainViewModel @Inject constructor(
                 val starsAverageLocal = 0
                 val ratingLocal = 0
 
-                quizUseCase.insertQuiz(quizUseCase.fetchQuiz(
-                    typeId,
-                    categoryId,
-                    subcategoryId,
-                    subsubcategoryId,
-                    starsMaxLocal,
-                    starsAverageLocal,
-                    ratingLocal,
-                    idQuiz
-                ))
+                quizUseCase.insertQuiz(
+                    quizUseCase.fetchQuiz(
+                        typeId,
+                        categoryId,
+                        subcategoryId,
+                        subsubcategoryId,
+                        starsMaxLocal,
+                        starsAverageLocal,
+                        ratingLocal,
+                        idQuiz
+                    )
+                )
 
                 questionUseCase.fetchQuestion(
                     8,
@@ -136,6 +145,13 @@ class MainViewModel @Inject constructor(
         return structureDataList.event.filter { it.id == 8 }.flatMap { eventData ->
             eventData.category.filter { it.isShowDownload }
         }
+    }
+
+    fun getQuizByIdQuiz(idQuiz: Int) = viewModelScope.launch {
+        _quizData.value = quizUseCase.getQuizById(idQuiz)
+    }
+    fun getQuestionByIdQuiz(idQuiz: Int) = viewModelScope.launch {
+        _questionData.value = questionUseCase.getQuestionByIdQuiz(idQuiz)
     }
 
     private fun errorGetDataFromStructure(): Int {

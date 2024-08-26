@@ -1,11 +1,13 @@
 package com.tpov.common.data.model.local
 
+import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tpov.common.data.model.remote.QuestionRemote
+import kotlinx.parcelize.Parcelize
 
-
+@Parcelize
 @Entity(tableName = "question_entity")
 data class QuestionEntity(
     @PrimaryKey(autoGenerate = true)
@@ -37,12 +39,25 @@ data class QuestionEntity(
 
     @ColumnInfo(name = "lvlTranslate")
     var lvlTranslate: Int
-) {
+) : Parcelable {
     fun toQuestionRemote() = QuestionRemote(
         answer = this.answer,
         nameAnswers = this.nameAnswers,
         pathPictureQuestion = this.pathPictureQuestion,
         nameQuestion = this.nameAnswers,
         lvlTranslate = this.lvlTranslate
+    )
+
+    constructor() : this(
+        id = null,
+        numQuestion = 0,
+        nameQuestion = "",
+        answer = 0,
+        nameAnswers = "",
+        hardQuestion = false,
+        idQuiz = 0,
+        language = "",
+        lvlTranslate = 0,
+        pathPictureQuestion = ""
     )
 }
