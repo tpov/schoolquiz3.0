@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/back_main">
@@ -10,18 +9,31 @@
         android:id="@+id/tv_quiz_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="82dp"
+        android:foregroundGravity="center"
         android:gravity="center"
         android:text="Quiz name"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="+@id/imv_quiz"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/imv_quiz"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_upload" />
 
     <Spinner
         android:id="@+id/sp_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
@@ -29,6 +41,7 @@
         android:id="@+id/sp_sub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
         app:layout_constraintStart_toEndOf="@+id/sp_category"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
@@ -36,39 +49,72 @@
         android:id="@+id/sp_subsub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/sp_sub_category"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
-    <EditText
-        android:id="@+id/tv_category"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:id="@+id/ll_create_new_category"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="TextView"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
-
-
-    <EditText
-        android:id="@+id/tv_sub_category"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="TextView"
-        android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@+id/tv_category"
-        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
-
-
-    <EditText
-        android:id="@+id/tv_subsub_category"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="TextView"
-        android:visibility="gone"
+        android:layout_margin="16dp"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tv_sub_category"
-        app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sp_category">
+
+        <EditText
+            android:id="@+id/tv_category"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Category"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/imv_category"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5"
+            app:srcCompat="@drawable/ic_upload" />
+
+        <EditText
+            android:id="@+id/tv_sub_category"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Subcategory"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/imv_subcategory"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5"
+            app:srcCompat="@drawable/ic_upload"/>
+
+        <EditText
+            android:id="@+id/tv_subsub_category"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Subsubcategory"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/imv_subsubcategory"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.5"
+            app:srcCompat="@drawable/ic_upload" />
+    </LinearLayout>
 
     <View
         android:id="@+id/stroce"
@@ -76,8 +122,8 @@
         android:layout_height="3dp"
         android:layout_margin="16dp"
         android:background="@color/contour"
-        app:layout_constraintBottom_toTopOf="@+id/b_load_image"
-        app:layout_constraintTop_toBottomOf="@+id/sp_subsub_category">
+        app:layout_constraintBottom_toTopOf="@+id/imv_question"
+        app:layout_constraintTop_toBottomOf="@+id/ll_create_new_category">
 
     </View>
 
@@ -85,17 +131,6 @@
         android:id="@+id/imv_question"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_margin="16dp"
-        app:layout_constraintBottom_toBottomOf="@+id/b_load_image"
-        app:layout_constraintEnd_toStartOf="@+id/b_load_image"
-        app:layout_constraintTop_toTopOf="@+id/b_load_image"
-        tools:srcCompat="@drawable/db_design3_main" />
-
-
-    <ImageView
-        android:id="@+id/b_load_image"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
         android:layout_marginRight="16dp"
         app:layout_constraintBottom_toTopOf="@+id/scv_question"
         app:layout_constraintEnd_toEndOf="parent"
@@ -110,9 +145,9 @@
         android:text="Question 1/n"
         android:textColor="@color/white"
         android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="@+id/b_load_image"
+        app:layout_constraintBottom_toBottomOf="@+id/imv_question"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/b_load_image" />
+        app:layout_constraintTop_toTopOf="@+id/imv_question" />
 
     <ScrollView
         android:id="@+id/scv_question"
@@ -227,9 +262,9 @@
         android:outlineProvider="none"
         android:padding="8dp"
         android:text="Reset"
-        android:textStyle="bold"
         android:textAllCaps="false"
         android:textColor="@color/red"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/b_save"
         app:layout_constraintStart_toStartOf="parent" />
@@ -260,10 +295,10 @@
         android:background="@drawable/back_item_main"
         android:padding="8dp"
         android:text="+ Answer"
-        android:textStyle="bold"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/b_reset"
         app:layout_constraintStart_toEndOf="@+id/b_add_translate" />
 
@@ -278,9 +313,9 @@
         android:padding="8dp"
         android:text="+ Gap"
         android:textAllCaps="false"
-        android:textStyle="bold"
         android:textColor="@color/contour"
         android:textSize="12sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/b_reset"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/b_add_answer" />
@@ -294,10 +329,10 @@
         android:background="@drawable/back_item_main"
         android:padding="8dp"
         android:text="+ Translate"
-        android:textStyle="bold"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/b_reset"
         app:layout_constraintStart_toEndOf="@+id/b_add_question" />
 
@@ -308,12 +343,12 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="16dp"
-        android:textStyle="bold"
         android:background="@drawable/back_item_main_true"
         android:padding="8dp"
         android:text="Create"
         android:textAllCaps="false"
         android:textColor="@color/back_main_green"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/b_reset" />
