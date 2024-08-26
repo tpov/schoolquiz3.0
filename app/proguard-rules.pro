@@ -23,3 +23,4 @@
 -keep class com.tpov.schoolquiz.MainApp { *; }
 -keep class com.google.firebase.** { *; }
 -keep class com.google.firestore.** { *; }
+-keep class com.google.firebase.firestore.** { *; }

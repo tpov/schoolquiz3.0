@@ -1300,6 +1300,10 @@ int color bright_foreground_inverse_material_dark 0x0
 int color bright_foreground_inverse_material_light 0x0
 int color bright_foreground_material_dark 0x0
 int color bright_foreground_material_light 0x0
+int color browser_actions_bg_grey 0x0
+int color browser_actions_divider_color 0x0
+int color browser_actions_text_color 0x0
+int color browser_actions_title_color 0x0
 int color button_color_end 0x0
 int color button_color_start 0x0
 int color button_material_dark 0x0
@@ -2141,6 +2145,8 @@ int dimen abc_text_size_subtitle_material_toolbar 0x0
 int dimen abc_text_size_title_material 0x0
 int dimen abc_text_size_title_material_toolbar 0x0
 int dimen appcompat_dialog_background_inset 0x0
+int dimen browser_actions_context_menu_max_width 0x0
+int dimen browser_actions_context_menu_min_padding 0x0
 int dimen cardview_compat_inset_shadow 0x0
 int dimen cardview_default_elevation 0x0
 int dimen cardview_default_radius 0x0
@@ -3014,6 +3020,9 @@ int drawable ic_mtrl_checked_circle 0x0
 int drawable ic_mtrl_chip_checked_black 0x0
 int drawable ic_mtrl_chip_checked_circle 0x0
 int drawable ic_mtrl_chip_close_circle 0x0
+int drawable ic_other_sign_in 0x0
+int drawable ic_passkey 0x0
+int drawable ic_password 0x0
 int drawable ic_search_black_24 0x0
 int drawable indeterminate_static 0x0
 int drawable m3_avd_hide_password 0x0
@@ -3175,6 +3184,11 @@ int id baseline 0x0
 int id blocking 0x0
 int id bottom 0x0
 int id bounce 0x0
+int id browser_actions_header_text 0x0
+int id browser_actions_menu_item_icon 0x0
+int id browser_actions_menu_item_text 0x0
+int id browser_actions_menu_items 0x0
+int id browser_actions_menu_view 0x0
 int id btnBuyAd 0x0
 int id buttonPanel 0x0
 int id buy_life 0x0
@@ -3622,6 +3636,8 @@ int layout abc_search_dropdown_item_icons_2line 0x0
 int layout abc_search_view 0x0
 int layout abc_select_dialog_material 0x0
 int layout abc_tooltip 0x0
+int layout browser_actions_context_menu_page 0x0
+int layout browser_actions_context_menu_row 0x0
 int layout custom_dialog 0x0
 int layout design_bottom_navigation_item 0x0
 int layout design_bottom_sheet_dialog 0x0
@@ -3733,6 +3749,8 @@ int string abc_searchview_description_voice 0x0
 int string abc_shareactionprovider_share_with 0x0
 int string abc_shareactionprovider_share_with_application 0x0
 int string abc_toolbar_collapse_description 0x0
+int string android_credentials_TYPE_PASSWORD_CREDENTIAL 0x0
+int string androidx_credentials_TYPE_PUBLIC_KEY_CREDENTIAL 0x0
 int string androidx_startup 0x0
 int string app_name 0x0
 int string appbar_scrolling_view_behavior 0x0
@@ -3771,11 +3789,15 @@ int string common_google_play_services_wear_update_text 0x0
 int string common_open_on_phone 0x0
 int string common_signin_button_text 0x0
 int string common_signin_button_text_long 0x0
+int string copy_toast_msg 0x0
 int string error_a11y_label 0x0
 int string error_icon_content_description 0x0
 int string exposed_dropdown_menu_content_description 0x0
 int string fab_transformation_scrim_behavior 0x0
 int string fab_transformation_sheet_behavior 0x0
+int string fallback_menu_item_copy_link 0x0
+int string fallback_menu_item_open_in_browser 0x0
+int string fallback_menu_item_share_link 0x0
 int string hide_bottom_view_on_scroll_behavior 0x0
 int string icon_content_description 0x0
 int string item_view_role_description 0x0
@@ -4569,6 +4591,7 @@ int style Theme_Design_Light 0x0
 int style Theme_Design_Light_BottomSheetDialog 0x0
 int style Theme_Design_Light_NoActionBar 0x0
 int style Theme_Design_NoActionBar 0x0
+int style Theme_Hidden 0x0
 int style Theme_Material3_Dark 0x0
 int style Theme_Material3_Dark_BottomSheetDialog 0x0
 int style Theme_Material3_Dark_Dialog 0x0
@@ -6845,3 +6868,4 @@ int[] styleable ViewStubCompat { 0x10100d0, 0x10100f3, 0x10100f2 }
 int styleable ViewStubCompat_android_id 0
 int styleable ViewStubCompat_android_inflatedId 1
 int styleable ViewStubCompat_android_layout 2
+int xml image_share_filepaths 0x0

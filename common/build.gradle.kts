@@ -40,15 +40,9 @@ dependencies {
     implementation("com.google.dagger:dagger:2.40.5")
     kapt("com.google.dagger:dagger-compiler:2.40.5")
 
-    // Firebase dependencies
-    implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
-    implementation("com.google.firebase:firebase-storage-ktx:20.0.0")
-    implementation("com.google.firebase:firebase-auth-ktx:22.0.0")
-
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("com.google.firebase:firebase-database:20.0.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 
@@ -58,11 +52,6 @@ dependencies {
     testImplementation("org.mockito:mockito-inline:3.3.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
-    implementation ("com.google.firebase:firebase-database")
-    implementation ("com.google.cloud:google-cloud-translate:2.27.0")
-    implementation ("com.google.firebase:firebase-firestore-ktx:25.0.0")
-    implementation ("com.google.firebase:firebase-database-ktx:21.0.0")
-    implementation ("com.google.firebase:firebase-analytics:22.0.2")
     kapt ("com.google.dagger:dagger-compiler:2.48.1")
     kapt("androidx.room:room-compiler:2.6.1")
 

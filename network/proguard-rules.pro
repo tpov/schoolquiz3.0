@@ -21,3 +21,4 @@
 #-renamesourcefileattribute SourceFile
 -keep class com.google.firebase.** { *; }
 -keep class com.google.firestore.** { *; }
+-keep class com.google.firebase.firestore.** { *; }
