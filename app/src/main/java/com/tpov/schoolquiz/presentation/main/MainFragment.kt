@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.common.data.model.local.CategoryData
@@ -12,7 +11,6 @@ import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.di.DaggerApplicationComponent
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
@@ -44,14 +42,6 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
         viewModel.categoryData.observe(viewLifecycleOwner) { categoryDataList ->
             adapter = MainAdapter(categoryDataList, this)
             recyclerView.adapter = adapter
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            val listNewQuiz = viewModel.loadHomeCategory()
-            if (viewModel.firstStartApp) {
-                viewModel.loadQuizByStructure(listNewQuiz)
-                viewModel.createProfile()
-            }
         }
     }
 

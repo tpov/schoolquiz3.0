@@ -33,8 +33,6 @@ android {
 
 dependencies {
 
-    implementation("com.google.firebase:firebase-database-ktx:21.0.0")
-    implementation("com.google.firebase:firebase-auth")
     implementation(project(":common"))
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")

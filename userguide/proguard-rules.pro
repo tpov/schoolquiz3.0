@@ -23,3 +23,5 @@
 -keep class com.google.firebase.** { *; }
 -keep class com.google.firestore.** { *; }
 -keep class com.google.firebase.firestore.** { *; }
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.protobuf.**

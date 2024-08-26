@@ -43,7 +43,9 @@ subprojects {
                 kotlinOptions {
                     jvmTarget = "11"
                 }
-
+                defaultConfig {
+                    multiDexEnabled true
+                }
                 buildFeatures {
                     viewBinding true
                 }
@@ -52,14 +54,13 @@ subprojects {
                 def lifecycle_version = "2.2.0"
 
                 // Exclude conflicting protobuf dependencies
-                configurations.all {
-                    exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
-                    exclude group: 'com.google.firebase', module: 'protolite-well-known-types'
-                    exclude group: 'com.google.api.grpc', module: 'proto-google-common-protos'
-                    resolutionStrategy {
-                        force 'com.google.protobuf:protobuf-java:3.24.0'
+                configurations {
+                    all {
+                        exclude module: 'httpclient'
+                        exclude module: 'httpcore'
                     }
                 }
+                implementation 'com.google.protobuf:protobuf-javalite:3.25.1'
 
                 implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
                 implementation 'androidx.core:core-ktx:1.13.1'
@@ -87,13 +88,20 @@ subprojects {
                 androidTestImplementation 'org.mockito:mockito-android:5.4.0'
                 testImplementation 'org.robolectric:robolectric:4.9'
 
+                testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+                testImplementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
+                testImplementation 'org.mockito:mockito-core:5.4.0'
+
+                implementation 'com.google.code.gson:gson:2.10.1'
                 // Firebase and WorkManager
                 implementation platform("com.google.firebase:firebase-bom:33.2.0")
                 implementation 'com.google.firebase:firebase-firestore'
                 implementation 'com.google.firebase:firebase-auth-ktx'
                 implementation 'com.google.firebase:firebase-database-ktx'
                 implementation 'com.google.firebase:firebase-storage-ktx'
+
                 implementation 'androidx.work:work-runtime-ktx:2.9.1'
+                implementation 'com.android.support:multidex:1.0.3'
             }
         }
     }

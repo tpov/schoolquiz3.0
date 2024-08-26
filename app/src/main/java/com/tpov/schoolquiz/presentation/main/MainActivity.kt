@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -12,6 +13,7 @@ import android.graphics.PorterDuff
 import android.graphics.Typeface
 import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.LayerDrawable
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.text.Spannable
@@ -43,6 +45,7 @@ import com.tpov.network.presentation.friend.FriendsFragment
 import com.tpov.network.presentation.leaders.LeadersFragment
 import com.tpov.network.presentation.referal.ReferralProgramFragment
 import com.tpov.network.presentation.roles.RolesFragment
+import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
@@ -98,8 +101,26 @@ class MainActivity : AppCompatActivity() {
         setupAnimations()
         createTimer()
         updateProfile()
+        initData()
     }
 
+    private fun initData() {
+        lifecycleScope.launch {
+            val listNewQuiz = viewModel.loadHomeCategory()
+            if (!isNetworkAvailable(this@MainActivity)) {
+                Toast.makeText(this@MainActivity, "Нет подключения к интернету. Попробуйте позже.", Toast.LENGTH_LONG).show()
+            }
+            if (viewModel.firstStartApp) {
+                viewModel.loadQuizByStructure(listNewQuiz)
+                viewModel.createProfile()
+            }
+        }
+    }
+    fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetworkInfo
+        return activeNetwork?.isConnectedOrConnecting == true
+    }
     private fun updateProfile() {
         lifecycleScope.launch {
             viewModel.profileState.collect { profile ->
@@ -173,6 +194,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViewModel() {
+        (application as MainApp).applicationComponent.inject(this)
         viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
     }
 

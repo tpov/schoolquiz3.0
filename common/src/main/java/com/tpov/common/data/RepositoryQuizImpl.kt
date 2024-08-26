@@ -25,10 +25,11 @@ class RepositoryQuizImpl @Inject constructor(
         typeId: Int,
         categoryId: Int,
         subcategoryId: Int,
-        subsubcategoryId: Int
-    ): List<QuizRemote> {
+        subsubcategoryId: Int,
+        idQuiz: Int
+    ): QuizRemote {
 
-        var collectionReference = baseCollection
+        var documentReference = baseCollection
             .document("quiz$typeId")
             .collection("quiz$typeId")
             .document(categoryId.toString())
@@ -37,17 +38,28 @@ class RepositoryQuizImpl @Inject constructor(
             .collection(subcategoryId.toString())
             .document(subsubcategoryId.toString())
             .collection(subsubcategoryId.toString())
+            .document(idQuiz.toString())
 
-        if (typeId == 1) collectionReference =
-            collectionReference.document(tpovId.toString()).collection(tpovId.toString())
-        val quizRemotes = collectionReference.get().await().documents
-            .mapNotNull { it.toObject(QuizRemote::class.java) }
-
-        quizRemotes.forEach { quiz ->
-            downloadPhotoToLocalPath(quiz.picture)
+        if (typeId == 1) {
+            documentReference = documentReference.collection(tpovId.toString()).document(tpovId.toString())
         }
 
-        return quizRemotes
+        return try {
+            // Получаем документ по ссылке
+            val documentSnapshot = documentReference.get().await()
+            // Преобразуем содержимое документа в объект QuizRemote
+            val quizRemote = documentSnapshot.toObject(QuizRemote::class.java)
+                ?: throw NoSuchElementException("No quiz found with the specified criteria")
+
+            // Выполняем дополнительные действия, например, скачивание фотографии
+            downloadPhotoToLocalPath(quizRemote.picture)
+
+            quizRemote
+        } catch (e: Exception) {
+            // Обрабатываем исключения, например, логируем ошибку или возвращаем дефолтное значение
+            e.printStackTrace()
+            throw e // или вернуть дефолтное значение, если это уместно
+        }
     }
 
     override suspend fun getQuizzes() = quizDao.getQuiz()
@@ -65,7 +77,7 @@ class RepositoryQuizImpl @Inject constructor(
         idQuiz: Int,
         categoryId: Int,
         subcategoryId: Int,
-        subsubcategoryId: Int
+        subsubcategoryId: Int,
     ) {
         var id = idQuiz
         if (id < 100) id = fetchLastQuizId()

@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.presentation.main
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -30,7 +31,8 @@ class MainViewModel @Inject constructor(
     private val structureUseCase: StructureUseCase,
     private val quizUseCase: QuizUseCase,
     private val questionUseCase: QuestionUseCase,
-    private val profileUseCase: ProfileUseCase
+    private val profileUseCase: ProfileUseCase,
+    private val context: Context
 ) : ViewModel() {
 
     val categoryData: LiveData<List<CategoryData>> get() = _categoryData
@@ -42,7 +44,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            profileUseCase.getProfileFlow(tpovId).collect { profile ->
+            profileUseCase.getProfileFlow(tpovId)?.collect { profile ->
                 _profileState.value = profile
             }
         }
@@ -83,15 +85,16 @@ class MainViewModel @Inject constructor(
                 val starsAverageLocal = 0
                 val ratingLocal = 0
 
-                quizUseCase.fetchQuiz(
+                quizUseCase.insertQuiz(quizUseCase.fetchQuiz(
                     typeId,
                     categoryId,
                     subcategoryId,
                     subsubcategoryId,
                     starsMaxLocal,
                     starsAverageLocal,
-                    ratingLocal
-                )
+                    ratingLocal,
+                    idQuiz
+                ))
 
                 questionUseCase.fetchQuestion(
                     8,

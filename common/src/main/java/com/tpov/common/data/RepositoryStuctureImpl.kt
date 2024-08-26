@@ -3,6 +3,7 @@ package com.tpov.common.data
 import android.content.Context
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.gson.Gson
 import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.data.model.remote.StructureData
@@ -10,6 +11,7 @@ import com.tpov.common.data.model.remote.StructureLocalData
 import com.tpov.common.domain.repository.RepositoryStructure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -27,22 +29,45 @@ class RepositoryStuctureImpl @Inject constructor(
 
     override suspend fun fetchStructureData(): StructureData? {
         return try {
+            Log.d("SyncData", "Starting to fetch 'structureData' from Firestore")
+            firestore.collection("structureData")
+                .document("1")
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        Log.d("FirestoreTest", "DocumentSnapshot data: ${document.data}")
+                    } else {
+                        Log.d("FirestoreTest", "No such document")
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("FirestoreTest", "get failed with ", exception)
+                }
+
             val documentSnapshot = firestore.collection("structureData")
                 .document("structureData")
                 .get().await()
+
             if (documentSnapshot.exists()) {
-                documentSnapshot.toObject(StructureData::class.java) ?: throw Exception("Data parsing error")
+                Log.d("SyncData", "Document 'structureData' exists. Converting to StructureData object.")
+                val structureData = documentSnapshot.toObject(StructureData::class.java)
+                Log.d("SyncData", "Successfully parsed 'structureData': $structureData")
+                structureData ?: throw Exception("Data parsing error")
             } else {
-                Log.d("Firestore", "Document 'structureData' does not exist, returning null.")
+                Log.d("SyncData", "Document 'structureData' does not exist, returning null.")
                 null // Возвращаем null, если документ не найден
             }
+        } catch (e: FirebaseFirestoreException) {
+            Log.e("SyncData", "Firestore exception: ${e.message}")
+            null
+        } catch (e: TimeoutCancellationException) {
+            Log.e("SyncData", "Request timeout: ${e.message}")
+            null
         } catch (e: Exception) {
-            Log.e("Firestore", "Error fetching document: ${e.message}")
-            throw Exception("Error fetching data", e)
+            Log.e("SyncData", "General error fetchStructureData: ${e.message}")
+            null
         }
     }
-
-
 
     override suspend fun pushStructureRating(ratingData: StructureLocalData) {
         try {

@@ -24,9 +24,10 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         val dataRemote = try {
             repositoryStructureImpl.fetchStructureData()
         } catch (e: Exception) {
-            Log.e("SyncData", "Error fetching remote data: ${e.message}")
-            throw e
+            Log.e("SyncData", "Error syncData: ${e.message}")
+            null
         }
+
         Log.d("SyncData", "Remote data fetched: $dataRemote")
 
         val dataLocal = try {
@@ -37,17 +38,23 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         }
         Log.d("SyncData", "Local data loaded: $dataLocal")
 
-        val newDataLocalEmpty = dataRemote?.toStructureDataLocal()
+        val newDataLocalEmpty: StructureData? = dataRemote?.toStructureDataLocal()
         Log.d("SyncData", "Converted remote data to local format: $newDataLocalEmpty")
+
+        if (newDataLocalEmpty == null) {
+            // Выводим тост и возвращаем пустой список
+            Log.d("SyncData", "No structure data found on the server. Sync canceled.")
+            return emptyList()
+        }
 
         val changedQuizzes = mutableListOf<String>()
 
         val newDataLocal: StructureData = if (dataLocal == null) {
             Log.d("SyncData", "No local data found, using new data")
-            newDataLocalEmpty!!
+            newDataLocalEmpty
         } else {
             Log.d("SyncData", "Merging local and new data")
-            mergeData(dataLocal, newDataLocalEmpty!!, changedQuizzes)
+            mergeData(dataLocal, newDataLocalEmpty, changedQuizzes)
         }
 
         try {

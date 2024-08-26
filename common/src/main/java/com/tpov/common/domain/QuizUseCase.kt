@@ -13,19 +13,21 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
         subsubcategoryId: Int,
         starsMaxLocal: Int,
         starsAverageLocal: Int,
-        ratingLocal: Int
-    ) = repositoryQuiz.fetchQuizzes(typeId, categoryId, subcategoryId, subsubcategoryId)
-        .map { quiz ->
-            quiz.toQuizEntity(
-                getQuizIdByPathPicture(quiz.picture),
-                categoryId,
-                subcategoryId,
-                subsubcategoryId,
-                starsMaxLocal,
-                starsAverageLocal,
-                ratingLocal
-            )
-        }
+        ratingLocal: Int,
+        idQuiz: Int
+    ): QuizEntity {
+        val quizRemote = repositoryQuiz.fetchQuizzes(typeId, categoryId, subcategoryId, subsubcategoryId, idQuiz)
+
+        return quizRemote.toQuizEntity(
+            getQuizIdByPathPicture(quizRemote.picture),
+            categoryId,
+            subcategoryId,
+            subsubcategoryId,
+            starsMaxLocal,
+            starsAverageLocal,
+            ratingLocal
+        )
+    }
 
     private fun getQuizIdByPathPicture(picture: String) =
         picture.substringAfterLast("/").toIntOrNull() ?: 0

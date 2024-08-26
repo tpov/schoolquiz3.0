@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.di
 import android.app.Application
 import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryQuizImpl
@@ -62,7 +63,13 @@ class AppModule {
     @Provides
     @Singleton
     fun provideFirestore(): FirebaseFirestore {
-        return FirebaseFirestore.getInstance()
+
+        val firestore = FirebaseFirestore.getInstance()
+        firestore.firestoreSettings = FirebaseFirestoreSettings.Builder()
+            .setPersistenceEnabled(true)
+            .build()
+
+        return firestore
     }
 
     @Provides

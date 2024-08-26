@@ -56,9 +56,10 @@ class SyncWorker @AssistedInject constructor(
             Log.d("SyncWorker", "Sync successful")
             Result.success(outputData)
         } catch (e: Exception) {
-            Log.e("SyncWorker", "Sync failed with exception", e)
-            Result.retry()
+            Log.e("SyncData", "Error fetching or saving data: ${e.message}")
+            Result.failure()
         }
+
     }
 
     @SuppressLint("MissingPermission")

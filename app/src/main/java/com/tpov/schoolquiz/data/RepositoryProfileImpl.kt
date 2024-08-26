@@ -11,32 +11,33 @@ class RepositoryProfileImpl @Inject constructor(
     private val profileDao: ProfileDao,
     private val quizDao: QuizDao
 ) : RepositoryProfile {
-    override fun getProfileFlow(tpovId: Int): Flow<ProfileEntity> {
-        TODO("Not yet implemented")
+    override fun getProfileFlow(tpovId: Int): Flow<ProfileEntity?>? {
+        return null
     }
 
-    override fun getProfile(tpovId: Int): ProfileEntity {
-        TODO("Not yet implemented")
+    override fun getProfile(tpovId: Int): ProfileEntity? {
+        return null
     }
 
-    override fun getProfileList(): List<ProfileEntity> {
-        TODO("Not yet implemented")
+    override fun getProfileList(): List<ProfileEntity?>? {
+
+        return null
     }
 
     override fun insertProfile(profile: ProfileEntity) {
-        TODO("Not yet implemented")
+
     }
 
     override fun updateProfile(profile: ProfileEntity) {
-        TODO("Not yet implemented")
+
     }
 
     override fun unloadProfile() {
-        TODO("Not yet implemented")
+
     }
 
     override fun downloadProfile() {
-        TODO("Not yet implemented")
+
     }
 
 }
