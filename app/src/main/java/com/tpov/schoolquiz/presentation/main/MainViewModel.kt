@@ -61,6 +61,8 @@ class MainViewModel @Inject constructor(
         profileUseCase.updateProfile(profileEntity)
     }
 
+    suspend fun getStructureData() = structureUseCase.getStructureData()
+
     suspend fun loadHomeCategory(): List<String> {
         var listNewQuiz: List<String> = listOf()
 

@@ -152,92 +152,37 @@
     <ScrollView
         android:id="@+id/scv_question"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_margin="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imv_question">
 
         <LinearLayout
-            android:id="@+id/ll_question"
+            android:id="@+id/ll_questions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <LinearLayout
-                android:id="@+id/ll_question1"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/tv_question_text1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_weight="1"
-                    android:maxLines="3"
-                    android:text="Question text"
-                    android:textColor="@color/white" />
-
-                <Spinner
-                    android:id="@+id/sp_language_question1"
-                    android:layout_width="80dp"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
-                    android:backgroundTint="@color/black" />
-            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
-    <LinearLayout
-        android:id="@+id/ll_answers"
+    <ScrollView
+        android:id="@+id/scv_answers"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_margin="16dp"
-        android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/stroce2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
-            android:id="@+id/tv_answer_language"
-            android:text="Language"
-            android:textColor="@color/white"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
         <LinearLayout
-            android:id="@+id/ll_answer"
+            android:id="@+id/ll_answers"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/b_answer1"
-                android:layout_width="0dp"
-                android:layout_height="45dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="Answer 1"
-                android:textAllCaps="false"
-                android:textColor="@color/white" />
-
-            <EditText
-                android:id="@+id/b_answer2"
-                android:layout_width="0dp"
-                android:layout_height="45dp"
-                android:layout_marginLeft="8dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:padding="8dp"
-                android:text="Answer 2"
-                android:textAllCaps="false"
-                android:textColor="@color/white" />
-
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
         </LinearLayout>
-    </LinearLayout>
+    </ScrollView>
 
     <View
         android:id="@+id/stroce2"
@@ -250,7 +195,7 @@
     </View>
 
     <CheckBox
-        android:id="@+id/checkBox2"
+        android:id="@+id/chb_type_question"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hard question"
