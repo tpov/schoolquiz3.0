@@ -21,7 +21,7 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
 
     suspend fun getQuestionByIdQuiz(idQuiz: Int) = repositoryQuestion.getQuestionByIdQuiz(idQuiz)
 
-    suspend fun saveQuestion(questionEntity: QuestionEntity) {
+    suspend fun insertQuestion(questionEntity: QuestionEntity) {
         repositoryQuestion.saveQuestion(questionEntity)
     }
 

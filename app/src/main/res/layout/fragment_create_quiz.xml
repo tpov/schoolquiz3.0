@@ -138,7 +138,7 @@
         app:srcCompat="@drawable/ic_upload" />
 
     <Spinner
-        android:id="@+id/tv_num_question"
+        android:id="@+id/sp_num_question"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"

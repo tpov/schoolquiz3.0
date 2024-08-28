@@ -55,7 +55,7 @@ class RepositoryStuctureImpl @Inject constructor(
                 structureData ?: throw Exception("Data parsing error")
             } else {
                 Log.d("SyncData", "Document 'structureData' does not exist, returning null.")
-                null // Возвращаем null, если документ не найден
+                null
             }
         } catch (e: FirebaseFirestoreException) {
             Log.e("SyncData", "Firestore exception: ${e.message}")

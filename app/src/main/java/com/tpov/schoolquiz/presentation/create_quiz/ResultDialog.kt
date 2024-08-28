@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.dialog
+package com.tpov.schoolquiz.presentation.create_quiz
 
 import android.app.Dialog
 import android.content.Context

@@ -1,7 +1,8 @@
-package com.tpov.schoolquiz.presentation.dialog
+package com.tpov.schoolquiz.presentation.create_quiz
 
 import android.R
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -30,15 +31,14 @@ class CreateQuestionFragment : Fragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-
     private lateinit var viewModel: MainViewModel
-
     private var idQuiz = -1
 
-    private var _binding: FragmentCreateQuizBinding? = null
     private val binding get() = _binding!!
+    private var _binding: FragmentCreateQuizBinding? = null
 
     private var questionsEntity: List<QuestionEntity>? = null
+    private var quizEntity: QuizEntity? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,28 +67,44 @@ class CreateQuestionFragment : Fragment() {
 
     }
 
-    private fun initSetOnClickListeners() {
+    private fun setupQuestionSpinner() = with(binding) {
+        val questionForSpinner = questionsEntity
+            ?.filter { it.language == getUserLanguage() }
+            ?.sortedBy { it.numQuestion }?.sortedBy { !it.hardQuestion }
+
+        val adapter = questionForSpinner?.let {
+            CustomSpinnerAdapter(root.context, it)
+        }
+
+        spNumQuestion.adapter = adapter
+        spNumQuestion.setSelection(0)
+        spNumQuestion.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                saveThisNumberQuestion()
+                updateUiQuestion(position)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+    }
+
+    private fun initSetOnClickListeners() = with(binding) {
+        setupQuestionSpinner()
         binding.bSave.setOnClickListener {
-            // Логика для сохранения данных
-            val newQuestion = QuestionEntity(
-                id = questionEntity?.id, // Если редактирование, сохраняем ID
-                numQuestion = questionEntity?.numQuestion
-                    ?: 0, // Или получаем номер вопроса откуда-то
-                nameQuestion = binding.tvQuestionText.text.toString(),
-                pathPictureQuestion = questionEntity?.pathPictureQuestion,
-                answer = determineCorrectAnswer(), // Ваша логика определения правильного ответа
-                nameAnswers = "${binding.bAnswer1.text}|${binding.bAnswer2.text}", // Форматируем ответы
-                hardQuestion = binding.checkBox2.isChecked,
-                idQuiz = quizEntity!!.id!!, // Используем ID викторины
-                language = questionEntity?.language ?: "default",
-                lvlTranslate = questionEntity?.lvlTranslate ?: 0
-            )
-
-            // Сохранение или обновление вопроса в базе данных
-            saveQuestion(newQuestion)
-
+            saveThisNumberQuestion()
+            saveQuiz()
         }
         setCategorySpinnerListeners()
+
+    }
+
+    private fun getUserLanguage(): String {
+        return ""
     }
 
     private fun initView() {
@@ -120,34 +136,37 @@ class CreateQuestionFragment : Fragment() {
         lifecycleScope.launch {
             val structureData = viewModel.getStructureData()
 
-            // Переменные для хранения выбранных индексов
-            var selectedCategoryIndex = 0 // По умолчанию "Создать новую категорию"
+            var selectedCategoryIndex = 0
             var selectedSubCategoryIndex = 0
             var selectedSubSubCategoryIndex = 0
 
-            // Создаем списки для категорий, подкатегорий и под-субкатегорий
             val categories = mutableListOf("Создать новую категорию")
             val subcategories = mutableListOf("Создать новую подкатегорию")
             val subSubcategories = mutableListOf("Создать новую под-субкатегорию")
 
-            // Заполняем категории и ищем нужную
             structureData?.event?.forEach { event ->
                 event.category.forEachIndexed { catIndex, cat ->
                     categories.add(cat.nameQuiz)
                     if (cat.nameQuiz == category) {
-                        selectedCategoryIndex =
-                            catIndex + 1 // Смещение на +1 из-за добавления "Создать новую категорию"
+                        if (!cat.picture.isNullOrEmpty()) {
+                            binding.imvCategory.setImageURI(Uri.parse(cat.picture))
+                        }
+                        selectedCategoryIndex = catIndex + 1
 
-                        // Заполняем субкатегории и ищем нужную
                         cat.subcategory.forEachIndexed { subCatIndex, subCat ->
                             subcategories.add(subCat.nameQuiz)
                             if (subCat.nameQuiz == subCategory) {
+                                if (!subCat.picture.isNullOrEmpty()) {
+                                    binding.imvSubcategory.setImageURI(Uri.parse(subCat.picture))
+                                }
                                 selectedSubCategoryIndex = subCatIndex + 1
 
-                                // Заполняем под-субкатегории и ищем нужную
                                 subCat.subSubcategory.forEachIndexed { subSubCatIndex, subSubCat ->
                                     subSubcategories.add(subSubCat.nameQuiz)
                                     if (subSubCat.nameQuiz == subSubCategory) {
+                                        if (!subSubCat.picture.isNullOrEmpty()) {
+                                            binding.imvSubcategory.setImageURI(Uri.parse(subSubCat.picture))
+                                        }
                                         selectedSubSubCategoryIndex = subSubCatIndex + 1
                                     }
                                 }
@@ -156,6 +175,10 @@ class CreateQuestionFragment : Fragment() {
                     }
                 }
             }
+
+            binding.tvCategory.setText(category)
+            binding.tvSubCategory.setText(subCategory)
+            binding.tvSubsubCategory.setText(subSubCategory)
 
             // Устанавливаем адаптеры для спиннеров
             val categoryAdapter =
@@ -357,6 +380,84 @@ class CreateQuestionFragment : Fragment() {
         binding.llQuestions.addView(questionLayout)
     }
 
+    private fun saveThisNumberQuestion() {
+        QuestionEntity(null)
+    }
+
+    private fun getAllQuestionsAndLanguages(): List<Pair<String, String>> {
+        val questionsAndLanguages = mutableListOf<Pair<String, String>>()
+
+        val childCount = binding.llQuestions.childCount
+        for (i in 0 until childCount) {
+            val questionLayout = binding.llQuestions.getChildAt(i) as LinearLayout
+
+            val questionTextView: EditText =
+                questionLayout.findViewById(com.tpov.schoolquiz.R.id.tv_question_text1)
+            val languageSpinner: Spinner =
+                questionLayout.findViewById(com.tpov.schoolquiz.R.id.sp_language_question1)
+
+            val questionText = questionTextView.text.toString()
+            val selectedLanguageIndex = languageSpinner.selectedItemPosition
+            val selectedLanguageCode = LanguageUtils.languagesShortCodes[selectedLanguageIndex]
+
+            questionsAndLanguages.add(Pair(questionText, selectedLanguageCode))
+        }
+
+        return questionsAndLanguages
+    }
+
+    private fun getAllAnswersAndCorrectAnswers(): List<Triple<String, String, Int>> {
+        val answersList = mutableListOf<Triple<String, String, Int>>()
+
+        val childCount = binding.llAnswers.childCount
+        for (i in 0 until childCount) {
+            val answerLayout = binding.llAnswers.getChildAt(i) as LinearLayout
+
+            val answerLanguageTextView: TextView =
+                answerLayout.findViewById(com.tpov.schoolquiz.R.id.tv_answer_language)
+            val leftAnswerEditText: EditText =
+                answerLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer1)
+            val rightAnswerEditText: EditText =
+                answerLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer2)
+
+            val language =
+                LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
+
+            val answers = mutableListOf<String>()
+            var correctAnswerIndex = -1
+
+            if (leftAnswerEditText.text.isNotEmpty()) {
+                answers.add(leftAnswerEditText.text.toString())
+                if (leftAnswerEditText.background is ColorDrawable && (leftAnswerEditText.background as ColorDrawable).color == Color.GREEN) {
+                    correctAnswerIndex = answers.size
+                }
+            }
+
+            if (rightAnswerEditText.text.isNotEmpty()) {
+                answers.add(rightAnswerEditText.text.toString())
+                if (rightAnswerEditText.background is ColorDrawable && (rightAnswerEditText.background as ColorDrawable).color == Color.GREEN) {
+                    correctAnswerIndex = answers.size
+                }
+            }
+
+            for (j in 2 until answerLayout.childCount) { // Iterate over dynamically added EditTexts
+                val answerEditText = answerLayout.getChildAt(j) as? EditText ?: continue
+                if (answerEditText.text.isNotEmpty()) {
+                    answers.add(answerEditText.text.toString())
+                    if (answerEditText.background is ColorDrawable && (answerEditText.background as ColorDrawable).color == Color.GREEN) {
+                        correctAnswerIndex = answers.size
+                    }
+                }
+            }
+
+            // Convert the list of answers to a string separated by "|"
+            val answersString = answers.joinToString("|")
+            answersList.add(Triple(language, answersString, correctAnswerIndex))
+        }
+
+        return answersList
+    }
+
     private fun updateUiQuestion(numQuestion: Int) = with(binding) {
         val questionEntitiesLanguage = questionsEntity?.filter {
             it.numQuestion == numQuestion && it.hardQuestion == (numQuestion < 0)
@@ -473,8 +574,23 @@ class CreateQuestionFragment : Fragment() {
         return 0
     }
 
-    private fun saveQuestion(question: QuestionEntity) {
-        // Логика сохранения или обновления вопроса в базе данных
+    private fun saveQuiz() = lifecycleScope.launch {
+        quizEntity?.let { //then create quiz, else translate quiz
+            viewModel.insertQuiz(it)
+            viewModel.insertQuestion(questionsEntity ?: errorLoadQuestionEntity())
+        } ?: saveTranslate()
+    }
+
+    private fun getFilteredAndSortedQuestions(): List<String> {
+        return questionsEntity?.filter { it.language == getUserLanguage() }
+            ?.sortedBy { it.numQuestion }
+            ?.sortedBy { !it.hardQuestion }
+            ?.map { "${it.numQuestion}. ${it.nameQuestion}" }
+            ?: listOf()
+    }
+
+    private fun saveTranslate() {
+
     }
 
     private fun determineLanguage(textBeforeSpace: String): String {
@@ -484,6 +600,10 @@ class CreateQuestionFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun errorLoadQuestionEntity(): List<QuestionEntity> {
+        return null!!
     }
 
     companion object {

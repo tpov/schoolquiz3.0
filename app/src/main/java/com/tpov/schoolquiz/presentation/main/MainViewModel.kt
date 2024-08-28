@@ -149,6 +149,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    suspend fun insertQuiz(quizEntity: QuizEntity) {
+        quizUseCase.insertQuiz(quizEntity)
+    }
+
+    suspend fun insertQuestion(questionsList: List<QuestionEntity>) {
+        questionsList.forEach { questionUseCase.insertQuestion(it) }
+    }
+
     fun getQuizByIdQuiz(idQuiz: Int) = viewModelScope.launch {
         _quizData.value = quizUseCase.getQuizById(idQuiz)
     }
