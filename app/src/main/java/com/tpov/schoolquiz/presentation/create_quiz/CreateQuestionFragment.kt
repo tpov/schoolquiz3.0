@@ -33,12 +33,15 @@ class CreateQuestionFragment : Fragment() {
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var viewModel: MainViewModel
     private var idQuiz = -1
+    private var lvlTranslate = 0
 
     private val binding get() = _binding!!
     private var _binding: FragmentCreateQuizBinding? = null
 
-    private var questionsEntity: List<QuestionEntity>? = null
+    private var questionsEntity: ArrayList<QuestionEntity>? = null
     private var quizEntity: QuizEntity? = null
+
+    private var numQuestion = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,7 +116,7 @@ class CreateQuestionFragment : Fragment() {
             lifecycleScope.launch {
                 viewModel.questionData.collect {
                     it.let {
-                        questionsEntity = it!!
+                        questionsEntity = (it as ArrayList<QuestionEntity>?)!!
                         updateUiQuestion(1)
                     }
                 }
@@ -380,8 +383,39 @@ class CreateQuestionFragment : Fragment() {
         binding.llQuestions.addView(questionLayout)
     }
 
+    //Удаляем в вопросах тот номер вопроса который отабрежен, затем считываем отобреженный номер вопроса и добавляем в список вопросов
     private fun saveThisNumberQuestion() {
-        QuestionEntity(null)
+        questionsEntity?.filter {
+            it.numQuestion != numQuestion || it.hardQuestion != (numQuestion < 0)
+        }
+
+        val newQuestions = getAllQuestionsAndLanguages()
+        val newAnswers = getAllAnswersAndCorrectAnswers()
+        if (newAnswers != newQuestions) errorCountLanguage()
+        else {
+            val pathPicture = getPathPicture()
+            newQuestions.forEach { newQuestion ->
+                val filterAnswer = newAnswers.filter { it.first == newQuestion.second }[0]
+                questionsEntity?.add(
+                    QuestionEntity(
+                        null,
+                        numQuestion,
+                        newQuestion.first,
+                        pathPicture,
+                        filterAnswer.third,
+                        filterAnswer.second,
+                        binding.chbTypeQuestion.isChecked,
+                        idQuiz,
+                        newQuestion.second,
+                        lvlTranslate
+                    )
+                )
+            }
+        }
+    }
+
+    private fun getPathPicture(): String {
+        return ""
     }
 
     private fun getAllQuestionsAndLanguages(): List<Pair<String, String>> {
@@ -604,6 +638,10 @@ class CreateQuestionFragment : Fragment() {
 
     private fun errorLoadQuestionEntity(): List<QuestionEntity> {
         return null!!
+    }
+
+    private fun errorCountLanguage() {
+
     }
 
     companion object {

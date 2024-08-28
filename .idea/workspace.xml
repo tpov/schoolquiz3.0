@@ -48,6 +48,11 @@
           <theme>@style/Theme.GeoQuiz</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/simple_spinner_item.xml">
+        <config>
+          <theme>@style/Theme.GeoQuiz</theme>
+        </config>
+      </layout>
       <layout url="file://$PROJECT_DIR$/app/src/main/res/menu/menu_front_activity.xml">
         <config>
           <theme>@style/Theme.GeoQuiz</theme>
@@ -169,20 +174,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Fix read firebase">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CustomSpinnerAdapter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/config.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Edit show spinner language">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/CreateQuestionFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuestionFragment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/dialog/ResultDialog.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/ResultDialog.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_create_quiz.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_create_quiz.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStuctureImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStuctureImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/QuestionUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/QuestionUseCase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuestionFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuestionFragment.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -226,9 +220,9 @@
         <option value="Kotlin Data Class" />
         <option value="Kotlin Interface" />
         <option value="valueResourceFile" />
-        <option value="layoutResourceFile" />
         <option value="resourceFile" />
         <option value="Kotlin Class" />
+        <option value="layoutResourceFile" />
       </list>
     </option>
   </component>
@@ -1291,7 +1285,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <option name="localTasksCounter" value="81" />
+    <option name="localTasksCounter" value="82" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -1329,7 +1323,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Add profile fragment prototype" />
     <MESSAGE value="Add get massage" />
     <MESSAGE value="Add translate UserGuide" />
     <MESSAGE value="Add refactoring get all quiz" />
@@ -1354,7 +1347,8 @@
     <MESSAGE value="Fix start SyncWorker&#10;Add all fragments" />
     <MESSAGE value="Fix build dagger" />
     <MESSAGE value="Fix read firebase" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix read firebase" />
+    <MESSAGE value="Edit show spinner language" />
+    <option name="LAST_COMMIT_MESSAGE" value="Edit show spinner language" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>
