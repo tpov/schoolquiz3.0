@@ -16,6 +16,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -27,7 +28,7 @@ import com.tpov.schoolquiz.presentation.main.MainViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class CreateQuestionFragment : Fragment() {
+class CreateQuizFragment : Fragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
@@ -343,9 +344,7 @@ class CreateQuestionFragment : Fragment() {
         languagesAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
         languageSpinner.adapter = languagesAdapter
 
-        val selectedLanguageIndex = language?.let {
-            languagesShortCodes.indexOf(it)
-        } ?: -1
+        val selectedLanguageIndex = language?.let { languagesShortCodes.indexOf(it) } ?: -1
 
         if (selectedLanguageIndex != -1) {
             languageSpinner.setSelection(selectedLanguageIndex)
@@ -390,7 +389,7 @@ class CreateQuestionFragment : Fragment() {
         }
 
         val newQuestions = getAllQuestionsAndLanguages()
-        val newAnswers = getAllAnswersAndCorrectAnswers()
+        val newAnswers = getThisAnswers()
         if (newAnswers != newQuestions) errorCountLanguage()
         else {
             val pathPicture = getPathPicture()
@@ -440,22 +439,21 @@ class CreateQuestionFragment : Fragment() {
         return questionsAndLanguages
     }
 
-    private fun getAllAnswersAndCorrectAnswers(): List<Triple<String, String, Int>> {
+    private fun getThisAnswers(): List<Triple<String, String, Int>> {
         val answersList = mutableListOf<Triple<String, String, Int>>()
 
-        val childCount = binding.llAnswers.childCount
+        val childCount = binding.llGroupAnswer.childCount
         for (i in 0 until childCount) {
-            val answerLayout = binding.llAnswers.getChildAt(i) as LinearLayout
+            val answerLayout = binding.llGroupAnswer.getChildAt(i) as LinearLayout
 
             val answerLanguageTextView: TextView =
                 answerLayout.findViewById(com.tpov.schoolquiz.R.id.tv_answer_language)
             val leftAnswerEditText: EditText =
-                answerLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer1)
+                answerLayout.findViewById(com.tpov.schoolquiz.R.id.edt_answer1)
             val rightAnswerEditText: EditText =
-                answerLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer2)
+                answerLayout.findViewById(com.tpov.schoolquiz.R.id.edt_answer2)
 
-            val language =
-                LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
+            val language = LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
 
             val answers = mutableListOf<String>()
             var correctAnswerIndex = -1
@@ -463,35 +461,35 @@ class CreateQuestionFragment : Fragment() {
             if (leftAnswerEditText.text.isNotEmpty()) {
                 answers.add(leftAnswerEditText.text.toString())
                 if (leftAnswerEditText.background is ColorDrawable && (leftAnswerEditText.background as ColorDrawable).color == Color.GREEN) {
-                    correctAnswerIndex = answers.size
+                    correctAnswerIndex = answers.size - 1
                 }
             }
 
             if (rightAnswerEditText.text.isNotEmpty()) {
                 answers.add(rightAnswerEditText.text.toString())
                 if (rightAnswerEditText.background is ColorDrawable && (rightAnswerEditText.background as ColorDrawable).color == Color.GREEN) {
-                    correctAnswerIndex = answers.size
+                    correctAnswerIndex = answers.size - 1
                 }
             }
 
-            for (j in 2 until answerLayout.childCount) { // Iterate over dynamically added EditTexts
-                val answerEditText = answerLayout.getChildAt(j) as? EditText ?: continue
-                if (answerEditText.text.isNotEmpty()) {
-                    answers.add(answerEditText.text.toString())
-                    if (answerEditText.background is ColorDrawable && (answerEditText.background as ColorDrawable).color == Color.GREEN) {
-                        correctAnswerIndex = answers.size
+            for (j in 0 until answerLayout.childCount) { // Проходим по всем дочерним элементам
+                val child = answerLayout.getChildAt(j)
+                if (child is EditText && child != leftAnswerEditText && child != rightAnswerEditText) {
+                    if (child.text.isNotEmpty()) {
+                        answers.add(child.text.toString())
+                        if (child.background is ColorDrawable && (child.background as ColorDrawable).color == Color.GREEN) {
+                            correctAnswerIndex = answers.size - 1
+                        }
                     }
                 }
             }
 
-            // Convert the list of answers to a string separated by "|"
             val answersString = answers.joinToString("|")
             answersList.add(Triple(language, answersString, correctAnswerIndex))
         }
 
         return answersList
     }
-
     private fun updateUiQuestion(numQuestion: Int) = with(binding) {
         val questionEntitiesLanguage = questionsEntity?.filter {
             it.numQuestion == numQuestion && it.hardQuestion == (numQuestion < 0)
@@ -503,62 +501,105 @@ class CreateQuestionFragment : Fragment() {
 
         chbTypeQuestion.isChecked = numQuestion < 0
 
-        questionEntitiesLanguage?.forEach { question ->
+        questionEntitiesLanguage?.forEachIndexed { indexLanguage, question ->
             addQuestionToLayout(question.nameQuestion, question.language)
 
             val answers = question.nameAnswers.split("|")
             val correctAnswerIndex = question.answer
 
-            answers.forEachIndexed { index, answerText ->
-                val isCorrect = index == correctAnswerIndex
-                addAnswer(
-                    language = question.language,
-                    answerText = answerText,
-                    isCorrect = isCorrect
+            answers.forEachIndexed { indexAnswer, answerText ->
+                val isCorrect = indexAnswer == correctAnswerIndex
+                addOrUpdateAnswerGroup(
+                    indexLanguage,
+                    question.language,
+                    (indexAnswer > 2 && indexAnswer % 2 != 0),
+                    isCorrect,
+                    answerText
                 )
             }
         }
     }
 
-    private fun addAnswer(language: String, answerText: String, isCorrect: Boolean = false) {
-        val existingLayout = findLayoutByLanguage(language)
+    private fun addOrUpdateAnswerGroup(
+        groupNumber: Int,
+        language: String,
+        addAnswers: Boolean,
+        isCorrect: Boolean,
+        answerText: String
+    ) {
+        val existingGroup = binding.llGroupAnswer.findViewWithTag<View>("group_$groupNumber")
 
-        if (existingLayout != null) {
-            val leftAnswerEditText: EditText =
-                existingLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer1)
-            val rightAnswerEditText: EditText =
-                existingLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer2)
+        if (existingGroup != null) {
+            val languageTextView =
+                existingGroup.findViewById<TextView>(com.tpov.schoolquiz.R.id.tv_answer_language)
+            languageTextView.text = language
 
-            when {
-                leftAnswerEditText.text.isEmpty() -> {
-                    leftAnswerEditText.setText(answerText)
-                    if (isCorrect) leftAnswerEditText.setBackgroundColor(Color.GREEN)
-                }
+            if (addAnswers) {
+                val answerContainer =
+                    existingGroup.findViewById<LinearLayout>(com.tpov.schoolquiz.R.id.ll_answer)
+                val inflater = LayoutInflater.from(requireContext())
+                val newAnswerView = inflater.inflate(
+                    com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
+                    answerContainer,
+                    false
+                )
 
-                rightAnswerEditText.text.isEmpty() -> {
-                    rightAnswerEditText.setText(answerText)
-                    if (isCorrect) rightAnswerEditText.setBackgroundColor(Color.GREEN)
-                }
+                val answerEditText =
+                    newAnswerView.findViewById<EditText>(com.tpov.schoolquiz.R.id.edt_answer1)
+                answerEditText.setText(answerText)
 
-                else -> {
-                    val newAnswerEditText = EditText(context).apply {
-                        layoutParams =
-                            LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                        setText(answerText)
-                        if (isCorrect) setBackgroundColor(Color.GREEN)
-                        setTextColor(Color.WHITE)
-                    }
-                    existingLayout.addView(newAnswerEditText)
-                }
+                answerContainer.addView(newAnswerView)
+            }
+
+            if (isCorrect) {
+                existingGroup.setBackgroundColor(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        android.R.color.holo_green_light
+                    )
+                )
+            } else {
+                existingGroup.setBackgroundColor(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        android.R.color.transparent
+                    )
+                )
             }
         } else {
-            createNewAnswerLayout(language, answerText, "", isCorrect, false)
+            val inflater = LayoutInflater.from(requireContext())
+            val newGroup = inflater.inflate(
+                com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
+                binding.llGroupAnswer,
+                false
+            )
+
+            val languageTextView =
+                newGroup.findViewById<TextView>(com.tpov.schoolquiz.R.id.tv_answer_language)
+            languageTextView.text = language
+
+            val answerEditText =
+                newGroup.findViewById<EditText>(com.tpov.schoolquiz.R.id.edt_answer1)
+            answerEditText.setText(answerText)
+
+            newGroup.tag = "group_$groupNumber"
+
+            if (isCorrect) {
+                newGroup.setBackgroundColor(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        android.R.color.holo_green_light
+                    )
+                )
+            }
+
+            binding.llGroupAnswer.addView(newGroup)
         }
     }
 
     private fun findLayoutByLanguage(language: String): LinearLayout? {
-        for (i in 0 until binding.llAnswers.childCount) {
-            val layout = binding.llAnswers.getChildAt(i) as LinearLayout
+        for (i in 0 until binding.llGroupAnswer.childCount) {
+            val layout = binding.llGroupAnswer.getChildAt(i) as LinearLayout
             val languageTextView: TextView =
                 layout.findViewById(com.tpov.schoolquiz.R.id.tv_answer_language)
             if (languageTextView.text == LanguageUtils.getLanguageFullName(language)) {
@@ -567,41 +608,6 @@ class CreateQuestionFragment : Fragment() {
         }
         return null
     }
-
-    private fun createNewAnswerLayout(
-        language: String,
-        answerTextLeft: String?,
-        answerTextRight: String?,
-        isCorrectLeft: Boolean,
-        isCorrectRight: Boolean
-    ) {
-        val newAnswerLayout = LayoutInflater.from(context).inflate(
-            com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
-            binding.llAnswers,
-            false
-        ) as LinearLayout
-
-        val answerLanguageTextView: TextView =
-            newAnswerLayout.findViewById(com.tpov.schoolquiz.R.id.tv_answer_language)
-        answerLanguageTextView.text = LanguageUtils.getLanguageFullName(language)
-
-        val leftAnswerEditText: EditText =
-            newAnswerLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer1)
-        leftAnswerEditText.setText(answerTextLeft ?: "")
-        if (isCorrectLeft) {
-            leftAnswerEditText.setBackgroundColor(Color.GREEN)
-        }
-
-        val rightAnswerEditText: EditText =
-            newAnswerLayout.findViewById(com.tpov.schoolquiz.R.id.b_answer2)
-        rightAnswerEditText.setText(answerTextRight ?: "")
-        if (isCorrectRight) {
-            rightAnswerEditText.setBackgroundColor(Color.GREEN)
-        }
-
-        binding.llAnswers.addView(newAnswerLayout)
-    }
-
 
     private fun determineCorrectAnswer(): Int {
         // Ваша логика определения правильного ответа
@@ -650,8 +656,8 @@ class CreateQuestionFragment : Fragment() {
 
         fun newInstance(
             idQuiz: Int
-        ): CreateQuestionFragment {
-            val fragment = CreateQuestionFragment()
+        ): CreateQuizFragment {
+            val fragment = CreateQuizFragment()
             val args = Bundle()
             args.putInt(ARG_QUIZ, idQuiz)
             fragment.arguments = args

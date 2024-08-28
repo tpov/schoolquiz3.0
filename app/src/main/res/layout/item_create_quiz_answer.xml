@@ -19,7 +19,7 @@
         android:orientation="horizontal">
 
         <EditText
-            android:id="@+id/b_answer1"
+            android:id="@+id/edt_answer1"
             android:layout_width="0dp"
             android:layout_height="45dp"
             android:layout_weight="1"
@@ -29,7 +29,7 @@
             android:textColor="@color/white" />
 
         <EditText
-            android:id="@+id/b_answer2"
+            android:id="@+id/edt_answer2"
             android:layout_width="0dp"
             android:layout_height="45dp"
             android:layout_marginLeft="8dp"
