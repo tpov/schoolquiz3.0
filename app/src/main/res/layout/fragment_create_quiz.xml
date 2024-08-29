@@ -16,7 +16,7 @@
         android:gravity="center"
         android:text="Quiz name"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="+@id/imv_quiz"
+        app:layout_constraintEnd_toStartOf="@id/imv_quiz"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -59,6 +59,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:visibility="gone"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -202,7 +203,7 @@
         android:textColor="@color/back_main_red"
         app:layout_constraintBottom_toBottomOf="@+id/imv_question"
         app:layout_constraintEnd_toStartOf="@+id/imv_question"
-        app:layout_constraintStart_toEndOf="@+id/tv_num_question"
+        app:layout_constraintStart_toEndOf="@+id/sp_num_question"
         app:layout_constraintTop_toTopOf="@+id/imv_question" />
 
     <Button

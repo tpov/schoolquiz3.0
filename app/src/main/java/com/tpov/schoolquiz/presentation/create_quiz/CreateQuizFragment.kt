@@ -1,6 +1,9 @@
 package com.tpov.schoolquiz.presentation.create_quiz
 
 import android.R
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
@@ -22,6 +25,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.databinding.FragmentCreateQuizBinding
 import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.main.MainViewModel
@@ -36,14 +40,27 @@ class CreateQuizFragment : Fragment() {
     private var idQuiz = -1
     private var lvlTranslate = 0
 
+    private val PICK_IMAGE_CATEGORY = 1001
+    private val PICK_IMAGE_SUBCATEGORY = 1002
+    private val PICK_IMAGE_SUBSUBCATEGORY = 1003
+    private val PICK_IMAGE_QUIZ = 1004
+    private val PICK_IMAGE_QUESTION = 1005
+
     private val binding get() = _binding!!
     private var _binding: FragmentCreateQuizBinding? = null
 
     private var questionsEntity: ArrayList<QuestionEntity>? = null
     private var quizEntity: QuizEntity? = null
 
-    private var numQuestion = 1
+    private var category: String = ""
+    private var subCategory: String = ""
+    private var subsubCategory: String = ""
 
+    private var numQuestion = 1
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        (activity?.application as MainApp).applicationComponent.inject(this)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -66,6 +83,9 @@ class CreateQuizFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        quizEntity = arguments?.getParcelable(ARG_QUIZ)
+        questionsEntity = arguments?.getParcelableArrayList(ARG_QUESTION)
+        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         initView()
         initSetOnClickListeners()
 
@@ -81,7 +101,7 @@ class CreateQuizFragment : Fragment() {
         }
 
         spNumQuestion.adapter = adapter
-        spNumQuestion.setSelection(0)
+        spNumQuestion.setSelection(numQuestion - 1)
         spNumQuestion.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>,
@@ -90,7 +110,9 @@ class CreateQuizFragment : Fragment() {
                 id: Long
             ) {
                 saveThisNumberQuestion()
-                updateUiQuestion(position)
+                numQuestion = position + 1
+                saveThisNumberQuestion()
+                updateUiQuestion()
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -98,13 +120,45 @@ class CreateQuizFragment : Fragment() {
     }
 
     private fun initSetOnClickListeners() = with(binding) {
-        setupQuestionSpinner()
+
         binding.bSave.setOnClickListener {
             saveThisNumberQuestion()
             saveQuiz()
         }
-        setCategorySpinnerListeners()
 
+        binding.imvCategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_CATEGORY) }
+        binding.imvSubcategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_SUBCATEGORY) }
+        binding.imvSubsubcategory.setOnClickListener {
+            pickImageFromGallery(
+                PICK_IMAGE_SUBSUBCATEGORY
+            )
+        }
+        binding.imvQuiz.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUIZ) }
+        binding.imvQuestion.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUESTION) }
+
+        setCategorySpinnerListeners()
+    }
+
+    private fun pickImageFromGallery(requestCode: Int) {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        startActivityForResult(intent, requestCode)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode == Activity.RESULT_OK) {
+            val imageUri = data?.data
+            when (requestCode) {
+                PICK_IMAGE_CATEGORY -> binding.imvCategory.setImageURI(imageUri)
+                PICK_IMAGE_SUBCATEGORY -> binding.imvSubcategory.setImageURI(imageUri)
+                PICK_IMAGE_SUBSUBCATEGORY -> binding.imvSubsubcategory.setImageURI(imageUri)
+                PICK_IMAGE_QUIZ -> binding.imvQuiz.setImageURI(imageUri)
+                PICK_IMAGE_QUESTION -> binding.imvQuestion.setImageURI(imageUri)
+            }
+        }
     }
 
     private fun getUserLanguage(): String {
@@ -112,34 +166,33 @@ class CreateQuizFragment : Fragment() {
     }
 
     private fun initView() {
-        if (idQuiz != -1) {
-            lifecycleScope.launch { viewModel.quizData.collect { it.let { updateUiQuiz(it!!) } } }
-            lifecycleScope.launch {
-                viewModel.questionData.collect {
-                    it.let {
-                        questionsEntity = (it as ArrayList<QuestionEntity>?)!!
-                        updateUiQuestion(1)
-                    }
-                }
+        questionsEntity.let {
+
+            numQuestion = 1
+            setupQuestionSpinner()
+            updateUiQuestion()
+            quizEntity.let {
+                setupUiQuiz()
+                setSpinnersCategory()
             }
         }
+
     }
 
-    private fun updateUiQuiz(quiz: QuizEntity) = with(binding) {
-        tvQuizName.setText(quiz.nameQuiz)
+    private fun setupUiQuiz() = with(binding) {
+        tvQuizName.setText(quizEntity?.nameQuiz)
 
-        val imagePath = quiz.picture
+        setCategorySpinnerListeners()
+
+        val imagePath = quizEntity?.picture
         if (!imagePath.isNullOrEmpty()) {
             imvQuiz.setImageURI(Uri.parse(imagePath))
         }
-
-
     }
 
-    private fun setSpinnersCategory(category: String, subCategory: String, subSubCategory: String) {
+    private fun setSpinnersCategory() {
         lifecycleScope.launch {
             val structureData = viewModel.getStructureData()
-
             var selectedCategoryIndex = 0
             var selectedSubCategoryIndex = 0
             var selectedSubSubCategoryIndex = 0
@@ -167,7 +220,7 @@ class CreateQuizFragment : Fragment() {
 
                                 subCat.subSubcategory.forEachIndexed { subSubCatIndex, subSubCat ->
                                     subSubcategories.add(subSubCat.nameQuiz)
-                                    if (subSubCat.nameQuiz == subSubCategory) {
+                                    if (subSubCat.nameQuiz == subsubCategory) {
                                         if (!subSubCat.picture.isNullOrEmpty()) {
                                             binding.imvSubcategory.setImageURI(Uri.parse(subSubCat.picture))
                                         }
@@ -182,7 +235,7 @@ class CreateQuizFragment : Fragment() {
 
             binding.tvCategory.setText(category)
             binding.tvSubCategory.setText(subCategory)
-            binding.tvSubsubCategory.setText(subSubCategory)
+            binding.tvSubsubCategory.setText(subsubCategory)
 
             // Устанавливаем адаптеры для спиннеров
             val categoryAdapter =
@@ -220,7 +273,9 @@ class CreateQuizFragment : Fragment() {
                 if (selectedCategory == "Создать новую категорию") {
                     createNewCategory()
                 } else {
-                    loadSubCategories(selectedCategory)
+                    category = selectedCategory
+                    filledTVCategory()
+                    setSpinnersCategory()
                 }
             }
 
@@ -239,14 +294,15 @@ class CreateQuizFragment : Fragment() {
                 if (selectedSubCategory == "Создать новую подкатегорию") {
                     createNewSubCategory()
                 } else {
-                    loadSubSubCategories(selectedSubCategory)
+                    subCategory = selectedSubCategory
+                    filledTVCategory()
+                    setSpinnersCategory()
                 }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
-        // Слушатель для спиннера под-субкатегорий
         binding.spSubsubCategory.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(
@@ -259,7 +315,9 @@ class CreateQuizFragment : Fragment() {
                     if (selectedSubSubCategory == "Создать новую под-субкатегорию") {
                         createNewSubSubCategory()
                     } else {
-                        // Обработка выбора под-субкатегории
+                        subsubCategory = selectedSubSubCategory
+                        filledTVCategory()
+                        setSpinnersCategory()
                     }
                 }
 
@@ -267,56 +325,43 @@ class CreateQuizFragment : Fragment() {
             }
     }
 
-    private fun loadSubCategories(category: String) {
-        lifecycleScope.launch {
-            val structureData = viewModel.getStructureData()
-
-            val subcategories = mutableListOf("Создать новую подкатегорию")
-
-            structureData?.event?.forEach { event ->
-                event.category.firstOrNull { it.nameQuiz == category }?.subcategory?.forEach {
-                    subcategories.add(it.nameQuiz)
-                }
-            }
-
-            val subCategoryAdapter =
-                ArrayAdapter(requireContext(), R.layout.simple_spinner_item, subcategories)
-            subCategoryAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
-            binding.spSubCategory.adapter = subCategoryAdapter
-        }
-    }
-
-    private fun loadSubSubCategories(subCategory: String) {
-        lifecycleScope.launch {
-            val structureData = viewModel.getStructureData()
-
-            val subSubcategories = mutableListOf("Создать новую под-субкатегорию")
-
-            structureData?.event?.forEach { event ->
-                event.category.forEach { category ->
-                    category.subcategory.firstOrNull { it.nameQuiz == subCategory }?.subSubcategory?.forEach {
-                        subSubcategories.add(it.nameQuiz)
-                    }
-                }
-            }
-
-            val subSubCategoryAdapter =
-                ArrayAdapter(requireContext(), R.layout.simple_spinner_item, subSubcategories)
-            subSubCategoryAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
-            binding.spSubsubCategory.adapter = subSubCategoryAdapter
-        }
-    }
-
     private fun createNewCategory() {
-        // Логика создания новой категории
+        category = ""
+        subCategory = ""
+        subsubCategory = ""
+
+        binding.imvCategory.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)
+        binding.imvSubcategory.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)
+        binding.imvSubsubcategory.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)
+
+        showCreateNewCategory()
     }
 
     private fun createNewSubCategory() {
-        // Логика создания новой подкатегории
+        subCategory = ""
+        subsubCategory = ""
+
+        binding.imvSubcategory.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)
+        binding.imvSubsubcategory.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)
+
+        showCreateNewCategory()
     }
 
     private fun createNewSubSubCategory() {
-        // Логика создания новой под-субкатегории
+        subsubCategory = ""
+        binding.imvSubsubcategory.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)
+        showCreateNewCategory()
+    }
+
+    private fun showCreateNewCategory() {
+        binding.llCreateNewCategory.visibility = View.VISIBLE
+        filledTVCategory()
+    }
+
+    private fun filledTVCategory() {
+        binding.tvCategory.setText(category)
+        binding.tvSubCategory.setText(subCategory)
+        binding.tvSubsubCategory.setText(subsubCategory)
     }
 
     private fun addQuestionToLayout(questionText: String? = null, language: String? = null) {
@@ -453,7 +498,8 @@ class CreateQuizFragment : Fragment() {
             val rightAnswerEditText: EditText =
                 answerLayout.findViewById(com.tpov.schoolquiz.R.id.edt_answer2)
 
-            val language = LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
+            val language =
+                LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
 
             val answers = mutableListOf<String>()
             var correctAnswerIndex = -1
@@ -490,7 +536,8 @@ class CreateQuizFragment : Fragment() {
 
         return answersList
     }
-    private fun updateUiQuestion(numQuestion: Int) = with(binding) {
+
+    private fun updateUiQuestion() = with(binding) {
         val questionEntitiesLanguage = questionsEntity?.filter {
             it.numQuestion == numQuestion && it.hardQuestion == (numQuestion < 0)
         }
@@ -655,11 +702,13 @@ class CreateQuizFragment : Fragment() {
         private const val ARG_QUESTION = "arg_question"
 
         fun newInstance(
-            idQuiz: Int
+            quiz: QuizEntity? = null,
+            questions: List<QuestionEntity>? = null
         ): CreateQuizFragment {
             val fragment = CreateQuizFragment()
             val args = Bundle()
-            args.putInt(ARG_QUIZ, idQuiz)
+            args.putParcelable(ARG_QUIZ, quiz)
+            args.putParcelableArrayList(ARG_QUESTION, ArrayList(questions))
             fragment.arguments = args
             return fragment
         }

@@ -46,6 +46,8 @@ class MainViewModel @Inject constructor(
     private val _quizData = MutableStateFlow<QuizEntity?>(null)
     val questionData: StateFlow<List<QuestionEntity>?> get() = _questionData
     private val _questionData = MutableStateFlow<List<QuestionEntity>?>(null)
+    val structureData: StateFlow<StructureData?> get() = _structureData
+    private val _structureData = MutableStateFlow<StructureData?>(null)
 
     var firstStartApp = false
 
@@ -61,7 +63,7 @@ class MainViewModel @Inject constructor(
         profileUseCase.updateProfile(profileEntity)
     }
 
-    suspend fun getStructureData() = structureUseCase.getStructureData()
+suspend fun getStructureData() = structureUseCase.getStructureData()
 
     suspend fun loadHomeCategory(): List<String> {
         var listNewQuiz: List<String> = listOf()

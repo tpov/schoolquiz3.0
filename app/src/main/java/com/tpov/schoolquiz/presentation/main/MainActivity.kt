@@ -39,7 +39,6 @@ import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
 import com.tpov.common.presentation.quiz.QuizFragment
-import com.tpov.network.presentation.AutorisationFragment
 import com.tpov.network.presentation.chat.ChatFragment
 import com.tpov.network.presentation.friend.FriendsFragment
 import com.tpov.network.presentation.leaders.LeadersFragment
@@ -53,6 +52,7 @@ import com.tpov.schoolquiz.presentation.about.AboutFragment
 import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizFragment
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.shop.presentation.ShopFragment
@@ -346,7 +346,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.menu_adb -> switchFragment(ShopFragment())
                 R.id.menu_info -> startInfoFragment()
                 R.id.menu_network -> {
-                    switchFragment(AutorisationFragment())
+                    switchFragment(CreateQuizFragment())
                     //SetItemMenu.setNetworkMenu(binding, )
                 }
                 else -> false
