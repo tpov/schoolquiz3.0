@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.presentation.create_quiz
 
-import android.R
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -12,27 +11,26 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.schoolquiz.MainApp
-import com.tpov.schoolquiz.databinding.FragmentCreateQuizBinding
+import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
 import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class CreateQuizFragment : Fragment() {
+class CreateQuizActivity : AppCompatActivity() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
@@ -46,8 +44,7 @@ class CreateQuizFragment : Fragment() {
     private val PICK_IMAGE_QUIZ = 1004
     private val PICK_IMAGE_QUESTION = 1005
 
-    private val binding get() = _binding!!
-    private var _binding: FragmentCreateQuizBinding? = null
+    private lateinit var binding: ActivityCreateQuizBinding
 
     private var questionsEntity: ArrayList<QuestionEntity>? = null
     private var quizEntity: QuizEntity? = null
@@ -57,47 +54,36 @@ class CreateQuizFragment : Fragment() {
     private var subsubCategory: String = ""
 
     private var numQuestion = 1
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        (activity?.application as MainApp).applicationComponent.inject(this)
-    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        arguments?.let {
-            idQuiz = it.getInt(ARG_QUIZ)
+        (application as MainApp).applicationComponent.inject(this)
+        binding = ActivityCreateQuizBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        intent?.let {
+            idQuiz = it.getIntExtra(ARG_QUIZ, -1)
+            viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
             viewModel.getQuizByIdQuiz(idQuiz)
             viewModel.getQuestionByIdQuiz(idQuiz)
         }
-    }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentCreateQuizBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+        quizEntity = intent.getParcelableExtra(ARG_QUIZ)
+        questionsEntity = intent.getParcelableArrayListExtra(ARG_QUESTION)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        quizEntity = arguments?.getParcelable(ARG_QUIZ)
-        questionsEntity = arguments?.getParcelableArrayList(ARG_QUESTION)
-        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         initView()
         initSetOnClickListeners()
-
     }
 
     private fun setupQuestionSpinner() = with(binding) {
         val questionForSpinner = questionsEntity
             ?.filter { it.language == getUserLanguage() }
-            ?.sortedBy { it.numQuestion }?.sortedBy { !it.hardQuestion }
+            ?.sortedBy { it.numQuestion }
+            ?.sortedBy { !it.hardQuestion }
 
         val adapter = questionForSpinner?.let {
-            CustomSpinnerAdapter(root.context, it)
+            CustomSpinnerAdapter(this@CreateQuizActivity, it)
         }
 
         spNumQuestion.adapter = adapter
@@ -121,20 +107,16 @@ class CreateQuizFragment : Fragment() {
 
     private fun initSetOnClickListeners() = with(binding) {
 
-        binding.bSave.setOnClickListener {
+        bSave.setOnClickListener {
             saveThisNumberQuestion()
             saveQuiz()
         }
 
-        binding.imvCategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_CATEGORY) }
-        binding.imvSubcategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_SUBCATEGORY) }
-        binding.imvSubsubcategory.setOnClickListener {
-            pickImageFromGallery(
-                PICK_IMAGE_SUBSUBCATEGORY
-            )
-        }
-        binding.imvQuiz.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUIZ) }
-        binding.imvQuestion.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUESTION) }
+        imvCategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_CATEGORY) }
+        imvSubcategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_SUBCATEGORY) }
+        imvSubsubcategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_SUBSUBCATEGORY) }
+        imvQuiz.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUIZ) }
+        imvQuestion.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUESTION) }
 
         setCategorySpinnerListeners()
     }
@@ -145,7 +127,6 @@ class CreateQuizFragment : Fragment() {
         startActivityForResult(intent, requestCode)
     }
 
-    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -222,7 +203,7 @@ class CreateQuizFragment : Fragment() {
                                     subSubcategories.add(subSubCat.nameQuiz)
                                     if (subSubCat.nameQuiz == subsubCategory) {
                                         if (!subSubCat.picture.isNullOrEmpty()) {
-                                            binding.imvSubcategory.setImageURI(Uri.parse(subSubCat.picture))
+                                            binding.imvSubsubcategory.setImageURI(Uri.parse(subSubCat.picture))
                                         }
                                         selectedSubSubCategoryIndex = subSubCatIndex + 1
                                     }
@@ -239,18 +220,18 @@ class CreateQuizFragment : Fragment() {
 
             // Устанавливаем адаптеры для спиннеров
             val categoryAdapter =
-                ArrayAdapter(requireContext(), R.layout.simple_spinner_item, categories)
-            categoryAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, categories)
+            categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.spCategory.adapter = categoryAdapter
 
             val subCategoryAdapter =
-                ArrayAdapter(requireContext(), R.layout.simple_spinner_item, subcategories)
-            subCategoryAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, subcategories)
+            subCategoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.spSubCategory.adapter = subCategoryAdapter
 
             val subSubCategoryAdapter =
-                ArrayAdapter(requireContext(), R.layout.simple_spinner_item, subSubcategories)
-            subSubCategoryAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, subSubcategories)
+            subSubCategoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.spSubsubCategory.adapter = subSubCategoryAdapter
 
             // Устанавливаем выбранные элементы в спиннерах
@@ -282,7 +263,6 @@ class CreateQuizFragment : Fragment() {
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
-        // Слушатель для спиннера подкатегорий
         binding.spSubCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>,
@@ -365,7 +345,7 @@ class CreateQuizFragment : Fragment() {
     }
 
     private fun addQuestionToLayout(questionText: String? = null, language: String? = null) {
-        val questionLayout = LayoutInflater.from(context).inflate(
+        val questionLayout = LayoutInflater.from(this).inflate(
             com.tpov.schoolquiz.R.layout.item_create_quiz_question,
             binding.llQuestions,
             false
@@ -382,11 +362,11 @@ class CreateQuizFragment : Fragment() {
         val languagesShortCodes = LanguageUtils.languagesShortCodes
 
         val languagesAdapter = ArrayAdapter(
-            view?.context!!,
-            R.layout.simple_spinner_item,
+            this,
+            android.R.layout.simple_spinner_item,
             languagesFullNames
         )
-        languagesAdapter.setDropDownViewResource(R.layout.simple_spinner_dropdown_item)
+        languagesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         languageSpinner.adapter = languagesAdapter
 
         val selectedLanguageIndex = language?.let { languagesShortCodes.indexOf(it) } ?: -1
@@ -427,7 +407,6 @@ class CreateQuizFragment : Fragment() {
         binding.llQuestions.addView(questionLayout)
     }
 
-    //Удаляем в вопросах тот номер вопроса который отабрежен, затем считываем отобреженный номер вопроса и добавляем в список вопросов
     private fun saveThisNumberQuestion() {
         questionsEntity?.filter {
             it.numQuestion != numQuestion || it.hardQuestion != (numQuestion < 0)
@@ -518,7 +497,7 @@ class CreateQuizFragment : Fragment() {
                 }
             }
 
-            for (j in 0 until answerLayout.childCount) { // Проходим по всем дочерним элементам
+            for (j in 0 until answerLayout.childCount) {
                 val child = answerLayout.getChildAt(j)
                 if (child is EditText && child != leftAnswerEditText && child != rightAnswerEditText) {
                     if (child.text.isNotEmpty()) {
@@ -549,6 +528,7 @@ class CreateQuizFragment : Fragment() {
         chbTypeQuestion.isChecked = numQuestion < 0
 
         questionEntitiesLanguage?.forEachIndexed { indexLanguage, question ->
+            idQuiz = question.idQuiz
             addQuestionToLayout(question.nameQuestion, question.language)
 
             val answers = question.nameAnswers.split("|")
@@ -584,7 +564,7 @@ class CreateQuizFragment : Fragment() {
             if (addAnswers) {
                 val answerContainer =
                     existingGroup.findViewById<LinearLayout>(com.tpov.schoolquiz.R.id.ll_answer)
-                val inflater = LayoutInflater.from(requireContext())
+                val inflater = LayoutInflater.from(this)
                 val newAnswerView = inflater.inflate(
                     com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
                     answerContainer,
@@ -601,20 +581,20 @@ class CreateQuizFragment : Fragment() {
             if (isCorrect) {
                 existingGroup.setBackgroundColor(
                     ContextCompat.getColor(
-                        requireContext(),
+                        this,
                         android.R.color.holo_green_light
                     )
                 )
             } else {
                 existingGroup.setBackgroundColor(
                     ContextCompat.getColor(
-                        requireContext(),
+                        this,
                         android.R.color.transparent
                     )
                 )
             }
         } else {
-            val inflater = LayoutInflater.from(requireContext())
+            val inflater = LayoutInflater.from(this)
             val newGroup = inflater.inflate(
                 com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
                 binding.llGroupAnswer,
@@ -634,7 +614,7 @@ class CreateQuizFragment : Fragment() {
             if (isCorrect) {
                 newGroup.setBackgroundColor(
                     ContextCompat.getColor(
-                        requireContext(),
+                        this,
                         android.R.color.holo_green_light
                     )
                 )
@@ -657,12 +637,11 @@ class CreateQuizFragment : Fragment() {
     }
 
     private fun determineCorrectAnswer(): Int {
-        // Ваша логика определения правильного ответа
         return 0
     }
 
     private fun saveQuiz() = lifecycleScope.launch {
-        quizEntity?.let { //then create quiz, else translate quiz
+        quizEntity?.let {
             viewModel.insertQuiz(it)
             viewModel.insertQuestion(questionsEntity ?: errorLoadQuestionEntity())
         } ?: saveTranslate()
@@ -684,11 +663,6 @@ class CreateQuizFragment : Fragment() {
         return "ua"
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
     private fun errorLoadQuestionEntity(): List<QuestionEntity> {
         return null!!
     }
@@ -702,15 +676,14 @@ class CreateQuizFragment : Fragment() {
         private const val ARG_QUESTION = "arg_question"
 
         fun newInstance(
+            context: Context,
             quiz: QuizEntity? = null,
             questions: List<QuestionEntity>? = null
-        ): CreateQuizFragment {
-            val fragment = CreateQuizFragment()
-            val args = Bundle()
-            args.putParcelable(ARG_QUIZ, quiz)
-            args.putParcelableArrayList(ARG_QUESTION, ArrayList(questions))
-            fragment.arguments = args
-            return fragment
+        ): Intent {
+            return Intent(context, CreateQuizActivity::class.java).apply {
+                putExtra(ARG_QUIZ, quiz)
+                putParcelableArrayListExtra(ARG_QUESTION, ArrayList(questions))
+            }
         }
     }
 }

@@ -15,12 +15,12 @@
       </config>
     </shared>
     <layouts>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml">
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_create_quiz.xml">
         <config>
           <theme>@style/Theme.GeoQuiz</theme>
         </config>
       </layout>
-      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/fragment_create_quiz.xml">
+      <layout url="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml">
         <config>
           <theme>@style/Theme.GeoQuiz</theme>
         </config>
@@ -177,23 +177,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Edit CreateQuizFragment">
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/ApplicationComponent.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/ApplicationComponent.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_create_quiz.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_create_quiz.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_create_quiz.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_create_quiz.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main.xml.flat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_false.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_false.xml.flat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_true.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_true.xml.flat" afterDir="false" />
@@ -240,17 +237,6 @@
       <change beforePath="$PROJECT_DIR$/settings/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings/build/intermediates/incremental/mergeDebugShaders/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/mergeDebugShaders/merger.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings/build/intermediates/incremental/packageDebugAssets/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/packageDebugAssets/merger.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/results.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/databinding/ShopFragmentBinding.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/DaggerShopComponent$Factory.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/DaggerShopComponent$ShopComponentImpl.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/DaggerShopComponent.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopComponent$Factory.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopComponent.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule_ProvideContextFactory.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/presentation/ShopFragment.dex" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/54d91a146177efd5d8dd81ff2d7fe57d/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24.xml.flat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_empty.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_empty.xml.flat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_gold.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_gold.xml.flat" afterDir="false" />
@@ -300,7 +286,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[C:\Users\tpovd\.android\avd\Pixel_7_Pro_API_34.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -419,11 +405,11 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
-    "git-widget-placeholder": "SchoolQuiz4.0",
+    "git-widget-placeholder": "Rebasing SchoolQuiz4.0",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "D:/Programming/Android/schoolquiz3.0/common/src/main/res/layout",
-    "project.structure.last.edited": "Dependencies",
+    "project.structure.last.edited": "SDK Location",
     "project.structure.proportion": "0.17",
     "project.structure.side.proportion": "0.2",
     "settings.editor.selected.configurable": "Errors"
@@ -487,7 +473,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -551,7 +540,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -615,7 +607,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -679,7 +674,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -743,7 +741,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -807,7 +808,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -870,7 +874,10 @@
       <option name="RETENTION_COMPRESS_SNAPSHOTS" value="false" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />

@@ -6,6 +6,7 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -52,7 +53,7 @@ import com.tpov.schoolquiz.presentation.about.AboutFragment
 import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizFragment
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.shop.presentation.ShopFragment
@@ -346,7 +347,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.menu_adb -> switchFragment(ShopFragment())
                 R.id.menu_info -> startInfoFragment()
                 R.id.menu_network -> {
-                    switchFragment(CreateQuizFragment())
+                    startActivity(Intent(this, CreateQuizActivity::class.java))
                     //SetItemMenu.setNetworkMenu(binding, )
                 }
                 else -> false
