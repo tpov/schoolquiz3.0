@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.AdapterView
@@ -24,10 +25,12 @@ import androidx.lifecycle.lifecycleScope
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.schoolquiz.MainApp
+import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
 import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 class CreateQuizActivity : AppCompatActivity() {
@@ -53,20 +56,19 @@ class CreateQuizActivity : AppCompatActivity() {
     private var subCategory: String = ""
     private var subsubCategory: String = ""
 
-    private var numQuestion = 1
+    private var numQuestion = 0
+    private var idGroup = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        supportActionBar?.hide()
         (application as MainApp).applicationComponent.inject(this)
         binding = ActivityCreateQuizBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         intent?.let {
-            idQuiz = it.getIntExtra(ARG_QUIZ, -1)
             viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
-            viewModel.getQuizByIdQuiz(idQuiz)
-            viewModel.getQuestionByIdQuiz(idQuiz)
         }
 
         quizEntity = intent.getParcelableExtra(ARG_QUIZ)
@@ -77,11 +79,14 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun setupQuestionSpinner() = with(binding) {
+        Log.d("setupQuestionSpinner()", "1")
         val questionForSpinner = questionsEntity
             ?.filter { it.language == getUserLanguage() }
             ?.sortedBy { it.numQuestion }
             ?.sortedBy { !it.hardQuestion }
 
+        Log.d("setupQuestionSpinner()", "questionsEntity size: ${questionsEntity?.size}")
+        Log.d("setupQuestionSpinner()", "questionForSpinner size: ${questionForSpinner?.size}")
         val adapter = questionForSpinner?.let {
             CustomSpinnerAdapter(this@CreateQuizActivity, it)
         }
@@ -97,7 +102,7 @@ class CreateQuizActivity : AppCompatActivity() {
             ) {
                 saveThisNumberQuestion()
                 numQuestion = position + 1
-                saveThisNumberQuestion()
+                idGroup = 0
                 updateUiQuestion()
             }
 
@@ -110,6 +115,23 @@ class CreateQuizActivity : AppCompatActivity() {
         bSave.setOnClickListener {
             saveThisNumberQuestion()
             saveQuiz()
+        }
+        bCencel.setOnClickListener {
+            finish()
+        }
+        bAddQuestion.setOnClickListener {
+            saveThisNumberQuestion()
+            numQuestion += 1
+            idGroup = 0
+            setupQuestionSpinner()
+            updateUiQuestion()
+        }
+        bAddTranslate.setOnClickListener {
+            addQuestionToLayout("", getUserLanguage())
+            addOrUpdateAnswerGroup(idGroup, getUserLanguage(), false, "")
+        }
+        bAddAnswer.setOnClickListener {
+            addOrUpdateAnswerGroup(1, getUserLanguage(), true, "")
         }
 
         imvCategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_CATEGORY) }
@@ -127,6 +149,7 @@ class CreateQuizActivity : AppCompatActivity() {
         startActivityForResult(intent, requestCode)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -143,11 +166,11 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun getUserLanguage(): String {
-        return ""
+        return Locale.getDefault().language
     }
 
     private fun initView() {
-        questionsEntity.let {
+        questionsEntity?.let {
 
             numQuestion = 1
             setupQuestionSpinner()
@@ -156,6 +179,14 @@ class CreateQuizActivity : AppCompatActivity() {
                 setupUiQuiz()
                 setSpinnersCategory()
             }
+        }
+        if (questionsEntity == null) {
+
+            Log.d("wadwad", "questionsEntity ?: ")
+            setupQuestionSpinner()
+            updateUiQuestion()
+            setupUiQuiz()
+            setSpinnersCategory()
         }
 
     }
@@ -172,6 +203,7 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun setSpinnersCategory() {
+        Log.d("wadwad", "setSpinnersCategory")
         lifecycleScope.launch {
             val structureData = viewModel.getStructureData()
             var selectedCategoryIndex = 0
@@ -203,7 +235,11 @@ class CreateQuizActivity : AppCompatActivity() {
                                     subSubcategories.add(subSubCat.nameQuiz)
                                     if (subSubCat.nameQuiz == subsubCategory) {
                                         if (!subSubCat.picture.isNullOrEmpty()) {
-                                            binding.imvSubsubcategory.setImageURI(Uri.parse(subSubCat.picture))
+                                            binding.imvSubsubcategory.setImageURI(
+                                                Uri.parse(
+                                                    subSubCat.picture
+                                                )
+                                            )
                                         }
                                         selectedSubSubCategoryIndex = subSubCatIndex + 1
                                     }
@@ -220,17 +256,29 @@ class CreateQuizActivity : AppCompatActivity() {
 
             // Устанавливаем адаптеры для спиннеров
             val categoryAdapter =
-                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, categories)
+                ArrayAdapter(
+                    this@CreateQuizActivity,
+                    android.R.layout.simple_spinner_item,
+                    categories
+                )
             categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.spCategory.adapter = categoryAdapter
 
             val subCategoryAdapter =
-                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, subcategories)
+                ArrayAdapter(
+                    this@CreateQuizActivity,
+                    android.R.layout.simple_spinner_item,
+                    subcategories
+                )
             subCategoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.spSubCategory.adapter = subCategoryAdapter
 
             val subSubCategoryAdapter =
-                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, subSubcategories)
+                ArrayAdapter(
+                    this@CreateQuizActivity,
+                    android.R.layout.simple_spinner_item,
+                    subSubcategories
+                )
             subSubCategoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             binding.spSubsubCategory.adapter = subSubCategoryAdapter
 
@@ -345,6 +393,7 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun addQuestionToLayout(questionText: String? = null, language: String? = null) {
+        idGroup += 1
         val questionLayout = LayoutInflater.from(this).inflate(
             com.tpov.schoolquiz.R.layout.item_create_quiz_question,
             binding.llQuestions,
@@ -376,6 +425,8 @@ class CreateQuizActivity : AppCompatActivity() {
         }
 
         languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+
+            var isSpinnerInitialized = false
             override fun onItemSelected(
                 parent: AdapterView<*>,
                 view: View?,
@@ -383,6 +434,15 @@ class CreateQuizActivity : AppCompatActivity() {
                 id: Long
             ) {
                 (view as? TextView)?.text = languagesShortCodes[position]
+                Log.d("QuizApp", "languageSpinner.onItemSelectedListener")
+                if (!isSpinnerInitialized) {
+                    isSpinnerInitialized = true
+                    return
+                }
+                addOrUpdateAnswerGroup(
+                    binding.llQuestions.indexOfChild(questionLayout) + 1,
+                    languagesShortCodes[position]
+                )
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -414,8 +474,12 @@ class CreateQuizActivity : AppCompatActivity() {
 
         val newQuestions = getAllQuestionsAndLanguages()
         val newAnswers = getThisAnswers()
-        if (newAnswers != newQuestions) errorCountLanguage()
+        Log.d("saveThisNumberQuestion", "newQuestions: ${newQuestions.size}")
+        Log.d("saveThisNumberQuestion", "newAnswers: ${newAnswers.size}")
+        if (newAnswers.size != newQuestions.size) errorCountLanguage()
         else {
+            Log.d("saveThisNumberQuestion", "newQuestions language: ${newQuestions}")
+            Log.d("saveThisNumberQuestion", "new answer language: ${newAnswers}")
             val pathPicture = getPathPicture()
             newQuestions.forEach { newQuestion ->
                 val filterAnswer = newAnswers.filter { it.first == newQuestion.second }[0]
@@ -443,7 +507,6 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun getAllQuestionsAndLanguages(): List<Pair<String, String>> {
         val questionsAndLanguages = mutableListOf<Pair<String, String>>()
-
         val childCount = binding.llQuestions.childCount
         for (i in 0 until childCount) {
             val questionLayout = binding.llQuestions.getChildAt(i) as LinearLayout
@@ -467,15 +530,15 @@ class CreateQuizActivity : AppCompatActivity() {
         val answersList = mutableListOf<Triple<String, String, Int>>()
 
         val childCount = binding.llGroupAnswer.childCount
+
+        Log.d("getThisAnswers", "childCount: $childCount")
         for (i in 0 until childCount) {
             val answerLayout = binding.llGroupAnswer.getChildAt(i) as LinearLayout
 
             val answerLanguageTextView: TextView =
-                answerLayout.findViewById(com.tpov.schoolquiz.R.id.tv_answer_language)
+                answerLayout.findViewById(R.id.tv_answer_language)
             val leftAnswerEditText: EditText =
-                answerLayout.findViewById(com.tpov.schoolquiz.R.id.edt_answer1)
-            val rightAnswerEditText: EditText =
-                answerLayout.findViewById(com.tpov.schoolquiz.R.id.edt_answer2)
+                answerLayout.findViewById(com.tpov.schoolquiz.R.id.edt_answer)
 
             val language =
                 LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
@@ -490,16 +553,10 @@ class CreateQuizActivity : AppCompatActivity() {
                 }
             }
 
-            if (rightAnswerEditText.text.isNotEmpty()) {
-                answers.add(rightAnswerEditText.text.toString())
-                if (rightAnswerEditText.background is ColorDrawable && (rightAnswerEditText.background as ColorDrawable).color == Color.GREEN) {
-                    correctAnswerIndex = answers.size - 1
-                }
-            }
 
             for (j in 0 until answerLayout.childCount) {
                 val child = answerLayout.getChildAt(j)
-                if (child is EditText && child != leftAnswerEditText && child != rightAnswerEditText) {
+                if (child is EditText && child != leftAnswerEditText && child != leftAnswerEditText) {
                     if (child.text.isNotEmpty()) {
                         answers.add(child.text.toString())
                         if (child.background is ColorDrawable && (child.background as ColorDrawable).color == Color.GREEN) {
@@ -510,6 +567,10 @@ class CreateQuizActivity : AppCompatActivity() {
             }
 
             val answersString = answers.joinToString("|")
+
+            Log.d("getThisAnswers", "language: $language")
+            Log.d("getThisAnswers", "answersString: $answersString")
+            Log.d("getThisAnswers", "correctAnswerIndex: $correctAnswerIndex")
             answersList.add(Triple(language, answersString, correctAnswerIndex))
         }
 
@@ -517,9 +578,13 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun updateUiQuestion() = with(binding) {
+        Log.d("showQuestion", "updateUiQuestion: $numQuestion ")
         val questionEntitiesLanguage = questionsEntity?.filter {
             it.numQuestion == numQuestion && it.hardQuestion == (numQuestion < 0)
         }
+
+        llQuestions.removeAllViews()
+        llGroupAnswer.removeAllViews()
 
         val imagePath = questionEntitiesLanguage?.get(0)?.pathPictureQuestion
         if (!imagePath.isNullOrEmpty()) imvQuestion.setImageURI(Uri.parse(imagePath))
@@ -535,92 +600,101 @@ class CreateQuizActivity : AppCompatActivity() {
             val correctAnswerIndex = question.answer
 
             answers.forEachIndexed { indexAnswer, answerText ->
-                val isCorrect = indexAnswer == correctAnswerIndex
                 addOrUpdateAnswerGroup(
                     indexLanguage,
                     question.language,
                     (indexAnswer > 2 && indexAnswer % 2 != 0),
-                    isCorrect,
                     answerText
                 )
             }
         }
     }
 
+    private val idCounters: MutableList<Int> = mutableListOf(1, 2)
+
     private fun addOrUpdateAnswerGroup(
         groupNumber: Int,
-        language: String,
-        addAnswers: Boolean,
-        isCorrect: Boolean,
-        answerText: String
+        language: String? = null,
+        addAnswers: Boolean? = null,
+        answerText: String? = null
     ) {
         val existingGroup = binding.llGroupAnswer.findViewWithTag<View>("group_$groupNumber")
-
+        Log.d(
+            "QuizApp",
+            "addOrUpdateAnswerGroup called with groupNumber: $groupNumber, language: $language, addAnswers: $addAnswers, answerText: $answerText, existingGroup: $existingGroup"
+        )
         if (existingGroup != null) {
-            val languageTextView =
-                existingGroup.findViewById<TextView>(com.tpov.schoolquiz.R.id.tv_answer_language)
-            languageTextView.text = language
+            // Установить язык
+            if (language != null) existingGroup.findViewById<TextView>(R.id.tv_answer_language).text =
+                language
+            if (answerText != null) existingGroup.findViewById<TextView>(idCounters.lastIndex).text =
+                answerText
 
-            if (addAnswers) {
-                val answerContainer =
-                    existingGroup.findViewById<LinearLayout>(com.tpov.schoolquiz.R.id.ll_answer)
-                val inflater = LayoutInflater.from(this)
-                val newAnswerView = inflater.inflate(
-                    com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
-                    answerContainer,
-                    false
-                )
+            if (addAnswers == true) {
+                idCounters.add(idCounters.lastIndex + 1)
+                for (i in 0 until binding.llGroupAnswer.childCount) {
+                    val firstAnswerLayout =  LayoutInflater.from(this).inflate(
+                        R.layout.linear_layout_answer,
+                        binding.llGroupAnswer.getChildAt(i) as LinearLayout,
+                        true
+                    ) as LinearLayout
 
-                val answerEditText =
-                    newAnswerView.findViewById<EditText>(com.tpov.schoolquiz.R.id.edt_answer1)
-                answerEditText.setText(answerText)
-
-                answerContainer.addView(newAnswerView)
-            }
-
-            if (isCorrect) {
-                existingGroup.setBackgroundColor(
-                    ContextCompat.getColor(
-                        this,
-                        android.R.color.holo_green_light
-                    )
-                )
-            } else {
-                existingGroup.setBackgroundColor(
-                    ContextCompat.getColor(
-                        this,
-                        android.R.color.transparent
-                    )
-                )
+                    firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = idCounters.lastIndex
+                }
             }
         } else {
             val inflater = LayoutInflater.from(this)
+
+// Сначала создаем View без добавления в иерархию
             val newGroup = inflater.inflate(
                 com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
                 binding.llGroupAnswer,
                 false
-            )
+            ) as LinearLayout
 
-            val languageTextView =
-                newGroup.findViewById<TextView>(com.tpov.schoolquiz.R.id.tv_answer_language)
-            languageTextView.text = language
-
-            val answerEditText =
-                newGroup.findViewById<EditText>(com.tpov.schoolquiz.R.id.edt_answer1)
-            answerEditText.setText(answerText)
-
+// Присваиваем тег
             newGroup.tag = "group_$groupNumber"
 
-            if (isCorrect) {
-                newGroup.setBackgroundColor(
-                    ContextCompat.getColor(
-                        this,
-                        android.R.color.holo_green_light
-                    )
+// Устанавливаем язык
+            newGroup.findViewById<TextView>(R.id.tv_answer_language).text = language
+
+// Теперь выполняем оставшиеся операции
+            idCounters.forEachIndexed { index, id ->
+                val firstAnswerLayout = inflater.inflate(
+                    R.layout.linear_layout_answer, newGroup, false
+                ) as LinearLayout
+
+                firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = id
+
+                val firstTextView = firstAnswerLayout.findViewById<EditText>(id)
+                firstTextView?.setText(answerText ?: "")
+                if (id == 1) firstTextView.setTextColor(
+                    ContextCompat.getColor(this, R.color.back_main_green)
                 )
+
+                // Добавляем firstAnswerLayout в newGroup
+                newGroup.addView(firstAnswerLayout)
             }
 
+// Теперь добавляем newGroup в binding.llGroupAnswer
             binding.llGroupAnswer.addView(newGroup)
+        }
+    }
+
+    private fun setGroupBackgroundColorAndTextColor(textView: TextView, isCorrect: Boolean?) {
+        if (isCorrect == true) {
+            // Установим зеленую полоску снизу
+            textView.setBackgroundColor(
+                ContextCompat.getColor(
+                    this,
+                    android.R.color.holo_green_light
+                )
+            )
+            textView.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_light))
+        } else {
+            // Установим прозрачный фон и стандартный цвет текста
+            textView.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent))
+            textView.setTextColor(ContextCompat.getColor(this, android.R.color.black))
         }
     }
 
@@ -628,7 +702,7 @@ class CreateQuizActivity : AppCompatActivity() {
         for (i in 0 until binding.llGroupAnswer.childCount) {
             val layout = binding.llGroupAnswer.getChildAt(i) as LinearLayout
             val languageTextView: TextView =
-                layout.findViewById(com.tpov.schoolquiz.R.id.tv_answer_language)
+                layout.findViewById(R.id.tv_answer_language)
             if (languageTextView.text == LanguageUtils.getLanguageFullName(language)) {
                 return layout
             }
@@ -660,7 +734,7 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun determineLanguage(textBeforeSpace: String): String {
-        return "ua"
+        return getUserLanguage()
     }
 
     private fun errorLoadQuestionEntity(): List<QuestionEntity> {

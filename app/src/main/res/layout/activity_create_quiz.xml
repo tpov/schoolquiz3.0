@@ -14,8 +14,9 @@
         android:layout_marginRight="82dp"
         android:foregroundGravity="center"
         android:gravity="center"
-        android:text="Quiz name"
+        android:hint="Quiz name"
         android:textColor="@color/white"
+        android:textColorHint="@color/white"
         app:layout_constraintEnd_toStartOf="@id/imv_quiz"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -33,7 +34,12 @@
         android:id="@+id/sp_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        app:layout_constraintEnd_toStartOf="@+id/sp_sub_category"
+        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
@@ -41,7 +47,11 @@
         android:id="@+id/sp_sub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_weight="1"
+        app:layout_constraintEnd_toStartOf="@+id/sp_subsub_category"
+        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_category"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
@@ -49,8 +59,11 @@
         android:id="@+id/sp_subsub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_weight="1"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_sub_category"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
@@ -59,8 +72,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:visibility="gone"
         android:orientation="horizontal"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sp_category">
@@ -97,7 +110,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.5"
-            app:srcCompat="@drawable/ic_upload"/>
+            app:srcCompat="@drawable/ic_upload" />
 
         <EditText
             android:id="@+id/tv_subsub_category"
@@ -146,6 +159,7 @@
         android:text="Question 1/n"
         android:textColor="@color/white"
         android:textSize="16sp"
+        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintBottom_toBottomOf="@+id/imv_question"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/imv_question" />
@@ -181,7 +195,8 @@
             android:id="@+id/ll_group_answer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical">
+
         </LinearLayout>
     </ScrollView>
 
@@ -207,7 +222,7 @@
         app:layout_constraintTop_toTopOf="@+id/imv_question" />
 
     <Button
-        android:id="@+id/b_reset"
+        android:id="@+id/b_cencel"
         android:layout_width="0dp"
         android:layout_height="45dp"
         android:layout_marginLeft="16dp"
@@ -237,7 +252,7 @@
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/b_reset"
+        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
         app:layout_constraintEnd_toStartOf="@+id/b_add_translate"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -254,7 +269,7 @@
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/b_reset"
+        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
         app:layout_constraintStart_toEndOf="@+id/b_add_translate" />
 
     <Button
@@ -271,7 +286,7 @@
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/b_reset"
+        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/b_add_answer" />
 
@@ -288,7 +303,7 @@
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/b_reset"
+        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
         app:layout_constraintStart_toEndOf="@+id/b_add_question" />
 
     <Button
@@ -306,5 +321,5 @@
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/b_reset" />
+        app:layout_constraintStart_toEndOf="@+id/b_cencel" />
 </androidx.constraintlayout.widget.ConstraintLayout>

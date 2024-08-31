@@ -63,7 +63,7 @@ class MainViewModel @Inject constructor(
         profileUseCase.updateProfile(profileEntity)
     }
 
-suspend fun getStructureData() = structureUseCase.getStructureData()
+    suspend fun getStructureData() = structureUseCase.getStructureData()
 
     suspend fun loadHomeCategory(): List<String> {
         var listNewQuiz: List<String> = listOf()
@@ -162,6 +162,7 @@ suspend fun getStructureData() = structureUseCase.getStructureData()
     fun getQuizByIdQuiz(idQuiz: Int) = viewModelScope.launch {
         _quizData.value = quizUseCase.getQuizById(idQuiz)
     }
+
     fun getQuestionByIdQuiz(idQuiz: Int) = viewModelScope.launch {
         _questionData.value = questionUseCase.getQuestionByIdQuiz(idQuiz)
     }
