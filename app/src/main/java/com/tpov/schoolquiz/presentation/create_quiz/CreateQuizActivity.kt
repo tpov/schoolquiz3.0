@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -100,6 +99,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
+                (view as? TextView)?.setTextColor(Color.GRAY)
                 saveThisNumberQuestion()
                 numQuestion = position + 1
                 idGroup = 0
@@ -298,6 +298,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
+                (view as? TextView)?.setTextColor(Color.GRAY)
                 val selectedCategory = parent.getItemAtPosition(position) as String
                 if (selectedCategory == "Создать новую категорию") {
                     createNewCategory()
@@ -318,6 +319,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
+                (view as? TextView)?.setTextColor(Color.GRAY)
                 val selectedSubCategory = parent.getItemAtPosition(position) as String
                 if (selectedSubCategory == "Создать новую подкатегорию") {
                     createNewSubCategory()
@@ -339,6 +341,7 @@ class CreateQuizActivity : AppCompatActivity() {
                     position: Int,
                     id: Long
                 ) {
+                    (view as? TextView)?.setTextColor(Color.GRAY)
                     val selectedSubSubCategory = parent.getItemAtPosition(position) as String
                     if (selectedSubSubCategory == "Создать новую под-субкатегорию") {
                         createNewSubSubCategory()
@@ -433,6 +436,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 position: Int,
                 id: Long
             ) {
+                (view as? TextView)?.setTextColor(Color.GRAY)
                 (view as? TextView)?.text = languagesShortCodes[position]
                 Log.d("QuizApp", "languageSpinner.onItemSelectedListener")
                 if (!isSpinnerInitialized) {
@@ -528,7 +532,6 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun getThisAnswers(): List<Triple<String, String, Int>> {
         val answersList = mutableListOf<Triple<String, String, Int>>()
-
         val childCount = binding.llGroupAnswer.childCount
 
         Log.d("getThisAnswers", "childCount: $childCount")
@@ -537,41 +540,20 @@ class CreateQuizActivity : AppCompatActivity() {
 
             val answerLanguageTextView: TextView =
                 answerLayout.findViewById(R.id.tv_answer_language)
-            val leftAnswerEditText: EditText =
-                answerLayout.findViewById(com.tpov.schoolquiz.R.id.edt_answer)
-
-            val language =
-                LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
 
             val answers = mutableListOf<String>()
-            var correctAnswerIndex = -1
-
-            if (leftAnswerEditText.text.isNotEmpty()) {
-                answers.add(leftAnswerEditText.text.toString())
-                if (leftAnswerEditText.background is ColorDrawable && (leftAnswerEditText.background as ColorDrawable).color == Color.GREEN) {
-                    correctAnswerIndex = answers.size - 1
-                }
+            idCounters.forEach {
+                answers.add(answerLayout.findViewById<EditText>(it).text.toString())
             }
-
-
-            for (j in 0 until answerLayout.childCount) {
-                val child = answerLayout.getChildAt(j)
-                if (child is EditText && child != leftAnswerEditText && child != leftAnswerEditText) {
-                    if (child.text.isNotEmpty()) {
-                        answers.add(child.text.toString())
-                        if (child.background is ColorDrawable && (child.background as ColorDrawable).color == Color.GREEN) {
-                            correctAnswerIndex = answers.size - 1
-                        }
-                    }
-                }
-            }
+            val language = LanguageUtils.getLanguageShortCode(answerLanguageTextView.text.toString())
 
             val answersString = answers.joinToString("|")
 
+            Log.d("getThisAnswers", "answerLanguageTextView: $answerLanguageTextView.text.toString()")
             Log.d("getThisAnswers", "language: $language")
             Log.d("getThisAnswers", "answersString: $answersString")
-            Log.d("getThisAnswers", "correctAnswerIndex: $correctAnswerIndex")
-            answersList.add(Triple(language, answersString, correctAnswerIndex))
+            Log.d("getThisAnswers", "correctAnswerIndex: ${idCounters[0]}")
+            answersList.add(Triple(language, answersString, idCounters[0]))
         }
 
         return answersList
@@ -624,9 +606,8 @@ class CreateQuizActivity : AppCompatActivity() {
             "addOrUpdateAnswerGroup called with groupNumber: $groupNumber, language: $language, addAnswers: $addAnswers, answerText: $answerText, existingGroup: $existingGroup"
         )
         if (existingGroup != null) {
-            // Установить язык
             if (language != null) existingGroup.findViewById<TextView>(R.id.tv_answer_language).text =
-                language
+                LanguageUtils.getLanguageFullName(language)
             if (answerText != null) existingGroup.findViewById<TextView>(idCounters.lastIndex).text =
                 answerText
 
@@ -656,7 +637,7 @@ class CreateQuizActivity : AppCompatActivity() {
             newGroup.tag = "group_$groupNumber"
 
 // Устанавливаем язык
-            newGroup.findViewById<TextView>(R.id.tv_answer_language).text = language
+            newGroup.findViewById<TextView>(R.id.tv_answer_language).text =  LanguageUtils.getLanguageFullName(language ?: getUserLanguage())
 
 // Теперь выполняем оставшиеся операции
             idCounters.forEachIndexed { index, id ->

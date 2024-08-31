@@ -38,6 +38,7 @@
         android:layout_marginBottom="8dp"
         android:layout_marginStart="8dp"
         android:layout_weight="1"
+        android:textColor="@color/white"
         app:layout_constraintEnd_toStartOf="@+id/sp_sub_category"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
@@ -50,6 +51,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
+        android:textColor="@color/white"
         app:layout_constraintEnd_toStartOf="@+id/sp_subsub_category"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_category"
@@ -62,6 +64,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
+        android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_sub_category"
@@ -168,9 +171,12 @@
         android:id="@+id/scv_question"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_margin="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintVertical_weight="1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/scv_answers"
         app:layout_constraintTop_toBottomOf="@+id/imv_question">
 
         <LinearLayout
@@ -186,10 +192,13 @@
         android:id="@+id/scv_answers"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_margin="16dp"
+        app:layout_constraintVertical_weight="2"
+        android:layout_marginRight="16dp"
+        android:layout_marginLeft="16dp"
         app:layout_constraintBottom_toTopOf="@+id/stroce2"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scv_question">
 
         <LinearLayout
             android:id="@+id/ll_group_answer"
@@ -206,7 +215,9 @@
         android:layout_height="3dp"
         android:layout_margin="16dp"
         android:background="@color/contour"
-        app:layout_constraintBottom_toTopOf="@+id/b_add_question">
+        app:layout_constraintBottom_toTopOf="@+id/b_add_question"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
     </View>
 
