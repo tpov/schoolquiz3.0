@@ -48,7 +48,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCreateQuizBinding
 
-    private var questionsEntity: ArrayList<QuestionEntity>? = null
+    private var questionsEntity: ArrayList<QuestionEntity> = arrayListOf()
     private var quizEntity: QuizEntity? = null
 
     private var category: String = ""
@@ -71,7 +71,7 @@ class CreateQuizActivity : AppCompatActivity() {
         }
 
         quizEntity = intent.getParcelableExtra(ARG_QUIZ)
-        questionsEntity = intent.getParcelableArrayListExtra(ARG_QUESTION)
+        questionsEntity = intent.getParcelableArrayListExtra(ARG_QUESTION) ?: arrayListOf()
 
         initView()
         initSetOnClickListeners()
@@ -79,31 +79,40 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun setupQuestionSpinner() = with(binding) {
         Log.d("setupQuestionSpinner()", "1")
+
         val questionForSpinner = questionsEntity
-            ?.filter { it.language == getUserLanguage() }
-            ?.sortedBy { it.numQuestion }
-            ?.sortedBy { !it.hardQuestion }
+            ?.distinctBy { it.numQuestion }
+            ?.toMutableList() ?: mutableListOf()
+
+        // Определяем количество элементов и добавляем следующий номер
+        val nextNumQuestion = questionForSpinner.size + 1
+        questionForSpinner.add(QuestionEntity().copy(numQuestion = nextNumQuestion, nameQuestion = "New")) // добавьте необходимые параметры в конструктор
 
         Log.d("setupQuestionSpinner()", "questionsEntity size: ${questionsEntity?.size}")
-        Log.d("setupQuestionSpinner()", "questionForSpinner size: ${questionForSpinner?.size}")
-        val adapter = questionForSpinner?.let {
-            CustomSpinnerAdapter(this@CreateQuizActivity, it)
-        }
+        Log.d("setupQuestionSpinner()", "questionForSpinner size: ${questionForSpinner.size}")
+        Log.d("setupQuestionSpinner()", "numQuestion: ${numQuestion}")
+
+        val adapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionForSpinner)
 
         spNumQuestion.adapter = adapter
-        spNumQuestion.setSelection(numQuestion - 1)
+        spNumQuestion.setSelection(numQuestion - 1) // Выбираем последний элемент (новый номер)
         spNumQuestion.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+
+            var initSp = false
             override fun onItemSelected(
                 parent: AdapterView<*>,
                 view: View?,
                 position: Int,
                 id: Long
             ) {
-                (view as? TextView)?.setTextColor(Color.GRAY)
+                if (!initSp) {
+                    initSp = true
+                } else {
                 saveThisNumberQuestion()
                 numQuestion = position + 1
                 idGroup = 0
                 updateUiQuestion()
+                    }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -483,25 +492,42 @@ class CreateQuizActivity : AppCompatActivity() {
         if (newAnswers.size != newQuestions.size) errorCountLanguage()
         else {
             Log.d("saveThisNumberQuestion", "newQuestions language: ${newQuestions}")
-            Log.d("saveThisNumberQuestion", "new answer language: ${newAnswers}")
+            Log.d("saveThisNumberQuestion", "newAnswers language: ${newAnswers}")
+
             val pathPicture = getPathPicture()
+            Log.d("saveThisNumberQuestion", "Path to picture: $pathPicture")
+
             newQuestions.forEach { newQuestion ->
-                val filterAnswer = newAnswers.filter { it.first == newQuestion.second }[0]
-                questionsEntity?.add(
-                    QuestionEntity(
-                        null,
-                        numQuestion,
-                        newQuestion.first,
-                        pathPicture,
-                        filterAnswer.third,
-                        filterAnswer.second,
-                        binding.chbTypeQuestion.isChecked,
-                        idQuiz,
-                        newQuestion.second,
-                        lvlTranslate
+                Log.d("saveThisNumberQuestion", "Processing newQuestion: $newQuestion")
+
+                val filterAnswer = newAnswers.filter { it.first == newQuestion.second }
+                Log.d("saveThisNumberQuestion", "Filtered answer: $filterAnswer")
+
+                if (filterAnswer.isNotEmpty()) {
+                    val answer = filterAnswer[0]
+                    Log.d("saveThisNumberQuestion", "Selected answer: $answer")
+
+                    questionsEntity?.add(
+                        QuestionEntity(
+                            null,
+                            numQuestion,
+                            newQuestion.first,
+                            pathPicture,
+                            answer.third,
+                            answer.second,
+                            binding.chbTypeQuestion.isChecked,
+                            idQuiz,
+                            newQuestion.second,
+                            lvlTranslate
+                        )
                     )
-                )
+                    Log.d("saveThisNumberQuestion", "Added QuestionEntity: ${questionsEntity?.last()}")
+                } else {
+                    Log.d("saveThisNumberQuestion", "No matching answer found for question: $newQuestion")
+                }
             }
+
+            Log.d("saveThisNumberQuestion", "Final questionsEntity list: $questionsEntity")
         }
     }
 
@@ -561,14 +587,15 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun updateUiQuestion() = with(binding) {
         Log.d("showQuestion", "updateUiQuestion: $numQuestion ")
-        val questionEntitiesLanguage = questionsEntity?.filter {
+        val questionEntitiesLanguage = questionsEntity.filter {
             it.numQuestion == numQuestion && it.hardQuestion == (numQuestion < 0)
         }
 
         llQuestions.removeAllViews()
         llGroupAnswer.removeAllViews()
 
-        val imagePath = questionEntitiesLanguage?.get(0)?.pathPictureQuestion
+        val imagePath =  if (questionEntitiesLanguage.isNotEmpty()) questionEntitiesLanguage.get(0).pathPictureQuestion
+        else ""
         if (!imagePath.isNullOrEmpty()) imvQuestion.setImageURI(Uri.parse(imagePath))
         else imvQuestion.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)
 

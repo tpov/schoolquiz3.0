@@ -26,7 +26,7 @@ class CustomSpinnerAdapter(
         if (question.hardQuestion) {
             textView.setTextColor(Color.RED)
         } else {
-            textView.setTextColor(Color.BLACK)
+            textView.setTextColor(Color.WHITE)
         }
 
         return view

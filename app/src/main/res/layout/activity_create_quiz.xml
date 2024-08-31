@@ -225,7 +225,7 @@
         android:id="@+id/chb_type_question"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hard question"
+        android:text="Hard"
         android:textColor="@color/back_main_red"
         app:layout_constraintBottom_toBottomOf="@+id/imv_question"
         app:layout_constraintEnd_toStartOf="@+id/imv_question"
