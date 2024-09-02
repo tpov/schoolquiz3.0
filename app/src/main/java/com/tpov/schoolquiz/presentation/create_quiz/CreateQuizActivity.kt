@@ -97,7 +97,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 if (!initSp) {
                     initSp = true
                 } else {
-                    saveThisNumberQuestion()
+                    saveThisNumberQuestion(false)
                     counter = position
                     idGroup = 0
                     updateUiQuestion()
@@ -165,21 +165,19 @@ class CreateQuizActivity : AppCompatActivity() {
                     id = 0,
                     numQuestion = 1,
                     nameQuestion = "New Question",
-                    hardQuestion = false // Начальный элемент предположительно простой
+                    hardQuestion = false
                 )
             )
             return
         }
 
-        // Получаем текущий элемент
         val questionItemThis = questionsShortEntity[counter]
         val isHardQuestion = questionItemThis.hardQuestion
 
         // Ищем отсутствующий номер вопроса
         val missingNumber = findMissingNumber(isHardQuestion)
 
-        val newNumQuestion =
-            missingNumber ?: ((questionsShortEntity.maxOfOrNull { it.numQuestion } ?: 1) + 1)
+        val newNumQuestion = missingNumber ?: ((questionsShortEntity.maxOfOrNull { it.numQuestion } ?: 1) + 1)
 
         // Создаем новый элемент
         val newQuestionItem = QuestionShortEntity(
@@ -536,7 +534,7 @@ setNewCounterAndShortList(true)
         binding.llQuestions.addView(questionLayout)
     }
 
-    private fun saveThisNumberQuestion() {
+    private fun saveThisNumberQuestion(isNewQuestion: Boolean = true) {
         val numQuestionThis = questionsShortEntity[counter].numQuestion
         val hardQuestionThis = questionsShortEntity[counter].hardQuestion
         val newQuestionEntity = questionsEntity.filter {
@@ -544,9 +542,6 @@ setNewCounterAndShortList(true)
         }
 
         questionsEntity = newQuestionEntity as ArrayList<QuestionEntity>
-
-        Log.d("saveThisNumberQuestion", "questionsEntity: $questionsEntity")
-
 
         val newQuestions = getAllQuestionsAndLanguages()
         val newAnswers = getThisAnswers()
@@ -557,20 +552,19 @@ setNewCounterAndShortList(true)
             val pathPicture = getPathPicture()
 
             newQuestions.forEach { newQuestion ->
-                Log.d("saveThisNumberQuestion", "Processing newQuestion: $newQuestion")
 
                 val filterAnswer = newAnswers.filter { it.first == newQuestion.second }
-                Log.d("saveThisNumberQuestion", "Filtered answer: $filterAnswer")
 
                 if (filterAnswer.isNotEmpty()) {
                     val answer = filterAnswer[0]
-                    Log.d("saveThisNumberQuestion", "Selected answer: $answer")
                     val isHardQuestion = binding.chbTypeQuestion.isChecked
 
-                    var thisNumQuestion: Int = questionsEntity
-                            ?.filter { it.hardQuestion == isHardQuestion}
-                            ?.maxOfOrNull { it.numQuestion } ?: 1
-                    if (questionsShortEntity[counter].hardQuestion != hardQuestionThis){
+                    var thisNumQuestion: Int = if(isNewQuestion) questionsEntity
+                        .filter { it.hardQuestion == isHardQuestion }
+                        .maxOfOrNull { it.numQuestion } ?: 0
+                    else questionsShortEntity[counter].numQuestion
+
+                    if (questionsShortEntity[counter].hardQuestion != hardQuestionThis) {
                         val referenceElement = questionsShortEntity[counter]
                         val numberQuestionToRemove = referenceElement.numQuestion
                         val hardQuestionToRemove = referenceElement.hardQuestion
@@ -578,8 +572,14 @@ setNewCounterAndShortList(true)
                         questionsEntity = questionsEntity.filterNot {
                             it.numQuestion == numberQuestionToRemove && it.hardQuestion == hardQuestionToRemove
                         }.toMutableList() as ArrayList<QuestionEntity>
-                        thisNumQuestion += 1
+
                     }
+                    Log.d("saveThisNumberQuestion", "questionsEntity: $questionsEntity")
+                    Log.d("saveThisNumberQuestion", "questionsShortEntity: $questionsShortEntity")
+                    Log.d("saveThisNumberQuestion", "newQuestion: $newQuestion")
+                    Log.d("saveThisNumberQuestion", "thisNumQuestion: $thisNumQuestion")
+                    Log.d("saveThisNumberQuestion", "isNewQuestion: $isNewQuestion")
+                    if (isNewQuestion) thisNumQuestion += 1
 
                     questionsEntity?.add(
                         QuestionEntity(
@@ -595,20 +595,11 @@ setNewCounterAndShortList(true)
                             lvlTranslate
                         )
                     )
-
-                    Log.d(
-                        "saveThisNumberQuestion",
-                        "Added QuestionEntity: ${questionsEntity?.last()}"
-                    )
-                } else {
-                    Log.d(
-                        "saveThisNumberQuestion",
-                        "No matching answer found for question: $newQuestion"
-                    )
                 }
             }
             questionsShortEntity = viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
-            Log.d("saveThisNumberQuestion", "questionShortList: $questionsShortEntity")
+            Log.d("saveThisNumberQuestion", "newQuestionsShortEntity: $questionsShortEntity")
+            Log.d("saveThisNumberQuestion", "newQuestionsEntity: $questionsEntity")
         }
     }
 

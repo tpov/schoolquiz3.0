@@ -182,20 +182,67 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Fix show data spinner num question in CreateNewQuiz">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/model/QuestionShortEntity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/config.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CustomSpinnerAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CustomSpinnerAdapter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuestionEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuestionEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_false.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_false.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_true.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_item_main_true.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_main.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_back_main.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_advanced.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_advanced.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_dont_save.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_dont_save.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_background.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_background.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_foreground.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_foreground.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_profile.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_profile.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_save.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_save.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_sync.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_sync.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_blue_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_blue_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_green_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_green_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_red_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_red_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_yellow_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_label_yellow_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_blue_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_blue_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_green_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_green_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_red_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_red_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_yellow_gradient.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_custom_preference_category_yellow_gradient.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_preference_time_picker.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_preference_time_picker.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_settings_activity.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_settings_activity.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/menu_settings_menu.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/menu_settings_menu.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher_round.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher_round.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/xml_root_preferences.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/xml_root_preferences.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_blue_gradient-layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_blue_gradient-layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_green_gradient-layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_green_gradient-layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_red_gradient-layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_red_gradient-layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_yellow_gradient-layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/custom_preference_category_yellow_gradient-layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/preference_time_picker-layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/preference_time_picker-layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/settings_activity-layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/settings_activity-layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/merger.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_empty.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_empty.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_gold.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_baseline_favorite_24_gold.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_baseline_add_circle_24.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_baseline_add_circle_24.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_donate.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_donate.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_background.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_background.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_foreground.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/drawable_ic_launcher_foreground.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_shop_fragment.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/layout_shop_fragment.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher_round.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compiled_local_resources/debug/compileDebugLibraryResources/out/mipmap-anydpi-v4_ic_launcher_round.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/shop_fragment-layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/data_binding_layout_info_type_package/debug/packageDebugResources/out/shop_fragment-layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/merger.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/last-build.bin" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/last-build.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/local-state/build-history.bin" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/local-state/build-history.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/tmp/kapt3/stubs/debug/com/tpov/shop/di/ShopComponent.kapt_metadata" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/tmp/kapt3/stubs/debug/com/tpov/shop/di/ShopComponent.kapt_metadata" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/tmp/kapt3/stubs/debug/com/tpov/shop/di/ShopModule.kapt_metadata" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/tmp/kapt3/stubs/debug/com/tpov/shop/di/ShopModule.kapt_metadata" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/tmp/kapt3/stubs/debug/com/tpov/shop/presentation/ShopFragment.kapt_metadata" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/tmp/kapt3/stubs/debug/com/tpov/shop/presentation/ShopFragment.kapt_metadata" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -205,7 +252,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -313,32 +360,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;SchoolQuiz4.0&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Programming/Android/schoolquiz3.0/common/src/main/res/layout&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDK Location&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Android App.app.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "git-widget-placeholder": "Rebasing SchoolQuiz4.0",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/Programming/Android/schoolquiz3.0/common/src/main/res/layout",
+    "project.structure.last.edited": "SDK Location",
+    "project.structure.proportion": "0.17",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "Errors"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;kotlin-gradle-user-dirs&quot;: [
-      &quot;/Users/tpov/.gradle&quot;
+  "keyToStringList": {
+    "kotlin-gradle-user-dirs": [
+      "/Users/tpov/.gradle"
     ]
   }
-}</component>
+}]]></component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Properties" />
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
@@ -392,7 +439,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -456,7 +506,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -520,7 +573,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -584,7 +640,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -648,7 +707,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -712,7 +774,10 @@
       <option name="MODE" value="default_activity" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
@@ -775,7 +840,10 @@
       <option name="RETENTION_COMPRESS_SNAPSHOTS" value="false" />
       <option name="CLEAR_LOGCAT" value="false" />
       <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
       <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
       <option name="DEBUGGER_TYPE" value="Auto" />
       <Auto>
         <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
