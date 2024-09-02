@@ -18,7 +18,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/upload/baseline_upload_24.xml" />
+                                      <entry key="url" value="file:$USER_HOME$/Library/Android/sdk/icons/material/materialicons/fullscreen_exit/baseline_fullscreen_exit_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -29,8 +29,8 @@
                         <option name="values">
                           <map>
                             <entry key="color" value="075b0b" />
-                            <entry key="outputName" value="ic_upload" />
-                            <entry key="sourceFile" value="D:\Programming\Android\schoolquiz3.0" />
+                            <entry key="outputName" value="ic_fullscreen_exit" />
+                            <entry key="sourceFile" value="/D:\Programming\Android\schoolquiz3.0" />
                           </map>
                         </option>
                       </PersistentState>

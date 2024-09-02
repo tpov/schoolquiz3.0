@@ -48,6 +48,7 @@ data class QuestionEntity(
         lvlTranslate = this.lvlTranslate
     )
 
+
     constructor() : this(
         id = null,
         numQuestion = 0,

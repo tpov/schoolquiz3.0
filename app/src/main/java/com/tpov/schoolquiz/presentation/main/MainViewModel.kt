@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,7 @@ import com.tpov.common.domain.QuizUseCase
 import com.tpov.common.domain.StructureUseCase
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.ProfileUseCase
+import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +59,49 @@ class MainViewModel @Inject constructor(
                 _profileState.value = profile
             }
         }
+    }
+
+    fun getQuestionListShortEntity(questionList: List<QuestionEntity>, languages: String): ArrayList<QuestionShortEntity> {
+        val indexedQuestions = questionList.withIndex()
+        Log.d("getQuestionListShortEntity", "Indexed Questions: $indexedQuestions")
+
+// Разделяем на две группы по признаку hardQuestion
+        val (hardQuestions, normalQuestions) = indexedQuestions.partition { it.value.hardQuestion }
+
+        // Функция для сортировки и фильтрации по numQuestion
+        fun sortAndFilterQuestions(questions: List<IndexedValue<QuestionEntity>>): List<IndexedValue<QuestionEntity>> {
+            return questions
+                .groupBy { it.value.numQuestion }
+                .flatMap { (_, questionsGroup) ->
+                    Log.d("getQuestionListShortEntity", "Grouping Questions: $questionsGroup")
+                    questionsGroup.sortedWith(compareBy(
+                        { question -> languages.indexOf(question.value.language).takeIf { it >= 0 } ?: Int.MAX_VALUE },
+                        { question -> -question.value.lvlTranslate }
+                    )).take(1)  // Отбираем только первый элемент после сортировки в каждой группе
+                }
+        }
+
+// Сортируем и фильтруем обе группы
+        val sortedHardQuestions = sortAndFilterQuestions(hardQuestions)
+        val sortedNormalQuestions = sortAndFilterQuestions(normalQuestions)
+
+// Объединяем результаты
+        val combinedQuestions = sortedNormalQuestions + sortedHardQuestions
+
+// Создаем итоговый список
+        val questionShortList = combinedQuestions.map { indexedValue ->
+            val questionShortEntity = QuestionShortEntity(
+                id = indexedValue.index,
+                numQuestion = indexedValue.value.numQuestion,
+                nameQuestion = indexedValue.value.nameQuestion,
+                hardQuestion = indexedValue.value.hardQuestion
+            )
+            Log.d("getQuestionListShortEntity", "Created QuestionShortEntity: $questionShortEntity")
+            questionShortEntity
+        }.toCollection(ArrayList())
+
+        Log.d("getQuestionListShortEntity", "Final QuestionShortEntity List: $questionShortList")
+        return questionShortList
     }
 
     fun updateProfile(profileEntity: ProfileEntity) {

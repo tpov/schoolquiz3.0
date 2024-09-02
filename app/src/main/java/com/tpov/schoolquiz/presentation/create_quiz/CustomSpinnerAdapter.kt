@@ -6,13 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
-import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.schoolquiz.R
+import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
 
 class CustomSpinnerAdapter(
     context: Context,
-    private val questions: List<QuestionEntity>
-) : ArrayAdapter<QuestionEntity>(context, R.layout.simple_spinner_item, questions) {
+    private val questions: ArrayList<QuestionShortEntity>
+) : ArrayAdapter<QuestionShortEntity>(context, R.layout.simple_spinner_item, questions) {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view = super.getView(position, convertView, parent)
@@ -26,7 +26,7 @@ class CustomSpinnerAdapter(
         if (question.hardQuestion) {
             textView.setTextColor(Color.RED)
         } else {
-            textView.setTextColor(Color.WHITE)
+            textView.setTextColor(Color.GREEN)
         }
 
         return view
