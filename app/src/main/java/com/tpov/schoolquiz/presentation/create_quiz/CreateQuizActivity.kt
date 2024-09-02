@@ -117,27 +117,18 @@ class CreateQuizActivity : AppCompatActivity() {
 
         bSave.setOnClickListener {
             saveThisNumberQuestion()
+            saveThisQuiz()
             saveQuiz()
         }
         bCencel.setOnClickListener {
             finish()
         }
         bAddQuestion.setOnClickListener {
-
-            Log.d("initSetOnClickListeners", "1 $questionsShortEntity")
             saveThisNumberQuestion()
-
-            Log.d("initSetOnClickListeners", "2 $questionsShortEntity")
             setNewCounterAndShortList()
-
-            Log.d("initSetOnClickListeners", "3 $questionsShortEntity")
             idGroup = 0
             setupQuestionSpinner()
-
-            Log.d("initSetOnClickListeners", "4 $questionsShortEntity")
             updateUiQuestion()
-
-            Log.d("initSetOnClickListeners", "5 $questionsShortEntity")
         }
         bAddTranslate.setOnClickListener {
             addQuestionToLayout("", getUserLanguage())
@@ -156,6 +147,9 @@ class CreateQuizActivity : AppCompatActivity() {
         setCategorySpinnerListeners()
     }
 
+    private fun saveThisQuiz() {
+
+    }
     private fun setNewCounterAndShortList(isInit: Boolean = false) {
         if (isInit) {
             // Инициализация списка
@@ -550,11 +544,9 @@ setNewCounterAndShortList(true)
         else {
 
             val pathPicture = getPathPicture()
-
             newQuestions.forEach { newQuestion ->
 
                 val filterAnswer = newAnswers.filter { it.first == newQuestion.second }
-
                 if (filterAnswer.isNotEmpty()) {
                     val answer = filterAnswer[0]
                     val isHardQuestion = binding.chbTypeQuestion.isChecked
@@ -572,8 +564,8 @@ setNewCounterAndShortList(true)
                         questionsEntity = questionsEntity.filterNot {
                             it.numQuestion == numberQuestionToRemove && it.hardQuestion == hardQuestionToRemove
                         }.toMutableList() as ArrayList<QuestionEntity>
-
                     }
+
                     Log.d("saveThisNumberQuestion", "questionsEntity: $questionsEntity")
                     Log.d("saveThisNumberQuestion", "questionsShortEntity: $questionsShortEntity")
                     Log.d("saveThisNumberQuestion", "newQuestion: $newQuestion")
@@ -610,7 +602,8 @@ setNewCounterAndShortList(true)
     private fun getAllQuestionsAndLanguages(): List<Pair<String, String>> {
         val questionsAndLanguages = mutableListOf<Pair<String, String>>()
         val childCount = binding.llQuestions.childCount
-        for (i in 0 until childCount) {
+        // Начинаем с последнего элемента и двигаемся к первому
+        for (i in childCount - 1 downTo 0) {
             val questionLayout = binding.llQuestions.getChildAt(i) as LinearLayout
 
             val questionTextView: EditText =
@@ -806,6 +799,7 @@ setNewCounterAndShortList(true)
         quizEntity?.let {
             viewModel.insertQuiz(it)
             viewModel.insertQuestion(questionsEntity ?: errorLoadQuestionEntity())
+            finish()
         } ?: saveTranslate()
     }
 

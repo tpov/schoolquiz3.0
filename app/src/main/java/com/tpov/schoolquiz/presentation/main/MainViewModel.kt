@@ -201,6 +201,7 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun insertQuestion(questionsList: List<QuestionEntity>) {
+        Log.d("savequestionsList ", "questionsList: $questionsList")
         questionsList.forEach { questionUseCase.insertQuestion(it) }
     }
 
