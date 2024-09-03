@@ -158,10 +158,10 @@
         android:id="@+id/sp_num_question"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
+        android:layout_marginLeft="8dp"
         android:text="Question 1/n"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="10sp"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintBottom_toBottomOf="@+id/imv_question"
         app:layout_constraintStart_toStartOf="parent"
@@ -229,6 +229,7 @@
         android:textColor="@color/back_main_red"
         app:layout_constraintBottom_toBottomOf="@+id/imv_question"
         app:layout_constraintEnd_toStartOf="@+id/imv_question"
+        app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintStart_toEndOf="@+id/sp_num_question"
         app:layout_constraintTop_toTopOf="@+id/imv_question" />
 

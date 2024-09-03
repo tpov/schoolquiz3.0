@@ -14,7 +14,7 @@ data class QuestionEntity(
     val id: Int?,
 
     @ColumnInfo(name = "numQuestion")
-    val numQuestion: Int,
+    var numQuestion: Int,
 
     @ColumnInfo(name = "nameQuestion")
     var nameQuestion: String,

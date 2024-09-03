@@ -65,10 +65,10 @@ class MainViewModel @Inject constructor(
         val indexedQuestions = questionList.withIndex()
         Log.d("getQuestionListShortEntity", "Indexed Questions: $indexedQuestions")
 
-// Разделяем на две группы по признаку hardQuestion
+        // Разделение вопросов на "обычные" и "сложные"
         val (hardQuestions, normalQuestions) = indexedQuestions.partition { it.value.hardQuestion }
 
-        // Функция для сортировки и фильтрации по numQuestion
+        // Функция для сортировки и фильтрации вопросов
         fun sortAndFilterQuestions(questions: List<IndexedValue<QuestionEntity>>): List<IndexedValue<QuestionEntity>> {
             return questions
                 .groupBy { it.value.numQuestion }
@@ -77,21 +77,23 @@ class MainViewModel @Inject constructor(
                     questionsGroup.sortedWith(compareBy(
                         { question -> languages.indexOf(question.value.language).takeIf { it >= 0 } ?: Int.MAX_VALUE },
                         { question -> -question.value.lvlTranslate }
-                    )).take(1)  // Отбираем только первый элемент после сортировки в каждой группе
+                    )).take(1)
                 }
         }
 
-// Сортируем и фильтруем обе группы
-        val sortedHardQuestions = sortAndFilterQuestions(hardQuestions)
-        val sortedNormalQuestions = sortAndFilterQuestions(normalQuestions)
+        // Сортировка обычных вопросов по numQuestion
+        val sortedNormalQuestions = sortAndFilterQuestions(normalQuestions).sortedBy { it.value.numQuestion }
 
-// Объединяем результаты
+        // Сортировка сложных вопросов в обратном порядке по numQuestion
+        val sortedHardQuestions = sortAndFilterQuestions(hardQuestions).sortedBy { it.value.numQuestion }
+
+        // Объединение результатов: сначала обычные вопросы, затем сложные
         val combinedQuestions = sortedNormalQuestions + sortedHardQuestions
 
-// Создаем итоговый список
-        val questionShortList = combinedQuestions.map { indexedValue ->
+        // Создание итогового списка
+        val questionShortList = combinedQuestions.mapIndexed { index, indexedValue ->
             val questionShortEntity = QuestionShortEntity(
-                id = indexedValue.index,
+                id = index,
                 numQuestion = indexedValue.value.numQuestion,
                 nameQuestion = indexedValue.value.nameQuestion,
                 hardQuestion = indexedValue.value.hardQuestion

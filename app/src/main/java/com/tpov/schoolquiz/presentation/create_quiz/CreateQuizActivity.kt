@@ -17,6 +17,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -81,7 +82,8 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun setupQuestionSpinner() = with(binding) {
-        val adapter: CustomSpinnerAdapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
+        val adapter: CustomSpinnerAdapter =
+            CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
         Log.d("setupQuestionSpinner", "$questionsShortEntity")
         spNumQuestion.adapter = adapter
         spNumQuestion.setSelection(counter)
@@ -97,7 +99,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 if (!initSp) {
                     initSp = true
                 } else {
-                    saveThisNumberQuestion(false)
+                    saveThisNumberQuestion()
                     counter = position
                     idGroup = 0
                     updateUiQuestion()
@@ -150,6 +152,7 @@ class CreateQuizActivity : AppCompatActivity() {
     private fun saveThisQuiz() {
 
     }
+
     private fun setNewCounterAndShortList(isInit: Boolean = false) {
         if (isInit) {
             // Инициализация списка
@@ -171,11 +174,12 @@ class CreateQuizActivity : AppCompatActivity() {
         // Ищем отсутствующий номер вопроса
         val missingNumber = findMissingNumber(isHardQuestion)
 
-        val newNumQuestion = missingNumber ?: ((questionsShortEntity.maxOfOrNull { it.numQuestion } ?: 1) + 1)
+        val newNumQuestion =
+            missingNumber ?: ((questionsShortEntity.maxOfOrNull { it.numQuestion } ?: 1) + 1)
 
         // Создаем новый элемент
         val newQuestionItem = QuestionShortEntity(
-            id = questionsShortEntity.size,
+            id = -1,
             numQuestion = newNumQuestion,
             nameQuestion = "New Question",
             hardQuestion = isHardQuestion
@@ -183,7 +187,8 @@ class CreateQuizActivity : AppCompatActivity() {
 
         // Добавляем новый элемент в нужную позицию и обновляем счетчик
         if (missingNumber != null) {
-            val insertPosition = questionsShortEntity.indexOfFirst { it.numQuestion > newNumQuestion }
+            val insertPosition =
+                questionsShortEntity.indexOfFirst { it.numQuestion > newNumQuestion }
             if (insertPosition >= 0) {
                 questionsShortEntity.add(insertPosition, newQuestionItem)
                 counter = insertPosition
@@ -231,7 +236,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun initView() {
         if (questionsEntity.isEmpty()) {
-setNewCounterAndShortList(true)
+            setNewCounterAndShortList(true)
             Log.d("wadwad", "questionsEntity ?: ")
             setupQuestionSpinner()
             updateUiQuestion()
@@ -528,9 +533,9 @@ setNewCounterAndShortList(true)
         binding.llQuestions.addView(questionLayout)
     }
 
-    private fun saveThisNumberQuestion(isNewQuestion: Boolean = true) {
+    private fun saveThisNumberQuestion() {
         val numQuestionThis = questionsShortEntity[counter].numQuestion
-        val hardQuestionThis = questionsShortEntity[counter].hardQuestion
+        val hardQuestionThis = binding.chbTypeQuestion.isChecked
         val newQuestionEntity = questionsEntity.filter {
             it.numQuestion != numQuestionThis || it.hardQuestion != hardQuestionThis
         }
@@ -542,36 +547,33 @@ setNewCounterAndShortList(true)
 
         if (newAnswers.size != newQuestions.size) errorCountLanguage()
         else {
+            if (questionsShortEntity[counter].hardQuestion != hardQuestionThis) {
+                questionsEntity = questionsEntity.filter {
+                    it.numQuestion != numQuestionThis || it.hardQuestion == hardQuestionThis
+                } as ArrayList<QuestionEntity>
 
+                questionsShortEntity[counter].id = -1
+                Toast.makeText(
+                    this,
+                    "${if (!hardQuestionThis) "Сложние" else "Легкие"} вопроси сдвинулись",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            val isNewQuestion = questionsShortEntity[counter].id == -1
+            var thisNumQuestion: Int = if (isNewQuestion) questionsEntity
+                .filter { it.hardQuestion == hardQuestionThis }
+                .maxOfOrNull { it.numQuestion } ?: 0
+            else questionsShortEntity[counter].numQuestion
+
+            if (isNewQuestion) thisNumQuestion += 1
             val pathPicture = getPathPicture()
             newQuestions.forEach { newQuestion ->
 
                 val filterAnswer = newAnswers.filter { it.first == newQuestion.second }
                 if (filterAnswer.isNotEmpty()) {
                     val answer = filterAnswer[0]
-                    val isHardQuestion = binding.chbTypeQuestion.isChecked
-
-                    var thisNumQuestion: Int = if(isNewQuestion) questionsEntity
-                        .filter { it.hardQuestion == isHardQuestion }
-                        .maxOfOrNull { it.numQuestion } ?: 0
-                    else questionsShortEntity[counter].numQuestion
-
-                    if (questionsShortEntity[counter].hardQuestion != hardQuestionThis) {
-                        val referenceElement = questionsShortEntity[counter]
-                        val numberQuestionToRemove = referenceElement.numQuestion
-                        val hardQuestionToRemove = referenceElement.hardQuestion
-
-                        questionsEntity = questionsEntity.filterNot {
-                            it.numQuestion == numberQuestionToRemove && it.hardQuestion == hardQuestionToRemove
-                        }.toMutableList() as ArrayList<QuestionEntity>
-                    }
-
-                    Log.d("saveThisNumberQuestion", "questionsEntity: $questionsEntity")
-                    Log.d("saveThisNumberQuestion", "questionsShortEntity: $questionsShortEntity")
-                    Log.d("saveThisNumberQuestion", "newQuestion: $newQuestion")
-                    Log.d("saveThisNumberQuestion", "thisNumQuestion: $thisNumQuestion")
-                    Log.d("saveThisNumberQuestion", "isNewQuestion: $isNewQuestion")
-                    if (isNewQuestion) thisNumQuestion += 1
+                    Log.d("saveThisNumberQuestion", "question: $thisNumQuestion. ${newQuestion.first}")
 
                     questionsEntity?.add(
                         QuestionEntity(
@@ -581,7 +583,7 @@ setNewCounterAndShortList(true)
                             pathPicture,
                             answer.third,
                             answer.second,
-                            isHardQuestion,
+                            hardQuestionThis,
                             idQuiz,
                             newQuestion.second,
                             lvlTranslate
@@ -589,9 +591,33 @@ setNewCounterAndShortList(true)
                     )
                 }
             }
+            fillMissingQuestionNumbersByHardQuestion()
             questionsShortEntity = viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
+
             Log.d("saveThisNumberQuestion", "newQuestionsShortEntity: $questionsShortEntity")
             Log.d("saveThisNumberQuestion", "newQuestionsEntity: $questionsEntity")
+        }
+    }
+
+    private fun fillMissingQuestionNumbersByHardQuestion() {
+        val groupedByHardQuestion = questionsEntity.groupBy { it.hardQuestion }
+
+        groupedByHardQuestion.forEach { (hardQuestion, questions) ->
+            val sortedQuestions = questions.sortedBy { it.numQuestion }
+            var expectedNumber = 1
+
+            sortedQuestions.forEachIndexed { index, element ->
+                if (element.numQuestion > expectedNumber) {
+                    val missingNumber = expectedNumber
+
+                    for (i in index until sortedQuestions.size) {
+                        sortedQuestions[i].numQuestion -= 1
+                    }
+                    expectedNumber = missingNumber
+                } else {
+                    expectedNumber++
+                }
+            }
         }
     }
 
