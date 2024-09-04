@@ -3,7 +3,9 @@ package com.tpov.schoolquiz.presentation.create_quiz
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -14,6 +16,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
@@ -31,6 +34,8 @@ import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Locale
 import javax.inject.Inject
 
@@ -105,7 +110,8 @@ class CreateQuizActivity : AppCompatActivity() {
                     updateUiQuestion()
 
                     initSp = false
-                    val newAdapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
+                    val newAdapter =
+                        CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
                     spNumQuestion.adapter = newAdapter
                     spNumQuestion.setSelection(counter)
                 }
@@ -120,6 +126,7 @@ class CreateQuizActivity : AppCompatActivity() {
         bSave.setOnClickListener {
             saveThisNumberQuestion()
             saveThisQuiz()
+            saveStructureCategory()
             saveQuiz()
         }
         bCencel.setOnClickListener {
@@ -137,7 +144,7 @@ class CreateQuizActivity : AppCompatActivity() {
             addOrUpdateAnswerGroup(idGroup, getUserLanguage(), false, "")
         }
         bAddAnswer.setOnClickListener {
-            addOrUpdateAnswerGroup(1, getUserLanguage(), true, "")
+            addOrUpdateAnswerGroup(1, getUserLanguage(), true)
         }
 
         imvCategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_CATEGORY) }
@@ -149,10 +156,96 @@ class CreateQuizActivity : AppCompatActivity() {
         setCategorySpinnerListeners()
     }
 
-    private fun saveThisQuiz() {
+    private fun saveThisQuiz() = with(binding) {
+        (quizEntity ?: QuizEntity()).copy(
+            idCategory = getCategoriesByLayout().first,
+            idSubcategory = getCategoriesByLayout().second,
+            idSubsubcategory = getCategoriesByLayout().third,
+            nameQuiz = tvQuizName.toString(),
+            userName = getUserName(),
+            dataUpdate = getDataQuiz(),
+            numQ = questionsShortEntity.filter { !it.hardQuestion }.size,
+            numHQ = questionsShortEntity.filter { it.hardQuestion }.size,
+            versionQuiz = quizEntity?.versionQuiz?.plus(1) ?: QuizEntity().versionQuiz,
+            picture = saveImage(imvQuiz, (quizEntity?.id ?: QuizEntity().id).toString()),
+            languages = getLanguageQuizByQuestions()
+        )
+    }
+
+    private fun saveStructureCategory() {
 
     }
 
+    private fun saveImage(imageView: ImageView, fileName: String): String {
+        val bitmap = (imageView.drawable as BitmapDrawable).bitmap
+
+        // Указываем максимальные размеры изображения
+        val maxWidth = 1024  // Задай нужные значения, например половину экрана планшета
+        val maxHeight = 1024
+
+        // Проверяем, нужно ли уменьшать изображение
+        val scaledBitmap = if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
+            scaleBitmap(bitmap, maxWidth, maxHeight)  // Уменьшаем, если изображение слишком большое
+        } else {
+            bitmap  // Используем оригинальное изображение, если оно уже маленькое
+        }
+
+        // Указываем путь для сохранения файла
+        val filePath = getExternalFilesDir(null)?.absolutePath + "/$fileName.png"
+        val file = File(filePath)
+        var fileOutputStream: FileOutputStream? = null
+        try {
+            fileOutputStream = FileOutputStream(file)
+
+            // Сохраняем изображение с качеством 100%
+            scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+
+            Toast.makeText(this, "Image saved to $filePath", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            fileOutputStream?.close()
+        }
+
+        return filePath
+    }
+
+    // Функция для масштабирования изображения
+    private fun scaleBitmap(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+
+        // Вычисляем соотношение сторон
+        val ratioBitmap = width.toFloat() / height.toFloat()
+        val ratioMax = maxWidth.toFloat() / maxHeight.toFloat()
+
+        var finalWidth = maxWidth
+        var finalHeight = maxHeight
+
+        // Подгоняем размеры под максимальные параметры
+        if (ratioMax > ratioBitmap) {
+            finalWidth = (maxHeight * ratioBitmap).toInt()
+        } else {
+            finalHeight = (maxWidth / ratioBitmap).toInt()
+        }
+
+        // Возвращаем масштабированный Bitmap
+        return Bitmap.createScaledBitmap(bitmap, finalWidth, finalHeight, true)
+    }
+
+    private fun getLanguageQuizByQuestions(): String {
+        return ""
+    }
+
+    private fun getCategoriesByLayout(): Triple<Int, Int, Int> {
+        return Triple(0, 0, 0)
+    }
+
+    private fun getUserName(): String {
+        return ""
+    }
+
+    private fun getDataQuiz() = ""
     private fun setNewCounterAndShortList(isInit: Boolean = false) {
         if (isInit) {
             // Инициализация списка
@@ -573,7 +666,10 @@ class CreateQuizActivity : AppCompatActivity() {
                 val filterAnswer = newAnswers.filter { it.first == newQuestion.second }
                 if (filterAnswer.isNotEmpty()) {
                     val answer = filterAnswer[0]
-                    Log.d("saveThisNumberQuestion", "question: $thisNumQuestion. ${newQuestion.first}")
+                    Log.d(
+                        "saveThisNumberQuestion",
+                        "question: $thisNumQuestion. ${newQuestion.first}"
+                    )
 
                     questionsEntity?.add(
                         QuestionEntity(
@@ -592,8 +688,8 @@ class CreateQuizActivity : AppCompatActivity() {
                 }
             }
             fillMissingQuestionNumbersByHardQuestion()
-            questionsShortEntity = viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
-
+            questionsShortEntity =
+                viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
             Log.d("saveThisNumberQuestion", "newQuestionsShortEntity: $questionsShortEntity")
             Log.d("saveThisNumberQuestion", "newQuestionsEntity: $questionsEntity")
         }
@@ -659,7 +755,12 @@ class CreateQuizActivity : AppCompatActivity() {
                 answerLayout.findViewById(R.id.tv_answer_language)
 
             val answers = mutableListOf<String>()
-            idCounters.asReversed().forEach {
+            idCounters[counter][i].asReversed().forEach {
+                Log.d("getThisAnswers", " answers.add: $it")
+                Log.d(
+                    "getThisAnswers",
+                    " answers.add: ${answerLayout.findViewById<EditText>(it).text}"
+                )
                 answers.add(answerLayout.findViewById<EditText>(it).text.toString())
             }
             val language =
@@ -667,14 +768,10 @@ class CreateQuizActivity : AppCompatActivity() {
 
             val answersString = answers.joinToString("|")
 
-            Log.d(
-                "getThisAnswers",
-                "answerLanguageTextView: $answerLanguageTextView.text.toString()"
-            )
             Log.d("getThisAnswers", "language: $language")
             Log.d("getThisAnswers", "answersString: $answersString")
             Log.d("getThisAnswers", "correctAnswerIndex: ${idCounters[0]}")
-            answersList.add(Triple(language, answersString, idCounters[0]))
+            answersList.add(Triple(language, answersString, 1))
         }
 
         return answersList
@@ -716,7 +813,8 @@ class CreateQuizActivity : AppCompatActivity() {
         }
     }
 
-    private val idCounters: MutableList<Int> = mutableListOf(1, 2)
+    private var idCounters: MutableList<MutableList<MutableList<Int>>> =
+        mutableListOf(mutableListOf(mutableListOf()))
 
     private fun addOrUpdateAnswerGroup(
         groupNumber: Int,
@@ -736,16 +834,18 @@ class CreateQuizActivity : AppCompatActivity() {
                 answerText
 
             if (addAnswers == true) {
-                idCounters.add(idCounters.lastIndex + 1)
                 for (i in 0 until binding.llGroupAnswer.childCount) {
                     val firstAnswerLayout = LayoutInflater.from(this).inflate(
                         R.layout.linear_layout_answer,
                         binding.llGroupAnswer.getChildAt(i) as LinearLayout,
                         true
                     ) as LinearLayout
+                    val idGroupCounter = idCounters[counter][i]
+                    val newIdEdtAnswer = idGroupCounter.last() + 1
+                    idGroupCounter.add((newIdEdtAnswer))
 
-                    firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id =
-                        idCounters.lastIndex
+                    Log.d("getThisAnswers", "idCounters.lastIndex: ${idCounters.lastIndex}")
+                    firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = newIdEdtAnswer
                 }
             }
         } else {
@@ -765,8 +865,16 @@ class CreateQuizActivity : AppCompatActivity() {
             newGroup.findViewById<TextView>(R.id.tv_answer_language).text =
                 LanguageUtils.getLanguageFullName(language ?: getUserLanguage())
 
+            Log.d("wafsfe", "idCounters[counter][0]: ${idCounters[counter][0]}")
 // Теперь выполняем оставшиеся операции
-            idCounters.forEachIndexed { index, id ->
+            if (idCounters[counter].isEmpty()) {
+                idCounters[counter].add(mutableListOf(1, 2))  // Добавляем первый список, если его нет
+            } else if (idCounters[counter][0].isEmpty()) {
+                idCounters[counter][0] = mutableListOf(1, 2)  // Если первый элемент пуст, заменяем его
+            }
+            Log.d("wafsfe", "idCounters[counter][0]: ${idCounters[counter][0]}")
+            idCounters[counter][0].forEachIndexed { index, id ->
+                Log.d("wafsfe", "id: $id")
                 val firstAnswerLayout = inflater.inflate(
                     R.layout.linear_layout_answer, newGroup, false
                 ) as LinearLayout
@@ -778,8 +886,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 if (id == 1) firstTextView.setTextColor(
                     ContextCompat.getColor(this, R.color.back_main_green)
                 )
-
-                // Добавляем firstAnswerLayout в newGroup
+                idCounters[counter].add(idCounters[counter][0])
                 newGroup.addView(firstAnswerLayout)
             }
 

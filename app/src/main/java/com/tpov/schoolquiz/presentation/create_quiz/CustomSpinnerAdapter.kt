@@ -20,12 +20,10 @@ class CustomSpinnerAdapter(
         val view = super.getView(position, convertView, parent)
         val textView = view.findViewById<TextView>(android.R.id.text1)
 
-        // Настройка текста
         val question = questions[position]
         textView.text = "${question.numQuestion}. ${question.nameQuestion.take(10)}" +
-                if (question.nameQuestion.length > 10) "." else ""
+                if (question.nameQuestion.length > 10) "..." else ""
 
-        // Изменение цвета текста
         if (question.hardQuestion) {
             textView.setTextColor(Color.RED)
         } else {
@@ -35,17 +33,15 @@ class CustomSpinnerAdapter(
         return view
     }
 
+    @SuppressLint("SetTextI18n")
     override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
         val view = super.getDropDownView(position, convertView, parent)
         val textView = view.findViewById<TextView>(android.R.id.text1)
 
-        // Настройка текста
         val question = questions[position]
         textView.text = "${question.numQuestion}. ${question.nameQuestion.take(10)}" +
-                if (question.nameQuestion.length > 10) "." else ""
+                if (question.nameQuestion.length > 10) "..." else ""
 
-
-        // Изменение цвета текста
         if (question.hardQuestion) {
             textView.setTextColor(Color.RED)
         } else {
