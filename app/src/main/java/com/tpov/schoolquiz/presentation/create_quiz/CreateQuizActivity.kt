@@ -593,12 +593,10 @@ class CreateQuizActivity : AppCompatActivity() {
             ) {
                 (view as? TextView)?.setTextColor(Color.GRAY)
                 (view as? TextView)?.text = languagesShortCodes[position]
-                Log.d("QuizApp", "languageSpinner.onItemSelectedListener")
+                Log.d("QuizApp", "languageSpinner.onItemSelectedListener isSpinnerInitialized: $isSpinnerInitialized")
                 if (!isSpinnerInitialized) {
                     isSpinnerInitialized = true
-                    return
-                }
-                addOrUpdateAnswerGroup(
+                }else addOrUpdateAnswerGroup(
                     binding.llQuestions.indexOfChild(questionLayout) + 1,
                     languagesShortCodes[position]
                 )
@@ -690,6 +688,7 @@ class CreateQuizActivity : AppCompatActivity() {
             fillMissingQuestionNumbersByHardQuestion()
             questionsShortEntity =
                 viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
+            idCounters = mutableListOf(mutableListOf())
             Log.d("saveThisNumberQuestion", "newQuestionsShortEntity: $questionsShortEntity")
             Log.d("saveThisNumberQuestion", "newQuestionsEntity: $questionsEntity")
         }
@@ -724,8 +723,8 @@ class CreateQuizActivity : AppCompatActivity() {
     private fun getAllQuestionsAndLanguages(): List<Pair<String, String>> {
         val questionsAndLanguages = mutableListOf<Pair<String, String>>()
         val childCount = binding.llQuestions.childCount
-        // Начинаем с последнего элемента и двигаемся к первому
-        for (i in childCount - 1 downTo 0) {
+
+        for (i in 0 until childCount) {
             val questionLayout = binding.llQuestions.getChildAt(i) as LinearLayout
 
             val questionTextView: EditText =
@@ -755,7 +754,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 answerLayout.findViewById(R.id.tv_answer_language)
 
             val answers = mutableListOf<String>()
-            idCounters[counter][i].asReversed().forEach {
+            idCounters[i].forEach {
                 Log.d("getThisAnswers", " answers.add: $it")
                 Log.d(
                     "getThisAnswers",
@@ -800,54 +799,71 @@ class CreateQuizActivity : AppCompatActivity() {
             addQuestionToLayout(question.nameQuestion, question.language)
 
             val answers = question.nameAnswers.split("|").toMutableList()
-            answers.add(0, answers.removeAt(question.answer))
+            answers.add(0, answers.removeAt(question.answer - 1))
 
             answers.forEachIndexed { indexAnswer, answerText ->
+
+                Log.d("getThisAnswers", "indexAnswer: ${indexAnswer}, answerText: ${answerText}")
                 addOrUpdateAnswerGroup(
                     indexLanguage,
                     question.language,
-                    (indexAnswer > 2 && indexAnswer % 2 != 0),
-                    answerText
+                    true,
+                    answerText,
+                    indexAnswer
                 )
             }
         }
     }
 
-    private var idCounters: MutableList<MutableList<MutableList<Int>>> =
-        mutableListOf(mutableListOf(mutableListOf()))
+    private var idCounters: MutableList<MutableList<Int>> =
+        mutableListOf(mutableListOf())
 
     private fun addOrUpdateAnswerGroup(
         groupNumber: Int,
         language: String? = null,
         addAnswers: Boolean? = null,
-        answerText: String? = null
+        answerText: String? = null,
+        idAnswer: Int? = null
     ) {
         val existingGroup = binding.llGroupAnswer.findViewWithTag<View>("group_$groupNumber")
         Log.d(
-            "QuizApp",
-            "addOrUpdateAnswerGroup called with groupNumber: $groupNumber, language: $language, addAnswers: $addAnswers, answerText: $answerText, existingGroup: $existingGroup"
+            "getThisAnswers",
+            "addOrUpdateAnswerGroup called with groupNumber: $groupNumber, language: $language, addAnswers: $addAnswers, answerText: $answerText, existingGroup: $existingGroup, idAnswer: $idAnswer"
         )
         if (existingGroup != null) {
-            if (language != null) existingGroup.findViewById<TextView>(R.id.tv_answer_language).text =
-                LanguageUtils.getLanguageFullName(language)
-            if (answerText != null) existingGroup.findViewById<TextView>(idCounters.lastIndex).text =
-                answerText
 
             if (addAnswers == true) {
                 for (i in 0 until binding.llGroupAnswer.childCount) {
                     val firstAnswerLayout = LayoutInflater.from(this).inflate(
-                        R.layout.linear_layout_answer,
-                        binding.llGroupAnswer.getChildAt(i) as LinearLayout,
-                        true
+                        R.layout.linear_layout_answer,                   // Сам макет (XML файл)
+                        binding.llGroupAnswer.getChildAt(i) as LinearLayout,  // Родительский контейнер, куда добавляется макет
+                        false  // Не добавляем его сразу к родителю, просто надуваем
                     ) as LinearLayout
-                    val idGroupCounter = idCounters[counter][i]
-                    val newIdEdtAnswer = idGroupCounter.last() + 1
-                    idGroupCounter.add((newIdEdtAnswer))
 
-                    Log.d("getThisAnswers", "idCounters.lastIndex: ${idCounters.lastIndex}")
-                    firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = newIdEdtAnswer
+                    val idGroupCounter = idCounters[i]
+
+                    val newIdEdtAnswer = idAnswer ?: (idGroupCounter.last() + 1)
+
+                    if (idAnswer != null ) {
+                        if (idGroupCounter.last() < idAnswer) {
+                            idGroupCounter.add(newIdEdtAnswer)
+                            (binding.llGroupAnswer.getChildAt(i) as LinearLayout).addView(firstAnswerLayout)
+                            firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = newIdEdtAnswer
+                            Log.d("getThisAnswers", "newIdEdtAnswer EditText: $newIdEdtAnswer")
+                        }
+                    } else {
+                        idGroupCounter.add(newIdEdtAnswer)
+                        (binding.llGroupAnswer.getChildAt(i) as LinearLayout).addView(firstAnswerLayout)
+                        firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = newIdEdtAnswer
+                        Log.d("getThisAnswers", "newIdEdtAnswer idAnswer: $newIdEdtAnswer")
+                    }
                 }
             }
+            if (language != null) existingGroup.findViewById<TextView>(R.id.tv_answer_language).text =
+                LanguageUtils.getLanguageFullName(language)
+            if (answerText != null && idAnswer != null && answerText != "") existingGroup.findViewById<TextView>(idCounters[groupNumber][idAnswer]).text =
+                answerText
+
         } else {
             val inflater = LayoutInflater.from(this)
 
@@ -865,28 +881,29 @@ class CreateQuizActivity : AppCompatActivity() {
             newGroup.findViewById<TextView>(R.id.tv_answer_language).text =
                 LanguageUtils.getLanguageFullName(language ?: getUserLanguage())
 
-            Log.d("wafsfe", "idCounters[counter][0]: ${idCounters[counter][0]}")
 // Теперь выполняем оставшиеся операции
-            if (idCounters[counter].isEmpty()) {
-                idCounters[counter].add(mutableListOf(1, 2))  // Добавляем первый список, если его нет
-            } else if (idCounters[counter][0].isEmpty()) {
-                idCounters[counter][0] = mutableListOf(1, 2)  // Если первый элемент пуст, заменяем его
+            if (idCounters.isEmpty()) {
+                idCounters.add(mutableListOf(0,1))  // Добавляем первый список, если его нет
+            } else if (idCounters[0].isEmpty()) {
+                idCounters[0] = mutableListOf(0,1)  // Если первый элемент пуст, заменяем его
             }
-            Log.d("wafsfe", "idCounters[counter][0]: ${idCounters[counter][0]}")
-            idCounters[counter][0].forEachIndexed { index, id ->
-                Log.d("wafsfe", "id: $id")
+            Log.d("getThisAnswers", "idCounters[counter][0]: ${idCounters[0]}")
+            idCounters[0].forEachIndexed { index, it ->
+                Log.d("wafsfe", "idAnswer: $idAnswer")
                 val firstAnswerLayout = inflater.inflate(
                     R.layout.linear_layout_answer, newGroup, false
                 ) as LinearLayout
 
-                firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = id
+                firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = it
 
-                val firstTextView = firstAnswerLayout.findViewById<EditText>(id)
+                Log.d("getThisAnswers", "idEdtAnswer: ${it}")
+                val firstTextView = firstAnswerLayout.findViewById<EditText>(it)
                 firstTextView?.setText(answerText ?: "")
-                if (id == 1) firstTextView.setTextColor(
+                if (it == 0) firstTextView.setTextColor(
                     ContextCompat.getColor(this, R.color.back_main_green)
                 )
-                idCounters[counter].add(idCounters[counter][0])
+                idCounters.add(idCounters[0])
+
                 newGroup.addView(firstAnswerLayout)
             }
 
