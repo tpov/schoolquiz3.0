@@ -30,6 +30,7 @@ import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
+import com.tpov.schoolquiz.presentation.StructureCategotyData
 import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
@@ -47,6 +48,7 @@ class CreateQuizActivity : AppCompatActivity() {
     private var idQuiz = -1
     private var lvlTranslate = 0
     private var counter = 0
+    private var isCreateNewCategory = false
 
     private val PICK_IMAGE_CATEGORY = 1001
     private val PICK_IMAGE_SUBCATEGORY = 1002
@@ -126,7 +128,7 @@ class CreateQuizActivity : AppCompatActivity() {
         bSave.setOnClickListener {
             saveThisNumberQuestion()
             saveThisQuiz()
-            saveStructureCategory()
+            saveStructureCategory(quizEntity?.event ?: 1)
             saveQuiz()
         }
         bCencel.setOnClickListener {
@@ -156,11 +158,11 @@ class CreateQuizActivity : AppCompatActivity() {
         setCategorySpinnerListeners()
     }
 
-    private fun saveThisQuiz() = with(binding) {
-        (quizEntity ?: QuizEntity()).copy(
-            idCategory = getCategoriesByLayout().first,
-            idSubcategory = getCategoriesByLayout().second,
-            idSubsubcategory = getCategoriesByLayout().third,
+    private fun saveThisQuiz(): QuizEntity? = with(binding) {
+        quizEntity = (quizEntity ?: QuizEntity()).copy(
+            idCategory = getNewCategory().first,
+            idSubcategory = getNewCategory().second,
+            idSubsubcategory = getNewCategory().third,
             nameQuiz = tvQuizName.toString(),
             userName = getUserName(),
             dataUpdate = getDataQuiz(),
@@ -170,10 +172,19 @@ class CreateQuizActivity : AppCompatActivity() {
             picture = saveImage(imvQuiz, (quizEntity?.id ?: QuizEntity().id).toString()),
             languages = getLanguageQuizByQuestions()
         )
+        return quizEntity
     }
 
-    private fun saveStructureCategory() {
+    private fun getNewCategory() = if (!isCreateNewCategory) Triple(
+        quizEntity?.idCategory ?: 0,
+        quizEntity?.idSubcategory ?: 0,
+        quizEntity?.idSubsubcategory ?: 0
+    ) else Triple(0, 0, 0)
 
+    private var structureCategoryData = StructureCategotyData()
+
+    private fun saveStructureCategory(newEvent: Int) {
+        structureCategoryData = StructureCategotyData().init(quizEntity!!, getCategoriesByLayout(), newEvent)
     }
 
     private fun saveImage(imageView: ImageView, fileName: String): String {
@@ -237,9 +248,11 @@ class CreateQuizActivity : AppCompatActivity() {
         return ""
     }
 
-    private fun getCategoriesByLayout(): Triple<Int, Int, Int> {
-        return Triple(0, 0, 0)
-    }
+    private fun getCategoriesByLayout() = Triple(
+        binding.tvCategory.text.toString(),
+        binding.tvSubCategory.text.toString(),
+        binding.tvSubsubCategory.text.toString()
+    )
 
     private fun getUserName(): String {
         return ""
@@ -593,10 +606,13 @@ class CreateQuizActivity : AppCompatActivity() {
             ) {
                 (view as? TextView)?.setTextColor(Color.GRAY)
                 (view as? TextView)?.text = languagesShortCodes[position]
-                Log.d("QuizApp", "languageSpinner.onItemSelectedListener isSpinnerInitialized: $isSpinnerInitialized")
+                Log.d(
+                    "QuizApp",
+                    "languageSpinner.onItemSelectedListener isSpinnerInitialized: $isSpinnerInitialized"
+                )
                 if (!isSpinnerInitialized) {
                     isSpinnerInitialized = true
-                }else addOrUpdateAnswerGroup(
+                } else addOrUpdateAnswerGroup(
                     binding.llQuestions.indexOfChild(questionLayout) + 1,
                     languagesShortCodes[position]
                 )
@@ -844,24 +860,32 @@ class CreateQuizActivity : AppCompatActivity() {
 
                     val newIdEdtAnswer = idAnswer ?: (idGroupCounter.last() + 1)
 
-                    if (idAnswer != null ) {
+                    if (idAnswer != null) {
                         if (idGroupCounter.last() < idAnswer) {
                             idGroupCounter.add(newIdEdtAnswer)
-                            (binding.llGroupAnswer.getChildAt(i) as LinearLayout).addView(firstAnswerLayout)
-                            firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = newIdEdtAnswer
+                            (binding.llGroupAnswer.getChildAt(i) as LinearLayout).addView(
+                                firstAnswerLayout
+                            )
+                            firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id =
+                                newIdEdtAnswer
                             Log.d("getThisAnswers", "newIdEdtAnswer EditText: $newIdEdtAnswer")
                         }
                     } else {
                         idGroupCounter.add(newIdEdtAnswer)
-                        (binding.llGroupAnswer.getChildAt(i) as LinearLayout).addView(firstAnswerLayout)
-                        firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id = newIdEdtAnswer
+                        (binding.llGroupAnswer.getChildAt(i) as LinearLayout).addView(
+                            firstAnswerLayout
+                        )
+                        firstAnswerLayout.findViewById<EditText>(R.id.edt_answer).id =
+                            newIdEdtAnswer
                         Log.d("getThisAnswers", "newIdEdtAnswer idAnswer: $newIdEdtAnswer")
                     }
                 }
             }
             if (language != null) existingGroup.findViewById<TextView>(R.id.tv_answer_language).text =
                 LanguageUtils.getLanguageFullName(language)
-            if (answerText != null && idAnswer != null && answerText != "") existingGroup.findViewById<TextView>(idCounters[groupNumber][idAnswer]).text =
+            if (answerText != null && idAnswer != null && answerText != "") existingGroup.findViewById<TextView>(
+                idCounters[groupNumber][idAnswer]
+            ).text =
                 answerText
 
         } else {
@@ -883,9 +907,9 @@ class CreateQuizActivity : AppCompatActivity() {
 
 // Теперь выполняем оставшиеся операции
             if (idCounters.isEmpty()) {
-                idCounters.add(mutableListOf(0,1))  // Добавляем первый список, если его нет
+                idCounters.add(mutableListOf(0, 1))  // Добавляем первый список, если его нет
             } else if (idCounters[0].isEmpty()) {
-                idCounters[0] = mutableListOf(0,1)  // Если первый элемент пуст, заменяем его
+                idCounters[0] = mutableListOf(0, 1)  // Если первый элемент пуст, заменяем его
             }
             Log.d("getThisAnswers", "idCounters[counter][0]: ${idCounters[0]}")
             idCounters[0].forEachIndexed { index, it ->
