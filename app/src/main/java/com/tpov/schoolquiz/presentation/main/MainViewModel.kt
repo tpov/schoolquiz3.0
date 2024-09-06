@@ -11,6 +11,7 @@ import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.data.model.local.StructureCategoryData
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.domain.QuestionUseCase
 import com.tpov.common.domain.QuizUseCase
@@ -59,6 +60,10 @@ class MainViewModel @Inject constructor(
                 _profileState.value = profile
             }
         }
+    }
+
+    fun sendStructureCategory(structureCategoryData: StructureCategoryData) = viewModelScope.launch{
+        structureUseCase.pushStructureCategoryData(structureCategoryData)
     }
 
     fun getQuestionListShortEntity(questionList: List<QuestionEntity>, languages: String): ArrayList<QuestionShortEntity> {

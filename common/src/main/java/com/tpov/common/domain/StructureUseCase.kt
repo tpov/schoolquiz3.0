@@ -2,6 +2,7 @@ package com.tpov.common.domain
 
 import android.util.Log
 import com.tpov.common.data.RepositoryStuctureImpl
+import com.tpov.common.data.model.local.StructureCategoryData
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
 import javax.inject.Inject
@@ -12,6 +13,10 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
 
     suspend fun pushStructureLocalData(ratingData: StructureLocalData) {
         repositoryStructureImpl.pushStructureRating(ratingData)
+    }
+
+    suspend fun pushStructureCategoryData(structureCategoryData: StructureCategoryData) {
+        repositoryStructureImpl.pushStructureCategoryData(structureCategoryData)
     }
 
     suspend fun retryFailedLocalData() {

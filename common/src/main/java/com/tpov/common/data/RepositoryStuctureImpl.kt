@@ -5,7 +5,9 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.gson.Gson
+import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
+import com.tpov.common.data.model.local.StructureCategoryData
 import com.tpov.common.data.model.remote.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
 import com.tpov.common.domain.repository.RepositoryStructure
@@ -19,6 +21,7 @@ import javax.inject.Inject
 
 class RepositoryStuctureImpl @Inject constructor(
     private val structureRatingDataDao: StructureRatingDataDao,
+    private val structureCategoryDataDao: StructureCategoryDataDao,
     private val firestore: FirebaseFirestore,
     private val context: Context
 ) : RepositoryStructure {
@@ -99,6 +102,27 @@ class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
+    override suspend fun pushStructureCategoryData(structureCategoryData: StructureCategoryData) {
+        try {
+            val dataMap = structureCategoryData.toMap()
+
+            firestore.collection("structureCategory")
+                .add(dataMap)
+                .addOnSuccessListener { documentReference ->
+                    println("DocumentSnapshot added with ID: ${documentReference.id}")
+                }
+                .addOnFailureListener {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        saveFailedCategoryLocally(structureCategoryData)
+                    }
+                }
+        } catch (e: Exception) {
+            CoroutineScope(Dispatchers.IO).launch {
+                saveFailedCategoryLocally(structureCategoryData)
+            }
+        }
+    }
+
     override suspend fun saveListUpdateQuiz(list: List<String>) {
         val sharedPreferences = context.getSharedPreferences("QuizUpdates", Context.MODE_PRIVATE)
         with(sharedPreferences.edit()) {
@@ -127,6 +151,10 @@ class RepositoryStuctureImpl @Inject constructor(
 
     private suspend fun saveFailedRatingLocally(ratingData: StructureLocalData) {
         structureRatingDataDao.insert(ratingData.toStructureRatingDataEntity())
+    }
+
+    private suspend fun saveFailedCategoryLocally(structureCategoryData: StructureCategoryData) {
+        structureCategoryDataDao.insert(structureCategoryData)
     }
 
     suspend fun retryFailedRatings() {

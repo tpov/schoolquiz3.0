@@ -48,7 +48,6 @@ data class QuestionEntity(
         lvlTranslate = this.lvlTranslate
     )
 
-
     constructor() : this(
         id = null,
         numQuestion = 0,
@@ -61,4 +60,5 @@ data class QuestionEntity(
         lvlTranslate = 0,
         pathPictureQuestion = ""
     )
+
 }

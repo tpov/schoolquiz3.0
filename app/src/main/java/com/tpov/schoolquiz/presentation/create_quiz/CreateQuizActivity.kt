@@ -27,10 +27,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.data.model.local.StructureCategoryData
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
-import com.tpov.schoolquiz.presentation.StructureCategotyData
 import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
@@ -181,10 +181,10 @@ class CreateQuizActivity : AppCompatActivity() {
         quizEntity?.idSubsubcategory ?: 0
     ) else Triple(0, 0, 0)
 
-    private var structureCategoryData = StructureCategotyData()
+    private var structureCategoryData = StructureCategoryData()
 
     private fun saveStructureCategory(newEvent: Int) {
-        structureCategoryData = StructureCategotyData().init(quizEntity!!, getCategoriesByLayout(), newEvent)
+        structureCategoryData = StructureCategoryData().initCreateQuizActivity(quizEntity!!, getCategoriesByLayout(), newEvent)
     }
 
     private fun saveImage(imageView: ImageView, fileName: String): String {
@@ -653,8 +653,7 @@ class CreateQuizActivity : AppCompatActivity() {
         val newAnswers = getThisAnswers()
 
         if (newAnswers.size != newQuestions.size) errorCountLanguage()
-        else {
-            if (questionsShortEntity[counter].hardQuestion != hardQuestionThis) {
+        else { if (questionsShortEntity[counter].hardQuestion != hardQuestionThis) {
                 questionsEntity = questionsEntity.filter {
                     it.numQuestion != numQuestionThis || it.hardQuestion == hardQuestionThis
                 } as ArrayList<QuestionEntity>
@@ -851,9 +850,9 @@ class CreateQuizActivity : AppCompatActivity() {
             if (addAnswers == true) {
                 for (i in 0 until binding.llGroupAnswer.childCount) {
                     val firstAnswerLayout = LayoutInflater.from(this).inflate(
-                        R.layout.linear_layout_answer,                   // Сам макет (XML файл)
-                        binding.llGroupAnswer.getChildAt(i) as LinearLayout,  // Родительский контейнер, куда добавляется макет
-                        false  // Не добавляем его сразу к родителю, просто надуваем
+                        R.layout.linear_layout_answer,
+                        binding.llGroupAnswer.getChildAt(i) as LinearLayout,
+                        false
                     ) as LinearLayout
 
                     val idGroupCounter = idCounters[i]
@@ -970,11 +969,14 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun saveQuiz() = lifecycleScope.launch {
-        quizEntity?.let {
-            viewModel.insertQuiz(it)
+        questionsEntity.let {
             viewModel.insertQuestion(questionsEntity ?: errorLoadQuestionEntity())
-            finish()
-        } ?: saveTranslate()
+            quizEntity?.let {
+                viewModel.insertQuiz(it)
+                viewModel.sendStructureCategory(structureCategoryData)
+                finish()
+            } ?: saveTranslate()
+        }
     }
 
     private fun getFilteredAndSortedQuestions(): List<String> {
