@@ -1,17 +1,23 @@
 package com.tpov.common.data.model.remote
 
 data class StructureData(
-    val event: List<EventData>,
+    val event: List<EventData> = emptyList()
 ) {
+    // Конструктор по умолчанию для Firestore
+    constructor() : this(emptyList())
+
     fun toStructureDataLocal() = com.tpov.common.data.model.local.StructureData(
         event = event.map { it.toEventDataLocal() }
     )
 }
 
 data class EventData(
-    val id: Int,
-    val category: List<CategoryData>,
+    val id: Int = 0,
+    val category: List<CategoryData> = emptyList(),
 ) {
+    // Конструктор по умолчанию для Firestore
+    constructor() : this(0, emptyList())
+
     fun toEventDataLocal(): com.tpov.common.data.model.local.EventData {
         return com.tpov.common.data.model.local.EventData(
             id = id,
@@ -23,14 +29,17 @@ data class EventData(
 }
 
 data class CategoryData(
-    val id: Int,
-    val subcategory: List<SubCategoryData>,
-    val nameQuiz: String,
-    val dataUpdate: String,
-    val starsMaxRemote: Int,
-    val picture: String?,
-    val ratingRemote: Int
+    val id: Int = 0,
+    val subcategory: List<SubCategoryData> = emptyList(),
+    val nameQuiz: String = "",
+    val dataUpdate: String = "",
+    val starsMaxRemote: Int = 0,
+    val picture: String? = null,
+    val ratingRemote: Int = 0
 ) {
+    // Конструктор по умолчанию для Firestore
+    constructor() : this(0, emptyList(), "", "", 0, null, 0)
+
     fun toCategoryDataLocal(): com.tpov.common.data.model.local.CategoryData {
         return com.tpov.common.data.model.local.CategoryData(
             id = id,
@@ -49,15 +58,18 @@ data class CategoryData(
 }
 
 data class SubCategoryData(
-    val id: Int,
-    val subSubcategory: List<SubsubCategoryData>,
-    val nameQuiz: String,
-    val dataUpdate: String,
-    val userName: String,
-    val starsMaxRemote: Int,
-    val picture: String?,
-    val ratingRemote: Int,
+    val id: Int = 0,
+    val subSubcategory: List<SubsubCategoryData> = emptyList(),
+    val nameQuiz: String = "",
+    val dataUpdate: String = "",
+    val userName: String = "",
+    val starsMaxRemote: Int = 0,
+    val picture: String? = null,
+    val ratingRemote: Int = 0
 ) {
+    // Конструктор по умолчанию для Firestore
+    constructor() : this(0, emptyList(), "", "", "", 0, null, 0)
+
     fun toSubCategoryDataLocal(): com.tpov.common.data.model.local.SubCategoryData {
         return com.tpov.common.data.model.local.SubCategoryData(
             id = id,
@@ -77,15 +89,18 @@ data class SubCategoryData(
 }
 
 data class SubsubCategoryData(
-    val id: Int,
-    val quizData: List<QuizData>,
-    val nameQuiz: String,
-    val dataUpdate: String,
-    val userName: String,
-    val starsMaxRemote: Int,
-    val picture: String?,
-    val ratingRemote: Int,
+    val id: Int = 0,
+    val quizData: List<QuizData> = emptyList(),
+    val nameQuiz: String = "",
+    val dataUpdate: String = "",
+    val userName: String = "",
+    val starsMaxRemote: Int = 0,
+    val picture: String? = null,
+    val ratingRemote: Int = 0
 ) {
+    // Конструктор по умолчанию для Firestore
+    constructor() : this(0, emptyList(), "", "", "", 0, null, 0)
+
     fun toSubsubCategoryDataLocal(): com.tpov.common.data.model.local.SubsubCategoryData {
         return com.tpov.common.data.model.local.SubsubCategoryData(
             id = id,
@@ -105,14 +120,17 @@ data class SubsubCategoryData(
 }
 
 data class QuizData(
-    val idQuiz: Int,
-    val nameQuiz: String,
-    val ratingRemote: Int,
-    val dataUpdate: String,
-    val userName: String,
-    val picture: String,
-    val starsMaxRemote: Int
+    val idQuiz: Int = 0,
+    val nameQuiz: String = "",
+    val ratingRemote: Int = 0,
+    val dataUpdate: String = "",
+    val userName: String = "",
+    val picture: String = "",
+    val starsMaxRemote: Int = 0
 ) {
+    // Конструктор по умолчанию для Firestore
+    constructor() : this(0, "", 0, "", "", "", 0)
+
     fun toQuizDataLocal(): com.tpov.common.data.model.local.QuizData {
         return com.tpov.common.data.model.local.QuizData(
             idQuiz = idQuiz,

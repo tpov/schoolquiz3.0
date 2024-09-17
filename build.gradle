@@ -66,10 +66,6 @@ subprojects {
                 implementation 'androidx.core:core-ktx:1.13.1'
                 implementation 'androidx.appcompat:appcompat:1.7.0'
 
-                implementation 'junit:junit:4.13.2'
-                implementation 'androidx.test.ext:junit:1.2.1'
-                implementation 'androidx.test.espresso:espresso-core:3.6.1'
-
                 // ViewModel and LiveData
                 implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
                 implementation "androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version"
@@ -81,17 +77,6 @@ subprojects {
 
                 implementation 'com.google.dagger:dagger:2.49'
 
-                testImplementation 'org.mockito:mockito-core:5.4.0'
-                testImplementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
-                testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
-
-                androidTestImplementation 'org.mockito:mockito-android:5.4.0'
-                testImplementation 'org.robolectric:robolectric:4.9'
-
-                testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
-                testImplementation 'org.mockito.kotlin:mockito-kotlin:5.1.0'
-                testImplementation 'org.mockito:mockito-core:5.4.0'
-
                 implementation 'com.google.code.gson:gson:2.10.1'
                 // Firebase and WorkManager
                 implementation platform("com.google.firebase:firebase-bom:33.2.0")
@@ -102,6 +87,29 @@ subprojects {
 
                 implementation 'androidx.work:work-runtime-ktx:2.9.1'
                 implementation 'com.android.support:multidex:1.0.3'
+                implementation 'com.google.firebase:firebase-appcheck-playintegrity:18.0.0'
+
+                implementation 'com.google.android.gms:play-services-base:18.5.0'
+                implementation 'com.google.android.gms:play-services-basement:18.4.0'
+                implementation 'com.google.firebase:firebase-functions:21.0.0'
+                implementation platform('com.google.firebase:firebase-bom:33.2.0') // Проверьте актуальную версию
+                implementation 'com.google.firebase:firebase-appcheck-playintegrity'
+                implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+
+                implementation 'com.google.firebase:firebase-functions'
+
+                // Testing
+                testImplementation 'junit:junit:4.13.2'
+                androidTestImplementation 'androidx.test:runner:1.6.1'
+                androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+                androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+
+                // Coroutines Testing
+                testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
+
+                androidTestImplementation 'androidx.test.espresso:espresso-intents:3.6.1'
+                androidTestImplementation 'androidx.test:rules:1.6.1'
+
             }
         }
     }

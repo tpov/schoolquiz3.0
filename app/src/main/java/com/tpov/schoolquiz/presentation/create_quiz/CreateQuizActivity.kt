@@ -27,13 +27,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.local.StructureCategoryData
+import com.tpov.common.data.model.local.StructureCategoryDataEntity
+import com.tpov.common.domain.SettingConfigObject.settingsConfig
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
 import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -70,7 +72,6 @@ class CreateQuizActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         supportActionBar?.hide()
         (application as MainApp).applicationComponent.inject(this)
         binding = ActivityCreateQuizBinding.inflate(layoutInflater)
@@ -89,8 +90,7 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun setupQuestionSpinner() = with(binding) {
-        val adapter: CustomSpinnerAdapter =
-            CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
+        val adapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
         Log.d("setupQuestionSpinner", "$questionsShortEntity")
         spNumQuestion.adapter = adapter
         spNumQuestion.setSelection(counter)
@@ -163,14 +163,14 @@ class CreateQuizActivity : AppCompatActivity() {
             idCategory = getNewCategory().first,
             idSubcategory = getNewCategory().second,
             idSubsubcategory = getNewCategory().third,
-            nameQuiz = tvQuizName.toString(),
+            nameQuiz = tvQuizName.text.toString(),
             userName = getUserName(),
             dataUpdate = getDataQuiz(),
             numQ = questionsShortEntity.filter { !it.hardQuestion }.size,
             numHQ = questionsShortEntity.filter { it.hardQuestion }.size,
             versionQuiz = quizEntity?.versionQuiz?.plus(1) ?: QuizEntity().versionQuiz,
             picture = saveImage(imvQuiz, (quizEntity?.id ?: QuizEntity().id).toString()),
-            languages = getLanguageQuizByQuestions()
+            languages = getLanguageQuizByQuestions(),
         )
         return quizEntity
     }
@@ -181,44 +181,55 @@ class CreateQuizActivity : AppCompatActivity() {
         quizEntity?.idSubsubcategory ?: 0
     ) else Triple(0, 0, 0)
 
-    private var structureCategoryData = StructureCategoryData()
+    private var structureCategoryDataEntity = StructureCategoryDataEntity()
 
     private fun saveStructureCategory(newEvent: Int) {
-        structureCategoryData = StructureCategoryData().initCreateQuizActivity(quizEntity!!, getCategoriesByLayout(), newEvent)
+        val pathCategory = saveImage(binding.imvCategory, category)
+         val pathSubCategory = saveImage(binding.imvSubcategory, "$category/$subCategory")
+         val pathSubsubCategory = saveImage(binding.imvSubsubcategory, "$category/$subCategory/$subsubCategory")
+        structureCategoryDataEntity = StructureCategoryDataEntity().initCreateQuizActivity(quizEntity!!, getCategoriesByLayout(), newEvent, pathCategory, pathSubCategory, pathSubsubCategory, quizEntity?.nameQuiz ?: "")
     }
 
     private fun saveImage(imageView: ImageView, fileName: String): String {
-        val bitmap = (imageView.drawable as BitmapDrawable).bitmap
+        val drawable = imageView.drawable
 
-        // Указываем максимальные размеры изображения
-        val maxWidth = 1024  // Задай нужные значения, например половину экрана планшета
-        val maxHeight = 1024
+        // Проверяем, является ли drawable объектом BitmapDrawable
+        if (drawable is BitmapDrawable) {
+            val bitmap = drawable.bitmap
 
-        // Проверяем, нужно ли уменьшать изображение
-        val scaledBitmap = if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
-            scaleBitmap(bitmap, maxWidth, maxHeight)  // Уменьшаем, если изображение слишком большое
+            // Указываем максимальные размеры изображения
+            val maxWidth = 1024  // Задай нужные значения, например половину экрана планшета
+            val maxHeight = 1024
+
+            // Проверяем, нужно ли уменьшать изображение
+            val scaledBitmap = if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
+                scaleBitmap(bitmap, maxWidth, maxHeight)  // Уменьшаем, если изображение слишком большое
+            } else {
+                bitmap  // Используем оригинальное изображение, если оно уже маленькое
+            }
+
+            // Указываем путь для сохранения файла
+            val filePath = getExternalFilesDir(null)?.absolutePath + "/$fileName.png"
+            val file = File(filePath)
+            var fileOutputStream: FileOutputStream? = null
+            try {
+                fileOutputStream = FileOutputStream(file)
+
+                // Сохраняем изображение с качеством 100%
+                scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+
+                Toast.makeText(this, "Image saved to $filePath", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                fileOutputStream?.close()
+            }
+
+            return filePath
         } else {
-            bitmap  // Используем оригинальное изображение, если оно уже маленькое
+            // Если изображение не является BitmapDrawable, возвращаем пустую строку
+            return ""
         }
-
-        // Указываем путь для сохранения файла
-        val filePath = getExternalFilesDir(null)?.absolutePath + "/$fileName.png"
-        val file = File(filePath)
-        var fileOutputStream: FileOutputStream? = null
-        try {
-            fileOutputStream = FileOutputStream(file)
-
-            // Сохраняем изображение с качеством 100%
-            scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
-
-            Toast.makeText(this, "Image saved to $filePath", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            fileOutputStream?.close()
-        }
-
-        return filePath
     }
 
     // Функция для масштабирования изображения
@@ -245,8 +256,14 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun getLanguageQuizByQuestions(): String {
-        return ""
+        if (questionsEntity.isEmpty()) return ""
+
+        val firstLanguage = questionsEntity.first().language
+        val commonLanguage = questionsEntity.all { it.language == firstLanguage }
+
+        return if (commonLanguage) firstLanguage else ""
     }
+
 
     private fun getCategoriesByLayout() = Triple(
         binding.tvCategory.text.toString(),
@@ -255,10 +272,14 @@ class CreateQuizActivity : AppCompatActivity() {
     )
 
     private fun getUserName(): String {
-        return ""
+        return settingsConfig.name
     }
 
-    private fun getDataQuiz() = ""
+    private fun getDataQuiz(): String {
+        val unixTime = System.currentTimeMillis() / 1000
+        return unixTime.toString()
+    }
+
     private fun setNewCounterAndShortList(isInit: Boolean = false) {
         if (isInit) {
             // Инициализация списка
@@ -372,7 +393,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun setSpinnersCategory() {
         Log.d("wadwad", "setSpinnersCategory")
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.Default) {
             val structureData = viewModel.getStructureData()
             var selectedCategoryIndex = 0
             var selectedSubCategoryIndex = 0
@@ -856,7 +877,6 @@ class CreateQuizActivity : AppCompatActivity() {
                     ) as LinearLayout
 
                     val idGroupCounter = idCounters[i]
-
                     val newIdEdtAnswer = idAnswer ?: (idGroupCounter.last() + 1)
 
                     if (idAnswer != null) {
@@ -968,12 +988,11 @@ class CreateQuizActivity : AppCompatActivity() {
         return 0
     }
 
-    private fun saveQuiz() = lifecycleScope.launch {
-        questionsEntity.let {
+    private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
+        questionsEntity.let { questionsIt ->
             viewModel.insertQuestion(questionsEntity ?: errorLoadQuestionEntity())
-            quizEntity?.let {
-                viewModel.insertQuiz(it)
-                viewModel.sendStructureCategory(structureCategoryData)
+            quizEntity?.let {quizIt ->
+                viewModel.pushTheQuiz(structureCategoryDataEntity, quizIt, questionsIt)
                 finish()
             } ?: saveTranslate()
         }

@@ -6,6 +6,7 @@ import com.tpov.common.data.database.CommonDatabase
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.database.QuestionDetailDao
 import com.tpov.common.data.database.QuizDao
+import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.schoolquiz.data.database.MainDatabase
 import com.tpov.schoolquiz.data.database.ProfileDao
@@ -60,5 +61,10 @@ class DatabaseModule {
     @Provides
     fun provideStructureRatingDataDao(database: CommonDatabase): StructureRatingDataDao {
         return database.getStructureRatingDataDao()
+    }
+    @Provides
+    @Singleton
+    fun provideStructureCategoryDataDao(database: CommonDatabase): StructureCategoryDataDao {
+        return database.getStructureCategoryDataDao()
     }
 }

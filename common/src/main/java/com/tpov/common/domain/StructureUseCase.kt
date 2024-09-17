@@ -1,8 +1,9 @@
 package com.tpov.common.domain
 
+import android.annotation.SuppressLint
 import android.util.Log
 import com.tpov.common.data.RepositoryStuctureImpl
-import com.tpov.common.data.model.local.StructureCategoryData
+import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
 import javax.inject.Inject
@@ -15,14 +16,17 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         repositoryStructureImpl.pushStructureRating(ratingData)
     }
 
-    suspend fun pushStructureCategoryData(structureCategoryData: StructureCategoryData) {
-        repositoryStructureImpl.pushStructureCategoryData(structureCategoryData)
+    suspend fun pushStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
+        repositoryStructureImpl.pushStructureCategoryData(structureCategoryDataEntity)
     }
 
     suspend fun retryFailedLocalData() {
         repositoryStructureImpl.retryFailedRatings()
     }
 
+
+    private val changedQuizzes = mutableListOf<String>()
+    @SuppressLint("SuspiciousIndentation")
     suspend fun syncData(): List<String> {
         Log.d("SyncData", "Starting data synchronization")
 
@@ -52,15 +56,33 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
             return emptyList()
         }
 
-        val changedQuizzes = mutableListOf<String>()
-
+        changedQuizzes.clear()
         val newDataLocal: StructureData = if (dataLocal == null) {
             Log.d("SyncData", "No local data found, using new data")
+            newDataLocalEmpty.event.forEach { newEvent ->
+                Log.d("SyncData", "Processing event id: ${newEvent.id}")
+                newEvent.category.forEach { newCategory ->
+                    Log.d("SyncData", "Processing category: ${newCategory.nameQuiz}")
+                    newCategory.subcategory.forEach { newSubcategory ->
+                        Log.d("SyncData", "Processing subcategory: ${newSubcategory.nameQuiz}")
+                        newSubcategory.subSubcategory.forEach { newSubsub ->
+                            Log.d("SyncData", "Processing subsubcategory: ${newSubsub.nameQuiz}")
+                            newSubsub.quizData.forEach { newQuiz ->
+                                val quizString = "${newEvent.id}|${newCategory.nameQuiz}|${newSubcategory.nameQuiz}|${newSubsub.nameQuiz}|${newQuiz.nameQuiz}"
+
+                                    Log.d("SyncData", "Adding quiz: $quizString")
+                                    changedQuizzes.add(quizString)
+                            }
+                        }
+                    }
+                }
+            }
             newDataLocalEmpty
         } else {
             Log.d("SyncData", "Merging local and new data")
-            mergeData(dataLocal, newDataLocalEmpty, changedQuizzes)
+            mergeData(dataLocal, newDataLocalEmpty)
         }
+
 
         try {
             repositoryStructureImpl.saveStructureData(newDataLocal)
@@ -74,7 +96,11 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         return changedQuizzes
     }
 
-    private fun mergeData(dataLocal: StructureData, newDataLocalEmpty: StructureData, changedQuizzes: MutableList<String>): StructureData {
+    private fun mergeData(
+        dataLocal: StructureData,
+        newDataLocalEmpty: StructureData
+    ): StructureData {
+
         return StructureData(
             event = newDataLocalEmpty.event.map { newEvent ->
                 val localEvent = dataLocal.event.find { it.id == newEvent.id }
@@ -83,39 +109,57 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
                         val localCategory = localEvent?.category?.find { it.id == newCategory.id }
                         newCategory.copy(
                             subcategory = newCategory.subcategory.map { newSubcategory ->
-                                val localSubcategory = localCategory?.subcategory?.find { it.id == newSubcategory.id }
+                                val localSubcategory =
+                                    localCategory?.subcategory?.find { it.id == newSubcategory.id }
                                 newSubcategory.copy(
                                     subSubcategory = newSubcategory.subSubcategory.map { newSubsub ->
-                                        val localSubsub = localSubcategory?.subSubcategory?.find { it.id == newSubsub.id }
+                                        val localSubsub =
+                                            localSubcategory?.subSubcategory?.find { it.id == newSubsub.id }
                                         newSubsub.copy(
                                             quizData = newSubsub.quizData.map { newQuiz ->
-                                                val localQuiz = localSubsub?.quizData?.find { it.idQuiz == newQuiz.idQuiz }
+                                                val localQuiz =
+                                                    localSubsub?.quizData?.find { it.idQuiz == newQuiz.idQuiz }
                                                 if (localQuiz != null && newQuiz.dataUpdate != localQuiz.dataUpdate) {
                                                     changedQuizzes.add("${newEvent.id}|${newCategory.id}|${newSubcategory.id}|${newSubsub.id}|${newQuiz.idQuiz}")
                                                 }
                                                 newQuiz.copy(
-                                                    ratingLocal = localQuiz?.ratingLocal ?: newQuiz.ratingLocal,
-                                                    starsMaxLocal = localQuiz?.starsMaxLocal ?: newQuiz.starsMaxLocal,
-                                                    isShowArchive = localQuiz?.isShowArchive ?: newQuiz.isShowArchive,
-                                                    isShowDownload = localQuiz?.isShowDownload ?: newQuiz.isShowDownload
+                                                    ratingLocal = localQuiz?.ratingLocal
+                                                        ?: newQuiz.ratingLocal,
+                                                    starsMaxLocal = localQuiz?.starsMaxLocal
+                                                        ?: newQuiz.starsMaxLocal,
+                                                    isShowArchive = localQuiz?.isShowArchive
+                                                        ?: newQuiz.isShowArchive,
+                                                    isShowDownload = localQuiz?.isShowDownload
+                                                        ?: newQuiz.isShowDownload
                                                 )
                                             },
-                                            ratingLocal = localSubsub?.ratingLocal ?: newSubsub.ratingLocal,
-                                            starsMaxLocal = localSubsub?.starsMaxLocal ?: newSubsub.starsMaxLocal,
-                                            isShowArchive = localSubsub?.isShowArchive ?: newSubsub.isShowArchive,
-                                            isShowDownload = localSubsub?.isShowDownload ?: newSubsub.isShowDownload
+                                            ratingLocal = localSubsub?.ratingLocal
+                                                ?: newSubsub.ratingLocal,
+                                            starsMaxLocal = localSubsub?.starsMaxLocal
+                                                ?: newSubsub.starsMaxLocal,
+                                            isShowArchive = localSubsub?.isShowArchive
+                                                ?: newSubsub.isShowArchive,
+                                            isShowDownload = localSubsub?.isShowDownload
+                                                ?: newSubsub.isShowDownload
                                         )
                                     },
-                                    ratingLocal = localSubcategory?.ratingLocal ?: newSubcategory.ratingLocal,
-                                    starsMaxLocal = localSubcategory?.starsMaxLocal ?: newSubcategory.starsMaxLocal,
-                                    isShowArchive = localSubcategory?.isShowArchive ?: newSubcategory.isShowArchive,
-                                    isShowDownload = localSubcategory?.isShowDownload ?: newSubcategory.isShowDownload
+                                    ratingLocal = localSubcategory?.ratingLocal
+                                        ?: newSubcategory.ratingLocal,
+                                    starsMaxLocal = localSubcategory?.starsMaxLocal
+                                        ?: newSubcategory.starsMaxLocal,
+                                    isShowArchive = localSubcategory?.isShowArchive
+                                        ?: newSubcategory.isShowArchive,
+                                    isShowDownload = localSubcategory?.isShowDownload
+                                        ?: newSubcategory.isShowDownload
                                 )
                             },
                             ratingLocal = localCategory?.ratingLocal ?: newCategory.ratingLocal,
-                            starsMaxLocal = localCategory?.starsMaxLocal ?: newCategory.starsMaxLocal,
-                            isShowArchive = localCategory?.isShowArchive ?: newCategory.isShowArchive,
-                            isShowDownload = localCategory?.isShowDownload ?: newCategory.isShowDownload
+                            starsMaxLocal = localCategory?.starsMaxLocal
+                                ?: newCategory.starsMaxLocal,
+                            isShowArchive = localCategory?.isShowArchive
+                                ?: newCategory.isShowArchive,
+                            isShowDownload = localCategory?.isShowDownload
+                                ?: newCategory.isShowDownload
                         )
                     },
                     isShowArchive = localEvent?.isShowArchive ?: newEvent.isShowArchive,

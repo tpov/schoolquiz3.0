@@ -11,34 +11,34 @@ import kotlinx.parcelize.Parcelize
 @Entity(tableName = "question_entity")
 data class QuestionEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Int?,
+    val id: Int? = null,
 
     @ColumnInfo(name = "numQuestion")
-    var numQuestion: Int,
+    var numQuestion: Int = 0,
 
     @ColumnInfo(name = "nameQuestion")
-    var nameQuestion: String,
+    var nameQuestion: String = "",
 
     @ColumnInfo(name = "pictureQuestion")
-    var pathPictureQuestion: String?,
+    var pathPictureQuestion: String? = "",
 
     @ColumnInfo(name = "answer")
-    val answer: Int,
+    val answer: Int = 0,
 
     @ColumnInfo(name = "nameAnswers")
-    val nameAnswers: String,
+    val nameAnswers: String = "",
 
     @ColumnInfo(name = "hardQuestion")
-    val hardQuestion: Boolean,
+    val hardQuestion: Boolean = false,
 
     @ColumnInfo(name = "idQuiz")
-    val idQuiz: Int,
+    val idQuiz: Int = 0,
 
     @ColumnInfo(name = "language")
-    var language: String,
+    var language: String = "",
 
     @ColumnInfo(name = "lvlTranslate")
-    var lvlTranslate: Int
+    var lvlTranslate: Int = 0
 ) : Parcelable {
     fun toQuestionRemote() = QuestionRemote(
         answer = this.answer,

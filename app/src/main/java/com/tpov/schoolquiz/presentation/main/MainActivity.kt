@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initData() {
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.Default) {
             val listNewQuiz = viewModel.loadHomeCategory()
             if (!isNetworkAvailable(this@MainActivity)) {
                 Toast.makeText(this@MainActivity, "Нет подключения к интернету. Попробуйте позже.", Toast.LENGTH_LONG).show()

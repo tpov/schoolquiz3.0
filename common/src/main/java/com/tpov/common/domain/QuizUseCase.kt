@@ -1,6 +1,7 @@
 package com.tpov.common.domain
 
 import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.domain.repository.RepositoryQuiz
 import javax.inject.Inject
 
@@ -29,6 +30,10 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
         )
     }
 
+    suspend fun pushQuiz(quizEntity: QuizEntity) {
+        repositoryQuiz.pushQuiz(quizEntity.toQuizRemote(), quizEntity.id ?:0)
+    }
+
     private fun getQuizIdByPathPicture(picture: String) =
         picture.substringAfterLast("/").toIntOrNull() ?: 0
 
@@ -40,15 +45,9 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
         repositoryQuiz.saveQuiz(quizEntity)
     }
 
-    suspend fun pushQuiz(
-        quizEntity: QuizEntity,
-        idQuiz: Int,
-        categoryId: Int,
-        subcategoryId: Int,
-        subsubcategoryId: Int
-    ) {
-        repositoryQuiz.pushQuiz(quizEntity.toQuizRemote(), idQuiz, categoryId, subcategoryId, subsubcategoryId)
-    }
+    suspend fun pushStructureCategory(
+        structureCategoryDataEntity: StructureCategoryDataEntity
+    ) = repositoryQuiz.pushStructureCategory(structureCategoryDataEntity)
 
     suspend fun getQuizzes(): List<QuizEntity>? {
         return repositoryQuiz.getQuizzes()

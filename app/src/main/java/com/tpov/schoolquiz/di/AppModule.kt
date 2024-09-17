@@ -8,6 +8,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryQuizImpl
 import com.tpov.common.data.RepositoryStuctureImpl
+import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.domain.QuestionUseCase
 import com.tpov.common.domain.QuizUseCase
@@ -54,10 +55,11 @@ class AppModule {
     @Singleton
     fun provideRepositoryStructureImpl(
         structureRatingDataDao: StructureRatingDataDao,
+        structureCategoryDataDao: StructureCategoryDataDao,
         firestore: FirebaseFirestore,
         context: Context
     ): RepositoryStuctureImpl {
-        return RepositoryStuctureImpl(structureRatingDataDao, firestore, context)
+        return RepositoryStuctureImpl(structureRatingDataDao,structureCategoryDataDao, firestore, context)
     }
 
     @Provides
@@ -68,7 +70,6 @@ class AppModule {
         firestore.firestoreSettings = FirebaseFirestoreSettings.Builder()
             .setPersistenceEnabled(true)
             .build()
-
         return firestore
     }
 

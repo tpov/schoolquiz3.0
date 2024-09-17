@@ -1,6 +1,9 @@
 package com.tpov.common.data
 
 import android.net.Uri
+import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.core.Core.tpovId
@@ -144,36 +147,77 @@ class RepositoryQuestionImpl @Inject constructor(
         }
     }
 
-    private suspend fun uploadPhotoToServer(pathPhoto: String) {
-        val storageRef = storage.reference
-        val localFile = File(pathPhoto)
-        val photoRef = storageRef.child("questionPhoto/${localFile.name}")
+    private fun uploadPhotoToServer(pathPhoto: String) {
+        if (pathPhoto.isNotBlank()) {
+            // Проверка на авторизацию
+            val currentUser: FirebaseUser? = FirebaseAuth.getInstance().currentUser
 
-        photoRef.putFile(Uri.fromFile(localFile)).await()
-    }
-
-    private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
-        val storageRef = storage.reference
-        val photoRef = storageRef.child(pathPhoto)
-        val localFile = File(pathPhoto, File(pathPhoto).name)
-
-        return try {
-            photoRef.getFile(localFile).await()
-            localFile.absolutePath
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            if (currentUser == null) {
+                // Если пользователь не авторизован, то авторизуем анонимно
+                FirebaseAuth.getInstance().signInAnonymously()
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            // Успешная анонимная аутентификация
+                            Log.d("FirebaseAuth", "Анонимный пользователь создан")
+                            // Продолжаем загрузку файла после аутентификации
+                            uploadFileToFirebaseStorage(pathPhoto)
+                        } else {
+                            // Обработка ошибки аутентификации
+                            Log.e("FirebaseAuth", "Ошибка анонимной аутентификации", task.exception)
+                        }
+                    }
+            } else {
+                // Если пользователь уже авторизован, продолжаем загрузку
+                uploadFileToFirebaseStorage(pathPhoto)
+            }
         }
     }
 
-    private suspend fun deletePhotoFromServer(pathPhoto: String) {
-        val storageRef = storage.reference
-        val photoRef = storageRef.child(pathPhoto)
+    private fun uploadFileToFirebaseStorage(pathPhoto: String) {
+        val storageRef = FirebaseStorage.getInstance().reference
+        val localFile = File(pathPhoto)
+        val photoRef = storageRef.child("quizPhoto/${localFile.name}")
 
-        try {
-            photoRef.delete().await()
-        } catch (e: Exception) {
-            e.printStackTrace()
+        photoRef.putFile(Uri.fromFile(localFile))
+            .addOnSuccessListener {
+                // Файл успешно загружен
+                Log.d("FirebaseStorage", "Файл успешно загружен: ${localFile.name}")
+            }
+            .addOnFailureListener { exception ->
+                // Обработка ошибок
+                Log.e("FirebaseStorage", "Ошибка загрузки файла", exception)
+            }
+    }
+
+
+    private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
+
+        return if (pathPhoto.isNotBlank()) {
+            val storageRef = storage.reference
+            val photoRef = storageRef.child(pathPhoto)
+            val localFile = File(pathPhoto, File(pathPhoto).name)
+
+            return try {
+                photoRef.getFile(localFile).await()
+                localFile.absolutePath
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else ""
+    }
+
+    private suspend fun deletePhotoFromServer(pathPhoto: String) {
+
+        if (pathPhoto.isNotBlank()) {
+            val storageRef = storage.reference
+            val photoRef = storageRef.child(pathPhoto)
+
+            try {
+                photoRef.delete().await()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

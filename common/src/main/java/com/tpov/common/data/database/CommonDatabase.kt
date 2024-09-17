@@ -7,10 +7,11 @@ import com.tpov.common.data.custom.Converters
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.StructureRatingDataEntity
 
 @Database(
-    entities = [QuestionDetailEntity::class, QuestionEntity::class, QuizEntity::class, StructureRatingDataEntity::class],
+    entities = [QuestionDetailEntity::class, QuestionEntity::class, QuizEntity::class, StructureRatingDataEntity::class, StructureCategoryDataEntity::class],
     version = 1,
     exportSchema = true
 )
@@ -20,5 +21,6 @@ abstract class CommonDatabase : RoomDatabase() {
     abstract fun getQuestionDao(): QuestionDao
     abstract fun getQuestionDetailDao(): QuestionDetailDao
     abstract fun getStructureRatingDataDao(): StructureRatingDataDao
+    abstract fun getStructureCategoryDataDao(): StructureCategoryDataDao
 
 }

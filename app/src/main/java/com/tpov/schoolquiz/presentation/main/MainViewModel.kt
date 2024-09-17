@@ -11,7 +11,7 @@ import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.local.StructureCategoryData
+import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.domain.QuestionUseCase
 import com.tpov.common.domain.QuizUseCase
@@ -55,20 +55,23 @@ class MainViewModel @Inject constructor(
     var firstStartApp = false
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             profileUseCase.getProfileFlow(tpovId)?.collect { profile ->
                 _profileState.value = profile
             }
         }
     }
 
-    fun sendStructureCategory(structureCategoryData: StructureCategoryData) = viewModelScope.launch{
-        structureUseCase.pushStructureCategoryData(structureCategoryData)
-    }
+    fun sendStructureCategory(structureCategoryDataEntity: StructureCategoryDataEntity) =
+        viewModelScope.launch(Dispatchers.Default) {
+            structureUseCase.pushStructureCategoryData(structureCategoryDataEntity)
+        }
 
-    fun getQuestionListShortEntity(questionList: List<QuestionEntity>, languages: String): ArrayList<QuestionShortEntity> {
+    fun getQuestionListShortEntity(
+        questionList: List<QuestionEntity>,
+        languages: String
+    ): ArrayList<QuestionShortEntity> {
         val indexedQuestions = questionList.withIndex()
-        Log.d("getQuestionListShortEntity", "Indexed Questions: $indexedQuestions")
 
         // Разделение вопросов на "обычные" и "сложные"
         val (hardQuestions, normalQuestions) = indexedQuestions.partition { it.value.hardQuestion }
@@ -78,19 +81,23 @@ class MainViewModel @Inject constructor(
             return questions
                 .groupBy { it.value.numQuestion }
                 .flatMap { (_, questionsGroup) ->
-                    Log.d("getQuestionListShortEntity", "Grouping Questions: $questionsGroup")
                     questionsGroup.sortedWith(compareBy(
-                        { question -> languages.indexOf(question.value.language).takeIf { it >= 0 } ?: Int.MAX_VALUE },
+                        { question ->
+                            languages.indexOf(question.value.language).takeIf { it >= 0 }
+                                ?: Int.MAX_VALUE
+                        },
                         { question -> -question.value.lvlTranslate }
                     )).take(1)
                 }
         }
 
         // Сортировка обычных вопросов по numQuestion
-        val sortedNormalQuestions = sortAndFilterQuestions(normalQuestions).sortedBy { it.value.numQuestion }
+        val sortedNormalQuestions =
+            sortAndFilterQuestions(normalQuestions).sortedBy { it.value.numQuestion }
 
         // Сортировка сложных вопросов в обратном порядке по numQuestion
-        val sortedHardQuestions = sortAndFilterQuestions(hardQuestions).sortedBy { it.value.numQuestion }
+        val sortedHardQuestions =
+            sortAndFilterQuestions(hardQuestions).sortedBy { it.value.numQuestion }
 
         // Объединение результатов: сначала обычные вопросы, затем сложные
         val combinedQuestions = sortedNormalQuestions + sortedHardQuestions
@@ -103,11 +110,9 @@ class MainViewModel @Inject constructor(
                 nameQuestion = indexedValue.value.nameQuestion,
                 hardQuestion = indexedValue.value.hardQuestion
             )
-            Log.d("getQuestionListShortEntity", "Created QuestionShortEntity: $questionShortEntity")
             questionShortEntity
         }.toCollection(ArrayList())
 
-        Log.d("getQuestionListShortEntity", "Final QuestionShortEntity List: $questionShortList")
         return questionShortList
     }
 
@@ -126,7 +131,7 @@ class MainViewModel @Inject constructor(
             listNewQuiz = structureUseCase.syncData()
             structureDataList = structureUseCase.getStructureData()
         }
-        withContext(Dispatchers.Main) {
+        withContext(Dispatchers.Default) {
             _categoryData.value = prepareData(structureDataList ?: retryFromDelay())
         }
         return listNewQuiz
@@ -171,7 +176,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    suspend fun createProfile() {
+    fun createProfile() {
         val currentTimestamp = Instant.now().epochSecond
         val userLocalDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         profileUseCase.insertProfile(
@@ -203,6 +208,33 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    private suspend fun pushStructureCategory(structureCategoryDataEntity: StructureCategoryDataEntity) =
+       quizUseCase.pushStructureCategory(structureCategoryDataEntity)
+
+    suspend fun pushTheQuiz(
+        structureCategoryDataEntity: StructureCategoryDataEntity,
+        quizEntity: QuizEntity,
+        questionsEntity: ArrayList<QuestionEntity>
+    ) {
+        val newStructureCategory = pushStructureCategory(structureCategoryDataEntity)
+        val idQuiz = newStructureCategory.oldIdQuizId
+        quizEntity.id = idQuiz
+        pushQuiz(quizEntity)
+        questionsEntity.forEach {
+            val question = it.copy(idQuiz = idQuiz)
+            pushQuestion(question, question.language, quizEntity.event)
+        }
+
+    }
+
+    private suspend fun pushQuiz(quizEntity: QuizEntity) {
+        quizUseCase.pushQuiz(quizEntity)
+    }
+
+    suspend fun pushQuestion(questionEntity: QuestionEntity, language: String, event: Int) {
+        questionUseCase.pushQuestion(questionEntity, language, event)
+    }
+
     suspend fun insertQuiz(quizEntity: QuizEntity) {
         quizUseCase.insertQuiz(quizEntity)
     }
@@ -212,11 +244,11 @@ class MainViewModel @Inject constructor(
         questionsList.forEach { questionUseCase.insertQuestion(it) }
     }
 
-    fun getQuizByIdQuiz(idQuiz: Int) = viewModelScope.launch {
+    fun getQuizByIdQuiz(idQuiz: Int) = viewModelScope.launch(Dispatchers.Default) {
         _quizData.value = quizUseCase.getQuizById(idQuiz)
     }
 
-    fun getQuestionByIdQuiz(idQuiz: Int) = viewModelScope.launch {
+    fun getQuestionByIdQuiz(idQuiz: Int) = viewModelScope.launch(Dispatchers.Default) {
         _questionData.value = questionUseCase.getQuestionByIdQuiz(idQuiz)
     }
 

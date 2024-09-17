@@ -9,8 +9,8 @@ data class QuizRemote(
     var tpovId: Int = 0,
     var dataUpdate: String = "",
     var versionQuiz: Int = -1,
-    var picture: String = "123",
-    var event: Int = -1,
+    var picture: String = "",
+    var event: Int = 1,
     var numQ: Int = 0,
     var numHQ: Int = 0,
     var starsAverageRemote: Int = 0,
@@ -19,6 +19,24 @@ data class QuizRemote(
     var userName: String = "",
     var languages: String = ""
 ) {
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+            "nameQuiz" to nameQuiz,
+            "tpovId" to tpovId,
+            "dataUpdate" to dataUpdate,
+            "versionQuiz" to versionQuiz,
+            "picture" to picture,
+            "event" to event,
+            "numQ" to numQ,
+            "numHQ" to numHQ,
+            "starsAverageRemote" to starsAverageRemote,
+            "starsMaxRemote" to starsMaxRemote,
+            "ratingRemote" to ratingRemote,
+            "userName" to userName,
+            "languages" to languages
+        )
+    }
+
     fun toQuizEntity(
         id: Int = 0,
         idCategory: Int,

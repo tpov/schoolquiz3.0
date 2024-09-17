@@ -7,7 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.gson.Gson
 import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
-import com.tpov.common.data.model.local.StructureCategoryData
+import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.remote.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
 import com.tpov.common.domain.repository.RepositoryStructure
@@ -33,8 +33,8 @@ class RepositoryStuctureImpl @Inject constructor(
     override suspend fun fetchStructureData(): StructureData? {
         return try {
             Log.d("SyncData", "Starting to fetch 'structureData' from Firestore")
-            firestore.collection("structureData")
-                .document("1")
+            firestore.collection("structures")
+                .document("structureData")
                 .get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
@@ -47,7 +47,7 @@ class RepositoryStuctureImpl @Inject constructor(
                     Log.e("FirestoreTest", "get failed with ", exception)
                 }
 
-            val documentSnapshot = firestore.collection("structureData")
+            val documentSnapshot = firestore.collection("structures")
                 .document("structureData")
                 .get().await()
 
@@ -102,26 +102,31 @@ class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun pushStructureCategoryData(structureCategoryData: StructureCategoryData) {
+    override suspend fun pushStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
         try {
-            val dataMap = structureCategoryData.toMap()
+            val dataMap = structureCategoryDataEntity.toMap()
 
+            Log.d("Firestore", "pushStructureCategoryData() ")
             firestore.collection("structureCategory")
-                .add(dataMap)
-                .addOnSuccessListener { documentReference ->
-                    println("DocumentSnapshot added with ID: ${documentReference.id}")
+                .document("structureCategory")  // укажите ваш ID или сгенерируйте его
+                .set(dataMap)
+                .addOnSuccessListener {
+                    Log.d("Firestore", "Document successfully written!")
                 }
-                .addOnFailureListener {
+                .addOnFailureListener { e ->
+                    Log.e("Firestore", "Error writing document", e)
                     CoroutineScope(Dispatchers.IO).launch {
-                        saveFailedCategoryLocally(structureCategoryData)
+                        saveFailedCategoryLocally(structureCategoryDataEntity)
                     }
                 }
         } catch (e: Exception) {
+            Log.e("Firestore", "Exception while pushing data", e)
             CoroutineScope(Dispatchers.IO).launch {
-                saveFailedCategoryLocally(structureCategoryData)
+                saveFailedCategoryLocally(structureCategoryDataEntity)
             }
         }
     }
+
 
     override suspend fun saveListUpdateQuiz(list: List<String>) {
         val sharedPreferences = context.getSharedPreferences("QuizUpdates", Context.MODE_PRIVATE)
@@ -153,8 +158,8 @@ class RepositoryStuctureImpl @Inject constructor(
         structureRatingDataDao.insert(ratingData.toStructureRatingDataEntity())
     }
 
-    private suspend fun saveFailedCategoryLocally(structureCategoryData: StructureCategoryData) {
-        structureCategoryDataDao.insert(structureCategoryData)
+    private suspend fun saveFailedCategoryLocally(structureCategoryDataEntity: StructureCategoryDataEntity) {
+        structureCategoryDataDao.insert(structureCategoryDataEntity)
     }
 
     suspend fun retryFailedRatings() {

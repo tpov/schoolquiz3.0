@@ -38,11 +38,19 @@ class SyncWorker @AssistedInject constructor(
         try {
             Log.d("SyncWorker", "Sync started")
 
+            // Получаем обновленные данные
             val updatedQuizList = structureUseCase.syncData()
 
+            // Проверяем, есть ли изменения
             if (updatedQuizList.isNotEmpty()) {
                 val quizCount = updatedQuizList.size
                 Log.d("SyncWorker", "Sync completed with $quizCount updated quizzes")
+
+                // Выводим информацию об измененных данных
+                updatedQuizList.forEach { quiz ->
+                    Log.d("SyncWorker", "Updated quiz: $quiz")
+                }
+
                 showNotification("Sync Complete", "Updated $quizCount quizzes.")
             } else {
                 Log.d("SyncWorker", "Sync completed with no new data to synchronize")
@@ -50,8 +58,8 @@ class SyncWorker @AssistedInject constructor(
             }
 
             val outputData = Data.Builder()
-                    .putBoolean(KEY_SYNC_SUCCESS, true)
-                    .build()
+                .putBoolean(KEY_SYNC_SUCCESS, true)
+                .build()
 
             Log.d("SyncWorker", "Sync successful")
             Result.success(outputData)
@@ -59,7 +67,6 @@ class SyncWorker @AssistedInject constructor(
             Log.e("SyncData", "Error fetching or saving data: ${e.message}")
             Result.failure()
         }
-
     }
 
     @SuppressLint("MissingPermission")
