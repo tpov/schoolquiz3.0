@@ -5059,8 +5059,6 @@ int style Theme_MaterialComponents_Light_NoActionBar_Bridge 0x0
 int style Theme_MaterialComponents_NoActionBar 0x0
 int style Theme_MaterialComponents_NoActionBar_Bridge 0x0
 int style Theme_Schoolquiz 0x0
-int style WhiteBackgroundDialogTheme 0x0
-int style WhiteBackgroundTheme 0x0
 int style Widget_AppCompat_ActionBar 0x0
 int style Widget_AppCompat_ActionBar_Solid 0x0
 int style Widget_AppCompat_ActionBar_TabBar 0x0
