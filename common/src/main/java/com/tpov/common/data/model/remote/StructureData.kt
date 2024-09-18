@@ -126,10 +126,11 @@ data class QuizData(
     val dataUpdate: String = "",
     val userName: String = "",
     val picture: String = "",
-    val starsMaxRemote: Int = 0
+    val starsMaxRemote: Int = 0,
+    val tpovId: Int = 0
 ) {
     // Конструктор по умолчанию для Firestore
-    constructor() : this(0, "", 0, "", "", "", 0)
+    constructor() : this(0, "", 0, "", "", "", 0, 0)
 
     fun toQuizDataLocal(): com.tpov.common.data.model.local.QuizData {
         return com.tpov.common.data.model.local.QuizData(
@@ -143,7 +144,8 @@ data class QuizData(
             userName = userName,
             starsMaxLocal = 0,
             picture = picture,
-            starsMaxRemote = starsMaxRemote
+            starsMaxRemote = starsMaxRemote,
+            tpovId = tpovId
         )
     }
 }

@@ -38,7 +38,7 @@ data class QuizRemote(
     }
 
     fun toQuizEntity(
-        id: Int = 0,
+        id: Int,
         idCategory: Int,
         idSubcategory: Int,
         idSubsubcategory: Int,

@@ -9,14 +9,14 @@ data class QuestionRemote (
     val answer: Int,
     val nameAnswers: String,
     val pathPictureQuestion: String?,
-    val lvlTranslate: Int
+    val lvlTranslate: Int,
+    val numQuestion: Int,
+    val hardQuestion: Boolean,
+    val language: String
 ) {
     fun toQuizEntity(
-        numQuestion: Int,
         id: Int = 0,
-        hardQuestion: Boolean,
         idQuiz: Int,
-        language: String
     ): QuestionEntity {
         return QuestionEntity(
             id = id,
@@ -33,6 +33,6 @@ data class QuestionRemote (
     }
 
     constructor() : this(
-        "", 0, "", "",  0
+        "", 0, "", "",  0, 0 ,false, ""
     )
 }

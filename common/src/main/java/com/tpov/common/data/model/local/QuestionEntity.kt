@@ -45,7 +45,10 @@ data class QuestionEntity(
         nameAnswers = this.nameAnswers,
         pathPictureQuestion = this.pathPictureQuestion,
         nameQuestion = this.nameAnswers,
-        lvlTranslate = this.lvlTranslate
+        lvlTranslate = this.lvlTranslate,
+        numQuestion = this.numQuestion,
+        hardQuestion = this.hardQuestion,
+        language = this.language
     )
 
     constructor() : this(

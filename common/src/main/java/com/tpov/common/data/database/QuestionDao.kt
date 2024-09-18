@@ -1,5 +1,6 @@
 package com.tpov.common.data.database
 
+import android.util.Log
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -33,6 +34,7 @@ interface QuestionDao {
     }
 
     fun getQuestionByIdQuiz(id: Int): List<QuestionEntity> {
+        Log.d("getQuestionByIdQuiz", id.toString())
         return getQuestionByIdQuizDB(id)
     }
 

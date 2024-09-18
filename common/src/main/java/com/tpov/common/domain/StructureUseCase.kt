@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 class StructureUseCase @Inject constructor(private val repositoryStructureImpl: RepositoryStuctureImpl) {
 
-    suspend fun fetchQuizzes() = repositoryStructureImpl.fetchStructureData()
+    suspend fun fetchStructureData() = repositoryStructureImpl.fetchStructureData()
 
     suspend fun pushStructureLocalData(ratingData: StructureLocalData) {
         repositoryStructureImpl.pushStructureRating(ratingData)
@@ -25,9 +25,14 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
     }
 
 
-    private val changedQuizzes = mutableListOf<String>()
+    private val changedQuizzes = mutableListOf<Pair<String, String>>()
+
+    fun logger(i: Int) {
+        Log.d("logger", i.toString())
+    }
+
     @SuppressLint("SuspiciousIndentation")
-    suspend fun syncData(): List<String> {
+    suspend fun syncStructureDataANDquizzes(): MutableList<Pair<String, String>> {
         Log.d("SyncData", "Starting data synchronization")
 
         val dataRemote = try {
@@ -40,53 +45,75 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         Log.d("SyncData", "Remote data fetched: $dataRemote")
 
         val dataLocal = try {
-            repositoryStructureImpl.loadStructureData()
+            repositoryStructureImpl.getStructureData()
         } catch (e: Exception) {
             Log.e("SyncData", "Error loading local data: ${e.message}")
             throw e
         }
         Log.d("SyncData", "Local data loaded: $dataLocal")
 
-        val newDataLocalEmpty: StructureData? = dataRemote?.toStructureDataLocal()
+        var newDataLocalEmpty: StructureData? = dataRemote?.toStructureDataLocal()
         Log.d("SyncData", "Converted remote data to local format: $newDataLocalEmpty")
-
         if (newDataLocalEmpty == null) {
             // Выводим тост и возвращаем пустой список
             Log.d("SyncData", "No structure data found on the server. Sync canceled.")
-            return emptyList()
+            return emptyList<Pair<String, String>>().toMutableList()
+
         }
 
         changedQuizzes.clear()
-        val newDataLocal: StructureData = if (dataLocal == null) {
-            Log.d("SyncData", "No local data found, using new data")
-            newDataLocalEmpty.event.forEach { newEvent ->
-                Log.d("SyncData", "Processing event id: ${newEvent.id}")
-                newEvent.category.forEach { newCategory ->
-                    Log.d("SyncData", "Processing category: ${newCategory.nameQuiz}")
-                    newCategory.subcategory.forEach { newSubcategory ->
-                        Log.d("SyncData", "Processing subcategory: ${newSubcategory.nameQuiz}")
-                        newSubcategory.subSubcategory.forEach { newSubsub ->
-                            Log.d("SyncData", "Processing subsubcategory: ${newSubsub.nameQuiz}")
-                            newSubsub.quizData.forEach { newQuiz ->
-                                val quizString = "${newEvent.id}|${newCategory.nameQuiz}|${newSubcategory.nameQuiz}|${newSubsub.nameQuiz}|${newQuiz.nameQuiz}"
+        val newDataLocal: StructureData =
+            if (dataLocal == null) { //Приложение было запущено первый раз
+                Log.d("SyncData", "No local data found, using new data")
+                newDataLocalEmpty.event.forEach { newEvent ->
+                    newEvent.isShowArchive = isShowArhive()
+                    newEvent.isShowDownload = isShowDownload(newEvent.id)
+                    Log.d("SyncData", "Processing event id: ${newEvent.id}")
+                    newEvent.category.forEach { newCategory ->
+                        newCategory.isShowArchive = isShowArhive()
+                        newEvent.isShowDownload = isShowDownload(newEvent.id)
+                        Log.d("SyncData", "Processing category: ${newCategory.nameQuiz}")
+                        newCategory.subcategory.forEach { newSubcategory ->
+                            newSubcategory.isShowArchive = isShowArhive()
+                            newEvent.isShowDownload = isShowDownload(newEvent.id)
+                            Log.d("SyncData", "Processing subcategory: ${newSubcategory.nameQuiz}")
+                            newSubcategory.subSubcategory.forEach { newSubsub ->
+                                newSubsub.isShowArchive = isShowArhive()
+                                newEvent.isShowDownload = isShowDownload(newEvent.id)
+                                Log.d(
+                                    "SyncData",
+                                    "Processing subsubcategory: ${newSubsub.nameQuiz}"
+                                )
+                                newSubsub.quizData.forEach { newQuiz ->
+                                    newQuiz.isShowArchive = isShowArhive()
+                                    newEvent.isShowDownload = isShowDownload(newEvent.id)
+                                    val quizString =
+                                        "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
+                                    val quizInt =
+                                        "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
 
                                     Log.d("SyncData", "Adding quiz: $quizString")
-                                    changedQuizzes.add(quizString)
+                                    if (newQuiz.isShowDownload) changedQuizzes.add(
+                                        Pair(
+                                            quizString,
+                                            quizInt
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
                 }
+                newDataLocalEmpty
+            } else {
+                Log.d("SyncData", "Merging local and new data")
+                mergeData(dataLocal, newDataLocalEmpty)
             }
-            newDataLocalEmpty
-        } else {
-            Log.d("SyncData", "Merging local and new data")
-            mergeData(dataLocal, newDataLocalEmpty)
-        }
 
 
         try {
             repositoryStructureImpl.saveStructureData(newDataLocal)
-            Log.d("SyncData", "Data saved successfully")
+            Log.d("SyncData", "Data saved successfully $newDataLocal")
         } catch (e: Exception) {
             Log.e("SyncData", "Error saving data: ${e.message}")
             throw e
@@ -95,6 +122,32 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         Log.d("SyncData", "Data synchronization completed with changes: $changedQuizzes")
         return changedQuizzes
     }
+
+    private fun isShowDownload(newEventId: Int): Boolean {
+        return newEventId == 8
+    }
+
+    private fun isShowArhive(): Boolean {
+return true
+    }
+
+    private fun updateIsShow(newDataLocalEmpty: StructureData) =
+        newDataLocalEmpty.event.forEach { newEvent ->
+            newEvent.isShowArchive = true
+
+            newEvent.category.forEach { newCategory ->
+                newCategory.isShowArchive = true
+                newCategory.subcategory.forEach { newSubcategory ->
+                    newSubcategory.isShowArchive = true
+                    newSubcategory.subSubcategory.forEach { newSubsub ->
+                        newSubsub.isShowArchive = true
+                        newSubsub.quizData.forEach { newQuiz ->
+                            newQuiz.isShowArchive = true
+                        }
+                    }
+                }
+            }
+        }
 
     private fun mergeData(
         dataLocal: StructureData,
@@ -120,7 +173,15 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
                                                 val localQuiz =
                                                     localSubsub?.quizData?.find { it.idQuiz == newQuiz.idQuiz }
                                                 if (localQuiz != null && newQuiz.dataUpdate != localQuiz.dataUpdate) {
-                                                    changedQuizzes.add("${newEvent.id}|${newCategory.id}|${newSubcategory.id}|${newSubsub.id}|${newQuiz.idQuiz}")
+
+                                                    val quizString =
+                                                        "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
+                                                    val quizInt =
+                                                        "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
+
+                                                    if (newQuiz.isShowDownload && newQuiz.dataUpdate.toLong() > localQuiz.dataUpdate.toLong()) changedQuizzes.add(
+                                                        Pair(quizString, quizInt)
+                                                    )
                                                 }
                                                 newQuiz.copy(
                                                     ratingLocal = localQuiz?.ratingLocal
@@ -170,6 +231,6 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
     }
 
     suspend fun getStructureData(): StructureData? {
-        return repositoryStructureImpl.loadStructureData()
+        return repositoryStructureImpl.getStructureData()
     }
 }

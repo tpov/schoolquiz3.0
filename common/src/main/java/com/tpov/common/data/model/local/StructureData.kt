@@ -9,8 +9,8 @@ data class StructureData(
 data class EventData(
     val id: Int,
     val category: List<CategoryData>,
-    val isShowArchive: Boolean,
-    val isShowDownload: Boolean
+    var isShowArchive: Boolean,
+    var isShowDownload: Boolean
 ) {
 
 }
@@ -25,7 +25,7 @@ data class CategoryData(
     val picture: String?,
     val ratingRemote: Int,
     val ratingLocal: Int,
-    val isShowArchive: Boolean,
+    var isShowArchive: Boolean,
     val isShowDownload: Boolean
 ) {
 
@@ -42,7 +42,7 @@ data class SubCategoryData(
     val picture: String?,
     val ratingRemote: Int,
     val ratingLocal: Int,
-    val isShowArchive: Boolean,
+    var isShowArchive: Boolean,
     val isShowDownload: Boolean
 ) {
 
@@ -59,7 +59,7 @@ data class SubsubCategoryData(
     val picture: String?,
     val ratingRemote: Int,
     val ratingLocal: Int,
-    val isShowArchive: Boolean,
+    var isShowArchive: Boolean,
     val isShowDownload: Boolean
 ) {
 
@@ -75,8 +75,9 @@ data class QuizData(
     val starsMaxRemote: Int,
     val ratingRemote: Int,
     val ratingLocal: Int,
-    val isShowArchive: Boolean,
-    val isShowDownload: Boolean
+    var isShowArchive: Boolean,
+    val isShowDownload: Boolean,
+    val tpovId: Int
 ) {
 
 }

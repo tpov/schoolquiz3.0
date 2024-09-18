@@ -107,12 +107,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun initData() {
         lifecycleScope.launch(Dispatchers.Default) {
-            val listNewQuiz = viewModel.loadHomeCategory()
             if (!isNetworkAvailable(this@MainActivity)) {
                 Toast.makeText(this@MainActivity, "Нет подключения к интернету. Попробуйте позже.", Toast.LENGTH_LONG).show()
             }
             if (viewModel.firstStartApp) {
-                viewModel.loadQuizByStructure(listNewQuiz)
+                viewModel.getNewStructureDataANDQuizzes()
                 viewModel.createProfile()
             }
         }

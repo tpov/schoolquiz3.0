@@ -25,8 +25,8 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         repositoryQuestion.saveQuestion(questionEntity)
     }
 
-    suspend fun pushQuestion(questionEntity: QuestionEntity, pathLanguage: String, event: Int) {
-        repositoryQuestion.pushQuestion(questionEntity, pathLanguage, event)
+    suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int, idQuiz: Int) {
+        repositoryQuestion.pushQuestion(questionEntity.toQuestionRemote(), event, questionEntity.idQuiz)
     }
 
     suspend fun updateQuestion(questionEntity: QuestionEntity) {
@@ -37,8 +37,11 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         repositoryQuestion.deleteQuestionByIdQuiz(idQuiz)
     }
 
-    suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, pathLanguage: String, typeId: Int, numQuestion: Int,hardQuestion: Boolean) {
-        repositoryQuestion.deleteRemoteQuestionByIdQuiz(idQuiz, pathLanguage, typeId, numQuestion, hardQuestion)
+    suspend fun deleteRemoteQuestionByIdQuiz(
+        idQuiz: Int,
+        typeId: Int
+    ) {
+        repositoryQuestion.deleteRemoteQuestionByIdQuiz(idQuiz, typeId)
     }
 
 }

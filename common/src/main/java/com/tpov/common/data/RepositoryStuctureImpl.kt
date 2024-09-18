@@ -142,12 +142,12 @@ class RepositoryStuctureImpl @Inject constructor(
         return data?.split(",")?.filterNot { it.isEmpty() } ?: emptyList()
     }
 
-    override suspend fun loadStructureData(): com.tpov.common.data.model.local.StructureData? {
+    override suspend fun getStructureData(): com.tpov.common.data.model.local.StructureData? {
         return withContext(Dispatchers.IO) {
-            val file = context.getFileStreamPath(ratingFileName)
+            val file = context.getFileStreamPath(fileName)
             (if (file.exists()) {
                 gson.fromJson(
-                    context.openFileInput(ratingFileName).bufferedReader().use { it.readText() },
+                    context.openFileInput(fileName).bufferedReader().use { it.readText() },
                     com.tpov.common.data.model.local.StructureData::class.java
                 )
             } else null)

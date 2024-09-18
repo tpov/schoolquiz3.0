@@ -1,5 +1,6 @@
 package com.tpov.common.domain
 
+import android.util.Log
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.domain.repository.RepositoryQuiz
@@ -15,12 +16,13 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
         starsMaxLocal: Int,
         starsAverageLocal: Int,
         ratingLocal: Int,
-        idQuiz: Int
+        idQuiz: Int,
+        tpovId: Int
     ): QuizEntity {
-        val quizRemote = repositoryQuiz.fetchQuizzes(typeId, categoryId, subcategoryId, subsubcategoryId, idQuiz)
+        val quizRemote = repositoryQuiz.fetchQuizzes(typeId, tpovId, idQuiz)
 
         return quizRemote.toQuizEntity(
-            getQuizIdByPathPicture(quizRemote.picture),
+            idQuiz,
             categoryId,
             subcategoryId,
             subsubcategoryId,
@@ -33,9 +35,6 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
     suspend fun pushQuiz(quizEntity: QuizEntity) {
         repositoryQuiz.pushQuiz(quizEntity.toQuizRemote(), quizEntity.id ?:0)
     }
-
-    private fun getQuizIdByPathPicture(picture: String) =
-        picture.substringAfterLast("/").toIntOrNull() ?: 0
 
     suspend fun insertQuiz(quizEntity: QuizEntity) {
         repositoryQuiz.insertQuiz(quizEntity)
@@ -53,6 +52,7 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
         return repositoryQuiz.getQuizzes()
     }
     suspend fun getQuizById(id: Int): QuizEntity? {
+        Log.d("getQuizById", "${getQuizzes()}")
         return getQuizzes()?.filter { it.id == id }?.get(0)
     }
 

@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz
 
+import android.util.Log
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -9,9 +10,15 @@ import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryQuizImpl
 import com.tpov.common.data.RepositoryStuctureImpl
 import com.tpov.common.data.database.CommonDatabase
+import com.tpov.common.data.model.local.CategoryData
+import com.tpov.common.data.model.local.EventData
 import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuizData
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
+import com.tpov.common.data.model.local.StructureData
+import com.tpov.common.data.model.local.SubCategoryData
+import com.tpov.common.data.model.local.SubsubCategoryData
 import com.tpov.common.domain.QuestionUseCase
 import com.tpov.common.domain.QuizUseCase
 import com.tpov.common.domain.StructureUseCase
@@ -47,7 +54,10 @@ class CreateQuizIntegrationTest {
         nameQuiz = "Столицы Европы",
         numQ = 2,
         numHQ = 2,
-        languages = "ru|ua|en"
+        languages = "ru|ua|en",
+        dataUpdate = (System.currentTimeMillis() / 1000).toString(),
+        userName = "TPOV",
+        event = 8
     )
 
     val questionsEntity1 = QuestionEntity(
@@ -167,11 +177,41 @@ class CreateQuizIntegrationTest {
     )
 
     val structureCategoryDataEntity = StructureCategoryDataEntity(
-        newEventId = 1,
+        newEventId = 8,
         newCategoryName = "География",
         newSubCategoryName = "Европа",
         newSubsubCategoryName = "Столицы",
         newQuizName = "Столицы Европы",
+    )
+
+    val structureData1 = StructureData(
+        listOf( // Ожидается список событий
+            EventData(
+                1,
+                listOf( // Ожидается список категорий
+                    CategoryData(
+                        1,
+                        listOf( // Ожидается список подкатегорий
+                            SubCategoryData(
+                                1,
+                                listOf( // Ожидается список субподкатегорий
+                                    SubsubCategoryData(
+                                        1,
+                                        listOf(
+                                            QuizData(101,"Столицы Европы","","",0,"",0,0,0,true,false, 0)
+                                        ),
+                                        "Столицы","","",0,0,"",0,0,true,false
+                                    )
+                                ),
+                                "Европа","","",0,0,"",0,0,true,false
+                            )
+                        ),
+                        "География","",0,0,"",0,0,true,false
+                    )
+                ),
+                true,false
+            )
+        )
     )
 
     @Before
@@ -184,58 +224,104 @@ class CreateQuizIntegrationTest {
             context,
             MainDatabase::class.java
         ).build().getQuizDao()
-        val profileDao = Room.inMemoryDatabaseBuilder(
-            context,
-            MainDatabase::class.java
-        ).build().getProfileDao()
         val questionDao = Room.inMemoryDatabaseBuilder(
             context,
             MainDatabase::class.java
         ).build().getQuestionDao()
-        val structureCategoryDataDao = Room.inMemoryDatabaseBuilder(
-            context,
-            CommonDatabase::class.java
-        ).build().getStructureCategoryDataDao()
         val structureRatingDataDao = Room.inMemoryDatabaseBuilder(
             context,
             CommonDatabase::class.java
         ).build().getStructureRatingDataDao()
+        val structureCategoryDataDao = Room.inMemoryDatabaseBuilder(
+            context,
+            CommonDatabase::class.java
+        ).build().getStructureCategoryDataDao()
+        val profileDao = Room.inMemoryDatabaseBuilder(
+            context,
+            MainDatabase::class.java
+        ).build().getProfileDao()
 
         val storage = FirebaseStorage.getInstance()
-        // Инициализация репозиториев
+
+        // Инициализация всех репозиториев
         repositoryQuiz = RepositoryQuizImpl(quizDao, firestore, storage)
-        repositoryStuctureImpl = RepositoryStuctureImpl(structureRatingDataDao, structureCategoryDataDao, firestore, context)
+
+        // Предположим, что RepositoryQuestion и RepositoryStructureImpl требуют подобных данных
         repositoryQuestion = RepositoryQuestionImpl(questionDao, firestore, storage)
+        repositoryStuctureImpl = RepositoryStuctureImpl(structureRatingDataDao, structureCategoryDataDao, firestore, context)
+
+        repositoryProfile = RepositoryProfileImpl(profileDao, quizDao)
         // Инициализация use case
         structureUseCase = StructureUseCase(repositoryStuctureImpl)
         quizUseCase = QuizUseCase(repositoryQuiz)
         questionUseCase = QuestionUseCase(repositoryQuestion)
-        repositoryProfile = RepositoryProfileImpl(profileDao, quizDao)
-        // Инициализация profileUseCase
+
+        // Инициализация profileUseCase (предполагается, что есть отдельный репозиторий для профилей)
         profileUseCase = ProfileUseCase(repositoryProfile)
 
-        // Инициализация ViewModel
+        // Инициализация ViewModel с передачей всех зависимостей
         viewModel = MainViewModel(structureUseCase, quizUseCase, questionUseCase, profileUseCase, context)
     }
-
-
 
     @Test
     fun testPushAndFetchQuiz() = runBlocking {
         viewModel.pushTheQuiz(structureCategoryDataEntity, quizEntity, questionsEntity)
-
+        kotlinx.coroutines.delay(5000)
+        structureUseCase.logger(1)
+        viewModel.getNewStructureDataANDQuizzes()
         kotlinx.coroutines.delay(5000)
 
-        structureUseCase.fetchQuizzes()
-
-        kotlinx.coroutines.delay(5000)
-
-        // Проверяем, что квиз сохранен правильно
+        structureUseCase.logger(2)
+        Log.e("testPushAndFetchQuiz", "0")
         val savedQuiz = quizUseCase.getQuizById(101)
         assertNotNull("Квиз не найден в локальной базе данных", savedQuiz)
-        assertEquals(quizEntity.copy(id = 101), savedQuiz)
 
-        val savedQuestions = questionUseCase.getQuestionByIdQuiz(savedQuiz?.id ?: 0)
+        val currentTime = System.currentTimeMillis() / 1000  // Текущее время в секундах
+        val savedQuizDataUpdate = savedQuiz?.dataUpdate?.toLongOrNull() ?: 0L
+        val quizEntityDataUpdate = quizEntity.dataUpdate.toLongOrNull() ?: 0L
+
+        Log.d("TestTime", "Текущее время: $currentTime")
+        Log.d("TestTime", "Текущее время: ${savedQuiz?.dataUpdate}")
+        Log.d("TestTime", "Время сохраненного квиза: $savedQuizDataUpdate")
+// Проверяем, что разница между текущим временем и сохраненным не более 60 секунд
+        assertTrue(
+            "Временные метки отличаются более чем на 60 секунд",
+            Math.abs(currentTime - savedQuizDataUpdate) <= 60
+        )
+
+// Копируем объект с временной меткой из сохраненного объекта для дальнейшего сравнения остальных полей
+        assertEquals(quizEntity.copy(id = 101, dataUpdate = savedQuiz?.dataUpdate ?: ""), savedQuiz)
+
+
+
+        Log.e("testPushAndFetchQuiz", "1")
+        // Получаем обновленные данные
+        val updatedQuizList = structureUseCase.syncStructureDataANDquizzes()
+
+        structureUseCase.logger(3)
+        Log.e("testPushAndFetchQuiz", "2")
+        kotlinx.coroutines.delay(5000)
+        Log.e("testPushAndFetchQuiz", "3")
+        // Проверяем, есть ли изменения
+        if (updatedQuizList.isNotEmpty()) {
+            structureUseCase.logger(4)
+            Log.e("testPushAndFetchQuiz", "4")
+            val quizCount = updatedQuizList.size
+            Log.e("SyncWorker", "Sync completed with $quizCount updated quizzes")
+
+            Log.e("testPushAndFetchQuiz", "5")
+            // Выводим информацию об измененных данных
+            updatedQuizList.forEach { quiz ->
+                Log.e("SyncWorker", "Updated quiz: $quiz")
+
+                structureUseCase.logger(4)
+            }
+        }
+
+        structureUseCase.logger(5)
+        Log.d("testPushAndFetchQuiz", "6")
+                assertEquals(structureData1, structureUseCase.getStructureData())
+            val savedQuestions = questionUseCase.getQuestionByIdQuiz(savedQuiz?.id ?: 0)
         assertTrue("Вопросы не найдены или не соответствуют ожиданиям", questionsEntity == savedQuestions)
     }
 }

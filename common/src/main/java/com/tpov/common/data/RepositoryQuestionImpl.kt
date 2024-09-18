@@ -6,7 +6,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.remote.QuestionRemote
@@ -29,76 +28,40 @@ class RepositoryQuestionImpl @Inject constructor(
         subcategoryId: Int,
         language: String,
         idQuiz: Int
-    ): List<QuestionEntity> {
+    ): List<QuestionRemote> {
 
-        var baseCollectionReference = baseCollection
+        val baseCollectionReference = baseCollection
             .document("question$event")
-            .collection("question$event")
-            .document(idQuiz.toString())
             .collection(idQuiz.toString())
 
-        if (event == 1) {
-            baseCollectionReference = baseCollectionReference
-                .document(tpovId.toString())
-                .collection(tpovId.toString())
+        val questionRemotes = mutableListOf<QuestionRemote>()
+        val questionDocuments = baseCollectionReference.get().await().documents
+
+        for (questionDocument in questionDocuments) {
+            val questionEntity = questionDocument.toObject(QuestionRemote::class.java)
+            questionEntity?.let { questionRemotes.add(it) }
+            questionEntity?.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) }
         }
 
-        val questionRemotes = mutableListOf<QuestionEntity>()
-
-        val questionDirectories = baseCollectionReference.get().await().documents
-
-        for (questionDirectory in questionDirectories) {
-            val numQuestionStr = questionDirectory.id
-            val numQuestion = numQuestionStr.toIntOrNull() ?: 0
-            val hardQuestion = numQuestion < 0
-
-            val languageCollection = baseCollectionReference.document(numQuestionStr).collection(
-                language
-            )
-            var documents = languageCollection.get().await().documents
-
-            if (documents.isEmpty() && questionDirectories.isNotEmpty()) {
-                val firstLanguage = questionDirectories.first().id
-                val firstLanguageCollection = baseCollectionReference.document(numQuestionStr).collection(firstLanguage)
-                documents = firstLanguageCollection.get().await().documents
-            }
-
-            val questions = documents.mapNotNull {
-                it.toObject(QuestionRemote::class.java)
-                    ?.toQuizEntity(numQuestion = numQuestion, hardQuestion = hardQuestion, id = 0, idQuiz = idQuiz, language = language)
-            }
-
-            questionRemotes.addAll(questions)
-        }
-
-        questionRemotes.forEach { it.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) } }
         return questionRemotes
     }
 
-    override suspend fun getQuestionByIdQuiz(idQuiz: Int) = questionDao.getQuestionByIdQuiz(idQuiz)
+
+    override suspend fun getQuestionByIdQuiz(idQuiz: Int): List<QuestionEntity> = questionDao.getQuestionByIdQuiz(idQuiz)
 
     override suspend fun saveQuestion(questionEntity: QuestionEntity) {
         questionDao.insertQuestion(questionEntity)
     }
 
-    override suspend fun pushQuestion(questionEntity: QuestionEntity, pathLanguage: String, event: Int) {
+    override suspend fun pushQuestion(questionEntity: QuestionRemote, event: Int, idQuiz: Int) {
         questionEntity.pathPictureQuestion?.let { uploadPhotoToServer(it) }
 
-        var docRef = baseCollection
+        val docRef = baseCollection
             .document("question${event}")
-            .collection("question${event}")
-            .document(questionEntity.idQuiz.toString())
-            .collection(questionEntity.idQuiz.toString())
+            .collection(idQuiz.toString())
+            .document()
 
-        if (event == 1) {
-            docRef = docRef.document(tpovId.toString()).collection(tpovId.toString())
-        }
-
-        val questionNumber = if (questionEntity.hardQuestion) "-${questionEntity.numQuestion}"
-        else questionEntity.numQuestion.toString()
-
-        docRef = docRef.document(questionNumber).collection(pathLanguage)
-        docRef.document(pathLanguage).set(questionEntity.toQuestionRemote()).await()
+        docRef.set(questionEntity).await()
     }
 
     override suspend fun updateQuestion(questionEntity: QuestionEntity) {
@@ -109,43 +72,32 @@ class RepositoryQuestionImpl @Inject constructor(
         questionDao.deleteQuestion(idQuiz)
     }
 
-    override suspend fun deleteRemoteQuestionByIdQuiz(
-        idQuiz: Int,
-        pathLanguage: String,
-        typeId: Int,
-        numQuestion: Int,
-        hardQuestion: Boolean
-    ) {
+    override suspend fun deleteRemoteQuestionByIdQuiz( idQuiz: Int, event: Int,) {
+        // Устанавливаем ссылку на коллекцию вопросов по idQuiz
+        val baseCollectionReference = baseCollection
+            .document("question$event") // Коллекция с событием
+            .collection(idQuiz.toString()) // Папка с idQuiz
 
-        var collectionReference = baseCollection
-            .document("question$typeId")
-            .collection("question$typeId")
-            .document(idQuiz.toString())
-            .collection(idQuiz.toString())
-            .document(pathLanguage)
-            .collection(pathLanguage)
+        // Получаем все документы в коллекции
+        val questionDocuments = baseCollectionReference.get().await().documents
 
-        if (typeId == 1) {
-            collectionReference = collectionReference
-                .document(tpovId.toString())
-                .collection(tpovId.toString())
-        }
+        for (document in questionDocuments) {
+            val questionEntity = document.toObject(QuestionEntity::class.java)
 
-        val questionRemotes = collectionReference
-            .get()
-            .await()
-            .documents
-            .mapNotNull { it.toObject(QuestionRemote::class.java) }
+            // Если есть путь к изображению, удаляем его из Storage
+            questionEntity?.pathPictureQuestion?.let { path ->
+                val photoRef = storage.reference.child(path)
+                try {
+                    photoRef.delete().await() // Удаление фото
+                } catch (e: Exception) {
+                    println("Ошибка при удалении изображения: $path")
+                }
+            }
 
-        questionRemotes.forEach { question ->
-            question.pathPictureQuestion?.let { deletePhotoFromServer(it) }
-
-            val questionNumber = if (hardQuestion) "-$numQuestion"
-            else numQuestion.toString()
-
-            collectionReference.document(questionNumber).delete().await()
+            document.reference.delete().await()
         }
     }
+
 
     private fun uploadPhotoToServer(pathPhoto: String) {
         if (pathPhoto.isNotBlank()) {
@@ -176,7 +128,7 @@ class RepositoryQuestionImpl @Inject constructor(
     private fun uploadFileToFirebaseStorage(pathPhoto: String) {
         val storageRef = FirebaseStorage.getInstance().reference
         val localFile = File(pathPhoto)
-        val photoRef = storageRef.child("quizPhoto/${localFile.name}")
+        val photoRef = storageRef.child("questionPhoto/${localFile.name}")
 
         photoRef.putFile(Uri.fromFile(localFile))
             .addOnSuccessListener {

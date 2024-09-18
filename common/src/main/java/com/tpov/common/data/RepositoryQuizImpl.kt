@@ -6,7 +6,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.database.QuizDao
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
@@ -34,27 +33,16 @@ class RepositoryQuizImpl @Inject constructor(
 
     override suspend fun fetchQuizzes(
         typeId: Int,
-        categoryId: Int,
-        subcategoryId: Int,
-        subsubcategoryId: Int,
+        tpovId: Int,
         idQuiz: Int
     ): QuizRemote {
 
         var documentReference = baseCollection
             .document("quiz$typeId")
-            .collection("quiz$typeId")
-            .document(categoryId.toString())
-            .collection(categoryId.toString())
-            .document(subcategoryId.toString())
-            .collection(subcategoryId.toString())
-            .document(subsubcategoryId.toString())
-            .collection(subsubcategoryId.toString())
-            .document(idQuiz.toString())
+            .collection("$tpovId")
+            .document("$idQuiz")
 
-        if (typeId == 1) {
-            documentReference = documentReference.collection(tpovId.toString()).document(tpovId.toString())
-        }
-
+        Log.d("Firestore", "typeId: $typeId, tpovId: $tpovId, idQuiz: $idQuiz")
         return try {
             val documentSnapshot = documentReference.get().await()
             val quizRemote = documentSnapshot.toObject(QuizRemote::class.java)
@@ -80,10 +68,9 @@ class RepositoryQuizImpl @Inject constructor(
     }
 
     override suspend fun pushQuiz(quizRemote: QuizRemote, idQuiz: Int) {
-        // Получаем ссылку на коллекцию "quizzes/quiz${quiz.event}"
         val quizDocumentRef = firestore.collection("quizzes")
             .document("quiz${quizRemote.event}")
-            .collection("quiz${quizRemote.event}")
+            .collection("${quizRemote.tpovId}")
             .document(idQuiz.toString())
 
         try {
@@ -214,16 +201,10 @@ class RepositoryQuizImpl @Inject constructor(
     override suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int) {
         var docRef = baseCollection
             .document("quiz${quizRemote.event}")
-            .collection("quiz${quizRemote.event}")
-            .document(categoryId.toString())
-            .collection(categoryId.toString())
-            .document(subcategoryId.toString())
-            .collection(subcategoryId.toString())
-            .document(subsubcategoryId.toString())
-            .collection(subsubcategoryId.toString())
+            .collection("${quizRemote.tpovId}")
+            .document("${idQuiz}")
 
-        if (quizRemote.event == 1) docRef = docRef.document(quizRemote.event.toString()).collection(quizRemote.event.toString())
-        docRef.document(idQuiz.toString()).delete().await()
+        docRef.delete().await()
 
         quizRemote.picture?.let { deletePhotoFromServer(it) }
     }

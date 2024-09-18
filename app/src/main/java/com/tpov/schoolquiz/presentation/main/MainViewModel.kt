@@ -122,37 +122,57 @@ class MainViewModel @Inject constructor(
 
     suspend fun getStructureData() = structureUseCase.getStructureData()
 
-    suspend fun loadHomeCategory(): List<String> {
-        var listNewQuiz: List<String> = listOf()
+    suspend fun getNewQuizListANDcatDataWithServer(): List<Pair<String, String>> {
+        var listNewQuiz: List<Pair<String,String>> = listOf()
 
+        Log.e("test", "getNewQuizListWithServer()")
         var structureDataList = structureUseCase.getStructureData()
+        Log.e("test", "2()")
         if (structureDataList == null) {
+            Log.e("test", "3()")
             firstStartApp = true
-            listNewQuiz = structureUseCase.syncData()
+            listNewQuiz = structureUseCase.syncStructureDataANDquizzes()
             structureDataList = structureUseCase.getStructureData()
         }
+        Log.e("test", "4() $structureDataList")
         withContext(Dispatchers.Default) {
-            _categoryData.value = prepareData(structureDataList ?: retryFromDelay())
+            _categoryData.postValue(prepareData(structureDataList ?: retryFromDelay()))
         }
+
+        Log.e("test", "getNewQuizListWithServer() end")
         return listNewQuiz
     }
 
-    //This fun started only first run
-    suspend fun loadQuizByStructure(listNewQuiz: List<String>) {
-        listNewQuiz.forEach { quizStructure ->
-            val categories = quizStructure.split("|")
+    //Этот метод загружает структуру, сравнивает в локальной, получает список новых квестов и загружает их
+    suspend fun getNewStructureDataANDQuizzes(): List<Pair< String, String>> {
+        val listNewQuiz = getNewQuizListANDcatDataWithServer()
+        Log.e("test", "loadQuizzesByList()")
+        loadQuizzesByList(listNewQuiz)
+        structureUseCase.logger(15)
+        return listNewQuiz
+    }
 
+    //Этот метод загружает квизы из строки
+    private suspend fun loadQuizzesByList(listNewQuiz: List<Pair<String, String>>) {
+        Log.e("test", "loadQuizzesByList()")
+        listNewQuiz.forEach {
+            val quizStructure = it.second
+            val categories = quizStructure.split(">")
+
+            Log.e("testPushAndFetchQuiz", "1")
             if (categories.size >= 5) {
                 val typeId = categories[0].toIntOrNull() ?: errorGetDataFromStructure()
                 val categoryId = categories[1].toIntOrNull() ?: errorGetDataFromStructure()
                 val subcategoryId = categories[2].toIntOrNull() ?: errorGetDataFromStructure()
                 val subsubcategoryId = categories[3].toIntOrNull() ?: errorGetDataFromStructure()
                 val idQuiz = categories[4].toIntOrNull() ?: errorGetDataFromStructure()
+                val tpovId = categories[5].toIntOrNull() ?: errorGetDataFromStructure()
 
                 val starsMaxLocal = 0
                 val starsAverageLocal = 0
                 val ratingLocal = 0
 
+                Log.e("testPushAndFetchQuiz", "2")
                 quizUseCase.insertQuiz(
                     quizUseCase.fetchQuiz(
                         typeId,
@@ -162,18 +182,25 @@ class MainViewModel @Inject constructor(
                         starsMaxLocal,
                         starsAverageLocal,
                         ratingLocal,
-                        idQuiz
+                        idQuiz,
+                        tpovId
                     )
                 )
 
+                questionUseCase.deleteQuestionByIdQuiz(idQuiz)
+                Log.e("testPushAndFetchQuiz", "3")
                 questionUseCase.fetchQuestion(
-                    8,
+                    typeId,
                     categoryId,
                     subcategoryId,
                     Locale.getDefault().language, idQuiz
-                )
+                  ).forEach {
+                      questionUseCase.insertQuestion(it.toQuizEntity(0, idQuiz))
+                }
             }
         }
+
+        Log.e("testPushAndFetchQuiz", "4")
     }
 
     fun createProfile() {
@@ -194,6 +221,7 @@ class MainViewModel @Inject constructor(
         while (attempt < maxAttempts) {
             delay(1000L * (attempt + 1))
             val data = structureUseCase.getStructureData()
+            Log.e("testPushAndFetchQuiz", "data $data")
             if (data != null) {
                 return data
             }
@@ -218,11 +246,21 @@ class MainViewModel @Inject constructor(
     ) {
         val newStructureCategory = pushStructureCategory(structureCategoryDataEntity)
         val idQuiz = newStructureCategory.oldIdQuizId
+        val eventQuiz = newStructureCategory.newEventId
+        val oldCategoryId = newStructureCategory.oldCategoryId
+        val oldSubCategoryId = newStructureCategory.oldSubCategoryId
+        val oldSubsubCategoryId = newStructureCategory.oldSubsubCategoryId
+        Log.d("pushTheQuiz", newStructureCategory.toString())
         quizEntity.id = idQuiz
+        quizEntity.event = eventQuiz
+        quizEntity.idCategory = oldCategoryId
+        quizEntity.idSubcategory = oldSubCategoryId
+        quizEntity.idSubsubcategory = oldSubsubCategoryId
+
         pushQuiz(quizEntity)
         questionsEntity.forEach {
             val question = it.copy(idQuiz = idQuiz)
-            pushQuestion(question, question.language, quizEntity.event)
+            pushQuestion(question, eventQuiz, idQuiz)
         }
 
     }
@@ -231,8 +269,8 @@ class MainViewModel @Inject constructor(
         quizUseCase.pushQuiz(quizEntity)
     }
 
-    suspend fun pushQuestion(questionEntity: QuestionEntity, language: String, event: Int) {
-        questionUseCase.pushQuestion(questionEntity, language, event)
+    private suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int, idQuiz: Int) {
+        questionUseCase.pushQuestion(questionEntity, event, idQuiz)
     }
 
     suspend fun insertQuiz(quizEntity: QuizEntity) {

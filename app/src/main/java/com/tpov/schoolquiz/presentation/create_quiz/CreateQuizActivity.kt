@@ -791,11 +791,6 @@ class CreateQuizActivity : AppCompatActivity() {
 
             val answers = mutableListOf<String>()
             idCounters[i].forEach {
-                Log.d("getThisAnswers", " answers.add: $it")
-                Log.d(
-                    "getThisAnswers",
-                    " answers.add: ${answerLayout.findViewById<EditText>(it).text}"
-                )
                 answers.add(answerLayout.findViewById<EditText>(it).text.toString())
             }
             val language =
@@ -910,25 +905,21 @@ class CreateQuizActivity : AppCompatActivity() {
         } else {
             val inflater = LayoutInflater.from(this)
 
-// Сначала создаем View без добавления в иерархию
             val newGroup = inflater.inflate(
                 com.tpov.schoolquiz.R.layout.item_create_quiz_answer,
                 binding.llGroupAnswer,
                 false
             ) as LinearLayout
 
-// Присваиваем тег
             newGroup.tag = "group_$groupNumber"
 
-// Устанавливаем язык
             newGroup.findViewById<TextView>(R.id.tv_answer_language).text =
                 LanguageUtils.getLanguageFullName(language ?: getUserLanguage())
 
-// Теперь выполняем оставшиеся операции
             if (idCounters.isEmpty()) {
-                idCounters.add(mutableListOf(0, 1))  // Добавляем первый список, если его нет
+                idCounters.add(mutableListOf(0, 1))
             } else if (idCounters[0].isEmpty()) {
-                idCounters[0] = mutableListOf(0, 1)  // Если первый элемент пуст, заменяем его
+                idCounters[0] = mutableListOf(0, 1)
             }
             Log.d("getThisAnswers", "idCounters[counter][0]: ${idCounters[0]}")
             idCounters[0].forEachIndexed { index, it ->
@@ -950,7 +941,6 @@ class CreateQuizActivity : AppCompatActivity() {
                 newGroup.addView(firstAnswerLayout)
             }
 
-// Теперь добавляем newGroup в binding.llGroupAnswer
             binding.llGroupAnswer.addView(newGroup)
         }
     }

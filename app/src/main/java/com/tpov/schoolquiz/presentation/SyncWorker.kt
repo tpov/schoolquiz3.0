@@ -39,7 +39,7 @@ class SyncWorker @AssistedInject constructor(
             Log.d("SyncWorker", "Sync started")
 
             // Получаем обновленные данные
-            val updatedQuizList = structureUseCase.syncData()
+            val updatedQuizList = structureUseCase.syncStructureDataANDquizzes()
 
             // Проверяем, есть ли изменения
             if (updatedQuizList.isNotEmpty()) {
@@ -48,7 +48,7 @@ class SyncWorker @AssistedInject constructor(
 
                 // Выводим информацию об измененных данных
                 updatedQuizList.forEach { quiz ->
-                    Log.d("SyncWorker", "Updated quiz: $quiz")
+                    Log.d("SyncWorker", "Updated quiz: ${quiz.first}")
                 }
 
                 showNotification("Sync Complete", "Updated $quizCount quizzes.")

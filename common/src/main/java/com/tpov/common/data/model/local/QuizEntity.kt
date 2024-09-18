@@ -14,13 +14,13 @@ data class QuizEntity(
     var id: Int? = null,
 
     @ColumnInfo(name = "idCategory")
-    val idCategory: Int = 0,
+    var idCategory: Int = 0,
 
     @ColumnInfo(name = "idSubcategory")
-    val idSubcategory: Int = 0,
+    var idSubcategory: Int = 0,
 
     @ColumnInfo(name = "idSubsubcategory")
-    val idSubsubcategory: Int = 0,
+    var idSubsubcategory: Int = 0,
 
     @ColumnInfo(name = "nameQuiz")
     val nameQuiz: String = "",

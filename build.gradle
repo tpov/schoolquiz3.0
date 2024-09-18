@@ -109,6 +109,7 @@ subprojects {
 
                 androidTestImplementation 'androidx.test.espresso:espresso-intents:3.6.1'
                 androidTestImplementation 'androidx.test:rules:1.6.1'
+                implementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
 
             }
         }
