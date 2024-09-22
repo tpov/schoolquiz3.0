@@ -60,8 +60,8 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
         repositoryQuiz.deleteQuizById(idQuiz)
     }
 
-    suspend fun deleteRemoteQuizById(quizEntity: QuizEntity, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int) {
-        repositoryQuiz.deleteRemoteQuizById(quizEntity.toQuizRemote(), idQuiz, categoryId, subcategoryId, subsubcategoryId)
+    suspend fun deleteRemoteQuizById(quizEntity: QuizEntity, idQuiz: Int) {
+        repositoryQuiz.deleteRemoteQuizById(quizEntity.toQuizRemote(), idQuiz)
     }
 
 }

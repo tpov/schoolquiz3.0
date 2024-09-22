@@ -1,5 +1,6 @@
 package com.tpov.common.domain
 
+import android.util.Log
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.repository.RepositoryQuestion
 import javax.inject.Inject
@@ -22,6 +23,7 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
     suspend fun getQuestionByIdQuiz(idQuiz: Int) = repositoryQuestion.getQuestionByIdQuiz(idQuiz)
 
     suspend fun insertQuestion(questionEntity: QuestionEntity) {
+        Log.d("insertQuestion", "$questionEntity")
         repositoryQuestion.saveQuestion(questionEntity)
     }
 

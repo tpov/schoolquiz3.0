@@ -146,9 +146,11 @@ class MainViewModel @Inject constructor(
     //Этот метод загружает структуру, сравнивает в локальной, получает список новых квестов и загружает их
     suspend fun getNewStructureDataANDQuizzes(): List<Pair< String, String>> {
         val listNewQuiz = getNewQuizListANDcatDataWithServer()
-        Log.e("test", "loadQuizzesByList()")
+        Log.e("test", "loadQuizzesByList(): ${listNewQuiz.size}")
         loadQuizzesByList(listNewQuiz)
         structureUseCase.logger(15)
+
+        Log.e("testPushAndFetchQuiz", "2 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         return listNewQuiz
     }
 
@@ -195,8 +197,11 @@ class MainViewModel @Inject constructor(
                     subcategoryId,
                     Locale.getDefault().language, idQuiz
                   ).forEach {
-                      questionUseCase.insertQuestion(it.toQuizEntity(0, idQuiz))
+                    Log.e("testPushAndFetchQuiz", "questionUseCase.fetchQuestion")
+                      questionUseCase.insertQuestion(it.toQuizEntity(null, idQuiz))
                 }
+
+                Log.e("testPushAndFetchQuiz", "${questionUseCase.getQuestionByIdQuiz(idQuiz).size}")
             }
         }
 
@@ -279,7 +284,9 @@ class MainViewModel @Inject constructor(
 
     suspend fun insertQuestion(questionsList: List<QuestionEntity>) {
         Log.d("savequestionsList ", "questionsList: $questionsList")
-        questionsList.forEach { questionUseCase.insertQuestion(it) }
+        questionsList.forEach {
+            Log.d("savequestionsList ", "question: $it")
+            questionUseCase.insertQuestion(it) }
     }
 
     fun getQuizByIdQuiz(idQuiz: Int) = viewModelScope.launch(Dispatchers.Default) {

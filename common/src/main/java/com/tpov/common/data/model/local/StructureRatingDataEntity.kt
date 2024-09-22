@@ -6,7 +6,7 @@ import com.tpov.common.data.model.remote.StructureLocalData
 
 @Entity(tableName = "structure_rating_data")
 data class StructureRatingDataEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey(autoGenerate = true) val id: Int? = 0,
     val idEvent: Int,
     val idCategory: Int,
     val idSubCategory: Int,

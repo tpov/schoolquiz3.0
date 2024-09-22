@@ -26,7 +26,7 @@ data class CategoryData(
     val ratingRemote: Int,
     val ratingLocal: Int,
     var isShowArchive: Boolean,
-    val isShowDownload: Boolean
+    var isShowDownload: Boolean
 ) {
 
 }
@@ -43,7 +43,7 @@ data class SubCategoryData(
     val ratingRemote: Int,
     val ratingLocal: Int,
     var isShowArchive: Boolean,
-    val isShowDownload: Boolean
+    var isShowDownload: Boolean
 ) {
 
 }
@@ -60,7 +60,7 @@ data class SubsubCategoryData(
     val ratingRemote: Int,
     val ratingLocal: Int,
     var isShowArchive: Boolean,
-    val isShowDownload: Boolean
+    var isShowDownload: Boolean
 ) {
 
 }
@@ -76,7 +76,7 @@ data class QuizData(
     val ratingRemote: Int,
     val ratingLocal: Int,
     var isShowArchive: Boolean,
-    val isShowDownload: Boolean,
+    var isShowDownload: Boolean,
     val tpovId: Int
 ) {
 

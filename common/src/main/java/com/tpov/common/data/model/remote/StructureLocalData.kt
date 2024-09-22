@@ -28,7 +28,7 @@ data class StructureLocalData(
     }
 
     fun toStructureRatingDataEntity() = StructureRatingDataEntity(
-        id = 0,
+        id = null,
         idEvent = idEvent,
         idCategory = idCategory,
         idSubCategory = idSubCategory,

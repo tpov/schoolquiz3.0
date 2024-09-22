@@ -15,7 +15,7 @@ data class QuestionRemote (
     val language: String
 ) {
     fun toQuizEntity(
-        id: Int = 0,
+        id: Int? = null,
         idQuiz: Int,
     ): QuestionEntity {
         return QuestionEntity(

@@ -39,13 +39,13 @@ class RepositoryQuestionImpl @Inject constructor(
 
         for (questionDocument in questionDocuments) {
             val questionEntity = questionDocument.toObject(QuestionRemote::class.java)
+            Log.d("fetchQuestion", "questionEntity: ${questionEntity?.nameQuestion}")
             questionEntity?.let { questionRemotes.add(it) }
             questionEntity?.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) }
         }
 
         return questionRemotes
     }
-
 
     override suspend fun getQuestionByIdQuiz(idQuiz: Int): List<QuestionEntity> = questionDao.getQuestionByIdQuiz(idQuiz)
 

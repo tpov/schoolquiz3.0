@@ -44,7 +44,7 @@ data class QuestionEntity(
         answer = this.answer,
         nameAnswers = this.nameAnswers,
         pathPictureQuestion = this.pathPictureQuestion,
-        nameQuestion = this.nameAnswers,
+        nameQuestion = this.nameQuestion,
         lvlTranslate = this.lvlTranslate,
         numQuestion = this.numQuestion,
         hardQuestion = this.hardQuestion,

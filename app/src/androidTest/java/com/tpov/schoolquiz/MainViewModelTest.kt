@@ -30,12 +30,14 @@ import com.tpov.schoolquiz.domain.ProfileUseCase
 import com.tpov.schoolquiz.domain.repository.RepositoryProfile
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+
 
 @RunWith(AndroidJUnit4::class)
 class CreateQuizIntegrationTest {
@@ -198,18 +200,22 @@ class CreateQuizIntegrationTest {
                                     SubsubCategoryData(
                                         1,
                                         listOf(
-                                            QuizData(101,"Столицы Европы","","",0,"",0,0,0,true,false, 0)
+                                            QuizData(101,"Столицы Европы",
+                                                dataUpdate = (System.currentTimeMillis() / 1000).toString(),"",0,"",0,0,0,true,true, 0)
                                         ),
-                                        "Столицы","","",0,0,"",0,0,true,false
+                                        "Столицы",
+                                        dataUpdate = (System.currentTimeMillis() / 1000).toString(),"",0,0,"",0,0,true,true
                                     )
                                 ),
-                                "Европа","","",0,0,"",0,0,true,false
+                                "Европа",
+                                dataUpdate = (System.currentTimeMillis() / 1000).toString(),"",0,0,"",0,0,true,true
                             )
                         ),
-                        "География","",0,0,"",0,0,true,false
+                        "География",
+                        dataUpdate = (System.currentTimeMillis() / 1000).toString(),0,0,"",0,0,true,true
                     )
                 ),
-                true,false
+                true,true
             )
         )
     )
@@ -262,38 +268,36 @@ class CreateQuizIntegrationTest {
         // Инициализация ViewModel с передачей всех зависимостей
         viewModel = MainViewModel(structureUseCase, quizUseCase, questionUseCase, profileUseCase, context)
     }
-
     @Test
-    fun testPushAndFetchQuiz() = runBlocking {
+    fun testPushAndFetchQuiz() = runBlocking<Unit>{
+
+        structureUseCase.logger(0)
         viewModel.pushTheQuiz(structureCategoryDataEntity, quizEntity, questionsEntity)
         kotlinx.coroutines.delay(5000)
         structureUseCase.logger(1)
         viewModel.getNewStructureDataANDQuizzes()
         kotlinx.coroutines.delay(5000)
 
+        Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         structureUseCase.logger(2)
         Log.e("testPushAndFetchQuiz", "0")
         val savedQuiz = quizUseCase.getQuizById(101)
         assertNotNull("Квиз не найден в локальной базе данных", savedQuiz)
 
+        Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         val currentTime = System.currentTimeMillis() / 1000  // Текущее время в секундах
         val savedQuizDataUpdate = savedQuiz?.dataUpdate?.toLongOrNull() ?: 0L
         val quizEntityDataUpdate = quizEntity.dataUpdate.toLongOrNull() ?: 0L
 
-        Log.d("TestTime", "Текущее время: $currentTime")
-        Log.d("TestTime", "Текущее время: ${savedQuiz?.dataUpdate}")
-        Log.d("TestTime", "Время сохраненного квиза: $savedQuizDataUpdate")
-// Проверяем, что разница между текущим временем и сохраненным не более 60 секунд
+        Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         assertTrue(
             "Временные метки отличаются более чем на 60 секунд",
             Math.abs(currentTime - savedQuizDataUpdate) <= 60
         )
 
-// Копируем объект с временной меткой из сохраненного объекта для дальнейшего сравнения остальных полей
         assertEquals(quizEntity.copy(id = 101, dataUpdate = savedQuiz?.dataUpdate ?: ""), savedQuiz)
 
-
-
+        Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         Log.e("testPushAndFetchQuiz", "1")
         // Получаем обновленные данные
         val updatedQuizList = structureUseCase.syncStructureDataANDquizzes()
@@ -318,10 +322,38 @@ class CreateQuizIntegrationTest {
             }
         }
 
+        Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         structureUseCase.logger(5)
         Log.d("testPushAndFetchQuiz", "6")
-                assertEquals(structureData1, structureUseCase.getStructureData())
-            val savedQuestions = questionUseCase.getQuestionByIdQuiz(savedQuiz?.id ?: 0)
-        assertTrue("Вопросы не найдены или не соответствуют ожиданиям", questionsEntity == savedQuestions)
+        assertThat(structureData1)
+            .usingRecursiveComparison()
+            .ignoringFieldsMatchingRegexes(".*\\.id$", ".*\\.idQuiz$", ".*\\.dataUpdate$")
+            .isEqualTo(structureUseCase.getStructureData())
+
+        Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
+        val savedQuestions = questionUseCase.getQuestionByIdQuiz(101)
+Log.d("testPushAndFetchQuiz", "${savedQuestions.size}")
+        Log.d("123 SavedQuestions", savedQuestions.toString());
+        Log.d("123 ExpectedQuestions", questionsEntity.toString());
+
+        assertEquals("Размеры списков не совпадают", savedQuestions.size, questionsEntity.size)
+
+        for (expected in questionsEntity) {
+            val matchingQuestion = savedQuestions.find { saved ->
+                saved.numQuestion == expected.numQuestion &&
+                        saved.language == expected.language &&
+                        saved.hardQuestion == expected.hardQuestion
+            }
+
+            assertNotNull("Не найдено совпадение для: $expected", matchingQuestion)
+
+            matchingQuestion?.let { saved ->
+                assertThat(saved)
+                    .usingRecursiveComparison()
+                    .ignoringFields("id", "idQuiz")
+                    .isEqualTo(expected)
+            }
+        }
+
     }
 }

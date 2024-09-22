@@ -40,6 +40,7 @@ import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
 import com.tpov.common.presentation.quiz.QuizFragment
+import com.tpov.log_api.logger.Logger
 import com.tpov.network.presentation.chat.ChatFragment
 import com.tpov.network.presentation.friend.FriendsFragment
 import com.tpov.network.presentation.leaders.LeadersFragment
@@ -89,6 +90,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetTextI18n")
+    @Logger
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         initData()
     }
 
+    @Logger
     private fun initData() {
         lifecycleScope.launch(Dispatchers.Default) {
             if (!isNetworkAvailable(this@MainActivity)) {

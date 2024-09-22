@@ -71,22 +71,22 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
                     Log.d("SyncData", "Processing event id: ${newEvent.id}")
                     newEvent.category.forEach { newCategory ->
                         newCategory.isShowArchive = isShowArhive()
-                        newEvent.isShowDownload = isShowDownload(newEvent.id)
+                        newCategory.isShowDownload = isShowDownload(newEvent.id)
                         Log.d("SyncData", "Processing category: ${newCategory.nameQuiz}")
                         newCategory.subcategory.forEach { newSubcategory ->
                             newSubcategory.isShowArchive = isShowArhive()
-                            newEvent.isShowDownload = isShowDownload(newEvent.id)
+                            newSubcategory.isShowDownload = isShowDownload(newEvent.id)
                             Log.d("SyncData", "Processing subcategory: ${newSubcategory.nameQuiz}")
                             newSubcategory.subSubcategory.forEach { newSubsub ->
                                 newSubsub.isShowArchive = isShowArhive()
-                                newEvent.isShowDownload = isShowDownload(newEvent.id)
+                                newSubsub.isShowDownload = isShowDownload(newEvent.id)
                                 Log.d(
                                     "SyncData",
                                     "Processing subsubcategory: ${newSubsub.nameQuiz}"
                                 )
                                 newSubsub.quizData.forEach { newQuiz ->
                                     newQuiz.isShowArchive = isShowArhive()
-                                    newEvent.isShowDownload = isShowDownload(newEvent.id)
+                                    newQuiz.isShowDownload = isShowDownload(newEvent.id)
                                     val quizString =
                                         "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
                                     val quizInt =
@@ -156,7 +156,7 @@ return true
 
         return StructureData(
             event = newDataLocalEmpty.event.map { newEvent ->
-                val localEvent = dataLocal.event.find { it.id == newEvent.id }
+                val localEvent = dataLocal.event.find { it.id == newEvent.id}
                 newEvent.copy(
                     category = newEvent.category.map { newCategory ->
                         val localCategory = localEvent?.category?.find { it.id == newCategory.id }

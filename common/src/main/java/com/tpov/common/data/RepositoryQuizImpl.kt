@@ -198,7 +198,7 @@ class RepositoryQuizImpl @Inject constructor(
         quizDao.deleteQuizById(idQuiz)
     }
 
-    override suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int) {
+    override suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int) {
         var docRef = baseCollection
             .document("quiz${quizRemote.event}")
             .collection("${quizRemote.tpovId}")

@@ -8,6 +8,12 @@
       <entry key="app">
         <State />
       </entry>
+      <entry key="logger-api">
+        <State />
+      </entry>
+      <entry key="logger-processor">
+        <State />
+      </entry>
     </value>
   </component>
 </project>

@@ -286,7 +286,7 @@ class CreateQuizActivity : AppCompatActivity() {
             counter = 0
             questionsShortEntity = arrayListOf(
                 QuestionShortEntity(
-                    id = 0,
+                    id = null,
                     numQuestion = 1,
                     nameQuestion = "New Question",
                     hardQuestion = false

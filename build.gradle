@@ -1,9 +1,10 @@
 buildscript {
     ext {
         agp_version = '8.3.1'
-        ksp_version = "1.5.31-1.0.0"
+        ksp_version = "1.9.20-1.0.14"
         kotlin_version = "1.9.20"
     }
+
     repositories {
         gradlePluginPortal()
         google()
@@ -14,7 +15,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.4.1'
+        classpath 'com.google.gms:google-services:4.4.2'
     }
 }
 
@@ -92,7 +93,6 @@ subprojects {
                 implementation 'com.google.android.gms:play-services-base:18.5.0'
                 implementation 'com.google.android.gms:play-services-basement:18.4.0'
                 implementation 'com.google.firebase:firebase-functions:21.0.0'
-                implementation platform('com.google.firebase:firebase-bom:33.2.0') // Проверьте актуальную версию
                 implementation 'com.google.firebase:firebase-appcheck-playintegrity'
                 implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
@@ -110,6 +110,8 @@ subprojects {
                 androidTestImplementation 'androidx.test.espresso:espresso-intents:3.6.1'
                 androidTestImplementation 'androidx.test:rules:1.6.1'
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
+                testImplementation 'org.assertj:assertj-core:3.23.1'
+                implementation 'org.assertj:assertj-core:3.23.1'
 
             }
         }

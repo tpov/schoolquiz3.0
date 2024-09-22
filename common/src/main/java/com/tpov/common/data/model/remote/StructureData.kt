@@ -3,7 +3,6 @@ package com.tpov.common.data.model.remote
 data class StructureData(
     val event: List<EventData> = emptyList()
 ) {
-    // Конструктор по умолчанию для Firestore
     constructor() : this(emptyList())
 
     fun toStructureDataLocal() = com.tpov.common.data.model.local.StructureData(
@@ -15,7 +14,6 @@ data class EventData(
     val id: Int = 0,
     val category: List<CategoryData> = emptyList(),
 ) {
-    // Конструктор по умолчанию для Firestore
     constructor() : this(0, emptyList())
 
     fun toEventDataLocal(): com.tpov.common.data.model.local.EventData {
@@ -37,7 +35,6 @@ data class CategoryData(
     val picture: String? = null,
     val ratingRemote: Int = 0
 ) {
-    // Конструктор по умолчанию для Firestore
     constructor() : this(0, emptyList(), "", "", 0, null, 0)
 
     fun toCategoryDataLocal(): com.tpov.common.data.model.local.CategoryData {
@@ -67,7 +64,6 @@ data class SubCategoryData(
     val picture: String? = null,
     val ratingRemote: Int = 0
 ) {
-    // Конструктор по умолчанию для Firestore
     constructor() : this(0, emptyList(), "", "", "", 0, null, 0)
 
     fun toSubCategoryDataLocal(): com.tpov.common.data.model.local.SubCategoryData {
@@ -98,7 +94,6 @@ data class SubsubCategoryData(
     val picture: String? = null,
     val ratingRemote: Int = 0
 ) {
-    // Конструктор по умолчанию для Firestore
     constructor() : this(0, emptyList(), "", "", "", 0, null, 0)
 
     fun toSubsubCategoryDataLocal(): com.tpov.common.data.model.local.SubsubCategoryData {
@@ -129,7 +124,6 @@ data class QuizData(
     val starsMaxRemote: Int = 0,
     val tpovId: Int = 0
 ) {
-    // Конструктор по умолчанию для Firestore
     constructor() : this(0, "", 0, "", "", "", 0, 0)
 
     fun toQuizDataLocal(): com.tpov.common.data.model.local.QuizData {

@@ -12,5 +12,5 @@ interface RepositoryQuiz {
     suspend fun pushStructureCategory(structureCategoryDataEntity: StructureCategoryDataEntity): StructureCategoryDataEntity
     suspend fun insertQuiz(quiz: QuizEntity)
     suspend fun deleteQuizById(idQuiz: Int)
-    suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int, categoryId: Int, subcategoryId: Int, subsubcategoryId: Int)
+    suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int)
 }

@@ -2,7 +2,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
-    id ("kotlin-parcelize")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -15,8 +15,18 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    packagingOptions {
+        resources {
+            excludes += "kotlin/**"
+            excludes += "META-INF/**"
+            excludes += "kotlin/internal/internal.kotlin_builtins"
+            excludes += "kotlin/collections/collections.kotlin_builtins"
+            excludes += "kotlin/reflect/reflect.kotlin_builtins"
+        }
+    }
 
     buildTypes {
+
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -66,5 +76,8 @@ dependencies {
     // AssistedInject for Dagger
     implementation("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
     kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
-}
 
+    add("debugImplementation", project(":logger-processor"))
+    add("debugImplementation", project(":log-api"))
+
+}
