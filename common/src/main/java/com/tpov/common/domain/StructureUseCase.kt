@@ -12,7 +12,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
 
     suspend fun fetchStructureData() = repositoryStructureImpl.fetchStructureData()
 
-    suspend fun pushStructureLocalData(ratingData: StructureLocalData) {
+    suspend fun pushStructureRating(ratingData: StructureLocalData) {
         repositoryStructureImpl.pushStructureRating(ratingData)
     }
 
@@ -112,7 +112,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
 
 
         try {
-            repositoryStructureImpl.saveStructureData(newDataLocal)
+            saveStructureData(newDataLocal)
             Log.d("SyncData", "Data saved successfully $newDataLocal")
         } catch (e: Exception) {
             Log.e("SyncData", "Error saving data: ${e.message}")
@@ -124,13 +124,16 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
     }
 
     private fun isShowDownload(newEventId: Int): Boolean {
-        return newEventId == 8
+        return false
     }
 
     private fun isShowArhive(): Boolean {
 return true
     }
 
+    suspend fun saveStructureData(structureData: StructureData) {
+        repositoryStructureImpl.saveStructureData(structureData)
+    }
     private fun updateIsShow(newDataLocalEmpty: StructureData) =
         newDataLocalEmpty.event.forEach { newEvent ->
             newEvent.isShowArchive = true

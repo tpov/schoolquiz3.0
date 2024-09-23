@@ -1,83 +1,71 @@
 package com.tpov.common.data.model.local
 
 data class StructureData(
-    val event: List<EventData>,
-) {
-
-}
+    val event: List<EventData> = emptyList()
+)
 
 data class EventData(
-    val id: Int,
-    val category: List<CategoryData>,
-    var isShowArchive: Boolean,
-    var isShowDownload: Boolean
-) {
-
-}
+    val id: Int = 0,
+    val category: List<CategoryData> = emptyList(),
+    var isShowArchive: Boolean = false,
+    var isShowDownload: Boolean = false
+)
 
 data class CategoryData(
-    val id: Int,
-    val subcategory: List<SubCategoryData>,
-    val nameQuiz: String,
-    val dataUpdate: String,
-    val starsMaxLocal: Int,
-    val starsMaxRemote: Int,
-    val picture: String?,
-    val ratingRemote: Int,
-    val ratingLocal: Int,
-    var isShowArchive: Boolean,
-    var isShowDownload: Boolean
-) {
-
-}
+    val id: Int = 0,
+    val subcategory: List<SubCategoryData> = emptyList(),
+    val nameQuiz: String = "",
+    val dataUpdate: String =(System.currentTimeMillis() / 1000).toString(),
+    val starsMaxLocal: Int = 0,
+    val starsMaxRemote: Int = 0,
+    val picture: String? = null,
+    val ratingRemote: Int = 0,
+    val ratingLocal: Int = 0,
+    var isShowArchive: Boolean = false,
+    var isShowDownload: Boolean = false
+)
 
 data class SubCategoryData(
-    val id: Int,
-    val subSubcategory: List<SubsubCategoryData>,
-    val nameQuiz: String,
-    val dataUpdate: String,
-    val userName: String,
-    val starsMaxLocal: Int,
-    val starsMaxRemote: Int,
-    val picture: String?,
-    val ratingRemote: Int,
-    val ratingLocal: Int,
-    var isShowArchive: Boolean,
-    var isShowDownload: Boolean
-) {
-
-}
+    val id: Int = 0,
+    val subSubcategory: List<SubsubCategoryData> = emptyList(),
+    val nameQuiz: String = "",
+    val dataUpdate: String = (System.currentTimeMillis() / 1000).toString(),
+    val userName: String = "",
+    val starsMaxLocal: Int = 0,
+    val starsMaxRemote: Int = 0,
+    val picture: String? = null,
+    val ratingRemote: Int = 0,
+    val ratingLocal: Int = 0,
+    var isShowArchive: Boolean = false,
+    var isShowDownload: Boolean = false
+)
 
 data class SubsubCategoryData(
-    val id: Int,
-    val quizData: List<QuizData>,
-    val nameQuiz: String,
-    val dataUpdate: String,
-    val userName: String,
-    val starsMaxLocal: Int,
-    val starsMaxRemote: Int,
-    val picture: String?,
-    val ratingRemote: Int,
-    val ratingLocal: Int,
-    var isShowArchive: Boolean,
-    var isShowDownload: Boolean
-) {
-
-}
+    val id: Int = 0,
+    val quizData: List<QuizData> = emptyList(),
+    val nameQuiz: String = "",
+    val dataUpdate: String = (System.currentTimeMillis() / 1000).toString(),
+    val userName: String = "",
+    val starsMaxLocal: Int = 0,
+    val starsMaxRemote: Int = 0,
+    val picture: String? = null,
+    val ratingRemote: Int = 0,
+    val ratingLocal: Int = 0,
+    var isShowArchive: Boolean = false,
+    var isShowDownload: Boolean = false
+)
 
 data class QuizData(
-    val idQuiz: Int,
-    val nameQuiz: String,
-    val dataUpdate: String,
-    val userName: String,
-    val starsMaxLocal: Int,
-    val picture: String?,
-    val starsMaxRemote: Int,
-    val ratingRemote: Int,
-    val ratingLocal: Int,
-    var isShowArchive: Boolean,
-    var isShowDownload: Boolean,
-    val tpovId: Int
-) {
-
-}
+    val idQuiz: Int = 0,
+    val nameQuiz: String = "",
+    val dataUpdate: String = (System.currentTimeMillis() / 1000).toString(),
+    val userName: String = "",
+    val starsMaxLocal: Int = 0,
+    val picture: String? = null,
+    val starsMaxRemote: Int = 0,
+    val ratingRemote: Int = 0,
+    val ratingLocal: Int = 0,
+    var isShowArchive: Boolean = false,
+    var isShowDownload: Boolean = false,
+    val tpovId: Int = 0
+)

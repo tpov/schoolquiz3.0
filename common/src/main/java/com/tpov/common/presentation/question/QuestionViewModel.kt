@@ -107,7 +107,7 @@ class QuestionViewModel @Inject constructor(
 
     fun pushStructureLocalData(ratingData: StructureLocalData) =
         viewModelScope.launch(Dispatchers.IO) {
-            structureUseCase.pushStructureLocalData(ratingData)
+            structureUseCase.pushStructureRating(ratingData)
         }
     fun deleteQuestionDetailById(id: Int?): String {
         viewModelScope.launch(Dispatchers.IO) {

@@ -201,11 +201,40 @@ class MainViewModel @Inject constructor(
                       questionUseCase.insertQuestion(it.toQuizEntity(null, idQuiz))
                 }
 
-                Log.e("testPushAndFetchQuiz", "${questionUseCase.getQuestionByIdQuiz(idQuiz).size}")
+                updateIsShowDownload(structureUseCase.getStructureData()!!, true)
             }
         }
 
         Log.e("testPushAndFetchQuiz", "4")
+    }
+    fun updateIsShowDownload(structureData: StructureData, newIsShowDownload: Boolean): StructureData {
+        return structureData.copy(
+            event = structureData.event.map { event ->
+                event.copy(
+                    isShowDownload = newIsShowDownload,
+                    category = event.category.map { category ->
+                        category.copy(
+                            isShowDownload = newIsShowDownload,
+                            subcategory = category.subcategory.map { subCategory ->
+                                subCategory.copy(
+                                    isShowDownload = newIsShowDownload,
+                                    subSubcategory = subCategory.subSubcategory.map { subsubCategory ->
+                                        subsubCategory.copy(
+                                            isShowDownload = newIsShowDownload,
+                                            quizData = subsubCategory.quizData.map { quizData ->
+                                                quizData.copy(
+                                                    isShowDownload = newIsShowDownload
+                                                )
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        )
     }
 
     fun createProfile() {
