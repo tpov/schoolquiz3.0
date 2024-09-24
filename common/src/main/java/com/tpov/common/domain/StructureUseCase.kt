@@ -80,10 +80,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
                             newSubcategory.subSubcategory.forEach { newSubsub ->
                                 newSubsub.isShowArchive = isShowArhive()
                                 newSubsub.isShowDownload = isShowDownload(newEvent.id)
-                                Log.d(
-                                    "SyncData",
-                                    "Processing subsubcategory: ${newSubsub.nameQuiz}"
-                                )
+
                                 newSubsub.quizData.forEach { newQuiz ->
                                     newQuiz.isShowArchive = isShowArhive()
                                     newQuiz.isShowDownload = isShowDownload(newEvent.id)
@@ -92,7 +89,8 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
                                     val quizInt =
                                         "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
 
-                                    Log.d("SyncData", "Adding quiz: $quizString")
+                                    Log.d("SyncData", "Adding quiz path: $quizString")
+                                    Log.d("SyncData", "Adding quiz: $newQuiz")
                                     if (newQuiz.isShowDownload) changedQuizzes.add(
                                         Pair(
                                             quizString,
@@ -124,7 +122,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
     }
 
     private fun isShowDownload(newEventId: Int): Boolean {
-        return false
+        return newEventId == 1 || newEventId == 8
     }
 
     private fun isShowArhive(): Boolean {

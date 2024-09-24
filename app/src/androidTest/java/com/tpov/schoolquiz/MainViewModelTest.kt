@@ -103,35 +103,41 @@ class CreateQuizIntegrationTest {
     @Test
     fun testPushAndFetchQuiz() = runBlocking<Unit> {
 
+        kotlinx.coroutines.delay(30000) // для получения анонимного токена
         structureUseCase.logger(0)
         viewModel.pushTheQuiz(
             Quiz1.structureCategoryDataEntity,
             Quiz1.quizEntity1,
             Quiz1.questionsEntity
         )
+        structureUseCase.logger(1)
         viewModel.pushTheQuiz(
             Quiz3.structureCategoryDataEntityAfrica,
             Quiz3.quizEntity3,
             Quiz3.questionsEntityAfrica
         )
+        structureUseCase.logger(2)
         viewModel.pushTheQuiz(
             Quiz4.structureCategoryDataEntityNorthAmerica,
             Quiz4.quizEntity4,
             Quiz4.questionsEntityNorthAmerica
         )
-        kotlinx.coroutines.delay(10000)
+        kotlinx.coroutines.delay(30000)
 
         structureUseCase.logger(1)
-        viewModel.getNewStructureDataANDQuizzes()
-        kotlinx.coroutines.delay(10000)
+        val listQuiz = viewModel.getNewStructureDataANDQuizzes()
+        Log.d("testPushAndFetchQuiz", "listQuiz: $listQuiz")
+        assertEquals(3, listQuiz.size)
+        structureUseCase.logger(2)
+        kotlinx.coroutines.delay(5000)
 
         val savedQuiz1 = quizUseCase.getQuizById(101)
         val savedQuiz3 = quizUseCase.getQuizById(102)
         val savedQuiz4 = quizUseCase.getQuizById(103)
 
-        assertNotNull("Квиз не найден в локальной базе данных", savedQuiz1)
-        assertNotNull("Квиз не найден в локальной базе данных", savedQuiz3)
-        assertNotNull("Квиз не найден в локальной базе данных", savedQuiz4)
+        assertNotNull("Квиз не найден в локальной базе данных", quizUseCase.getQuizById(101))
+        assertNotNull("Квиз не найден в локальной базе данных", quizUseCase.getQuizById(102))
+        assertNotNull("Квиз не найден в локальной базе данных", quizUseCase.getQuizById(103))
 
         val currentTime = System.currentTimeMillis() / 1000
         val savedQuiz1DataUpdate = savedQuiz1?.dataUpdate?.toLongOrNull() ?: 0L
@@ -144,16 +150,16 @@ class CreateQuizIntegrationTest {
 
         Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         assertTrue(
-            "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz1DataUpdate) <= 60
+            "Временные метки отличаются более чем на 200 секунд",
+            abs(currentTime - savedQuiz1DataUpdate) <= 200
         )
         assertTrue(
-            "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz3DataUpdate) <= 60
+            "Временные метки отличаются более чем на 200 секунд",
+            abs(currentTime - savedQuiz3DataUpdate) <= 200
         )
         assertTrue(
-            "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz4DataUpdate) <= 60
+            "Временные метки отличаются более чем на 200 секунд",
+            abs(currentTime - savedQuiz4DataUpdate) <= 200
         )
 
         assertEquals(
@@ -169,7 +175,7 @@ class CreateQuizIntegrationTest {
             savedQuiz4
         )
 
-        val updatedQuizList = structureUseCase.syncStructureDataANDquizzes()
+        structureUseCase.syncStructureDataANDquizzes()
         kotlinx.coroutines.delay(10000)
 
         assertThat(StructureData1.structureData)

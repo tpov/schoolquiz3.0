@@ -7,8 +7,8 @@ data class StructureData(
 data class EventData(
     val id: Int = 0,
     val category: List<CategoryData> = emptyList(),
-    var isShowArchive: Boolean = false,
-    var isShowDownload: Boolean = false
+    var isShowArchive: Boolean = true,
+    var isShowDownload: Boolean = true
 )
 
 data class CategoryData(
@@ -18,11 +18,11 @@ data class CategoryData(
     val dataUpdate: String =(System.currentTimeMillis() / 1000).toString(),
     val starsMaxLocal: Int = 0,
     val starsMaxRemote: Int = 0,
-    val picture: String? = null,
+    val picture: String = "",
     val ratingRemote: Int = 0,
     val ratingLocal: Int = 0,
-    var isShowArchive: Boolean = false,
-    var isShowDownload: Boolean = false
+    var isShowArchive: Boolean = true,
+    var isShowDownload: Boolean = true
 )
 
 data class SubCategoryData(
@@ -33,11 +33,11 @@ data class SubCategoryData(
     val userName: String = "",
     val starsMaxLocal: Int = 0,
     val starsMaxRemote: Int = 0,
-    val picture: String? = null,
+    val picture: String = "",
     val ratingRemote: Int = 0,
     val ratingLocal: Int = 0,
-    var isShowArchive: Boolean = false,
-    var isShowDownload: Boolean = false
+    var isShowArchive: Boolean = true,
+    var isShowDownload: Boolean = true
 )
 
 data class SubsubCategoryData(
@@ -48,11 +48,11 @@ data class SubsubCategoryData(
     val userName: String = "",
     val starsMaxLocal: Int = 0,
     val starsMaxRemote: Int = 0,
-    val picture: String? = null,
+    val picture: String = "",
     val ratingRemote: Int = 0,
     val ratingLocal: Int = 0,
-    var isShowArchive: Boolean = false,
-    var isShowDownload: Boolean = false
+    var isShowArchive: Boolean = true,
+    var isShowDownload: Boolean = true
 )
 
 data class QuizData(
@@ -61,11 +61,11 @@ data class QuizData(
     val dataUpdate: String = (System.currentTimeMillis() / 1000).toString(),
     val userName: String = "",
     val starsMaxLocal: Int = 0,
-    val picture: String? = null,
+    val picture: String = "",
     val starsMaxRemote: Int = 0,
     val ratingRemote: Int = 0,
     val ratingLocal: Int = 0,
-    var isShowArchive: Boolean = false,
-    var isShowDownload: Boolean = false,
+    var isShowArchive: Boolean = true,
+    var isShowDownload: Boolean = true,
     val tpovId: Int = 0
 )

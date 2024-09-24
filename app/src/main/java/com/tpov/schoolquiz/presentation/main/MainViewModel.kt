@@ -122,7 +122,8 @@ class MainViewModel @Inject constructor(
 
     suspend fun getStructureData() = structureUseCase.getStructureData()
 
-    suspend fun getNewQuizListANDcatDataWithServer(): List<Pair<String, String>> {
+        //Загрузить если нету локальной структуры, иначе она загрузится в фоне
+    private suspend fun getNewQuizListANDcatDataWithServer(): List<Pair<String, String>> {
         var listNewQuiz: List<Pair<String,String>> = listOf()
 
         Log.e("test", "getNewQuizListWithServer()")
@@ -134,6 +135,7 @@ class MainViewModel @Inject constructor(
             listNewQuiz = structureUseCase.syncStructureDataANDquizzes()
             structureDataList = structureUseCase.getStructureData()
         }
+
         Log.e("test", "4() $structureDataList")
         withContext(Dispatchers.Default) {
             _categoryData.postValue(prepareData(structureDataList ?: retryFromDelay()))
@@ -146,9 +148,7 @@ class MainViewModel @Inject constructor(
     //Этот метод загружает структуру, сравнивает в локальной, получает список новых квестов и загружает их
     suspend fun getNewStructureDataANDQuizzes(): List<Pair< String, String>> {
         val listNewQuiz = getNewQuizListANDcatDataWithServer()
-        Log.e("test", "loadQuizzesByList(): ${listNewQuiz.size}")
         loadQuizzesByList(listNewQuiz)
-        structureUseCase.logger(15)
 
         Log.e("testPushAndFetchQuiz", "2 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         return listNewQuiz
@@ -200,13 +200,12 @@ class MainViewModel @Inject constructor(
                     Log.e("testPushAndFetchQuiz", "questionUseCase.fetchQuestion")
                       questionUseCase.insertQuestion(it.toQuizEntity(null, idQuiz))
                 }
-
                 updateIsShowDownload(structureUseCase.getStructureData()!!, true)
             }
         }
-
         Log.e("testPushAndFetchQuiz", "4")
     }
+
     fun updateIsShowDownload(structureData: StructureData, newIsShowDownload: Boolean): StructureData {
         return structureData.copy(
             event = structureData.event.map { event ->
@@ -292,11 +291,15 @@ class MainViewModel @Inject constructor(
         quizEntity.idSubsubcategory = oldSubsubCategoryId
 
         pushQuiz(quizEntity)
+        Log.d("pushTheQuiz", "pushQuiz questionsEntity ${questionsEntity.size}")
         questionsEntity.forEach {
+            Log.d("pushTheQuiz", "$it")
             val question = it.copy(idQuiz = idQuiz)
             pushQuestion(question, eventQuiz, idQuiz)
+            Log.d("pushTheQuiz", "pushQuestion")
         }
 
+        Log.d("pushTheQuiz", "End")
     }
 
     private suspend fun pushQuiz(quizEntity: QuizEntity) {
@@ -304,6 +307,7 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int, idQuiz: Int) {
+        Log.d("pushTheQuiz", "pushingQuestion")
         questionUseCase.pushQuestion(questionEntity, event, idQuiz)
     }
 

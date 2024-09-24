@@ -104,6 +104,9 @@ class RepositoryQuizImpl @Inject constructor(
         val mediaType = "application/json; charset=utf-8".toMediaType()
         val requestBody = data.toString().toRequestBody(mediaType)
 
+        Log.d("OkHttp", "Sending request to URL: $url")
+        Log.d("OkHttp", "Request body: ${data.toString()}")
+
         val request = Request.Builder()
             .url(url)
             .post(requestBody)
@@ -111,13 +114,16 @@ class RepositoryQuizImpl @Inject constructor(
 
         return try {
             val response = client.newCall(request).execute()
+            Log.d("OkHttp", "Request executed, response code: ${response.code}")
+
             if (response.isSuccessful) {
                 val responseData = response.body?.string()
                 if (responseData != null) {
+                    Log.d("OkHttp", "Received response body: $responseData")
                     // Парсинг JSON-ответа
                     val jsonResponse = JSONObject(responseData)
                     val updatedCategory = fromJson(jsonResponse)  // Обращение к методу через объект-компаньон
-                    Log.d("OkHttp", "Response: $responseData")
+                    Log.d("OkHttp", "Parsed updated category: $updatedCategory")
                     updatedCategory  // Возвращаем обновленное значение
                 } else {
                     Log.e("OkHttp", "Empty response body")
@@ -135,6 +141,7 @@ class RepositoryQuizImpl @Inject constructor(
             throw e
         }
     }
+
 
     private fun deleteStructureCategory(idCategory: Int) {
 

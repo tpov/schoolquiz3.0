@@ -32,10 +32,10 @@ data class CategoryData(
     val nameQuiz: String = "",
     val dataUpdate: String = "",
     val starsMaxRemote: Int = 0,
-    val picture: String? = null,
+    val picture: String = "",
     val ratingRemote: Int = 0
 ) {
-    constructor() : this(0, emptyList(), "", "", 0, null, 0)
+    constructor() : this(0, emptyList(), "", "", 0, "", 0)
 
     fun toCategoryDataLocal(): com.tpov.common.data.model.local.CategoryData {
         return com.tpov.common.data.model.local.CategoryData(
@@ -61,10 +61,10 @@ data class SubCategoryData(
     val dataUpdate: String = "",
     val userName: String = "",
     val starsMaxRemote: Int = 0,
-    val picture: String? = null,
+    val picture: String = "",
     val ratingRemote: Int = 0
 ) {
-    constructor() : this(0, emptyList(), "", "", "", 0, null, 0)
+    constructor() : this(0, emptyList(), "", "", "", 0, "", 0)
 
     fun toSubCategoryDataLocal(): com.tpov.common.data.model.local.SubCategoryData {
         return com.tpov.common.data.model.local.SubCategoryData(
@@ -91,10 +91,10 @@ data class SubsubCategoryData(
     val dataUpdate: String = "",
     val userName: String = "",
     val starsMaxRemote: Int = 0,
-    val picture: String? = null,
+    val picture: String = "",
     val ratingRemote: Int = 0
 ) {
-    constructor() : this(0, emptyList(), "", "", "", 0, null, 0)
+    constructor() : this(0, emptyList(), "", "", "", 0, "", 0)
 
     fun toSubsubCategoryDataLocal(): com.tpov.common.data.model.local.SubsubCategoryData {
         return com.tpov.common.data.model.local.SubsubCategoryData(
