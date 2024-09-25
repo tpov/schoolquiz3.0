@@ -1,4 +1,5 @@
 package com.tpov.common.data.model
+
 data class SettingConfigModel(
     var tpovId: Int,
     var login: String,
@@ -28,7 +29,7 @@ data class SettingConfigModel(
                 nickname = map["nickname"] as? String ?: "",
                 birthday = map["birthday"] as? String ?: "",
                 city = map["city"] as? String ?: "",
-                logo = (map["logo"] as? Long)?.toInt() ?: -1, // Firebase может возвращать Int как Long
+                logo = (map["logo"] as? Long)?.toInt() ?: -1,
                 languages = map["languages"] as? String ?: "",
                 profileSyncFrequency = map["profileSyncFrequency"] as? String ?: "1",
                 questsSyncFrequency = map["questsSyncFrequency"] as? String ?: "1",

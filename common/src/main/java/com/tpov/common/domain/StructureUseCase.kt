@@ -121,6 +121,9 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         return changedQuizzes
     }
 
+    suspend fun deleteStructureCategoryById(id: Int) {
+        repositoryStructureImpl.deleteCategoryById(id)
+    }
     private fun isShowDownload(newEventId: Int): Boolean {
         return newEventId == 1 || newEventId == 8
     }
@@ -233,5 +236,13 @@ return true
 
     suspend fun getStructureData(): StructureData? {
         return repositoryStructureImpl.getStructureData()
+    }
+
+    suspend fun insertStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
+repositoryStructureImpl.insertStructureRating(structureCategoryDataEntity)
+    }
+
+    suspend fun getStructureCategory(): List<StructureCategoryDataEntity> {
+        return repositoryStructureImpl.getStructureCategory()
     }
 }

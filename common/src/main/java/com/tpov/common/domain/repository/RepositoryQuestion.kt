@@ -12,7 +12,7 @@ interface RepositoryQuestion {
         idQuiz: Int
     ): List<QuestionRemote>
 
-    suspend fun getQuestionByIdQuiz(idQuiz: Int): List<QuestionEntity>
+    suspend fun getQuestionByIdQuiz(idQuiz: Int): ArrayList<QuestionEntity>
     suspend fun saveQuestion(questionEntity: QuestionEntity)
     suspend fun pushQuestion(questionEntity: QuestionRemote, event: Int,idQuiz: Int)
     suspend fun updateQuestion(questionEntity: QuestionEntity)

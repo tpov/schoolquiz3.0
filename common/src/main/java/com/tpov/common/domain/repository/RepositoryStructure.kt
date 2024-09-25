@@ -14,4 +14,8 @@ interface RepositoryStructure {
 
     suspend fun saveListUpdateQuiz(list: List<String>)
     suspend fun loadListUpdateQuiz(): List<String>
+    suspend fun insertStructureRating(structureCategoryDataEntity: StructureCategoryDataEntity)
+    suspend fun getStructureCategory(): List<StructureCategoryDataEntity>
+
+    suspend fun deleteCategoryById(id: Int)
 }

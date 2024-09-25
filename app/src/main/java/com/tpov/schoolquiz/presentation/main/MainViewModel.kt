@@ -334,6 +334,21 @@ class MainViewModel @Inject constructor(
         return 0
     }
 
+    fun insertQuizThis(
+        structureCategoryDataEntity: StructureCategoryDataEntity,
+        quizIt: QuizEntity,
+        questionsIt: ArrayList<QuestionEntity>
+    ) = viewModelScope.launch(Dispatchers.Default){
+        structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)
+        quizUseCase.insertQuiz(quizIt)
+        questionsIt.forEach {
+            questionUseCase.insertQuestion(it.copy(idQuiz = getNewIdQuiz()))
+        }
+    }
+
+}
+private fun getNewIdQuiz(): Int {
+    return 0
 }
 
 class ViewModelFactory @Inject constructor(

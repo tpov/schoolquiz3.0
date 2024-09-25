@@ -142,6 +142,18 @@ class RepositoryStuctureImpl @Inject constructor(
         return data?.split(",")?.filterNot { it.isEmpty() } ?: emptyList()
     }
 
+    override suspend fun insertStructureRating(structureCategoryDataEntity: StructureCategoryDataEntity) {
+        structureCategoryDataDao.insert(structureCategoryDataEntity)
+    }
+
+    override suspend fun getStructureCategory(): List<StructureCategoryDataEntity> {
+        return structureCategoryDataDao.getAllFailedCategory()
+    }
+
+    override suspend fun deleteCategoryById(id: Int) {
+        structureCategoryDataDao.deleteCategoryById(id)
+    }
+
     override suspend fun getStructureData(): com.tpov.common.data.model.local.StructureData? {
         return withContext(Dispatchers.IO) {
             val file = context.getFileStreamPath(fileName)

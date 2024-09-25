@@ -122,7 +122,7 @@ class CreateQuizIntegrationTest {
             Quiz4.quizEntity4,
             Quiz4.questionsEntityNorthAmerica
         )
-        kotlinx.coroutines.delay(30000)
+        kotlinx.coroutines.delay(5000)
 
         structureUseCase.logger(1)
         val listQuiz = viewModel.getNewStructureDataANDQuizzes()
@@ -144,22 +144,18 @@ class CreateQuizIntegrationTest {
         val savedQuiz3DataUpdate = savedQuiz3?.dataUpdate?.toLongOrNull() ?: 0L
         val savedQuiz4DataUpdate = savedQuiz4?.dataUpdate?.toLongOrNull() ?: 0L
 
-        val quizEntity1DataUpdate = Quiz1.quizEntity1.dataUpdate.toLongOrNull() ?: 0L
-        val quizEntity3DataUpdate = Quiz3.quizEntity3.dataUpdate.toLongOrNull() ?: 0L
-        val quizEntity4DataUpdate = Quiz4.quizEntity4.dataUpdate.toLongOrNull() ?: 0L
-
         Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         assertTrue(
-            "Временные метки отличаются более чем на 200 секунд",
-            abs(currentTime - savedQuiz1DataUpdate) <= 200
+            "Временные метки отличаются более чем на 60 секунд",
+            abs(currentTime - savedQuiz1DataUpdate) <= 60
         )
         assertTrue(
-            "Временные метки отличаются более чем на 200 секунд",
-            abs(currentTime - savedQuiz3DataUpdate) <= 200
+            "Временные метки отличаются более чем на 60 секунд",
+            abs(currentTime - savedQuiz3DataUpdate) <= 60
         )
         assertTrue(
-            "Временные метки отличаются более чем на 200 секунд",
-            abs(currentTime - savedQuiz4DataUpdate) <= 200
+            "Временные метки отличаются более чем на 60 секунд",
+            abs(currentTime - savedQuiz4DataUpdate) <= 60
         )
 
         assertEquals(

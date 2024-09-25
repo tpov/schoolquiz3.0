@@ -980,9 +980,8 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
         questionsEntity.let { questionsIt ->
-            viewModel.insertQuestion(questionsEntity ?: errorLoadQuestionEntity())
             quizEntity?.let {quizIt ->
-                viewModel.pushTheQuiz(structureCategoryDataEntity, quizIt, questionsIt)
+                viewModel.insertQuizThis(structureCategoryDataEntity, quizIt, questionsIt)
                 finish()
             } ?: saveTranslate()
         }
