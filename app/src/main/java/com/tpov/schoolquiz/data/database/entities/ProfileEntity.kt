@@ -65,7 +65,6 @@ data class ProfileEntity(
     constructor(
         id: Int? = null,
         dataCreateAcc: String,
-        dateSynch: String,
         languages: String,
         timeLastOpenBox: String
     ) : this(
@@ -104,7 +103,7 @@ data class ProfileEntity(
         addMassage = "",
 
         dataCreateAcc = dataCreateAcc,
-        dateSynch = dateSynch,
+        dateSynch = "",
         dateCloseApp = "",
         idFirebase = null,
         languages = languages,

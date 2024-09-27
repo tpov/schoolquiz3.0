@@ -19,8 +19,10 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         pathLanguage,
         idQuiz
     )
-
-    suspend fun getQuestionByIdQuiz(idQuiz: Int) = repositoryQuestion.getQuestionByIdQuiz(idQuiz)
+    suspend fun getQuestionByIdQuiz(idQuiz: Int): ArrayList<QuestionEntity> {
+        val questionList = repositoryQuestion.getQuestionByIdQuiz(idQuiz)
+        return ArrayList(questionList)
+    }
 
     suspend fun insertQuestion(questionEntity: QuestionEntity) {
         Log.d("insertQuestion", "$questionEntity")

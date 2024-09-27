@@ -7,7 +7,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.tpov.common.data.core.Core.tpovId
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
@@ -26,8 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Provider
@@ -56,7 +53,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
-            profileUseCase.getProfileFlow(tpovId)?.collect { profile ->
+            profileUseCase.getProfileFlow()?.collect { profile ->
                 _profileState.value = profile
             }
         }
@@ -122,9 +119,9 @@ class MainViewModel @Inject constructor(
 
     suspend fun getStructureData() = structureUseCase.getStructureData()
 
-        //Загрузить если нету локальной структуры, иначе она загрузится в фоне
+    //Загрузить если нету локальной структуры, иначе она загрузится в фоне
     private suspend fun getNewQuizListANDcatDataWithServer(): List<Pair<String, String>> {
-        var listNewQuiz: List<Pair<String,String>> = listOf()
+        var listNewQuiz: List<Pair<String, String>> = listOf()
 
         Log.e("test", "getNewQuizListWithServer()")
         var structureDataList = structureUseCase.getStructureData()
@@ -146,7 +143,7 @@ class MainViewModel @Inject constructor(
     }
 
     //Этот метод загружает структуру, сравнивает в локальной, получает список новых квестов и загружает их
-    suspend fun getNewStructureDataANDQuizzes(): List<Pair< String, String>> {
+    suspend fun getNewStructureDataANDQuizzes(): List<Pair<String, String>> {
         val listNewQuiz = getNewQuizListANDcatDataWithServer()
         loadQuizzesByList(listNewQuiz)
 
@@ -196,9 +193,9 @@ class MainViewModel @Inject constructor(
                     categoryId,
                     subcategoryId,
                     Locale.getDefault().language, idQuiz
-                  ).forEach {
+                ).forEach {
                     Log.e("testPushAndFetchQuiz", "questionUseCase.fetchQuestion")
-                      questionUseCase.insertQuestion(it.toQuizEntity(null, idQuiz))
+                    questionUseCase.insertQuestion(it.toQuizEntity(null, idQuiz))
                 }
                 updateIsShowDownload(structureUseCase.getStructureData()!!, true)
             }
@@ -206,7 +203,10 @@ class MainViewModel @Inject constructor(
         Log.e("testPushAndFetchQuiz", "4")
     }
 
-    fun updateIsShowDownload(structureData: StructureData, newIsShowDownload: Boolean): StructureData {
+    fun updateIsShowDownload(
+        structureData: StructureData,
+        newIsShowDownload: Boolean
+    ): StructureData {
         return structureData.copy(
             event = structureData.event.map { event ->
                 event.copy(
@@ -238,13 +238,13 @@ class MainViewModel @Inject constructor(
 
     fun createProfile() {
         val currentTimestamp = Instant.now().epochSecond
-        val userLocalDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val daysSinceEpoch = Instant.now().epochSecond / 86400
+
         profileUseCase.insertProfile(
             ProfileEntity(
                 dataCreateAcc = currentTimestamp.toString(),
-                dateSynch = currentTimestamp.toString(),
                 languages = Locale.getDefault().language,
-                timeLastOpenBox = userLocalDate
+                timeLastOpenBox = daysSinceEpoch.toString()
             )
         )
     }
@@ -270,7 +270,7 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun pushStructureCategory(structureCategoryDataEntity: StructureCategoryDataEntity) =
-       quizUseCase.pushStructureCategory(structureCategoryDataEntity)
+        quizUseCase.pushStructureCategory(structureCategoryDataEntity)
 
     suspend fun pushTheQuiz(
         structureCategoryDataEntity: StructureCategoryDataEntity,
@@ -319,7 +319,8 @@ class MainViewModel @Inject constructor(
         Log.d("savequestionsList ", "questionsList: $questionsList")
         questionsList.forEach {
             Log.d("savequestionsList ", "question: $it")
-            questionUseCase.insertQuestion(it) }
+            questionUseCase.insertQuestion(it)
+        }
     }
 
     fun getQuizByIdQuiz(idQuiz: Int) = viewModelScope.launch(Dispatchers.Default) {
@@ -338,17 +339,27 @@ class MainViewModel @Inject constructor(
         structureCategoryDataEntity: StructureCategoryDataEntity,
         quizIt: QuizEntity,
         questionsIt: ArrayList<QuestionEntity>
-    ) = viewModelScope.launch(Dispatchers.Default){
+    ) = viewModelScope.launch(Dispatchers.Default) {
+        val newIdQuiz = getNewIdQuiz()
         structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)
-        quizUseCase.insertQuiz(quizIt)
+        quizUseCase.insertQuiz(quizIt.copy(id = newIdQuiz))
         questionsIt.forEach {
-            questionUseCase.insertQuestion(it.copy(idQuiz = getNewIdQuiz()))
+            questionUseCase.insertQuestion(it.copy(idQuiz = newIdQuiz))
         }
     }
 
-}
-private fun getNewIdQuiz(): Int {
-    return 0
+    private suspend fun getNewIdQuiz(): Int {
+        val quizzes = quizUseCase.getQuizzes()
+        val usedIds = quizzes?.map { it.id }?.toSet()
+
+        for (i in 1..100) {
+            if (i !in usedIds!!) {
+                return i
+            }
+        }
+
+        throw IllegalStateException("Нет свободных ID до 100")
+    }
 }
 
 class ViewModelFactory @Inject constructor(

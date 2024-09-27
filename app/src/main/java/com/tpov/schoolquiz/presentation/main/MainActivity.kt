@@ -113,10 +113,8 @@ class MainActivity : AppCompatActivity() {
             if (!isNetworkAvailable(this@MainActivity)) {
                 Toast.makeText(this@MainActivity, "Нет подключения к интернету. Попробуйте позже.", Toast.LENGTH_LONG).show()
             }
-            if (viewModel.firstStartApp) {
                 viewModel.getNewStructureDataANDQuizzes()
-                viewModel.createProfile()
-            }
+
         }
     }
     fun isNetworkAvailable(context: Context): Boolean {
@@ -168,7 +166,7 @@ class MainActivity : AppCompatActivity() {
                             viewModel.updateProfile(updatedProfile)
                         }
                     }
-                } else Toast.makeText(applicationContext, "profile not created", Toast.LENGTH_LONG).show()
+                } else viewModel.createProfile()
             }
         }
     }

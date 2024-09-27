@@ -74,10 +74,8 @@ class CreateQuizIntegrationTest {
 
         val storage = FirebaseStorage.getInstance()
 
-        // Инициализация всех репозиториев
         repositoryQuiz = RepositoryQuizImpl(quizDao, firestore, storage)
 
-        // Предположим, что RepositoryQuestion и RepositoryStructureImpl требуют подобных данных
         repositoryQuestion = RepositoryQuestionImpl(questionDao, firestore, storage)
         repositoryStuctureImpl = RepositoryStuctureImpl(
             structureRatingDataDao,
@@ -85,8 +83,7 @@ class CreateQuizIntegrationTest {
             firestore,
             context
         )
-
-        repositoryProfile = RepositoryProfileImpl(profileDao, quizDao)
+        repositoryProfile = RepositoryProfileImpl(profileDao, firestore)
         // Инициализация use case
         structureUseCase = StructureUseCase(repositoryStuctureImpl)
         quizUseCase = QuizUseCase(repositoryQuiz)

@@ -47,7 +47,7 @@ class RepositoryQuestionImpl @Inject constructor(
         return questionRemotes
     }
 
-    override suspend fun getQuestionByIdQuiz(idQuiz: Int): List<QuestionEntity> = questionDao.getQuestionByIdQuiz(idQuiz)
+    override suspend fun getQuestionByIdQuiz(idQuiz: Int) = questionDao.getQuestionByIdQuiz(idQuiz)
 
     override suspend fun saveQuestion(questionEntity: QuestionEntity) {
         questionDao.insertQuestion(questionEntity)

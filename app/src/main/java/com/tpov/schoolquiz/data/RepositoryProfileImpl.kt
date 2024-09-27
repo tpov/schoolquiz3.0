@@ -1,43 +1,61 @@
 package com.tpov.schoolquiz.data
 
-import com.tpov.common.data.database.QuizDao
+import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.schoolquiz.data.database.ProfileDao
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.fierbase.Profile
 import com.tpov.schoolquiz.domain.repository.RepositoryProfile
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class RepositoryProfileImpl @Inject constructor(
     private val profileDao: ProfileDao,
-    private val quizDao: QuizDao
+    private val firestore: FirebaseFirestore,
 ) : RepositoryProfile {
-    override fun getProfileFlow(tpovId: Int): Flow<ProfileEntity?>? {
-        return null
+    override suspend fun getProfileFlow(): Flow<ProfileEntity?>? {
+        return profileDao.getProfileFlow()
     }
 
-    override fun getProfile(tpovId: Int): ProfileEntity? {
-        return null
+    override suspend fun fetchProfile(tpovId: Int): Profile? {
+        val profilesRef = firestore.collection("profiles")
+
+        return try {
+            val documentSnapshot = profilesRef.document(tpovId.toString()).get().await()
+            if (documentSnapshot.exists()) {
+                val profileData = documentSnapshot.data
+                Profile().fromHashMap(profileData!!)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.w("Firestore", "Error fetchProfile", e)
+            null
+        }
     }
 
-    override fun getProfileList(): List<ProfileEntity?>? {
+    override suspend fun pushProfile(profile: Profile) {
+        val profilesRef = firestore.collection("profiles")
 
-        return null
+        profilesRef.document(profile.tpovId)
+            .set(profile.toHashMap())
+            .addOnSuccessListener {
+            }
+            .addOnFailureListener { e ->
+                Log.w("Firestore", "Error pushProfile ", e)
+            }
     }
 
-    override fun insertProfile(profile: ProfileEntity) {
-
+    override suspend fun getProfile(): ProfileEntity {
+        return profileDao.getProfile()
     }
 
-    override fun updateProfile(profile: ProfileEntity) {
-
+    override suspend fun insertProfile(profile: ProfileEntity) {
+profileDao.insertProfile(profile)
     }
 
-    override fun unloadProfile() {
-
+    override suspend fun updateProfile(profile: ProfileEntity) {
+        profileDao.updateProfiles(profile)
     }
-
-    override fun downloadProfile() {
-
-    }
-
 }

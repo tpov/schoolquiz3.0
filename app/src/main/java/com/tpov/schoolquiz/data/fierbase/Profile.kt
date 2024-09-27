@@ -12,8 +12,6 @@ data class Profile constructor(
     val nickname: String,
     val birthday: String,
     val points: Points,
-    val datePremium: String,
-    val dateBanned: String,
     val buy: Buy,
     val trophy: String,
     val friends: String,
@@ -29,28 +27,160 @@ data class Profile constructor(
     val box: Box,
     val comander: Int
 ) {
+    fun toHashMap(): HashMap<String, Any> {
+        val result = HashMap<String, Any>()
+
+        result["tpovId"] = tpovId
+        result["login"] = login
+        result["name"] = name
+        result["nickname"] = nickname
+        result["birthday"] = birthday
+        result["points"] = hashMapOf(
+            "gold" to points.gold,
+            "skill" to points.skill,
+            "nolics" to points.nolics
+        )
+        result["buy"] = hashMapOf(
+            "quizPlace" to buy.quizPlace,
+            "theme" to buy.theme,
+            "music" to buy.music,
+            "logo" to buy.logo
+        )
+        result["trophy"] = trophy
+        result["friends"] = friends
+        result["city"] = city
+        result["logo"] = logo
+        result["timeInGames"] = hashMapOf(
+            "timeInQuiz" to timeInGames.timeInQuiz,
+            "timeInChat" to timeInGames.timeInChat,
+            "smsPoints" to timeInGames.smsPoints,
+            "countQuestions" to timeInGames.countQuestions,
+            "countTrueQuestion" to timeInGames.countTrueQuestion,
+            "quizRating" to timeInGames.quizRating
+        )
+        result["addPoints"] = hashMapOf(
+            "addGold" to addPoints.addGold,
+            "addSkill" to addPoints.addSkill,
+            "addNolics" to addPoints.addNolics,
+            "addTrophy" to addPoints.addTrophy,
+            "addMassage" to addPoints.addMassage
+        )
+        result["dates"] = hashMapOf(
+            "dataCreateAcc" to dates.dataCreateAcc,
+            "dateSynch" to dates.dateSynch,
+            "datePremium" to dates.datePremium,
+            "dateBanned" to dates.dateBanned
+        )
+        result["idFirebase"] = idFirebase
+        result["languages"] = languages
+        result["qualification"] = hashMapOf(
+            "sponsor" to qualification.sponsor,
+            "tester" to qualification.tester,
+            "translater" to qualification.translater,
+            "moderator" to qualification.moderator,
+            "admin" to qualification.admin,
+            "developer" to qualification.developer
+        )
+        result["life"] = hashMapOf(
+            "countLife" to life.countLife,
+            "countGoldLife" to life.countGoldLife
+        )
+        result["box"] = hashMapOf(
+            "countBox" to box.countBox,
+            "timeLastOpenBox" to box.timeLastOpenBox,
+            "coundDayBox" to box.coundDayBox
+        )
+        result["comander"] = comander
+
+        return result
+    }
+
+    fun fromHashMap(map: Map<String, Any>): Profile {
+        return Profile(
+            tpovId = map["tpovId"] as String? ?: "",
+            login = map["login"] as String? ?: "",
+            name = map["name"] as String? ?: "",
+            nickname = map["nickname"] as String? ?: "",
+            birthday = map["birthday"] as String? ?: "",
+            points = Points(
+                gold = (map["points"] as? Map<String, Any>)?.get("gold") as? Int ?: 0,
+                skill = (map["points"] as? Map<String, Any>)?.get("skill") as? Int ?: 0,
+                nolics = (map["points"] as? Map<String, Any>)?.get("nolics") as? Int ?: 0
+            ),
+            buy = Buy(
+                quizPlace = (map["buy"] as? Map<String, Any>)?.get("quizPlace") as? Int ?: 0,
+                theme = (map["buy"] as? Map<String, Any>)?.get("theme") as? String ?: "",
+                music = (map["buy"] as? Map<String, Any>)?.get("music") as? String ?: "",
+                logo = (map["buy"] as? Map<String, Any>)?.get("logo") as? String ?: ""
+            ),
+            trophy = map["trophy"] as String? ?: "",
+            friends = map["friends"] as String? ?: "",
+            city = map["city"] as String? ?: "",
+            logo = map["logo"] as? Int ?: 0,
+            timeInGames = TimeInGames(
+                timeInQuiz = (map["timeInGames"] as? Map<String, Any>)?.get("timeInQuiz") as? Int ?: 0,
+                timeInChat = (map["timeInGames"] as? Map<String, Any>)?.get("timeInChat") as? Int ?: 0,
+                smsPoints = (map["timeInGames"] as? Map<String, Any>)?.get("smsPoints") as? Int ?: 0,
+                countQuestions = (map["timeInGames"] as? Map<String, Any>)?.get("countQuestions") as? Int ?: 0,
+                countTrueQuestion = (map["timeInGames"] as? Map<String, Any>)?.get("countTrueQuestion") as? Int ?: 0,
+                quizRating = (map["timeInGames"] as? Map<String, Any>)?.get("quizRating") as? Int ?: 0
+            ),
+            addPoints = AddPoints(
+                addGold = (map["addPoints"] as? Map<String, Any>)?.get("addGold") as? Int ?: 0,
+                addSkill = (map["addPoints"] as? Map<String, Any>)?.get("addSkill") as? Int ?: 0,
+                addNolics = (map["addPoints"] as? Map<String, Any>)?.get("addNolics") as? Int ?: 0,
+                addTrophy = (map["addPoints"] as? Map<String, Any>)?.get("addTrophy") as? String ?: "",
+                addMassage = (map["addPoints"] as? Map<String, Any>)?.get("addMassage") as? String ?: ""
+            ),
+            dates = Dates(
+                dataCreateAcc = (map["dates"] as? Map<String, Any>)?.get("dataCreateAcc") as? String ?: "",
+                dateSynch = (map["dates"] as? Map<String, Any>)?.get("dateSynch") as? String ?: "",
+                datePremium = (map["dates"] as? Map<String, Any>)?.get("datePremium") as? String ?: "",
+                dateBanned = (map["dates"] as? Map<String, Any>)?.get("dateBanned") as? String ?: ""
+            ),
+            idFirebase = map["idFirebase"] as String? ?: "",
+            languages = map["languages"] as String? ?: "",
+            qualification = Qualification(
+                sponsor = (map["qualification"] as? Map<String, Any>)?.get("sponsor") as? Int ?: 0,
+                tester = (map["qualification"] as? Map<String, Any>)?.get("tester") as? Int ?: 0,
+                translater = (map["qualification"] as? Map<String, Any>)?.get("translater") as? Int ?: 0,
+                moderator = (map["qualification"] as? Map<String, Any>)?.get("moderator") as? Int ?: 0,
+                admin = (map["qualification"] as? Map<String, Any>)?.get("admin") as? Int ?: 0,
+                developer = (map["qualification"] as? Map<String, Any>)?.get("developer") as? Int ?: 0
+            ),
+            life = Life(
+                countLife = (map["life"] as? Map<String, Any>)?.get("countLife") as? Int ?: 0,
+                countGoldLife = (map["life"] as? Map<String, Any>)?.get("countGoldLife") as? Int ?: 0
+            ),
+            box = Box(
+                countBox = (map["box"] as? Map<String, Any>)?.get("countBox") as? Int ?: 0,
+                timeLastOpenBox = (map["box"] as? Map<String, Any>)?.get("timeLastOpenBox") as? String ?: "",
+                coundDayBox = (map["box"] as? Map<String, Any>)?.get("coundDayBox") as? Int ?: 0
+            ),
+            comander = map["comander"] as? Int ?: 0
+        )
+    }
+
     constructor() : this(
         0.toString(),
         "",
         "",
         "",
         "",
-        Points( 0, 0, 0),
-        "",
-        "",
-        Buy(0, "", "", ""),
+        Points(),
+        Buy(),
         "",
         "",
         "",
         0,
-        TimeInGames(0, 0, 0, 0, 0, 0),
-        AddPoints(0, 0, 0, "", ""),
-        Dates("", ""),
+        TimeInGames(),
+        AddPoints(),
+        Dates(),
         "",
         "",
-        Qualification(0,0, 0, 0, 0, 0),
-        Life(0, 0),
-        Box(0, "0", 0),
+        Qualification(),
+        Life(),
+        Box(),
         0
     )
 }
@@ -98,7 +228,7 @@ data class TimeInGames(
     val smsPoints: Int,
     val countQuestions: Int?,
     val countTrueQuestion: Int,
-    val timeInQuizRating: Int
+    val quizRating: Int
 ) {
     constructor() : this(
         0, 0, 0, 0, 0, 0
@@ -144,10 +274,12 @@ data class AddPoints(
 @IgnoreExtraProperties
 data class Dates(
     val dataCreateAcc: String,
-    val dateSynch: String
+    val dateSynch: String,
+    val datePremium: String,
+    val dateBanned: String,
 ) {
     constructor() : this(
-        "", ""
+        "", "", "", ""
     )
 }
 
@@ -163,8 +295,6 @@ fun ProfileEntity.toProfile(): Profile {
             skill = this.pointsSkill!!,
             nolics = this.pointsNolics!!
         ),
-        datePremium = this.datePremium,
-        dateBanned = this.dateBanned,
         buy = Buy(
             quizPlace = this.buyQuizPlace!!,
             theme = this.buyTheme!!,
@@ -181,7 +311,7 @@ fun ProfileEntity.toProfile(): Profile {
             smsPoints = this.timeInGamesSmsPoints!!,
             countQuestions = this.timeInGamesCountQuestions,
             countTrueQuestion = this.timeInGamesCountTrueQuestion,
-            timeInQuizRating = this.timeInQuizRating
+            quizRating = this.timeInQuizRating
         ),
         addPoints = AddPoints(
             this.addPointsGold ?: 0,
@@ -190,7 +320,7 @@ fun ProfileEntity.toProfile(): Profile {
             this.addTrophy ?: "",
             this.addMassage ?: ""
         ),
-        dates = Dates(this.dataCreateAcc!!, this.dateSynch!!),
+        dates = Dates(this.dataCreateAcc!!, this.dateSynch!!, this.datePremium, this.dateBanned),
         idFirebase = this.idFirebase!!,
         languages = this.languages!!,
         qualification = Qualification(
@@ -224,7 +354,7 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         pointsGold = this.points.gold,
         pointsSkill = this.points.skill,
         pointsNolics = this.points.nolics,
-        datePremium = this.datePremium,
+        datePremium = this.dates.datePremium,
         buyQuizPlace = this.buy.quizPlace,
         buyTheme = this.buy.theme,
         buyMusic = this.buy.music,
@@ -262,8 +392,8 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         dateCloseApp = TimeManager.getCurrentTime(),
         timeInGamesCountQuestions = this.timeInGames.countQuestions!!,
         timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion,
-        timeInQuizRating = this.timeInGames.timeInQuizRating,
+        timeInQuizRating = this.timeInGames.quizRating,
         commander = this.comander,
-        dateBanned = this.dateBanned
+        dateBanned = this.dates.dateBanned
     )
 }

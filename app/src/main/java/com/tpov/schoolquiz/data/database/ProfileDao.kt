@@ -1,7 +1,11 @@
 package com.tpov.schoolquiz.data.database
 
-import androidx.room.*
-import com.tpov.schoolquiz.data.database.entities.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -10,11 +14,11 @@ interface ProfileDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertProfile(profile: ProfileEntity)
 
-    @Query("SELECT * FROM profiles WHERE tpovId LIKE :tpovId")
-    fun getProfileFlow(tpovId: Int): Flow<ProfileEntity>
+    @Query("SELECT * FROM profiles")
+    fun getProfileFlow(): Flow<ProfileEntity>
 
-    @Query("SELECT * FROM profiles WHERE tpovId LIKE :tpovId")
-    fun getProfile(tpovId: Int): ProfileEntity
+    @Query("SELECT * FROM profiles")
+    fun getProfile(): ProfileEntity
 
     @Query("SELECT * FROM profiles WHERE tpovId LIKE :tpovId")
     fun getProfileByTpovId(tpovId: Int): ProfileEntity

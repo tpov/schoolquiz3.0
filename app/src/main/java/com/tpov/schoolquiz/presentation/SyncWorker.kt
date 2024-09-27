@@ -18,6 +18,7 @@ import androidx.work.WorkerParameters
 import com.tpov.common.domain.QuestionUseCase
 import com.tpov.common.domain.QuizUseCase
 import com.tpov.common.domain.StructureUseCase
+import com.tpov.schoolquiz.domain.ProfileUseCase
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -32,6 +33,7 @@ class SyncWorker @AssistedInject constructor(
     @Assisted private val workerParams: WorkerParameters,
     private val structureUseCase: StructureUseCase,
     private val quizUseCase: QuizUseCase,
+    private val profileUseCase: ProfileUseCase,
     private val questionUseCase: QuestionUseCase,
     private val viewModelFactory: ViewModelProvider.Factory
 ) : CoroutineWorker(context, workerParams) {
@@ -47,8 +49,9 @@ class SyncWorker @AssistedInject constructor(
         try {
             Log.d("SyncWorker", "Sync started")
 
-            getData()
-            setQuizData(viewModel)
+            fetchQuizData()
+            pushQuizData(viewModel)
+            syncProfile()
 
             val outputData = Data.Builder()
                 .putBoolean(KEY_SYNC_SUCCESS, true)
@@ -60,6 +63,10 @@ class SyncWorker @AssistedInject constructor(
             Log.e("SyncData", "Error fetching or saving data: ${e.message}")
             Result.failure()
         }
+    }
+
+    private fun syncProfile() {
+        profileUseCase.syncProfile()
     }
 
     @SuppressLint("MissingPermission")
@@ -76,7 +83,7 @@ class SyncWorker @AssistedInject constructor(
         NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
-    private suspend fun setQuizData(viewModel: MainViewModel) {
+    private suspend fun pushQuizData(viewModel: MainViewModel) {
         val structureCategoryList = structureUseCase.getStructureCategory()
         if (structureCategoryList.isNotEmpty()) {
             structureCategoryList.forEach { structureCategory ->
@@ -91,7 +98,7 @@ class SyncWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun getData() {
+    private suspend fun fetchQuizData() {
         val updatedQuizList = structureUseCase.syncStructureDataANDquizzes()
         if (updatedQuizList.isNotEmpty()) {
             val quizCount = updatedQuizList.size
