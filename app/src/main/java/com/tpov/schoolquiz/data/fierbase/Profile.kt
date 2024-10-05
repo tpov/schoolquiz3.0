@@ -287,7 +287,7 @@ fun ProfileEntity.toProfile(): Profile {
     return Profile(
         tpovId = this.tpovId.toString(),
         login = this.login!!,
-        name = this.name ?: "",
+        name = this.name,
         nickname = this.nickname!!,
         birthday = this.birthday,
         points = Points(
@@ -314,11 +314,11 @@ fun ProfileEntity.toProfile(): Profile {
             quizRating = this.timeInQuizRating
         ),
         addPoints = AddPoints(
-            this.addPointsGold ?: 0,
-            this.addPointsSkill ?: 0,
-            this.addPointsNolics ?: 0,
-            this.addTrophy ?: "",
-            this.addMassage ?: ""
+            this.addPointsGold,
+            this.addPointsSkill,
+            this.addPointsNolics,
+            this.addTrophy,
+            this.addMassage
         ),
         dates = Dates(this.dataCreateAcc!!, this.dateSynch!!, this.datePremium, this.dateBanned),
         idFirebase = this.idFirebase!!,

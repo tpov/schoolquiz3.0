@@ -113,7 +113,7 @@ class MainViewModel @Inject constructor(
         return questionShortList
     }
 
-    fun updateProfile(profileEntity: ProfileEntity) {
+    fun updateProfile(profileEntity: ProfileEntity) = viewModelScope.launch(Dispatchers.Default){
         profileUseCase.updateProfile(profileEntity)
     }
 
@@ -236,7 +236,7 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun createProfile() {
+    fun createProfile() = viewModelScope.launch(Dispatchers.Default) {
         val currentTimestamp = Instant.now().epochSecond
         val daysSinceEpoch = Instant.now().epochSecond / 86400
 

@@ -35,3 +35,4 @@ ChatEntity(
     @ColumnInfo(name = "reaction")
     val reaction: Int
 )
+

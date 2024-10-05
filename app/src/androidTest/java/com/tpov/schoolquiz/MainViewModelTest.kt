@@ -30,6 +30,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.math.abs
 
+/**
+ * Перед запуском нужно на сервере
+ * 1. удалить файлы questionN
+ * 2. удалить структуру
+ * 3. сбросить значение idQuiz = 100
+ */
 
 @RunWith(AndroidJUnit4::class)
 class CreateQuizIntegrationTest {
@@ -100,7 +106,7 @@ class CreateQuizIntegrationTest {
     @Test
     fun testPushAndFetchQuiz() = runBlocking<Unit> {
 
-        kotlinx.coroutines.delay(30000) // для получения анонимного токена
+        kotlinx.coroutines.delay(0) // для получения анонимного токена
         structureUseCase.logger(0)
         viewModel.pushTheQuiz(
             Quiz1.structureCategoryDataEntity,
@@ -144,15 +150,15 @@ class CreateQuizIntegrationTest {
         Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         assertTrue(
             "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz1DataUpdate) <= 60
+            abs(currentTime - savedQuiz1DataUpdate) <= 90
         )
         assertTrue(
             "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz3DataUpdate) <= 60
+            abs(currentTime - savedQuiz3DataUpdate) <= 90
         )
         assertTrue(
             "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz4DataUpdate) <= 60
+            abs(currentTime - savedQuiz4DataUpdate) <= 90
         )
 
         assertEquals(

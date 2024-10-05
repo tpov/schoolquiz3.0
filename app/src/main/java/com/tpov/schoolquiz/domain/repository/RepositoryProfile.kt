@@ -11,7 +11,7 @@ interface RepositoryProfile {
 
     suspend fun pushProfile(profile: Profile)
 
-    suspend fun getProfile(): ProfileEntity?
+    suspend fun getProfile(): ProfileEntity
 
     suspend fun insertProfile(profile: ProfileEntity)
 

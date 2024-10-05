@@ -19,10 +19,10 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
     }
 
     suspend fun syncProfile() {
-        val remoteProfile = repositoryProfile.fetchProfile(tpovId)
+        val remoteProfile = repositoryProfile.fetchProfile(tpovId)!!
         val localProfile = repositoryProfile.getProfile()
 
-        val newProfile = localProfile?.copy(
+        val newProfile = localProfile.copy(
             addMassage = remoteProfile.addPoints.addMassage,
             addPointsGold = remoteProfile.addPoints.addGold,
             addPointsNolics = remoteProfile.addPoints.addNolics,
@@ -40,7 +40,7 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
             datePremium = remoteProfile.dates.datePremium
         )
 
-        repositoryProfile.pushProfile(newProfile?.toProfile()!!)
+        repositoryProfile.pushProfile(newProfile.toProfile())
         repositoryProfile.updateProfile(newProfile)
 
     }

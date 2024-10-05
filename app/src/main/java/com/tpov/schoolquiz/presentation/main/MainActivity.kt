@@ -117,11 +117,13 @@ class MainActivity : AppCompatActivity() {
 
         }
     }
+
     fun isNetworkAvailable(context: Context): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetwork = connectivityManager.activeNetworkInfo
         return activeNetwork?.isConnectedOrConnecting == true
     }
+
     private fun updateProfile() {
         lifecycleScope.launch {
             viewModel.profileState.collect { profile ->

@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.data
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.tpov.common.data.core.FirebaseRequestInterceptor
 import com.tpov.schoolquiz.data.database.ProfileDao
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.fierbase.Profile
@@ -22,9 +23,12 @@ class RepositoryProfileImpl @Inject constructor(
         val profilesRef = firestore.collection("profiles")
 
         return try {
-            val documentSnapshot = profilesRef.document(tpovId.toString()).get().await()
-            if (documentSnapshot.exists()) {
-                val profileData = documentSnapshot.data
+            val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                profilesRef.document(tpovId.toString()).get()
+            }.await()
+
+            if (task.exists()) {
+                val profileData = task.data
                 Profile().fromHashMap(profileData!!)
             } else {
                 null
@@ -35,17 +39,19 @@ class RepositoryProfileImpl @Inject constructor(
         }
     }
 
+
     override suspend fun pushProfile(profile: Profile) {
         val profilesRef = firestore.collection("profiles")
 
-        profilesRef.document(profile.tpovId)
-            .set(profile.toHashMap())
-            .addOnSuccessListener {
-            }
-            .addOnFailureListener { e ->
-                Log.w("Firestore", "Error pushProfile ", e)
-            }
+        try {
+            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                profilesRef.document(profile.tpovId).set(profile.toHashMap())
+            }.await()
+        } catch (e: Exception) {
+            Log.w("Firestore", "Error pushProfile", e)
+        }
     }
+
 
     override suspend fun getProfile(): ProfileEntity {
         return profileDao.getProfile()

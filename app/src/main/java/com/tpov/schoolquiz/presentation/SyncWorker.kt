@@ -65,7 +65,7 @@ class SyncWorker @AssistedInject constructor(
         }
     }
 
-    private fun syncProfile() {
+    private suspend fun syncProfile() {
         profileUseCase.syncProfile()
     }
 

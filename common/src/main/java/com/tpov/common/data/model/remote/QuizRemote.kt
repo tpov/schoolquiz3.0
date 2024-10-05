@@ -46,6 +46,7 @@ data class QuizRemote(
         starsAverageLocal: Int = 0,
         ratingLocal: Int = 0
     ): QuizEntity {
+
         return QuizEntity(
             id = id,
             idCategory = idCategory,

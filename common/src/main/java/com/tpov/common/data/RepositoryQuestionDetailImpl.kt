@@ -1,7 +1,9 @@
 package com.tpov.common.data
 
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.data.core.Core.tpovId
+import com.tpov.common.data.core.FirebaseRequestInterceptor
 import com.tpov.common.data.database.QuestionDetailDao
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.remote.QuestionDetailRemote
@@ -31,12 +33,18 @@ class RepositoryQuestionDetailImpl @Inject constructor(
             .document(tpovId.toString())
             .collection(tpovId.toString())
 
-        return collectionReference
-            .get()
-            .await()
-            .documents
-            .mapNotNull { it.toObject(QuestionDetailRemote::class.java) }
+        return try {
+            val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                collectionReference.get()
+            }.await()
+
+            task.documents.mapNotNull { it.toObject(QuestionDetailRemote::class.java) }
+        } catch (e: Exception) {
+            Log.w("Firestore", "Error fetchQuestionDetail", e)
+            emptyList()
+        }
     }
+
 
     override suspend fun pushQuestionDetail(
         id: Int,
@@ -47,18 +55,25 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         idQuiz: Int,
         questionDetailRemote: QuestionDetailRemote
     ) {
-            val collectionReference = baseCollection
-                .document("questionDetail$event")
-                .collection("questionDetail$event")
-                .document(idQuiz.toString())
-                .collection(idQuiz.toString())
-                .document(tpovId.toString())
-                .collection(tpovId.toString())
+        val collectionReference = baseCollection
+            .document("questionDetail$event")
+            .collection("questionDetail$event")
+            .document(idQuiz.toString())
+            .collection(idQuiz.toString())
+            .document(tpovId.toString())
+            .collection(tpovId.toString())
 
-            collectionReference
-                .add(questionDetailRemote)
-                .await()
-        questionDetailDao.updateQuizDetail(questionDetailDao.getQuestionDetail(id).copy(synth = true))
+        try {
+            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                collectionReference.add(questionDetailRemote)
+            }.await()
+
+            questionDetailDao.updateQuizDetail(
+                questionDetailDao.getQuestionDetail(id).copy(synth = true)
+            )
+        } catch (e: Exception) {
+            Log.w("Firestore", "Error pushQuestionDetail", e)
+        }
     }
 
     override suspend fun getQuestionDetailByIdQuiz(idQuiz: Int) = questionDetailDao.getQuestionDetailByIdQuiz(idQuiz)
@@ -84,8 +99,12 @@ class RepositoryQuestionDetailImpl @Inject constructor(
             .document(tpovId.toString())
             .collection(tpovId.toString())
 
-        collectionReference.document(idQuiz.toString()).delete().await()
+        try {
+            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                collectionReference.document(idQuiz.toString()).delete()
+            }.await()
+        } catch (e: Exception) {
+            Log.w("Firestore", "Error deleting remote question detail", e)
+        }
     }
-
-
 }

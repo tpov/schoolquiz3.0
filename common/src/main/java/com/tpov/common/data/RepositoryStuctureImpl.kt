@@ -2,9 +2,12 @@ package com.tpov.common.data
 
 import android.content.Context
 import android.util.Log
+import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.gson.Gson
+import com.tpov.common.data.core.FirebaseRequestInterceptor
+import com.tpov.common.data.core.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
@@ -31,35 +34,37 @@ class RepositoryStuctureImpl @Inject constructor(
     private val ratingFileName = "structure_rating.json"
 
     override suspend fun fetchStructureData(): StructureData? {
-        return try {
-            Log.d("SyncData", "Starting to fetch 'structureData' from Firestore")
-            firestore.collection("structures")
-                .document("structureData")
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        Log.d("FirestoreTest", "DocumentSnapshot data: ${document.data}")
+        val fetchTask = {
+            val taskCompletionSource = TaskCompletionSource<StructureData?>()
+            val documentRef = firestore.collection("structures").document("structureData")
+
+            documentRef.get()
+                .addOnSuccessListener { documentSnapshot ->
+                    if (documentSnapshot.exists()) {
+                        Log.d("SyncData", "Document 'structureData' exists. Converting to StructureData object.")
+                        val structureData = documentSnapshot.toObject(StructureData::class.java)
+                        if (structureData != null) {
+                            Log.d("SyncData", "Successfully parsed 'structureData': $structureData")
+                            taskCompletionSource.setResult(structureData)
+                        } else {
+                            taskCompletionSource.setException(Exception("Data parsing error"))
+                        }
                     } else {
-                        Log.d("FirestoreTest", "No such document")
+                        Log.d("SyncData", "Document 'structureData' does not exist, returning null.")
+                        taskCompletionSource.setResult(null)
                     }
                 }
                 .addOnFailureListener { exception ->
-                    Log.e("FirestoreTest", "get failed with ", exception)
+                    Log.e("SyncData", "Error fetching document: ", exception)
+                    taskCompletionSource.setException(exception)
                 }
 
-            val documentSnapshot = firestore.collection("structures")
-                .document("structureData")
-                .get().await()
+            taskCompletionSource.task
+        }
 
-            if (documentSnapshot.exists()) {
-                Log.d("SyncData", "Document 'structureData' exists. Converting to StructureData object.")
-                val structureData = documentSnapshot.toObject(StructureData::class.java)
-                Log.d("SyncData", "Successfully parsed 'structureData': $structureData")
-                structureData ?: throw Exception("Data parsing error")
-            } else {
-                Log.d("SyncData", "Document 'structureData' does not exist, returning null.")
-                null
-            }
+        return try {
+            executeWithChecksSingleTask(fetchTask)
+                .await()
         } catch (e: FirebaseFirestoreException) {
             Log.e("SyncData", "Firestore exception: ${e.message}")
             null
@@ -67,65 +72,100 @@ class RepositoryStuctureImpl @Inject constructor(
             Log.e("SyncData", "Request timeout: ${e.message}")
             null
         } catch (e: Exception) {
-            Log.e("SyncData", "General error fetchStructureData: ${e.message}")
+            Log.e("SyncData", "General error in fetchStructureData: ${e.message}")
             null
         }
     }
 
+
     override suspend fun pushStructureRating(ratingData: StructureLocalData) {
-        try {
+        val pushTask = {
+            val taskCompletionSource = TaskCompletionSource<Void>()
             val dataMap = ratingData.toMap()
 
             firestore.collection("structureRatings")
                 .add(dataMap)
                 .addOnSuccessListener { documentReference ->
-                    println("DocumentSnapshot added with ID: ${documentReference.id}")
+                    Log.d("Firestore", "DocumentSnapshot added with ID: ${documentReference.id}")
+                    taskCompletionSource.setResult(null)
                 }
-                .addOnFailureListener {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        saveFailedRatingLocally(ratingData)
-                    }
+                .addOnFailureListener { exception ->
+                    Log.e("Firestore", "Error adding document", exception)
+                    taskCompletionSource.setException(exception)
                 }
+
+            taskCompletionSource.task
+        }
+
+        try {
+            // Используем FirebaseRequestInterceptor для выполнения задачи
+            executeWithChecksSingleTask(pushTask)
+                .await()
         } catch (e: Exception) {
-            CoroutineScope(Dispatchers.IO).launch {
-                saveFailedRatingLocally(ratingData)
-            }
+            Log.e("Firestore", "Failed to push rating data. Saving locally.", e)
+            // Если произошла ошибка, сохраняем данные локально
+            saveFailedRatingLocally(ratingData)
         }
     }
 
     override suspend fun saveStructureData(structureData: com.tpov.common.data.model.local.StructureData) {
-        withContext(Dispatchers.IO) {
-            val json = gson.toJson(structureData)
-            context.openFileOutput(fileName, Context.MODE_PRIVATE).use {
-                it.write(json.toByteArray())
-            }
+        try {
+            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                val taskCompletionSource = TaskCompletionSource<Void>()
+
+                    val json = gson.toJson(structureData)
+                    context.openFileOutput(fileName, Context.MODE_PRIVATE).use {
+                        it.write(json.toByteArray())
+                    }
+                    taskCompletionSource.setResult(null)
+
+                taskCompletionSource.task
+            }.await()
+
+            Log.d("SaveStructureData", "Данные структуры успешно сохранены")
+        } catch (e: Exception) {
+            Log.e("SaveStructureData", "Ошибка при сохранении данных структуры", e)
+            throw e
         }
     }
+
 
     override suspend fun pushStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
         try {
             val dataMap = structureCategoryDataEntity.toMap()
 
-            Log.d("Firestore", "pushStructureCategoryData() ")
-            firestore.collection("structureCategory")
-                .document("structureCategory")  // укажите ваш ID или сгенерируйте его
-                .set(dataMap)
-                .addOnSuccessListener {
-                    Log.d("Firestore", "Document successfully written!")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("Firestore", "Error writing document", e)
-                    CoroutineScope(Dispatchers.IO).launch {
-                        saveFailedCategoryLocally(structureCategoryDataEntity)
+            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                val taskCompletionSource = TaskCompletionSource<Void>()
+
+                firestore.collection("structureCategory")
+                    .document("structureCategory")  // укажите ваш ID или сгенерируйте его
+                    .set(dataMap)
+                    .addOnSuccessListener {
+                        Log.d("Firestore", "Document successfully written!")
+                        taskCompletionSource.setResult(null)
                     }
-                }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Error writing document", e)
+                        taskCompletionSource.setException(e)
+
+                        // Если произошла ошибка, сохраняем данные локально
+                        CoroutineScope(Dispatchers.IO).launch {
+                            saveFailedCategoryLocally(structureCategoryDataEntity)
+                        }
+                    }
+
+                taskCompletionSource.task
+            }.await() // Ждём завершения задачи
         } catch (e: Exception) {
             Log.e("Firestore", "Exception while pushing data", e)
+
+            // Если произошла ошибка, сохраняем данные локально
             CoroutineScope(Dispatchers.IO).launch {
                 saveFailedCategoryLocally(structureCategoryDataEntity)
             }
         }
     }
+
 
 
     override suspend fun saveListUpdateQuiz(list: List<String>) {
@@ -180,18 +220,30 @@ class RepositoryStuctureImpl @Inject constructor(
             try {
                 val dataMap = ratingDataEntity.toStructureRatingData().toMap()
 
-                firestore.collection("structureRatings")
-                    .add(dataMap)
-                    .addOnSuccessListener { documentReference ->
-                        println("DocumentSnapshot added with ID: ${documentReference.id}")
-                    }
-                    .addOnFailureListener { e ->
-                        println("Error adding document: $e")
-                    }
+                // Используем перехватчик для отправки данных на сервер
+                FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                    val taskCompletionSource = TaskCompletionSource<Void>()
+
+                    firestore.collection("structureRatings")
+                        .add(dataMap)
+                        .addOnSuccessListener { documentReference ->
+                            println("DocumentSnapshot added with ID: ${documentReference.id}")
+                            taskCompletionSource.setResult(null)
+                        }
+                        .addOnFailureListener { e ->
+                            println("Error adding document: $e")
+                            taskCompletionSource.setException(e)
+                        }
+
+                    taskCompletionSource.task
+                }.await()
+
             } catch (e: Exception) {
                 println("Error saving structure rating: $e")
             }
         }
+
+        // Очищаем локальные записи после успешной попытки
         structureRatingDataDao.clearFailedRatings()
     }
 }
