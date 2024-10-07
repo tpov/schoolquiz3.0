@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.tpov.common.data.core.Core
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
@@ -19,9 +20,13 @@ import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.ProfileUseCase
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -29,6 +34,7 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Provider
 
+@OptIn(FlowPreview::class)
 class MainViewModel @Inject constructor(
     private val structureUseCase: StructureUseCase,
     private val quizUseCase: QuizUseCase,
@@ -51,13 +57,32 @@ class MainViewModel @Inject constructor(
 
     var firstStartApp = false
 
+    private val _tpovIdFlow = MutableStateFlow(Core.tpovId)
+    val tpovId: StateFlow<Int> = _tpovIdFlow
+
     init {
         viewModelScope.launch(Dispatchers.Default) {
-            profileUseCase.getProfileFlow()?.collect { profile ->
-                _profileState.value = profile
-            }
+            var previousProfile: ProfileEntity? = null
+
+            combine(profileUseCase.getProfileFlow() ?: flowOf(null), tpovId) { profile, currentTpovId ->
+                profile to currentTpovId }
+                .debounce(500)
+                .collect { (profile, currentTpovId) ->
+                    Log.d("qweqwe", "Profile: $profile, tpovId: $currentTpovId, if: ${profile != previousProfile}")
+
+                    if ((profile != previousProfile) && currentTpovId != 0 || (profile != previousProfile)) {
+                        _profileState.value = profile
+                        if (profile == null) {
+                            createProfile()
+                        } else {
+                            profileUseCase.syncProfile()
+                        }
+                        previousProfile = profile
+                    }
+                }
         }
     }
+
 
     fun sendStructureCategory(structureCategoryDataEntity: StructureCategoryDataEntity) =
         viewModelScope.launch(Dispatchers.Default) {
@@ -240,11 +265,12 @@ class MainViewModel @Inject constructor(
         val currentTimestamp = Instant.now().epochSecond
         val daysSinceEpoch = Instant.now().epochSecond / 86400
 
-        profileUseCase.insertProfile(
+        profileUseCase.insertAndPushProfile(
             ProfileEntity(
                 dataCreateAcc = currentTimestamp.toString(),
                 languages = Locale.getDefault().language,
-                timeLastOpenBox = daysSinceEpoch.toString()
+                timeLastOpenBox = daysSinceEpoch.toString(),
+                tpovId = Core.tpovId
             )
         )
     }

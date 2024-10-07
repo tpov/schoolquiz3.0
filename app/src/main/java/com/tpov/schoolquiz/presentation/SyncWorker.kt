@@ -113,6 +113,7 @@ class SyncWorker @AssistedInject constructor(
             showNotification("Sync Complete", "No new data to synchronize.")
         }
     }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Sync Notifications"

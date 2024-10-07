@@ -89,6 +89,7 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     override suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, event: Int) {
+        Log.d("FirebaseRequestInterceptor", "deleteRemoteQuestionByIdQuiz")
         val baseCollectionReference = baseCollection
             .document("question$event")
             .collection(idQuiz.toString())
@@ -151,6 +152,7 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     private fun uploadFileWithInterceptor(pathPhoto: String) {
+        Log.d("FirebaseRequestInterceptor", "uploadFileWithInterceptor")
         FirebaseRequestInterceptor.executeWithChecksSingleTask {
             val storageRef = storage.reference.child(pathPhoto)
             storageRef.putFile(Uri.parse(pathPhoto)) // Загружаем фото на сервер
@@ -164,6 +166,7 @@ class RepositoryQuestionImpl @Inject constructor(
 
 
     private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
+        Log.d("FirebaseRequestInterceptor", "downloadPhotoToLocalPath")
         return if (pathPhoto.isNotBlank()) {
             val storageRef = storage.reference
             val photoRef = storageRef.child(pathPhoto)
@@ -184,6 +187,7 @@ class RepositoryQuestionImpl @Inject constructor(
 
 
     private suspend fun deletePhotoFromServer(pathPhoto: String) {
+        Log.d("FirebaseRequestInterceptor", "deletePhotoFromServer")
         if (pathPhoto.isNotBlank()) {
             val storageRef = storage.reference
             val photoRef = storageRef.child(pathPhoto)

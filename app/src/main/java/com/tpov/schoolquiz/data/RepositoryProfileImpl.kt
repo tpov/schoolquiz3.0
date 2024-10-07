@@ -21,7 +21,7 @@ class RepositoryProfileImpl @Inject constructor(
 
     override suspend fun fetchProfile(tpovId: Int): Profile? {
         val profilesRef = firestore.collection("profiles")
-
+Log.d("FirebaseRequestInterceptor", "fetchProfile $tpovId")
         return try {
             val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
                 profilesRef.document(tpovId.toString()).get()
@@ -43,9 +43,10 @@ class RepositoryProfileImpl @Inject constructor(
     override suspend fun pushProfile(profile: Profile) {
         val profilesRef = firestore.collection("profiles")
 
+        Log.d("FirebaseRequestInterceptor", "pushProfile")
         try {
             FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                profilesRef.document(profile.tpovId).set(profile.toHashMap())
+                profilesRef.document(profile.tpovId.toString()).set(profile.toHashMap())
             }.await()
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushProfile", e)

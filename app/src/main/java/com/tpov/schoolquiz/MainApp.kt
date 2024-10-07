@@ -21,6 +21,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class MainApp : Application(), Configuration.Provider {
 
@@ -68,7 +69,11 @@ class MainApp : Application(), Configuration.Provider {
         Core.token = token
 
         val url = "https://get-tpovid-762375057396.us-central1.run.app/assignTpovId"
-        val client = OkHttpClient()
+        val client = OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
         val json = JSONObject().apply {
             put("token", token)
         }

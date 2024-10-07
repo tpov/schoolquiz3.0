@@ -40,6 +40,7 @@ class RepositoryQuizImpl @Inject constructor(
         tpovId: Int,
         idQuiz: Int
     ): QuizRemote {
+        Log.d("FirebaseRequestInterceptor", "fetchQuizzes")
         val documentReference = baseCollection
             .document("quiz$typeId")
             .collection("$tpovId")
@@ -87,6 +88,7 @@ class RepositoryQuizImpl @Inject constructor(
     }
 
     override suspend fun pushQuiz(quizRemote: QuizRemote, idQuiz: Int) {
+        Log.d("FirebaseRequestInterceptor", "pushQuiz")
         val quizDocumentRef = firestore.collection("quizzes")
             .document("quiz${quizRemote.event}")
             .collection("${quizRemote.tpovId}")
@@ -111,6 +113,7 @@ class RepositoryQuizImpl @Inject constructor(
     override suspend fun pushStructureCategory(
         structureCategoryDataEntity: StructureCategoryDataEntity
     ): StructureCategoryDataEntity {
+        Log.d("FirebaseRequestInterceptor", "pushStructureCategory")
         val client = OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
@@ -210,6 +213,7 @@ class RepositoryQuizImpl @Inject constructor(
 
 
     private suspend fun uploadFileToFirebaseStorage(pathPhoto: String) {
+        Log.d("FirebaseRequestInterceptor", "uploadFileToFirebaseStorage")
         if (pathPhoto.isNotBlank()) {
             val storageRef = FirebaseStorage.getInstance().reference
             val localFile = File(pathPhoto)
@@ -245,6 +249,7 @@ class RepositoryQuizImpl @Inject constructor(
 
 
     private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
+        Log.d("FirebaseRequestInterceptor", "downloadPhotoToLocalPath")
         if (pathPhoto.isNotBlank()) {
             val storageRef = FirebaseStorage.getInstance().reference
             val photoRef = storageRef.child(pathPhoto)
@@ -282,6 +287,7 @@ class RepositoryQuizImpl @Inject constructor(
         quizDao.deleteQuizById(idQuiz)
     }
     override suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int) {
+        Log.d("FirebaseRequestInterceptor", "deleteRemoteQuizById")
         val deleteTask = {
             val taskCompletionSource = TaskCompletionSource<Void>()
             val docRef = baseCollection
@@ -314,6 +320,7 @@ class RepositoryQuizImpl @Inject constructor(
     }
 
     private suspend fun deletePhotoFromServer(pathPhoto: String) {
+        Log.d("FirebaseRequestInterceptor", "deletePhotoFromServer")
         val deletePhotoTask = {
             val taskCompletionSource = TaskCompletionSource<Void>()
             val storageRef = FirebaseStorage.getInstance().reference

@@ -6,7 +6,7 @@ import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 
 @IgnoreExtraProperties
 data class Profile constructor(
-    val tpovId: String,
+    val tpovId: Long,
     val login: String,
     val name: String,
     val nickname: String,
@@ -16,16 +16,15 @@ data class Profile constructor(
     val trophy: String,
     val friends: String,
     val city: String,
-    val logo: Int,
+    val logo: Long,
     val timeInGames: TimeInGames,
     val addPoints: AddPoints,
     val dates: Dates,
-    val idFirebase: String,
     val languages: String,
     val qualification: Qualification,
     val life: Life,
     val box: Box,
-    val comander: Int
+    val comander: Long
 ) {
     fun toHashMap(): HashMap<String, Any> {
         val result = HashMap<String, Any>()
@@ -71,7 +70,6 @@ data class Profile constructor(
             "datePremium" to dates.datePremium,
             "dateBanned" to dates.dateBanned
         )
-        result["idFirebase"] = idFirebase
         result["languages"] = languages
         result["qualification"] = hashMapOf(
             "sponsor" to qualification.sponsor,
@@ -97,18 +95,18 @@ data class Profile constructor(
 
     fun fromHashMap(map: Map<String, Any>): Profile {
         return Profile(
-            tpovId = map["tpovId"] as String? ?: "",
+            tpovId = map["tpovId"] as Long? ?: 0,
             login = map["login"] as String? ?: "",
             name = map["name"] as String? ?: "",
             nickname = map["nickname"] as String? ?: "",
             birthday = map["birthday"] as String? ?: "",
             points = Points(
-                gold = (map["points"] as? Map<String, Any>)?.get("gold") as? Int ?: 0,
-                skill = (map["points"] as? Map<String, Any>)?.get("skill") as? Int ?: 0,
-                nolics = (map["points"] as? Map<String, Any>)?.get("nolics") as? Int ?: 0
+                gold = (map["points"] as? Map<String, Any>)?.get("gold") as? Long ?: 0,
+                skill = (map["points"] as? Map<String, Any>)?.get("skill") as? Long ?: 0,
+                nolics = (map["points"] as? Map<String, Any>)?.get("nolics") as? Long ?: 0
             ),
             buy = Buy(
-                quizPlace = (map["buy"] as? Map<String, Any>)?.get("quizPlace") as? Int ?: 0,
+                quizPlace = (map["buy"] as? Map<String, Any>)?.get("quizPlace") as? Long ?: 0,
                 theme = (map["buy"] as? Map<String, Any>)?.get("theme") as? String ?: "",
                 music = (map["buy"] as? Map<String, Any>)?.get("music") as? String ?: "",
                 logo = (map["buy"] as? Map<String, Any>)?.get("logo") as? String ?: ""
@@ -116,19 +114,19 @@ data class Profile constructor(
             trophy = map["trophy"] as String? ?: "",
             friends = map["friends"] as String? ?: "",
             city = map["city"] as String? ?: "",
-            logo = map["logo"] as? Int ?: 0,
+            logo = map["logo"] as? Long ?: 0,
             timeInGames = TimeInGames(
-                timeInQuiz = (map["timeInGames"] as? Map<String, Any>)?.get("timeInQuiz") as? Int ?: 0,
-                timeInChat = (map["timeInGames"] as? Map<String, Any>)?.get("timeInChat") as? Int ?: 0,
-                smsPoints = (map["timeInGames"] as? Map<String, Any>)?.get("smsPoints") as? Int ?: 0,
-                countQuestions = (map["timeInGames"] as? Map<String, Any>)?.get("countQuestions") as? Int ?: 0,
-                countTrueQuestion = (map["timeInGames"] as? Map<String, Any>)?.get("countTrueQuestion") as? Int ?: 0,
-                quizRating = (map["timeInGames"] as? Map<String, Any>)?.get("quizRating") as? Int ?: 0
+                timeInQuiz = (map["timeInGames"] as? Map<String, Any>)?.get("timeInQuiz") as? Long ?: 0,
+                timeInChat = (map["timeInGames"] as? Map<String, Any>)?.get("timeInChat") as? Long ?: 0,
+                smsPoints = (map["timeInGames"] as? Map<String, Any>)?.get("smsPoints") as? Long ?: 0,
+                countQuestions = (map["timeInGames"] as? Map<String, Any>)?.get("countQuestions") as? Long ?: 0,
+                countTrueQuestion = (map["timeInGames"] as? Map<String, Any>)?.get("countTrueQuestion") as? Long ?: 0,
+                quizRating = (map["timeInGames"] as? Map<String, Any>)?.get("quizRating") as? Long ?: 0
             ),
             addPoints = AddPoints(
-                addGold = (map["addPoints"] as? Map<String, Any>)?.get("addGold") as? Int ?: 0,
-                addSkill = (map["addPoints"] as? Map<String, Any>)?.get("addSkill") as? Int ?: 0,
-                addNolics = (map["addPoints"] as? Map<String, Any>)?.get("addNolics") as? Int ?: 0,
+                addGold = (map["addPoints"] as? Map<String, Any>)?.get("addGold") as? Long ?: 0,
+                addSkill = (map["addPoints"] as? Map<String, Any>)?.get("addSkill") as? Long ?: 0,
+                addNolics = (map["addPoints"] as? Map<String, Any>)?.get("addNolics") as? Long ?: 0,
                 addTrophy = (map["addPoints"] as? Map<String, Any>)?.get("addTrophy") as? String ?: "",
                 addMassage = (map["addPoints"] as? Map<String, Any>)?.get("addMassage") as? String ?: ""
             ),
@@ -138,31 +136,30 @@ data class Profile constructor(
                 datePremium = (map["dates"] as? Map<String, Any>)?.get("datePremium") as? String ?: "",
                 dateBanned = (map["dates"] as? Map<String, Any>)?.get("dateBanned") as? String ?: ""
             ),
-            idFirebase = map["idFirebase"] as String? ?: "",
             languages = map["languages"] as String? ?: "",
             qualification = Qualification(
-                sponsor = (map["qualification"] as? Map<String, Any>)?.get("sponsor") as? Int ?: 0,
-                tester = (map["qualification"] as? Map<String, Any>)?.get("tester") as? Int ?: 0,
-                translater = (map["qualification"] as? Map<String, Any>)?.get("translater") as? Int ?: 0,
-                moderator = (map["qualification"] as? Map<String, Any>)?.get("moderator") as? Int ?: 0,
-                admin = (map["qualification"] as? Map<String, Any>)?.get("admin") as? Int ?: 0,
-                developer = (map["qualification"] as? Map<String, Any>)?.get("developer") as? Int ?: 0
+                sponsor = (map["qualification"] as? Map<String, Any>)?.get("sponsor") as? Long ?: 0,
+                tester = (map["qualification"] as? Map<String, Any>)?.get("tester") as? Long ?: 0,
+                translater = (map["qualification"] as? Map<String, Any>)?.get("translater") as? Long ?: 0,
+                moderator = (map["qualification"] as? Map<String, Any>)?.get("moderator") as? Long ?: 0,
+                admin = (map["qualification"] as? Map<String, Any>)?.get("admin") as? Long ?: 0,
+                developer = (map["qualification"] as? Map<String, Any>)?.get("developer") as? Long ?: 0
             ),
             life = Life(
-                countLife = (map["life"] as? Map<String, Any>)?.get("countLife") as? Int ?: 0,
-                countGoldLife = (map["life"] as? Map<String, Any>)?.get("countGoldLife") as? Int ?: 0
+                countLife = (map["life"] as? Map<String, Any>)?.get("countLife") as? Long ?: 0,
+                countGoldLife = (map["life"] as? Map<String, Any>)?.get("countGoldLife") as? Long ?: 0
             ),
             box = Box(
-                countBox = (map["box"] as? Map<String, Any>)?.get("countBox") as? Int ?: 0,
+                countBox = (map["box"] as? Map<String, Any>)?.get("countBox") as? Long ?: 0,
                 timeLastOpenBox = (map["box"] as? Map<String, Any>)?.get("timeLastOpenBox") as? String ?: "",
-                coundDayBox = (map["box"] as? Map<String, Any>)?.get("coundDayBox") as? Int ?: 0
+                coundDayBox = (map["box"] as? Map<String, Any>)?.get("coundDayBox") as? Long ?: 0
             ),
-            comander = map["comander"] as? Int ?: 0
+            comander = map["comander"] as? Long ?: 0
         )
     }
 
     constructor() : this(
-        0.toString(),
+        0L,
         "",
         "",
         "",
@@ -172,102 +169,101 @@ data class Profile constructor(
         "",
         "",
         "",
-        0,
+        0L,
         TimeInGames(),
         AddPoints(),
         Dates(),
         "",
-        "",
         Qualification(),
         Life(),
         Box(),
-        0
+        0L
     )
 }
 
 @IgnoreExtraProperties
 data class Life(
-    val countLife: Int,
-    val countGoldLife: Int,
+    val countLife: Long,
+    val countGoldLife: Long,
 ) {
     constructor() : this(
-        0, 0
+        0L, 0L
     )
 }
 
 @IgnoreExtraProperties
 data class Box(
-    val countBox: Int,
+    val countBox: Long,
     val timeLastOpenBox: String,
-    val coundDayBox: Int
+    val coundDayBox: Long
 ) {
     constructor() : this(
-        0, "", 0
+        0L, "", 0L
     )
 }
 
 
 @IgnoreExtraProperties
 data class Qualification(
-    val sponsor: Int,
-    val tester: Int,
-    val translater: Int,
-    val moderator: Int,
-    val admin: Int,
-    val developer: Int
+    val sponsor: Long,
+    val tester: Long,
+    val translater: Long,
+    val moderator: Long,
+    val admin: Long,
+    val developer: Long
 ) {
     constructor() : this(
-         0, 0, 0, 0, 0, 0
+         0L, 0L, 0L, 0L, 0L, 0L
     )
 }
 
 @IgnoreExtraProperties
 data class TimeInGames(
-    val timeInQuiz: Int,
-    val timeInChat: Int,
-    val smsPoints: Int,
-    val countQuestions: Int?,
-    val countTrueQuestion: Int,
-    val quizRating: Int
+    val timeInQuiz: Long,
+    val timeInChat: Long,
+    val smsPoints: Long,
+    val countQuestions: Long?,
+    val countTrueQuestion: Long,
+    val quizRating: Long
 ) {
     constructor() : this(
-        0, 0, 0, 0, 0, 0
+        0L, 0L, 0L, 0L, 0L, 0L
     )
 }
 
 @IgnoreExtraProperties
 data class Buy(
-    val quizPlace: Int,
+    val quizPlace: Long,
     val theme: String,
     val music: String,
     val logo: String
 ) {
     constructor() : this(
-         0, "", "", ""
+         0L, "", "", ""
     )
 }
 
 @IgnoreExtraProperties
 data class Points(
-    val gold: Int,
-    val skill: Int,
-    val nolics: Int
+    val gold: Long,
+    val skill: Long,
+    val nolics: Long
 ) {
     constructor() : this(
-        0,  0, 0
+        0L,  0L, 0L
     )
 }
 
 @IgnoreExtraProperties
 data class AddPoints(
-    val addGold: Int,
-    val addSkill: Int,
-    val addNolics: Int,
+    val addGold: Long,
+    val addSkill: Long,
+    val addNolics: Long,
     val addTrophy: String,
     val addMassage: String
 ) {
     constructor() : this(
-        0,  0, 0, "", ""
+        0L,  0L, 0L, "", ""
     )
 }
 
@@ -285,18 +281,18 @@ data class Dates(
 
 fun ProfileEntity.toProfile(): Profile {
     return Profile(
-        tpovId = this.tpovId.toString(),
-        login = this.login!!,
+        tpovId = tpovId.toLong(),
+        login = this.login ?: "",
         name = this.name,
-        nickname = this.nickname!!,
+        nickname = this.nickname ?: "",
         birthday = this.birthday,
         points = Points(
-            gold = this.pointsGold,
-            skill = this.pointsSkill!!,
-            nolics = this.pointsNolics!!
+            gold = this.pointsGold.toLong(),
+            skill = this.pointsSkill.toLong()!!,
+            nolics = this.pointsNolics.toLong()!!
         ),
         buy = Buy(
-            quizPlace = this.buyQuizPlace!!,
+            quizPlace = this.buyQuizPlace.toLong()!!,
             theme = this.buyTheme!!,
             music = this.buyMusic!!,
             logo = this.buyLogo!!
@@ -304,41 +300,40 @@ fun ProfileEntity.toProfile(): Profile {
         trophy = this.trophy!!,
         friends = this.friends!!,
         city = this.city!!,
-        logo = this.logo!!,
+        logo = this.logo.toLong(),
         timeInGames = TimeInGames(
-            timeInQuiz = this.timeInGamesInQuiz!!,
-            timeInChat = this.timeInGamesInChat!!,
-            smsPoints = this.timeInGamesSmsPoints!!,
-            countQuestions = this.timeInGamesCountQuestions,
-            countTrueQuestion = this.timeInGamesCountTrueQuestion,
-            quizRating = this.timeInQuizRating
+            timeInQuiz = this.timeInGamesInQuiz.toLong()!!,
+            timeInChat = this.timeInGamesInChat.toLong()!!,
+            smsPoints = this.timeInGamesSmsPoints.toLong()!!,
+            countQuestions = this.timeInGamesCountQuestions.toLong(),
+            countTrueQuestion = this.timeInGamesCountTrueQuestion.toLong(),
+            quizRating = this.timeInQuizRating.toLong()
         ),
         addPoints = AddPoints(
-            this.addPointsGold,
-            this.addPointsSkill,
-            this.addPointsNolics,
+            this.addPointsGold.toLong(),
+            this.addPointsSkill.toLong(),
+            this.addPointsNolics.toLong(),
             this.addTrophy,
             this.addMassage
         ),
         dates = Dates(this.dataCreateAcc!!, this.dateSynch!!, this.datePremium, this.dateBanned),
-        idFirebase = this.idFirebase!!,
         languages = this.languages!!,
         qualification = Qualification(
-            this.sponsor!!,
-            this.tester!!,
-            this.translater!!,
-            this.moderator!!,
-            this.admin!!,
-            this.developer!!
+            this.sponsor?.toLong()!!,
+            this.tester?.toLong()!!,
+            this.translater.toLong()!!,
+            this.moderator.toLong()!!,
+            this.admin.toLong()!!,
+            this.developer.toLong()!!
         ),
         life = Life(
-            this.countLife!!,
-            this.countGoldLife!!,
+            this.countLife.toLong()!!,
+            this.countGoldLife.toLong()!!,
         ),
         box = Box(
-            this.countBox!!,
+            this.countBox.toLong()!!,
             this.timeLastOpenBox!!,
-            this.coundDayBox!!
+            this.coundDayBox.toLong()!!
         ),
         0
     )
@@ -351,49 +346,48 @@ fun Profile.toProfileEntity(countGold: Int, count: Int): ProfileEntity {
         login = this.login,
         name = this.name,
         birthday = this.birthday,
-        pointsGold = this.points.gold,
-        pointsSkill = this.points.skill,
-        pointsNolics = this.points.nolics,
+        pointsGold = this.points.gold.toInt(),
+        pointsSkill = this.points.skill.toInt(),
+        pointsNolics = this.points.nolics.toInt(),
         datePremium = this.dates.datePremium,
-        buyQuizPlace = this.buy.quizPlace,
+        buyQuizPlace = this.buy.quizPlace.toInt(),
         buyTheme = this.buy.theme,
         buyMusic = this.buy.music,
         buyLogo = this.buy.logo,
         trophy = this.trophy,
         friends = this.friends,
         city = this.city,
-        logo = this.logo,
-       timeInGamesInQuiz = this.timeInGames.timeInQuiz,
-        timeInGamesInChat = this.timeInGames.timeInChat,
-        timeInGamesSmsPoints = this.timeInGames.smsPoints,
-        addPointsGold = this.addPoints.addGold,
-        addPointsSkill = this.addPoints.addSkill,
-        addPointsNolics = this.addPoints.addNolics,
+        logo = this.logo.toInt(),
+       timeInGamesInQuiz = this.timeInGames.timeInQuiz.toInt(),
+        timeInGamesInChat = this.timeInGames.timeInChat.toInt(),
+        timeInGamesSmsPoints = this.timeInGames.smsPoints.toInt(),
+        addPointsGold = this.addPoints.addGold.toInt(),
+        addPointsSkill = this.addPoints.addSkill.toInt(),
+        addPointsNolics = this.addPoints.addNolics.toInt(),
         addTrophy = this.addPoints.addTrophy,
         addMassage = this.addPoints.addMassage,
         dataCreateAcc = this.dates.dataCreateAcc,
         dateSynch = this.dates.dateSynch,
-        idFirebase = this.idFirebase,
         languages = this.languages,
-        sponsor = this.qualification.sponsor,
-        tester = this.qualification.tester,
-        translater = this.qualification.translater,
-        moderator = this.qualification.moderator,
-        admin = this.qualification.admin,
-        developer = this.qualification.developer,
+        sponsor = this.qualification.sponsor.toInt(),
+        tester = this.qualification.tester.toInt(),
+        translater = this.qualification.translater.toInt(),
+        moderator = this.qualification.moderator.toInt(),
+        admin = this.qualification.admin.toInt(),
+        developer = this.qualification.developer.toInt(),
         nickname = this.nickname,
-        coundDayBox = this.box.coundDayBox,
-        countBox = this.box.countBox,
+        coundDayBox = this.box.coundDayBox.toInt(),
+        countBox = this.box.countBox.toInt(),
         timeLastOpenBox = this.box.timeLastOpenBox,
-        countGold = countGold,
-        count = count,
-        countGoldLife = this.life.countGoldLife,
-        countLife = this.life.countLife,
+        countGold = countGold.toInt(),
+        count = count.toInt(),
+        countGoldLife = this.life.countGoldLife.toInt(),
+        countLife = this.life.countLife.toInt(),
         dateCloseApp = TimeManager.getCurrentTime(),
-        timeInGamesCountQuestions = this.timeInGames.countQuestions!!,
-        timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion,
-        timeInQuizRating = this.timeInGames.quizRating,
-        commander = this.comander,
+        timeInGamesCountQuestions = this.timeInGames.countQuestions?.toInt() ?: 0,
+        timeInGamesCountTrueQuestion = this.timeInGames.countTrueQuestion.toInt(),
+        timeInQuizRating = this.timeInGames.quizRating.toInt(),
+        commander = this.comander.toInt(),
         dateBanned = this.dates.dateBanned
     )
 }

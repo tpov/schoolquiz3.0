@@ -26,9 +26,6 @@ interface ProfileDao {
     @Query("SELECT * FROM profiles")
     fun getAllProfilesList(): ProfileEntity
 
-    @Query("SELECT * FROM profiles WHERE idFirebase = :id")
-    fun getProfileByFirebaseId(id: String): ProfileEntity
-
     @Query("SELECT * FROM profiles")
     fun getAllProfiles(): List<ProfileEntity>
 

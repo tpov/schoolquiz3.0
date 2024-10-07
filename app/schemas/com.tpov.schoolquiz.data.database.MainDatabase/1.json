@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "570c4349dbf3f1294157841e3ef529fb",
+    "identityHash": "d6c8c435905a348dfb32cec50b86a8e9",
     "entities": [
       {
         "tableName": "question_detail_entity",
@@ -264,7 +264,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT, `name` TEXT NOT NULL, `nickname` TEXT, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `dateBanned` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `timeInGamesCountQuestions` INTEGER NOT NULL, `timeInGamesCountTrueQuestion` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `addMassage` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `dateCloseApp` TEXT NOT NULL, `idFirebase` TEXT, `languages` TEXT NOT NULL, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT NOT NULL, `coundDayBox` INTEGER NOT NULL, `countLife` INTEGER NOT NULL, `count` INTEGER NOT NULL, `countGoldLife` INTEGER NOT NULL, `countGold` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT, `name` TEXT NOT NULL, `nickname` TEXT, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `dateBanned` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `timeInGamesCountQuestions` INTEGER NOT NULL, `timeInGamesCountTrueQuestion` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `addMassage` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `dateCloseApp` TEXT NOT NULL, `languages` TEXT NOT NULL, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT NOT NULL, `coundDayBox` INTEGER NOT NULL, `countLife` INTEGER NOT NULL, `count` INTEGER NOT NULL, `countGoldLife` INTEGER NOT NULL, `countGold` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -471,12 +471,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "idFirebase",
-            "columnName": "idFirebase",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
             "fieldPath": "languages",
             "columnName": "languages",
             "affinity": "TEXT",
@@ -574,7 +568,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '570c4349dbf3f1294157841e3ef529fb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd6c8c435905a348dfb32cec50b86a8e9')"
     ]
   }
 }

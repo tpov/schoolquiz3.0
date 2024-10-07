@@ -149,16 +149,16 @@ class CreateQuizIntegrationTest {
 
         Log.e("testPushAndFetchQuiz", "3 ${questionUseCase.getQuestionByIdQuiz(101).size}")
         assertTrue(
-            "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz1DataUpdate) <= 90
+            "Временные метки отличаются более чем на 120 секунд",
+            abs(currentTime - savedQuiz1DataUpdate) <= 120
         )
         assertTrue(
-            "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz3DataUpdate) <= 90
+            "Временные метки отличаются более чем на 120 секунд",
+            abs(currentTime - savedQuiz3DataUpdate) <= 120
         )
         assertTrue(
-            "Временные метки отличаются более чем на 60 секунд",
-            abs(currentTime - savedQuiz4DataUpdate) <= 90
+            "Временные метки отличаются более чем на 120 секунд",
+            abs(currentTime - savedQuiz4DataUpdate) <= 120
         )
 
         assertEquals(

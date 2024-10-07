@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.View
@@ -127,6 +128,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateProfile() {
         lifecycleScope.launch {
             viewModel.profileState.collect { profile ->
+                Log.d("qweqwe", "2 $profile")
                 if (profile != null) {
                     with(profile) {
                         nickname
@@ -168,7 +170,7 @@ class MainActivity : AppCompatActivity() {
                             viewModel.updateProfile(updatedProfile)
                         }
                     }
-                } else viewModel.createProfile()
+                }
             }
         }
     }

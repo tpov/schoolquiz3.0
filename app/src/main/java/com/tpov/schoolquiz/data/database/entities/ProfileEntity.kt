@@ -43,7 +43,6 @@ data class ProfileEntity(
     val dataCreateAcc: String,
     val dateSynch: String,
     val dateCloseApp: String,
-    val idFirebase: String?,
     val languages: String,
 
     val sponsor: Int?,
@@ -66,10 +65,11 @@ data class ProfileEntity(
         id: Int? = null,
         dataCreateAcc: String,
         languages: String,
-        timeLastOpenBox: String
+        timeLastOpenBox: String,
+        tpovId: Int
     ) : this(
         id = id,
-        tpovId = 0,
+        tpovId = tpovId,
         login = null,
         name = "",
         nickname = null,
@@ -105,7 +105,6 @@ data class ProfileEntity(
         dataCreateAcc = dataCreateAcc,
         dateSynch = "",
         dateCloseApp = "",
-        idFirebase = null,
         languages = languages,
 
         sponsor = 0,

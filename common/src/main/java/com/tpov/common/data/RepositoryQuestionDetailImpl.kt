@@ -25,6 +25,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         subsubcategoryId: String,
         idQuiz: Int
     ): List<QuestionDetailRemote> {
+        Log.d("FirebaseRequestInterceptor", "fetchQuestionDetail")
         val collectionReference = baseCollection
             .document("questionDetail$typeId")
             .collection("questionDetail$typeId")
@@ -55,6 +56,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         idQuiz: Int,
         questionDetailRemote: QuestionDetailRemote
     ) {
+        Log.d("FirebaseRequestInterceptor", "pushQuestionDetail")
         val collectionReference = baseCollection
             .document("questionDetail$event")
             .collection("questionDetail$event")
@@ -91,6 +93,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
     }
 
     override suspend fun deleteRemoteQuestionDetailByIdQuiz(idQuiz: Int, typeId: Int) {
+        Log.d("FirebaseRequestInterceptor", "deleteRemoteQuestionDetailByIdQuiz")
         val collectionReference = baseCollection
             .document("questionDetail$typeId")
             .collection("questionDetail$typeId")
