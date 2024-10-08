@@ -68,7 +68,6 @@ class MainViewModel @Inject constructor(
                 profile to currentTpovId }
                 .debounce(500)
                 .collect { (profile, currentTpovId) ->
-                    Log.d("qweqwe", "Profile: $profile, tpovId: $currentTpovId, if: ${profile != previousProfile}")
 
                     if ((profile != previousProfile) && currentTpovId != 0 || (profile != previousProfile)) {
                         _profileState.value = profile

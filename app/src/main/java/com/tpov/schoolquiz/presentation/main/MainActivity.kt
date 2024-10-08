@@ -40,7 +40,9 @@ import com.tpov.common.COUNT_LIFE_POINTS_IN_LIFE
 import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
+import com.tpov.common.domain.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.quiz.QuizFragment
+import com.tpov.common.presentation.utils.Values.getColorNickname
 import com.tpov.log_api.logger.Logger
 import com.tpov.network.presentation.chat.ChatFragment
 import com.tpov.network.presentation.friend.FriendsFragment
@@ -64,7 +66,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.NumberFormat
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.Timer
 import java.util.TimerTask
 import javax.inject.Inject
@@ -82,6 +87,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
     lateinit var viewModel: MainViewModel
     private var recreateActivity: Boolean = false
+
+    private var unixTimeDayThis = 0L
+    private var unixTimeThis = 0L
 
     override fun onDestroy() {
         super.onDestroy()
@@ -104,75 +112,218 @@ class MainActivity : AppCompatActivity() {
         initBottomMenu()
         setupAnimations()
         createTimer()
-        updateProfile()
+        syncProfile()
         initData()
     }
 
     @Logger
     private fun initData() {
+        getDataToday()
+
         lifecycleScope.launch(Dispatchers.Default) {
             if (!isNetworkAvailable(this@MainActivity)) {
-                Toast.makeText(this@MainActivity, "Нет подключения к интернету. Попробуйте позже.", Toast.LENGTH_LONG).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Нет подключения к интернету. Попробуйте позже.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                return@launch
             }
-                viewModel.getNewStructureDataANDQuizzes()
-
+            viewModel.getNewStructureDataANDQuizzes()
         }
     }
 
+    private fun getDataToday() {
+        val currentUnixTime = Instant.now()
+
+        val nextDay = currentUnixTime.atZone(ZoneOffset.UTC)
+
+        unixTimeDayThis = nextDay.toEpochSecond()
+    }
+
     fun isNetworkAvailable(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetwork = connectivityManager.activeNetworkInfo
         return activeNetwork?.isConnectedOrConnecting == true
     }
 
-    private fun updateProfile() {
+    private fun syncProfile() {
         lifecycleScope.launch {
             viewModel.profileState.collect { profile ->
                 Log.d("qweqwe", "2 $profile")
-                if (profile != null) {
-                    with(profile) {
-                        nickname
-                        datePremium
-                        dateBanned
-                        trophy
-                        pointsGold
-                        pointsSkill
-                        pointsNolics
-                        buyQuizPlace
-                        buyTheme
+                profile?.apply {
+                    showNick(nickname, trophy)
+                    showPremiumOrBan(datePremium, dateBanned)
+                    showPoints(pointsNolics, pointsGold, pointsSkill)
+                    showLife(countLife, count, countGoldLife, countGold)
+                    showFabs(buyQuizPlace, countBox)
+                    val newBoxDay = showBoxDayANDGetNew(timeLastOpenBox, coundDayBox)
+                    val newPoints = showAddPoints(profile)
 
-                        countBox
-                        timeLastOpenBox
-                        coundDayBox
-                        countLife
-                        count
-                        countGoldLife
-                        countGold
-                        if (addPointsGold != 0 ||
-                            addPointsSkill != 0 ||
-                            addPointsNolics != 0 ||
-                            addTrophy.isNotEmpty() ||
-                            addMassage.isNotEmpty()
-                        ) {
 
-                            val updatedProfile = profile.copy(
-                                pointsGold = pointsGold + addPointsGold,
-                                pointsSkill = pointsSkill + addPointsSkill,
-                                pointsNolics = pointsNolics + addPointsNolics,
-                                trophy = trophy + addTrophy,
-                                addPointsGold = 0,
-                                addPointsSkill = 0,
-                                addPointsNolics = 0,
-                                addTrophy = "",
-                                addMassage = ""
-                            )
+                    viewModel.updateProfile(
+                        this.copy(
+                            coundDayBox = newBoxDay,
+                            timeLastOpenBox = unixTimeDayThis.toString(),
 
-                            viewModel.updateProfile(updatedProfile)
-                        }
-                    }
+                            trophy = newPoints?.trophy ?: this.trophy,
+                            pointsSkill = newPoints?.pointsSkill ?: this.pointsSkill,
+                            pointsNolics = newPoints?.pointsNolics ?: this.pointsNolics,
+                            pointsGold = newPoints?.pointsGold ?: this.pointsGold,
+
+                            addTrophy = "",
+                            addPointsSkill = 0,
+                            addPointsNolics = 0,
+                            addPointsGold = 0,
+                            addMassage = ""
+                        )
+                    )
                 }
+
             }
         }
+    }
+
+    private fun showAddPoints(profile: ProfileEntity): ProfileEntity? {
+        var updatedProfile: ProfileEntity? = null
+        profile.apply {
+            if (addPointsGold != 0 ||
+                addPointsSkill != 0 ||
+                addPointsNolics != 0 ||
+                addTrophy.isNotEmpty() ||
+                addMassage.isNotEmpty()
+            ) {
+
+                updatedProfile = profile.copy(
+                    pointsGold = pointsGold + addPointsGold,
+                    pointsSkill = pointsSkill + addPointsSkill,
+                    pointsNolics = pointsNolics + addPointsNolics,
+                    trophy = trophy + addTrophy,
+                    addPointsGold = 0,
+                    addPointsSkill = 0,
+                    addPointsNolics = 0,
+                    addTrophy = "",
+                    addMassage = ""
+                )
+            }
+            //val notification = NotificationHelper(this@MainActivity)
+            //notification.updateProfileUserGuide()
+            //notification.showBuilderUpdateProfile()
+        }
+
+        return updatedProfile
+    }
+
+    private fun showBoxDayANDGetNew(timeLastOpenBox: String, countDayBox: Int): Int {
+        val diffDays = unixTimeDayThis.toInt() - timeLastOpenBox.toInt()
+
+        val newCountDayBox: Int = when {
+            diffDays >= 2 -> 0
+            diffDays == 1 -> countDayBox + 1
+            diffDays == 0 -> countDayBox
+            else -> countDayBox
+        }
+
+        val boxDays = listOf(
+            binding.boxDay1, binding.boxDay2, binding.boxDay3, binding.boxDay4, binding.boxDay5,
+            binding.boxDay6, binding.boxDay7, binding.boxDay8, binding.boxDay9, binding.boxDay10
+        )
+
+        boxDays.take(countDayBox).forEach {
+            it.setBackgroundColor(ContextCompat.getColor(this, R.color.green))
+        }
+
+        return newCountDayBox
+    }
+
+    private fun showFabs(buyQuizPlace: Int, countBox: Int) = with(binding) {
+        if (countBox > 1) {
+            fabBox.visibility = View.VISIBLE
+            tvNumberBox.text = countBox.toString()
+        }
+        if (buyQuizPlace > 1) tvNumberPlaceUserQuiz.text = buyQuizPlace.toString()
+    }
+
+    private fun showLife(
+        countLife: Int,
+        count: Int,
+        countGoldLife: Int,
+        countGold: Int,
+    ) {
+
+        val lifeIndicators = listOf(
+            binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5
+        )
+
+        val filledLives = count / 100
+        val partialLifePercentage = count % 100
+
+        for (i in 0 until countLife) {
+            val lifeIndicator = lifeIndicators[i]
+            val layerDrawable = createLayerDrawable(
+                R.drawable.baseline_favorite_24_empty,
+                R.drawable.baseline_favorite_24
+            )
+
+            when {
+                i < filledLives -> layerDrawable.level = 10000
+                i == filledLives && partialLifePercentage > 0 ->
+                    layerDrawable.level = partialLifePercentage * 100
+
+                else -> layerDrawable.level = 0
+            }
+            lifeIndicator.setImageDrawable(layerDrawable)
+        }
+
+        if (countGoldLife > 0) {
+            val layerDrawableGold = createLayerDrawable(
+                R.drawable.baseline_favorite_24_empty,
+                R.drawable.baseline_favorite_24_gold
+            )
+
+            when {
+                countGold >= 100 -> layerDrawableGold.level = 10000
+                countGold > 0 -> layerDrawableGold.level = countGold * 100
+                else -> layerDrawableGold.level = 0
+            }
+            binding.pbLifeGold1.setImageDrawable(layerDrawableGold)
+        }
+    }
+
+    private fun showPoints(pointsNolics: Int, pointsGold: Int, pointsSkill: Int) {
+        binding.tvNolics.text = pointsNolics.toString()
+        binding.tvGold.text = pointsGold.toString()
+        binding.tvStars.text = pointsSkill.toString()
+    }
+
+    private fun showPremiumOrBan(datePremium: String, dateBanned: String) {
+        val lastDayPremium = datePremium.toLong() - unixTimeDayThis
+        val lastDayBan = dateBanned.toLong() - unixTimeDayThis
+
+        if (lastDayPremium > 0L) {
+            binding.imvPremiun.setBackgroundColor(Color.YELLOW)
+            binding.tvCountPremiun.text = lastDayPremium.toString()
+        } else if (lastDayBan > 0L) {
+            binding.imvPremiun.setBackgroundColor(Color.RED)
+            binding.tvCountPremiun.text = lastDayBan.toString()
+        } else {
+            binding.imvPremiun.setBackgroundColor(Color.WHITE)
+            binding.tvCountPremiun.text = 0.toString()
+        }
+    }
+
+    private fun showNick(nickname: String?, trophy: String) {
+
+        showTextWithDelay(
+            binding.tvName,
+            "$nickname $trophy",
+            25,
+            getColorNickname(0),
+            getColorNickname(settingsConfig.nicknameColor)
+        )
     }
 
     private fun setupUI() {
@@ -183,12 +334,30 @@ class MainActivity : AppCompatActivity() {
             binding.drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        val layerDrawable1 = createLayerDrawable(R.drawable.baseline_favorite_24_empty, R.drawable.baseline_favorite_24)
-        val layerDrawable2 = createLayerDrawable(R.drawable.baseline_favorite_24_empty, R.drawable.baseline_favorite_24)
-        val layerDrawable3 = createLayerDrawable(R.drawable.baseline_favorite_24_empty, R.drawable.baseline_favorite_24)
-        val layerDrawable4 = createLayerDrawable(R.drawable.baseline_favorite_24_empty, R.drawable.baseline_favorite_24)
-        val layerDrawable5 = createLayerDrawable(R.drawable.baseline_favorite_24_empty, R.drawable.baseline_favorite_24)
-        val layerDrawableGold = createLayerDrawable(R.drawable.baseline_favorite_24_empty, R.drawable.baseline_favorite_24_gold)
+        val layerDrawable1 = createLayerDrawable(
+            R.drawable.baseline_favorite_24_empty,
+            R.drawable.baseline_favorite_24
+        )
+        val layerDrawable2 = createLayerDrawable(
+            R.drawable.baseline_favorite_24_empty,
+            R.drawable.baseline_favorite_24
+        )
+        val layerDrawable3 = createLayerDrawable(
+            R.drawable.baseline_favorite_24_empty,
+            R.drawable.baseline_favorite_24
+        )
+        val layerDrawable4 = createLayerDrawable(
+            R.drawable.baseline_favorite_24_empty,
+            R.drawable.baseline_favorite_24
+        )
+        val layerDrawable5 = createLayerDrawable(
+            R.drawable.baseline_favorite_24_empty,
+            R.drawable.baseline_favorite_24
+        )
+        val layerDrawableGold = createLayerDrawable(
+            R.drawable.baseline_favorite_24_empty,
+            R.drawable.baseline_favorite_24_gold
+        )
 
         binding.pbLife1.setImageDrawable(layerDrawable1)
         binding.pbLife2.setImageDrawable(layerDrawable2)
@@ -223,18 +392,26 @@ class MainActivity : AppCompatActivity() {
         var count = countLifePoints
 
         lifeDrawables.forEach { drawable ->
-            (drawable as? LayerDrawable)?.findDrawableByLayerId(android.R.id.progress)?.level = count
+            (drawable as? LayerDrawable)?.findDrawableByLayerId(android.R.id.progress)?.level =
+                count
             count -= VALUE_COUNT_LIFE
         }
 
         (binding.pbLifeGold1.drawable as? LayerDrawable)?.findDrawableByLayerId(android.R.id.progress)?.level =
             (profile?.countGold ?: 0) * COUNT_LIFE_POINTS_IN_LIFE
 
-        binding.pbLifeGold1.visibility = if (profile?.countGoldLife == 1) View.VISIBLE else View.GONE
+        binding.pbLifeGold1.visibility =
+            if (profile?.countGoldLife == 1) View.VISIBLE else View.GONE
     }
 
     private fun updateLifeVisibility(countLife: Int) {
-        val lifeViews = arrayOf(binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5)
+        val lifeViews = arrayOf(
+            binding.pbLife1,
+            binding.pbLife2,
+            binding.pbLife3,
+            binding.pbLife4,
+            binding.pbLife5
+        )
         lifeViews.forEachIndexed { index, imageView ->
             imageView.visibility = if (index < countLife) View.VISIBLE else View.GONE
         }
@@ -250,13 +427,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (SharedPreferencesManager.getNick() != nickname) {
-            showTextWithDelay(binding.tvName, displayedNickname, DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK)
+            showTextWithDelay(
+                binding.tvName,
+                displayedNickname,
+                DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK,
+                getColorNickname(1),
+                getColorNickname(settingsConfig.nicknameColor)
+            )
         } else {
             binding.tvName.text = displayedNickname
         }
 
         try {
-            binding.tvName.setShadowLayer(10F, 0F, 0F, getShadowColor(binding.tvName.currentTextColor))
+            binding.tvName.setShadowLayer(
+                10F,
+                0F,
+                0F,
+                getShadowColor(binding.tvName.currentTextColor)
+            )
             binding.tvName.setTypeface(null, Typeface.BOLD)
         } catch (e: Exception) {
         }
@@ -265,13 +453,21 @@ class MainActivity : AppCompatActivity() {
     private fun getShadowColor(currentColor: Int): Int {
         return when (currentColor) {
             ContextCompat.getColor(this, R.color.default_nick_color6) -> {
-                binding.progressBar2.progressDrawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                binding.progressBar2.progressDrawable.setColorFilter(
+                    Color.WHITE,
+                    PorterDuff.Mode.SRC_IN
+                )
                 Color.WHITE
             }
+
             ContextCompat.getColor(this, R.color.default_nick_color7) -> {
-                binding.progressBar2.progressDrawable.setColorFilter(Color.YELLOW, PorterDuff.Mode.SRC_IN)
+                binding.progressBar2.progressDrawable.setColorFilter(
+                    Color.YELLOW,
+                    PorterDuff.Mode.SRC_IN
+                )
                 Color.YELLOW
             }
+
             else -> Color.TRANSPARENT
         }
     }
@@ -279,8 +475,20 @@ class MainActivity : AppCompatActivity() {
     private fun updateCounters(profile: ProfileEntity?) {
         val animationDuration = 1000L
 
-        animateValue(binding.tvNolics, SharedPreferencesManager.getNolic(), profile?.pointsNolics ?: 0, animationDuration, 500)
-        animateValue(binding.tvGold, SharedPreferencesManager.getGold(), profile?.pointsGold ?: 0, animationDuration, 500)
+        animateValue(
+            binding.tvNolics,
+            SharedPreferencesManager.getNolic(),
+            profile?.pointsNolics ?: 0,
+            animationDuration,
+            500
+        )
+        animateValue(
+            binding.tvGold,
+            SharedPreferencesManager.getGold(),
+            profile?.pointsGold ?: 0,
+            animationDuration,
+            500
+        )
         animateValueFloat(
             binding.tvStars,
             SharedPreferencesManager.getSkill().toFloat() / 100,
@@ -290,8 +498,14 @@ class MainActivity : AppCompatActivity() {
         )
         animateValue(
             binding.tvCountPremiun,
-            TimeManager.getDaysBetweenDates(SharedPreferencesManager.getPremium(), TimeManager.getCurrentTime()).toInt() ?: 0,
-            TimeManager.getDaysBetweenDates(profile?.datePremium ?: "", TimeManager.getCurrentTime()).toInt(),
+            TimeManager.getDaysBetweenDates(
+                SharedPreferencesManager.getPremium(),
+                TimeManager.getCurrentTime()
+            ).toInt() ?: 0,
+            TimeManager.getDaysBetweenDates(
+                profile?.datePremium ?: "",
+                TimeManager.getCurrentTime()
+            ).toInt(),
             animationDuration,
             500
         )
@@ -304,8 +518,10 @@ class MainActivity : AppCompatActivity() {
                 binding.cv.translationX = slideX
 
                 // Пример взаимодействия с другими элементами
-                binding.progressBar2.alpha = 1 - slideOffset // Меняем прозрачность ProgressBar в зависимости от открытия меню
-                binding.tvPbLoad.translationX = slideX / 2 // Перемещаем текст в зависимости от открытия меню
+                binding.progressBar2.alpha =
+                    1 - slideOffset // Меняем прозрачность ProgressBar в зависимости от открытия меню
+                binding.tvPbLoad.translationX =
+                    slideX / 2 // Перемещаем текст в зависимости от открытия меню
             }
 
             override fun onDrawerOpened(drawerView: View) {}
@@ -333,6 +549,7 @@ class MainActivity : AppCompatActivity() {
                 getString(R.string.nav_logout) -> {
                     logout()
                 }
+
                 else -> false
             }
             binding.drawerLayout.closeDrawers()
@@ -354,6 +571,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(Intent(this, CreateQuizActivity::class.java))
                     //SetItemMenu.setNetworkMenu(binding, )
                 }
+
                 else -> false
             }
             true
@@ -373,8 +591,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupAnimations() {
         val viewsToAnimate = arrayOf(
-            binding.imvStars, binding.imvNolics, binding.pbLife1, binding.pbLife2,
-            binding.pbLife3, binding.pbLife4, binding.pbLife5, binding.pbLifeGold1, binding.imvGold, binding.imvPremiun
+            binding.imvStars,
+            binding.imvNolics,
+            binding.pbLife1,
+            binding.pbLife2,
+            binding.pbLife3,
+            binding.pbLife4,
+            binding.pbLife5,
+            binding.pbLifeGold1,
+            binding.imvGold,
+            binding.imvPremiun
         )
 
         var initialDelay = 100L
@@ -386,7 +612,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun createLayerDrawable(emptyRes: Int, filledRes: Int): LayerDrawable {
         val emptyDrawable = ContextCompat.getDrawable(this, emptyRes)
-        val filledDrawable = ClipDrawable(ContextCompat.getDrawable(this, filledRes), Gravity.LEFT, ClipDrawable.HORIZONTAL)
+        val filledDrawable = ClipDrawable(
+            ContextCompat.getDrawable(this, filledRes),
+            Gravity.LEFT,
+            ClipDrawable.HORIZONTAL
+        )
 
         return LayerDrawable(arrayOf(emptyDrawable, filledDrawable)).apply {
             setDrawableByLayerId(0, emptyDrawable)
@@ -462,28 +692,41 @@ class MainActivity : AppCompatActivity() {
         valueAnimator.start()
     }
 
-    private fun showTextWithDelay(textView: TextView, text: String, delayInMillis: Long) {
-        CoroutineScope(Dispatchers.Main).launch {
-            val spannableText = SpannableStringBuilder()
-            for (char in text) {
-                val start = spannableText.length
-                spannableText.append(char.toString())
-                spannableText.setSpan(
-                    ForegroundColorSpan(Color.WHITE),
-                    start,
-                    start + 1,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-                textView.text = spannableText
-                delay(delayInMillis)
+    private fun showTextWithDelay(
+        textView: TextView,
+        text: String,
+        delayInMillis: Long,
+        firstColorId: Int,
+        secondColorId: Int
+    ) {
+        val existingText = textView.text.toString()
+        if (existingText != text) {
+            val commonPrefixLength = existingText.commonPrefixWith(text).length
 
-                spannableText.setSpan(
-                    ForegroundColorSpan(Color.BLACK),
-                    start,
-                    start + 1,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-                textView.text = spannableText
+            CoroutineScope(Dispatchers.Main).launch {
+                val spannableText = SpannableStringBuilder()
+                spannableText.append(text.substring(0, commonPrefixLength))
+                for (i in commonPrefixLength until text.length) {
+                    val char = text[i]
+                    val start = spannableText.length
+                    spannableText.append(char.toString())
+                    spannableText.setSpan(
+                        ForegroundColorSpan(firstColorId),
+                        start,
+                        start + 1,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    textView.text = spannableText
+                    delay(delayInMillis)
+
+                    spannableText.setSpan(
+                        ForegroundColorSpan(secondColorId),
+                        start,
+                        start + 1,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    textView.text = spannableText
+                }
             }
         }
     }
@@ -527,12 +770,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadNumBoxDay() = with(binding) {
-        val views = arrayOf(textView10, textView9, textView8, textView7, textView6, textView5, textView4, textView3, textView2, textView)
-        views.forEachIndexed { index, view ->
-            if (10 > index) view.setBackgroundResource(R.color.green)
-        }
-    }
 
     fun replaceFragment(fragment: Fragment) {
         val fragmentManager = supportFragmentManager
@@ -552,7 +789,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == REQUEST_CODE_CONTACTS_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    //clickNavMenuContact()
+                //clickNavMenuContact()
             } else {
                 Toast.makeText(
                     this,

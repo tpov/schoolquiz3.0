@@ -5,6 +5,7 @@ data class SettingConfigModel(
     var login: String,
     var password: String,
     var name: String,
+    val nicknameColor: Int,
     var nickname: String,
     var birthday: String,
     var city: String,
@@ -18,7 +19,7 @@ data class SettingConfigModel(
     var lessonsFrequencyDays: Set<String>
 ) {
     companion object {
-        fun default() = SettingConfigModel(0,"", "", "", "", "", "", -1, "", "1", "1", false, "1", "00:00", emptySet())
+        fun default() = SettingConfigModel(0,"", "", "", 1,"", "", "", -1, "", "1", "1", false, "1", "00:00", emptySet())
 
         fun fromMap(map: Map<String, Any>): SettingConfigModel {
             return SettingConfigModel(
@@ -27,6 +28,7 @@ data class SettingConfigModel(
                 password = map["password"] as? String ?: "",
                 name = map["name"] as? String ?: "",
                 nickname = map["nickname"] as? String ?: "",
+                nicknameColor = map["nicknameColor"] as? Int ?: 1,
                 birthday = map["birthday"] as? String ?: "",
                 city = map["city"] as? String ?: "",
                 logo = (map["logo"] as? Long)?.toInt() ?: -1,
@@ -48,6 +50,7 @@ data class SettingConfigModel(
             "password" to password,
             "name" to name,
             "nickname" to nickname,
+            "nicknameColor" to nicknameColor,
             "birthday" to birthday,
             "city" to city,
             "logo" to logo,
