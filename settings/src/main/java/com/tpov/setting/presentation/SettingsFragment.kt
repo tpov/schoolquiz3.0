@@ -95,6 +95,8 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
             findPreference<EditTextPreference>(getString(R.string.key_name))?.text ?: defaultConfig.name
         val nickname = findPreference<EditTextPreference>(getString(R.string.key_nickname))?.text
             ?: defaultConfig.nickname
+        val nicknameColor = findPreference<EditTextPreference>(getString(R.string.key_nickname_color))?.text?.toIntOrNull()
+            ?: defaultConfig.nicknameColor
         val birthday = findPreference<EditTextPreference>(getString(R.string.key_birthday))?.text
             ?: defaultConfig.birthday
         val city =
@@ -127,6 +129,7 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
             login,
             password,
             name,
+            nicknameColor,
             nickname,
             birthday,
             city,

@@ -42,6 +42,7 @@ import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
 import com.tpov.common.domain.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.quiz.QuizFragment
+import com.tpov.common.presentation.utils.Values
 import com.tpov.common.presentation.utils.Values.getColorNickname
 import com.tpov.log_api.logger.Logger
 import com.tpov.network.presentation.chat.ChatFragment
@@ -88,15 +89,18 @@ class MainActivity : AppCompatActivity() {
     lateinit var viewModel: MainViewModel
     private var recreateActivity: Boolean = false
 
+    private var timerStarted = false
+    private var timer: Timer? = null
     private var unixTimeDayThis = 0L
     private var unixTimeThis = 0L
 
     override fun onDestroy() {
         super.onDestroy()
-
         timer?.cancel()
         timer = null
+        timerStarted = false
     }
+
 
     @SuppressLint("SetTextI18n")
     @Logger
@@ -106,12 +110,16 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        var launchCount = sharedPreferences.getInt("launchCount", 0) + 1
+        sharedPreferences.edit().putInt("launchCount", launchCount).apply()
+
+        Values.context = this
         setupUI()
         initViewModel()
         setupDrawerLayout()
         initBottomMenu()
         setupAnimations()
-        createTimer()
         syncProfile()
         initData()
     }
@@ -159,6 +167,7 @@ class MainActivity : AppCompatActivity() {
                     showPremiumOrBan(datePremium, dateBanned)
                     showPoints(pointsNolics, pointsGold, pointsSkill)
                     showLife(countLife, count, countGoldLife, countGold)
+                    showTimerLife(countLife, count, countGoldLife, countGold, dateCloseApp.toLongOrNull(), profile)
                     showFabs(buyQuizPlace, countBox)
                     val newBoxDay = showBoxDayANDGetNew(timeLastOpenBox, coundDayBox)
                     val newPoints = showAddPoints(profile)
@@ -184,6 +193,52 @@ class MainActivity : AppCompatActivity() {
                 }
 
             }
+        }
+    }
+
+    private fun showTimerLife(
+        countLife: Int,
+        initialCount: Int,
+        countGoldLife: Int,
+        initialCountGold: Int,
+        dateCloseApp: Long?,
+        profile: ProfileEntity
+    ) {
+        val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+        var count = initialCount
+        var countGold = initialCountGold
+
+        var launchCount = sharedPreferences.getInt("launchCount", 0)
+
+        val maxCount = if (launchCount <= 3) 300 else countLife * 100
+        val maxCountGold = if (launchCount <= 3) 300 else countGoldLife * 100
+
+        val elapsedTimeSeconds = (unixTimeThis - (dateCloseApp ?: unixTimeThis))
+        val elapsedMinutes = elapsedTimeSeconds / 60
+
+        val ratePerMinute = 100
+
+        count += (elapsedMinutes * ratePerMinute).toInt().coerceAtMost(maxCount - count)
+        countGold += (elapsedMinutes * ratePerMinute).toInt().coerceAtMost(maxCountGold - countGold)
+
+        if (!timerStarted) {
+            timerStarted = true
+            timer = Timer()
+            timer?.scheduleAtFixedRate(object : TimerTask() {
+                override fun run() {
+                    runOnUiThread {
+                        if (count < maxCount) {
+                            count = (count + ratePerMinute).coerceAtMost(maxCount)
+                        }
+                        if (countGold < maxCountGold) {
+                            countGold = (countGold + ratePerMinute).coerceAtMost(maxCountGold)
+                        }
+
+                        unixTimeThis = System.currentTimeMillis() / 1000
+                        viewModel.updateProfile(profile.copy(count = count, countGold = countGold, dateCloseApp = unixTimeThis.toString()))
+                    }
+                }
+            }, 0, 60000) // Executes every 1 minute
         }
     }
 
@@ -300,8 +355,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPremiumOrBan(datePremium: String, dateBanned: String) {
-        val lastDayPremium = datePremium.toLong() - unixTimeDayThis
-        val lastDayBan = dateBanned.toLong() - unixTimeDayThis
+        val lastDayPremium = (datePremium.toLongOrNull() ?: unixTimeDayThis) - unixTimeDayThis
+        val lastDayBan = (dateBanned.toLongOrNull()?: unixTimeDayThis) - unixTimeDayThis
 
         if (lastDayPremium > 0L) {
             binding.imvPremiun.setBackgroundColor(Color.YELLOW)
@@ -315,11 +370,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showNick(nickname: String?, trophy: String) {
+    private fun showNick(nickname: String?, trophy: String?) {
 
         showTextWithDelay(
             binding.tvName,
-            "$nickname $trophy",
+            "${nickname ?: ""} ${trophy ?: ""}",
             25,
             getColorNickname(0),
             getColorNickname(settingsConfig.nicknameColor)
@@ -629,31 +684,6 @@ class MainActivity : AppCompatActivity() {
     private fun getAppVersionName(): String {
         val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
         return pInfo.versionName
-    }
-
-    private var timer: Timer? = null
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createTimer() {
-        timer = Timer()
-        val delay = 0L // Delay before the timer starts executing the task (in milliseconds)
-        val task = object : TimerTask() {
-            override fun run() {
-            }
-        }
-
-        timer?.scheduleAtFixedRate(task, delay, 1000)
-    }
-
-    private fun getMaxCount(countLife: Int?): Int {
-        return when (countLife) {
-            1 -> 100
-            2 -> 200
-            3 -> 300
-            4 -> 400
-            5 -> 500
-            else -> 0
-        }
     }
 
     private fun animateValue(

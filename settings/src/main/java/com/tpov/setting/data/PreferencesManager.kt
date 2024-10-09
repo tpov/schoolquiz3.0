@@ -38,6 +38,7 @@ class PreferencesManager(var context: Context) {
             preferences.getString(context.getString(R.string.key_login), defaultConfig.login) ?: defaultConfig.login,
             preferences.getString(context.getString(R.string.key_password), defaultConfig.password) ?: defaultConfig.password,
             preferences.getString(context.getString(R.string.key_name), defaultConfig.name) ?: defaultConfig.name,
+            preferences.getInt(context.getString(R.string.key_nickname_color), defaultConfig.nicknameColor),
             preferences.getString(context.getString(R.string.key_nickname), defaultConfig.nickname) ?: defaultConfig.nickname,
             preferences.getString(context.getString(R.string.key_birthday), defaultConfig.birthday) ?: defaultConfig.birthday,
             preferences.getString(context.getString(R.string.key_city), defaultConfig.city) ?: defaultConfig.city,

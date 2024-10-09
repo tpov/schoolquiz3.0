@@ -4096,6 +4096,7 @@ int string key_login 0x0
 int string key_logo 0x0
 int string key_name 0x0
 int string key_nickname 0x0
+int string key_nickname_color 0x0
 int string key_notifications 0x0
 int string key_password 0x0
 int string key_profile_sync_frequency 0x0

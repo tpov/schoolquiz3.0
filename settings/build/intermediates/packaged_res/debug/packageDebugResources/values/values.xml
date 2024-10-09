@@ -83,6 +83,7 @@
     <string name="key_logo">logo</string>
     <string name="key_name">name</string>
     <string name="key_nickname">nickname</string>
+    <string name="key_nickname_color">nickname_color</string>
     <string name="key_notifications">notifications</string>
     <string name="key_password">password</string>
     <string name="key_profile_sync_frequency">profile_sync_frequency</string>

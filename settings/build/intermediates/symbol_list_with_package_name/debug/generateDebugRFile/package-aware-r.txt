@@ -4097,6 +4097,7 @@ string key_login
 string key_logo
 string key_name
 string key_nickname
+string key_nickname_color
 string key_notifications
 string key_password
 string key_profile_sync_frequency
