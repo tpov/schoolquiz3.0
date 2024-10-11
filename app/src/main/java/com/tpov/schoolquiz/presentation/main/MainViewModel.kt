@@ -74,7 +74,7 @@ class MainViewModel @Inject constructor(
                         if (profile == null) {
                             createProfile()
                         } else {
-                            profileUseCase.syncProfile()
+                            //profileUseCase.syncProfile()
                         }
                         previousProfile = profile
                     }

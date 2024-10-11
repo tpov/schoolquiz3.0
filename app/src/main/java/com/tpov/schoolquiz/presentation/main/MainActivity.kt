@@ -70,7 +70,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.time.Instant
-import java.time.ZoneOffset
 import java.util.Timer
 import java.util.TimerTask
 import javax.inject.Inject
@@ -92,7 +91,7 @@ class MainActivity : AppCompatActivity() {
     private var timerStarted = false
     private var timer: Timer? = null
     private var unixTimeDayThis = 0L
-    private var unixTimeThis = 0L
+    private var unixTimeSecondThis = 0L
 
     override fun onDestroy() {
         super.onDestroy()
@@ -145,10 +144,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun getDataToday() {
         val currentUnixTime = Instant.now()
-
-        val nextDay = currentUnixTime.atZone(ZoneOffset.UTC)
-
-        unixTimeDayThis = nextDay.toEpochSecond()
+        unixTimeSecondThis = currentUnixTime.epochSecond
+        unixTimeDayThis = currentUnixTime.epochSecond
     }
 
     fun isNetworkAvailable(context: Context): Boolean {
@@ -167,7 +164,7 @@ class MainActivity : AppCompatActivity() {
                     showPremiumOrBan(datePremium, dateBanned)
                     showPoints(pointsNolics, pointsGold, pointsSkill)
                     showLife(countLife, count, countGoldLife, countGold)
-                    showTimerLife(countLife, count, countGoldLife, countGold, dateCloseApp.toLongOrNull(), profile)
+                    startTimerLife(countLife, count, countGoldLife, countGold, dateCloseApp.toLongOrNull(), profile)
                     showFabs(buyQuizPlace, countBox)
                     val newBoxDay = showBoxDayANDGetNew(timeLastOpenBox, coundDayBox)
                     val newPoints = showAddPoints(profile)
@@ -196,7 +193,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showTimerLife(
+    private fun startTimerLife(
         countLife: Int,
         initialCount: Int,
         countGoldLife: Int,
@@ -204,41 +201,67 @@ class MainActivity : AppCompatActivity() {
         dateCloseApp: Long?,
         profile: ProfileEntity
     ) {
+
+
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
-        var count = initialCount
-        var countGold = initialCountGold
-
-        var launchCount = sharedPreferences.getInt("launchCount", 0)
-
-        val maxCount = if (launchCount <= 3) 300 else countLife * 100
-        val maxCountGold = if (launchCount <= 3) 300 else countGoldLife * 100
-
-        val elapsedTimeSeconds = (unixTimeThis - (dateCloseApp ?: unixTimeThis))
-        val elapsedMinutes = elapsedTimeSeconds / 60
-
-        val ratePerMinute = 100
-
-        count += (elapsedMinutes * ratePerMinute).toInt().coerceAtMost(maxCount - count)
-        countGold += (elapsedMinutes * ratePerMinute).toInt().coerceAtMost(maxCountGold - countGold)
-
         if (!timerStarted) {
+
             timerStarted = true
             timer = Timer()
             timer?.scheduleAtFixedRate(object : TimerTask() {
                 override fun run() {
+
+                    var count = initialCount
+                    var countGold = initialCountGold
+
+                    var launchCount = sharedPreferences.getInt("launchCount", 0)
+
+                    val maxCount = if (launchCount <= 3) 300 else countLife * 300
+                    val maxCountGold = if (launchCount <= 3) 300 else countGoldLife * 300
+
+                    val elapsedTimeSeconds = (unixTimeSecondThis - (dateCloseApp ?: unixTimeSecondThis))
+                    val elapsedMinutes = elapsedTimeSeconds / 60
+
+                    val ratePerMinute = 2
+                    val rateGoldPerMinute = 1
+
+                    Log.d("TAG", "Начальное значение count: $count")
+                    Log.d("TAG", "Запуск номер: $launchCount")
+                    Log.d("TAG", "Начальное значение countGold: $countGold")
+                    Log.d("TAG", "Максимальное значение count: $maxCount")
+                    Log.d("TAG", "Максимальное значение countGold: $maxCountGold")
+                    Log.d("TAG", "Прошло минут с момента закрытия приложения: $elapsedMinutes")
+                    Log.d("TAG", "unixTimeThis: $unixTimeSecondThis")
+
+                    count += (elapsedMinutes * ratePerMinute).toInt().coerceAtMost(maxCount - count)
+                    countGold += (elapsedMinutes * rateGoldPerMinute).toInt().coerceAtMost(maxCountGold - countGold)
+
+                    Log.d("TAG", "Обновленное значение count после расчета: $count")
+                    Log.d("TAG", "Обновленное значение countGold после расчета: $countGold")
+
                     runOnUiThread {
+
                         if (count < maxCount) {
                             count = (count + ratePerMinute).coerceAtMost(maxCount)
+                            Log.d("TAG", "Текущее значение count в таймере: $count")
                         }
                         if (countGold < maxCountGold) {
                             countGold = (countGold + ratePerMinute).coerceAtMost(maxCountGold)
+                            Log.d("TAG", "Текущее значение countGold в таймере: $countGold")
                         }
-
-                        unixTimeThis = System.currentTimeMillis() / 1000
-                        viewModel.updateProfile(profile.copy(count = count, countGold = countGold, dateCloseApp = unixTimeThis.toString()))
+getDataToday()
+                        Log.d("TAG", "unixTimeThis: $unixTimeSecondThis")
+                        viewModel.updateProfile(
+                            profile.copy(
+                                count = count,
+                                countGold = countGold,
+                                dateCloseApp = unixTimeSecondThis.toString()
+                            )
+                        )
+                        Log.d("TAG", "Профиль обновлен с новыми значениями count и countGold")
                     }
                 }
-            }, 0, 60000) // Executes every 1 minute
+            }, 0, 60000) // Выполняется каждую 1 минуту
         }
     }
 
@@ -308,43 +331,52 @@ class MainActivity : AppCompatActivity() {
         countGoldLife: Int,
         countGold: Int,
     ) {
+        Log.d("showLife", "countLife: $countLife")
+        Log.d("showLife", "count: $count")
+        Log.d("showLife", "countGoldLife: $countGoldLife")
+        Log.d("showLife", "countGold: $countGold")
 
         val lifeIndicators = listOf(
             binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5
         )
 
-        val filledLives = count / 100
-        val partialLifePercentage = count % 100
+        val totalLives = countLife
+        val filledUnits = count / 10  // Преобразуем count к единицам по 10
 
-        for (i in 0 until countLife) {
+        // Скрываем все индикаторы перед началом
+        lifeIndicators.forEach { it.visibility = View.GONE }
+
+        for (i in 0 until totalLives) {
             val lifeIndicator = lifeIndicators[i]
+            lifeIndicator.visibility = View.VISIBLE  // Делаем видимым нужный индикатор
+
             val layerDrawable = createLayerDrawable(
                 R.drawable.baseline_favorite_24_empty,
                 R.drawable.baseline_favorite_24
             )
 
-            when {
-                i < filledLives -> layerDrawable.level = 10000
-                i == filledLives && partialLifePercentage > 0 ->
-                    layerDrawable.level = partialLifePercentage * 100
+            val unitsForThisLife = minOf(10, maxOf(0, filledUnits - i * 10))
+            val level = unitsForThisLife * 1000  // уровень от 0 до 10000
 
-                else -> layerDrawable.level = 0
-            }
+            layerDrawable.level = level
             lifeIndicator.setImageDrawable(layerDrawable)
         }
 
+        // Обработка золотых сердец
         if (countGoldLife > 0) {
             val layerDrawableGold = createLayerDrawable(
                 R.drawable.baseline_favorite_24_empty,
                 R.drawable.baseline_favorite_24_gold
             )
 
-            when {
-                countGold >= 100 -> layerDrawableGold.level = 10000
-                countGold > 0 -> layerDrawableGold.level = countGold * 100
-                else -> layerDrawableGold.level = 0
-            }
+            val unitsForGoldLife = minOf(10, countGold / 10)
+            val levelGold = unitsForGoldLife * 1000
+
+            layerDrawableGold.level = levelGold
+            binding.pbLifeGold1.visibility = View.VISIBLE
             binding.pbLifeGold1.setImageDrawable(layerDrawableGold)
+        } else {
+            binding.pbLifeGold1.visibility = View.GONE
         }
     }
 
@@ -359,14 +391,14 @@ class MainActivity : AppCompatActivity() {
         val lastDayBan = (dateBanned.toLongOrNull()?: unixTimeDayThis) - unixTimeDayThis
 
         if (lastDayPremium > 0L) {
-            binding.imvPremiun.setBackgroundColor(Color.YELLOW)
             binding.tvCountPremiun.text = lastDayPremium.toString()
+            binding.tvCountPremiun.setTextColor(ContextCompat.getColor(this, R.color.green))
         } else if (lastDayBan > 0L) {
-            binding.imvPremiun.setBackgroundColor(Color.RED)
             binding.tvCountPremiun.text = lastDayBan.toString()
+            binding.tvCountPremiun.setTextColor(ContextCompat.getColor(this, R.color.red))
         } else {
-            binding.imvPremiun.setBackgroundColor(Color.WHITE)
             binding.tvCountPremiun.text = 0.toString()
+            binding.tvCountPremiun.setTextColor(ContextCompat.getColor(this, R.color.white))
         }
     }
 
