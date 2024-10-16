@@ -5,6 +5,9 @@
       <entry key="CreateQuizIntegrationTest">
         <State />
       </entry>
+      <entry key="MainActivityTest">
+        <State />
+      </entry>
       <entry key="app">
         <State />
       </entry>
@@ -12,6 +15,9 @@
         <State />
       </entry>
       <entry key="logger-processor">
+        <State />
+      </entry>
+      <entry key="testProfile()">
         <State />
       </entry>
     </value>

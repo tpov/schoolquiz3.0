@@ -55,7 +55,6 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         var newDataLocalEmpty: StructureData? = dataRemote?.toStructureDataLocal()
         Log.d("SyncData", "Converted remote data to local format: $newDataLocalEmpty")
         if (newDataLocalEmpty == null) {
-            // Выводим тост и возвращаем пустой список
             Log.d("SyncData", "No structure data found on the server. Sync canceled.")
             return emptyList<Pair<String, String>>().toMutableList()
 
@@ -63,7 +62,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
 
         changedQuizzes.clear()
         val newDataLocal: StructureData =
-            if (dataLocal == null) { //Приложение было запущено первый раз
+            if (dataLocal == null) {
                 Log.d("SyncData", "No local data found, using new data")
                 newDataLocalEmpty.event.forEach { newEvent ->
                     newEvent.isShowArchive = isShowArhive()
@@ -72,14 +71,17 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
                     newEvent.category.forEach { newCategory ->
                         newCategory.isShowArchive = isShowArhive()
                         newCategory.isShowDownload = isShowDownload(newEvent.id)
+                        if (newCategory.isShowDownload) fetchPictureStructure(newCategory.picture)
                         Log.d("SyncData", "Processing category: ${newCategory.nameQuiz}")
                         newCategory.subcategory.forEach { newSubcategory ->
                             newSubcategory.isShowArchive = isShowArhive()
                             newSubcategory.isShowDownload = isShowDownload(newEvent.id)
+                            if (newSubcategory.isShowDownload) fetchPictureStructure(newCategory.picture)
                             Log.d("SyncData", "Processing subcategory: ${newSubcategory.nameQuiz}")
                             newSubcategory.subSubcategory.forEach { newSubsub ->
                                 newSubsub.isShowArchive = isShowArhive()
                                 newSubsub.isShowDownload = isShowDownload(newEvent.id)
+                                if (newSubsub.isShowDownload) fetchPictureStructure(newCategory.picture)
 
                                 newSubsub.quizData.forEach { newQuiz ->
                                     newQuiz.isShowArchive = isShowArhive()
@@ -124,17 +126,19 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
     suspend fun deleteStructureCategoryById(id: Int) {
         repositoryStructureImpl.deleteCategoryById(id)
     }
+
     private fun isShowDownload(newEventId: Int): Boolean {
         return newEventId == 1 || newEventId == 8
     }
 
     private fun isShowArhive(): Boolean {
-return true
+        return true
     }
 
     suspend fun saveStructureData(structureData: StructureData) {
         repositoryStructureImpl.saveStructureData(structureData)
     }
+
     private fun updateIsShow(newDataLocalEmpty: StructureData) =
         newDataLocalEmpty.event.forEach { newEvent ->
             newEvent.isShowArchive = true
@@ -153,6 +157,7 @@ return true
             }
         }
 
+    @SuppressLint("SuspiciousIndentation")
     private fun mergeData(
         dataLocal: StructureData,
         newDataLocalEmpty: StructureData
@@ -160,42 +165,84 @@ return true
 
         return StructureData(
             event = newDataLocalEmpty.event.map { newEvent ->
-                val localEvent = dataLocal.event.find { it.id == newEvent.id}
+                val localEvent = dataLocal.event.find { it.id == newEvent.id }
+
+
                 newEvent.copy(
                     category = newEvent.category.map { newCategory ->
                         val localCategory = localEvent?.category?.find { it.id == newCategory.id }
+
+                        if (localCategory != null && newCategory.picture != localCategory.picture && newCategory.isShowDownload) {
+                            deleteLocalPictureStructure(localCategory.picture)
+                            fetchPictureStructure(newCategory.picture)
+                        }
+
                         newCategory.copy(
+                            picture = newCategory.picture,
                             subcategory = newCategory.subcategory.map { newSubcategory ->
                                 val localSubcategory =
                                     localCategory?.subcategory?.find { it.id == newSubcategory.id }
+
+                                if (localSubcategory != null && newSubcategory.picture != localSubcategory.picture && newSubcategory.isShowDownload) {
+                                    deleteLocalPictureStructure(localSubcategory.picture)
+                                    fetchPictureStructure(newSubcategory.picture)
+                                }
+
                                 newSubcategory.copy(
+                                    picture = newSubcategory.picture,
                                     subSubcategory = newSubcategory.subSubcategory.map { newSubsub ->
                                         val localSubsub =
                                             localSubcategory?.subSubcategory?.find { it.id == newSubsub.id }
+
+                                        if (localSubsub != null && newSubsub.picture != localSubsub.picture && newSubsub.isShowDownload) {
+                                            deleteLocalPictureStructure(localSubsub.picture)
+                                            fetchPictureStructure(newSubsub.picture)
+                                        }
+
                                         newSubsub.copy(
+                                            picture = newSubsub.picture,
                                             quizData = newSubsub.quizData.map { newQuiz ->
                                                 val localQuiz =
                                                     localSubsub?.quizData?.find { it.idQuiz == newQuiz.idQuiz }
-                                                if (localQuiz != null && newQuiz.dataUpdate != localQuiz.dataUpdate) {
 
+                                                if (localQuiz != null && newQuiz.dataUpdate > localQuiz.dataUpdate) {
                                                     val quizString =
                                                         "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
                                                     val quizInt =
                                                         "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
 
-                                                    if (newQuiz.isShowDownload && newQuiz.dataUpdate.toLong() > localQuiz.dataUpdate.toLong()) changedQuizzes.add(
-                                                        Pair(quizString, quizInt)
-                                                    )
+                                                    if (newQuiz.isShowDownload && newQuiz.dataUpdate.toLong() > localQuiz.dataUpdate.toLong()) {
+                                                        changedQuizzes.add(
+                                                            Pair(
+                                                                quizString,
+                                                                quizInt
+                                                            )
+                                                        )
+                                                    }
+                                                } else {
+                                                    val quizString =
+                                                        "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
+                                                    val quizInt =
+                                                        "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
+
+                                                       changedQuizzes.add(
+                                                            Pair(
+                                                                quizString,
+                                                                quizInt
+                                                            )
+                                                        )
                                                 }
+
                                                 newQuiz.copy(
+                                                    picture = newQuiz.picture,
                                                     ratingLocal = localQuiz?.ratingLocal
                                                         ?: newQuiz.ratingLocal,
                                                     starsMaxLocal = localQuiz?.starsMaxLocal
                                                         ?: newQuiz.starsMaxLocal,
                                                     isShowArchive = localQuiz?.isShowArchive
-                                                        ?: newQuiz.isShowArchive,
+                                                        ?: isShowArhive(),
                                                     isShowDownload = localQuiz?.isShowDownload
-                                                        ?: newQuiz.isShowDownload
+                                                        ?: isShowDownload(newEvent.id)
                                                 )
                                             },
                                             ratingLocal = localSubsub?.ratingLocal
@@ -203,9 +250,9 @@ return true
                                             starsMaxLocal = localSubsub?.starsMaxLocal
                                                 ?: newSubsub.starsMaxLocal,
                                             isShowArchive = localSubsub?.isShowArchive
-                                                ?: newSubsub.isShowArchive,
+                                                ?: isShowArhive(),
                                             isShowDownload = localSubsub?.isShowDownload
-                                                ?: newSubsub.isShowDownload
+                                                ?: isShowDownload(newEvent.id)
                                         )
                                     },
                                     ratingLocal = localSubcategory?.ratingLocal
@@ -213,25 +260,33 @@ return true
                                     starsMaxLocal = localSubcategory?.starsMaxLocal
                                         ?: newSubcategory.starsMaxLocal,
                                     isShowArchive = localSubcategory?.isShowArchive
-                                        ?: newSubcategory.isShowArchive,
+                                        ?: isShowArhive(),
                                     isShowDownload = localSubcategory?.isShowDownload
-                                        ?: newSubcategory.isShowDownload
+                                        ?: isShowDownload(newEvent.id)
                                 )
                             },
                             ratingLocal = localCategory?.ratingLocal ?: newCategory.ratingLocal,
                             starsMaxLocal = localCategory?.starsMaxLocal
                                 ?: newCategory.starsMaxLocal,
                             isShowArchive = localCategory?.isShowArchive
-                                ?: newCategory.isShowArchive,
+                                ?: isShowArhive(),
                             isShowDownload = localCategory?.isShowDownload
-                                ?: newCategory.isShowDownload
+                                ?: isShowDownload(newEvent.id)
                         )
                     },
-                    isShowArchive = localEvent?.isShowArchive ?: newEvent.isShowArchive,
-                    isShowDownload = localEvent?.isShowDownload ?: newEvent.isShowDownload
+                    isShowArchive = localEvent?.isShowArchive ?: isShowArhive(),
+                    isShowDownload = localEvent?.isShowDownload ?: isShowDownload(newEvent.id)
                 )
             }
         )
+    }
+
+    private fun deleteLocalPictureStructure(name: String) {
+        repositoryStructureImpl.deleteLocalPictureStructure(name)
+    }
+
+    private fun fetchPictureStructure(name: String) {
+        repositoryStructureImpl.fetchPictureStructure(name)
     }
 
     suspend fun getStructureData(): StructureData? {
@@ -239,7 +294,8 @@ return true
     }
 
     suspend fun insertStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
-repositoryStructureImpl.insertStructureRating(structureCategoryDataEntity)
+        Log.d("pushQuizData", "structureCategory: $structureCategoryDataEntity")
+        repositoryStructureImpl.insertStructureRating(structureCategoryDataEntity)
     }
 
     suspend fun getStructureCategory(): List<StructureCategoryDataEntity> {

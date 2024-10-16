@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="12dp">
+    android:padding="6dp">
 
     <com.tpov.common.presentation.utils.CustomRoundedImageView
         android:id="@+id/cl"
@@ -28,7 +28,7 @@
             <ImageView
                 android:id="@+id/imv_category_title"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="125dp"
                 android:layout_weight="1"
                 android:layout_margin="4dp"
                 android:scaleType="centerCrop"
@@ -59,6 +59,6 @@
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textColor="@android:color/white" />
         </LinearLayout>
-    </com.tpov.common.presentation.utils.CustomRoundedImageView>>
+    </com.tpov.common.presentation.utils.CustomRoundedImageView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

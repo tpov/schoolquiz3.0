@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.data.core.Core
+import com.tpov.common.data.core.Core.tpovIdFlow
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
@@ -57,21 +58,21 @@ class MainViewModel @Inject constructor(
 
     var firstStartApp = false
 
-    private val _tpovIdFlow = MutableStateFlow(Core.tpovId)
-    val tpovId: StateFlow<Int> = _tpovIdFlow
-
-    init {
+    fun initProfile() {
+        Log.d("init", "init")
         viewModelScope.launch(Dispatchers.Default) {
             var previousProfile: ProfileEntity? = null
 
-            combine(profileUseCase.getProfileFlow() ?: flowOf(null), tpovId) { profile, currentTpovId ->
+            combine(profileUseCase.getProfileFlow() ?: flowOf(null), tpovIdFlow) { profile, currentTpovId ->
                 profile to currentTpovId }
                 .debounce(500)
                 .collect { (profile, currentTpovId) ->
 
-                    if ((profile != previousProfile) && currentTpovId != 0 || (profile != previousProfile)) {
+                    Log.d("init", "previousProfile: $previousProfile, profile: $profile, currentTpovId: $currentTpovId")
+                    if ((profile != previousProfile) && currentTpovId != 0 || (profile != previousProfile) || profile == null) {
+                        Log.d("init", "profile: $profile")
                         _profileState.value = profile
-                        if (profile == null) {
+                        if (profile == null && currentTpovId != 0) {
                             createProfile()
                         } else {
                             //profileUseCase.syncProfile()
@@ -94,10 +95,8 @@ class MainViewModel @Inject constructor(
     ): ArrayList<QuestionShortEntity> {
         val indexedQuestions = questionList.withIndex()
 
-        // Разделение вопросов на "обычные" и "сложные"
         val (hardQuestions, normalQuestions) = indexedQuestions.partition { it.value.hardQuestion }
 
-        // Функция для сортировки и фильтрации вопросов
         fun sortAndFilterQuestions(questions: List<IndexedValue<QuestionEntity>>): List<IndexedValue<QuestionEntity>> {
             return questions
                 .groupBy { it.value.numQuestion }
@@ -112,18 +111,14 @@ class MainViewModel @Inject constructor(
                 }
         }
 
-        // Сортировка обычных вопросов по numQuestion
         val sortedNormalQuestions =
             sortAndFilterQuestions(normalQuestions).sortedBy { it.value.numQuestion }
 
-        // Сортировка сложных вопросов в обратном порядке по numQuestion
         val sortedHardQuestions =
             sortAndFilterQuestions(hardQuestions).sortedBy { it.value.numQuestion }
 
-        // Объединение результатов: сначала обычные вопросы, затем сложные
         val combinedQuestions = sortedNormalQuestions + sortedHardQuestions
 
-        // Создание итогового списка
         val questionShortList = combinedQuestions.mapIndexed { index, indexedValue ->
             val questionShortEntity = QuestionShortEntity(
                 id = index,
@@ -133,7 +128,6 @@ class MainViewModel @Inject constructor(
             )
             questionShortEntity
         }.toCollection(ArrayList())
-
         return questionShortList
     }
 
@@ -143,31 +137,33 @@ class MainViewModel @Inject constructor(
 
     suspend fun getStructureData() = structureUseCase.getStructureData()
 
-    //Загрузить если нету локальной структуры, иначе она загрузится в фоне
     private suspend fun getNewQuizListANDcatDataWithServer(): List<Pair<String, String>> {
         var listNewQuiz: List<Pair<String, String>> = listOf()
 
-        Log.e("test", "getNewQuizListWithServer()")
+        Log.d("test", "getNewQuizListWithServer()")
         var structureDataList = structureUseCase.getStructureData()
-        Log.e("test", "2()")
+        Log.d("test", "2()")
         if (structureDataList == null) {
-            Log.e("test", "3()")
+            Log.d("test", "3()")
             firstStartApp = true
             listNewQuiz = structureUseCase.syncStructureDataANDquizzes()
             structureDataList = structureUseCase.getStructureData()
         }
 
-        Log.e("test", "4() $structureDataList")
+        Log.d("test", "4() $structureDataList")
         withContext(Dispatchers.Default) {
-            _categoryData.postValue(prepareData(structureDataList ?: retryFromDelay()))
+            val data = prepareData(structureDataList ?: retryFromDelay())
+            Log.d("test", "5() data: $data")
+            _categoryData.postValue(data)
         }
 
-        Log.e("test", "getNewQuizListWithServer() end")
+        Log.d("test", "getNewQuizListWithServer() end")
         return listNewQuiz
     }
 
     //Этот метод загружает структуру, сравнивает в локальной, получает список новых квестов и загружает их
     suspend fun getNewStructureDataANDQuizzes(): List<Pair<String, String>> {
+        Log.d("test", "getNewStructureDataANDQuizzes")
         val listNewQuiz = getNewQuizListANDcatDataWithServer()
         loadQuizzesByList(listNewQuiz)
 
@@ -261,6 +257,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun createProfile() = viewModelScope.launch(Dispatchers.Default) {
+        Log.d("createProfile", "createProfile()")
         val currentTimestamp = Instant.now().epochSecond
         val daysSinceEpoch = Instant.now().epochSecond / 86400
 
@@ -327,6 +324,10 @@ class MainViewModel @Inject constructor(
         Log.d("pushTheQuiz", "End")
     }
 
+    fun syncProfile()= viewModelScope.launch(Dispatchers.Default) {
+
+        profileUseCase.syncProfile()
+    }
     private suspend fun pushQuiz(quizEntity: QuizEntity) {
         quizUseCase.pushQuiz(quizEntity)
     }
@@ -360,20 +361,34 @@ class MainViewModel @Inject constructor(
         return 0
     }
 
+    fun getPathPicture(): String {
+        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        val randomString = (1..5)
+            .map { chars.random() }
+            .joinToString("")
+        return "${Core.tpovId}_$randomString.jpg"
+    }
+
     fun insertQuizThis(
         structureCategoryDataEntity: StructureCategoryDataEntity,
         quizIt: QuizEntity,
         questionsIt: ArrayList<QuestionEntity>
     ) = viewModelScope.launch(Dispatchers.Default) {
         val newIdQuiz = getNewIdQuiz()
-        structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)
-        quizUseCase.insertQuiz(quizIt.copy(id = newIdQuiz))
+        Log.d("awdads", "newIdQuiz: $newIdQuiz")
+        val updatedStructureCategoryData =
+            structureCategoryDataEntity.copy(oldIdQuizId = newIdQuiz)
+        structureUseCase.insertStructureCategoryData(updatedStructureCategoryData)
+        val updatedQuizIt = quizIt.copy(id = newIdQuiz)
+        quizUseCase.insertQuiz(updatedQuizIt)
+
+        questionsIt.replaceAll { it.copy(idQuiz = newIdQuiz) }
         questionsIt.forEach {
-            questionUseCase.insertQuestion(it.copy(idQuiz = newIdQuiz))
+            questionUseCase.insertQuestion(it)
         }
     }
 
-    private suspend fun getNewIdQuiz(): Int {
+        private suspend fun getNewIdQuiz(): Int {
         val quizzes = quizUseCase.getQuizzes()
         val usedIds = quizzes?.map { it.id }?.toSet()
 

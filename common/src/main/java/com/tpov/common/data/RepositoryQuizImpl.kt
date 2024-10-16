@@ -4,7 +4,6 @@ import android.net.Uri
 import android.util.Log
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.core.FirebaseRequestInterceptor
@@ -14,6 +13,10 @@ import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.fromJson
 import com.tpov.common.data.model.remote.QuizRemote
 import com.tpov.common.domain.repository.RepositoryQuiz
+import com.tpov.common.presentation.utils.Values.context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -102,7 +105,7 @@ class RepositoryQuizImpl @Inject constructor(
             FirebaseRequestInterceptor
                 .executeWithChecksSingleTask(pushQuizTask)
                 .await()
-            uploadPhotoToServer(quizRemote.picture)
+            uploadFileToFirebaseStorage(quizRemote.picture)
             Log.d("Firestore", "Quiz успешно сохранен в Firestore.")
         } catch (e: Exception) {
             Log.e("Firestore", "Ошибка при сохранении Quiz в Firestore", e)
@@ -151,6 +154,12 @@ class RepositoryQuizImpl @Inject constructor(
                             Log.d("OkHttp", "Received response body: $responseData")
                             val jsonResponse = JSONObject(responseData)
                             val updatedCategory = fromJson(jsonResponse)
+                            CoroutineScope(Dispatchers.IO).launch {
+
+                                uploadFileToFirebaseStorage(structureCategoryDataEntity.newCategoryPhoto)
+                                uploadFileToFirebaseStorage(structureCategoryDataEntity.newSubCategoryPhoto)
+                                uploadFileToFirebaseStorage(structureCategoryDataEntity.newSubsubCategoryPhoto)
+                            }
                             taskCompletionSource.setResult(updatedCategory)
                         } else {
                             taskCompletionSource.setException(Exception("Empty response from server"))
@@ -175,26 +184,10 @@ class RepositoryQuizImpl @Inject constructor(
     }
 
 
-
     private fun deleteStructureCategory(idCategory: Int) {
 
     }
 
-    private suspend fun uploadPhotoToServer(pathPhoto: String) {
-        if (pathPhoto.isNotBlank()) {
-            try {
-                val currentUser: FirebaseUser? = FirebaseAuth.getInstance().currentUser
-
-                if (currentUser == null) {
-                    signInAnonymously()
-                }
-
-                uploadFileToFirebaseStorage(pathPhoto)
-            } catch (e: Exception) {
-                Log.e("FirebaseAuth", "Ошибка при загрузке фото: ${e.message}", e)
-            }
-        }
-    }
 
     private suspend fun signInAnonymously() {
         return suspendCoroutine<Unit> { continuation ->
@@ -205,7 +198,11 @@ class RepositoryQuizImpl @Inject constructor(
                         continuation.resume(Unit)
                     } else {
                         Log.e("FirebaseAuth", "Ошибка анонимной аутентификации", task.exception)
-                        continuation.resumeWith(Result.failure(task.exception ?: Exception("Неизвестная ошибка аутентификации")))
+                        continuation.resumeWith(
+                            Result.failure(
+                                task.exception ?: Exception("Неизвестная ошибка аутентификации")
+                            )
+                        )
                     }
                 }
         }
@@ -216,14 +213,13 @@ class RepositoryQuizImpl @Inject constructor(
         Log.d("FirebaseRequestInterceptor", "uploadFileToFirebaseStorage")
         if (pathPhoto.isNotBlank()) {
             val storageRef = FirebaseStorage.getInstance().reference
-            val localFile = File(pathPhoto)
+            val localFile = File(context.filesDir, pathPhoto)
             val photoRef = storageRef.child("quizPhoto/${localFile.name}")
 
             val uploadTask = {
                 val taskCompletionSource = TaskCompletionSource<Void>()
                 photoRef.putFile(Uri.fromFile(localFile))
                     .addOnSuccessListener {
-                        // Файл успешно загружен
                         Log.d("FirebaseStorage", "Файл успешно загружен: ${localFile.name}")
                         taskCompletionSource.setResult(null)
                     }
@@ -259,11 +255,9 @@ class RepositoryQuizImpl @Inject constructor(
                 val taskCompletionSource = TaskCompletionSource<File>()
                 photoRef.getFile(localFile)
                     .addOnSuccessListener {
-                        // Файл успешно загружен
                         taskCompletionSource.setResult(localFile)
                     }
                     .addOnFailureListener { exception ->
-                        // Обработка ошибок
                         taskCompletionSource.setException(exception)
                     }
                 taskCompletionSource.task
@@ -286,6 +280,7 @@ class RepositoryQuizImpl @Inject constructor(
     override suspend fun deleteQuizById(idQuiz: Int) {
         quizDao.deleteQuizById(idQuiz)
     }
+
     override suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int) {
         Log.d("FirebaseRequestInterceptor", "deleteRemoteQuizById")
         val deleteTask = {

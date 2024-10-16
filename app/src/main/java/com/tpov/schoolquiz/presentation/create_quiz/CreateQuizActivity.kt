@@ -169,7 +169,7 @@ class CreateQuizActivity : AppCompatActivity() {
             numQ = questionsShortEntity.filter { !it.hardQuestion }.size,
             numHQ = questionsShortEntity.filter { it.hardQuestion }.size,
             versionQuiz = quizEntity?.versionQuiz?.plus(1) ?: QuizEntity().versionQuiz,
-            picture = saveImage(imvQuiz, (quizEntity?.id ?: QuizEntity().id).toString()),
+            picture = saveImage(imvQuiz, (viewModel.getPathPicture())),
             languages = getLanguageQuizByQuestions(),
         )
         return quizEntity
@@ -184,16 +184,23 @@ class CreateQuizActivity : AppCompatActivity() {
     private var structureCategoryDataEntity = StructureCategoryDataEntity()
 
     private fun saveStructureCategory(newEvent: Int) {
-        val pathCategory = saveImage(binding.imvCategory, category)
-         val pathSubCategory = saveImage(binding.imvSubcategory, "$category/$subCategory")
-         val pathSubsubCategory = saveImage(binding.imvSubsubcategory, "$category/$subCategory/$subsubCategory")
-        structureCategoryDataEntity = StructureCategoryDataEntity().initCreateQuizActivity(quizEntity!!, getCategoriesByLayout(), newEvent, pathCategory, pathSubCategory, pathSubsubCategory, quizEntity?.nameQuiz ?: "")
+        val pathCategory = saveImage(binding.imvCategory, viewModel.getPathPicture())
+        val pathSubCategory = saveImage(binding.imvSubcategory, viewModel.getPathPicture())
+        val pathSubsubCategory = saveImage(binding.imvSubsubcategory, viewModel.getPathPicture())
+        structureCategoryDataEntity = StructureCategoryDataEntity().initCreateQuizActivity(
+            quizEntity!!,
+            getCategoriesByLayout(),
+            newEvent,
+            pathCategory,
+            pathSubCategory,
+            pathSubsubCategory,
+            binding.tvQuizName.text.toString()
+        )
     }
 
     private fun saveImage(imageView: ImageView, fileName: String): String {
         val drawable = imageView.drawable
 
-        // Проверяем, является ли drawable объектом BitmapDrawable
         if (drawable is BitmapDrawable) {
             val bitmap = drawable.bitmap
 
@@ -203,29 +210,31 @@ class CreateQuizActivity : AppCompatActivity() {
 
             // Проверяем, нужно ли уменьшать изображение
             val scaledBitmap = if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
-                scaleBitmap(bitmap, maxWidth, maxHeight)  // Уменьшаем, если изображение слишком большое
+                scaleBitmap(
+                    bitmap,
+                    maxWidth,
+                    maxHeight
+                )
             } else {
-                bitmap  // Используем оригинальное изображение, если оно уже маленькое
+                bitmap
             }
 
-            // Указываем путь для сохранения файла
-            val filePath = getExternalFilesDir(null)?.absolutePath + "/$fileName.png"
-            val file = File(filePath)
+            val file = File(applicationContext.filesDir, fileName)
             var fileOutputStream: FileOutputStream? = null
             try {
                 fileOutputStream = FileOutputStream(file)
 
-                // Сохраняем изображение с качеством 100%
-                scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
 
-                Toast.makeText(this, "Image saved to $filePath", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Image saved to $fileName in Pictures", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
                 fileOutputStream?.close()
             }
 
-            return filePath
+            // Возвращаем короткий путь без полного пути к директории
+            return fileName
         } else {
             // Если изображение не является BitmapDrawable, возвращаем пустую строку
             return ""
@@ -674,7 +683,8 @@ class CreateQuizActivity : AppCompatActivity() {
         val newAnswers = getThisAnswers()
 
         if (newAnswers.size != newQuestions.size) errorCountLanguage()
-        else { if (questionsShortEntity[counter].hardQuestion != hardQuestionThis) {
+        else {
+            if (questionsShortEntity[counter].hardQuestion != hardQuestionThis) {
                 questionsEntity = questionsEntity.filter {
                     it.numQuestion != numQuestionThis || it.hardQuestion == hardQuestionThis
                 } as ArrayList<QuestionEntity>
@@ -694,7 +704,7 @@ class CreateQuizActivity : AppCompatActivity() {
             else questionsShortEntity[counter].numQuestion
 
             if (isNewQuestion) thisNumQuestion += 1
-            val pathPicture = getPathPicture()
+            val pathPicture = viewModel.getPathPicture()
             newQuestions.forEach { newQuestion ->
 
                 val filterAnswer = newAnswers.filter { it.first == newQuestion.second }
@@ -710,7 +720,7 @@ class CreateQuizActivity : AppCompatActivity() {
                             null,
                             thisNumQuestion,
                             newQuestion.first,
-                            pathPicture,
+                            saveImage(binding.imvQuestion, viewModel.getPathPicture()),
                             answer.third,
                             answer.second,
                             hardQuestionThis,
@@ -750,10 +760,6 @@ class CreateQuizActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    private fun getPathPicture(): String {
-        return ""
     }
 
     private fun getAllQuestionsAndLanguages(): List<Pair<String, String>> {
@@ -980,7 +986,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
         questionsEntity.let { questionsIt ->
-            quizEntity?.let {quizIt ->
+            quizEntity?.let { quizIt ->
                 viewModel.insertQuizThis(structureCategoryDataEntity, quizIt, questionsIt)
                 finish()
             } ?: saveTranslate()
@@ -998,6 +1004,7 @@ class CreateQuizActivity : AppCompatActivity() {
     private fun saveTranslate() {
 
     }
+
 
     private fun determineLanguage(textBeforeSpace: String): String {
         return getUserLanguage()

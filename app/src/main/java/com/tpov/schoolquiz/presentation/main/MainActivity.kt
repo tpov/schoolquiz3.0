@@ -116,6 +116,7 @@ class MainActivity : AppCompatActivity() {
         Values.context = this
         setupUI()
         initViewModel()
+        viewModel.initProfile()
         setupDrawerLayout()
         initBottomMenu()
         setupAnimations()
@@ -123,7 +124,6 @@ class MainActivity : AppCompatActivity() {
         initData()
     }
 
-    @Logger
     private fun initData() {
         getDataToday()
 
@@ -138,6 +138,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@launch
             }
+            Log.d("test", "initData()")
             viewModel.getNewStructureDataANDQuizzes()
         }
     }
@@ -155,7 +156,7 @@ class MainActivity : AppCompatActivity() {
         return activeNetwork?.isConnectedOrConnecting == true
     }
 
-    private fun syncProfile() {
+    fun syncProfile() {
         lifecycleScope.launch {
             viewModel.profileState.collect { profile ->
                 Log.d("qweqwe", "2 $profile")
@@ -266,6 +267,7 @@ getDataToday()
     }
 
     private fun showAddPoints(profile: ProfileEntity): ProfileEntity? {
+        Log.d("showAddPoints", "showAddPoints")
         var updatedProfile: ProfileEntity? = null
         profile.apply {
             if (addPointsGold != 0 ||
@@ -274,6 +276,13 @@ getDataToday()
                 addTrophy.isNotEmpty() ||
                 addMassage.isNotEmpty()
             ) {
+                // Логи для отслеживания перед копированием
+                Log.d("showAddPoints", "Добавляем очки к профилю:")
+                Log.d("showAddPoints", "addPointsGold: $addPointsGold")
+                Log.d("showAddPoints", "addPointsSkill: $addPointsSkill")
+                Log.d("showAddPoints", "addPointsNolics: $addPointsNolics")
+                Log.d("showAddPoints", "addTrophy: $addTrophy")
+                Log.d("showAddPoints", "addMassage: $addMassage")
 
                 updatedProfile = profile.copy(
                     pointsGold = pointsGold + addPointsGold,
@@ -286,10 +295,16 @@ getDataToday()
                     addTrophy = "",
                     addMassage = ""
                 )
+
+                // Логи для отслеживания после обновления
+                Log.d("showAddPoints", "Обновленный профиль:")
+                Log.d("showAddPoints", "pointsGold: ${updatedProfile?.pointsGold}")
+                Log.d("showAddPoints", "pointsSkill: ${updatedProfile?.pointsSkill}")
+                Log.d("showAddPoints", "pointsNolics: ${updatedProfile?.pointsNolics}")
+                Log.d("showAddPoints", "trophy: ${updatedProfile?.trophy}")
+            } else {
+                Log.d("showAddPoints", "Изменений не требуется.")
             }
-            //val notification = NotificationHelper(this@MainActivity)
-            //notification.updateProfileUserGuide()
-            //notification.showBuilderUpdateProfile()
         }
 
         return updatedProfile
@@ -649,6 +664,7 @@ getDataToday()
     }
 
     private fun initBottomMenu() {
+        switchFragment(MainFragment())
         binding.bNav.setOnNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.menu_home -> switchFragment(MainFragment())

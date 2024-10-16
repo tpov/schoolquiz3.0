@@ -5,23 +5,16 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentLinkedQueue
 
 object FirebaseRequestInterceptor {
     private var isOpenServer: Boolean? = null
-    private val requestQueue: ConcurrentLinkedQueue<QueuedRequest<*>> = ConcurrentLinkedQueue()
+    private val requestQueue: ConcurrentLinkedQueue<() -> Task<*>> = ConcurrentLinkedQueue()
     private var isProcessingQueue: Boolean = false
-
-    data class QueuedRequest<T>(
-        val request: () -> Task<T>,
-        val taskCompletionSource: TaskCompletionSource<T>
-    )
-
-    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     fun getIsOpenServer(taskCompletionSource: TaskCompletionSource<Boolean>) {
         fetchIsOpenServer()
@@ -34,27 +27,34 @@ object FirebaseRequestInterceptor {
             }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun <T> executeWithChecksSingleTask(request: () -> Task<T>): Task<T> {
         val taskCompletionSource = TaskCompletionSource<T>()
 
-        val queuedRequest = QueuedRequest(request, taskCompletionSource)
-        requestQueue.add(queuedRequest)
+        requestQueue.add {
+            request().addOnSuccessListener { result ->
+                taskCompletionSource.setResult(result)
+            }.addOnFailureListener { exception ->
+                taskCompletionSource.setException(exception)
+            }
+        }
         processQueue()
 
         return taskCompletionSource.task
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun processQueue() {
         if (isProcessingQueue) return
 
-        coroutineScope.launch {
+        GlobalScope.launch {
             isProcessingQueue = true
             while (requestQueue.isNotEmpty()) {
-                val queuedRequest = requestQueue.poll() as QueuedRequest<Any>
+                val request = requestQueue.peek()
 
                 if (Core.token.isEmpty()) {
-                    Log.d("FirebaseRequestInterceptor", "Token is empty, cannot execute request")
-                    queuedRequest.taskCompletionSource.setException(Exception("Token is empty"))
+                    Log.d("FirebaseRequestInterceptor", "Token is empty, retrying after delay")
+                    delay(5000L)
                     continue
                 }
 
@@ -65,20 +65,15 @@ object FirebaseRequestInterceptor {
 
                     if (isOpenServerResult) {
                         Log.d("FirebaseRequestInterceptor", "Server is open, executing request")
-                        queuedRequest.request()
-                            .addOnSuccessListener { result ->
-                                queuedRequest.taskCompletionSource.setResult(result)
-                            }
-                            .addOnFailureListener { exception ->
-                                queuedRequest.taskCompletionSource.setException(exception)
-                            }
+                        request()
+                        requestQueue.poll() // Удаляем успешно выполненный запрос из очереди
                     } else {
-                        Log.d("FirebaseRequestInterceptor", "Server is closed, completing task with error")
-                        queuedRequest.taskCompletionSource.setException(Exception("Server is closed"))
+                        Log.d("FirebaseRequestInterceptor", "Server is closed, retrying after delay")
+                        delay(5000L)
                     }
                 } catch (e: Exception) {
-                    Log.e("FirebaseRequestInterceptor", "Exception occurred: ${e.message}")
-                    queuedRequest.taskCompletionSource.setException(e)
+                    Log.e("FirebaseRequestInterceptor", "Exception occurred: ${e.message}, retrying request after delay")
+                    delay(5000L)
                 }
             }
             isProcessingQueue = false

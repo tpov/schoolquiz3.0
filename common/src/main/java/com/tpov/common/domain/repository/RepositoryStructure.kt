@@ -17,4 +17,7 @@ interface RepositoryStructure {
     suspend fun insertStructureRating(structureCategoryDataEntity: StructureCategoryDataEntity)
     suspend fun getStructureCategory(): List<StructureCategoryDataEntity>
     suspend fun deleteCategoryById(id: Int)
+
+    fun deleteLocalPictureStructure(path: String)
+    fun fetchPictureStructure(path: String)
 }

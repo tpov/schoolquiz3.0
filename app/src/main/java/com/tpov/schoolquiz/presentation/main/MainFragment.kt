@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -36,10 +37,12 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
+        viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[MainViewModel::class.java]
 
-        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
 
+        Log.d("MainFragment", "onViewCreated()")
         viewModel.categoryData.observe(viewLifecycleOwner) { categoryDataList ->
+            Log.d("MainFragment", "categoryDataList: $categoryDataList")
             adapter = MainAdapter(categoryDataList, this)
             recyclerView.adapter = adapter
         }
@@ -47,15 +50,12 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onItemClick(category: CategoryData) {
-        // Создаем новый фрагмент, который нужно показать
         val newFragment = QuizFragment()
 
-        // Создаем Bundle для передачи данных, если необходимо
         val args = Bundle()
         args.putString("key", category.nameQuiz)
         newFragment.arguments = args
 
-        // Выполняем транзакцию замены фрагмента
         requireActivity().supportFragmentManager.beginTransaction()
                 .replace(R.id.title_fragment, newFragment)
                 .addToBackStack(null)

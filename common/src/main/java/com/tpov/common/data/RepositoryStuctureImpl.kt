@@ -1,12 +1,13 @@
 package com.tpov.common.data
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
-import com.tpov.common.data.core.FirebaseRequestInterceptor
 import com.tpov.common.data.core.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
@@ -20,6 +21,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 class RepositoryStuctureImpl @Inject constructor(
@@ -32,16 +34,22 @@ class RepositoryStuctureImpl @Inject constructor(
     private val gson = Gson()
     private val fileName = "structure_data.json"
     private val ratingFileName = "structure_rating.json"
+    private val storageFolder = "quizPhoto"
 
     override suspend fun fetchStructureData(): StructureData? {
+        Log.d("SyncData", "fetchStructureData()")
         val fetchTask = {
             val taskCompletionSource = TaskCompletionSource<StructureData?>()
             val documentRef = firestore.collection("structures").document("structureData")
 
             documentRef.get()
                 .addOnSuccessListener { documentSnapshot ->
+                    Log.d("SyncData", "documentSnapshot: $documentSnapshot()")
                     if (documentSnapshot.exists()) {
-                        Log.d("SyncData", "Document 'structureData' exists. Converting to StructureData object.")
+                        Log.d(
+                            "SyncData",
+                            "Document 'structureData' exists. Converting to StructureData object."
+                        )
                         val structureData = documentSnapshot.toObject(StructureData::class.java)
                         if (structureData != null) {
                             Log.d("SyncData", "Successfully parsed 'structureData': $structureData")
@@ -50,7 +58,10 @@ class RepositoryStuctureImpl @Inject constructor(
                             taskCompletionSource.setException(Exception("Data parsing error"))
                         }
                     } else {
-                        Log.d("SyncData", "Document 'structureData' does not exist, returning null.")
+                        Log.d(
+                            "SyncData",
+                            "Document 'structureData' does not exist, returning null."
+                        )
                         taskCompletionSource.setResult(null)
                     }
                 }
@@ -98,26 +109,24 @@ class RepositoryStuctureImpl @Inject constructor(
         }
 
         try {
-            // Используем FirebaseRequestInterceptor для выполнения задачи
             executeWithChecksSingleTask(pushTask)
                 .await()
         } catch (e: Exception) {
             Log.e("Firestore", "Failed to push rating data. Saving locally.", e)
-            // Если произошла ошибка, сохраняем данные локально
             saveFailedRatingLocally(ratingData)
         }
     }
 
     override suspend fun saveStructureData(structureData: com.tpov.common.data.model.local.StructureData) {
         try {
-            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+            executeWithChecksSingleTask {
                 val taskCompletionSource = TaskCompletionSource<Void>()
 
-                    val json = gson.toJson(structureData)
-                    context.openFileOutput(fileName, Context.MODE_PRIVATE).use {
-                        it.write(json.toByteArray())
-                    }
-                    taskCompletionSource.setResult(null)
+                val json = gson.toJson(structureData)
+                context.openFileOutput(fileName, Context.MODE_PRIVATE).use {
+                    it.write(json.toByteArray())
+                }
+                taskCompletionSource.setResult(null)
 
                 taskCompletionSource.task
             }.await()
@@ -134,7 +143,7 @@ class RepositoryStuctureImpl @Inject constructor(
         try {
             val dataMap = structureCategoryDataEntity.toMap()
 
-            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+            executeWithChecksSingleTask {
                 val taskCompletionSource = TaskCompletionSource<Void>()
 
                 firestore.collection("structureCategory")
@@ -142,6 +151,15 @@ class RepositoryStuctureImpl @Inject constructor(
                     .set(dataMap)
                     .addOnSuccessListener {
                         Log.d("Firestore", "Document successfully written!")
+                        if (structureCategoryDataEntity.newCategoryPhoto != "") pushPictureStructure(
+                            structureCategoryDataEntity.newCategoryPhoto
+                        )
+                        if (structureCategoryDataEntity.newSubCategoryPhoto != "") pushPictureStructure(
+                            structureCategoryDataEntity.newSubCategoryPhoto
+                        )
+                        if (structureCategoryDataEntity.newSubsubCategoryPhoto != "") pushPictureStructure(
+                            structureCategoryDataEntity.newSubsubCategoryPhoto
+                        )
                         taskCompletionSource.setResult(null)
                     }
                     .addOnFailureListener { e ->
@@ -165,7 +183,6 @@ class RepositoryStuctureImpl @Inject constructor(
             }
         }
     }
-
 
 
     override suspend fun saveListUpdateQuiz(list: List<String>) {
@@ -192,6 +209,70 @@ class RepositoryStuctureImpl @Inject constructor(
 
     override suspend fun deleteCategoryById(id: Int) {
         structureCategoryDataDao.deleteCategoryById(id)
+    }
+
+
+    override fun deleteLocalPictureStructure(pictureName: String) {
+        val file = File(pictureName)
+        if (file.exists()) {
+            val deleted = file.delete()
+            if (deleted) {
+                println("Удалена локальная фотография: $pictureName")
+            } else {
+                println("Не удалось удалить локальную фотографию: $pictureName")
+            }
+        } else {
+            println("Локальная фотография не найдена: $pictureName")
+        }
+    }
+
+    fun pushPictureStructure(localPath: String) {
+        val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$localPath")
+        val localFile = File(localPath)
+
+        localFile.parentFile?.let {
+            if (!it.exists()) {
+                it.mkdirs()
+            }
+        }
+
+        if (!localFile.exists()) {
+            println("Файл не найден: $localPath")
+            return
+        }
+
+        executeWithChecksSingleTask {
+            storageRef.putFile(Uri.fromFile(localFile))
+                .addOnSuccessListener {
+                    println("Фотография загружена успешно: $localPath")
+                }
+                .addOnFailureListener { exception ->
+                    println("Ошибка при загрузке фотографии: $localPath")
+                    exception.printStackTrace()
+                }
+        }
+    }
+
+    override fun fetchPictureStructure(path: String) {
+        val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$path")
+        val localFile = File(context.filesDir, path)
+
+        localFile.parentFile?.let {
+            if (!it.exists()) {
+                it.mkdirs()
+            }
+        }
+
+        executeWithChecksSingleTask {
+            storageRef.getFile(localFile)
+                .addOnSuccessListener {
+                    println("Фотография загружена успешно: $path")
+                }
+                .addOnFailureListener { exception ->
+                    println("Ошибка при загрузке фотографии: $path")
+                    exception.printStackTrace()
+                }
+        }
     }
 
     override suspend fun getStructureData(): com.tpov.common.data.model.local.StructureData? {
@@ -221,7 +302,7 @@ class RepositoryStuctureImpl @Inject constructor(
                 val dataMap = ratingDataEntity.toStructureRatingData().toMap()
 
                 // Используем перехватчик для отправки данных на сервер
-                FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                executeWithChecksSingleTask {
                     val taskCompletionSource = TaskCompletionSource<Void>()
 
                     firestore.collection("structureRatings")

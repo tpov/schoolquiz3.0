@@ -84,19 +84,40 @@ class SyncWorker @AssistedInject constructor(
     }
 
     private suspend fun pushQuizData(viewModel: MainViewModel) {
+        // Лог начала выполнения функции
+        Log.d("pushQuizData", "Начало синхронизации данных викторин")
+
         val structureCategoryList = structureUseCase.getStructureCategory()
+        Log.d("pushQuizData", "Получено ${structureCategoryList.size} категорий структуры")
+
         if (structureCategoryList.isNotEmpty()) {
             structureCategoryList.forEach { structureCategory ->
                 val idQuiz = structureCategory.oldIdQuizId
-                val quiz = quizUseCase.getQuizById(idQuiz)
-                val questionList = questionUseCase.getQuestionByIdQuiz(idQuiz)
+                Log.d("pushQuizData", "Обработка категории с idQuiz: $idQuiz")
+                Log.d("pushQuizData", "structureCategory: $structureCategory")
 
+                val quiz = quizUseCase.getQuizById(idQuiz)
+                Log.d("pushQuizData", "Получена викторина для idQuiz: ${quiz?.id}")
+
+                val questionList = questionUseCase.getQuestionByIdQuiz(idQuiz)
+                Log.d("pushQuizData", "Получено ${questionList.size} вопросов для idQuiz: $idQuiz")
+
+                // Пушим данные викторины в viewModel
                 viewModel.pushTheQuiz(structureCategory, quiz!!, questionList)
+                Log.d("pushQuizData", "Данные викторины для idQuiz: $idQuiz успешно отправлены")
+
+                // Удаляем категорию структуры после успешного пуша
                 structureUseCase.deleteStructureCategoryById(structureCategory.id!!)
+                Log.d("pushQuizData", "Категория структуры с id: ${structureCategory.id} удалена")
             }
+            // Отображаем уведомление по завершению
             showNotification("Sync Complete", "Pushed ${structureCategoryList.size} quizzes.")
+            Log.d("pushQuizData", "Синхронизация завершена. Pushed ${structureCategoryList.size} quizzes.")
+        } else {
+            Log.d("pushQuizData", "Нет категорий структуры для синхронизации")
         }
     }
+
 
     private suspend fun fetchQuizData() {
         val updatedQuizList = structureUseCase.syncStructureDataANDquizzes()
