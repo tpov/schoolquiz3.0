@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="#00050404"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="6dp">
@@ -23,14 +24,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="8dp">
+            android:padding="6dp">
 
             <ImageView
                 android:id="@+id/imv_category_title"
                 android:layout_width="match_parent"
                 android:layout_height="125dp"
-                android:layout_weight="1"
-                android:layout_margin="4dp"
                 android:scaleType="centerCrop"
                 tools:srcCompat="@tools:sample/avatars" />
 
@@ -40,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|center_vertical"
-                android:background="#222222"
+                android:background="#3C3C3C"
                 android:numStars="3"
                 android:layout_margin="8dp"
                 android:progressBackgroundTint="#AAAAAA"
@@ -52,12 +51,12 @@
                 android:id="@+id/tv_category_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:layout_margin="8dp"
-                android:textColorHint="@color/white"
+                android:gravity="center"
                 android:text="Title"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="@android:color/white" />
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
         </LinearLayout>
     </com.tpov.common.presentation.utils.CustomRoundedImageView>
 

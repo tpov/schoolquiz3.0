@@ -43,7 +43,7 @@ class RepositoryQuizImpl @Inject constructor(
         tpovId: Int,
         idQuiz: Int
     ): QuizRemote {
-        Log.d("FirebaseRequestInterceptor", "fetchQuizzes")
+        Log.e("FirebaseRequestInterceptor", "fetchQuizzes: $typeId, tpovId: $tpovId, idQuiz: $idQuiz")
         val documentReference = baseCollection
             .document("quiz$typeId")
             .collection("$tpovId")
@@ -57,6 +57,7 @@ class RepositoryQuizImpl @Inject constructor(
                     if (quizRemote != null) {
                         taskCompletionSource.setResult(quizRemote)
                     } else {
+
                         taskCompletionSource.setException(
                             NoSuchElementException("No quiz found with the specified criteria")
                         )

@@ -173,7 +173,7 @@
                     <TextView
                         android:id="@+id/boxDay1"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -181,7 +181,7 @@
                     <TextView
                         android:id="@+id/boxDay2"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -189,7 +189,7 @@
                     <TextView
                         android:id="@+id/boxDay3"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -197,7 +197,7 @@
                     <TextView
                         android:id="@+id/boxDay4"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -205,7 +205,7 @@
                     <TextView
                         android:id="@+id/boxDay5"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -213,7 +213,7 @@
                     <TextView
                         android:id="@+id/boxDay6"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -221,7 +221,7 @@
                     <TextView
                         android:id="@+id/boxDay7"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -229,7 +229,7 @@
                     <TextView
                         android:id="@+id/boxDay8"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -237,7 +237,7 @@
                     <TextView
                         android:id="@+id/boxDay9"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_weight="1"
                         android:background="@color/red" />
@@ -245,7 +245,7 @@
                     <TextView
                         android:id="@+id/boxDay10"
                         android:layout_width="0dp"
-                        android:layout_height="2dp"
+                        android:layout_height="1dp"
                         android:layout_marginLeft="4dp"
                         android:layout_marginRight="4dp"
                         android:layout_weight="1"
@@ -266,6 +266,7 @@
                         android:id="@+id/imb_manu"
                         android:layout_width="14dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
                         android:background="@null"
                         app:srcCompat="@drawable/baseline_more_vert" />
 
@@ -274,7 +275,6 @@
                         android:layout_height="match_parent"
                         android:layout_margin="4dp"
                         android:layout_weight="1"
-                        android:background="@drawable/back_item_main"
                         android:gravity="center"
                         android:orientation="horizontal">
 
@@ -303,7 +303,6 @@
                         android:layout_height="match_parent"
                         android:layout_margin="4dp"
                         android:layout_weight="0.9"
-                        android:background="@drawable/back_item_main"
                         android:gravity="center"
                         android:orientation="horizontal">
 
@@ -358,7 +357,6 @@
                         android:layout_height="match_parent"
                         android:layout_margin="4dp"
                         android:layout_weight="1.05"
-                        android:background="@drawable/back_item_main"
                         android:gravity="center"
                         android:orientation="horizontal">
 
@@ -387,7 +385,6 @@
                         android:layout_height="match_parent"
                         android:layout_margin="4dp"
                         android:layout_weight="1.1"
-                        android:background="@drawable/back_item_main"
                         android:gravity="center"
                         android:orientation="horizontal">
 
@@ -429,6 +426,7 @@
                         android:background="@null"
                         android:ellipsize="end"
                         android:gravity="center_vertical"
+                        android:layout_marginLeft="4dp"
                         android:paddingLeft="4dp"
                         android:singleLine="true"
                         android:text="Name"
@@ -439,7 +437,9 @@
                     <RelativeLayout
                         android:layout_width="30dp"
                         android:layout_height="30dp"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginLeft="6dp"
+                        android:layout_marginRight="6dp"
+                        android:layout_weight="0"
                         android:background="@null">
 
                         <ImageView
@@ -464,9 +464,9 @@
 
                 <View
                     android:layout_width="wrap_content"
-                    android:layout_height="2dp"
+                    android:layout_height="1dp"
                     android:layout_margin="8dp"
-                    android:background="@color/contour" />
+                    android:background="#6A5E23 " />
 
             </LinearLayout>
 
