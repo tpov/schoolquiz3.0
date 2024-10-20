@@ -90,13 +90,17 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun setupQuestionSpinner() = with(binding) {
+
+        Log.d("segfdf", "newList setupQuestionSpinner: $questionsShortEntity")
+        Log.d("segfdf", "counter setupQuestionSpinner: $counter")
         val adapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
         Log.d("setupQuestionSpinner", "$questionsShortEntity")
         spNumQuestion.adapter = adapter
         spNumQuestion.setSelection(counter)
-        spNumQuestion.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
 
+        spNumQuestion.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             var initSp: Boolean = false
+
             override fun onItemSelected(
                 parent: AdapterView<*>,
                 view: View?,
@@ -106,22 +110,36 @@ class CreateQuizActivity : AppCompatActivity() {
                 if (!initSp) {
                     initSp = true
                 } else {
-                    saveThisNumberQuestion()
-                    counter = position
-                    idGroup = 0
-                    updateUiQuestion()
+                    if (position == questionsShortEntity.size - 1) {
+                        saveThisNumberQuestion()
 
-                    initSp = false
-                    val newAdapter =
-                        CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
-                    spNumQuestion.adapter = newAdapter
-                    spNumQuestion.setSelection(counter)
+                        setNewCounterAndShortList()
+                        idGroup = 0
+                        updateUiQuestion()
+
+                        initSp = false
+                        val newAdapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
+                        spNumQuestion.adapter = newAdapter
+                        spNumQuestion.setSelection(counter)
+                    } else {
+                        saveThisNumberQuestion()
+                        counter = position
+                        idGroup = 0
+                        updateUiQuestion()
+                        initSp = false
+                        val newAdapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
+                        spNumQuestion.adapter = newAdapter
+                        spNumQuestion.setSelection(counter)
+
+                    }
                 }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
     }
+
+
 
     private fun initSetOnClickListeners() = with(binding) {
 
@@ -133,13 +151,6 @@ class CreateQuizActivity : AppCompatActivity() {
         }
         bCencel.setOnClickListener {
             finish()
-        }
-        bAddQuestion.setOnClickListener {
-            saveThisNumberQuestion()
-            setNewCounterAndShortList()
-            idGroup = 0
-            setupQuestionSpinner()
-            updateUiQuestion()
         }
         bAddTranslate.setOnClickListener {
             addQuestionToLayout("", getUserLanguage())
@@ -291,7 +302,6 @@ class CreateQuizActivity : AppCompatActivity() {
 
     private fun setNewCounterAndShortList(isInit: Boolean = false) {
         if (isInit) {
-            // Инициализация списка
             counter = 0
             questionsShortEntity = arrayListOf(
                 QuestionShortEntity(
@@ -303,7 +313,6 @@ class CreateQuizActivity : AppCompatActivity() {
             )
             return
         }
-
         val questionItemThis = questionsShortEntity[counter]
         val isHardQuestion = questionItemThis.hardQuestion
 
@@ -735,8 +744,6 @@ class CreateQuizActivity : AppCompatActivity() {
             questionsShortEntity =
                 viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
             idCounters = mutableListOf(mutableListOf())
-            Log.d("saveThisNumberQuestion", "newQuestionsShortEntity: $questionsShortEntity")
-            Log.d("saveThisNumberQuestion", "newQuestionsEntity: $questionsEntity")
         }
     }
 
@@ -824,7 +831,7 @@ class CreateQuizActivity : AppCompatActivity() {
         llGroupAnswer.removeAllViews()
 
         val imagePath =
-            if (questionEntitiesLanguage.isNotEmpty()) questionEntitiesLanguage.get(0).pathPictureQuestion
+            if (questionEntitiesLanguage.isNotEmpty()) questionEntitiesLanguage[0].pathPictureQuestion
             else ""
         if (!imagePath.isNullOrEmpty()) imvQuestion.setImageURI(Uri.parse(imagePath))
         else imvQuestion.setImageResource(com.tpov.schoolquiz.R.drawable.ic_upload)

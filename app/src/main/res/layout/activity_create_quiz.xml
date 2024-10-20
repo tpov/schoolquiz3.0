@@ -136,10 +136,15 @@
     <View
         android:id="@+id/stroce"
         android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:layout_margin="16dp"
-        android:background="@color/contour"
+        android:layout_height="1dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/line"
         app:layout_constraintBottom_toTopOf="@+id/imv_question"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ll_create_new_category">
 
     </View>
@@ -212,10 +217,12 @@
     <View
         android:id="@+id/stroce2"
         android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:layout_margin="16dp"
-        android:background="@color/contour"
-        app:layout_constraintBottom_toTopOf="@+id/b_add_question"
+        android:layout_height="1dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/line"
+        app:layout_constraintBottom_toTopOf="@+id/b_add_translate"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
@@ -252,27 +259,10 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/b_add_question"
-        android:layout_width="0dp"
-        android:layout_height="45dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/back_item_main"
-        android:padding="8dp"
-        android:text="+ Question"
-        android:textAllCaps="false"
-        android:textColor="@color/contour"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
-        app:layout_constraintEnd_toStartOf="@+id/b_add_translate"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
         android:id="@+id/b_add_answer"
         android:layout_width="0dp"
         android:layout_height="45dp"
-        android:layout_marginLeft="8dp"
+        android:layout_marginLeft="16dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/back_item_main"
         android:padding="8dp"
@@ -281,8 +271,29 @@
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
+        app:layout_constraintWidth_percent="0.29"
         app:layout_constraintBottom_toTopOf="@+id/b_cencel"
-        app:layout_constraintStart_toEndOf="@+id/b_add_translate" />
+        app:layout_constraintRight_toLeftOf="@+id/b_add_gap"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+    <Button
+        android:id="@+id/b_add_translate"
+        android:layout_width="0dp"
+        android:layout_height="45dp"
+        android:background="@drawable/back_item_main"
+        android:padding="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginBottom="16dp"
+        android:text="+ Translate"
+        android:textAllCaps="false"
+        android:textColor="@color/contour"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintWidth_percent="0.29"
+        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
+        app:layout_constraintRight_toLeftOf="@+id/b_add_gap"
+        app:layout_constraintLeft_toRightOf="@+id/b_add_answer" />
 
     <Button
         android:id="@+id/b_add_gap"
@@ -298,25 +309,10 @@
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
+        app:layout_constraintWidth_percent="0.29"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/b_add_answer" />
-
-    <Button
-        android:id="@+id/b_add_translate"
-        android:layout_width="0dp"
-        android:layout_height="45dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/back_item_main"
-        android:padding="8dp"
-        android:text="+ Translate"
-        android:textAllCaps="false"
-        android:textColor="@color/contour"
-        android:textSize="12sp"
-        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/b_cencel"
-        app:layout_constraintStart_toEndOf="@+id/b_add_question" />
+        app:layout_constraintStart_toEndOf="@+id/b_add_translate" />
 
     <Button
         android:id="@+id/b_save"
