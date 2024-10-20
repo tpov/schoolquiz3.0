@@ -3,7 +3,6 @@ package com.tpov.schoolquiz.presentation.create_quiz
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -24,7 +23,6 @@ init {
         val view = super.getView(position, convertView, parent)
         val textView = view.findViewById<TextView>(android.R.id.text1)
 
-        Log.d("segfdf", "adapter questions: $questions")
         val question = questions[position]
         textView.text = "${question.numQuestion}. ${question.nameQuestion.take(10)}" +
                 if (question.nameQuestion.length > 10) "..." else ""

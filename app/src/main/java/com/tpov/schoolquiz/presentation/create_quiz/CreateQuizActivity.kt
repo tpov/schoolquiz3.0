@@ -121,6 +121,9 @@ class CreateQuizActivity : AppCompatActivity() {
                         val newAdapter = CustomSpinnerAdapter(this@CreateQuizActivity, questionsShortEntity)
                         spNumQuestion.adapter = newAdapter
                         spNumQuestion.setSelection(counter)
+
+                        addQuestionToLayout("", getUserLanguage())
+                        addOrUpdateAnswerGroup(idGroup, getUserLanguage(), false, "")
                     } else {
                         saveThisNumberQuestion()
                         counter = position
@@ -301,6 +304,8 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun setNewCounterAndShortList(isInit: Boolean = false) {
+        Log.d("segfdf", "newList setNewCounterAndShortList(): $questionsShortEntity")
+        Log.d("segfdf", "counter setNewCounterAndShortList(): $counter")
         if (isInit) {
             counter = 0
             questionsShortEntity = arrayListOf(
@@ -316,6 +321,7 @@ class CreateQuizActivity : AppCompatActivity() {
         val questionItemThis = questionsShortEntity[counter]
         val isHardQuestion = questionItemThis.hardQuestion
 
+        Log.d("dsfgfh", "questionItemThis: $questionItemThis")
         // Ищем отсутствующий номер вопроса
         val missingNumber = findMissingNumber(isHardQuestion)
 
@@ -345,7 +351,11 @@ class CreateQuizActivity : AppCompatActivity() {
             questionsShortEntity.add(newQuestionItem)
             counter = questionsShortEntity.size - 1
         }
+
+        Log.d("segfdf", "newList setNewCounterAndShortList(after): $questionsShortEntity")
+        Log.d("segfdf", "counter setNewCounterAndShortList(after): $counter")
     }
+
 
     private fun findMissingNumber(isHardQuestion: Boolean): Int {
         val relevantQuestions = questionsShortEntity.filter { it.hardQuestion == isHardQuestion }
@@ -387,6 +397,9 @@ class CreateQuizActivity : AppCompatActivity() {
             updateUiQuestion()
             setupUiQuiz()
             setSpinnersCategory()
+
+            addQuestionToLayout("", getUserLanguage())
+            addOrUpdateAnswerGroup(idGroup, getUserLanguage(), false, "")
         } else {
             setupQuestionSpinner()
             updateUiQuestion()
@@ -686,6 +699,11 @@ class CreateQuizActivity : AppCompatActivity() {
             it.numQuestion != numQuestionThis || it.hardQuestion != hardQuestionThis
         }
 
+        Log.d("segfdf", "newList saveThisNumberQuestion: $questionsShortEntity")
+        Log.d("segfdf", "counter saveThisNumberQuestion: $counter")
+        Log.d("segfdf", "numQuestionThis saveThisNumberQuestion: $numQuestionThis")
+        Log.d("segfdf", "newQuestionEntity saveThisNumberQuestion: $newQuestionEntity")
+        Log.d("segfdf", "hardQuestionThis saveThisNumberQuestion: $hardQuestionThis")
         questionsEntity = newQuestionEntity as ArrayList<QuestionEntity>
 
         val newQuestions = getAllQuestionsAndLanguages()
@@ -713,7 +731,6 @@ class CreateQuizActivity : AppCompatActivity() {
             else questionsShortEntity[counter].numQuestion
 
             if (isNewQuestion) thisNumQuestion += 1
-            val pathPicture = viewModel.getPathPicture()
             newQuestions.forEach { newQuestion ->
 
                 val filterAnswer = newAnswers.filter { it.first == newQuestion.second }
@@ -741,8 +758,11 @@ class CreateQuizActivity : AppCompatActivity() {
                 }
             }
             fillMissingQuestionNumbersByHardQuestion()
-            questionsShortEntity =
-                viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
+            val currentQuestion = questionsShortEntity[counter]
+            questionsShortEntity = viewModel.getQuestionListShortEntity(questionsEntity, getUserLanguage())
+            counter = questionsShortEntity.indexOfFirst { it.nameQuestion == currentQuestion.nameQuestion }
+            if (counter == -1) counter = 0
+
             idCounters = mutableListOf(mutableListOf())
         }
     }
