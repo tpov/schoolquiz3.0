@@ -13,4 +13,5 @@ interface RepositoryQuiz {
     suspend fun insertQuiz(quiz: QuizEntity)
     suspend fun deleteQuizById(idQuiz: Int)
     suspend fun deleteRemoteQuizById(quizRemote: QuizRemote, idQuiz: Int)
+    suspend fun updateQuiz(quizEntity: QuizEntity)
 }

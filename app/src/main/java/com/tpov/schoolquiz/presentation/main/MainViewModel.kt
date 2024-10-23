@@ -19,7 +19,6 @@ import com.tpov.common.domain.QuizUseCase
 import com.tpov.common.domain.StructureUseCase
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.ProfileUseCase
-import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -89,53 +88,11 @@ class MainViewModel @Inject constructor(
             structureUseCase.pushStructureCategoryData(structureCategoryDataEntity)
         }
 
-    fun getQuestionListShortEntity(
-        questionList: List<QuestionEntity>,
-        languages: String
-    ): ArrayList<QuestionShortEntity> {
-        val indexedQuestions = questionList.withIndex()
-
-        val (hardQuestions, normalQuestions) = indexedQuestions.partition { it.value.hardQuestion }
-
-        fun sortAndFilterQuestions(questions: List<IndexedValue<QuestionEntity>>): List<IndexedValue<QuestionEntity>> {
-            return questions
-                .groupBy { it.value.numQuestion }
-                .flatMap { (_, questionsGroup) ->
-                    questionsGroup.sortedWith(compareBy(
-                        { question ->
-                            languages.indexOf(question.value.language).takeIf { it >= 0 }
-                                ?: Int.MAX_VALUE
-                        },
-                        { question -> -question.value.lvlTranslate }
-                    )).take(1)
-                }
-        }
-
-        val sortedNormalQuestions =
-            sortAndFilterQuestions(normalQuestions).sortedBy { it.value.numQuestion }
-
-        val sortedHardQuestions =
-            sortAndFilterQuestions(hardQuestions).sortedBy { it.value.numQuestion }
-
-        val combinedQuestions = sortedNormalQuestions + sortedHardQuestions
-
-        val questionShortList = combinedQuestions.mapIndexed { index, indexedValue ->
-            val questionShortEntity = QuestionShortEntity(
-                id = index,
-                numQuestion = indexedValue.value.numQuestion,
-                nameQuestion = indexedValue.value.nameQuestion,
-                hardQuestion = indexedValue.value.hardQuestion
-            )
-            questionShortEntity
-        }.toCollection(ArrayList())
-        return questionShortList
-    }
 
     fun updateProfile(profileEntity: ProfileEntity) = viewModelScope.launch(Dispatchers.Default){
         profileUseCase.updateProfile(profileEntity)
     }
 
-    suspend fun getStructureData() = structureUseCase.getStructureData()
 
     private suspend fun getNewQuizListANDcatDataWithServer(): List<Pair<String, String>> {
         var listNewQuiz: List<Pair<String, String>> = listOf()
@@ -361,45 +318,7 @@ class MainViewModel @Inject constructor(
         return 0
     }
 
-    fun getPathPicture(): String {
-        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        val randomString = (1..5)
-            .map { chars.random() }
-            .joinToString("")
-        return "${Core.tpovId}_$randomString.jpg"
-    }
 
-    fun insertQuizThis(
-        structureCategoryDataEntity: StructureCategoryDataEntity,
-        quizIt: QuizEntity,
-        questionsIt: ArrayList<QuestionEntity>
-    ) = viewModelScope.launch(Dispatchers.Default) {
-        val newIdQuiz = getNewIdQuiz()
-        Log.d("awdads", "newIdQuiz: $newIdQuiz")
-        val updatedStructureCategoryData =
-            structureCategoryDataEntity.copy(oldIdQuizId = newIdQuiz)
-        structureUseCase.insertStructureCategoryData(updatedStructureCategoryData)
-        val updatedQuizIt = quizIt.copy(id = newIdQuiz)
-        quizUseCase.insertQuiz(updatedQuizIt)
-
-        questionsIt.replaceAll { it.copy(idQuiz = newIdQuiz) }
-        questionsIt.forEach {
-            questionUseCase.insertQuestion(it)
-        }
-    }
-
-        private suspend fun getNewIdQuiz(): Int {
-        val quizzes = quizUseCase.getQuizzes()
-        val usedIds = quizzes?.map { it.id }?.toSet()
-
-        for (i in 1..100) {
-            if (i !in usedIds!!) {
-                return i
-            }
-        }
-
-        throw IllegalStateException("Нет свободных ID до 100")
-    }
 }
 
 class ViewModelFactory @Inject constructor(
@@ -407,11 +326,16 @@ class ViewModelFactory @Inject constructor(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val creator = creators[modelClass] ?: creators.entries.first {
+        val creator = creators[modelClass] ?: creators.entries.firstOrNull() {
             modelClass.isAssignableFrom(
                 it.key
             )
-        }.value
-        return creator.get() as T
+        }?.value
+
+        if (creator != null) {
+            return creator.get() as T
+        } else {
+            throw IllegalArgumentException("Unknown model class: $modelClass")
+        }
     }
 }

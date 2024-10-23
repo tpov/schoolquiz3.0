@@ -250,7 +250,7 @@
         android:background="@drawable/back_item_main_false"
         android:outlineProvider="none"
         android:padding="8dp"
-        android:text="Reset"
+        android:text="Exit"
         android:textAllCaps="false"
         android:textColor="@color/red"
         android:textStyle="bold"

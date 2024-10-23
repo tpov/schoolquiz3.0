@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -671,8 +670,12 @@ getDataToday()
                 R.id.menu_adb -> switchFragment(ShopFragment())
                 R.id.menu_info -> startInfoFragment()
                 R.id.menu_network -> {
-                    startActivity(Intent(this, CreateQuizActivity::class.java))
-                    //SetItemMenu.setNetworkMenu(binding, )
+                    startActivity(
+                        CreateQuizActivity.newInstance(
+                        context = this,
+                        regime = CreateQuizActivity.REGIME_CREATE_QUIZ
+                    ))
+
                 }
 
                 else -> false

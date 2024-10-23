@@ -1,11 +1,16 @@
 package com.tpov.common.domain
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.util.Log
+import android.widget.Toast
 import com.tpov.common.data.RepositoryStuctureImpl
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.data.model.remote.StructureLocalData
+import com.tpov.common.presentation.utils.Values.application
+import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 
 class StructureUseCase @Inject constructor(private val repositoryStructureImpl: RepositoryStuctureImpl) {
@@ -14,6 +19,23 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
 
     suspend fun pushStructureRating(ratingData: StructureLocalData) {
         repositoryStructureImpl.pushStructureRating(ratingData)
+    }
+
+    fun savePicture(fileName: String, bitmap: Bitmap) {
+        val file = File(application.filesDir, fileName)
+        var fileOutputStream: FileOutputStream? = null
+        try {
+            fileOutputStream = FileOutputStream(file)
+
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
+
+            Toast.makeText(application, "Image saved to $fileName in Pictures", Toast.LENGTH_SHORT)
+                .show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            fileOutputStream?.close()
+        }
     }
 
     suspend fun pushStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {

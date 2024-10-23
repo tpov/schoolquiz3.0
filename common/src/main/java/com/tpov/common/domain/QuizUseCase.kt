@@ -39,6 +39,9 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
     suspend fun insertQuiz(quizEntity: QuizEntity) {
         repositoryQuiz.insertQuiz(quizEntity)
     }
+    suspend fun updateQuiz(quizEntity: QuizEntity) {
+        repositoryQuiz.updateQuiz(quizEntity)
+    }
 
     suspend fun saveQuiz(quizEntity: QuizEntity) {
         repositoryQuiz.saveQuiz(quizEntity)

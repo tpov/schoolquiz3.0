@@ -315,6 +315,10 @@ class RepositoryQuizImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateQuiz(quizEntity: QuizEntity) {
+        quizDao.updateQuiz(quizEntity)
+    }
+
     private suspend fun deletePhotoFromServer(pathPhoto: String) {
         Log.d("FirebaseRequestInterceptor", "deletePhotoFromServer")
         val deletePhotoTask = {
