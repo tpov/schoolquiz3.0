@@ -34,9 +34,9 @@
         android:id="@+id/sp_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        android:layout_marginStart="8dp"
         android:layout_weight="1"
         android:textColor="@color/white"
         app:layout_constraintEnd_toStartOf="@+id/sp_sub_category"
@@ -138,9 +138,9 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginLeft="8dp"
+        android:layout_marginTop="16dp"
         android:layout_marginRight="8dp"
         android:layout_marginBottom="16dp"
-        android:layout_marginTop="16dp"
         android:background="@color/line"
         app:layout_constraintBottom_toTopOf="@+id/imv_question"
         app:layout_constraintEnd_toEndOf="parent"
@@ -167,8 +167,8 @@
         android:text="Question 1/n"
         android:textColor="@color/white"
         android:textSize="10sp"
-        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintBottom_toBottomOf="@+id/imv_question"
+        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/imv_question" />
 
@@ -178,11 +178,11 @@
         android:layout_height="0dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintVertical_weight="1"
+        app:layout_constraintBottom_toTopOf="@+id/scv_answers"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/scv_answers"
-        app:layout_constraintTop_toBottomOf="@+id/imv_question">
+        app:layout_constraintTop_toBottomOf="@+id/imv_question"
+        app:layout_constraintVertical_weight="1">
 
         <LinearLayout
             android:id="@+id/ll_questions"
@@ -197,13 +197,13 @@
         android:id="@+id/scv_answers"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintVertical_weight="2"
-        android:layout_marginRight="16dp"
         android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
         app:layout_constraintBottom_toTopOf="@+id/stroce2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scv_question">
+        app:layout_constraintTop_toBottomOf="@+id/scv_question"
+        app:layout_constraintVertical_weight="2">
 
         <LinearLayout
             android:id="@+id/ll_group_answer"
@@ -258,61 +258,55 @@
         app:layout_constraintEnd_toStartOf="@id/b_save"
         app:layout_constraintStart_toStartOf="parent" />
 
+
     <Button
         android:id="@+id/b_add_answer"
         android:layout_width="0dp"
         android:layout_height="45dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="12dp"
         android:background="@drawable/back_item_main"
-        android:padding="8dp"
         android:text="+ Answer"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintWidth_percent="0.29"
         app:layout_constraintBottom_toTopOf="@+id/b_cencel"
-        app:layout_constraintRight_toLeftOf="@+id/b_add_gap"
-        app:layout_constraintStart_toStartOf="parent" />
-
+        app:layout_constraintEnd_toStartOf="@+id/b_add_translate"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.29" />
 
     <Button
         android:id="@+id/b_add_translate"
         android:layout_width="0dp"
         android:layout_height="45dp"
         android:background="@drawable/back_item_main"
-        android:padding="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginBottom="16dp"
         android:text="+ Translate"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintWidth_percent="0.29"
-        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
-        app:layout_constraintRight_toLeftOf="@+id/b_add_gap"
-        app:layout_constraintLeft_toRightOf="@+id/b_add_answer" />
+        app:layout_constraintBottom_toBottomOf="@+id/b_add_answer"
+        app:layout_constraintEnd_toStartOf="@+id/b_add_gap"
+        app:layout_constraintStart_toEndOf="@+id/b_add_answer"
+        app:layout_constraintTop_toTopOf="@+id/b_add_answer"
+        app:layout_constraintWidth_percent="0.29" />
 
     <Button
         android:id="@+id/b_add_gap"
         android:layout_width="0dp"
         android:layout_height="45dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
         android:background="@drawable/back_item_main"
-        android:padding="8dp"
         android:text="+ Gap"
         android:textAllCaps="false"
         android:textColor="@color/contour"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintWidth_percent="0.29"
+        app:layout_constraintBottom_toBottomOf="@+id/b_add_answer"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/b_cencel"
-        app:layout_constraintStart_toEndOf="@+id/b_add_translate" />
+        app:layout_constraintStart_toEndOf="@+id/b_add_translate"
+        app:layout_constraintTop_toTopOf="@+id/b_add_answer"
+        app:layout_constraintWidth_percent="0.29" />
 
     <Button
         android:id="@+id/b_save"

@@ -46,7 +46,9 @@ class CreateQuizViewModel @Inject constructor(
     var subCategory: String = ""
     var subsubCategory: String = ""
 
-    var isInitialSetupCategorySpinner = true
+    var isInitialSetupCategorySpinner1 = true
+    var isInitialSetupCategorySpinner2 = true
+    var isInitialSetupCategorySpinner3 = true
     var idGroup = 0
 
     var regime: Int = 0
