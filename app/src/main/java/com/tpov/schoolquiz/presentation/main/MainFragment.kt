@@ -50,15 +50,12 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onItemClick(category: CategoryData) {
-        val newFragment = QuizFragment()
-
-        val args = Bundle()
-        args.putString("key", category.nameQuiz)
-        newFragment.arguments = args
+        val fragment = QuizFragment.newInstance(category.id, 0, 0)
 
         requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.title_fragment, newFragment)
-                .addToBackStack(null)
-                .commit()
+            .replace(R.id.title_fragment, fragment)
+            .addToBackStack(null)
+            .commit()
     }
+
 }

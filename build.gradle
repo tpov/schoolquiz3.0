@@ -13,6 +13,7 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
+        classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.9.20-1.0.14"
         classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.2'
@@ -33,6 +34,7 @@ subprojects {
     afterEvaluate { project ->
         if (project.plugins.hasPlugin('com.android.application') || project.plugins.hasPlugin('com.android.library')) {
             android {
+                compileSdkVersion 34
                 compileOptions {
                     sourceCompatibility JavaVersion.VERSION_11
                     targetCompatibility JavaVersion.VERSION_11
@@ -61,6 +63,11 @@ subprojects {
                         exclude module: 'httpcore'
                     }
                 }
+                configurations.all {
+                    exclude group: 'org.gradle.internal.impldep', module: 'h2'
+                    exclude group: 'org.h2', module: 'h2'
+                }
+
                 implementation 'com.google.protobuf:protobuf-javalite:3.25.1'
 
                 implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

@@ -69,3 +69,17 @@ data class QuizData(
     var isShowDownload: Boolean = true,
     val tpovId: Int = 0
 )
+
+data class FlattenedQuizData(
+    val id: Int,
+    val name: String,
+    val dataUpdate: String,
+    val userName: String,
+    val starsMaxLocal: Int,
+    val starsMaxRemote: Int,
+    val picture: String,
+    val ratingRemote: Int,
+    val ratingLocal: Int,
+    val isShowArchive: Boolean,
+    val isShowDownload: Boolean
+)

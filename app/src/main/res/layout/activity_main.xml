@@ -256,17 +256,15 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="65dp"
-                    android:layout_margin="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingTop="12dp"
                     android:paddingBottom="12dp">
 
                     <ImageButton
                         android:id="@+id/imb_manu"
                         android:layout_width="14dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="8dp"
+                        android:layout_marginLeft="12dp"
                         android:background="@null"
                         app:srcCompat="@drawable/baseline_more_vert" />
 

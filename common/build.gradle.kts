@@ -74,10 +74,7 @@ dependencies {
     kapt("com.github.bumptech.glide:compiler:4.15.1")
 
     // AssistedInject for Dagger
-    implementation("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
+    implementation("com.squareup.inject:assisted-inject-annotations-dagger2:0.8.1")
     kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
-
-    add("debugImplementation", project(":logger-processor"))
-    add("debugImplementation", project(":log-api"))
 
 }

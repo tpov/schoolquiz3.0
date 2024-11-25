@@ -77,7 +77,7 @@ import javax.inject.Inject
  * This is the main screen of the application, it consists of a panel that shows how much spare is left.
  * questions of the day and a fragment that displays user and system questions
  */
-
+@Logger
 @InternalCoroutinesApi
 class MainActivity : AppCompatActivity() {
 
@@ -101,7 +101,6 @@ class MainActivity : AppCompatActivity() {
 
 
     @SuppressLint("SetTextI18n")
-    @Logger
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,8 +110,7 @@ class MainActivity : AppCompatActivity() {
         val sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
         var launchCount = sharedPreferences.getInt("launchCount", 0) + 1
         sharedPreferences.edit().putInt("launchCount", launchCount).apply()
-
-        Values.context = this
+        Values.init(this, application)
         setupUI()
         initViewModel()
         viewModel.initProfile()

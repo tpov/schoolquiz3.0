@@ -1,41 +1,32 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.20-1.0.14"
+    kotlin("jvm")
+    `java-library`
 }
 
-android {
-    namespace = "com.tpov.logger_processor"
-    compileSdk = 34
+group = "com.tpov"
+version = "1.0.0"
 
-    defaultConfig {
-        minSdk = 26
-        targetSdk = 34
-    }
-    packagingOptions {
-        resources {
-            excludes += "kotlin/**"
-            excludes += "META-INF/**"
-            excludes += "kotlin/internal/internal.kotlin_builtins"
-            excludes += "kotlin/collections/collections.kotlin_builtins"
-            excludes += "kotlin/reflect/reflect.kotlin_builtins"
-        }
-    }
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+repositories {
+    mavenCentral()
 }
 
-dependencies {
+    dependencies {
+        implementation(kotlin("stdlib"))
+        implementation(project(":log-api"))
+        compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.20")
+        compileOnly(files("D:/Programming/Android/root/platforms/android-34/android.jar"))
+
+    }
+
+
+java {
+    sourceSets["main"].java.srcDirs("src/main/java")
+    toolchain.languageVersion.set(JavaLanguageVersion.of(11))
+}
+
+tasks.register<Jar>("buildJar") {
+    archiveBaseName.set("logger-processor")
+    archiveVersion.set(version.toString())
+    from(sourceSets["main"].output)
+    destinationDirectory.set(buildDir.resolve("libs"))
 }

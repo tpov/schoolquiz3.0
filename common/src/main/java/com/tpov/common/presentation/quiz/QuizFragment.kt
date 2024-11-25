@@ -10,11 +10,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 
 @InternalCoroutinesApi
 class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
@@ -29,6 +32,10 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     private var createQuiz = false
 
+    private var idCategory = 0
+    private var idSubCategory = 0
+    private var idSubsubCategory = 0
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
     }
@@ -39,13 +46,32 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
         mainViewModel = ViewModelProvider(this)[QuizActivityViewModel::class.java]
 
+        initGetData()
+        initAdapter()
+
+    }
+
+    private fun initAdapter() {
         adapter = QuizActivityAdapter(this, requireContext(), mainViewModel)
         binding.rvQuizFragment.layoutManager = LinearLayoutManager(activity)
         binding.rvQuizFragment.adapter = adapter
         binding.rvQuizFragment.itemAnimator = RotateInItemAnimator()
 
-        adapter.onDeleteButtonClick = { quizEntity ->
+        lifecycleScope.launch(Dispatchers.IO) {
+            mainViewModel.listFlattenedQuizDataFlow.collect { list ->
+                adapter.submitList(list)
+            }
         }
+
+        adapter.onDeleteButtonClick = { quizEntity ->
+
+        }
+    }
+
+    private fun initGetData() {
+        idCategory = arguments?.getInt(KEY_ID_CATEGORY, 0) ?: 0
+        idSubCategory = arguments?.getInt(KEY_ID_CATEGORY, 0) ?: 0
+        idSubsubCategory = arguments?.getInt(KEY_ID_CATEGORY, 0) ?: 0
     }
 
     override fun onResume() {
@@ -70,6 +96,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
 
     }
+
     private fun getMap(
         listQuestionEntity: List<QuestionEntity>,
         listMap: MutableMap<Int, Boolean>
@@ -166,12 +193,12 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            data?.let {
-
+            data?.let { intent ->
 
             }
         }
     }
+
 
     override fun reloadData() {
         activity?.recreate()
@@ -179,13 +206,18 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     companion object {
 
-        const val ARG_IS_MY_QUIZ = "is_my_quiz"
+        const val KEY_ID_CATEGORY = "key_id_category"
+        const val KEY_ID_SUB_CATEGORY = "key_id_sub_category"
+        const val KEY_ID_SUB_SUB_CATEGORY = "key_id_subsub_category"
+
         const val REQUEST_CODE = 1
 
         @JvmStatic
-        fun newInstance(idQuiz: Int): QuizFragment {
+        fun newInstance(idCategory: Int, idSubCategory: Int, idSubsubCategory: Int): QuizFragment {
             val args = Bundle()
-            args.putInt(ARG_IS_MY_QUIZ, idQuiz)
+            args.putInt(KEY_ID_CATEGORY, idCategory)
+            args.putInt(KEY_ID_SUB_CATEGORY, idSubCategory)
+            args.putInt(KEY_ID_SUB_SUB_CATEGORY, idSubsubCategory)
             val fragment = QuizFragment()
             fragment.arguments = args
             return fragment

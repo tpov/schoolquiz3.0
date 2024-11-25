@@ -19,8 +19,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.tpov.common.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
-import com.tpov.common.EVENT_QUIZ_ARENA
-import com.tpov.common.EVENT_QUIZ_HOME
 import com.tpov.common.LVL_TRANSLATOR_1_LVL
 import com.tpov.common.LVL_TRANSLATOR_2_LVL
 import com.tpov.common.MAX_PERCENT_HARD_QUIZ_FULL
@@ -28,8 +26,7 @@ import com.tpov.common.MAX_PERCENT_LIGHT_QUIZ_FULL
 import com.tpov.common.PERCENT_1STAR_QUIZ_SHORT
 import com.tpov.common.R
 import com.tpov.common.RATING_QUIZ_ARENA_IN_TOP
-import com.tpov.common.data.core.SharedPreferencesManager.getTpovId
-import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.databinding.ActivityQuizItemBinding
 import com.tpov.common.presentation.utils.ResizeAndCrop
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +40,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val context: Context,
     private val viewModel: QuizActivityViewModel
 ) :
-    ListAdapter<QuizEntity, QuizActivityAdapter.ItemHolder>(ItemComparator()) {
+    ListAdapter<FlattenedQuizData, QuizActivityAdapter.ItemHolder>(ItemComparator()) {
     var onDeleteButtonClick: ((RecyclerView.ViewHolder) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
@@ -57,12 +54,12 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     }
 
 
-    class ItemComparator : DiffUtil.ItemCallback<QuizEntity>() {
-        override fun areItemsTheSame(oldItem: QuizEntity, newItem: QuizEntity): Boolean {
+    class ItemComparator : DiffUtil.ItemCallback<FlattenedQuizData>() {
+        override fun areItemsTheSame(oldItem: FlattenedQuizData, newItem: FlattenedQuizData): Boolean {
             return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: QuizEntity, newItem: QuizEntity): Boolean {
+        override fun areContentsTheSame(oldItem: FlattenedQuizData, newItem: FlattenedQuizData): Boolean {
             return oldItem == newItem
         }
     }
@@ -141,16 +138,11 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         @OptIn(InternalCoroutinesApi::class)
         fun setData(
-            quizEntity: QuizEntity,
+            quizEntity: FlattenedQuizData,
             listener: Listener,
             context: Context,
             mainViewModel: QuizActivityViewModel
         ) = with(binding) {
-
-            if (quizEntity.event != EVENT_QUIZ_HOME) constraintLayout.setOnLongClickListener {
-                showPopupMenu(it, quizEntity.id!!, context, mainViewModel)
-                true
-            }
 
             try {
 
@@ -185,20 +177,15 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             }
 
             var goHardQuiz =
-                "${context.getString(R.string.go_hard_question)} - ${quizEntity.nameQuiz}"
+                "${context.getString(R.string.go_hard_question)} - ${quizEntity.name}"
 
-            if (quizEntity.event == EVENT_QUIZ_ARENA) initViewQuiz5(
-                quizEntity,
-                mainViewModel,
-                listener
-            )
-            else initView(quizEntity, goHardQuiz, mainViewModel, listener)
+            initView(quizEntity, goHardQuiz, mainViewModel, listener)
 
         }
 
         @OptIn(InternalCoroutinesApi::class)
         private fun ActivityQuizItemBinding.initViewQuiz5(
-            quizEntity: QuizEntity,
+            quizEntity: FlattenedQuizData,
             viewModel: QuizActivityViewModel,
             listener: Listener
         ) {
@@ -220,12 +207,6 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 imvGradHardQuiz.visibility = View.VISIBLE
             }
 
-            if (quizEntity.tpovId == getTpovId()) {
-                imvGradLightQuiz.visibility = View.GONE
-                imvGradHardQuiz.visibility = View.GONE
-                imvGradientTranslateQuiz.visibility = View.VISIBLE
-            }
-
             chbTypeQuiz.visibility = View.VISIBLE
             chbTypeQuiz.isChecked = quizEntity.starsMaxLocal >= MAX_PERCENT_LIGHT_QUIZ_FULL
 
@@ -240,7 +221,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             else imvTranslate.setColorFilter(Color.BLUE)
 
             ratingBar.rating = quizEntity.ratingLocal.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
-            mainTitleButton.text = quizEntity.nameQuiz
+            mainTitleButton.text = quizEntity.name
 
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
@@ -266,7 +247,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         @OptIn(InternalCoroutinesApi::class)
         private fun ActivityQuizItemBinding.initView(
-            quizEntity: QuizEntity,
+            quizEntity: FlattenedQuizData,
             goHardQuiz: String,
             viewModel: QuizActivityViewModel,
             listener: Listener
@@ -279,17 +260,11 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 in MAX_PERCENT_LIGHT_QUIZ_FULL until MAX_PERCENT_HARD_QUIZ_FULL -> {
                     imvGradLightQuiz.visibility = View.VISIBLE
                     imvGradHardQuiz.visibility = View.GONE
-                    if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
+                    //if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
                     chbTypeQuiz.isChecked = true
 
                 }
-                MAX_PERCENT_HARD_QUIZ_FULL -> {
-                    if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
-                    imvGradLightQuiz.visibility = View.GONE
-                    imvGradHardQuiz.visibility = View.VISIBLE
-                    chbTypeQuiz.isChecked = true
 
-                }
                 else -> {
                     chbTypeQuiz.visibility = View.GONE
                     imvGradLightQuiz.visibility = View.GONE
@@ -329,7 +304,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 true
             }
 
-            mainTitleButton.text = quizEntity.nameQuiz
+            mainTitleButton.text = quizEntity.name
 
             mainTitleButton.setOnClickListener {
                 listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
@@ -343,7 +318,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             context: Context,
             mainViewModel: QuizActivityViewModel,
             nolics: Int,
-            quizEntity: QuizEntity,
+            quizEntity: FlattenedQuizData,
             popupWindow: PopupWindow,
 
             ) {
@@ -376,7 +351,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         @OptIn(InternalCoroutinesApi::class)
         private fun showPopupInfo(
-            quizEntity: QuizEntity,
+            quizEntity: FlattenedQuizData,
             event: MotionEvent,
             popupType: Int,
             viewModel: QuizActivityViewModel
