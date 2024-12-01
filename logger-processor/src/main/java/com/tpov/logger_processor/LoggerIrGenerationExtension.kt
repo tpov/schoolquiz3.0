@@ -9,53 +9,64 @@ import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
-import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrTypeOperatorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.classFqName
-import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.name.FqName
 
 class LoggerIrGenerationExtension : IrGenerationExtension {
+    // Defines the FqName for the Logger annotation
     private val loggerAnnotationFqName = FqName("com.tpov.log_api.logger.Logger")
+
+    // Set to track processed functions to avoid duplicates
+    private val processedFunctions = mutableSetOf<String>()
+
+    // Map to store call stack for each class
+    private val callStackByClass = mutableMapOf<IrClass, MutableList<String>>()
+
+    companion object {
+        // Helper function to generate indentation based on call depth
+        private fun getIndent(depth: Int): String {
+            return "|    ".repeat(depth)
+        }
+    }
 
     @OptIn(FirIncompatiblePluginAPI::class)
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
+        // Get reference to android.util.Log class
         val logClass = pluginContext.referenceClass(FqName("android.util.Log"))
-            ?: throw IllegalStateException("Cannot find android.util.Log class in Android SDK")
+            ?: throw IllegalStateException("Cannot find android.util.Log class")
 
+        // Get symbol for the Log.d(String, String) function
         val logDSymbol = logClass.owner.functions.firstOrNull {
             it.name.asString() == "d" && it.valueParameters.size == 2
-        }?.symbol
-            ?: throw IllegalStateException("Cannot find Log.d function with two parameters in Android SDK")
+        }?.symbol ?: throw IllegalStateException("Cannot find Log.d function")
 
-        val loggerAnnotatedClasses = mutableSetOf<IrClass>()
-
+        // Collect annotated classes
+        val annotatedClasses = mutableSetOf<IrClass>()
         moduleFragment.accept(object : IrElementVisitorVoid {
             override fun visitElement(element: IrElement) {
                 element.acceptChildren(this, null)
             }
 
             override fun visitClass(declaration: IrClass) {
+                // Check if class has @Logger annotation
                 if (declaration.annotations.any { it.type.classFqName == loggerAnnotationFqName }) {
-                    loggerAnnotatedClasses.add(declaration)
+                    annotatedClasses.add(declaration)
+                    callStackByClass[declaration] = mutableListOf() // Initialize call stack for class
                 }
                 super.visitClass(declaration)
             }
         }, null)
 
-        // Затем обрабатываем функции внутри этих классов
+        // Process functions in annotated classes
         moduleFragment.accept(object : IrElementVisitorVoid {
             override fun visitElement(element: IrElement) {
                 element.acceptChildren(this, null)
@@ -63,358 +74,113 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
 
             override fun visitFunction(declaration: IrFunction) {
                 val parentClass = declaration.parent as? IrClass
-                if (parentClass != null && loggerAnnotatedClasses.contains(parentClass)) {
-                    instrumentFunction(declaration, pluginContext, logDSymbol)
+                if (parentClass != null && annotatedClasses.contains(parentClass)) {
+                    val functionId = "${parentClass.hashCode()}_${declaration.name}"
+                    if (!processedFunctions.contains(functionId)) {
+                        processedFunctions.add(functionId)
+                        instrumentFunction(declaration, pluginContext, logDSymbol, parentClass) // Instrument function
+                    }
                 }
                 super.visitFunction(declaration)
             }
         }, null)
     }
 
-    private fun instrumentFunction(
-        declaration: IrFunction,
-        pluginContext: IrPluginContext,
-        logDSymbol: IrSimpleFunctionSymbol
-    ) {
-        // Создаем вызов для увеличения счетчика глубины
-        val incrementDepth = createDepthIncrement(pluginContext)
-
-        // Создаем вызов для уменьшения счетчика глубины
-        val decrementDepth = createDepthDecrement(pluginContext)
-
-        // Создаем логирование при входе в функцию
-        val enterMessage = createIndentedMessage(
-            pluginContext,
-            "Entering function: ${declaration.name}"
-        )
-        val logEnter = createLogCall(
-            pluginContext,
-            logDSymbol,
-            "LoggerTag",
-            enterMessage
-        )
-
-        // Создаем логирование при выходе из функции
-        val exitMessage = createIndentedMessage(
-            pluginContext,
-            "Exiting function: ${declaration.name}"
-        )
-        val logExit = createLogCall(
-            pluginContext,
-            logDSymbol,
-            "LoggerTag",
-            exitMessage
-        )
-
-        val body = declaration.body
-        when (body) {
-            is IrBlockBody -> {
-                body.statements.add(0, incrementDepth)
-                body.statements.add(1, logEnter)
-                body.statements.add(logExit)
-                body.statements.add(decrementDepth)
-            }
-            is IrExpressionBody -> {
-                declaration.body = IrBlockBodyImpl(
-                    body.startOffset, body.endOffset,
-                    listOf(
-                        incrementDepth,
-                        logEnter,
-                        body.expression,
-                        logExit,
-                        decrementDepth
-                    )
-                )
-            }
-        }
-    }
-
-    @OptIn(FirIncompatiblePluginAPI::class)
-    private fun createDepthDecrement(pluginContext: IrPluginContext): IrStatement {
-        val threadLocalClass = pluginContext.referenceClass(FqName("java.lang.ThreadLocal"))
-            ?: throw IllegalStateException("Cannot find java.lang.ThreadLocal class")
-
-        val getMethodSymbol = threadLocalClass.owner.functions.first { it.name.asString() == "get" }.symbol
-        val setMethodSymbol = threadLocalClass.owner.functions.first { it.name.asString() == "set" }.symbol
-
-        val loggerDepthClass = pluginContext.referenceClass(FqName("com.tpov.log_api.logger.LoggerDepth"))
-            ?: throw IllegalStateException("Cannot find LoggerDepth class")
-
-        val depthFieldSymbol = loggerDepthClass.owner.declarations.filterIsInstance<IrProperty>().firstOrNull {
-            it.name.asString() == "depth"
-        }?.backingField?.symbol
-            ?: throw IllegalStateException("Cannot find depth field in LoggerDepth class")
-
-        // Получаем LoggerDepth.depth
-        val depthFieldAccess = IrGetFieldImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = threadLocalClass.defaultType,
-            symbol = depthFieldSymbol,
-            receiver = null
-        )
-
-        // Вызываем depth.get()
-        val getDepthCall = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.anyNType,
-            symbol = getMethodSymbol,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 0
-        ).apply {
-            dispatchReceiver = depthFieldAccess
-        }
-
-        // Приводим к Int
-        val currentDepth = IrTypeOperatorCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.intType,
-            operator = IrTypeOperator.IMPLICIT_CAST,
-            typeOperand = pluginContext.irBuiltIns.intType,
-            argument = getDepthCall
-        )
-        val intMinusFunction = pluginContext.referenceFunctions(FqName("kotlin.Int.minus"))
-            .firstOrNull { it.owner.valueParameters.size == 1 }
-            ?: throw IllegalStateException("Cannot find kotlin.Int.minus function")
-
-        // Уменьшаем currentDepth на 1
-        val newDepth = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.intType,
-            symbol = intMinusFunction,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 1
-        ).apply {
-            dispatchReceiver = currentDepth
-            putValueArgument(0, IrConstImpl.int(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                type = pluginContext.irBuiltIns.intType,
-                value = 1
-            ))
-        }
-
-        // Вызываем depth.set(newDepth)
-        val setDepthCall = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.unitType,
-            symbol = setMethodSymbol,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 1
-        ).apply {
-            dispatchReceiver = depthFieldAccess
-            putValueArgument(0, newDepth)
-        }
-
-        return setDepthCall
-    }
-
-    val depth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
-    @OptIn(FirIncompatiblePluginAPI::class)
-    private fun createDepthIncrement(pluginContext: IrPluginContext): IrStatement {
-        val threadLocalClass = pluginContext.referenceClass(FqName("java.lang.ThreadLocal"))
-            ?: throw IllegalStateException("Cannot find java.lang.ThreadLocal class")
-
-        val getMethodSymbol = threadLocalClass.owner.functions.first { it.name.asString() == "get" }.symbol
-        val setMethodSymbol = threadLocalClass.owner.functions.first { it.name.asString() == "set" }.symbol
-
-
-        val loggerDepthClass = pluginContext.referenceClass(FqName("com.tpov.log_api.logger.LoggerDepth"))
-            ?: throw IllegalStateException("Cannot find LoggerDepth class")
-
-        val companionObject = loggerDepthClass.owner.declarations.filterIsInstance<IrClass>().firstOrNull {
-            it.isCompanion
-        } ?: throw IllegalStateException("Cannot find companion object in LoggerDepth class")
-
-        val depthFieldSymbol = companionObject.declarations.filterIsInstance<IrProperty>().firstOrNull {
-            it.name.asString() == "depth"
-        }?.backingField?.symbol
-            ?: throw IllegalStateException("Cannot find depth field in LoggerDepth class")
-
-
-        // Получаем LoggerDepth.depth
-        val depthFieldAccess = IrGetFieldImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = threadLocalClass.defaultType,
-            symbol = depthFieldSymbol,
-            receiver = null // Так как поле статическое (в объекте)
-        )
-
-        // Вызываем depth.get()
-        val getDepthCall = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.anyNType, // ThreadLocal.get(): Any?
-            symbol = getMethodSymbol,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 0
-        ).apply {
-            dispatchReceiver = depthFieldAccess
-        }
-
-        // Приводим к Int
-        val currentDepth = IrTypeOperatorCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.intType,
-            operator = IrTypeOperator.IMPLICIT_CAST,
-            typeOperand = pluginContext.irBuiltIns.intType,
-            argument = getDepthCall
-        )
-
-        // Увеличиваем currentDepth на 1
-        val newDepth = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.intType,
-            symbol = pluginContext.irBuiltIns.intPlusSymbol,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 1
-        ).apply {
-            dispatchReceiver = currentDepth
-            putValueArgument(0, IrConstImpl.int(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                type = pluginContext.irBuiltIns.intType,
-                value = 1
-            ))
-        }
-
-        // Вызываем depth.set(newDepth)
-        val setDepthCall = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.unitType,
-            symbol = setMethodSymbol,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 1
-        ).apply {
-            dispatchReceiver = depthFieldAccess
-            putValueArgument(0, newDepth)
-        }
-
-        return setDepthCall
-    }
-
-
-    private fun createLogCall(
-        pluginContext: IrPluginContext,
-        logDSymbol: IrSimpleFunctionSymbol,
+    // Creates a Log.d statement IrCall
+    private fun createLogStatement(
+        context: IrPluginContext,
+        logSymbol: IrSimpleFunctionSymbol,
         tag: String,
-        messageExpression: IrExpression
+        prefix: String,
+        functionName: String,
+        depth: Int
     ): IrCall {
+        val indent = getIndent(depth)
+        val message = "$indent$prefix $functionName [depth:${depth + 1}]"
         return IrCallImpl(
             startOffset = UNDEFINED_OFFSET,
             endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.unitType,
-            symbol = logDSymbol,
+            type = context.irBuiltIns.unitType,
+            symbol = logSymbol,
             typeArgumentsCount = 0,
             valueArgumentsCount = 2
         ).apply {
-            putValueArgument(0, IrConstImpl.string(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                type = pluginContext.irBuiltIns.stringType,
-                value = tag
-            ))
-            putValueArgument(1, messageExpression)
+            putValueArgument(0, IrConstImpl.string(UNDEFINED_OFFSET, UNDEFINED_OFFSET, context.irBuiltIns.stringType, tag))
+            putValueArgument(1, IrConstImpl.string(UNDEFINED_OFFSET, UNDEFINED_OFFSET, context.irBuiltIns.stringType, message))
         }
     }
-    @OptIn(FirIncompatiblePluginAPI::class)
-    private fun createIndentedMessage(
-        pluginContext: IrPluginContext,
-        message: String
-    ): IrExpression {
-        val threadLocalClass = pluginContext.referenceClass(FqName("java.lang.ThreadLocal"))
-            ?: throw IllegalStateException("Cannot find java.lang.ThreadLocal class")
-        val getMethodSymbol = threadLocalClass.owner.functions.first { it.name.asString() == "get" }.symbol
 
-        val loggerDepthClass = pluginContext.referenceClass(FqName("com.tpov.log_api.logger.LoggerDepth"))
-            ?: throw IllegalStateException("Cannot find LoggerDepth class")
+    private fun instrumentFunction(
+        declaration: IrFunction,
+        context: IrPluginContext,
+        logSymbol: IrSimpleFunctionSymbol,
+        parentClass: IrClass
+    ) {
+        val functionName = declaration.name.toString()
+        val functionId = "${parentClass.hashCode()}_$functionName"
+        val callStack = callStackByClass[parentClass] ?: mutableListOf()
 
-        val depthFieldSymbol = loggerDepthClass.owner.declarations.filterIsInstance<IrProperty>().firstOrNull {
-            it.name.asString() == "depth"
-        }?.backingField?.symbol
-            ?: throw IllegalStateException("Cannot find depth field in LoggerDepth class")
-
-        // Получаем LoggerDepth.depth.get()
-        val getDepthCall = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.anyNType,
-            symbol = getMethodSymbol,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 0
-        ).apply {
-            dispatchReceiver = IrGetFieldImpl(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                type = threadLocalClass.defaultType,
-                symbol = depthFieldSymbol,
-                receiver = null
-            )
+        // Check for recursive calls to avoid infinite loops
+        if (callStack.contains(functionId)) {
+            return
         }
 
-        // Приводим к Int
-        val currentDepth = IrTypeOperatorCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.intType,
-            operator = IrTypeOperator.IMPLICIT_CAST,
-            typeOperand = pluginContext.irBuiltIns.intType,
-            argument = getDepthCall
-        )
+        callStack.add(functionId) // Push to call stack
+        val currentDepth = callStack.size - 1
 
-        // Вызываем "  ".repeat(depth)
-        val repeatFunction = pluginContext.referenceFunctions(FqName("kotlin.text.StringsKt.repeat")).first {
-            it.owner.valueParameters.size == 2
+        when (val body = declaration.body) {
+            is IrBlockBody -> {
+                val statements = mutableListOf<IrStatement>()
+
+                // Add function entry log statement
+                statements.add(createLogStatement(context, logSymbol, "LoggerTag", "-->", functionName, currentDepth))
+
+                // Process existing function body statements
+                for (statement in body.statements) {
+                    statements.add(statement)
+
+                    // Process nested function calls recursively
+                    if (statement is IrCall) {
+                        val calledFunction = statement.symbol.owner
+                        if (calledFunction is IrFunction) {
+                            val calledClass = calledFunction.parent as? IrClass
+                            if (calledClass != null &&
+                                calledClass.annotations.any { it.type.classFqName == loggerAnnotationFqName }) {
+                                val calledFunctionId = "${calledClass.hashCode()}_${calledFunction.name}"
+                                if (!processedFunctions.contains(calledFunctionId)) {
+                                    processedFunctions.add(calledFunctionId)
+                                    instrumentFunction(calledFunction, context, logSymbol, calledClass)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Add function exit log statement
+                statements.add(createLogStatement(context, logSymbol, "LoggerTag", "<--", functionName, currentDepth))
+
+                // Replace original function body with instrumented one
+                declaration.body = IrBlockBodyImpl(
+                    startOffset = body.startOffset,
+                    endOffset = body.endOffset,
+                    statements = statements
+                )
+            }
+            is IrExpressionBody -> {
+                val statements = mutableListOf<IrStatement>()
+                statements.add(createLogStatement(context, logSymbol, "LoggerTag", "-->", functionName, currentDepth))
+                statements.add(body.expression)
+                statements.add(createLogStatement(context, logSymbol, "LoggerTag", "<--", functionName, currentDepth))
+
+                // Replace original expression body with block body containing log statements
+                declaration.body = IrBlockBodyImpl(
+                    startOffset = body.startOffset,
+                    endOffset = body.endOffset,
+                    statements = statements
+                )
+            }
         }
 
-        val repeatedSpaces = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.stringType,
-            symbol = repeatFunction,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 2
-        ).apply {
-            putValueArgument(0, IrConstImpl.string(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                type = pluginContext.irBuiltIns.stringType,
-                value = "  "
-            ))
-            putValueArgument(1, currentDepth)
-        }
-        val plusFunctionSymbol = pluginContext.referenceFunctions(FqName("kotlin.text.StringsKt.plus"))
-            .firstOrNull { it.owner.valueParameters.size == 1 }
-            ?: throw IllegalStateException("Cannot find kotlin.text.StringsKt.plus function")
-
-        // Объединяем отступы и сообщение
-        val messageExpression = IrCallImpl(
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            type = pluginContext.irBuiltIns.stringType,
-            symbol = plusFunctionSymbol,
-            typeArgumentsCount = 0,
-            valueArgumentsCount = 1
-        ).apply {
-            dispatchReceiver = repeatedSpaces
-            putValueArgument(0, IrConstImpl.string(
-                startOffset = UNDEFINED_OFFSET,
-                endOffset = UNDEFINED_OFFSET,
-                type = pluginContext.irBuiltIns.stringType,
-                value = message
-            ))
-        }
-
-        return messageExpression
+        callStack.removeLast() // Pop from call stack
     }
-
-
 }

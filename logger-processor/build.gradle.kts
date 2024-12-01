@@ -13,6 +13,7 @@ repositories {
     dependencies {
         implementation(kotlin("stdlib"))
         implementation(project(":log-api"))
+        implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.20")
         compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.20")
         compileOnly(files("D:/Programming/Android/root/platforms/android-34/android.jar"))
 
