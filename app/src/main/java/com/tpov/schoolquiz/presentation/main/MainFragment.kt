@@ -9,11 +9,12 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.presentation.quiz.QuizFragment
+import com.tpov.log_api.logger.Logger
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.di.DaggerApplicationComponent
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
-
+@Logger
 class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
     @Inject

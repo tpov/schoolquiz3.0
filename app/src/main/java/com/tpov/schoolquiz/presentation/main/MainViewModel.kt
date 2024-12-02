@@ -17,6 +17,7 @@ import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.domain.QuestionUseCase
 import com.tpov.common.domain.QuizUseCase
 import com.tpov.common.domain.StructureUseCase
+import com.tpov.log_api.logger.Logger
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.ProfileUseCase
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +34,7 @@ import java.time.Instant
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Provider
-
+@Logger
 @OptIn(FlowPreview::class)
 class MainViewModel @Inject constructor(
     private val structureUseCase: StructureUseCase,
