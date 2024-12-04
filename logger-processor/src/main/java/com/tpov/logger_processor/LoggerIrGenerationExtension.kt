@@ -6,7 +6,9 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.backend.js.utils.valueArguments
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
@@ -21,15 +23,7 @@ import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.name.FqName
-import kotlin.collections.MutableSet
-import kotlin.collections.any
-import kotlin.collections.forEach
-import kotlin.collections.get
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.mutableSetOf
 import kotlin.collections.set
-import kotlin.collections.toMutableSet
 
 class LoggerIrGenerationExtension : IrGenerationExtension {
     private val loggerAnnotationFqName = FqName("com.tpov.log_api.logger.Logger")
@@ -39,10 +33,11 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
     private val asyncContexts = mutableMapOf<String, Int>()
     private val asyncCallChains = mutableMapOf<String, String>()
     private val currentAsyncContext = mutableMapOf<String, String>()
+    private val asyncStack = mutableListOf<AsyncContext>()
 
     companion object {
         private const val TAG = "LoggerTag"
-        private const val ASYNC_INDENT = "          " // 10 spaces
+        private const val ASYNC_INDENT = "            " // 10 spaces
         private const val REGULAR_INDENT = "|    "
     }
 
@@ -55,15 +50,26 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
             it.name.asString() == "d" && it.valueParameters.size == 2
         }?.symbol ?: throw IllegalStateException("Cannot find Log.d function")
 
+        val logISymbol = logClass.owner.functions.firstOrNull {
+            it.name.asString() == "i" && it.valueParameters.size == 2
+        }?.symbol ?: throw IllegalStateException("Cannot find Log.i function")
+
         buildCallGraph(moduleFragment)
         calculateFunctionDepths()
-        instrumentFunctions(moduleFragment, pluginContext, logDSymbol)
+        instrumentFunctions(moduleFragment, pluginContext, logDSymbol, logISymbol)
     }
 
     private fun buildCallGraph(moduleFragment: IrModuleFragment) {
         moduleFragment.accept(object : IrElementVisitorVoid {
             private var currentFunction: String? = null
             private var currentClass: IrClass? = null
+
+            private fun isMainDispatcher(expression: IrCall): Boolean {
+                return expression.valueArguments.any { arg ->
+                    arg?.toString()?.contains("Dispatchers.Main") == true ||
+                            arg?.toString()?.contains("MainCoroutineDispatcher") == true
+                }
+            }
 
             override fun visitElement(element: IrElement) {
                 element.acceptChildren(this, null)
@@ -80,14 +86,102 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
                 val parentClass = declaration.parent as? IrClass
                 if (parentClass?.annotations?.any { it.type.classFqName == loggerAnnotationFqName } == true) {
                     val previousFunction = currentFunction
-                    currentFunction = "${parentClass.hashCode()}_${declaration.name}"
+                    currentFunction = if (declaration is IrConstructor) {
+                        "${parentClass.name}_<init>"
+                    } else {
+                        "${parentClass.name}_${declaration.name}"
+                    }
 
                     callGraph.putIfAbsent(currentFunction!!, mutableSetOf())
 
-                    if (isAsyncOperation(declaration, previousFunction)) {
-                        asyncContexts[declaration.name.asString()] = asyncContextLevel
-                        currentAsyncContext[declaration.name.asString()] = previousFunction ?: ""
+                    // Проверяем, выполняется ли функция в контексте существующей корутины
+                    val isInCoroutineContext = asyncStack.any { it.isInsideCoroutine && !it.isMainThread }
+                    if (isInCoroutineContext) {
+                        asyncContexts[declaration.name.asString()] = asyncStack.last().depth
+                        currentAsyncContext[declaration.name.asString()] = asyncStack.last().parentFunction ?: ""
                     }
+
+                    // Анализируем тело функции на предмет новых корутин
+                    declaration.body?.accept(object : IrElementVisitorVoid {
+                        override fun visitElement(element: IrElement) {
+                            element.acceptChildren(this, null)
+                        }
+
+                        override fun visitCall(expression: IrCall) {
+                            val calledFunction = expression.symbol.owner
+                            val calledFunctionName = calledFunction.name.asString()
+                            val calledClass = calledFunction.parent as? IrClass
+                            val calledClassName = calledClass?.name?.asString() ?: ""
+
+                            when {
+                                // Проверяем корутины
+                                calledFunctionName in setOf("launch", "async", "withContext") -> {
+                                    val isMainThread = isMainDispatcher(expression)
+
+                                    if (!isMainThread) {
+                                        asyncStack.add(AsyncContext().apply {
+                                            isInsideCoroutine = true
+                                            depth = asyncStack.size + 1
+                                            parentFunction = currentFunction
+                                            this.isMainThread = isMainThread
+                                        })
+
+                                        // Обновляем контекст для функций внутри корутины
+                                        val functionName = declaration.name.asString()
+                                        asyncContexts[functionName] = asyncStack.last().depth
+                                        asyncCallChains[functionName] = when {
+                                            calledClassName.contains("lifecycleScope") ->
+                                                "lifecycleScope.${calledFunctionName} -> $functionName"
+                                            else -> "${previousFunction ?: "Unknown"} -> ${calledFunctionName} -> $functionName"
+                                        }
+
+                                        expression.acceptChildren(this, null)
+                                        asyncStack.removeLastOrNull()
+                                    } else {
+                                        // Для корутин на главном потоке просто обрабатываем содержимое
+                                        expression.acceptChildren(this, null)
+                                    }
+                                }
+
+                                // Проверяем Flow операции
+                                calledFunctionName in setOf("collect", "collectLatest", "observe") ||
+                                        calledClassName.contains("Flow") -> {
+                                    if (!asyncStack.any { it.isInsideCoroutine && !it.isMainThread }) {
+                                        asyncStack.add(AsyncContext().apply {
+                                            isInsideCoroutine = true
+                                            depth = asyncStack.size + 1
+                                            parentFunction = currentFunction
+                                            isMainThread = false
+                                        })
+
+                                        val functionName = declaration.name.asString()
+                                        asyncContexts[functionName] = asyncStack.last().depth
+                                        asyncCallChains[functionName] =
+                                            "${previousFunction ?: "Unknown"} -> $calledFunctionName -> $functionName"
+                                    }
+                                }
+
+                                // Проверяем Timer операции
+                                calledClassName.contains("Timer") ||
+                                        calledFunctionName.contains("schedule") -> {
+                                    if (!asyncStack.any { it.isInsideCoroutine && !it.isMainThread }) {
+                                        asyncStack.add(AsyncContext().apply {
+                                            isInsideCoroutine = true
+                                            depth = asyncStack.size + 1
+                                            parentFunction = currentFunction
+                                            isMainThread = false
+                                        })
+
+                                        val functionName = declaration.name.asString()
+                                        asyncContexts[functionName] = asyncStack.last().depth
+                                        asyncCallChains[functionName] =
+                                            "${previousFunction ?: "Unknown"} -> Timer -> $functionName"
+                                    }
+                                }
+                            }
+                            super.visitCall(expression)
+                        }
+                    }, null)
 
                     previousFunction?.let {
                         callGraph[it]?.add(currentFunction!!)
@@ -106,7 +200,11 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
 
                 if (currentFunction != null &&
                     calledClass?.annotations?.any { it.type.classFqName == loggerAnnotationFqName } == true) {
-                    val calledFunctionId = "${calledClass.hashCode()}_${calledFunction.name}"
+                    val calledFunctionId = if (calledFunction is IrConstructor) {
+                        "${calledClass.name}_<init>"
+                    } else {
+                        "${calledClass.name}_${calledFunction.name}"
+                    }
                     callGraph[currentFunction]?.add(calledFunctionId)
                 }
 
@@ -137,44 +235,6 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
         }
     }
 
-    private fun isAsyncOperation(declaration: IrFunction, parentFunction: String? = null): Boolean {
-        val functionBody = declaration.body?.toString() ?: ""
-        val functionName = declaration.name.asString()
-
-        // Проверяем Flow и StateFlow
-        val isFlow = functionBody.contains("collect") ||
-                functionBody.contains("Flow") ||
-                functionBody.contains(".observe") ||
-                functionName.contains("collect", ignoreCase = true)
-
-        // Проверяем корутины и скоупы
-        val isCoroutine = functionBody.contains("launch") ||
-                functionBody.contains("async") ||
-                functionBody.contains("withContext") ||
-                functionBody.contains("viewModelScope") ||
-                functionBody.contains("lifecycleScope")
-
-        // Проверяем таймеры и обработчики
-        val isTimer = functionName.contains("timer", ignoreCase = true) ||
-                functionBody.contains("TimerTask") ||
-                functionBody.contains("schedule")
-
-        if (isFlow || isCoroutine || isTimer) {
-            asyncContextLevel++
-            asyncContexts[functionName] = asyncContextLevel
-
-            // Строим цепочку вызовов
-            asyncCallChains[functionName] = when {
-                functionBody.contains("lifecycleScope.launch") -> "lifecycleScope.launch -> $functionName"
-                functionBody.contains("collect") -> "${parentFunction ?: "Unknown"} -> collect -> $functionName"
-                else -> "${parentFunction ?: "Unknown"} -> $functionName"
-            }
-
-            return true
-        }
-        return false
-    }
-
     private fun getIndent(depth: Int, functionName: String): String {
         val asyncLevel = asyncContexts[functionName] ?: 0
         return ASYNC_INDENT.repeat(asyncLevel) + REGULAR_INDENT.repeat(depth)
@@ -189,7 +249,8 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
     private fun instrumentFunctions(
         moduleFragment: IrModuleFragment,
         context: IrPluginContext,
-        logSymbol: IrSimpleFunctionSymbol
+        logDSymbol: IrSimpleFunctionSymbol,
+        logISymbol: IrSimpleFunctionSymbol
     ) {
         moduleFragment.accept(object : IrElementVisitorVoid {
             override fun visitElement(element: IrElement) {
@@ -200,8 +261,14 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
                 val parentClass = declaration.parent as? IrClass
                 if (parentClass != null &&
                     parentClass.annotations.any { it.type.classFqName == loggerAnnotationFqName }) {
-                    val functionId = "${parentClass.hashCode()}_${declaration.name}"
+                    val functionId = if (declaration is IrConstructor) {
+                        "${parentClass.name}_<init>"
+                    } else {
+                        "${parentClass.name}_${declaration.name}"
+                    }
                     val depth = functionDepths[functionId] ?: 0
+                    val logSymbol = if (parentClass.name.asString().contains("ViewModel"))
+                        logISymbol else logDSymbol
                     instrumentFunction(declaration, context, logSymbol, parentClass, depth)
                 }
                 super.visitFunction(declaration)
@@ -220,37 +287,46 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
             is IrBlockBody -> {
                 val newStatements = mutableListOf<IrStatement>()
 
+                // Add entry log at the start
                 newStatements.add(createLogStatement(
                     context = context,
                     logSymbol = logSymbol,
                     prefix = "-->",
-                    functionName = declaration.name.toString(),
+                    functionName = declaration.name.asString(),
                     depth = depth,
-                    className = parentClass.name.toString()
+                    className = parentClass.name.asString()
                 ))
 
+                // Process each statement
                 body.statements.forEach { statement ->
-                    if (statement is IrReturn) {
-                        newStatements.add(createLogStatement(
-                            context = context,
-                            logSymbol = logSymbol,
-                            prefix = "<--",
-                            functionName = declaration.name.toString(),
-                            depth = depth,
-                            className = parentClass.name.toString()
-                        ))
+                    when (statement) {
+                        is IrReturn -> {
+                            // Add exit log BEFORE the return
+                            newStatements.add(createLogStatement(
+                                context = context,
+                                logSymbol = logSymbol,
+                                prefix = "<--",
+                                functionName = declaration.name.asString(),
+                                depth = depth,
+                                className = parentClass.name.asString()
+                            ))
+                            // Then add the return statement
+                            newStatements.add(statement)
+                        }
+                        else -> newStatements.add(statement)
                     }
-                    newStatements.add(statement)
                 }
 
-                newStatements.add(createLogStatement(
-                    context = context,
-                    logSymbol = logSymbol,
-                    prefix = "<--",
-                    functionName = declaration.name.toString(),
-                    depth = depth,
-                    className = parentClass.name.toString()
-                ))
+                if (!body.statements.any { it is IrReturn }) {
+                    newStatements.add(createLogStatement(
+                        context = context,
+                        logSymbol = logSymbol,
+                        prefix = "<--",
+                        functionName = declaration.name.asString(),
+                        depth = depth,
+                        className = parentClass.name.asString()
+                    ))
+                }
 
                 declaration.body = IrBlockBodyImpl(
                     startOffset = body.startOffset,
@@ -259,27 +335,43 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
                 )
             }
             is IrExpressionBody -> {
+                // Handle expression bodies similarly
                 val statements = mutableListOf<IrStatement>()
 
                 statements.add(createLogStatement(
                     context = context,
                     logSymbol = logSymbol,
                     prefix = "-->",
-                    functionName = declaration.name.toString(),
+                    functionName = declaration.name.asString(),
                     depth = depth,
-                    className = parentClass.name.toString()
+                    className = parentClass.name.asString()
                 ))
+
+                // Add exit log before the expression if it's a return
+                if (body.expression is IrReturn) {
+                    statements.add(createLogStatement(
+                        context = context,
+                        logSymbol = logSymbol,
+                        prefix = "<--",
+                        functionName = declaration.name.asString(),
+                        depth = depth,
+                        className = parentClass.name.asString()
+                    ))
+                }
 
                 statements.add(body.expression)
 
-                statements.add(createLogStatement(
-                    context = context,
-                    logSymbol = logSymbol,
-                    prefix = "<--",
-                    functionName = declaration.name.toString(),
-                    depth = depth,
-                    className = parentClass.name.toString()
-                ))
+                // Add exit log only if the expression isn't a return
+                if (body.expression !is IrReturn) {
+                    statements.add(createLogStatement(
+                        context = context,
+                        logSymbol = logSymbol,
+                        prefix = "<--",
+                        functionName = declaration.name.asString(),
+                        depth = depth,
+                        className = parentClass.name.asString()
+                    ))
+                }
 
                 declaration.body = IrBlockBodyImpl(
                     startOffset = body.startOffset,
