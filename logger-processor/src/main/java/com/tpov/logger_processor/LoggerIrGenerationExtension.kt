@@ -283,105 +283,90 @@ class LoggerIrGenerationExtension : IrGenerationExtension {
         parentClass: IrClass,
         depth: Int
     ) {
-        when (val body = declaration.body) {
+        val body = declaration.body
+        when (body) {
             is IrBlockBody -> {
                 val newStatements = mutableListOf<IrStatement>()
 
-                // Add entry log at the start
+                // Entry log
                 newStatements.add(createLogStatement(
-                    context = context,
-                    logSymbol = logSymbol,
-                    prefix = "-->",
-                    functionName = declaration.name.asString(),
-                    depth = depth,
-                    className = parentClass.name.asString()
+                    context,
+                    logSymbol,
+                    "-->",
+                    declaration.name.asString(),
+                    depth,
+                    parentClass.name.asString()
                 ))
 
-                // Process each statement
+                // Process existing statements
                 body.statements.forEach { statement ->
-                    when (statement) {
-                        is IrReturn -> {
-                            // Add exit log BEFORE the return
-                            newStatements.add(createLogStatement(
-                                context = context,
-                                logSymbol = logSymbol,
-                                prefix = "<--",
-                                functionName = declaration.name.asString(),
-                                depth = depth,
-                                className = parentClass.name.asString()
-                            ))
-                            // Then add the return statement
-                            newStatements.add(statement)
-                        }
-                        else -> newStatements.add(statement)
+                    if (statement is IrReturn) {
+                        // Add exit log before return
+                        newStatements.add(createLogStatement(
+                            context,
+                            logSymbol,
+                            "<--",
+                            declaration.name.asString(),
+                            depth,
+                            parentClass.name.asString()
+                        ))
                     }
+                    newStatements.add(statement)
                 }
 
+                // Add exit log if no return statement
                 if (!body.statements.any { it is IrReturn }) {
                     newStatements.add(createLogStatement(
-                        context = context,
-                        logSymbol = logSymbol,
-                        prefix = "<--",
-                        functionName = declaration.name.asString(),
-                        depth = depth,
-                        className = parentClass.name.asString()
+                        context,
+                        logSymbol,
+                        "<--",
+                        declaration.name.asString(),
+                        depth,
+                        parentClass.name.asString()
                     ))
                 }
 
                 declaration.body = IrBlockBodyImpl(
-                    startOffset = body.startOffset,
-                    endOffset = body.endOffset,
-                    statements = newStatements
+                    body.startOffset,
+                    body.endOffset,
+                    newStatements
                 )
             }
+
             is IrExpressionBody -> {
-                // Handle expression bodies similarly
+                // Similar handling for expression bodies
                 val statements = mutableListOf<IrStatement>()
 
                 statements.add(createLogStatement(
-                    context = context,
-                    logSymbol = logSymbol,
-                    prefix = "-->",
-                    functionName = declaration.name.asString(),
-                    depth = depth,
-                    className = parentClass.name.asString()
+                    context,
+                    logSymbol,
+                    "-->",
+                    declaration.name.asString(),
+                    depth,
+                    parentClass.name.asString()
                 ))
-
-                // Add exit log before the expression if it's a return
-                if (body.expression is IrReturn) {
-                    statements.add(createLogStatement(
-                        context = context,
-                        logSymbol = logSymbol,
-                        prefix = "<--",
-                        functionName = declaration.name.asString(),
-                        depth = depth,
-                        className = parentClass.name.asString()
-                    ))
-                }
 
                 statements.add(body.expression)
 
-                // Add exit log only if the expression isn't a return
                 if (body.expression !is IrReturn) {
                     statements.add(createLogStatement(
-                        context = context,
-                        logSymbol = logSymbol,
-                        prefix = "<--",
-                        functionName = declaration.name.asString(),
-                        depth = depth,
-                        className = parentClass.name.asString()
+                        context,
+                        logSymbol,
+                        "<--",
+                        declaration.name.asString(),
+                        depth,
+                        parentClass.name.asString()
                     ))
                 }
 
                 declaration.body = IrBlockBodyImpl(
-                    startOffset = body.startOffset,
-                    endOffset = body.endOffset,
-                    statements = statements
+                    body.startOffset,
+                    body.endOffset,
+                    statements
                 )
             }
         }
     }
-
     private fun createLogStatement(
         context: IrPluginContext,
         logSymbol: IrSimpleFunctionSymbol,
