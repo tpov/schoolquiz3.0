@@ -18,6 +18,8 @@ class LoggerPlugin : CompilerPluginRegistrar() {
             CompilerMessageSeverity.INFO,
             "LoggerPlugin: registerExtensions called"
         )
-        IrGenerationExtension.registerExtension(LoggerIrGenerationExtension())
+        IrGenerationExtension.registerExtension(IrGenerationExtensionReader())
+        IrGenerationExtension.registerExtension(IrGenerationExtensionWriter())
+
     }
 }
