@@ -20,6 +20,5 @@ class LoggerPlugin : CompilerPluginRegistrar() {
         )
         IrGenerationExtension.registerExtension(IrGenerationExtensionReader())
         IrGenerationExtension.registerExtension(IrGenerationExtensionWriter())
-
     }
 }

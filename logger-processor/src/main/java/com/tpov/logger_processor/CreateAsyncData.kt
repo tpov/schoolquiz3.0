@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 
 class CreateAsyncData {
-
     fun initFunction(declaration: IrFunction) {
         val pathList = getPathWithRootFunction(declaration)
         pathList.forEach { path ->
@@ -31,7 +30,7 @@ class CreateAsyncData {
             override fun visitCall(expression: IrCall) {
                 val calledFunction = expression.symbol.owner
                 val calledFunctionName = calledFunction.name.asString()
-                val calledFunctionPath = "$path->${getFunctionFullName(calledFunction)}"
+                val calledFunctionPath = "$path"
 
                 if (calledFunctionName in asyncFunctionNames) {
                     val newThreadId = maxCountThread + 1
@@ -69,7 +68,7 @@ class CreateAsyncData {
             asyncList[path] = newThreadId
             return newThreadId
         } else {
-            if (isRootFunction(pathList)) {
+            if (isRootFunction(path)) {
                 val thread = Pair(0, 0)
                 asyncList[path] = thread
                 return thread
