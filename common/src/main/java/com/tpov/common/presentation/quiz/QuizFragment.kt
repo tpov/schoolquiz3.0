@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,40 +16,49 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
+import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@Logger
 @InternalCoroutinesApi
 class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var mainViewModel: QuizActivityViewModel
 
     private lateinit var binding: FragmentQuizBinding
 
-    private var oldIdQuizEvent1 = 0
 
     private lateinit var adapter: QuizActivityAdapter
 
     private var createQuiz = false
 
+    private var idEvent = 0
     private var idCategory = 0
     private var idSubCategory = 0
     private var idSubsubCategory = 0
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-    }
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mainViewModel = ViewModelProvider(this)[QuizActivityViewModel::class.java]
+        mainViewModel = ViewModelProvider(this, viewModelFactory)[QuizActivityViewModel::class.java]
 
         initGetData()
+        mainViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
         initAdapter()
 
+    }
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        DaggerCommonComponent.factory()
+            .create(requireActivity().application)
+            .inject(this)
     }
 
     private fun initAdapter() {
@@ -59,6 +69,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
         lifecycleScope.launch(Dispatchers.IO) {
             mainViewModel.listFlattenedQuizDataFlow.collect { list ->
+                Log.d("dawdasf", list.toString())
                 adapter.submitList(list)
             }
         }
@@ -76,7 +87,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     override fun onResume() {
         super.onResume()
-
     }
 
     override fun onCreateView(
@@ -206,6 +216,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     companion object {
 
+        const val KEY_ID_EVENT = "key_id_event"
         const val KEY_ID_CATEGORY = "key_id_category"
         const val KEY_ID_SUB_CATEGORY = "key_id_sub_category"
         const val KEY_ID_SUB_SUB_CATEGORY = "key_id_subsub_category"
@@ -213,8 +224,9 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         const val REQUEST_CODE = 1
 
         @JvmStatic
-        fun newInstance(idCategory: Int, idSubCategory: Int, idSubsubCategory: Int): QuizFragment {
+        fun newInstance(idEvent: Int, idCategory: Int, idSubCategory: Int, idSubsubCategory: Int): QuizFragment {
             val args = Bundle()
+            args.putInt(KEY_ID_EVENT, idEvent)
             args.putInt(KEY_ID_CATEGORY, idCategory)
             args.putInt(KEY_ID_SUB_CATEGORY, idSubCategory)
             args.putInt(KEY_ID_SUB_SUB_CATEGORY, idSubsubCategory)

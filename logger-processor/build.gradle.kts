@@ -23,7 +23,7 @@ repositories {
 
 java {
     sourceSets["main"].java.srcDirs("src/main/java")
-    toolchain.languageVersion.set(JavaLanguageVersion.of(11))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
 
 tasks.register<Jar>("buildJar") {
@@ -31,4 +31,7 @@ tasks.register<Jar>("buildJar") {
     archiveVersion.set(version.toString())
     from(sourceSets["main"].output)
     destinationDirectory.set(buildDir.resolve("libs"))
+}
+tasks.clean {
+    enabled = false
 }

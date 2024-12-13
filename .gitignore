@@ -65,3 +65,11 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.gradle/
+build/
+*.bin
+*.lock
+*.jar
+.idea/
+*.iml
+local.properties

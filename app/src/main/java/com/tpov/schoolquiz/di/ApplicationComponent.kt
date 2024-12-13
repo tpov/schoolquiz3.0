@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.di
 
 import android.app.Application
+import com.tpov.common.data.database.StructureRatingDataDao
+import com.tpov.common.di.CommonComponent
 import com.tpov.schoolquiz.presentation.AppWorkerFactory
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.main.MainActivity
@@ -11,11 +13,14 @@ import dagger.Component
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Singleton
 
-
 @OptIn(InternalCoroutinesApi::class)
 @Singleton
-@Component(modules = [AppModule::class, ViewModelModule::class, WorkerModule::class])
+@Component(
+    dependencies = [CommonComponent::class],
+    modules = [AppModule::class, ViewModelModule::class, WorkerModule::class, DatabaseModule::class]
+)
 interface ApplicationComponent {
+    fun provideStructureRatingDataDao(): StructureRatingDataDao
     fun inject(application: Application)
     fun inject(splashScreen: SplashScreen)
     fun inject(mainFragment: MainFragment)
@@ -25,6 +30,7 @@ interface ApplicationComponent {
 
     @Component.Factory
     interface Factory {
-        fun create(@BindsInstance application: Application): ApplicationComponent
+        fun create(@BindsInstance application: Application,
+                   commonComponent: CommonComponent): ApplicationComponent
     }
 }

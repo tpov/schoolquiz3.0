@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.data.core.Core
 import com.tpov.common.data.core.Core.tpovIdFlow
@@ -33,7 +32,7 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.util.Locale
 import javax.inject.Inject
-import javax.inject.Provider
+
 @Logger
 @OptIn(FlowPreview::class)
 class MainViewModel @Inject constructor(
@@ -320,23 +319,4 @@ class MainViewModel @Inject constructor(
     }
 
 
-}
-
-class ViewModelFactory @Inject constructor(
-    private val creators: Map<Class<out ViewModel>, @JvmSuppressWildcards Provider<ViewModel>>
-) : ViewModelProvider.Factory {
-
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val creator = creators[modelClass] ?: creators.entries.firstOrNull() {
-            modelClass.isAssignableFrom(
-                it.key
-            )
-        }?.value
-
-        if (creator != null) {
-            return creator.get() as T
-        } else {
-            throw IllegalArgumentException("Unknown model class: $modelClass")
-        }
-    }
 }

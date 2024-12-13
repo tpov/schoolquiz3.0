@@ -29,12 +29,14 @@ import com.tpov.common.RATING_QUIZ_ARENA_IN_TOP
 import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.databinding.ActivityQuizItemBinding
 import com.tpov.common.presentation.utils.ResizeAndCrop
+import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import java.io.File
 
+@Logger
 class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
     private val context: Context,

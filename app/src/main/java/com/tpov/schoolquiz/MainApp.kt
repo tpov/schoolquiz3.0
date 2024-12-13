@@ -14,6 +14,7 @@ import com.tpov.common.data.core.Core
 import com.tpov.common.di.CommonComponent
 import com.tpov.common.di.DaggerCommonComponent
 import com.tpov.schoolquiz.di.ApplicationComponent
+import com.tpov.schoolquiz.di.CommonComponentProvider
 import com.tpov.schoolquiz.di.DaggerApplicationComponent
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -23,7 +24,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class MainApp : Application(), Configuration.Provider {
+class MainApp : Application(), Configuration.Provider, CommonComponentProvider {
 
     lateinit var commonComponent: CommonComponent
     lateinit var applicationComponent: ApplicationComponent
@@ -32,12 +33,9 @@ class MainApp : Application(), Configuration.Provider {
         super.onCreate()
 
         commonComponent = DaggerCommonComponent.factory().create(this)
-        applicationComponent = DaggerApplicationComponent.factory().create(this)
+        applicationComponent = DaggerApplicationComponent.factory().create(this, commonComponent)
 
-        WorkManager.initialize(
-            this,
-            workManagerConfiguration
-        )
+        WorkManager.initialize(this,workManagerConfiguration)
 
         // Initialize Firebase
         FirebaseApp.initializeApp(this)
@@ -132,7 +130,9 @@ class MainApp : Application(), Configuration.Provider {
         super.attachBaseContext(base)
         MultiDex.install(this)
     }
-
+    override fun provideCommonComponent(): CommonComponent {
+        return commonComponent
+    }
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(applicationComponent.workerFactory())

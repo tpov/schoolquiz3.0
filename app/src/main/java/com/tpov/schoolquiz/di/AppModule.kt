@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.di
 
-import android.app.Application
 import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
@@ -22,10 +21,6 @@ import javax.inject.Singleton
 
 @Module(includes = [DatabaseModule::class])
 class AppModule {
-
-    @Provides
-    @Singleton
-    fun provideApplicationContext(application: Application): Context = application
 
     @Provides
     @Singleton

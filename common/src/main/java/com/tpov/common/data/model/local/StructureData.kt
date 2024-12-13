@@ -15,7 +15,7 @@ data class CategoryData(
     val id: Int = 0,
     val subcategory: List<SubCategoryData> = emptyList(),
     val nameQuiz: String = "",
-    val dataUpdate: String =(System.currentTimeMillis() / 1000).toString(),
+    val dataUpdate: String = (System.currentTimeMillis() / 1000).toString(),
     val starsMaxLocal: Int = 0,
     val starsMaxRemote: Int = 0,
     val picture: String = "",
@@ -38,7 +38,21 @@ data class SubCategoryData(
     val ratingLocal: Int = 0,
     var isShowArchive: Boolean = true,
     var isShowDownload: Boolean = true
-)
+) {
+    fun toFlattenedQuizData() = FlattenedQuizData(
+        this.id,
+        this.nameQuiz,
+        this.dataUpdate,
+        this.userName,
+        this.starsMaxLocal,
+        this.starsMaxRemote,
+        this.picture,
+        this.ratingRemote,
+        this.ratingLocal,
+        this.isShowArchive,
+        this.isShowDownload
+    )
+}
 
 data class SubsubCategoryData(
     val id: Int = 0,
@@ -68,7 +82,21 @@ data class QuizData(
     var isShowArchive: Boolean = true,
     var isShowDownload: Boolean = true,
     val tpovId: Int = 0
-)
+) {
+    fun toFlattenedQuizData() = FlattenedQuizData(
+        this.idQuiz,
+        this.nameQuiz,
+        this.dataUpdate,
+        this.userName,
+        this.starsMaxLocal,
+        this.starsMaxRemote,
+        this.picture,
+        this.ratingRemote,
+        this.ratingLocal,
+        this.isShowArchive,
+        this.isShowDownload
+    )
+}
 
 data class FlattenedQuizData(
     val id: Int,

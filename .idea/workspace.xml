@@ -183,273 +183,17 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add Logger (start and finish fun)">
-      <change afterPath="$PROJECT_DIR$/log-api/src/main/java/com/tpov/log_api/logger/Build.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/results.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/data/PreferencesManager.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/databinding/CustomPreferenceCategoryBlueGradientBinding.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/databinding/CustomPreferenceCategoryGreenGradientBinding.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/databinding/CustomPreferenceCategoryRedGradientBinding.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/databinding/CustomPreferenceCategoryYellowGradientBinding.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/databinding/PreferenceTimePickerBinding.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/databinding/SettingsActivityBinding.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/DaggerSettingComponent$Factory.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/DaggerSettingComponent$SettingComponentImpl.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/DaggerSettingComponent.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingComponent$Factory.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingComponent.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingModule.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingModule_ProvideContextFactory.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/domain/SettingsDomain.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/ProfileEditModel.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsActivity.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsFragment.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreference.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/generated/source/kapt/debug/com/tpov/setting/di/DaggerSettingComponent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/generated/source/kapt/debug/com/tpov/setting/di/SettingModule_ProvideContextFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values-night-v8/values-night-v8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/stripped.dir/layout/custom_preference_category_blue_gradient.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/stripped.dir/layout/custom_preference_category_green_gradient.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/stripped.dir/layout/custom_preference_category_red_gradient.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/stripped.dir/layout/custom_preference_category_yellow_gradient.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/stripped.dir/layout/preference_time_picker.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/stripped.dir/layout/settings_activity.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/databinding/CustomPreferenceCategoryBlueGradientBinding.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/databinding/CustomPreferenceCategoryGreenGradientBinding.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/databinding/CustomPreferenceCategoryRedGradientBinding.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/databinding/CustomPreferenceCategoryYellowGradientBinding.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/databinding/PreferenceTimePickerBinding.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/databinding/SettingsActivityBinding.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/di/DaggerSettingComponent$Factory.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/di/DaggerSettingComponent$SettingComponentImpl.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/di/DaggerSettingComponent.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/tpov/setting/di/SettingModule_ProvideContextFactory.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/counters.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/last-build.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/counters.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/last-build.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/local-state/build-history.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/ap-classpath-entries.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/apt-cache.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/classpath-entries.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/classpath-structure.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/java-cache.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/META-INF/settings_debug.kotlin_module" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/data/PreferencesManager.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/di/SettingComponent$Factory.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/di/SettingComponent.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/di/SettingModule.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/domain/SettingsDomain.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/presentation/ProfileEditModel.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/presentation/SettingsActivity.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/presentation/SettingsFragment.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/presentation/TimePickerPreference.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incrementalData/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/data/PreferencesManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/data/PreferencesManager.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/di/SettingComponent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/di/SettingComponent.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/di/SettingModule.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/di/SettingModule.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/domain/SettingsDomain.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/domain/SettingsDomain.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/ProfileEditModel.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/ProfileEditModel.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/SettingsActivity.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/SettingsActivity.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/SettingsFragment.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/SettingsFragment.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/TimePickerPreference.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/TimePickerPreference.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.kapt_metadata" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/stubs/debug/error/NonExistentClass.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/META-INF/settings_debug.kotlin_module" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/data/PreferencesManager.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/di/SettingComponent$Factory.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/di/SettingComponent.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/di/SettingModule.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/domain/SettingsDomain.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/ProfileEditModel.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/SettingsActivity.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/SettingsFragment.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreference.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/results.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/databinding/ShopFragmentBinding.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/DaggerShopComponent$Factory.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/DaggerShopComponent$ShopComponentImpl.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/DaggerShopComponent.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopComponent$Factory.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopComponent.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule_ProvideContextFactory.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/presentation/ShopFragment.dex" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/merged.dir/values-night-v8/values-night-v8.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/stripped.dir/layout/shop_fragment.xml" afterDir="false" />
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add Logger (fix crash)">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/CommonComponentProvider.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonScope.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/DatabaseModuleCommon.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/FirebaseModule.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/ViewModelModule.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/utils/ViewModelFactory.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logger-processor/logger-processor-1.0.1.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" afterDir="false" />
@@ -457,23 +201,75 @@
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/AsyncContext.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/Core.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/Core.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/CreateAsyncData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/CreateAsyncData.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/FunctionCall.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/IrGenerationExtensionWriter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/IrGenerationExtensionWriter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/LoggerAnalysisHandler.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/LoggerPlugin.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/LoggerPlugin.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/MainApp.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/MainApp.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/AppModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/AppModule.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/ApplicationComponent.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/ApplicationComponent.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/DatabaseModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/DatabaseModule.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/ViewModelModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/ViewModelModule.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/common/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureData.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonComponent.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonComponent.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonModule.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/StructureUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/StructureUseCase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityAdapter.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logger-processor/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/logger-processor/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/data/PreferencesManager.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/data/PreferencesManager.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingModule.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingModule.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/domain/SettingsDomain.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/domain/SettingsDomain.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/ProfileEditModel.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/ProfileEditModel.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsActivity.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsActivity.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsFragment.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsFragment.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreference.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreference.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.dex" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/.transforms/b2bbad5f873860b4c335d447b226c2cd/transformed/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/data/PreferencesManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/data/PreferencesManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingModule.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/di/SettingModule.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/domain/SettingsDomain.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/domain/SettingsDomain.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/ProfileEditModel.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/ProfileEditModel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsActivity.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsActivity.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsFragment.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/SettingsFragment.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreference.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreference.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/last-build.bin" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/kotlin/compileDebugKotlin/cacheable/last-build.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/last-build.bin" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/last-build.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/local-state/build-history.bin" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/kotlin/kaptGenerateStubsDebugKotlin/local-state/build-history.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/apt-cache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/apt-cache.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/classpath-structure.bin" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/classpath-structure.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/java-cache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kapt3/incApCache/debug/java-cache.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/data/PreferencesManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/data/PreferencesManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/di/SettingModule.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/di/SettingModule.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/domain/SettingsDomain.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/domain/SettingsDomain.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/ProfileEditModel.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/ProfileEditModel.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/SettingsActivity.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/SettingsActivity.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/SettingsFragment.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/SettingsFragment.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreference.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreference.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat$Companion.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.class" beforeDir="false" afterPath="$PROJECT_DIR$/settings/build/tmp/kotlin-classes/debug/com/tpov/setting/presentation/TimePickerPreferenceDialogFragmentCompat.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule.dex" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/presentation/ShopFragment.dex" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/.transforms/736325319a3cc086fe26d76873dba095/transformed/bundleLibRuntimeToDirDebug/com/tpov/shop/presentation/ShopFragment.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/compile_library_classes_jar/debug/bundleLibCompileToJarDebug/classes.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule.class" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/shop/di/ShopModule.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/shop/presentation/ShopFragment.class" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug/com/tpov/shop/presentation/ShopFragment.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/kotlin/compileDebugKotlin/cacheable/last-build.bin" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/kotlin/compileDebugKotlin/cacheable/last-build.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/kotlin/compileDebugKotlin/local-state/build-history.bin" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/kotlin/compileDebugKotlin/local-state/build-history.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/last-build.bin" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/cacheable/last-build.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/local-state/build-history.bin" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/kotlin/kaptGenerateStubsDebugKotlin/local-state/build-history.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/tmp/kotlin-classes/debug/com/tpov/shop/di/ShopModule.class" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/tmp/kotlin-classes/debug/com/tpov/shop/di/ShopModule.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shop/build/tmp/kotlin-classes/debug/com/tpov/shop/presentation/ShopFragment.class" beforeDir="false" afterPath="$PROJECT_DIR$/shop/build/tmp/kotlin-classes/debug/com/tpov/shop/presentation/ShopFragment.class" afterDir="false" />
     </list>
     <list id="81ab6825-6e13-49c0-a4dd-0fe06f8e94eb" name="Node changelist" comment="Add Node" />
     <option name="SHOW_DIALOG" value="false" />
@@ -484,7 +280,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[C:\Users\tpovd\.android\avd\Pixel_7_Pro_API_34.avd]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -612,42 +408,42 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Android App.app.executor": "Run",
-    "PROJECT_TRUSTED_KEY": "true",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "com.google.services.firebase.aqiPopupShown": "true",
-    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary": "JUnit4",
-    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4": "",
-    "git-widget-placeholder": "Rebasing SchoolQuiz4.0",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_directory_selection": "D:/Programming/Android/schoolquiz3.0/app/src/test/java/com/tpov/schoolquiz",
-    "last_opened_file_path": "D:/Programming/Android/schoolquiz3.0/logger-processor",
-    "project.structure.last.edited": "SDK Location",
-    "project.structure.proportion": "0.17",
-    "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "inlay.hints"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
+    &quot;PROJECT_TRUSTED_KEY&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
+    &quot;com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary&quot;: &quot;JUnit4&quot;,
+    &quot;com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4&quot;: &quot;&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Rebasing SchoolQuiz4.0&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_directory_selection&quot;: &quot;D:/Programming/Android/schoolquiz3.0/app/src/test/java/com/tpov/schoolquiz&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Programming/Android/schoolquiz3.0/common/src/main/java/com/tpov/common/di&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;SDK Location&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;inlay.hints&quot;
   }
-}]]></component>
+}</component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Properties" />
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Programming\Android\schoolquiz3.0\common\src\main\java\com\tpov\common\di" />
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-processor" />
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-processor\src" />
       <recent name="D:\Programming\Android\schoolquiz3.0\common\src\androidTest\java\com\tpov\common" />
       <recent name="D:\Programming\Android\schoolquiz3.0\app\src\androidTest\java\com\tpov\schoolquiz" />
-      <recent name="D:\Programming\Android\schoolquiz3.0\app" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-processor\src\main\res\META-INF\services" />
@@ -664,10 +460,10 @@
     </key>
     <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
       <recent name="com.tpov.common" />
+      <recent name="com.tpov.common.di" />
       <recent name="com.tpov.schoolquiz" />
       <recent name="com.tpov.common.data.model.local" />
       <recent name="com.tpov.schoolquiz.presentation" />
-      <recent name="com.tpov.common.data.utils" />
     </key>
     <key name="CreateTestDialog.RecentsKey">
       <recent name="com.tpov.schoolquiz.presentation.main" />
@@ -1781,7 +1577,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <option name="localTasksCounter" value="109" />
+    <option name="localTasksCounter" value="110" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -1824,7 +1620,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Fix show data spinner num question in CreateNewQuiz" />
     <MESSAGE value="Fix create new answer" />
     <MESSAGE value="Node changelist" />
     <MESSAGE value="Add push Quiz,Question,StructureCategory" />
@@ -1849,7 +1644,8 @@
     <MESSAGE value="Fix create hard question&#10;add create translate after create new question" />
     <MESSAGE value="Fix update categoriesData after set new categories" />
     <MESSAGE value="Add Logger (start and finish fun)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add Logger (start and finish fun)" />
+    <MESSAGE value="Add Logger (fix crash)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add Logger (fix crash)" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

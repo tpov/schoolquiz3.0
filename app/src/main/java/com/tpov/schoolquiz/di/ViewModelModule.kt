@@ -2,9 +2,9 @@ package com.tpov.schoolquiz.di
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.tpov.common.presentation.utils.ViewModelFactory
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizViewModel
 import com.tpov.schoolquiz.presentation.main.MainViewModel
-import com.tpov.schoolquiz.presentation.main.ViewModelFactory
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module

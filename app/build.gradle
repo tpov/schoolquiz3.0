@@ -111,20 +111,3 @@ dependencies {
 
     androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
 }
-
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-    kotlinOptions {
-        freeCompilerArgs += [
-                "-Xno-optimize",
-                "-Xplugin=${project(':logger-processor').buildDir}/libs/logger-processor-1.0.0.jar",
-                "-Xplugin-option=com.tpov.logger_processor:androidJarPath=D:/Programming/Android/root/platforms/android-34/android.jar"
-        ]
-    }
-    doFirst {
-        def pluginJar = file("${project(':logger-processor').buildDir}/libs/logger-processor-1.0.0.jar")
-        if (!pluginJar.exists()) {
-            throw new GradleException("Plugin jar not found: $pluginJar. Build the :logger-processor module first.")
-        }
-    }
-}

@@ -26,9 +26,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         var fileOutputStream: FileOutputStream? = null
         try {
             fileOutputStream = FileOutputStream(file)
-
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
-
             Toast.makeText(application, "Image saved to $fileName in Pictures", Toast.LENGTH_SHORT)
                 .show()
         } catch (e: Exception) {

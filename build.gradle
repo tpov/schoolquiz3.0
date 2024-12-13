@@ -121,7 +121,24 @@ subprojects {
                 implementation 'org.assertj:assertj-core:3.23.1'
 
             }
+            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { task ->
+                task.kotlinOptions {
+                    freeCompilerArgs += [
+                            "-Xno-optimize",
+                            "-Xplugin=${project.rootDir}/logger-processor/build/libs/logger-processor-1.0.0.jar",
+                            "-Xplugin-option=com.tpov.logger_processor:androidJarPath=D:/Programming/Android/root/platforms/android-34/android.jar"
+                    ]
+                }
+                task.doFirst {
+                    def pluginJar = file("${project.rootDir}/logger-processor/build/libs/logger-processor-1.0.0.jar")
+                    if (!pluginJar.exists()) {
+                        throw new GradleException("Plugin jar not found: $pluginJar. Build the :logger-processor module first.")
+                    }
+                }
+            }
         }
+
+
     }
 }
 
