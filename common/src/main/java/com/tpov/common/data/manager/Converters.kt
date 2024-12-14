@@ -1,4 +1,4 @@
-package com.tpov.common.data.custom
+package com.tpov.common.data.manager
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

@@ -15,8 +15,8 @@ import com.google.firebase.database.FirebaseDatabase
 import com.tpov.common.DEFAULT_DATA_IN_GET_CHAT
 import com.tpov.common.DEFAULT_DATA_IN_SEND_CHAT
 import com.tpov.common.DEFAULT_LOCAL_IN_GET_CHAT
-import com.tpov.common.data.core.SharedPreferencesManager
-import com.tpov.common.data.core.SharedPreferencesManager.getTpovId
+import com.tpov.common.data.manager.SharedPreferencesManager
+import com.tpov.common.data.manager.SharedPreferencesManager.getTpovId
 import com.tpov.network.data.models.local.ChatEntity
 import com.tpov.network.databinding.FragmentChatBinding
 import com.tpov.userguide.Options

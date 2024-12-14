@@ -1,4 +1,4 @@
-package com.tpov.common.domain
+package com.tpov.common.domain.usecase
 
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.domain.repository.RepositoryQuestionDetail

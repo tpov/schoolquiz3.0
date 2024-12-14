@@ -10,9 +10,9 @@ import com.tpov.common.data.RepositoryQuizImpl
 import com.tpov.common.data.RepositoryStuctureImpl
 import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
-import com.tpov.common.domain.QuestionUseCase
-import com.tpov.common.domain.QuizUseCase
-import com.tpov.common.domain.StructureUseCase
+import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.QuizUseCase
+import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.data.RepositoryProfileImpl
 import com.tpov.schoolquiz.domain.ProfileUseCase
 import dagger.Module

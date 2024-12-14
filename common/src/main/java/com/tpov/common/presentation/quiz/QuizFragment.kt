@@ -23,13 +23,9 @@ import kotlinx.coroutines.launch
 class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     private lateinit var mainViewModel: QuizActivityViewModel
-
     private lateinit var binding: FragmentQuizBinding
-
     private var oldIdQuizEvent1 = 0
-
     private lateinit var adapter: QuizActivityAdapter
-
     private var createQuiz = false
 
     private var idCategory = 0
@@ -48,7 +44,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
         initGetData()
         initAdapter()
-
     }
 
     private fun initAdapter() {

@@ -6,8 +6,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.tpov.common.data.core.FirebaseRequestInterceptor
 import com.tpov.common.data.database.QuestionDao
+import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.remote.QuestionRemote
 import com.tpov.common.domain.repository.RepositoryQuestion

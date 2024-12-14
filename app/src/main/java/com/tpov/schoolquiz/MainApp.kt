@@ -10,7 +10,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.FirebaseAuth
-import com.tpov.common.data.core.Core
+import com.tpov.common.Core
 import com.tpov.common.di.CommonComponent
 import com.tpov.common.di.DaggerCommonComponent
 import com.tpov.schoolquiz.di.ApplicationComponent

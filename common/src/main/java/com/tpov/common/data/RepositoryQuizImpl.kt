@@ -6,8 +6,8 @@ import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.tpov.common.data.core.FirebaseRequestInterceptor
 import com.tpov.common.data.database.QuizDao
+import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.fromJson

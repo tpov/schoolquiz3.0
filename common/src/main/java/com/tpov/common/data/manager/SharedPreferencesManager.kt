@@ -1,4 +1,4 @@
-package com.tpov.common.data.core
+package com.tpov.common.data.manager
 
 import android.content.Context
 import android.content.SharedPreferences

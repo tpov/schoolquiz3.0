@@ -1,4 +1,4 @@
-package com.tpov.common.domain
+package com.tpov.common.domain.usecase
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -7,7 +7,7 @@ import android.widget.Toast
 import com.tpov.common.data.RepositoryStuctureImpl
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.StructureData
-import com.tpov.common.data.model.remote.StructureLocalData
+import com.tpov.common.data.model.remote.StructureLocalDataRemote
 import com.tpov.common.presentation.utils.Values.application
 import java.io.File
 import java.io.FileOutputStream
@@ -17,7 +17,7 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
 
     suspend fun fetchStructureData() = repositoryStructureImpl.fetchStructureData()
 
-    suspend fun pushStructureRating(ratingData: StructureLocalData) {
+    suspend fun pushStructureRating(ratingData: StructureLocalDataRemote) {
         repositoryStructureImpl.pushStructureRating(ratingData)
     }
 

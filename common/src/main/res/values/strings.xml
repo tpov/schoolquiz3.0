@@ -22,8 +22,8 @@
     <string name="amateur">Любитель</string>
     <string name="veteran">Ветеран</string>
     <string name="expert">Єксперт</string>
-    <string name="legend">Легенда</string>
     <string name="grandmaster">Гроссместер</string>
+    <string name="legend">Легенда</string>
 
     <string name="translate_negative">Отмена</string>
     <string name="translate_message">Сервисы перевода платные</string>
@@ -33,6 +33,7 @@
     <string name="send_to_arena_negative">Отмена</string>
     <string name="translate_title">Перевести</string>
 
+    <string name="short_second">s</string>
     <string-array name="category_array">
         <item>SchoolQuiz</item>
         <item>GameQuiz</item>

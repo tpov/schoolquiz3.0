@@ -15,9 +15,9 @@ import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import com.tpov.common.domain.QuestionUseCase
-import com.tpov.common.domain.QuizUseCase
-import com.tpov.common.domain.StructureUseCase
+import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.QuizUseCase
+import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.domain.ProfileUseCase
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.assisted.Assisted

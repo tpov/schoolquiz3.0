@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
 import com.bumptech.glide.request.RequestOptions
-import com.tpov.common.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
 import com.tpov.common.LVL_TRANSLATOR_1_LVL
 import com.tpov.common.LVL_TRANSLATOR_2_LVL
 import com.tpov.common.MAX_PERCENT_HARD_QUIZ_FULL
@@ -29,6 +28,7 @@ import com.tpov.common.RATING_QUIZ_ARENA_IN_TOP
 import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.databinding.ActivityQuizItemBinding
 import com.tpov.common.presentation.utils.ResizeAndCrop
+import com.tpov.shop.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -66,7 +66,6 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
     class ItemHolder(view: View, private val listener: Listener) : RecyclerView.ViewHolder(view),
         View.OnTouchListener {
-
 
         val constraintLayout: ConstraintLayout = itemView.findViewById(R.id.constraint_layout)
 

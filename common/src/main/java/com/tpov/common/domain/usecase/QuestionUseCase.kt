@@ -1,4 +1,4 @@
-package com.tpov.common.domain
+package com.tpov.common.domain.usecase
 
 import android.util.Log
 import com.tpov.common.data.model.local.QuestionEntity

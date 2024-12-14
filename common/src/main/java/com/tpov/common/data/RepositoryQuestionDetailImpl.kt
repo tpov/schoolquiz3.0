@@ -2,9 +2,9 @@ package com.tpov.common.data
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.common.data.core.Core.tpovId
-import com.tpov.common.data.core.FirebaseRequestInterceptor
+import com.tpov.common.Core.tpovId
 import com.tpov.common.data.database.QuestionDetailDao
+import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.remote.QuestionDetailRemote
 import com.tpov.common.domain.repository.RepositoryQuestionDetail

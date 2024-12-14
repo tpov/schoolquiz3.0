@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.tpov.common.data.core.SharedPreferencesManager.getTpovId
+import com.tpov.common.data.manager.SharedPreferencesManager.getTpovId
 import com.tpov.common.presentation.utils.Values.getColorNickname
 import com.tpov.network.R
 import com.tpov.network.data.models.local.ChatEntity

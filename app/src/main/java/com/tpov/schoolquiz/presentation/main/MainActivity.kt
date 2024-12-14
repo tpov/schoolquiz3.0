@@ -36,10 +36,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.COUNT_LIFE_POINTS_IN_LIFE
-import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
-import com.tpov.common.domain.SettingConfigObject.settingsConfig
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.common.presentation.utils.Values
 import com.tpov.common.presentation.utils.Values.getColorNickname
@@ -60,6 +59,7 @@ import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
+import com.tpov.shop.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.shop.presentation.ShopFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

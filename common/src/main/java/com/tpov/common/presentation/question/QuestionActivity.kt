@@ -6,7 +6,6 @@ import android.content.ClipDescription
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.DragEvent
-import android.view.Menu
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.Animation
@@ -18,8 +17,13 @@ import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import androidx.lifecycle.ViewModelProvider
+import com.tpov.common.ANIM_SPRING_VELOCITY_LEFT
+import com.tpov.common.ANIM_SPRING_VELOCITY_RIGHT
+import com.tpov.common.CODE_EMPTY_ANSWER
 import com.tpov.common.DELAY_SHOW_TEXT_IN_QUESTIONACTIVITY
+import com.tpov.common.MAX_CLASSIC_ANSWER
 import com.tpov.common.R
+import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.databinding.ActivityQuestionBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,16 +42,14 @@ private const val REQUEST_CODE_CHEAT = 0
  * this allows you to have the entire progress of the passage, save it and restore it.
  */
 @InternalCoroutinesApi
-class QuestionActivity : AppCompatActivity(){
+class QuestionActivity : AppCompatActivity() {
 
     lateinit var viewModel: QuestionViewModel
     private var languageUser: String? = null
 
-
     private val binding: ActivityQuestionBinding by lazy {
         ActivityQuestionBinding.inflate(layoutInflater)
     }
-
 
     val doter =  Regex("\\(.{7}\\)")
     private var originalText: String = ""
@@ -58,9 +60,10 @@ class QuestionActivity : AppCompatActivity(){
         binding.b5, binding.b6, binding.b7, binding.b8
     )
 
-    val buttons4 = listOf(
+    private val buttons4 = listOf(
         binding.button1, binding.button2, binding.button3, binding.button4
     )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -115,26 +118,23 @@ class QuestionActivity : AppCompatActivity(){
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.currentQuestion.collect { currentQuestion ->
                 if (currentQuestion != null && currentQuestion != viewModel.unknownCurrentQuestion) {
-                    val questionText =
-                        viewModel.questionList.value?.get(currentQuestion)?.nameQuestion
+                    val questionText = viewModel.questionList.value?.get(currentQuestion)?.nameQuestion
                     val answer = viewModel.questionList.value?.get(currentQuestion)?.answer
                     val answersName = viewModel.questionList.value?.get(currentQuestion)?.nameAnswers
                     val is4Button = questionText?.let { doter.containsMatchIn(it) } == true
+
                     if (is4Button) show4Answers(answer, answersName)
                     else show8Answers(answer, answersName)
                     startTimer(is4Button)
 
-                    setBlockButton(viewModel.codeAnswer.get(currentQuestion).code == 0)
-                    binding.tvQuestionText.setText(questionText)
+                    setBlockButton(viewModel.codeAnswer[currentQuestion].code == 0)
+                    binding.tvQuestionText.text = questionText
 
                     binding.imvQuestion.setImageResource(resources.getIdentifier(
                         viewModel.questionList.value?.get(viewModel.currentQuestion.value ?: 0)?.pathPictureQuestion,
                         "drawable",
                         packageName
                     ))
-
-
-
                 }
             }
         }
@@ -197,7 +197,7 @@ class QuestionActivity : AppCompatActivity(){
                                 matchAfter
                             }
                             val start = nearestMatch.range.first
-                            val newText = text.replaceRange(start, start + 8, dragData)
+                            val newText = text.replaceRange(start, start + 8, dragData) //todo What is 8?
                             textView.text = newText
                         }
                         matchBefore != null -> {
@@ -234,10 +234,11 @@ class QuestionActivity : AppCompatActivity(){
     }
 
     private fun show8Answers(answer: Int?, answersName: String?) {
-        val answers = answersName?.split("|") ?: return
+        val answers = answersName?.split(SPLIT_BETWEEN_ANSWERS) ?: return
         val maxAnswers = 8
 
-        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, '0') ?: "0".repeat(answers.size)
+        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, CODE_EMPTY_ANSWER)
+            ?: CODE_EMPTY_ANSWER.toString().repeat(answers.size)
         val indexedAnswers = answers.withIndex().toList().shuffled()
         val newAnswerOrder = indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
 
@@ -254,15 +255,16 @@ class QuestionActivity : AppCompatActivity(){
 
         setupTextViewForDrop()
 
-        viewModel.originalAnswerOrder = paddedAnswerValue.padStart(maxAnswers, '0').toInt()
+        viewModel.originalAnswerOrder = paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER).toInt()
         viewModel.newAnswerOrder = newAnswerOrder
     }
 
     private fun show4Answers(answer: Int?, answersName: String?) {
-        val answers = answersName?.split("|") ?: return
-        val maxAnswers = 4
+        val answers = answersName?.split(SPLIT_BETWEEN_ANSWERS) ?: return
+        val maxAnswers = MAX_CLASSIC_ANSWER
 
-        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, '0') ?: "0".repeat(answers.size)
+        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, CODE_EMPTY_ANSWER)
+            ?: CODE_EMPTY_ANSWER.toString().repeat(answers.size)
         val indexedAnswers = answers.withIndex().toList().shuffled()
         val newAnswerOrder = indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
 
@@ -276,84 +278,16 @@ class QuestionActivity : AppCompatActivity(){
             }
         }
 
-        viewModel.originalAnswerOrder = paddedAnswerValue.padStart(maxAnswers, '0').toInt()
+        viewModel.originalAnswerOrder = paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER).toInt()
         viewModel.newAnswerOrder = newAnswerOrder
-    }
-
-    private fun checkAnswer(selectedTags: List<Int>, is4Button: Boolean) {
-        if (selectedTags.isEmpty()) return
-        val score: Int
-
-        if (is4Button) {
-            val correctAnswerIndex = viewModel.originalAnswerOrder.toString().toIntOrNull() ?: return
-            score = if (selectedTags.contains(correctAnswerIndex)) {
-                9
-            } else {
-                1
-            }
-        } else {
-            var correctCount = 0
-
-            val originalOrder = viewModel.originalAnswerOrder.toString().take(8).map { it.toString().toInt() }
-            val totalCorrectAnswers = originalOrder.size
-
-            for (i in selectedTags.indices) {
-                val originalAnswer = originalOrder.getOrNull(i) ?: continue
-                val selectedAnswer = selectedTags.getOrNull(i) ?: continue
-
-                if (originalAnswer == selectedAnswer) {
-                    correctCount += 1
-                }
-            }
-
-            val percentage = (correctCount.toFloat() / totalCorrectAnswers) * 100
-            score = when {
-                percentage >= 100 -> 9
-                percentage >= 87.5 -> 8
-                percentage >= 75 -> 7
-                percentage >= 62.5 -> 6
-                percentage >= 50 -> 5
-                percentage >= 37.5 -> 4
-                percentage >= 25 -> 3
-                percentage >= 12.5 -> 2
-                else -> 1
-            }
-        }
-
-        setCodeInCodeAnswer(score)
-        setNextQuestion()
-    }
-
-    private fun setNextQuestion() {
-        if (viewModel.currentQuestion.value?.plus(1)!! >= viewModel.numQuestions!!) springAnim(true)
-        else viewModel.setNewCurrentQuestion(viewModel.currentQuestion.value?.plus(1)!!)
-    }
-
-    private fun setPrefQuestion() {
-        if (viewModel.currentQuestion.value?.plus(1)!! <= 1) springAnim(false)
-        else viewModel.setNewCurrentQuestion(viewModel.currentQuestion.value?.minus(1)!!)
-    }
-
-    private fun setCodeInCodeAnswer(score: Int) {
-        val index = viewModel.currentQuestion.value!!
-
-        if (index < viewModel.codeAnswer.length) {
-            viewModel.codeAnswer = viewModel.codeAnswer.substring(0, index) + score.toString() +
-                    viewModel.codeAnswer.substring(index + 1)
-        } else {
-            //error
-            viewModel.codeAnswer = viewModel.codeAnswer.padEnd(index, '0') + score.toString()
-        }
-
-        if (!viewModel.codeAnswer.contains('0')) viewModel.result()
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun synthInputData() {
-        viewModel.idQuiz = intent.getIntExtra(ID_QUIZ, 0)
-        viewModel.hardQuiz = intent.getBooleanExtra(HARD_QUESTION, false)
-        languageUser = intent.getStringExtra(LANGUAGE_USER)
-        viewModel.life = intent.getIntExtra(LIFE, 0)
+        viewModel.idQuiz = intent.getIntExtra(KEY_ID_QUIZ, 0)
+        viewModel.hardQuiz = intent.getBooleanExtra(KEY_HARD_QUESTION, false)
+        languageUser = intent.getStringExtra(KEY_LANGUAGE_USER)
+        viewModel.life = intent.getIntExtra(KEY_LIFE, 0)
 
     }
 
@@ -362,21 +296,9 @@ class QuestionActivity : AppCompatActivity(){
         binding.cheatButton.isEnabled = it
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        //stopService(Intent(this, MusicService::class.java))
-    }
-
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        //menuInflater.inflate(R.menu.menu_main_activity, menu)
-        return true
-    }
-
-
     private fun springAnim(next: Boolean) = with(binding) {
-        val START_VELOCITY = if (next) -5000f
-        else 5000f
+        val START_VELOCITY = if (next) ANIM_SPRING_VELOCITY_LEFT
+        else ANIM_SPRING_VELOCITY_RIGHT
 
         var springAnimation = SpringAnimation(tvQuestionText, DynamicAnimation.X)
         var springForce = SpringForce()
@@ -402,19 +324,19 @@ class QuestionActivity : AppCompatActivity(){
             override fun onTick(millisUntilFinished: Long) {
                 val secondsRemaining = millisUntilFinished / 1000
                 if (secondsRemaining <= 3) anim321(secondsRemaining.toInt())
-                binding.tvTimer.text = "$secondsRemaining с" // Обновляем текст таймера
+                binding.tvTimer.text = "$secondsRemaining s" // Обновляем текст таймера
             }
 
             override fun onFinish() {
                 if (is4Button) evaluateAnswer()
-                setCodeInCodeAnswer(3)
-                setNextQuestion()
+                viewModel.setCodeInCodeAnswer(3)
+                viewModel.setNextQuestion()
             }
         }.start()
     }
 
     private fun evaluateAnswer() {
-        checkAnswer(insertedOrder, false)
+        viewModel.checkAnswer(insertedOrder, false)
         insertedOrder.clear()
     }
 
@@ -450,11 +372,11 @@ class QuestionActivity : AppCompatActivity(){
     }
 
     companion object {
-        const val ID_QUIZ = "name_question"
-        const val NAME_USER = "name_user"
-        const val HARD_QUESTION = "hard_question"
-        const val LANGUAGE_USER = "language_user"
-        const val LIFE = "life"
+        const val KEY_ID_QUIZ = "id_question"
+        const val KEY_NAME_USER = "name_user"
+        const val KEY_HARD_QUESTION = "hard_question"
+        const val KEY_LANGUAGE_USER = "language_user"
+        const val KEY_LIFE = "life"
         const val RESULT_TRANSLATE = 2
         const val RESULT_OK = 1
 

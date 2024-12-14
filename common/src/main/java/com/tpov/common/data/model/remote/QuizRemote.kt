@@ -70,20 +70,4 @@ data class QuizRemote(
             languages = languages
         )
     }
-
-    constructor() : this(
-        nameQuiz = "",
-        tpovId = 0,
-        dataUpdate = "",
-        versionQuiz = 0,
-        picture = "",
-        event = 0,
-        numQ = 0,
-        numHQ = 0,
-        starsAverageRemote = 0,
-        starsMaxRemote = 0,
-        ratingRemote = 0,
-        userName = "",
-        languages = ""
-    )
 }

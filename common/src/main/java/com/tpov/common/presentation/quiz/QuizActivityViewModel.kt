@@ -27,7 +27,7 @@ class QuizActivityViewModel @Inject constructor(
                             id = category.id,
                             name = category.nameQuiz,
                             dataUpdate = category.dataUpdate,
-                            userName = "", // Нет данных в CategoryData
+                            userName = "",
                             starsMaxLocal = category.starsMaxLocal,
                             starsMaxRemote = category.starsMaxRemote,
                             picture = category.picture,

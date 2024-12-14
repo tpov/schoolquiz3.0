@@ -9,7 +9,7 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
-import com.tpov.common.data.core.CustomProgressBar
+import com.tpov.common.presentation.custom.CustomProgressBar
 import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity

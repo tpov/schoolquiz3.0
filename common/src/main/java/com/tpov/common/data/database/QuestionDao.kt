@@ -1,6 +1,5 @@
 package com.tpov.common.data.database
 
-import android.util.Log
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -12,47 +11,22 @@ import com.tpov.common.data.model.local.QuestionEntity
 interface QuestionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertQuestionDB(name: QuestionEntity)
-
-    suspend fun insertQuestion(question: QuestionEntity) {
-        insertQuestionDB(question)
-    }
+    fun insertQuestion(name: QuestionEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertQuestionListDB(name: List<QuestionEntity>)
-
-    suspend fun insertQuestionList(note: List<QuestionEntity>) {
-        insertQuestionListDB(note)
-    }
-
-    suspend fun getQuestionList(): List<QuestionEntity> {
-        return getQuestionListDB()
-    }
-
-    suspend fun getQuestionByIdQuiz(nameQuiz: String): List<QuestionEntity> {
-        return getQuestionByIdQuizDB(nameQuiz)
-    }
-
-    fun getQuestionByIdQuiz(id: Int): List<QuestionEntity> {
-        Log.d("getQuestionByIdQuiz", id.toString())
-        return getQuestionByIdQuizDB(id)
-    }
+    suspend fun insertQuestionList(name: List<QuestionEntity>)
 
     @Query("SELECT * FROM question_entity")
-    suspend fun getQuestionListDB(): List<QuestionEntity>
+    suspend fun getQuestionList(): List<QuestionEntity>
 
     @Query("SELECT * FROM question_entity WHERE idQuiz LIKE :nameQuiz")
-    suspend fun getQuestionByIdQuizDB(nameQuiz: String): List<QuestionEntity>
+    suspend fun getQuestionByIdQuiz(nameQuiz: String): List<QuestionEntity>
 
     @Query("SELECT * FROM question_entity WHERE idQuiz = :id")
-    fun getQuestionByIdQuizDB(id: Int): List<QuestionEntity>
+    fun getQuestionByIdQuiz(id: Int): List<QuestionEntity>
 
     @Query("DELETE FROM question_entity WHERE idQuiz IS :id")
-    fun deleteQuestionByIdQuizDB(id: Int)
-
-    fun deleteQuestionByIdQuiz(id: Int) {
-        deleteQuestionByIdQuizDB(id)
-    }
+    fun deleteQuestionByIdQuiz(id: Int)
 
     @Query("DELETE FROM question_entity WHERE id IS :id")
     fun deleteQuestion(id: Int)
