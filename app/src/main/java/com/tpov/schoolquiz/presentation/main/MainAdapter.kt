@@ -60,7 +60,6 @@ class MainAdapter(private val items: List<CategoryData>,
                         imageView.setImageResource(R.drawable.db_design3_main)
                     }
 
-                    // Можно продолжить использовать Glide, если хотите
                     Glide.with(imageView.context)
                         .load(file)
                         .listener(object : RequestListener<Drawable> {

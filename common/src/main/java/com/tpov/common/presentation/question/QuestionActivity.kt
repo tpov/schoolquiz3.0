@@ -52,7 +52,7 @@ class QuestionActivity : AppCompatActivity() {
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var binding: ActivityQuestionBinding
 
-    val doter = Regex("\\(.{7}\\)")
+    val doter = Regex("\\(\\.{7}\\)")
     private var originalText: String = ""
     private val insertedOrder = mutableListOf<Int>()
 
@@ -130,17 +130,17 @@ class QuestionActivity : AppCompatActivity() {
     private fun showQuestion() {
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.currentQuestion.collect { currentQuestion ->
-                Log.d("jfersdklfgjskledf", "currentQuestion: $currentQuestion")
                 if (currentQuestion != null && currentQuestion != viewModel.unknownCurrentQuestion) {
-                    val questionText =
-                        viewModel.questionList.value?.get(currentQuestion)?.nameQuestion
+                    val questionText = viewModel.questionList.value?.get(currentQuestion)?.nameQuestion
                     val answer = viewModel.questionList.value?.get(currentQuestion)?.answer
-                    val answersName =
-                        viewModel.questionList.value?.get(currentQuestion)?.nameAnswers
-                    val is4Button = questionText?.let { doter.containsMatchIn(it) } == true
-                    if (is4Button) show4Answers(answer, answersName)
+                    val answersName = viewModel.questionList.value?.get(currentQuestion)?.nameAnswers
+
+                    Log.d("jfersdklfgjskledfquestionText", "questionText: $questionText")
+                    Log.d("jfersdklfgjskledfquestionText", "questionText?.let { doter.containsMatchIn(it) }: ${questionText?.let { doter.containsMatchIn(it) }}")
+                    val is8Button = questionText?.let { doter.containsMatchIn(it) } == true
+                    if (!is8Button) show4Answers(answer, answersName)
                     else show8Answers(answer, answersName)
-                    startTimer(is4Button)
+                    startTimer(is8Button)
 
                     binding.tvQuestionText.setText(questionText)
 
