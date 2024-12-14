@@ -71,7 +71,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         binding.rvQuizFragment.adapter = adapter
         binding.rvQuizFragment.itemAnimator = RotateInItemAnimator()
 
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch(Dispatchers.Main) {
             mainViewModel.listFlattenedQuizDataFlow.collect { list ->
                 Log.d("dawdasf", list.toString())
                 adapter.submitList(list)
@@ -110,20 +110,22 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     override fun onClick(id: Int, typeQuestion: Boolean) {
-        Log.d("jfersdklfgjskledf", "idEvent: $idEvent idCategory: $idCategory idSubCategory: $idSubCategory idSubsubCategory: $idSubsubCategory ")
          if (idSubCategory == -1) {
-             Log.d("jfersdklfgjskledf", "1")
             idSubCategory = id
-            mainViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
-             initAdapter()
+             restartFragment()
         } else if (idSubsubCategory == -1) {
-             Log.d("jfersdklfgjskledf", "2")
-            idSubsubCategory = id
-            mainViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
-             initAdapter()
-        } else navigationProvider?.openQuestionActivity(id, typeQuestion)
-        Log.d("jfersdklfgjskledf", "idEvent: $idEvent idCategory: $idCategory idSubCategory: $idSubCategory idSubsubCategory: $idSubsubCategory ")
+             navigationProvider?.openQuestionActivity(id, typeQuestion)
+        } else {
+            navigationProvider?.openQuestionActivity(id, typeQuestion)
+         }
 
+    }
+    private fun restartFragment() {
+        val fragmentManager = parentFragmentManager
+        fragmentManager.beginTransaction()
+            .replace(this.id, newInstance(idEvent, idCategory, idSubCategory, idSubsubCategory))
+            .addToBackStack(null)
+            .commit()
     }
 
     private fun getMap(
