@@ -2,6 +2,7 @@ package com.tpov.common.di
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.tpov.common.presentation.question.QuestionViewModel
 import com.tpov.common.presentation.quiz.QuizActivityViewModel
 import com.tpov.common.presentation.utils.ViewModelFactory
 import dagger.Binds
@@ -23,6 +24,11 @@ abstract class ViewModelModule {
     @ViewModelKey(QuizActivityViewModel::class)
     abstract fun bindQuizActivityViewModel(viewModel: QuizActivityViewModel): ViewModel
 
+    @OptIn(InternalCoroutinesApi::class)
+    @Binds
+    @IntoMap
+    @ViewModelKey(QuestionViewModel::class)
+    abstract fun bindQuestionViewModel(viewModel: QuestionViewModel): ViewModel
 }
 
 @MustBeDocumented

@@ -153,9 +153,16 @@ class QuestionViewModel @Inject constructor(
     private fun calculateResultByCodeAnswer(codeAnswerThis: String) = codeAnswerThis.map {
             (((it.toInt() - '1'.toInt()) / 8.0) * 100).toInt() }.average().toInt()
 
-    private fun calculateStarsMaxLocal() = questionDetailList.value?.maxOf {
-            calculateResultByCodeAnswer(it.codeAnswer
-                ?: deleteQuestionDetailById(it.id))} ?: 0
+    private fun calculateStarsMaxLocal(): Int {
+        val list = questionDetailList.value
+        if (list.isNullOrEmpty()) {
+            return 0
+        }
+        return list.maxOf {
+            calculateResultByCodeAnswer(it.codeAnswer ?: deleteQuestionDetailById(it.id))
+        }
+    }
+
 
     private fun calculateStarsAverageLocal() = questionDetailList.value?.map {
         calculateResultByCodeAnswer(it.codeAnswer ?: deleteQuestionDetailById(it.id))

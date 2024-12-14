@@ -57,7 +57,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onItemClick(category: CategoryData) {
-        val fragment = QuizFragment.newInstance(EVENT_QUIZ_HOME, category.id, 0, 0)
+        val fragment = QuizFragment.newInstance(EVENT_QUIZ_HOME, category.id, -1, -1)
 
         requireActivity().supportFragmentManager.beginTransaction()
             .replace(R.id.title_fragment, fragment)

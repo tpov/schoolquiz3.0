@@ -40,6 +40,8 @@ import com.tpov.common.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
 import com.tpov.common.data.utils.TimeManager
 import com.tpov.common.domain.SettingConfigObject.settingsConfig
+import com.tpov.common.presentation.NavigationProvider
+import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.common.presentation.utils.Values
 import com.tpov.common.presentation.utils.Values.getColorNickname
@@ -79,13 +81,15 @@ import javax.inject.Inject
  */
 @Logger
 @InternalCoroutinesApi
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NavigationProvider {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     lateinit var binding: ActivityMainBinding
     lateinit var viewModel: MainViewModel
     private var recreateActivity: Boolean = false
+    private var life = 0
+    private var goldLife = 0
 
     private var timerStarted = false
     private var timer: Timer? = null
@@ -166,7 +170,8 @@ class MainActivity : AppCompatActivity() {
                     showFabs(buyQuizPlace, countBox)
                     val newBoxDay = showBoxDayANDGetNew(timeLastOpenBox, coundDayBox)
                     val newPoints = showAddPoints(profile)
-
+                    life = profile.count
+                    goldLife = profile.countGold
 
                     viewModel.updateProfile(
                         this.copy(
@@ -882,6 +887,17 @@ getDataToday()
     companion object {
         const val REQUEST_CODE_STORAGE_PERMISSION = 1001
         const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
+    }
+
+    override fun openQuestionActivity(idQuiz: Int, hardQuestion: Boolean) {
+        val intent = QuestionActivity.newIntent(
+            context = this,
+            idQuiz = idQuiz,
+            hardQuestion = hardQuestion,
+            languageUser = settingsConfig.languages,
+            life = if (hardQuestion)goldLife else life
+        )
+        startActivity(intent)
     }
 }
 

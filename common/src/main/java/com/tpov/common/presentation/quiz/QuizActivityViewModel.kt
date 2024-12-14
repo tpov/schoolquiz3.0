@@ -1,5 +1,6 @@
 package com.tpov.common.presentation.quiz
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.data.model.local.FlattenedQuizData
@@ -46,7 +47,6 @@ class QuizActivityViewModel @Inject constructor(
                 }
 
                 category.subcategory.forEach { subCategory ->
-                    // Добавляем данные из SubCategoryData
                     if (subCategory.isShowDownload) {
                         result.add(
                             FlattenedQuizData(
@@ -116,9 +116,11 @@ class QuizActivityViewModel @Inject constructor(
     fun initQuestionListByIds(event: Int, idCat: Int, idSubCat: Int) = viewModelScope.launch {
         val flattenedList: MutableList<FlattenedQuizData> = mutableListOf()
 
+        Log.d("jfersdklfgjskledf", "structureUseCase.getStructureData(): ${structureUseCase.getStructureData()}")
         structureUseCase.getStructureData()?.event?.find { it.id == event}?.category?.find { it.id == idCat}?.subcategory?.forEach {
+            Log.d("jfersdklfgjskledf", "structureUseCase.getStructureData()  it.id == idCat: ${it}")
 
-            if (idSubCat == 0) flattenedList.add(it.toFlattenedQuizData())
+            if (idSubCat == -1) flattenedList.add(it.toFlattenedQuizData())
             else it.subSubcategory.find { it.id == idSubCat}?.quizData?.forEach {
                     flattenedList.add(it.toFlattenedQuizData())
             }

@@ -3,8 +3,11 @@ package com.tpov.common.presentation.question
 import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipDescription
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.DragEvent
 import android.view.Menu
 import android.view.View
@@ -21,10 +24,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.tpov.common.DELAY_SHOW_TEXT_IN_QUESTIONACTIVITY
 import com.tpov.common.R
 import com.tpov.common.databinding.ActivityQuestionBinding
+import com.tpov.common.di.DaggerCommonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 private const val REQUEST_CODE_CHEAT = 0
 
@@ -38,42 +43,51 @@ private const val REQUEST_CODE_CHEAT = 0
  * this allows you to have the entire progress of the passage, save it and restore it.
  */
 @InternalCoroutinesApi
-class QuestionActivity : AppCompatActivity(){
+class QuestionActivity : AppCompatActivity() {
 
     lateinit var viewModel: QuestionViewModel
     private var languageUser: String? = null
 
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
+    private lateinit var binding: ActivityQuestionBinding
 
-    private val binding: ActivityQuestionBinding by lazy {
-        ActivityQuestionBinding.inflate(layoutInflater)
-    }
-
-
-    val doter =  Regex("\\(.{7}\\)")
+    val doter = Regex("\\(.{7}\\)")
     private var originalText: String = ""
     private val insertedOrder = mutableListOf<Int>()
 
-    private val buttons8: List<Button> = listOf(
-        binding.b1, binding.b2, binding.b3, binding.b4,
-        binding.b5, binding.b6, binding.b7, binding.b8
-    )
+    private lateinit var buttons8: List<Button>
+    private lateinit var buttons4: List<Button>
 
-    val buttons4 = listOf(
-        binding.button1, binding.button2, binding.button3, binding.button4
-    )
     override fun onCreate(savedInstanceState: Bundle?) {
+        DaggerCommonComponent.factory()
+            .create(application)
+            .inject(this)
         super.onCreate(savedInstanceState)
 
+        binding = ActivityQuestionBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        viewModel = ViewModelProvider(this)[QuestionViewModel::class.java]
+        viewModel = ViewModelProvider(this, viewModelFactory)[QuestionViewModel::class.java]
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         supportActionBar?.hide()
         actionBarSettings()
 
+        initView()
         synthInputData()
         loadQuizData()
         showQuestion()
         makeButtonsDraggable()
+    }
+
+    private fun initView() {
+        buttons8 = listOf(
+            binding.b1, binding.b2, binding.b3, binding.b4,
+            binding.b5, binding.b6, binding.b7, binding.b8
+        )
+
+        buttons4 = listOf(
+            binding.button1, binding.button2, binding.button3, binding.button4
+        )
     }
 
     private fun loadQuizData() {
@@ -107,32 +121,38 @@ class QuestionActivity : AppCompatActivity(){
     }
 
     private fun initDefaultView() {
-        visibleCheatButton(viewModel.hardQuiz ?: viewModel.notFoundInputData().toString().toBoolean())
+        visibleCheatButton(
+            viewModel.hardQuiz ?: viewModel.notFoundInputData().toString().toBoolean()
+        )
     }
 
     @SuppressLint("DiscouragedApi")
     private fun showQuestion() {
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.currentQuestion.collect { currentQuestion ->
+                Log.d("jfersdklfgjskledf", "currentQuestion: $currentQuestion")
                 if (currentQuestion != null && currentQuestion != viewModel.unknownCurrentQuestion) {
                     val questionText =
                         viewModel.questionList.value?.get(currentQuestion)?.nameQuestion
                     val answer = viewModel.questionList.value?.get(currentQuestion)?.answer
-                    val answersName = viewModel.questionList.value?.get(currentQuestion)?.nameAnswers
+                    val answersName =
+                        viewModel.questionList.value?.get(currentQuestion)?.nameAnswers
                     val is4Button = questionText?.let { doter.containsMatchIn(it) } == true
                     if (is4Button) show4Answers(answer, answersName)
                     else show8Answers(answer, answersName)
                     startTimer(is4Button)
 
-                    setBlockButton(viewModel.codeAnswer.get(currentQuestion).code == 0)
                     binding.tvQuestionText.setText(questionText)
 
-                    binding.imvQuestion.setImageResource(resources.getIdentifier(
-                        viewModel.questionList.value?.get(viewModel.currentQuestion.value ?: 0)?.pathPictureQuestion,
-                        "drawable",
-                        packageName
-                    ))
-
+                    binding.imvQuestion.setImageResource(
+                        resources.getIdentifier(
+                            viewModel.questionList.value?.get(
+                                viewModel.currentQuestion.value ?: 0
+                            )?.pathPictureQuestion,
+                            "drawable",
+                            packageName
+                        )
+                    )
 
 
                 }
@@ -146,7 +166,8 @@ class QuestionActivity : AppCompatActivity(){
             button.setOnLongClickListener { view ->
                 val clipText = (view as Button).text.toString()
                 val item = ClipData.Item(clipText)
-                val dragData = ClipData(clipText, arrayOf(ClipDescription.MIMETYPE_TEXT_PLAIN), item)
+                val dragData =
+                    ClipData(clipText, arrayOf(ClipDescription.MIMETYPE_TEXT_PLAIN), item)
                 val myShadow = View.DragShadowBuilder(view)
 
                 view.startDragAndDrop(dragData, myShadow, null, 0)
@@ -163,14 +184,17 @@ class QuestionActivity : AppCompatActivity(){
                 DragEvent.ACTION_DRAG_STARTED -> {
                     dragEvent.clipDescription.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)
                 }
+
                 DragEvent.ACTION_DRAG_ENTERED -> {
                     view.invalidate()
                     true
                 }
+
                 DragEvent.ACTION_DRAG_EXITED -> {
                     view.invalidate()
                     true
                 }
+
                 DragEvent.ACTION_DROP -> {
                     val item = dragEvent.clipData.getItemAt(0)
                     val dragData = item.text.toString()
@@ -191,20 +215,23 @@ class QuestionActivity : AppCompatActivity(){
 
                     when {
                         matchBefore != null && matchAfter != null -> {
-                            val nearestMatch = if (offset - matchBefore.range.last <= matchAfter.range.first) {
-                                matchBefore
-                            } else {
-                                matchAfter
-                            }
+                            val nearestMatch =
+                                if (offset - matchBefore.range.last <= matchAfter.range.first) {
+                                    matchBefore
+                                } else {
+                                    matchAfter
+                                }
                             val start = nearestMatch.range.first
                             val newText = text.replaceRange(start, start + 8, dragData)
                             textView.text = newText
                         }
+
                         matchBefore != null -> {
                             val start = matchBefore.range.first
                             val newText = text.replaceRange(start, start + 8, dragData)
                             textView.text = newText
                         }
+
                         matchAfter != null -> {
                             val start = matchAfter.range.first
                             val newText = text.replaceRange(start, start + 8, dragData)
@@ -216,10 +243,12 @@ class QuestionActivity : AppCompatActivity(){
 
                     true
                 }
+
                 DragEvent.ACTION_DRAG_ENDED -> {
                     view.invalidate()
                     true
                 }
+
                 else -> false
             }
         }
@@ -237,9 +266,11 @@ class QuestionActivity : AppCompatActivity(){
         val answers = answersName?.split("|") ?: return
         val maxAnswers = 8
 
-        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, '0') ?: "0".repeat(answers.size)
+        val paddedAnswerValue =
+            answer?.toString()?.padEnd(answers.size, '0') ?: "0".repeat(answers.size)
         val indexedAnswers = answers.withIndex().toList().shuffled()
-        val newAnswerOrder = indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
+        val newAnswerOrder =
+            indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
 
 
         for (i in buttons8.indices) {
@@ -262,9 +293,11 @@ class QuestionActivity : AppCompatActivity(){
         val answers = answersName?.split("|") ?: return
         val maxAnswers = 4
 
-        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, '0') ?: "0".repeat(answers.size)
+        val paddedAnswerValue =
+            answer?.toString()?.padEnd(answers.size, '0') ?: "0".repeat(answers.size)
         val indexedAnswers = answers.withIndex().toList().shuffled()
-        val newAnswerOrder = indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
+        val newAnswerOrder =
+            indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
 
         for (i in buttons4.indices) {
             if (i < indexedAnswers.size && i < maxAnswers) {
@@ -285,7 +318,8 @@ class QuestionActivity : AppCompatActivity(){
         val score: Int
 
         if (is4Button) {
-            val correctAnswerIndex = viewModel.originalAnswerOrder.toString().toIntOrNull() ?: return
+            val correctAnswerIndex =
+                viewModel.originalAnswerOrder.toString().toIntOrNull() ?: return
             score = if (selectedTags.contains(correctAnswerIndex)) {
                 9
             } else {
@@ -294,7 +328,8 @@ class QuestionActivity : AppCompatActivity(){
         } else {
             var correctCount = 0
 
-            val originalOrder = viewModel.originalAnswerOrder.toString().take(8).map { it.toString().toInt() }
+            val originalOrder =
+                viewModel.originalAnswerOrder.toString().take(8).map { it.toString().toInt() }
             val totalCorrectAnswers = originalOrder.size
 
             for (i in selectedTags.indices) {
@@ -459,5 +494,20 @@ class QuestionActivity : AppCompatActivity(){
         const val RESULT_OK = 1
 
         const val DELAY_SHOW_TEXT = DELAY_SHOW_TEXT_IN_QUESTIONACTIVITY
+
+        fun newIntent(
+            context: Context,
+            idQuiz: Int,
+            hardQuestion: Boolean,
+            languageUser: String,
+            life: Int
+        ): Intent {
+            return Intent(context, QuestionActivity::class.java).apply {
+                putExtra(ID_QUIZ, idQuiz)
+                putExtra(HARD_QUESTION, hardQuestion)
+                putExtra(LANGUAGE_USER, languageUser)
+                putExtra(LIFE, life)
+            }
+        }
     }
 }

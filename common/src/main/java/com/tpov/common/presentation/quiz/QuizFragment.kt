@@ -17,6 +17,7 @@ import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
 import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.common.presentation.NavigationProvider
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -30,35 +31,38 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var mainViewModel: QuizActivityViewModel
+    private var navigationProvider: NavigationProvider? = null
 
     private lateinit var binding: FragmentQuizBinding
-
-
     private lateinit var adapter: QuizActivityAdapter
 
     private var createQuiz = false
 
-    private var idEvent = 0
-    private var idCategory = 0
-    private var idSubCategory = 0
-    private var idSubsubCategory = 0
+    private var idEvent = -1
+    var idCategory = -1
+    var idSubCategory = -1
+    var idSubsubCategory = -1
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         mainViewModel = ViewModelProvider(this, viewModelFactory)[QuizActivityViewModel::class.java]
-
         initGetData()
         mainViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
         initAdapter()
-
+        Log.d("jfersdklfgjskledf", "idEvent: $idEvent idCategory: $idCategory idSubCategory: $idSubCategory idSubsubCategory: $idSubsubCategory ")
     }
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         DaggerCommonComponent.factory()
             .create(requireActivity().application)
             .inject(this)
+
+        if (context is NavigationProvider) {
+            navigationProvider = context
+        }
     }
 
     private fun initAdapter() {
@@ -80,9 +84,12 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     private fun initGetData() {
-        idCategory = arguments?.getInt(KEY_ID_CATEGORY, 0) ?: 0
-        idSubCategory = arguments?.getInt(KEY_ID_CATEGORY, 0) ?: 0
-        idSubsubCategory = arguments?.getInt(KEY_ID_CATEGORY, 0) ?: 0
+
+        idEvent = arguments?.getInt(KEY_ID_EVENT, -1) ?: -1
+        idCategory = arguments?.getInt(KEY_ID_CATEGORY, -1) ?: -1
+        idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, -1) ?: -1
+        idSubsubCategory = arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, -1) ?: -1
+
     }
 
     override fun onResume() {
@@ -103,7 +110,19 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     override fun onClick(id: Int, typeQuestion: Boolean) {
-
+        Log.d("jfersdklfgjskledf", "idEvent: $idEvent idCategory: $idCategory idSubCategory: $idSubCategory idSubsubCategory: $idSubsubCategory ")
+         if (idSubCategory == -1) {
+             Log.d("jfersdklfgjskledf", "1")
+            idSubCategory = id
+            mainViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
+             initAdapter()
+        } else if (idSubsubCategory == -1) {
+             Log.d("jfersdklfgjskledf", "2")
+            idSubsubCategory = id
+            mainViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
+             initAdapter()
+        } else navigationProvider?.openQuestionActivity(id, typeQuestion)
+        Log.d("jfersdklfgjskledf", "idEvent: $idEvent idCategory: $idCategory idSubCategory: $idSubCategory idSubsubCategory: $idSubsubCategory ")
 
     }
 
