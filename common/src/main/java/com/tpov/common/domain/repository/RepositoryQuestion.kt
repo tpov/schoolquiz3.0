@@ -17,7 +17,5 @@ interface RepositoryQuestion {
     suspend fun pushQuestion(questionEntity: QuestionRemote, event: Int,idQuiz: Int)
     suspend fun updateQuestion(questionEntity: QuestionEntity)
     suspend fun deleteQuestionByIdQuiz(idQuiz: Int)
-    suspend fun deleteRemoteQuestionByIdQuiz(
-        idQuiz: Int,
-        typeId: Int,)
+    suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, typeId: Int)
 }

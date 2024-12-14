@@ -1,4 +1,4 @@
-package com.tpov.common.presentation.utils
+package com.tpov.common.presentation.custom
 
 import android.content.Context
 import android.graphics.Canvas
@@ -13,7 +13,7 @@ class CustomRoundedImageView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr) {
 
-    private val radius = 25.0f // радиус закругления
+    private val radius = 25.0f
     private val path = Path()
     private lateinit var rect: RectF
 

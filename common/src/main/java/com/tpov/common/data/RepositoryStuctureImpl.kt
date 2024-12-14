@@ -8,12 +8,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
-import com.tpov.common.data.core.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
+import com.tpov.common.data.manager.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.remote.StructureData
-import com.tpov.common.data.model.remote.StructureLocalData
+import com.tpov.common.data.model.remote.StructureLocalDataRemote
 import com.tpov.common.domain.repository.RepositoryStructure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -89,7 +89,7 @@ class RepositoryStuctureImpl @Inject constructor(
     }
 
 
-    override suspend fun pushStructureRating(ratingData: StructureLocalData) {
+    override suspend fun pushStructureRating(ratingData: StructureLocalDataRemote) {
         val pushTask = {
             val taskCompletionSource = TaskCompletionSource<Void>()
             val dataMap = ratingData.toMap()
@@ -287,7 +287,7 @@ class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    private suspend fun saveFailedRatingLocally(ratingData: StructureLocalData) {
+    private suspend fun saveFailedRatingLocally(ratingData: StructureLocalDataRemote) {
         structureRatingDataDao.insert(ratingData.toStructureRatingDataEntity())
     }
 

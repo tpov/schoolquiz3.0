@@ -10,11 +10,11 @@ import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryQuizImpl
 import com.tpov.common.data.RepositoryStuctureImpl
 import com.tpov.common.data.database.CommonDatabase
-import com.tpov.common.domain.QuestionUseCase
-import com.tpov.common.domain.QuizUseCase
-import com.tpov.common.domain.StructureUseCase
 import com.tpov.common.domain.repository.RepositoryQuestion
 import com.tpov.common.domain.repository.RepositoryQuiz
+import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.QuizUseCase
+import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.data.RepositoryProfileImpl
 import com.tpov.schoolquiz.data.database.MainDatabase
 import com.tpov.schoolquiz.domain.ProfileUseCase

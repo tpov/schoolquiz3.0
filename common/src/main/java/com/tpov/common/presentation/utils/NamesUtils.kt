@@ -1,6 +1,6 @@
 package com.tpov.common.presentation.utils
 
-import com.tpov.common.data.core.Core
+import com.tpov.common.Core
 
 class NamesUtils {
     fun getPathPicture(): String {

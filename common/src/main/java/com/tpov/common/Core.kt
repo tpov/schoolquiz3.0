@@ -1,4 +1,4 @@
-package com.tpov.common.data.core
+package com.tpov.common
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

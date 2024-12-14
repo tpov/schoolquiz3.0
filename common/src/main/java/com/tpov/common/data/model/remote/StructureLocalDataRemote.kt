@@ -2,7 +2,7 @@ package com.tpov.common.data.model.remote
 
 import com.tpov.common.data.model.local.StructureRatingDataEntity
 
-data class StructureLocalData(
+data class StructureLocalDataRemote(
     val idEvent: Int,
     val idCategory: Int,
     val idSubCategory: Int,

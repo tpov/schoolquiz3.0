@@ -1,4 +1,4 @@
-package com.tpov.common
+package com.tpov.shop
 
 object CoastValues {
     object CoastValuesNolics {

@@ -13,10 +13,10 @@ import com.tpov.common.BITMAP_LOAD_MAX_WIDTH
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
-import com.tpov.common.domain.QuestionUseCase
-import com.tpov.common.domain.QuizUseCase
-import com.tpov.common.domain.SettingConfigObject
-import com.tpov.common.domain.StructureUseCase
+import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.QuizUseCase
+import com.tpov.common.domain.usecase.SettingConfigObject
+import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.utils.BitmapUtil
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.core.LanguageUtils

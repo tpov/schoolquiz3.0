@@ -10,7 +10,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
-import com.tpov.common.data.core.Core.tpovId
+import com.tpov.common.Core.tpovId
 import com.tpov.common.data.model.SettingConfigModel
 import com.tpov.setting.R
 import com.tpov.setting.data.PreferencesManager

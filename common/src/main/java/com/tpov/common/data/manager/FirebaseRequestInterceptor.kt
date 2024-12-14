@@ -1,10 +1,11 @@
-package com.tpov.common.data.core
+package com.tpov.common.data.manager
 
 import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FirebaseFirestore
+import com.tpov.common.Core
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -66,7 +67,7 @@ object FirebaseRequestInterceptor {
                     if (isOpenServerResult) {
                         Log.d("FirebaseRequestInterceptor", "Server is open, executing request")
                         request()
-                        requestQueue.poll() // Удаляем успешно выполненный запрос из очереди
+                        requestQueue.poll()
                     } else {
                         Log.d("FirebaseRequestInterceptor", "Server is closed, retrying after delay")
                         delay(5000L)

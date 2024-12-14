@@ -28,7 +28,7 @@ import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.StructureData
-import com.tpov.common.presentation.utils.DataUtil
+import com.tpov.common.presentation.utils.DateUtil
 import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
@@ -168,7 +168,7 @@ class CreateQuizActivity : AppCompatActivity() {
             idSubsubcategory = viewModel.getNewCategory().third,
             nameQuiz = tvQuizName.text.toString(),
             userName = viewModel.getUserName(),
-            dataUpdate = DataUtil().getDataQuiz(),
+            dataUpdate = DateUtil().getDateQuiz(),
             numQ = viewModel.questionsShortEntity.filter { !it.hardQuestion }.size,
             numHQ = viewModel.questionsShortEntity.filter { it.hardQuestion }.size,
             versionQuiz = viewModel.quizEntity?.versionQuiz?.plus(1) ?: QuizEntity().versionQuiz,

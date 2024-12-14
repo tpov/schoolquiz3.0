@@ -2,7 +2,7 @@ package com.tpov.common.data.model.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.tpov.common.data.model.remote.StructureLocalData
+import com.tpov.common.data.model.remote.StructureLocalDataRemote
 
 @Entity(tableName = "structure_rating_data")
 data class StructureRatingDataEntity(
@@ -16,7 +16,7 @@ data class StructureRatingDataEntity(
     val starsMaxLocal: Int,
     val ratingLocal: Int,
 ) {
-    fun toStructureRatingData() = StructureLocalData(
+    fun toStructureRatingData() = StructureLocalDataRemote(
         idEvent = idEvent,
         idCategory = idCategory,
         idSubCategory = idSubCategory,

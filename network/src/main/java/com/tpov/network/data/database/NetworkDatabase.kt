@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.tpov.common.data.custom.Converters
+import com.tpov.common.data.manager.Converters
 import com.tpov.network.data.models.local.ChatEntity
 import com.tpov.network.data.models.local.PlayersEntity
 import kotlinx.coroutines.InternalCoroutinesApi

@@ -2,11 +2,11 @@ package com.tpov.common.domain.repository
 
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.remote.StructureData
-import com.tpov.common.data.model.remote.StructureLocalData
+import com.tpov.common.data.model.remote.StructureLocalDataRemote
 
 interface RepositoryStructure {
     suspend fun fetchStructureData(): StructureData?
-    suspend fun pushStructureRating(ratingData: StructureLocalData)
+    suspend fun pushStructureRating(ratingData: StructureLocalDataRemote)
     suspend fun getStructureData(): com.tpov.common.data.model.local.StructureData?
     suspend fun saveStructureData(structureData: com.tpov.common.data.model.local.StructureData)
 

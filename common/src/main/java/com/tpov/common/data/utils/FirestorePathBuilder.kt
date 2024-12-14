@@ -2,7 +2,7 @@ package com.tpov.common.data.utils
 
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.common.data.core.Core
+import com.tpov.common.Core
 
 class FirestorePathBuilder(private val firestore: FirebaseFirestore, private val baseCollectionName: String) {
     private var collectionReference: CollectionReference = firestore.collection(baseCollectionName)

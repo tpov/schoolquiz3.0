@@ -278,14 +278,6 @@ getDataToday()
                 addTrophy.isNotEmpty() ||
                 addMassage.isNotEmpty()
             ) {
-                // Логи для отслеживания перед копированием
-                Log.d("showAddPoints", "Добавляем очки к профилю:")
-                Log.d("showAddPoints", "addPointsGold: $addPointsGold")
-                Log.d("showAddPoints", "addPointsSkill: $addPointsSkill")
-                Log.d("showAddPoints", "addPointsNolics: $addPointsNolics")
-                Log.d("showAddPoints", "addTrophy: $addTrophy")
-                Log.d("showAddPoints", "addMassage: $addMassage")
-
                 updatedProfile = profile.copy(
                     pointsGold = pointsGold + addPointsGold,
                     pointsSkill = pointsSkill + addPointsSkill,
@@ -297,15 +289,6 @@ getDataToday()
                     addTrophy = "",
                     addMassage = ""
                 )
-
-                // Логи для отслеживания после обновления
-                Log.d("showAddPoints", "Обновленный профиль:")
-                Log.d("showAddPoints", "pointsGold: ${updatedProfile?.pointsGold}")
-                Log.d("showAddPoints", "pointsSkill: ${updatedProfile?.pointsSkill}")
-                Log.d("showAddPoints", "pointsNolics: ${updatedProfile?.pointsNolics}")
-                Log.d("showAddPoints", "trophy: ${updatedProfile?.trophy}")
-            } else {
-                Log.d("showAddPoints", "Изменений не требуется.")
             }
         }
 
@@ -348,24 +331,18 @@ getDataToday()
         countGoldLife: Int,
         countGold: Int,
     ) {
-        Log.d("showLife", "countLife: $countLife")
-        Log.d("showLife", "count: $count")
-        Log.d("showLife", "countGoldLife: $countGoldLife")
-        Log.d("showLife", "countGold: $countGold")
-
         val lifeIndicators = listOf(
             binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5
         )
 
         val totalLives = countLife
-        val filledUnits = count / 10  // Преобразуем count к единицам по 10
+        val filledUnits = count / 10
 
-        // Скрываем все индикаторы перед началом
         lifeIndicators.forEach { it.visibility = View.GONE }
 
         for (i in 0 until totalLives) {
             val lifeIndicator = lifeIndicators[i]
-            lifeIndicator.visibility = View.VISIBLE  // Делаем видимым нужный индикатор
+            lifeIndicator.visibility = View.VISIBLE
 
             val layerDrawable = createLayerDrawable(
                 R.drawable.baseline_favorite_24_empty,
@@ -373,13 +350,12 @@ getDataToday()
             )
 
             val unitsForThisLife = minOf(10, maxOf(0, filledUnits - i * 10))
-            val level = unitsForThisLife * 1000  // уровень от 0 до 10000
+            val level = unitsForThisLife * 1000
 
             layerDrawable.level = level
             lifeIndicator.setImageDrawable(layerDrawable)
         }
 
-        // Обработка золотых сердец
         if (countGoldLife > 0) {
             val layerDrawableGold = createLayerDrawable(
                 R.drawable.baseline_favorite_24_empty,

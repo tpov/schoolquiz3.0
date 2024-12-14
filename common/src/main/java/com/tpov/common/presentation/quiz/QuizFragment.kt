@@ -34,8 +34,8 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     private var navigationProvider: NavigationProvider? = null
 
     private lateinit var binding: FragmentQuizBinding
+    private var oldIdQuizEvent1 = 0
     private lateinit var adapter: QuizActivityAdapter
-
     private var createQuiz = false
 
     private var idEvent = -1
@@ -73,7 +73,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
         lifecycleScope.launch(Dispatchers.Main) {
             mainViewModel.listFlattenedQuizDataFlow.collect { list ->
-                Log.d("dawdasf", list.toString())
                 adapter.submitList(list)
             }
         }
@@ -84,7 +83,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     private fun initGetData() {
-
         idEvent = arguments?.getInt(KEY_ID_EVENT, -1) ?: -1
         idCategory = arguments?.getInt(KEY_ID_CATEGORY, -1) ?: -1
         idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, -1) ?: -1

@@ -50,8 +50,8 @@ object Values {
             COUNT_SKILL_PLAYER to context.getString(R.string.player),
             COUNT_SKILL_AMATEUR to context.getString(R.string.amateur),
             COUNT_SKILL_VETERAN to context.getString(R.string.veteran),
-            COUNT_SKILL_GRANDMASTER to context.getString(R.string.grandmaster),
             COUNT_SKILL_EXPERT to context.getString(R.string.expert),
+            COUNT_SKILL_GRANDMASTER to context.getString(R.string.grandmaster),
             COUNT_SKILL_LEGEND to context.getString(R.string.legend),
         )
     }

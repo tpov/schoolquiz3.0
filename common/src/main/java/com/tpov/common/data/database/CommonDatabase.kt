@@ -3,7 +3,7 @@ package com.tpov.common.data.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.tpov.common.data.custom.Converters
+import com.tpov.common.data.manager.Converters
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
@@ -22,5 +22,4 @@ abstract class CommonDatabase : RoomDatabase() {
     abstract fun getQuestionDetailDao(): QuestionDetailDao
     abstract fun getStructureRatingDataDao(): StructureRatingDataDao
     abstract fun getStructureCategoryDataDao(): StructureCategoryDataDao
-
 }

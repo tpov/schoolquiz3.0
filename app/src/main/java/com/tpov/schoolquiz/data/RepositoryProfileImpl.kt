@@ -2,7 +2,7 @@ package com.tpov.schoolquiz.data
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.common.data.core.FirebaseRequestInterceptor
+import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.schoolquiz.data.database.ProfileDao
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.fierbase.Profile
