@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.util.Log
 import android.view.DragEvent
 import android.view.View
 import android.view.WindowManager
@@ -28,6 +27,7 @@ import com.tpov.common.MAX_CLASSIC_ANSWER
 import com.tpov.common.R
 import com.tpov.common.REGEX_DROP_TEXT
 import com.tpov.common.SPLIT_BETWEEN_ANSWERS
+import com.tpov.common.TIME_QUESTION
 import com.tpov.common.databinding.ActivityQuestionBinding
 import com.tpov.common.di.DaggerCommonComponent
 import kotlinx.coroutines.CoroutineScope
@@ -340,7 +340,7 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun startTimer(is4Button: Boolean) {
-        val totalTime = 30 * 1000L
+        val totalTime = TIME_QUESTION * 1000L
         val interval = 1000L
 
         object : CountDownTimer(totalTime, interval) {
@@ -351,9 +351,7 @@ class QuestionActivity : AppCompatActivity() {
             }
 
             override fun onFinish() {
-                if (is4Button) evaluateAnswer()
-                viewModel.setCodeInCodeAnswer(3)
-                viewModel.setNextQuestion()
+                evaluateAnswer()
             }
         }.start()
     }
@@ -402,10 +400,10 @@ class QuestionActivity : AppCompatActivity() {
             life: Int
         ): Intent {
             return Intent(context, QuestionActivity::class.java).apply {
-                putExtra(ID_QUIZ, idQuiz)
-                putExtra(HARD_QUESTION, hardQuestion)
-                putExtra(LANGUAGE_USER, languageUser)
-                putExtra(LIFE, life)
+                putExtra(KEY_ID_QUIZ, idQuiz)
+                putExtra(KEY_HARD_QUESTION, hardQuestion)
+                putExtra(KEY_LANGUAGE_USER, languageUser)
+                putExtra(KEY_LIFE, life)
             }
         }
     }

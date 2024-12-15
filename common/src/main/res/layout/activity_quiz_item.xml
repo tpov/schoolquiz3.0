@@ -185,15 +185,6 @@
                         android:minWidth="40dp"
                         android:orientation="vertical">
 
-
-                        <ImageView
-                            android:id="@+id/imv_translate"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:background="@null"
-                            app:srcCompat="@drawable/ic_translate" />
-
                         <CheckBox
                             android:id="@+id/chb_type_quiz"
                             android:layout_width="wrap_content"

@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.PopupMenu
-import android.widget.PopupWindow
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.DiffUtil
@@ -18,8 +17,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
 import com.bumptech.glide.request.RequestOptions
-import com.tpov.common.LVL_TRANSLATOR_1_LVL
-import com.tpov.common.LVL_TRANSLATOR_2_LVL
 import com.tpov.common.MAX_PERCENT_HARD_QUIZ_FULL
 import com.tpov.common.MAX_PERCENT_LIGHT_QUIZ_FULL
 import com.tpov.common.PERCENT_1STAR_QUIZ_SHORT
@@ -30,10 +27,7 @@ import com.tpov.common.databinding.ActivityQuizItemBinding
 import com.tpov.common.presentation.utils.ResizeAndCrop
 import com.tpov.log_api.logger.Logger
 import com.tpov.shop.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
 import java.io.File
 
 @Logger
@@ -78,7 +72,6 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         @OptIn(InternalCoroutinesApi::class)
         private fun showDialog(
             context: Context,
-            mainViewModel: QuizActivityViewModel,
             nolics: Int,
             id: Int
         ) {
@@ -118,7 +111,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.menu_send -> {
-                        showDialog(context, mainViewModel, COAST_SEND_QUIZ, id)
+                        showDialog(context, COAST_SEND_QUIZ, id)
                         true
                     }
 
@@ -154,9 +147,9 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                     return (dp * density).toInt()
                 }
 
-                val widthInDp = 100
-                val heightInDp = 75
-                val radius = 25
+                val widthInDp = 100 // don`t edit
+                val heightInDp = 75// don`t edit
+                val radius = 25// don`t edit
 
                 val widthInPx = dpToPx(widthInDp, context)
                 val heightInPx = dpToPx(heightInDp, context)
@@ -174,14 +167,10 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                             )
                     ).into(imageView)
 
-            } catch (e: Exception) {
-            }
+            } catch (e: Exception) {}
 
-            var goHardQuiz =
-                "${context.getString(R.string.go_hard_question)} - ${quizEntity.name}"
-
+            val goHardQuiz = "${context.getString(R.string.go_hard_question)} - ${quizEntity.name}"
             initView(quizEntity, goHardQuiz, mainViewModel, listener)
-
         }
 
         @OptIn(InternalCoroutinesApi::class)
@@ -211,27 +200,12 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             chbTypeQuiz.visibility = View.VISIBLE
             chbTypeQuiz.isChecked = quizEntity.starsMaxLocal >= MAX_PERCENT_LIGHT_QUIZ_FULL
 
-            imvTranslate.imageAlpha = 85
             ratingBar.rating = (quizEntity.ratingLocal.toFloat() / PERCENT_1STAR_QUIZ_SHORT)
-
-            val lvlTranslate = 100
-
-            //imvTranslate
-            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
-            else imvTranslate.setColorFilter(Color.BLUE)
-
             ratingBar.rating = quizEntity.ratingLocal.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
             mainTitleButton.text = quizEntity.name
 
             mainTitleButton.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
-            }
-
-            imvTranslate.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP)
-                    showPopupInfo(quizEntity, event, POPUP_TRANSLATE, viewModel)
-                true
+                listener.onClick(quizEntity.id, chbTypeQuiz.isChecked)
             }
 
             ratingBar.setOnTouchListener { view, event ->
@@ -261,9 +235,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 in MAX_PERCENT_LIGHT_QUIZ_FULL until MAX_PERCENT_HARD_QUIZ_FULL -> {
                     imvGradLightQuiz.visibility = View.VISIBLE
                     imvGradHardQuiz.visibility = View.GONE
-                    //if (quizEntity.numHQ > 0) chbTypeQuiz.visibility = View.VISIBLE
                     chbTypeQuiz.isChecked = true
-
                 }
 
                 else -> {
@@ -273,92 +245,21 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                     chbTypeQuiz.isChecked = false
                 }
             }
-
-            imvTranslate.imageAlpha = 85
-
-            val lvlTranslate = 100
-
-            if (lvlTranslate < LVL_TRANSLATOR_1_LVL) imvTranslate.setColorFilter(Color.GRAY)
-            else if (lvlTranslate < LVL_TRANSLATOR_2_LVL) imvTranslate.setColorFilter(Color.YELLOW)
-            else imvTranslate.setColorFilter(Color.BLUE)
             if (quizEntity.starsMaxLocal <= MAX_PERCENT_LIGHT_QUIZ_FULL) ratingBar.rating =
                 (quizEntity.starsMaxLocal.toFloat() / 50F)
             else ratingBar.rating = (((quizEntity.starsMaxLocal.toFloat() - 100F) / 20F) + 2F)
 
-
-
-            imvTranslate.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
-                    // Rating bar clicked, handle the event here
-                    // You can call your method to show the translation popup/dialog
-                    showPopupInfo(quizEntity, event, POPUP_TRANSLATE, viewModel)
-                }
-                true
-            }
-
             ratingBar.setOnTouchListener { view, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
-                    // Rating bar clicked, handle the event here
-                    // You can call your method to show the translation popup/dialog
                     showPopupInfo(quizEntity, event, POPUP_STARS, viewModel)
                 }
                 true
             }
 
             mainTitleButton.text = quizEntity.name
-
             mainTitleButton.setOnClickListener {
-                listener.onClick(quizEntity.id!!, chbTypeQuiz.isChecked)
+                listener.onClick(quizEntity.id, chbTypeQuiz.isChecked)
             }
-
-        }
-
-
-        @OptIn(InternalCoroutinesApi::class)
-        private fun showDialogTranslate(
-            context: Context,
-            mainViewModel: QuizActivityViewModel,
-            nolics: Int,
-            quizEntity: FlattenedQuizData,
-            popupWindow: PopupWindow,
-
-            ) {
-            val alertDialog = AlertDialog.Builder(context)
-                .setTitle(context.getString(R.string.translate_title))
-                .setMessage(context.getString(R.string.translate_message))
-                .setPositiveButton("(-) $nolics nolics") { _, _ ->
-
-
-                    CoroutineScope(Dispatchers.IO).launch {
-
-                    }
-                    popupWindow.dismiss()
-                }
-                .setNegativeButton(context.getString(R.string.translate_negative), null)
-                .create()
-
-            alertDialog.setOnShowListener { dialog ->
-                val positiveButton =
-                    (dialog as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE)
-                val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-
-                positiveButton.setTextColor(Color.WHITE)
-                negativeButton.setTextColor(Color.YELLOW)
-
-                dialog.window?.setBackgroundDrawableResource(R.drawable.db_design3_main)
-            }
-            alertDialog.show()
-        }
-
-        @OptIn(InternalCoroutinesApi::class)
-        private fun showPopupInfo(
-            quizEntity: FlattenedQuizData,
-            event: MotionEvent,
-            popupType: Int,
-            viewModel: QuizActivityViewModel
-        ) {
-
-
         }
 
         companion object {
@@ -392,5 +293,4 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         const val POPUP_LIFE_GOLD = 4
 
     }
-
 }

@@ -1,10 +1,13 @@
 package com.tpov.common.presentation.quiz
 
+import android.content.Context
+import android.content.res.Configuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.EVENT_QUIZ_FOR_USER
 import com.tpov.common.EVENT_QUIZ_HOME
 import com.tpov.common.data.model.local.FlattenedQuizData
+import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.log_api.logger.Logger
@@ -32,6 +35,77 @@ class QuizActivityViewModel @Inject constructor(
             EVENT_QUIZ_FOR_USER -> "My quiz"
             else -> "Error quiz"
         }
+    }
+
+    private fun getUserLocalization(context: Context): String {
+        val config: Configuration = context.resources.configuration
+        return config.locale.language
+    }
+
+    private fun getListQuestionByProfileLang(
+        questionThisListAll: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>,
+        context: Context
+    ): ArrayList<QuestionEntity> {
+        val userLocalization: String = getUserLocalization(context)
+
+        val questionList = ArrayList<QuestionEntity>()
+
+        listMap.forEach { map ->
+            var filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
+
+            if (filteredList.isNotEmpty()) {
+                questionList.add(filteredList[0])
+            } else {
+                filteredList = questionThisListAll
+                    .filter { it.numQuestion == map.key }
+
+                if (filteredList.isNotEmpty()) {
+                    questionList.add(filteredList[0])
+                }
+            }
+        }
+        return questionList
+    }
+
+    fun didFoundAllQuestion(
+        questionList: List<QuestionEntity>,
+        listMap: MutableMap<Int, Boolean>
+    ): Boolean {
+        var foundQuestion = listMap.isNotEmpty()
+
+        listMap.forEach {
+
+            try {
+                if (questionList[it.key - 1].id == null) foundQuestion = false
+            } catch (e: Exception) {
+
+                foundQuestion = false
+            }
+        }
+
+        return foundQuestion
+    }
+
+    fun getListQuestionListByLocal(
+        listMap: MutableMap<Int, Boolean>,
+        questionThisListAll: List<QuestionEntity>,
+        context: Context
+    ): ArrayList<QuestionEntity> {
+        val userLocalization: String = getUserLocalization(context)
+
+        val questionList = ArrayList<QuestionEntity>()
+        listMap.forEach { map ->
+            val filteredList = questionThisListAll
+                .filter { it.numQuestion == map.key }
+                .filter { it.language == userLocalization }
+
+            if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
+        }
+
+        return questionList
     }
 
     fun flattenStructureData(structure: StructureData): List<FlattenedQuizData> {

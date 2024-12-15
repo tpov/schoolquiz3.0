@@ -4,6 +4,8 @@ package com.tpov.common
 const val RATING_QUIZ_EVENT_BED = 1
 const val RATING_QUIZ_ALL_POINTS_IN_FB = 100
 const val COUNT_STARS_QUIZ_RATING = 3
+const val TIME_QUESTION = 30 //min
+const val UNKNOWN_VALUE = -1
 
 const val EVENT_QUIZ_HOME = 8
 const val EVENT_QUIZ_TOURNIRE_LEADER = 7

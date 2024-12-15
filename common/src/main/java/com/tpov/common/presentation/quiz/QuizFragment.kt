@@ -1,9 +1,7 @@
 package com.tpov.common.presentation.quiz
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
@@ -36,10 +35,10 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     private lateinit var adapter: QuizActivityAdapter
     private var createQuiz = false
 
-    private var idEvent = -1
-    var idCategory = -1
-    var idSubCategory = -1
-    var idSubsubCategory = -1
+    private var idEvent = UNKNOWN_VALUE
+    var idCategory = UNKNOWN_VALUE
+    var idSubCategory = UNKNOWN_VALUE
+    var idSubsubCategory = UNKNOWN_VALUE
     private var nameCategory = ""
     private var nameSubCategory = ""
 
@@ -78,10 +77,10 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     private fun initGetData() {
-        idEvent = arguments?.getInt(KEY_ID_EVENT, -1) ?: -1
-        idCategory = arguments?.getInt(KEY_ID_CATEGORY, -1) ?: -1
-        idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, -1) ?: -1
-        idSubsubCategory = arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, -1) ?: -1
+        idEvent = arguments?.getInt(KEY_ID_EVENT, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
+        idCategory = arguments?.getInt(KEY_ID_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
+        idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
+        idSubsubCategory = arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
     }
 
     override fun onCreateView(
@@ -97,10 +96,10 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     override fun onClick(id: Int, typeQuestion: Boolean) {
-         if (idSubCategory == -1) {
+         if (idSubCategory == UNKNOWN_VALUE) {
             idSubCategory = id
              restartFragment()
-        } else if (idSubsubCategory == -1) {
+        } else if (idSubsubCategory == UNKNOWN_VALUE) {
              navigationProvider?.openQuestionActivity(id, typeQuestion)
         } else {
             navigationProvider?.openQuestionActivity(id, typeQuestion)
@@ -125,75 +124,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         }
 
         return listMap
-    }
-
-    private fun getUserLocalization(context: Context): String {
-        val config: Configuration = context.resources.configuration
-        return config.locale.language
-    }
-
-    private fun getListQuestionByProfileLang(
-        questionThisListAll: List<QuestionEntity>,
-        listMap: MutableMap<Int, Boolean>
-    ): ArrayList<QuestionEntity> {
-        val userLocalization: String = getUserLocalization(requireContext())
-
-        val questionList = ArrayList<QuestionEntity>()
-
-        listMap.forEach { map ->
-            var filteredList = questionThisListAll
-                .filter { it.numQuestion == map.key }
-                .filter { it.language == userLocalization }
-
-            if (filteredList.isNotEmpty()) {
-                questionList.add(filteredList[0])
-            } else {
-                filteredList = questionThisListAll
-                    .filter { it.numQuestion == map.key }
-
-                if (filteredList.isNotEmpty()) {
-                    questionList.add(filteredList[0])
-                }
-            }
-        }
-        return questionList
-    }
-
-    private fun didFoundAllQuestion(
-        questionList: List<QuestionEntity>,
-        listMap: MutableMap<Int, Boolean>
-    ): Boolean {
-        var foundQuestion = listMap.isNotEmpty()
-
-        listMap.forEach {
-
-            try {
-                if (questionList[it.key - 1].id == null) foundQuestion = false
-            } catch (e: Exception) {
-
-                foundQuestion = false
-            }
-        }
-
-        return foundQuestion
-    }
-
-    private fun getListQuestionListByLocal(
-        listMap: MutableMap<Int, Boolean>,
-        questionThisListAll: List<QuestionEntity>
-    ): ArrayList<QuestionEntity> {
-        val userLocalization: String = getUserLocalization(requireContext())
-
-        val questionList = ArrayList<QuestionEntity>()
-        listMap.forEach { map ->
-            val filteredList = questionThisListAll
-                .filter { it.numQuestion == map.key }
-                .filter { it.language == userLocalization }
-
-            if (filteredList.isNotEmpty()) questionList.add(filteredList[0])
-        }
-
-        return questionList
     }
 
     override fun editItem(id: Int) {
