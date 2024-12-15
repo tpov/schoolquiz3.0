@@ -1,13 +1,12 @@
 package com.tpov.common.presentation.quiz
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.EVENT_QUIZ_FOR_USER
 import com.tpov.common.EVENT_QUIZ_HOME
 import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.data.model.local.StructureData
-import com.tpov.common.domain.StructureUseCase
+import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,11 +20,14 @@ class QuizActivityViewModel @Inject constructor(
     val structureUseCase: StructureUseCase
 ) : ViewModel() {
 
+    var nameCategory = ""
+    var nameSubCategory = ""
+
     val listFlattenedQuizDataFlow: StateFlow<List<FlattenedQuizData>> get() = _listFlattenedQuizDataFlow
     private val _listFlattenedQuizDataFlow = MutableStateFlow<List<FlattenedQuizData>>(emptyList())
 
     fun getNamePathEvent(event: Int): String {
-        return when(event) {
+        return when (event) {
             EVENT_QUIZ_HOME -> "Home quiz"
             EVENT_QUIZ_FOR_USER -> "My quiz"
             else -> "Error quiz"
@@ -125,17 +127,18 @@ class QuizActivityViewModel @Inject constructor(
     fun initQuestionListByIds(event: Int, idCat: Int, idSubCat: Int) = viewModelScope.launch {
         val flattenedList: MutableList<FlattenedQuizData> = mutableListOf()
 
-        Log.d("jfersdklfgjskledf", "structureUseCase.getStructureData(): ${structureUseCase.getStructureData()}")
-        structureUseCase.getStructureData()?.event?.find { it.id == event}?.category?.find { it.id == idCat}?.subcategory?.forEach {
-            Log.d("jfersdklfgjskledf", "structureUseCase.getStructureData()  it.id == idCat: ${it}")
+        val category = structureUseCase.getStructureData()?.event
+            ?.find { it.id == event }?.category?.find { it.id == idCat }
+        nameCategory = category?.nameQuiz ?: ""
+
+        category?.subcategory?.forEach {
 
             if (idSubCat == -1) flattenedList.add(it.toFlattenedQuizData())
-            else it.subSubcategory.find { it.id == idSubCat}?.quizData?.forEach {
-                    flattenedList.add(it.toFlattenedQuizData())
+            else it.subSubcategory.find { it.id == idSubCat }?.quizData?.forEach {
+                nameSubCategory = it.nameQuiz
+                flattenedList.add(it.toFlattenedQuizData())
             }
         }
         _listFlattenedQuizDataFlow.value = flattenedList
     }
-
-
 }

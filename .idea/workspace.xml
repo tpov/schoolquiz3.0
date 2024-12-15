@@ -183,12 +183,10 @@
   <component name="ChangeListManager">
     <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="redesign question activity">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainFragment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/fragment_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/fragment_main.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/Consts.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/Consts.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/question/QuestionActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/question/QuestionActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/question/QuestionViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/question/QuestionViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/common/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
     </list>
     <list id="81ab6825-6e13-49c0-a4dd-0fe06f8e94eb" name="Node changelist" comment="Add Node" />
     <option name="SHOW_DIALOG" value="false" />
@@ -276,7 +274,7 @@
     </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="SchoolQuiz4.0" />
+        <entry key="$PROJECT_DIR$" value="SchoolQuiz4.0-Refactofing(Mac)" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -327,31 +325,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
-    &quot;PROJECT_TRUSTED_KEY&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
-    &quot;com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary&quot;: &quot;JUnit4&quot;,
-    &quot;com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4&quot;: &quot;&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;SchoolQuiz4.0-Refactofing(Mac)&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_directory_selection&quot;: &quot;D:/Programming/Android/schoolquiz3.0/app/src/test/java/com/tpov/schoolquiz&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Programming/Android/schoolquiz3.0/logger-processor&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Suggestions&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;inlay.hints&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Android App.app.executor": "Run",
+    "PROJECT_TRUSTED_KEY": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary": "JUnit4",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4": "",
+    "git-widget-placeholder": "SchoolQuiz4.0",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_directory_selection": "D:/Programming/Android/schoolquiz3.0/app/src/test/java/com/tpov/schoolquiz",
+    "last_opened_file_path": "D:/Programming/Android/schoolquiz3.0/logger-processor",
+    "project.structure.last.edited": "Suggestions",
+    "project.structure.proportion": "0.17",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "inlay.hints"
   }
-}</component>
+}]]></component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Properties" />
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />

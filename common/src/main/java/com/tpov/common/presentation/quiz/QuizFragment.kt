@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
-import com.tpov.common.di.DaggerCommonComponent
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +55,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     private fun initPath() {
-
         binding.tvEventPath.text = quizViewModel.getNamePathEvent(idEvent)
         binding.tvCatPath.text = nameCategory
         binding.tvSubcatPath.text = nameSubCategory
@@ -219,7 +216,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
             }
         }
     }
-
 
     override fun reloadData() {
         activity?.recreate()
