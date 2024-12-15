@@ -3,6 +3,8 @@ package com.tpov.common.presentation.quiz
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tpov.common.EVENT_QUIZ_FOR_USER
+import com.tpov.common.EVENT_QUIZ_HOME
 import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.domain.StructureUseCase
@@ -22,6 +24,13 @@ class QuizActivityViewModel @Inject constructor(
     val listFlattenedQuizDataFlow: StateFlow<List<FlattenedQuizData>> get() = _listFlattenedQuizDataFlow
     private val _listFlattenedQuizDataFlow = MutableStateFlow<List<FlattenedQuizData>>(emptyList())
 
+    fun getNamePathEvent(event: Int): String {
+        return when(event) {
+            EVENT_QUIZ_HOME -> "Home quiz"
+            EVENT_QUIZ_FOR_USER -> "My quiz"
+            else -> "Error quiz"
+        }
+    }
 
     fun flattenStructureData(structure: StructureData): List<FlattenedQuizData> {
         val result = mutableListOf<FlattenedQuizData>()

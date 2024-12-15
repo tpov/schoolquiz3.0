@@ -8,6 +8,7 @@ import com.tpov.common.CODE_MAX_SCORE_ANSWER
 import com.tpov.common.CODE_MIN_SCORE_ANSWER
 import com.tpov.common.COUNT_VARIATION_CODE_ANSWER
 import com.tpov.common.MAX_DROP_ANSWER
+import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
@@ -137,7 +138,7 @@ class QuestionViewModel @Inject constructor(
         questionList.filter { it.language == Locale.getDefault().language }
 
     private fun filterQuestionByOtherLanguageUser(questionList: List<QuestionEntity>, languages: String, numQuestion: Int): List<QuestionEntity> {
-        for (language in languages.split("|")) {
+        for (language in languages.split(SPLIT_BETWEEN_LANGUAGES)) {
             val questionsForLanguage = questionList.filter { it.language == language }
             if (questionsForLanguage.size >= numQuestion) return questionsForLanguage
         }
@@ -163,7 +164,8 @@ class QuestionViewModel @Inject constructor(
     }
 
     private fun calculateResultByCodeAnswer(codeAnswerThis: String) = codeAnswerThis.map {
-            (((it.toInt() - '1'.toInt()) / 8.0) * 100).toInt() }.average().toInt()
+        (((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()) / COUNT_VARIATION_CODE_ANSWER) * 100)
+    }.average().toInt()
 
     private fun calculateStarsMaxLocal(): Int {
         val list = questionDetailList.value

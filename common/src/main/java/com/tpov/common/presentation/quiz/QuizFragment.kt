@@ -30,9 +30,9 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    private lateinit var mainViewModel: QuizActivityViewModel
     private var navigationProvider: NavigationProvider? = null
 
+    private lateinit var quizViewModel: QuizActivityViewModel
     private lateinit var binding: FragmentQuizBinding
     private var oldIdQuizEvent1 = 0
     private lateinit var adapter: QuizActivityAdapter
@@ -42,37 +42,35 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     var idCategory = -1
     var idSubCategory = -1
     var idSubsubCategory = -1
-
+    private var nameCategory = ""
+    private var nameSubCategory = ""
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mainViewModel = ViewModelProvider(this, viewModelFactory)[QuizActivityViewModel::class.java]
+        quizViewModel = ViewModelProvider(this, viewModelFactory)[QuizActivityViewModel::class.java]
+
         initGetData()
-        mainViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
+        quizViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
         initAdapter()
-        Log.d("jfersdklfgjskledf", "idEvent: $idEvent idCategory: $idCategory idSubCategory: $idSubCategory idSubsubCategory: $idSubsubCategory ")
+        initPath()
     }
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        DaggerCommonComponent.factory()
-            .create(requireActivity().application)
-            .inject(this)
+    private fun initPath() {
 
-        if (context is NavigationProvider) {
-            navigationProvider = context
-        }
+        binding.tvEventPath.text = quizViewModel.getNamePathEvent(idEvent)
+        binding.tvCatPath.text = nameCategory
+        binding.tvSubcatPath.text = nameSubCategory
     }
 
     private fun initAdapter() {
-        adapter = QuizActivityAdapter(this, requireContext(), mainViewModel)
+        adapter = QuizActivityAdapter(this, requireContext(), quizViewModel)
         binding.rvQuizFragment.layoutManager = LinearLayoutManager(activity)
         binding.rvQuizFragment.adapter = adapter
         binding.rvQuizFragment.itemAnimator = RotateInItemAnimator()
 
         lifecycleScope.launch(Dispatchers.Main) {
-            mainViewModel.listFlattenedQuizDataFlow.collect { list ->
+            quizViewModel.listFlattenedQuizDataFlow.collect { list ->
                 adapter.submitList(list)
             }
         }
@@ -87,11 +85,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         idCategory = arguments?.getInt(KEY_ID_CATEGORY, -1) ?: -1
         idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, -1) ?: -1
         idSubsubCategory = arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, -1) ?: -1
-
-    }
-
-    override fun onResume() {
-        super.onResume()
     }
 
     override fun onCreateView(
@@ -100,7 +93,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentQuizBinding.inflate(inflater, container, false)
-
         return binding.root
     }
 
