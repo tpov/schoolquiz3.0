@@ -23,6 +23,7 @@ import com.tpov.common.CODE_EMPTY_ANSWER
 import com.tpov.common.DELAY_SHOW_TEXT_IN_QUESTIONACTIVITY
 import com.tpov.common.MAX_CLASSIC_ANSWER
 import com.tpov.common.R
+import com.tpov.common.REGEX_DROP_TEXT
 import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.databinding.ActivityQuestionBinding
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +52,7 @@ class QuestionActivity : AppCompatActivity() {
         ActivityQuestionBinding.inflate(layoutInflater)
     }
 
-    val doter =  Regex("\\(.{7}\\)")
+    val doter =  REGEX_DROP_TEXT
     private var originalText: String = ""
     private val insertedOrder = mutableListOf<Int>()
 
@@ -127,7 +128,6 @@ class QuestionActivity : AppCompatActivity() {
                     else show8Answers(answer, answersName)
                     startTimer(is4Button)
 
-                    setBlockButton(viewModel.codeAnswer[currentQuestion].code == 0)
                     binding.tvQuestionText.text = questionText
 
                     binding.imvQuestion.setImageResource(resources.getIdentifier(
@@ -324,7 +324,7 @@ class QuestionActivity : AppCompatActivity() {
             override fun onTick(millisUntilFinished: Long) {
                 val secondsRemaining = millisUntilFinished / 1000
                 if (secondsRemaining <= 3) anim321(secondsRemaining.toInt())
-                binding.tvTimer.text = "$secondsRemaining s" // Обновляем текст таймера
+                binding.tvTimer.text = "$secondsRemaining s"
             }
 
             override fun onFinish() {
@@ -358,17 +358,6 @@ class QuestionActivity : AppCompatActivity() {
             }
         })
         tv321.startAnimation(anim)
-    }
-
-    private fun setBlockButton(state: Boolean) = with(binding) {
-        for (button in buttons4) {
-            button.isEnabled = state
-            button.isClickable = state
-        }
-        for (button in buttons8) {
-            button.isEnabled = state
-            button.isClickable = state
-        }
     }
 
     companion object {

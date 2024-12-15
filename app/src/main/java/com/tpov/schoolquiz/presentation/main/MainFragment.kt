@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -14,6 +13,7 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.di.DaggerApplicationComponent
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
+
 @Logger
 class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
@@ -40,10 +40,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[MainViewModel::class.java]
 
-
-        Log.d("MainFragment", "onViewCreated()")
         viewModel.categoryData.observe(viewLifecycleOwner) { categoryDataList ->
-            Log.d("MainFragment", "categoryDataList: $categoryDataList")
             adapter = MainAdapter(categoryDataList, this)
             recyclerView.adapter = adapter
         }

@@ -22,15 +22,18 @@ import kotlinx.coroutines.launch
 @InternalCoroutinesApi
 class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
-    private lateinit var mainViewModel: QuizActivityViewModel
+    private lateinit var quizViewModel: QuizActivityViewModel
     private lateinit var binding: FragmentQuizBinding
     private var oldIdQuizEvent1 = 0
     private lateinit var adapter: QuizActivityAdapter
     private var createQuiz = false
 
+    private var idEvent = 0
     private var idCategory = 0
     private var idSubCategory = 0
     private var idSubsubCategory = 0
+    private var nameCategory = ""
+    private var nameSubCategory = ""
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -40,20 +43,28 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mainViewModel = ViewModelProvider(this)[QuizActivityViewModel::class.java]
+        quizViewModel = ViewModelProvider(this)[QuizActivityViewModel::class.java]
 
         initGetData()
         initAdapter()
+        initPath()
+    }
+
+    private fun initPath() {
+
+        binding.tvEventPath.text = quizViewModel.getNamePathEvent(idEvent)
+        binding.tvCatPath.text = nameCategory
+        binding.tvSubcatPath.text = nameSubCategory
     }
 
     private fun initAdapter() {
-        adapter = QuizActivityAdapter(this, requireContext(), mainViewModel)
+        adapter = QuizActivityAdapter(this, requireContext(), quizViewModel)
         binding.rvQuizFragment.layoutManager = LinearLayoutManager(activity)
         binding.rvQuizFragment.adapter = adapter
         binding.rvQuizFragment.itemAnimator = RotateInItemAnimator()
 
         lifecycleScope.launch(Dispatchers.IO) {
-            mainViewModel.listFlattenedQuizDataFlow.collect { list ->
+            quizViewModel.listFlattenedQuizDataFlow.collect { list ->
                 adapter.submitList(list)
             }
         }
