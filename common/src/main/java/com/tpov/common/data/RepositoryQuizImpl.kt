@@ -211,39 +211,50 @@ class RepositoryQuizImpl @Inject constructor(
 
 
     private suspend fun uploadFileToFirebaseStorage(pathPhoto: String) {
-        Log.d("FirebaseRequestInterceptor", "uploadFileToFirebaseStorage")
-        if (pathPhoto.isNotBlank()) {
+        Log.d("FirebaseRequestInterceptor", "uploadFileToFirebaseStorage: $pathPhoto")
+
+        if (pathPhoto.isBlank()) {
+            Log.e("FirebaseStorage", "Путь к файлу пустой")
+            return
+        }
+
+        val localFile = File(context.filesDir, pathPhoto)
+
+        if (!localFile.exists()) {
+            Log.e("FirebaseStorage", "Файл не существует: ${localFile.absolutePath}")
+            return
+        }
+
+        try {
             val storageRef = FirebaseStorage.getInstance().reference
-            val localFile = File(context.filesDir, pathPhoto)
             val photoRef = storageRef.child("quizPhoto/${localFile.name}")
 
             val uploadTask = {
                 val taskCompletionSource = TaskCompletionSource<Void>()
+
                 photoRef.putFile(Uri.fromFile(localFile))
                     .addOnSuccessListener {
                         Log.d("FirebaseStorage", "Файл успешно загружен: ${localFile.name}")
                         taskCompletionSource.setResult(null)
                     }
                     .addOnFailureListener { exception ->
-                        // Обработка ошибок
-                        Log.e("FirebaseStorage", "Ошибка загрузки файла", exception)
+                        Log.e("FirebaseStorage", "Ошибка загрузки файла: ${exception.message}", exception)
                         taskCompletionSource.setException(exception)
                     }
+                    .addOnProgressListener { taskSnapshot ->
+                        val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount)
+                        Log.d("FirebaseStorage", "Прогресс загрузки: $progress%")
+                    }
+
                 taskCompletionSource.task
             }
 
-            try {
-                FirebaseRequestInterceptor
-                    .executeWithChecksSingleTask(uploadTask)
-                    .await()  // Ждём завершения задачи
-                Log.d("FirebaseStorage", "Загрузка завершена успешно")
-            } catch (e: Exception) {
-                Log.e("FirebaseStorage", "Ошибка при загрузке файла: ${e.message}", e)
-                throw e
-            }
+            uploadTask() // Убрал return
+        } catch (e: Exception) {
+            Log.e("FirebaseStorage", "Ошибка при инициализации загрузки: ${e.message}", e)
+            throw e
         }
     }
-
 
     private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
         Log.d("FirebaseRequestInterceptor", "downloadPhotoToLocalPath")

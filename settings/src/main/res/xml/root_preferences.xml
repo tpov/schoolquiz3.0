@@ -89,12 +89,12 @@
             app:defaultValue="2" />
 
         <com.tpov.setting.TimePickerPreference
-            app:key="@string/key_lessons_frequency_time"
+            app:key="@string/key_lessons_alarm_time"
             app:title="@string/lessons_frequency_time_title"
             app:summary="@string/summary_lessons_frequency_time" />
 
         <MultiSelectListPreference
-            app:key="@string/key_lessons_frequency_days"
+            app:key="@string/key_lessons_alarm_days"
             app:title="@string/lessons_frequency_days_title"
             app:summary="@string/summary_lessons_frequency_days"
             app:entries="@array/days_of_week"

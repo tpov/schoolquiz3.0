@@ -35,7 +35,7 @@
 
             android:orientation="vertical">
 
-            <com.tpov.common.data.core.CustomProgressBar
+            <com.tpov.common.presentation.custom.CustomProgressBar
                 android:id="@+id/customProgressBar"
                 android:layout_width="match_parent"
                 android:layout_height="6dp" />

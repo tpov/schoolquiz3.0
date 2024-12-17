@@ -51,8 +51,8 @@
     <string name="key_languages">languages</string>
     <string name="key_notifications">notifications</string>
     <string name="key_event_notifications_frequency">event_notifications_frequency</string>
-    <string name="key_lessons_frequency_time">lessons_frequency_time</string>
-    <string name="key_lessons_frequency_days">lessons_frequency_days</string>
+    <string name="key_lessons_alarm_time">lessons_frequency_time</string>
+    <string name="key_lessons_alarm_days">lessons_frequency_days</string>
     <string name="lessons_frequency_time_title">Выберите время занятий</string>
     <string name="lessons_frequency_days_title">Дата занятий</string>
     <string name="key_save">key_save_button</string>

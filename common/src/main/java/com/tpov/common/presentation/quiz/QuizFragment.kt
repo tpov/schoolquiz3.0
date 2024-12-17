@@ -1,6 +1,8 @@
 package com.tpov.common.presentation.quiz
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,6 +16,7 @@ import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
+import com.tpov.common.di.DaggerCommonComponent
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.Dispatchers
@@ -39,8 +42,6 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     var idCategory = UNKNOWN_VALUE
     var idSubCategory = UNKNOWN_VALUE
     var idSubsubCategory = UNKNOWN_VALUE
-    private var nameCategory = ""
-    private var nameSubCategory = ""
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -53,10 +54,24 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         initPath()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initPath() {
-        binding.tvEventPath.text = quizViewModel.getNamePathEvent(idEvent)
-        binding.tvCatPath.text = nameCategory
-        binding.tvSubcatPath.text = nameSubCategory
+        binding.tvEventPath.text = quizViewModel.getNamePathEvent(idEvent) +
+                if (quizViewModel.nameCategory != "") " > " else ""
+        binding.tvCatPath.text = quizViewModel.nameCategory +
+                if (quizViewModel.nameSubCategory != "") " > " else ""
+        binding.tvSubcatPath.text = quizViewModel.nameSubCategory
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        DaggerCommonComponent.factory()
+            .create(requireActivity().application)
+            .inject(this)
+
+        if (context is NavigationProvider) {
+            navigationProvider = context
+        }
     }
 
     private fun initAdapter() {
@@ -80,7 +95,8 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         idEvent = arguments?.getInt(KEY_ID_EVENT, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
         idCategory = arguments?.getInt(KEY_ID_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
         idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
-        idSubsubCategory = arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
+        idSubsubCategory =
+            arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
     }
 
     override fun onCreateView(
@@ -96,16 +112,17 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     override fun onClick(id: Int, typeQuestion: Boolean) {
-         if (idSubCategory == UNKNOWN_VALUE) {
+        if (idSubCategory == UNKNOWN_VALUE) {
             idSubCategory = id
-             restartFragment()
+            restartFragment()
         } else if (idSubsubCategory == UNKNOWN_VALUE) {
-             navigationProvider?.openQuestionActivity(id, typeQuestion)
+            navigationProvider?.openQuestionActivity(id, typeQuestion)
         } else {
             navigationProvider?.openQuestionActivity(id, typeQuestion)
-         }
+        }
 
     }
+
     private fun restartFragment() {
         val fragmentManager = parentFragmentManager
         fragmentManager.beginTransaction()
@@ -161,7 +178,12 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         const val REQUEST_CODE = 1
 
         @JvmStatic
-        fun newInstance(idEvent: Int, idCategory: Int, idSubCategory: Int, idSubsubCategory: Int): QuizFragment {
+        fun newInstance(
+            idEvent: Int,
+            idCategory: Int,
+            idSubCategory: Int,
+            idSubsubCategory: Int
+        ): QuizFragment {
             val args = Bundle()
             args.putInt(KEY_ID_EVENT, idEvent)
             args.putInt(KEY_ID_CATEGORY, idCategory)

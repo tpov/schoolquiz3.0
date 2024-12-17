@@ -7,6 +7,8 @@ import com.tpov.common.CODE_EMPTY_ANSWER
 import com.tpov.common.CODE_MAX_SCORE_ANSWER
 import com.tpov.common.CODE_MIN_SCORE_ANSWER
 import com.tpov.common.COUNT_VARIATION_CODE_ANSWER
+import com.tpov.common.ErrorHandler
+import com.tpov.common.Interactor
 import com.tpov.common.MAX_DROP_ANSWER
 import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.common.data.model.local.QuestionDetailEntity
@@ -17,7 +19,6 @@ import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
-import com.tpov.common.presentation.Errors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,8 +35,9 @@ class QuestionViewModel @Inject constructor(
     var quizUseCase: QuizUseCase,
     var questionUseCase: QuestionUseCase,
     var questionDetailUseCase: QuestionDetailUseCase,
-    val structureUseCase: StructureUseCase
-) : AndroidViewModel(app), Errors() {
+    val structureUseCase: StructureUseCase,
+    val interactor: Interactor
+) : AndroidViewModel(app) {
 
     var newAnswerOrder: Int = 0
     var originalAnswerOrder: Int = 0
@@ -48,6 +50,12 @@ class QuestionViewModel @Inject constructor(
     var codeAnswer = ""
 
     val unknownCurrentQuestion = -1
+
+    val errorHandler = ErrorHandler(
+        onCloseScreen = { _closeActivity.value = true },
+        onShowToast = { _toastMessage.value = it },
+        interactor
+    )
 
     val result: StateFlow<Int?> get() = _result
     private val _result = MutableStateFlow<Int?>(unknownCurrentQuestion)
@@ -66,21 +74,29 @@ class QuestionViewModel @Inject constructor(
 
     val springAnim: StateFlow<Boolean?> get() = _springAnim
     private val _springAnim = MutableStateFlow<Boolean?>(null)
-
     val closeActivity: StateFlow<Boolean> get() = _closeActivity
-        private val _closeActivity = MutableStateFlow(false)
+    private val _closeActivity = MutableStateFlow(false)
 
-//--------------------------------------------USE CASES---------------------------------------------
+    private val _toastMessage = MutableStateFlow<String?>(null)
+    val toastMessage: StateFlow<String?> = _toastMessage
+
+    //--------------------------------------------USE CASES---------------------------------------------
 
     fun saveQuizResult() = viewModelScope.launch(Dispatchers.IO) {
-        quizUseCase.saveQuiz(_quiz.value?.copy(
-            starsMaxLocal = quiz.value?.starsMaxLocal ?: _quiz.value?.starsMaxLocal ?: notFoundQuizValue(),
-            starsAverageLocal = quiz.value?.starsAverageLocal ?: _quiz.value?.starsAverageLocal ?: notFoundQuizValue(),
-            ratingLocal = quiz.value?.ratingLocal ?: _quiz.value?.ratingLocal ?: notFoundQuizValue()) ?: notFoundQuiz())
+        quizUseCase.saveQuiz(
+            _quiz.value?.copy(
+                starsMaxLocal = quiz.value?.starsMaxLocal ?: _quiz.value?.starsMaxLocal
+                ?: errorHandler.notFoundQuizValue(),
+                starsAverageLocal = quiz.value?.starsAverageLocal ?: _quiz.value?.starsAverageLocal
+                ?: errorHandler.notFoundQuizValue(),
+                ratingLocal = quiz.value?.ratingLocal ?: _quiz.value?.ratingLocal
+                ?: errorHandler.notFoundQuizValue()
+            ) ?: errorHandler.notFoundQuiz()
+        )
     }
 
     fun getQuizById() = viewModelScope.launch(Dispatchers.IO) {
-        _quiz.value = quizUseCase.getQuizById(idQuiz ?: notFoundInputData())
+        _quiz.value = quizUseCase.getQuizById(idQuiz ?: errorHandler.notFoundInputData())
     }
 
 //    fun saveQuestion(questionEntity: QuestionEntity) = viewModelScope.launch(Dispatchers.IO) {
@@ -88,27 +104,47 @@ class QuestionViewModel @Inject constructor(
 //    }
 
     fun getQuestionList(languagesUser: String) = viewModelScope.launch(Dispatchers.IO) {
-        val filterQuestionByIdQuiz = questionUseCase.getQuestionByIdQuiz(idQuiz ?: notFoundInputData())
-        val filterQuestionByHardQuiz = filterQuestionByHardQuiz(filterQuestionByIdQuiz, hardQuiz ?: notFoundInitTypeHardQuestion())
+        val filterQuestionByIdQuiz =
+            questionUseCase.getQuestionByIdQuiz(idQuiz ?: errorHandler.notFoundInputData())
+        val filterQuestionByHardQuiz = filterQuestionByHardQuiz(
+            filterQuestionByIdQuiz,
+            hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()
+        )
         var filterQuestionByLanguage = filterQuestionByMainLanguageUser(filterQuestionByHardQuiz)
-        if (filterQuestionByLanguage.size < (numQuestions ?: notFoundNumberQuestionByTypeHardQuiz()))
-            filterQuestionByLanguage = filterQuestionByOtherLanguageUser(filterQuestionByHardQuiz, languagesUser, numQuestions ?: notFoundNumberQuestionByTypeHardQuiz())
-        if (filterQuestionByLanguage.isEmpty()) notFountQuestionByLanguageUser()
+        if (filterQuestionByLanguage.size < (numQuestions
+                ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz())
+        )
+            filterQuestionByLanguage = filterQuestionByOtherLanguageUser(
+                filterQuestionByHardQuiz,
+                languagesUser,
+                numQuestions ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
+            )
+        if (filterQuestionByLanguage.isEmpty()) errorHandler.notFountQuestionByLanguageUser()
         else _questionList.value = filterQuestionByLanguage.sortedBy { it.numQuestion }
     }
 
     fun getQuestionDetailByIdQuiz() = viewModelScope.launch(Dispatchers.IO) {
-        _questionDetailList.value = questionDetailUseCase.getQuestionDetailByIdQuiz(idQuiz ?: notFoundInputData())
-            ?.filter { it.hardQuiz == hardQuiz } ?: listOf(QuestionDetailEntity(0, idQuiz ?: notFoundInputData(), getDataToday(),
-            "0".repeat(numQuestions ?: notFoundQuizValue()),
-            hardQuiz ?: notFoundInitTypeHardQuestion(), false))
+        _questionDetailList.value =
+            questionDetailUseCase.getQuestionDetailByIdQuiz(
+                idQuiz ?: errorHandler.notFoundInputData()
+            )
+                ?.filter { it.hardQuiz == hardQuiz } ?: listOf(
+                QuestionDetailEntity(
+                    0, idQuiz ?: errorHandler.notFoundInputData(), getDataToday(),
+                    "0".repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
+                    hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
+                )
+            )
     }
 
     fun saveQuestionDetail() = viewModelScope.launch(Dispatchers.IO) {
-            questionDetailUseCase.saveQuestionDetail(QuestionDetailEntity(
-                0, idQuiz ?: notFoundQuizValue(), getDataToday(), codeAnswer,
-                hardQuiz ?: notFoundQuizValue().toString().toBoolean(), false))
-        }
+        questionDetailUseCase.saveQuestionDetail(
+            QuestionDetailEntity(
+                0, idQuiz ?: errorHandler.notFoundQuizValue(), getDataToday(), codeAnswer,
+                hardQuiz ?: errorHandler.notFoundQuizValue().toString().toBoolean(), false
+            )
+        )
+    }
 
 
     private fun getDataToday() = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -122,6 +158,7 @@ class QuestionViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             structureUseCase.pushStructureRating(ratingData)
         }
+
     fun deleteQuestionDetailById(id: Int?): String {
         viewModelScope.launch(Dispatchers.IO) {
             //questionDetailUseCase.deleteQuestionDetailById(id)
@@ -129,15 +166,22 @@ class QuestionViewModel @Inject constructor(
         return ""
     }
 
-
     //--------------------------------------------OTHER FUN---------------------------------
-    private fun filterQuestionByHardQuiz(questionEntityList: List<QuestionEntity>, hardQuiz: Boolean) =
+
+    private fun filterQuestionByHardQuiz(
+        questionEntityList: List<QuestionEntity>,
+        hardQuiz: Boolean
+    ) =
         questionEntityList.filter { it.hardQuestion == hardQuiz }
 
     private fun filterQuestionByMainLanguageUser(questionList: List<QuestionEntity>) =
         questionList.filter { it.language == Locale.getDefault().language }
 
-    private fun filterQuestionByOtherLanguageUser(questionList: List<QuestionEntity>, languages: String, numQuestion: Int): List<QuestionEntity> {
+    private fun filterQuestionByOtherLanguageUser(
+        questionList: List<QuestionEntity>,
+        languages: String,
+        numQuestion: Int
+    ): List<QuestionEntity> {
         for (language in languages.split(SPLIT_BETWEEN_LANGUAGES)) {
             val questionsForLanguage = questionList.filter { it.language == language }
             if (questionsForLanguage.size >= numQuestion) return questionsForLanguage
@@ -146,8 +190,10 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun initQuizValues() {
-        numQuestions = if (hardQuiz ?: notFoundInitTypeHardQuestion()) quiz.value?.numHQ ?: notFoundNumberQuestionByTypeHardQuiz()
-        else quiz.value?.numQ ?: notFoundNumberQuestionByTypeHardQuiz()
+        numQuestions =
+            if (hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()) quiz.value?.numHQ
+                ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
+            else quiz.value?.numQ ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
 
     }
 
@@ -158,9 +204,11 @@ class QuestionViewModel @Inject constructor(
     fun initQuestionDetail() {
         _questionDetail.value = questionDetailList.value?.find { questionDetail ->
             questionDetail.codeAnswer?.any { it == '0' } ?: false
-        } ?: QuestionDetailEntity(0, idQuiz ?: notFoundInputData(), getDataToday(),
-            "0".repeat(numQuestions ?: notFoundQuizValue()),
-            hardQuiz ?: notFoundInitTypeHardQuestion(), false)
+        } ?: QuestionDetailEntity(
+            0, idQuiz ?: errorHandler.notFoundInputData(), getDataToday(),
+            "0".repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
+            hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
+        )
     }
 
     private fun calculateResultByCodeAnswer(codeAnswerThis: String) = codeAnswerThis.map {
@@ -242,7 +290,7 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun setCodeInCodeAnswer(score: Int) {
-        val index: Int = currentQuestion.value ?: errorGetNumQuestion()
+        val index: Int = currentQuestion.value ?: errorHandler.errorGetNumQuestion()
 
         codeAnswer = if (index < codeAnswer.length) {
             codeAnswer.substring(0, index) + score.toString() +
@@ -251,10 +299,4 @@ class QuestionViewModel @Inject constructor(
         if (!codeAnswer.contains(CODE_EMPTY_ANSWER)) result()
     }
 
-    //--------------------------------Exceptions------------------------
-
-
-    override fun closeActivity() {
-        _closeActivity.value = true
-    }
 }

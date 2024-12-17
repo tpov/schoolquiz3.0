@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:padding="6dp">
 
-    <com.tpov.common.presentation.utils.CustomRoundedImageView
+    <com.tpov.common.presentation.custom.CustomRoundedImageView
         android:id="@+id/cl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,7 +29,7 @@
             <ImageView
                 android:id="@+id/imv_category_title"
                 android:layout_width="match_parent"
-                android:layout_height="125dp"
+                android:layout_height="150dp"
                 android:scaleType="centerCrop"
                 tools:srcCompat="@tools:sample/avatars" />
 
@@ -58,6 +58,6 @@
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
         </LinearLayout>
-    </com.tpov.common.presentation.utils.CustomRoundedImageView>
+    </com.tpov.common.presentation.custom.CustomRoundedImageView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

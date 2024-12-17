@@ -44,12 +44,12 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<EditTextPreference>(getString(R.string.key_city))?.text = settings.city
         findPreference<EditTextPreference>(getString(R.string.key_logo))?.text = settings.logo.toString()
         findPreference<EditTextPreference>(getString(R.string.key_languages))?.text = settings.languages
-        findPreference<ListPreference>(getString(R.string.key_profile_sync_frequency))?.value = settings.profileSyncFrequency
-        findPreference<ListPreference>(getString(R.string.key_quests_sync_frequency))?.value = settings.questsSyncFrequency
+        findPreference<ListPreference>(getString(R.string.key_profile_sync_frequency))?.value = settings.profileSyncFrequency.toString()
+        findPreference<ListPreference>(getString(R.string.key_quests_sync_frequency))?.value = settings.questsSyncFrequency.toString()
         findPreference<SwitchPreferenceCompat>(getString(R.string.key_notifications))?.isChecked = settings.notificationsEnabled
-        findPreference<ListPreference>(getString(R.string.key_event_notifications_frequency))?.value =settings.eventNotificationsFrequency
-        findPreference<TimePickerPreference>(getString(R.string.key_lessons_frequency_time))?.time = settings.lessonsFrequencyTime
-        findPreference<MultiSelectListPreference>(getString(R.string.key_lessons_frequency_days))?.values = settings.lessonsFrequencyDays
+        findPreference<ListPreference>(getString(R.string.key_event_notifications_frequency))?.value =settings.eventNotificationsFrequency.toString()
+        findPreference<TimePickerPreference>(getString(R.string.key_lessons_alarm_time))?.time = settings.lessonsAlarmTime
+        findPreference<MultiSelectListPreference>(getString(R.string.key_lessons_alarm_days))?.values = settings.lessonsAlarmDays
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -85,7 +85,7 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun savePreferences() {
-        val defaultConfig = SettingConfigModel.default()
+        val defaultConfig = SettingConfigModel.defaultMiddle()
 
         val login =
             findPreference<EditTextPreference>(getString(R.string.key_login))?.text ?: defaultConfig.login
@@ -105,24 +105,22 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
             ?: defaultConfig.logo
         val languages = findPreference<EditTextPreference>(getString(R.string.key_languages))?.text
             ?: defaultConfig.languages
-        val profileSyncFrequency =
-            findPreference<ListPreference>(getString(R.string.key_profile_sync_frequency))?.value
-                ?: defaultConfig.profileSyncFrequency
-        val questsSyncFrequency =
-            findPreference<ListPreference>(getString(R.string.key_quests_sync_frequency))?.value
-                ?: defaultConfig.questsSyncFrequency
+        val profileSyncFrequency = findPreference<ListPreference>(getString(R.string.key_profile_sync_frequency))?.value?.let { value ->
+            value.toIntOrNull() ?: defaultConfig.profileSyncFrequency
+        } ?: defaultConfig.profileSyncFrequency
+        val questsSyncFrequency = findPreference<ListPreference>(getString(R.string.key_quests_sync_frequency))?.value?.let { value ->
+            value.toIntOrNull() ?: defaultConfig.questsSyncFrequency
+        } ?: defaultConfig.questsSyncFrequency
         val notificationsEnabled =
             findPreference<SwitchPreferenceCompat>(getString(R.string.key_notifications))?.isChecked
                 ?: defaultConfig.notificationsEnabled
-        val eventNotificationsFrequency =
-            findPreference<ListPreference>(getString(R.string.key_event_notifications_frequency))?.value
-                ?: defaultConfig.eventNotificationsFrequency
-        val lessonsFrequencyTime =
-            findPreference<TimePickerPreference>(getString(R.string.key_lessons_frequency_time))?.time
-                ?: defaultConfig.lessonsFrequencyTime
-        val lessonsFrequencyDays =
-            findPreference<MultiSelectListPreference>(getString(R.string.key_lessons_frequency_days))?.values
-                ?: defaultConfig.lessonsFrequencyDays
+        val eventNotificationsFrequency = findPreference<ListPreference>(getString(R.string.key_event_notifications_frequency))?.value?.let { value ->
+            value.toIntOrNull() ?: defaultConfig.eventNotificationsFrequency
+        } ?: defaultConfig.eventNotificationsFrequency
+        val lessonsFrequencyTime = findPreference<TimePickerPreference>(getString(R.string.key_lessons_alarm_time))?.time
+                ?: defaultConfig.lessonsAlarmTime
+        val lessonsFrequencyDays = findPreference<MultiSelectListPreference>(getString(R.string.key_lessons_alarm_days))?.values
+                ?: defaultConfig.lessonsAlarmDays
 
         val settings = SettingConfigModel(
             tpovId,
@@ -142,7 +140,6 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
             lessonsFrequencyTime,
             lessonsFrequencyDays
         )
-
         settingsDomain.saveSettings(settings)
     }
 }

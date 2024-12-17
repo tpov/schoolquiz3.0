@@ -55,7 +55,6 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
     override fun onItemClick(category: CategoryData) {
         val fragment = QuizFragment.newInstance(EVENT_QUIZ_HOME, category.id, -1, -1)
 
-        Log.d("варпроп", "category: $category")
         requireActivity().supportFragmentManager.beginTransaction()
             .replace(R.id.title_fragment, fragment)
             .addToBackStack(null)

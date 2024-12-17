@@ -11,14 +11,14 @@ data class SettingConfigModel(
     var city: String = "",
     var logo: Int = 0,
     var languages: String = "",
-    var profileSyncFrequency: Int, //count in month
+    var profileSyncFrequency: Int,
     var questsSyncFrequency: Int,
     var notificationsEnabled: Boolean = true,
     var eventNotificationsFrequency: Int,
     var lessonsAlarmTime: String = "00:00",
     var lessonsAlarmDays: Set<String> = emptySet()
 ) {
-
+    companion object {
         fun defaultLight() = SettingConfigModel(
             profileSyncFrequency = 1,
             questsSyncFrequency = 1,
@@ -39,20 +39,20 @@ data class SettingConfigModel(
 
         fun fromMap(map: Map<String, Any>): SettingConfigModel {
             return SettingConfigModel(
-                tpovId = map["tpovId"] as Int,
-                login = map["login"] as? String ?: this.login,
-                password = map["password"] as? String ?: this.password,
-                name = map["name"] as? String ?: this.name,
-                nickname = map["nickname"] as? String ?: this.nickname,
-                nicknameColor = map["nicknameColor"] as? Int ?: this.nicknameColor,
-                birthday = map["birthday"] as? String ?: this.birthday,
-                city = map["city"] as? String ?: this.city,
-                logo = (map["logo"] as? Long)?.toInt() ?: this.logo,
+                tpovId = map["tpovId"] as? Int ?: 0,
+                login = map["login"] as? String ?: "",
+                password = map["password"] as? String ?: "",
+                name = map["name"] as? String ?: "",
+                nicknameColor = map["nicknameColor"] as? Int ?: 1,
+                nickname = map["nickname"] as? String ?: "",
+                birthday = map["birthday"] as? String ?: "",
+                city = map["city"] as? String ?: "",
+                logo = (map["logo"] as? Long)?.toInt() ?: 0,
                 languages = map["languages"] as? String ?: "",
-                profileSyncFrequency = map["profileSyncFrequency"] as? Int ?: defaultMiddle().profileSyncFrequency,
-                questsSyncFrequency = map["questsSyncFrequency"] as? Int ?: defaultMiddle().questsSyncFrequency,
-                notificationsEnabled = map["notificationsEnabled"] as? Boolean ?: this.notificationsEnabled,
-                eventNotificationsFrequency = map["eventNotificationsFrequency"] as? Int ?: defaultMiddle().eventNotificationsFrequency,
+                profileSyncFrequency = map["profileSyncFrequency"] as? Int ?: 1,
+                questsSyncFrequency = map["questsSyncFrequency"] as? Int ?: 1,
+                notificationsEnabled = map["notificationsEnabled"] as? Boolean ?: true,
+                eventNotificationsFrequency = map["eventNotificationsFrequency"] as? Int ?: 1,
                 lessonsAlarmTime = map["lessonsAlarmTime"] as? String ?: "00:00",
                 lessonsAlarmDays = (map["lessonsAlarmDays"] as? List<String>)?.toSet() ?: emptySet()
             )
@@ -61,21 +61,22 @@ data class SettingConfigModel(
 
     fun toMap(): Map<String, Any> {
         return mapOf(
-            "tpovId" to this.tpovId,
-            "login" to this.login,
-            "password" to this.password,
-            "name" to this.name,
-            "nickname" to this.nickname,
-            "nicknameColor" to this.nicknameColor,
-            "birthday" to this.birthday,
-            "city" to this.city,
-            "logo" to this.logo,
-            "languages" to this.languages,
-            "profileSyncFrequency" to this.profileSyncFrequency,
-            "questsSyncFrequency" to this.questsSyncFrequency,
-            "notificationsEnabled" to this.notificationsEnabled,
-            "eventNotificationsFrequency" to this.eventNotificationsFrequency,
-            "lessonsFrequencyTime" to this.lessonsFrequencyTime,
-            "lessonsFrequencyDays" to this.lessonsFrequencyDays.toList()
+            "tpovId" to tpovId,
+            "login" to login,
+            "password" to password,
+            "name" to name,
+            "nickname" to nickname,
+            "nicknameColor" to nicknameColor,
+            "birthday" to birthday,
+            "city" to city,
+            "logo" to logo,
+            "languages" to languages,
+            "profileSyncFrequency" to profileSyncFrequency,
+            "questsSyncFrequency" to questsSyncFrequency,
+            "notificationsEnabled" to notificationsEnabled,
+            "eventNotificationsFrequency" to eventNotificationsFrequency,
+            "lessonsAlarmTime" to lessonsAlarmTime,
+            "lessonsAlarmDays" to lessonsAlarmDays.toList()
         )
+    }
 }

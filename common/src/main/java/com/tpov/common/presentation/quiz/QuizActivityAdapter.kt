@@ -26,7 +26,6 @@ import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.databinding.ActivityQuizItemBinding
 import com.tpov.common.presentation.utils.ResizeAndCrop
 import com.tpov.log_api.logger.Logger
-import com.tpov.shop.CoastValues.CoastValuesNolics.COAST_SEND_QUIZ
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
 
@@ -111,7 +110,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.menu_send -> {
-                        showDialog(context, COAST_SEND_QUIZ, id)
+                        showDialog(context, 200, id)
                         true
                     }
 
@@ -208,12 +207,6 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 listener.onClick(quizEntity.id, chbTypeQuiz.isChecked)
             }
 
-            ratingBar.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP)
-                    showPopupInfo(quizEntity, event, POPUP_STARS, viewModel)
-                true
-            }
-
             tvName.visibility = View.VISIBLE
             tvTime.visibility = View.VISIBLE
             tvName.text = quizEntity.userName
@@ -248,13 +241,6 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             if (quizEntity.starsMaxLocal <= MAX_PERCENT_LIGHT_QUIZ_FULL) ratingBar.rating =
                 (quizEntity.starsMaxLocal.toFloat() / 50F)
             else ratingBar.rating = (((quizEntity.starsMaxLocal.toFloat() - 100F) / 20F) + 2F)
-
-            ratingBar.setOnTouchListener { view, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
-                    showPopupInfo(quizEntity, event, POPUP_STARS, viewModel)
-                }
-                true
-            }
 
             mainTitleButton.text = quizEntity.name
             mainTitleButton.setOnClickListener {
