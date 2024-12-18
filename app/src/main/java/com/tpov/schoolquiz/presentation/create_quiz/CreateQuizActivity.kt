@@ -29,11 +29,11 @@ import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.presentation.utils.DateUtil
+import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
-import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

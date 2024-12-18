@@ -86,4 +86,9 @@ class ErrorHandler(
         interactor.sendErrorRemote()
         onCloseScreen()
     }
+
+    fun errorTranslate() {
+        onShowToast("errorTranslate")
+        onCloseScreen()
+    }
 }

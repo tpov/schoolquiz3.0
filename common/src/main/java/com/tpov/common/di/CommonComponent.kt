@@ -7,6 +7,7 @@ import com.tpov.common.data.database.QuizDao
 import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.presentation.question.QuestionActivity
+import com.tpov.common.presentation.question.TranslateDialog
 import com.tpov.common.presentation.quiz.QuizFragment
 import dagger.BindsInstance
 import dagger.Component
@@ -23,6 +24,7 @@ interface CommonComponent {
     fun provideQuestionDao(): QuestionDao
     @OptIn(InternalCoroutinesApi::class)
     fun inject(mainFragment: QuizFragment)
+    fun inject(translateDialog: TranslateDialog)
 
     @Component.Factory
     interface Factory {

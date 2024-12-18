@@ -1,15 +1,22 @@
 package com.tpov.common.presentation.question
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.mlkit.nl.languageid.LanguageIdentification
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.Translator
+import com.google.mlkit.nl.translate.TranslatorOptions
 import com.tpov.common.CODE_EMPTY_ANSWER
 import com.tpov.common.CODE_MAX_SCORE_ANSWER
 import com.tpov.common.CODE_MIN_SCORE_ANSWER
 import com.tpov.common.COUNT_VARIATION_CODE_ANSWER
 import com.tpov.common.ErrorHandler
 import com.tpov.common.Interactor
+import com.tpov.common.LVL_GOOGLE_TRANSLATOR
 import com.tpov.common.MAX_DROP_ANSWER
+import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
@@ -19,11 +26,15 @@ import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.presentation.utils.LanguageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,7 +51,7 @@ class QuestionViewModel @Inject constructor(
 ) : AndroidViewModel(app) {
 
     var newAnswerOrder: Int = 0
-    var originalAnswerOrder: Int = 0
+    var originalAnswerOrder: String = ""
     var numQuestions: Int? = null
     var hardQuiz: Boolean? = null
     var idQuiz: Int? = null
@@ -50,12 +61,17 @@ class QuestionViewModel @Inject constructor(
     var codeAnswer = ""
 
     val unknownCurrentQuestion = -1
+    private val languageIdentifier = LanguageIdentification.getClient()
+    private var translator: Translator? = null
 
     val errorHandler = ErrorHandler(
         onCloseScreen = { _closeActivity.value = true },
         onShowToast = { _toastMessage.value = it },
         interactor
     )
+
+    private val _translateState = MutableStateFlow<TranslateState>(TranslateState.Initial)
+    val translateState = _translateState.asStateFlow()
 
     val result: StateFlow<Int?> get() = _result
     private val _result = MutableStateFlow<Int?>(unknownCurrentQuestion)
@@ -80,6 +96,9 @@ class QuestionViewModel @Inject constructor(
     private val _toastMessage = MutableStateFlow<String?>(null)
     val toastMessage: StateFlow<String?> = _toastMessage
 
+    private val _showTranslateDialog = MutableStateFlow<Boolean?>(null)
+    val showTranslateDialog: StateFlow<Boolean?> = _showTranslateDialog
+
     //--------------------------------------------USE CASES---------------------------------------------
 
     fun saveQuizResult() = viewModelScope.launch(Dispatchers.IO) {
@@ -103,14 +122,19 @@ class QuestionViewModel @Inject constructor(
 //        questionUseCase.saveQuestion(questionEntity)
 //    }
 
-    fun getQuestionList(languagesUser: String) = viewModelScope.launch(Dispatchers.IO) {
+    fun getQuestionList(lng: String) = viewModelScope.launch(Dispatchers.IO) {
+        val languagesUser = if (lng == "") Locale.getDefault().language
+        else lng
+        Log.d("wadasdaw", "languagesUser: $languagesUser")
         val filterQuestionByIdQuiz =
             questionUseCase.getQuestionByIdQuiz(idQuiz ?: errorHandler.notFoundInputData())
+        Log.d("wadasdaw", "filterQuestionByIdQuiz: $filterQuestionByIdQuiz")
         val filterQuestionByHardQuiz = filterQuestionByHardQuiz(
             filterQuestionByIdQuiz,
             hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()
         )
-        var filterQuestionByLanguage = filterQuestionByMainLanguageUser(filterQuestionByHardQuiz)
+        Log.d("wadasdaw", "filterQuestionByHardQuiz: $filterQuestionByHardQuiz")
+        var filterQuestionByLanguage = filterQuestionByMainLanguageUser(filterQuestionByHardQuiz, languagesUser)
         if (filterQuestionByLanguage.size < (numQuestions
                 ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz())
         )
@@ -119,22 +143,24 @@ class QuestionViewModel @Inject constructor(
                 languagesUser,
                 numQuestions ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
             )
-        if (filterQuestionByLanguage.isEmpty()) errorHandler.notFountQuestionByLanguageUser()
+        Log.d("wadasdaw", "filterQuestionByLanguage: $filterQuestionByLanguage")
+        Log.d("wadasdaw", "_questionList.value : ${_questionList.value}")
+        if (filterQuestionByLanguage.isEmpty()) _showTranslateDialog.value = true
         else _questionList.value = filterQuestionByLanguage.sortedBy { it.numQuestion }
+        Log.d("wadasdaw", "_questionList.value : ${_questionList.value}")
     }
 
     fun getQuestionDetailByIdQuiz() = viewModelScope.launch(Dispatchers.IO) {
-        _questionDetailList.value =
-            questionDetailUseCase.getQuestionDetailByIdQuiz(
-                idQuiz ?: errorHandler.notFoundInputData()
+        _questionDetailList.value = questionDetailUseCase.getQuestionDetailByIdQuiz(
+            idQuiz ?: errorHandler.notFoundInputData()
+        )?.filter { it.hardQuiz == hardQuiz } ?: listOf(
+            QuestionDetailEntity(
+                0, idQuiz ?: errorHandler.notFoundInputData(), getDataToday(),
+                CODE_EMPTY_ANSWER.toString()
+                    .repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
+                hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
             )
-                ?.filter { it.hardQuiz == hardQuiz } ?: listOf(
-                QuestionDetailEntity(
-                    0, idQuiz ?: errorHandler.notFoundInputData(), getDataToday(),
-                    "0".repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
-                    hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
-                )
-            )
+        )
     }
 
     fun saveQuestionDetail() = viewModelScope.launch(Dispatchers.IO) {
@@ -174,8 +200,11 @@ class QuestionViewModel @Inject constructor(
     ) =
         questionEntityList.filter { it.hardQuestion == hardQuiz }
 
-    private fun filterQuestionByMainLanguageUser(questionList: List<QuestionEntity>) =
-        questionList.filter { it.language == Locale.getDefault().language }
+    private fun filterQuestionByMainLanguageUser(
+        questionList: List<QuestionEntity>,
+        languagesUser: String
+    ) =
+        questionList.filter { it.language == languagesUser }
 
     private fun filterQuestionByOtherLanguageUser(
         questionList: List<QuestionEntity>,
@@ -299,4 +328,59 @@ class QuestionViewModel @Inject constructor(
         if (!codeAnswer.contains(CODE_EMPTY_ANSWER)) result()
     }
 
+    fun translateANDAddQuestion(question: QuestionEntity, toLang: String) {
+        Log.d("wadasdaw", "translateANDAddQuestion: $toLang")
+        viewModelScope.launch(Dispatchers.IO) {
+            val newQuestion = question
+            var answers = ""
+            question.nameAnswers.split(SPLIT_BETWEEN_ANSWERS).forEach { answer ->
+                answers += "${
+                    LanguageUtils.getLanguageShortCode(
+                        translateText(answer,question.language,toLang)
+                    )}$SPLIT_BETWEEN_ANSWERS"
+            }
+            newQuestion.nameQuestion = translateText(question.nameQuestion, question.language, toLang)
+            newQuestion.nameAnswers = answers
+            newQuestion.language = toLang
+            newQuestion.lvlTranslate = LVL_GOOGLE_TRANSLATOR
+            questionUseCase.insertQuestion(newQuestion)
+        }
+    }
+
+    private suspend fun translateText(text: String, fromLang: String, toLang: String): String {
+        Log.d("TranslateDebug", "Starting translation from $fromLang to $toLang: '$text'")
+
+        return try {
+            withContext(Dispatchers.IO) {
+                val languagePair = "${fromLang}_$toLang"
+                Log.d("TranslateDebug", "Language pair: $languagePair")
+
+                val options = TranslatorOptions.Builder()
+                    .setSourceLanguage(fromLang)
+                    .setTargetLanguage(toLang)
+                    .build()
+
+                translator = Translation.getClient(options)
+
+                try {
+                    translator?.downloadModelIfNeeded()?.await()
+                    val result = translator?.translate(text)?.await() ?: text
+                    result
+                } catch (e: Exception) {
+                    errorHandler.errorTranslate()
+                    Log.e("TranslateError", "Translation error: ${e.message}")
+                    text
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("TranslateError", "General error", e)
+            errorHandler.errorTranslate()
+            text
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        translator?.close()
+    }
 }

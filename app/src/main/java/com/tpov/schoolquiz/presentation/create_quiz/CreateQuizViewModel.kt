@@ -18,8 +18,8 @@ import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.utils.BitmapUtil
+import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.presentation.core.LanguageUtils
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

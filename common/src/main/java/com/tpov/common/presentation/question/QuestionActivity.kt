@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.DragEvent
@@ -34,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val REQUEST_CODE_CHEAT = 0
@@ -76,13 +78,31 @@ class QuestionActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this, viewModelFactory)[QuestionViewModel::class.java]
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         supportActionBar?.hide()
-        actionBarSettings()
 
+        actionBarSettings()
+        hideSystemUI()
         initView()
         synthInputData()
         loadQuizData()
         showQuestion()
         makeButtonsDraggable()
+        initTranslateDialog()
+    }
+
+    private fun hideSystemUI() {
+        window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
     }
 
     private fun initView() {
@@ -111,9 +131,7 @@ class QuestionActivity : AppCompatActivity() {
             viewModel.quiz.collect {
                 it?.let {
                     viewModel.initQuizValues()
-                    viewModel.getQuestionList(
-                        languageUser ?: viewModel.errorHandler.notFoundInputData().toString()
-                    )
+                    viewModel.getQuestionList(languageUser!!)
                     viewModel.questionList.collect { questionList ->
                         questionList?.let {
                             viewModel.getQuestionDetailByIdQuiz()
@@ -123,13 +141,25 @@ class QuestionActivity : AppCompatActivity() {
                                     viewModel.questionDetail.collect { questionDetail ->
                                         questionDetail?.let {
                                             viewModel.initQuestionValues()
-                                            initDefaultView()
+                                            withContext(Dispatchers.Main) {
+                                                initDefaultView()
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private fun initTranslateDialog() {
+        CoroutineScope(Dispatchers.Main).launch {
+            viewModel.showTranslateDialog.collect {
+                if (it == true) {
+                    TranslateDialog().show(supportFragmentManager, "translate_dialog")
                 }
             }
         }
@@ -301,7 +331,7 @@ class QuestionActivity : AppCompatActivity() {
         setupTextViewForDrop()
 
         viewModel.originalAnswerOrder =
-            paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER).toInt()
+            paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER)
         viewModel.newAnswerOrder = newAnswerOrder
     }
 
@@ -325,8 +355,7 @@ class QuestionActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.originalAnswerOrder =
-            paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER).toInt()
+        viewModel.originalAnswerOrder = paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER)
         viewModel.newAnswerOrder = newAnswerOrder
     }
 

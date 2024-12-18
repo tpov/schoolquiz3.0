@@ -41,12 +41,15 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.12.0")
+    implementation ("androidx.fragment:fragment-ktx:1.6.2")
 
     // Room dependencies
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("com.google.firebase:firebase-functions-ktx:21.0.0")
     implementation(project(":log-api"))
     implementation(project(":log-api"))
+    implementation("com.google.mlkit:translate:17.0.3")
+    implementation("com.google.mlkit:language-id:17.0.6")
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
 

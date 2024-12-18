@@ -26,7 +26,7 @@ data class QuestionEntity(
     val answer: Int = 0,
 
     @ColumnInfo(name = "nameAnswers")
-    val nameAnswers: String = "",
+    var nameAnswers: String = "",
 
     @ColumnInfo(name = "hardQuestion")
     val hardQuestion: Boolean = false,
