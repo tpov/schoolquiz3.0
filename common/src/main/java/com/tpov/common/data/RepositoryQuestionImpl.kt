@@ -2,16 +2,24 @@ package com.tpov.common.data
 
 import android.net.Uri
 import android.util.Log
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.functions
 import com.google.firebase.storage.FirebaseStorage
+import com.tpov.common.EVENT_QUIZ_ARENA
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.remote.QuestionRemote
 import com.tpov.common.domain.repository.RepositoryQuestion
 import kotlinx.coroutines.tasks.await
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import java.io.File
 import javax.inject.Inject
 
@@ -21,6 +29,7 @@ class RepositoryQuestionImpl @Inject constructor(
     private val storage: FirebaseStorage
 ) : RepositoryQuestion {
 
+    private val functions = Firebase.functions
     private val baseCollection = firestore.collection("questions")
 
     override suspend fun fetchQuestion(
@@ -63,7 +72,13 @@ class RepositoryQuestionImpl @Inject constructor(
         questionDao.insertQuestion(questionEntity)
     }
 
-    override suspend fun pushQuestion(questionEntity: QuestionRemote, event: Int, idQuiz: Int) {
+    override suspend fun pushQuestion(
+        questionEntity: QuestionRemote,
+        event: Int,
+        idQuiz: Int,
+        isMainLanguageQuiz: Boolean,
+        toLang: String
+    ) {
         questionEntity.pathPictureQuestion?.let { uploadPhotoToServer(it) }
 
         val docRef = baseCollection
@@ -75,11 +90,43 @@ class RepositoryQuestionImpl @Inject constructor(
             FirebaseRequestInterceptor.executeWithChecksSingleTask {
                 docRef.set(questionEntity)
             }.await()
+            if (isMainLanguageQuiz) translateQuestion(questionEntity, idQuiz, event >= EVENT_QUIZ_ARENA, toLang)
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushing question", e)
         }
     }
 
+    private fun translateQuestion(question: QuestionRemote, idQuiz: Int, usePaidTranslation: Boolean, toLang: String) {
+        val client = OkHttpClient()
+
+        val json = JSONObject().apply {
+            put("question", question)
+            put("idQuiz", idQuiz)
+            put("usePaidTranslation", usePaidTranslation)
+            put("toLang", toLang)
+        }
+
+        val requestBody = json.toString()
+            .toRequestBody("application/json".toMediaType())
+
+        val request = Request.Builder()
+            .url("https://question-translate-762375057396-us-central1.run.app/translate-question")
+            .post(requestBody)
+            .build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val responseData = response.body?.string()
+                    Log.e("Translation", "responseData: $responseData")
+                } else {
+                    Log.e("Translation", "Error: ${response.code}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("Translation", "Error", e)
+        }
+    }
     override suspend fun updateQuestion(questionEntity: QuestionEntity) {
         questionDao.updateQuestion(questionEntity)
     }

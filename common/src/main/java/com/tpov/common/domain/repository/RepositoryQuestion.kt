@@ -14,7 +14,13 @@ interface RepositoryQuestion {
 
     suspend fun getQuestionByIdQuiz(idQuiz: Int): List<QuestionEntity>
     suspend fun saveQuestion(questionEntity: QuestionEntity)
-    suspend fun pushQuestion(questionEntity: QuestionRemote, event: Int,idQuiz: Int)
+    suspend fun pushQuestion(
+        questionEntity: QuestionRemote,
+        event: Int,
+        idQuiz: Int,
+        isMainLanguageQuiz: Boolean,
+        toLang: String
+    )
     suspend fun updateQuestion(questionEntity: QuestionEntity)
     suspend fun deleteQuestionByIdQuiz(idQuiz: Int)
     suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, typeId: Int)

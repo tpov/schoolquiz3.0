@@ -29,8 +29,8 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         repositoryQuestion.saveQuestion(questionEntity)
     }
 
-    suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int, idQuiz: Int) {
-        repositoryQuestion.pushQuestion(questionEntity.toQuestionRemote(), event, questionEntity.idQuiz)
+    suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int, mainLanguageQuiz: String) {
+        repositoryQuestion.pushQuestion(questionEntity.toQuestionRemote(), event, questionEntity.idQuiz, mainLanguageQuiz)
     }
 
     suspend fun updateQuestion(questionEntity: QuestionEntity) {
