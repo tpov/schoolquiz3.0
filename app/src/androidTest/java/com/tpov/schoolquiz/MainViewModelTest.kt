@@ -108,19 +108,19 @@ class CreateQuizIntegrationTest {
 
         kotlinx.coroutines.delay(0) // для получения анонимного токена
         structureUseCase.logger(0)
-        viewModel.pushTheQuiz(
+        viewModel.pushTheQuest(
             Quiz1.structureCategoryDataEntity,
             Quiz1.quizEntity1,
             Quiz1.questionsEntity
         )
         structureUseCase.logger(1)
-        viewModel.pushTheQuiz(
+        viewModel.pushTheQuest(
             Quiz3.structureCategoryDataEntityAfrica,
             Quiz3.quizEntity3,
             Quiz3.questionsEntityAfrica
         )
         structureUseCase.logger(2)
-        viewModel.pushTheQuiz(
+        viewModel.pushTheQuest(
             Quiz4.structureCategoryDataEntityNorthAmerica,
             Quiz4.quizEntity4,
             Quiz4.questionsEntityNorthAmerica

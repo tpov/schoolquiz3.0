@@ -31,6 +31,7 @@ import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.TIME_QUESTION
 import com.tpov.common.databinding.ActivityQuestionBinding
 import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -49,6 +50,7 @@ private const val REQUEST_CODE_CHEAT = 0
  * To save the session, many variables and encodings are used that are made from objects in one line,
  * this allows you to have the entire progress of the passage, save it and restore it.
  */
+@Logger
 @InternalCoroutinesApi
 class QuestionActivity : AppCompatActivity() {
 
@@ -82,11 +84,25 @@ class QuestionActivity : AppCompatActivity() {
         actionBarSettings()
         hideSystemUI()
         initView()
+        setOnClickListener()
         synthInputData()
         loadQuizData()
         showQuestion()
         makeButtonsDraggable()
         initTranslateDialog()
+    }
+
+    private fun setOnClickListener() {
+        buttons4.forEach { button ->
+            button.setOnClickListener {
+                viewModel.checkAnswer(listOf(button.tag as Int), true)
+            }
+        }
+
+        binding.cheatButton.setOnClickListener {
+
+        }
+
     }
 
     private fun hideSystemUI() {
@@ -167,7 +183,7 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun initDefaultView() {
         visibleCheatButton(
-            viewModel.hardQuiz ?: viewModel.errorHandler.notFoundInputData().toString().toBoolean()
+            viewModel.hardQuiz ?: viewModel.errorHandler.notFoundInputData()
         )
     }
 
@@ -175,32 +191,37 @@ class QuestionActivity : AppCompatActivity() {
     private fun showQuestion() {
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.currentQuestion.collect { currentQuestion ->
-                if (currentQuestion != null && currentQuestion != viewModel.unknownCurrentQuestion) {
-                    val questionText =
-                        viewModel.questionList.value?.get(currentQuestion)?.nameQuestion
-                    val answer = viewModel.questionList.value?.get(currentQuestion)?.answer
-                    val answersName =
-                        viewModel.questionList.value?.get(currentQuestion)?.nameAnswers
-                    val is4Button = questionText?.let { doter.containsMatchIn(it) } == true
-
-                    val is8Button = questionText?.let { doter.containsMatchIn(it) } == true
-                    if (!is8Button) show4Answers(answer, answersName)
-                    else show8Answers(answer, answersName)
+                if (currentQuestion != null) {
+                    val questionText = currentQuestion.nameQuestion
+                    val answer = currentQuestion.answer
+                    val answersName =currentQuestion.nameAnswers
+                    val is8Button = questionText.let { doter.containsMatchIn(it) }
+                    showViewByTypeQuestion(is8Button, answer, answersName)
                     startTimer(is8Button)
 
-                    binding.tvQuestionText.text = questionText
+                    if (viewModel.hardQuiz == true) binding.llLifeGold.visibility = View.VISIBLE
+                    else binding.llLife.visibility = View.VISIBLE
 
-                    binding.imvQuestion.setImageResource(
+                    binding.tvQuestionText.text = questionText
+                    binding.imvPhotoQuestion.setImageResource(
                         resources.getIdentifier(
-                            viewModel.questionList.value?.get(
-                                viewModel.currentQuestion.value ?: 0
-                            )?.pathPictureQuestion,
-                            "drawable",
-                            packageName
+                            currentQuestion.pathPictureQuestion, "drawable", packageName
                         )
                     )
                 }
             }
+        }
+    }
+
+    private fun showViewByTypeQuestion(is8Button: Boolean, answer: Int, answersName: String) {
+        if (is8Button) {
+            binding.ll8Answer.visibility = View.VISIBLE
+            binding.ll4Answer.visibility = View.GONE
+            show8Answers(answer, answersName)
+        } else {
+            binding.ll8Answer.visibility = View.GONE
+            binding.ll4Answer.visibility = View.VISIBLE
+            show4Answers(answer, answersName)
         }
     }
 

@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.Core
 import com.tpov.common.Core.tpovIdFlow
+import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
+import com.tpov.common.SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG
 import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
@@ -32,7 +34,7 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.util.Locale
 import javax.inject.Inject
-import javax.inject.Provider
+
 @Logger
 @OptIn(FlowPreview::class)
 class MainViewModel @Inject constructor(
@@ -62,12 +64,19 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             var previousProfile: ProfileEntity? = null
 
-            combine(profileUseCase.getProfileFlow() ?: flowOf(null), tpovIdFlow) { profile, currentTpovId ->
-                profile to currentTpovId }
+            combine(
+                profileUseCase.getProfileFlow() ?: flowOf(null),
+                tpovIdFlow
+            ) { profile, currentTpovId ->
+                profile to currentTpovId
+            }
                 .debounce(500)
                 .collect { (profile, currentTpovId) ->
 
-                    Log.d("init", "previousProfile: $previousProfile, profile: $profile, currentTpovId: $currentTpovId")
+                    Log.d(
+                        "init",
+                        "previousProfile: $previousProfile, profile: $profile, currentTpovId: $currentTpovId"
+                    )
                     if ((profile != previousProfile) && currentTpovId != 0 || (profile != previousProfile) || profile == null) {
                         Log.d("init", "profile: $profile")
                         _profileState.value = profile
@@ -89,7 +98,7 @@ class MainViewModel @Inject constructor(
         }
 
 
-    fun updateProfile(profileEntity: ProfileEntity) = viewModelScope.launch(Dispatchers.Default){
+    fun updateProfile(profileEntity: ProfileEntity) = viewModelScope.launch(Dispatchers.Default) {
         profileUseCase.updateProfile(profileEntity)
     }
 
@@ -251,7 +260,7 @@ class MainViewModel @Inject constructor(
     private suspend fun pushStructureCategory(structureCategoryDataEntity: StructureCategoryDataEntity) =
         quizUseCase.pushStructureCategory(structureCategoryDataEntity)
 
-    suspend fun pushTheQuiz(
+    suspend fun pushTheQuest(
         structureCategoryDataEntity: StructureCategoryDataEntity,
         quizEntity: QuizEntity,
         questionsEntity: ArrayList<QuestionEntity>
@@ -262,36 +271,63 @@ class MainViewModel @Inject constructor(
         val oldCategoryId = newStructureCategory.oldCategoryId
         val oldSubCategoryId = newStructureCategory.oldSubCategoryId
         val oldSubsubCategoryId = newStructureCategory.oldSubsubCategoryId
-        Log.d("pushTheQuiz", newStructureCategory.toString())
+
         quizEntity.id = idQuiz
         quizEntity.event = eventQuiz
         quizEntity.idCategory = oldCategoryId
         quizEntity.idSubcategory = oldSubCategoryId
         quizEntity.idSubsubcategory = oldSubsubCategoryId
 
+        val mainLanguageQuiz = quizEntity.languages
+            .split(SPLIT_BETWEEN_LANGUAGES)
+            .map { it.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG) }
+            .maxBy { it[1].toInt() }[0]
+
         pushQuiz(quizEntity)
-        Log.d("pushTheQuiz", "pushQuiz questionsEntity ${questionsEntity.size}")
+        maybePushQuestionForTranslate(questionsEntity, eventQuiz, eventQuiz, mainLanguageQuiz)
+
         questionsEntity.forEach {
-            Log.d("pushTheQuiz", "$it")
+
             val question = it.copy(idQuiz = idQuiz)
             pushQuestion(question, eventQuiz, idQuiz)
-            Log.d("pushTheQuiz", "pushQuestion")
-        }
 
-        Log.d("pushTheQuiz", "End")
+        }
     }
 
-    fun syncProfile()= viewModelScope.launch(Dispatchers.Default) {
+    fun maybePushQuestionForTranslate(
+        questionsEntity: ArrayList<QuestionEntity>,
+        idQuiz: Int,
+        event: Int,
+        mainLanguageQuiz: String
+    ) {
+        val mainQuestions = questionsEntity.filter { it.language == mainLanguageQuiz }
+        mainQuestions.forEach { question ->
+            viewModelScope.launch(Dispatchers.IO) {
+                val localLanguagesQuestions: Set<String> = questionsEntity.filter {
+                    it.hardQuestion == question.hardQuestion
+                 && it.numQuestion == question.numQuestion
+                 && it.idQuiz == idQuiz
+                }.map { it.language }.toSet()
+
+                questionUseCase.pushQuestionForTranslate(
+                    question, idQuiz, localLanguagesQuestions, event
+                )
+            }
+        }
+    }
+
+    fun syncProfile() = viewModelScope.launch(Dispatchers.Default) {
 
         profileUseCase.syncProfile()
     }
+
     private suspend fun pushQuiz(quizEntity: QuizEntity) {
         quizUseCase.pushQuiz(quizEntity)
     }
 
     private suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int, idQuiz: Int) {
         Log.d("pushTheQuiz", "pushingQuestion")
-        questionUseCase.pushQuestion(questionEntity, event, idQuiz)
+        questionUseCase.pushQuestion(questionEntity, event)
     }
 
     suspend fun insertQuiz(quizEntity: QuizEntity) {

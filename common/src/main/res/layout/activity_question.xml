@@ -29,7 +29,7 @@
     <TextView
         android:id="@+id/tvTimer"
         android:layout_width="wrap_content"
-        android:layout_height="45dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:background="@drawable/back_item_main"
         android:gravity="center"
@@ -48,7 +48,7 @@
         android:id="@+id/ll_percent"
         android:layout_width="80dp"
         android:layout_height="35dp"
-        android:layout_marginLeft="16dp"
+        android:layout_marginLeft="8dp"
         android:layout_marginTop="16dp"
         android:background="@drawable/back_item_main_unable"
         android:orientation="horizontal"
@@ -94,6 +94,7 @@
             android:layout_height="35dp"
             android:background="@drawable/back_item_main_unable"
             android:orientation="horizontal"
+            android:visibility="gone"
             app:layout_constraintEnd_toStartOf="@+id/ll_question"
             app:layout_constraintLeft_toRightOf="@+id/ll_percent"
             app:layout_constraintTop_toBottomOf="@+id/pbAnswer">
@@ -124,7 +125,7 @@
             android:layout_height="35dp"
             android:background="@drawable/back_item_main_unable"
             android:orientation="horizontal"
-            android:visibility="visible"
+            android:visibility="gone"
             app:layout_constraintEnd_toStartOf="@+id/ll_question"
             app:layout_constraintLeft_toRightOf="@+id/ll_percent"
             app:layout_constraintTop_toBottomOf="@+id/pbAnswer">
@@ -184,7 +185,7 @@
         android:id="@+id/ll_lest_question"
         android:layout_width="80dp"
         android:layout_height="35dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginRight="8dp"
         android:background="@drawable/back_item_main_unable"
         android:orientation="horizontal"
         android:layout_marginTop="16dp"
@@ -219,10 +220,10 @@
         android:layout_marginTop="16dp"
         android:maxHeight="400dp"
         android:layout_marginBottom="320dp"
-        android:background="@drawable/back_item_main"
+        android:background="@drawable/back_item_main_unable"
         android:gravity="center"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -231,7 +232,7 @@
         app:layout_constraintVertical_bias="0.3">
 
         <ImageView
-            android:id="@+id/imv_photo_qeustion"
+            android:id="@+id/imv_photo_question"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -261,7 +262,7 @@
         android:gravity="center|bottom"
         android:orientation="vertical"
         android:paddingBottom="8dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/cheat_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -281,13 +282,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <Button
@@ -298,13 +299,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -323,13 +324,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <Button
@@ -340,13 +341,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -365,13 +366,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <Button
@@ -382,13 +383,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -407,13 +408,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <Button
@@ -424,13 +425,13 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="8dp"
                 android:layout_marginBottom="8dp"
-                android:background="@drawable/back_item_main_true"
+                android:background="@drawable/back_item_main"
                 android:elevation="10dp"
                 android:gravity="center"
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
@@ -442,7 +443,7 @@
         android:gravity="center|bottom"
         android:orientation="vertical"
         android:paddingBottom="8dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/cheat_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -451,14 +452,14 @@
             android:id="@+id/button_1"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginLeft="16dp"
+            android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/back_item_main_true"
+            android:layout_marginRight="8dp"
+            android:background="@drawable/back_item_main"
             android:elevation="20dp"
             android:text="@string/true_button"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
 
@@ -466,16 +467,16 @@
             android:id="@+id/button_2"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginLeft="16dp"
+            android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/back_item_main_true"
+            android:layout_marginRight="8dp"
+            android:background="@drawable/back_item_main"
             android:elevation="10dp"
             android:gravity="center"
             android:padding="16dp"
             android:text="@string/false_button"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
 
@@ -483,16 +484,16 @@
             android:id="@+id/button_3"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginLeft="16dp"
+            android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/back_item_main_true"
+            android:layout_marginRight="8dp"
+            android:background="@drawable/back_item_main"
             android:elevation="10dp"
             android:gravity="center"
             android:padding="16dp"
             android:text="@string/false_button"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
 
@@ -500,17 +501,17 @@
             android:id="@+id/button_4"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginLeft="16dp"
+            android:layout_marginLeft="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginRight="16dp"
+            android:layout_marginRight="8dp"
             android:layout_marginBottom="8dp"
-            android:background="@drawable/back_item_main_true"
+            android:background="@drawable/back_item_main"
             android:elevation="10dp"
             android:gravity="center"
             android:padding="16dp"
             android:text="@string/false_button"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
     <ImageButton
@@ -518,7 +519,7 @@
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:layout_gravity="center"
-        android:layout_margin="4dp"
+        android:layout_margin="8dp"
         android:backgroundTint="#00FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

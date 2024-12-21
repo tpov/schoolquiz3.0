@@ -103,7 +103,7 @@ class SyncWorker @AssistedInject constructor(
                 Log.d("pushQuizData", "Получено ${questionList.size} вопросов для idQuiz: $idQuiz")
 
                 // Пушим данные викторины в viewModel
-                viewModel.pushTheQuiz(structureCategory, quiz!!, questionList)
+                viewModel.pushTheQuest(structureCategory, quiz!!, questionList)
                 Log.d("pushQuizData", "Данные викторины для idQuiz: $idQuiz успешно отправлены")
 
                 // Удаляем категорию структуры после успешного пуша

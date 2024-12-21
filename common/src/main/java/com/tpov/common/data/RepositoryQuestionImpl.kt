@@ -8,20 +8,26 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.functions
 import com.google.firebase.storage.FirebaseStorage
-import com.tpov.common.EVENT_QUIZ_ARENA
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.remote.QuestionRemote
 import com.tpov.common.domain.repository.RepositoryQuestion
 import kotlinx.coroutines.tasks.await
+import okhttp3.Dns
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 class RepositoryQuestionImpl @Inject constructor(
     private val questionDao: QuestionDao,
@@ -31,6 +37,40 @@ class RepositoryQuestionImpl @Inject constructor(
 
     private val functions = Firebase.functions
     private val baseCollection = firestore.collection("questions")
+    override suspend fun getAllMustTrnslLangsPaidQuestions(): Set<String> {
+        return try {
+            val snapshot = firestore
+                .collection("variable")
+                .document("translateConfig")
+                .get()
+                .await()
+
+            // Получаем массив языков из поля languagesGoogleTranslate
+            val languages = snapshot.get("languagesGoogleTranslate") as? List<String>
+            languages?.toSet() ?: emptySet()
+
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error getting paid translation languages", e)
+            emptySet()
+        }
+    }
+
+    override suspend fun getAllMustTrnslLangsFreeQuestions(): Set<String> {
+        return try {
+            val snapshot = firestore
+                .collection("variable")
+                .document("translateConfig")
+                .get()
+                .await()
+
+            val languages = snapshot.get("languagesFreeTranslate") as? List<String>
+            languages?.toSet() ?: emptySet()
+
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error getting free translation languages", e)
+            emptySet()
+        }
+    }
 
     override suspend fun fetchQuestion(
         event: Int,
@@ -55,7 +95,6 @@ class RepositoryQuestionImpl @Inject constructor(
 
             for (questionDocument in questionDocuments) {
                 val questionEntity = questionDocument.toObject(QuestionRemote::class.java)
-                Log.d("fetchQuestion", "questionEntity: ${questionEntity?.nameQuestion}")
                 questionEntity?.let { questionRemotes.add(it) }
                 questionEntity?.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) }
             }
@@ -75,9 +114,7 @@ class RepositoryQuestionImpl @Inject constructor(
     override suspend fun pushQuestion(
         questionEntity: QuestionRemote,
         event: Int,
-        idQuiz: Int,
-        isMainLanguageQuiz: Boolean,
-        toLang: String
+        idQuiz: Int
     ) {
         questionEntity.pathPictureQuestion?.let { uploadPhotoToServer(it) }
 
@@ -90,14 +127,26 @@ class RepositoryQuestionImpl @Inject constructor(
             FirebaseRequestInterceptor.executeWithChecksSingleTask {
                 docRef.set(questionEntity)
             }.await()
-            if (isMainLanguageQuiz) translateQuestion(questionEntity, idQuiz, event >= EVENT_QUIZ_ARENA, toLang)
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushing question", e)
         }
     }
 
-    private fun translateQuestion(question: QuestionRemote, idQuiz: Int, usePaidTranslation: Boolean, toLang: String) {
-        val client = OkHttpClient()
+    override suspend fun pushQuestionForTranslate(
+        question: QuestionRemote,
+        idQuiz: Int,
+        usePaidTranslation: Boolean,
+        toLang: String
+    ) {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .dns(object : Dns {
+                override fun lookup(hostname: String): List<InetAddress> {
+                    return Dns.SYSTEM.lookup(hostname).filterIsInstance<Inet4Address>()
+                }
+            }).build()
 
         val json = JSONObject().apply {
             put("question", question)
@@ -110,7 +159,7 @@ class RepositoryQuestionImpl @Inject constructor(
             .toRequestBody("application/json".toMediaType())
 
         val request = Request.Builder()
-            .url("https://question-translate-762375057396-us-central1.run.app/translate-question")
+            .url("https://question-translate-762375057396-uc.a.run.app/translate-question")
             .post(requestBody)
             .build()
 
@@ -126,6 +175,33 @@ class RepositoryQuestionImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e("Translation", "Error", e)
         }
+    }
+
+    override suspend fun remoteLangsQuestions(
+        hardQuestion: Boolean,
+        numQuestion: Int,
+        idQuiz: Int,
+        eventQuiz: Int
+    ): List<String> = suspendCoroutine { continuation ->
+        val languages = mutableListOf<String>()
+
+        baseCollection
+            .document("question$eventQuiz")
+            .collection(idQuiz.toString())
+            .whereEqualTo("hardQuestion", hardQuestion)
+            .whereEqualTo("numQuestion", numQuestion)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    document.getString("language")?.let {
+                        languages.add(it)
+                    }
+                }
+                continuation.resume(languages)
+            }
+            .addOnFailureListener { exception ->
+                continuation.resumeWithException(exception)
+            }
     }
     override suspend fun updateQuestion(questionEntity: QuestionEntity) {
         questionDao.updateQuestion(questionEntity)
@@ -209,7 +285,6 @@ class RepositoryQuestionImpl @Inject constructor(
             Log.e("FirebaseStorage", "Ошибка при загрузке фото", it)
         }
     }
-
 
 
     private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {

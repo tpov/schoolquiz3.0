@@ -28,7 +28,7 @@ data class QuestionRemote (
             hardQuestion = hardQuestion,
             idQuiz = idQuiz,
             language = language,
-            lvlTranslate = lvlTranslate,
+            lvlTranslate = lvlTranslate
         )
     }
 

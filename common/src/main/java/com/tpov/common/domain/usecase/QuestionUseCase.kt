@@ -19,6 +19,7 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         pathLanguage,
         idQuiz
     )
+
     suspend fun getQuestionByIdQuiz(idQuiz: Int): ArrayList<QuestionEntity> {
         val questionList = repositoryQuestion.getQuestionByIdQuiz(idQuiz)
         return ArrayList(questionList)
@@ -29,8 +30,43 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         repositoryQuestion.saveQuestion(questionEntity)
     }
 
-    suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int, mainLanguageQuiz: String) {
-        repositoryQuestion.pushQuestion(questionEntity.toQuestionRemote(), event, questionEntity.idQuiz, mainLanguageQuiz)
+    suspend fun pushQuestion(questionEntity: QuestionEntity, event: Int) {
+        repositoryQuestion.pushQuestion(
+            questionEntity.toQuestionRemote(),
+            event,
+            questionEntity.idQuiz
+        )
+    }
+
+    suspend fun pushQuestionForTranslate(
+        question: QuestionEntity,
+        idQuiz: Int,
+        localLangsQuestions: Set<String>,
+        eventQuiz: Int
+    ) {
+        val removeLangsQuestions = repositoryQuestion.remoteLangsQuestions(
+            question.hardQuestion, question.numQuestion, question.idQuiz, eventQuiz
+        ).toSet()
+        val allLangsQuestions = removeLangsQuestions + localLangsQuestions
+
+        val allMustPaidLangsQuestions = repositoryQuestion.getAllMustTrnslLangsPaidQuestions()
+        val allMustFreeLangsQuestions = repositoryQuestion.getAllMustTrnslLangsFreeQuestions()
+        val mustLangsPaidQuestions = allLangsQuestions.subtract(allMustPaidLangsQuestions)
+        val mustLangsFreeQuestions = allLangsQuestions.subtract(allMustFreeLangsQuestions)
+
+        mustLangsPaidQuestions.forEach { pushTranslation(question, idQuiz, true, it) }
+        mustLangsFreeQuestions.forEach { pushTranslation(question, idQuiz, false, it) }
+    }
+
+    private suspend fun pushTranslation(
+        question: QuestionEntity,
+        idQuiz: Int,
+        isPaid: Boolean,
+        toLang: String
+    ) {
+        repositoryQuestion.pushQuestionForTranslate(
+            question.toQuestionRemote(), idQuiz, isPaid, toLang
+        )
     }
 
     suspend fun updateQuestion(questionEntity: QuestionEntity) {

@@ -123,6 +123,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         setupAnimations()
         syncProfile()
         initData()
+
     }
 
     private fun initData() {

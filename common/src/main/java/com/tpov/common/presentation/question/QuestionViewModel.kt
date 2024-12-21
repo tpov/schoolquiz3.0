@@ -75,8 +75,8 @@ class QuestionViewModel @Inject constructor(
 
     val result: StateFlow<Int?> get() = _result
     private val _result = MutableStateFlow<Int?>(unknownCurrentQuestion)
-    val currentQuestion: StateFlow<Int?> get() = _currentQuestion
-    private val _currentQuestion = MutableStateFlow<Int?>(-1)
+    val currentQuestion: StateFlow<QuestionEntity?> get() = _currentQuestion
+    private val _currentQuestion = MutableStateFlow<QuestionEntity?>(null)
 
     val quiz: StateFlow<QuizEntity?> get() = _quiz
     private val _quiz = MutableStateFlow<QuizEntity?>(null)
@@ -125,29 +125,18 @@ class QuestionViewModel @Inject constructor(
     fun getQuestionList(lng: String) = viewModelScope.launch(Dispatchers.IO) {
         val languagesUser = if (lng == "") Locale.getDefault().language
         else lng
-        Log.d("wadasdaw", "languagesUser: $languagesUser")
-        val filterQuestionByIdQuiz =
-            questionUseCase.getQuestionByIdQuiz(idQuiz ?: errorHandler.notFoundInputData())
-        Log.d("wadasdaw", "filterQuestionByIdQuiz: $filterQuestionByIdQuiz")
+        val filterQuestionByIdQuiz = questionUseCase.getQuestionByIdQuiz(idQuiz ?: errorHandler.notFoundInputData())
         val filterQuestionByHardQuiz = filterQuestionByHardQuiz(
-            filterQuestionByIdQuiz,
-            hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()
+            filterQuestionByIdQuiz,hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()
         )
-        Log.d("wadasdaw", "filterQuestionByHardQuiz: $filterQuestionByHardQuiz")
         var filterQuestionByLanguage = filterQuestionByMainLanguageUser(filterQuestionByHardQuiz, languagesUser)
-        if (filterQuestionByLanguage.size < (numQuestions
-                ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz())
-        )
+        if (filterQuestionByLanguage.size < (numQuestions?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()))
             filterQuestionByLanguage = filterQuestionByOtherLanguageUser(
-                filterQuestionByHardQuiz,
-                languagesUser,
+                filterQuestionByHardQuiz,languagesUser,
                 numQuestions ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
             )
-        Log.d("wadasdaw", "filterQuestionByLanguage: $filterQuestionByLanguage")
-        Log.d("wadasdaw", "_questionList.value : ${_questionList.value}")
         if (filterQuestionByLanguage.isEmpty()) _showTranslateDialog.value = true
         else _questionList.value = filterQuestionByLanguage.sortedBy { it.numQuestion }
-        Log.d("wadasdaw", "_questionList.value : ${_questionList.value}")
     }
 
     fun getQuestionDetailByIdQuiz() = viewModelScope.launch(Dispatchers.IO) {
@@ -167,7 +156,7 @@ class QuestionViewModel @Inject constructor(
         questionDetailUseCase.saveQuestionDetail(
             QuestionDetailEntity(
                 0, idQuiz ?: errorHandler.notFoundQuizValue(), getDataToday(), codeAnswer,
-                hardQuiz ?: errorHandler.notFoundQuizValue().toString().toBoolean(), false
+                hardQuiz ?: errorHandler.notFoundQuizValue(), false
             )
         )
     }
@@ -194,6 +183,9 @@ class QuestionViewModel @Inject constructor(
 
     //--------------------------------------------OTHER FUN---------------------------------
 
+    fun initQuestionValues() {
+        _currentQuestion.value = questionList.value?.get(0)
+    }
     private fun filterQuestionByHardQuiz(
         questionEntityList: List<QuestionEntity>,
         hardQuiz: Boolean
@@ -226,10 +218,6 @@ class QuestionViewModel @Inject constructor(
 
     }
 
-    fun initQuestionValues() {
-        _currentQuestion.value = 0
-    }
-
     fun initQuestionDetail() {
         _questionDetail.value = questionDetailList.value?.find { questionDetail ->
             questionDetail.codeAnswer?.any { it == '0' } ?: false
@@ -260,15 +248,7 @@ class QuestionViewModel @Inject constructor(
     }?.average()?.toInt() ?: 0
 
     fun setNewCurrentQuestion(current: Int) {
-        _currentQuestion.value = current
-    }
-
-    fun setNextCurrentQuestion(current: Int) {
-        _currentQuestion.value = current
-    }
-
-    fun setPrefCurrentQuestion(current: Int) {
-        _currentQuestion.value = current
+        _currentQuestion.value = questionList.value?.get(current)
     }
 
     fun result() {
@@ -309,17 +289,17 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun setNextQuestion() {
-        if (currentQuestion.value?.plus(1)!! >= numQuestions!!) _springAnim.value = true
-        else setNewCurrentQuestion(currentQuestion.value?.plus(1)!!)
+        if (currentQuestion.value?.numQuestion!! >= numQuestions!!) _springAnim.value = true
+        else setNewCurrentQuestion(currentQuestion.value?.numQuestion!! + 1)
     }
 
     private fun setPrefQuestion() {
-        if (currentQuestion.value?.plus(1)!! <= 1) _springAnim.value = false
-        else setNewCurrentQuestion(currentQuestion.value?.minus(1)!!)
+        if (currentQuestion.value?.numQuestion!!.plus(1)!! <= 1) _springAnim.value = false
+        else setNewCurrentQuestion(currentQuestion.value?.numQuestion!!.minus(1)!!)
     }
 
     fun setCodeInCodeAnswer(score: Int) {
-        val index: Int = currentQuestion.value ?: errorHandler.errorGetNumQuestion()
+        val index = currentQuestion.value?.numQuestion ?: errorHandler.errorGetNumQuestion()
 
         codeAnswer = if (index < codeAnswer.length) {
             codeAnswer.substring(0, index) + score.toString() +
@@ -367,14 +347,14 @@ class QuestionViewModel @Inject constructor(
                     val result = translator?.translate(text)?.await() ?: text
                     result
                 } catch (e: Exception) {
-                    errorHandler.errorTranslate()
+                    errorHandler.errorTranslate<String>()
                     Log.e("TranslateError", "Translation error: ${e.message}")
                     text
                 }
             }
         } catch (e: Exception) {
             Log.e("TranslateError", "General error", e)
-            errorHandler.errorTranslate()
+            errorHandler.errorTranslate<String>()
             text
         }
     }

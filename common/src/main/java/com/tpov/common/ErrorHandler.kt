@@ -3,92 +3,63 @@ package com.tpov.common
 import com.tpov.common.data.model.local.QuizEntity
 
 class ErrorHandler(
-    private val onCloseScreen: () -> Unit,
-    private val onShowToast: (String) -> Unit,
-    private val interactor: Interactor
+    val onCloseScreen: () -> Unit,
+    val onShowToast: (String) -> Unit,
+    val interactor: Interactor
 ) {
-
-    fun notFoundQuiz(): QuizEntity {
-        onShowToast("notFoundQuiz")
-        interactor.notFoundQuiz()
+    inline fun <reified T> handleError(
+        message: String,
+        interactorAction: () -> Unit
+    ): T {
+        onShowToast(message)
+        interactorAction()
         interactor.sendErrorRemote()
         onCloseScreen()
-        return QuizEntity()
+        return getDefaultValue()
     }
 
-    fun notFoundInputData(): Int {
-        onShowToast("Input data not found")
-        interactor.notFoundInputData()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return 0
+    inline fun <reified T> getDefaultValue(): T = when (T::class) {
+        Int::class -> -1 as T
+        String::class -> "" as T
+        Boolean::class -> false as T
+        Float::class -> -1f as T
+        Double::class -> -1.0 as T
+        Long::class -> -1L as T
+        List::class -> emptyList<Any>() as T
+        Set::class -> emptySet<Any>() as T
+        Map::class -> emptyMap<Any, Any>() as T
+        QuizEntity::class -> QuizEntity() as T
+        Unit::class -> Unit as T
+        else -> null as T
     }
 
-    fun notFoundQuizValue(): Int {
-        onShowToast("Quiz value not found")
-        interactor.notFoundQuizValue()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return 0
-    }
+    inline fun <reified T> notFoundQuiz(): T =
+        handleError("notFoundQuiz") { interactor.notFoundQuiz() }
 
-    fun errorGetNumQuestion(): Int {
-        onShowToast("Error getting question number")
-        interactor.errorGetNumQuestion()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return 0
-    }
+    inline fun <reified T> notFoundInputData(): T =
+        handleError("Input data not found") { interactor.notFoundInputData() }
 
-    fun notFoundNumberQuestionByTypeHardQuiz(): Int {
-        onShowToast("Questions not found for this quiz type")
-        interactor.notFoundNumberQuestionByTypeHardQuiz()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return 0
-    }
+    inline fun <reified T> notFoundQuizValue(): T =
+        handleError("Quiz value not found") { interactor.notFoundQuizValue() }
 
-    fun notFoundInitTypeHardQuestion(): Boolean {
-        onShowToast("Quiz type not initialized")
-        interactor.notFoundInitTypeHardQuestion()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return false
-    }
+    inline fun <reified T> errorGetNumQuestion(): T =
+        handleError("Error getting question number") { interactor.errorGetNumQuestion() }
 
-    private fun handleQuizNotFound(): Int {
-        onShowToast("handleQuizNotFound")
-        interactor.handleQuizNotFound()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return 0
-    }
+    inline fun <reified T> notFoundNumberQuestionByTypeHardQuiz(): T =
+        handleError("Questions not found for this quiz type") {
+            interactor.notFoundNumberQuestionByTypeHardQuiz()
+        }
 
-    private fun handleInputDataNotFound(): Int {
-        onShowToast("handleInputDataNotFound")
-        interactor.handleInputDataNotFound()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return 0
-    }
+    inline fun <reified T> notFoundInitTypeHardQuestion(): T =
+        handleError("Quiz type not initialized") {
+            interactor.notFoundInitTypeHardQuestion()
+        }
 
-    private fun handleQuestionNotFound(): Int {
-        onShowToast("handleQuestionNotFound")
-        interactor.handleQuestionNotFound()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-        return 0
-    }
+    inline fun <reified T> notFountQuestionByLanguageUser(): T =
+        handleError("Question not found for user language") {
+            interactor.notFountQuestionByLanguageUser()
+        }
 
-    fun notFountQuestionByLanguageUser() {
-        onShowToast("handleQuestionNotFound")
-        interactor.notFountQuestionByLanguageUser()
-        interactor.sendErrorRemote()
-        onCloseScreen()
-    }
-
-    fun errorTranslate() {
-        onShowToast("errorTranslate")
-        onCloseScreen()
-    }
+    inline fun <reified T> errorTranslate(): T =
+        handleError("Error in translation") { }
 }
