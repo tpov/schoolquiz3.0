@@ -228,9 +228,19 @@ class QuestionViewModel @Inject constructor(
         )
     }
 
-    private fun calculateResultByCodeAnswer(codeAnswerThis: String) = codeAnswerThis.map {
+    fun calculateResultByCodeAnswer(codeAnswerThis: String) = codeAnswerThis.map {
         (((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()) / COUNT_VARIATION_CODE_ANSWER) * 100)
     }.average().toInt()
+
+    fun calculatePercentByCodeAnswer(): Int {
+        return codeAnswer
+            .filter { it != CODE_EMPTY_ANSWER }
+            .map {(((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()).toDouble() / COUNT_VARIATION_CODE_ANSWER) * 100)
+            }
+            .average()
+            .toInt()
+    }
+
 
     private fun calculateStarsMaxLocal(): Int {
         val list = questionDetailList.value
@@ -357,6 +367,9 @@ class QuestionViewModel @Inject constructor(
             errorHandler.errorTranslate<String>()
             text
         }
+    }
+    fun countNonEmptyAnswers(): Int {
+        return codeAnswer.count { it != '0' }
     }
 
     override fun onCleared() {

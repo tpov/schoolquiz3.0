@@ -32,11 +32,20 @@ object FirebaseRequestInterceptor {
     fun <T> executeWithChecksSingleTask(request: () -> Task<T>): Task<T> {
         val taskCompletionSource = TaskCompletionSource<T>()
 
+        // Создаем флаг для отслеживания состояния
+        var isResultSet = false
+
         requestQueue.add {
             request().addOnSuccessListener { result ->
-                taskCompletionSource.setResult(result)
+                if (!isResultSet) {
+                    isResultSet = true
+                    taskCompletionSource.setResult(result)
+                }
             }.addOnFailureListener { exception ->
-                taskCompletionSource.setException(exception)
+                if (!isResultSet) {
+                    isResultSet = true
+                    taskCompletionSource.setException(exception)
+                }
             }
         }
         processQueue()

@@ -233,7 +233,7 @@
 
         <ImageView
             android:id="@+id/imv_photo_question"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:padding="6dp"
@@ -248,7 +248,10 @@
             android:layout_marginEnd="4dp"
             android:elevation="10dp"
             android:gravity="center"
-            android:padding="16dp"
+            android:paddingBottom="16dp"
+            android:paddingTop="8dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
             android:text="ERROR  ERROR ERROR ERROR ERROR ERRORERROR  ERROR ERROR ERROR "
             android:textColor="@color/white"
             android:textSize="20sp" />
@@ -263,7 +266,7 @@
         android:orientation="vertical"
         android:paddingBottom="8dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/cheat_button"
+        app:layout_constraintBottom_toTopOf="@+id/b_cheat"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
@@ -444,7 +447,7 @@
         android:orientation="vertical"
         android:paddingBottom="8dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/cheat_button"
+        app:layout_constraintBottom_toTopOf="@+id/b_cheat"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
@@ -515,7 +518,7 @@
             android:textStyle="bold" />
     </LinearLayout>
     <ImageButton
-        android:id="@+id/cheat_button"
+        android:id="@+id/b_cheat"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:layout_gravity="center"

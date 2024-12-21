@@ -1,5 +1,6 @@
 package com.tpov.common.data
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.Firebase
@@ -32,7 +33,8 @@ import kotlin.coroutines.suspendCoroutine
 class RepositoryQuestionImpl @Inject constructor(
     private val questionDao: QuestionDao,
     private val firestore: FirebaseFirestore,
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val context: Context
 ) : RepositoryQuestion {
 
     private val functions = Firebase.functions
@@ -45,7 +47,6 @@ class RepositoryQuestionImpl @Inject constructor(
                 .get()
                 .await()
 
-            // Получаем массив языков из поля languagesGoogleTranslate
             val languages = snapshot.get("languagesGoogleTranslate") as? List<String>
             languages?.toSet() ?: emptySet()
 
@@ -288,25 +289,53 @@ class RepositoryQuestionImpl @Inject constructor(
 
 
     private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
-        Log.d("FirebaseRequestInterceptor", "downloadPhotoToLocalPath")
-        return if (pathPhoto.isNotBlank()) {
-            val storageRef = storage.reference
-            val photoRef = storageRef.child(pathPhoto)
-            val localFile = File(pathPhoto, File(pathPhoto).name)
+        Log.d("PhotoDebug", "Starting download: $pathPhoto")
 
-            try {
-                FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                    photoRef.getFile(localFile)
-                }.await()
+        if (pathPhoto.isBlank()) {
+            Log.d("PhotoDebug", "Path is blank")
+            return null
+        }
 
-                localFile.absolutePath
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
+        // Убедимся что путь содержит только имя файла
+        val fileName = if (pathPhoto.contains("/")) {
+            pathPhoto.substringAfterLast("/")
+        } else {
+            pathPhoto
+        }
+
+        val photoDir = File(context.filesDir, "questionPhoto").apply {
+            if (!exists()) {
+                val created = mkdirs()
+                Log.d("PhotoDebug", "Created directory: $created")
             }
-        } else ""
-    }
+        }
 
+        val localFile = File(photoDir, fileName)
+        Log.d("PhotoDebug", "Local file path: ${localFile.absolutePath}")
+
+        try {
+            val storageRef = storage.reference
+            // Используем полный путь к файлу в Storage
+            val photoRef = storageRef.child("questionPhoto/$fileName")
+            Log.d("PhotoDebug", "Storage reference created for: questionPhoto/$fileName")
+
+            // Загружаем файл
+            FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                photoRef.getFile(localFile)
+            }.await()
+
+            if (localFile.exists() && localFile.length() > 0) {
+                Log.d("PhotoDebug", "File downloaded successfully: ${localFile.length()} bytes")
+                return localFile.absolutePath
+            } else {
+                Log.e("PhotoDebug", "File download failed: exists=${localFile.exists()}, size=${localFile.length()}")
+                return null
+            }
+        } catch (e: Exception) {
+            Log.e("PhotoDebug", "Download error", e)
+            return null
+        }
+    }
 
     private suspend fun deletePhotoFromServer(pathPhoto: String) {
         Log.d("FirebaseRequestInterceptor", "deletePhotoFromServer")

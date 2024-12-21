@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.DragEvent
 import android.view.View
 import android.view.WindowManager
@@ -20,6 +21,7 @@ import androidx.dynamicanimation.animation.DynamicAnimation
 import androidx.dynamicanimation.animation.SpringAnimation
 import androidx.dynamicanimation.animation.SpringForce
 import androidx.lifecycle.ViewModelProvider
+import com.bumptech.glide.Glide
 import com.tpov.common.ANIM_SPRING_VELOCITY_LEFT
 import com.tpov.common.ANIM_SPRING_VELOCITY_RIGHT
 import com.tpov.common.CODE_EMPTY_ANSWER
@@ -31,12 +33,14 @@ import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.TIME_QUESTION
 import com.tpov.common.databinding.ActivityQuestionBinding
 import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.common.presentation.utils.Values.context
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 private const val REQUEST_CODE_CHEAT = 0
@@ -86,10 +90,19 @@ class QuestionActivity : AppCompatActivity() {
         initView()
         setOnClickListener()
         synthInputData()
+        filledView()
         loadQuizData()
         showQuestion()
         makeButtonsDraggable()
         initTranslateDialog()
+    }
+
+    private fun filledView() {
+        binding.tvPercent.text = viewModel.calculatePercentByCodeAnswer().toString()
+        if (viewModel.hardQuiz == true) binding.tvPointsGoldLife.text = viewModel.life.toString()
+        else binding.tvPointsLife.text = viewModel.life.toString()
+        binding.tvNumQuestion.text = viewModel.questionList.value?.size.toString()
+        binding.tvLoad.text = viewModel.countNonEmptyAnswers().toString()
     }
 
     private fun setOnClickListener() {
@@ -99,7 +112,7 @@ class QuestionActivity : AppCompatActivity() {
             }
         }
 
-        binding.cheatButton.setOnClickListener {
+        binding.bCheat.setOnClickListener {
 
         }
 
@@ -191,23 +204,54 @@ class QuestionActivity : AppCompatActivity() {
     private fun showQuestion() {
         CoroutineScope(Dispatchers.Main).launch {
             viewModel.currentQuestion.collect { currentQuestion ->
-                if (currentQuestion != null) {
-                    val questionText = currentQuestion.nameQuestion
-                    val answer = currentQuestion.answer
-                    val answersName =currentQuestion.nameAnswers
+                currentQuestion?.let { question ->
+                    val questionText = question.nameQuestion
+                    val answer = question.answer
+                    val answersName = question.nameAnswers
                     val is8Button = questionText.let { doter.containsMatchIn(it) }
+
                     showViewByTypeQuestion(is8Button, answer, answersName)
                     startTimer(is8Button)
 
-                    if (viewModel.hardQuiz == true) binding.llLifeGold.visibility = View.VISIBLE
-                    else binding.llLife.visibility = View.VISIBLE
+                    // Показываем нужную панель жизней
+                    if (viewModel.hardQuiz == true) {
+                        binding.llLifeGold.visibility = View.VISIBLE
+                        binding.llLife.visibility = View.GONE
+                    } else {
+                        binding.llLife.visibility = View.VISIBLE
+                        binding.llLifeGold.visibility = View.GONE
+                    }
 
                     binding.tvQuestionText.text = questionText
-                    binding.imvPhotoQuestion.setImageResource(
-                        resources.getIdentifier(
-                            currentQuestion.pathPictureQuestion, "drawable", packageName
-                        )
-                    )
+
+                    // Обработка изображения
+                    question.pathPictureQuestion?.let { photoPath ->
+                        if (photoPath.isNotBlank()) {
+                            try {
+                                val photoDir = File(context.filesDir, "questionPhoto")
+                                val localFile = File(photoDir, File(photoPath).name)
+
+                                if (localFile.exists()) {
+                                    binding.imvPhotoQuestion.visibility = View.VISIBLE
+                                    Glide.with(this@QuestionActivity)
+                                        .load(localFile)
+                                     //   .placeholder(R.drawable.loading_placeholder) // Добавьте placeholder
+                                    //    .error(R.drawable.error_image)
+                                        .into(binding.imvPhotoQuestion)
+                                } else {
+                                    binding.imvPhotoQuestion.visibility = View.GONE
+                                    Log.d("Question", "Image file not found: $photoPath")
+                                }
+                            } catch (e: Exception) {
+                                binding.imvPhotoQuestion.visibility = View.GONE
+                                Log.e("Question", "Error loading image", e)
+                            }
+                        } else {
+                            binding.imvPhotoQuestion.visibility = View.GONE
+                        }
+                    } ?: run {
+                        binding.imvPhotoQuestion.visibility = View.GONE
+                    }
                 }
             }
         }
@@ -390,8 +434,8 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     private fun visibleCheatButton(it: Boolean) {
-        binding.cheatButton.isClickable = it
-        binding.cheatButton.isEnabled = it
+        binding.bCheat.isClickable = it
+        binding.bCheat.isEnabled = it
     }
 
     private fun springAnim(next: Boolean) = with(binding) {

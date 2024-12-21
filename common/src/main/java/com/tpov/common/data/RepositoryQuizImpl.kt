@@ -1,5 +1,6 @@
 package com.tpov.common.data
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.google.android.gms.tasks.TaskCompletionSource
@@ -13,7 +14,6 @@ import com.tpov.common.data.model.local.StructureCategoryDataEntity
 import com.tpov.common.data.model.local.fromJson
 import com.tpov.common.data.model.remote.QuizRemote
 import com.tpov.common.domain.repository.RepositoryQuiz
-import com.tpov.common.presentation.utils.Values.context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,7 +33,8 @@ import kotlin.coroutines.suspendCoroutine
 class RepositoryQuizImpl @Inject constructor(
     private val quizDao: QuizDao,
     private val firestore: FirebaseFirestore,
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val context: Context
 ) : RepositoryQuiz {
 
     private val baseCollection = firestore.collection("quizzes")
@@ -218,7 +219,13 @@ class RepositoryQuizImpl @Inject constructor(
             return
         }
 
-        val localFile = File(context.filesDir, pathPhoto)
+        // Создаем директорию для фото если её нет
+        val photoDir = File(context.filesDir, "questionPhotos").apply {
+            if (!exists()) mkdirs()
+        }
+
+        // Создаем файл в нужной директории
+        val localFile = File(photoDir, File(pathPhoto).name)
 
         if (!localFile.exists()) {
             Log.e("FirebaseStorage", "Файл не существует: ${localFile.absolutePath}")
@@ -249,7 +256,8 @@ class RepositoryQuizImpl @Inject constructor(
                 taskCompletionSource.task
             }
 
-            uploadTask() // Убрал return
+            FirebaseRequestInterceptor.executeWithChecksSingleTask(uploadTask).await()
+
         } catch (e: Exception) {
             Log.e("FirebaseStorage", "Ошибка при инициализации загрузки: ${e.message}", e)
             throw e
