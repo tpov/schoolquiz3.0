@@ -85,8 +85,6 @@ dependencies {
     implementation 'androidx.databinding:databinding-runtime:8.5.2'
     implementation 'com.google.mlkit:language-id-common:16.1.0'
 
-    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
-
     implementation 'com.google.mlkit:language-id:17.0.6'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation "org.jetbrains.kotlin:kotlin-parcelize-runtime:$kotlin_version"

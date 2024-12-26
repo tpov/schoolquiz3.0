@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.BITMAP_LOAD_MAX_HEIGHT
 import com.tpov.common.BITMAP_LOAD_MAX_WIDTH
+import com.tpov.common.EVENT_QUIZ_FOR_USER
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
@@ -186,8 +187,8 @@ class CreateQuizViewModel @Inject constructor(
         when (regime) {
             CreateQuizActivity.REGIME_CREATE_QUIZ -> {
                 val newIdQuiz = getNewIdLocalQuiz()
-                val updatedStructureCategoryData = structureCategoryDataEntity.copy(oldIdQuizId = newIdQuiz)
-                val updatedQuizIt = quizIt.copy(id = newIdQuiz)
+                val updatedStructureCategoryData = structureCategoryDataEntity.copy(oldIdQuizId = newIdQuiz, newEventId = EVENT_QUIZ_FOR_USER)
+                val updatedQuizIt = quizIt.copy(id = newIdQuiz, event = EVENT_QUIZ_FOR_USER)
                 questionsIt.replaceAll { it.copy(idQuiz = newIdQuiz) }
 
                 structureUseCase.insertStructureCategoryData(updatedStructureCategoryData)

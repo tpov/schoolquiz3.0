@@ -9,21 +9,19 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.functions
 import com.google.firebase.storage.FirebaseStorage
+import com.google.gson.Gson
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.remote.QuestionRemote
+import com.tpov.common.data.model.remote.TranslateRequest
 import com.tpov.common.domain.repository.RepositoryQuestion
 import kotlinx.coroutines.tasks.await
-import okhttp3.Dns
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import java.io.File
-import java.net.Inet4Address
-import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -119,11 +117,13 @@ class RepositoryQuestionImpl @Inject constructor(
     ) {
         questionEntity.pathPictureQuestion?.let { uploadPhotoToServer(it) }
 
+
         val docRef = baseCollection
             .document("question${event}")
             .collection(idQuiz.toString())
             .document()
 
+        Log.d("Translation", "docRef: ${docRef.path}")
         try {
             FirebaseRequestInterceptor.executeWithChecksSingleTask {
                 docRef.set(questionEntity)
@@ -137,44 +137,40 @@ class RepositoryQuestionImpl @Inject constructor(
         question: QuestionRemote,
         idQuiz: Int,
         usePaidTranslation: Boolean,
-        toLang: String
+        toLang: String,
+        event: Int
     ) {
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .dns(object : Dns {
-                override fun lookup(hostname: String): List<InetAddress> {
-                    return Dns.SYSTEM.lookup(hostname).filterIsInstance<Inet4Address>()
-                }
-            }).build()
+            .build()
 
-        val json = JSONObject().apply {
-            put("question", question)
-            put("idQuiz", idQuiz)
-            put("usePaidTranslation", usePaidTranslation)
-            put("toLang", toLang)
-        }
+        val request = TranslateRequest(question, idQuiz, usePaidTranslation, toLang,event)
 
-        val requestBody = json.toString()
-            .toRequestBody("application/json".toMediaType())
+        val gson = Gson()
+        val jsonBody = gson.toJson(request)
 
-        val request = Request.Builder()
-            .url("https://question-translate-762375057396-uc.a.run.app/translate-question")
+        Log.d("Translation", "Request payload: $jsonBody")
+
+        val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
+
+        val httpRequest = Request.Builder()
+            .url("https://question-translate-762375057396.us-central1.run.app/translate-question")
             .post(requestBody)
             .build()
 
         try {
-            client.newCall(request).execute().use { response ->
+            client.newCall(httpRequest).execute().use { response ->
+                val responseBody = response.body?.string()
                 if (response.isSuccessful) {
-                    val responseData = response.body?.string()
-                    Log.e("Translation", "responseData: $responseData")
+                    Log.d("Translation", "Success: $responseBody")
                 } else {
-                    Log.e("Translation", "Error: ${response.code}")
+                    Log.e("Translation", "Error ${response.code}: $responseBody")
                 }
             }
         } catch (e: Exception) {
-            Log.e("Translation", "Error", e)
+            Log.e("Translation", "Network error", e)
         }
     }
 
@@ -279,7 +275,7 @@ class RepositoryQuestionImpl @Inject constructor(
         Log.d("FirebaseRequestInterceptor", "uploadFileWithInterceptor")
         FirebaseRequestInterceptor.executeWithChecksSingleTask {
             val storageRef = storage.reference.child(pathPhoto)
-            storageRef.putFile(Uri.parse(pathPhoto)) // Загружаем фото на сервер
+            storageRef.putFile(Uri.parse(pathPhoto))
         }.addOnSuccessListener {
             Log.d("FirebaseStorage", "Фото загружено успешно")
         }.addOnFailureListener {

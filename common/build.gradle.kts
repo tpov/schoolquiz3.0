@@ -42,7 +42,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.12.0")
     implementation ("androidx.fragment:fragment-ktx:1.6.2")
-    implementation ("com.squareup.okhttp3:okhttp:4.11.0")
     // Room dependencies
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("com.google.firebase:firebase-functions-ktx:21.0.0")
@@ -81,5 +80,8 @@ dependencies {
     // AssistedInject for Dagger
     implementation("com.squareup.inject:assisted-inject-annotations-dagger2:0.8.1")
     kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
+
+    implementation ("com.google.auth:google-auth-library-oauth2-http:1.23.0")
+
 
 }

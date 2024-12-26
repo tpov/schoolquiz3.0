@@ -25,13 +25,14 @@ interface RepositoryQuestion {
     suspend fun updateQuestion(questionEntity: QuestionEntity)
     suspend fun deleteQuestionByIdQuiz(idQuiz: Int)
     suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, typeId: Int)
+
+    suspend fun remoteLangsQuestions(hardQuestion: Boolean, numQuestion: Int, idQuiz: Int, eventQuiz: Int): List<String>
+    suspend fun getAllMustTrnslLangsFreeQuestions(): Set<String>
     suspend fun pushQuestionForTranslate(
         question: QuestionRemote,
         idQuiz: Int,
         usePaidTranslation: Boolean,
-        toLang: String
+        toLang: String,
+        event: Int
     )
-
-    suspend fun remoteLangsQuestions(hardQuestion: Boolean, numQuestion: Int, idQuiz: Int, eventQuiz: Int): List<String>
-    suspend fun getAllMustTrnslLangsFreeQuestions(): Set<String>
 }

@@ -265,6 +265,7 @@ class MainViewModel @Inject constructor(
         quizEntity: QuizEntity,
         questionsEntity: ArrayList<QuestionEntity>
     ) {
+        Log.e("Translation", "pushTheQuest()")
         val newStructureCategory = pushStructureCategory(structureCategoryDataEntity)
         val idQuiz = newStructureCategory.oldIdQuizId
         val eventQuiz = newStructureCategory.newEventId
@@ -272,6 +273,7 @@ class MainViewModel @Inject constructor(
         val oldSubCategoryId = newStructureCategory.oldSubCategoryId
         val oldSubsubCategoryId = newStructureCategory.oldSubsubCategoryId
 
+        Log.e("Translation", "newStructureCategory: $newStructureCategory")
         quizEntity.id = idQuiz
         quizEntity.event = eventQuiz
         quizEntity.idCategory = oldCategoryId
@@ -284,7 +286,7 @@ class MainViewModel @Inject constructor(
             .maxBy { it[1].toInt() }[0]
 
         pushQuiz(quizEntity)
-        maybePushQuestionForTranslate(questionsEntity, eventQuiz, eventQuiz, mainLanguageQuiz)
+        maybePushQuestionForTranslate(questionsEntity, idQuiz, eventQuiz, mainLanguageQuiz)
 
         questionsEntity.forEach {
 
@@ -300,6 +302,9 @@ class MainViewModel @Inject constructor(
         event: Int,
         mainLanguageQuiz: String
     ) {
+        Log.e("Translation", "maybePushQuestionForTranslate()")
+        Log.e("Translation", "questionsEntity: $questionsEntity")
+        Log.e("Translation", "mainLanguageQuiz: $mainLanguageQuiz")
         val mainQuestions = questionsEntity.filter { it.language == mainLanguageQuiz }
         mainQuestions.forEach { question ->
             viewModelScope.launch(Dispatchers.IO) {
@@ -309,6 +314,13 @@ class MainViewModel @Inject constructor(
                  && it.idQuiz == idQuiz
                 }.map { it.language }.toSet()
 
+                Log.e("Translation", "questionsEntity 1: $questionsEntity")
+                Log.e("Translation", "questionsEntity 2: ${ questionsEntity.filter {it.hardQuestion == question.hardQuestion }}")
+                Log.e("Translation", "questionsEntity 3: ${ questionsEntity.filter {it.hardQuestion == question.hardQuestion && it.numQuestion == question.numQuestion}}")
+                Log.e("Translation", "questionsEntity 4: ${ questionsEntity.filter {it.hardQuestion == question.hardQuestion && it.numQuestion == question.numQuestion&& it.idQuiz == idQuiz}}")
+                Log.e("Translation", "questionsEntity 5: ${ questionsEntity.filter {it.hardQuestion == question.hardQuestion && it.numQuestion == question.numQuestion&& it.idQuiz == idQuiz}.map { it.language }.toSet()}}")
+                Log.e("Translation", "question: $question")
+                Log.e("Translation", "localLanguagesQuestions: $localLanguagesQuestions")
                 questionUseCase.pushQuestionForTranslate(
                     question, idQuiz, localLanguagesQuestions, event
                 )

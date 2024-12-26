@@ -248,13 +248,14 @@
             android:layout_marginEnd="4dp"
             android:elevation="10dp"
             android:gravity="center"
-            android:paddingBottom="16dp"
-            android:paddingTop="8dp"
             android:paddingLeft="16dp"
+            android:paddingTop="8dp"
             android:paddingRight="16dp"
+            android:paddingBottom="16dp"
             android:text="ERROR  ERROR ERROR ERROR ERROR ERRORERROR  ERROR ERROR ERROR "
             android:textColor="@color/white"
-            android:textSize="20sp" />
+            android:textSize="22sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <LinearLayout
@@ -291,8 +292,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/b_2"
@@ -308,8 +308,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
 
         </LinearLayout>
 
@@ -333,8 +332,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/b_4"
@@ -350,8 +348,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
 
         </LinearLayout>
 
@@ -375,8 +372,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/b_6"
@@ -392,8 +388,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
 
         </LinearLayout>
 
@@ -417,8 +412,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/b_8"
@@ -434,8 +428,7 @@
                 android:padding="8dp"
                 android:text="123456789012345"
                 android:textColor="@color/white"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -462,8 +455,7 @@
             android:elevation="20dp"
             android:text="@string/true_button"
             android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="14sp" />
 
 
         <Button
@@ -479,8 +471,7 @@
             android:padding="16dp"
             android:text="@string/false_button"
             android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="14sp" />
 
 
         <Button
@@ -496,8 +487,7 @@
             android:padding="16dp"
             android:text="@string/false_button"
             android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="14sp"/>
 
 
         <Button
@@ -514,8 +504,7 @@
             android:padding="16dp"
             android:text="@string/false_button"
             android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="14sp"/>
     </LinearLayout>
     <ImageButton
         android:id="@+id/b_cheat"
