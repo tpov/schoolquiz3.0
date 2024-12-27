@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import androidx.fragment.app.FragmentManager
+import com.tpov.userguide.presentation.Options
+import com.tpov.userguide.presentation.UserGuide
 import io.mockk.Runs
 import io.mockk.confirmVerified
 import io.mockk.every

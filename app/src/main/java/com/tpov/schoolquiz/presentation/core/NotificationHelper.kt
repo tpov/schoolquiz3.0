@@ -12,8 +12,8 @@ import com.tpov.common.COUNT_SKILL_USERGUIDE_1
 import com.tpov.common.COUNT_SKILL_VETERAN
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.main.MainActivity
-import com.tpov.userguide.Options
-import com.tpov.userguide.UserGuide
+import com.tpov.userguide.presentation.Options
+import com.tpov.userguide.presentation.UserGuide
 import kotlinx.coroutines.InternalCoroutinesApi
 
 class NotificationHelper(private val context: Context) {
