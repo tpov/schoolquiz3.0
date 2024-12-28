@@ -20,11 +20,16 @@ class ErrorHandler(
 
     inline fun <reified T> getDefaultValue(): T = when (T::class) {
         Int::class -> -1 as T
+        java.lang.Integer::class -> -1 as T
         String::class -> "" as T
         Boolean::class -> false as T
+        java.lang.Boolean::class -> false as T
         Float::class -> -1f as T
+        java.lang.Float::class -> -1f as T
         Double::class -> -1.0 as T
+        java.lang.Double::class -> -1.0 as T
         Long::class -> -1L as T
+        java.lang.Long::class -> -1L as T
         List::class -> emptyList<Any>() as T
         Set::class -> emptySet<Any>() as T
         Map::class -> emptyMap<Any, Any>() as T

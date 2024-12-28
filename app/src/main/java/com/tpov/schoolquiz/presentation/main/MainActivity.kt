@@ -44,7 +44,6 @@ import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.common.presentation.utils.Values
 import com.tpov.common.presentation.utils.Values.getColorNickname
-import com.tpov.log_api.logger.Logger
 import com.tpov.network.presentation.chat.ChatFragment
 import com.tpov.network.presentation.friend.FriendsFragment
 import com.tpov.network.presentation.leaders.LeadersFragment
@@ -57,6 +56,7 @@ import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.about.AboutFragment
 import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
+import com.tpov.schoolquiz.presentation.core.NotificationHelper
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
@@ -79,7 +79,7 @@ import javax.inject.Inject
  * This is the main screen of the application, it consists of a panel that shows how much spare is left.
  * questions of the day and a fragment that displays user and system questions
  */
-@Logger
+
 @InternalCoroutinesApi
 class MainActivity : AppCompatActivity(), NavigationProvider {
 
@@ -123,9 +123,15 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         setupAnimations()
         syncProfile()
         initData()
-
+        val view = findViewById<View?>(R.id.menu_network)
+        initUserguide(view)
     }
 
+    fun initUserguide(view: View) {
+        Log.d("Userguide", "initUserguide")
+        val notification = NotificationHelper(this)
+        notification.setupUserGuide(view)
+    }
     private fun initData() {
         getDataToday()
 

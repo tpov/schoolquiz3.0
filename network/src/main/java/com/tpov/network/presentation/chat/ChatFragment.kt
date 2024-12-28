@@ -19,8 +19,8 @@ import com.tpov.common.data.manager.SharedPreferencesManager
 import com.tpov.common.data.manager.SharedPreferencesManager.getTpovId
 import com.tpov.network.data.models.local.ChatEntity
 import com.tpov.network.databinding.FragmentChatBinding
-import com.tpov.userguide.Options
-import com.tpov.userguide.UserGuide
+import com.tpov.userguide.presentation.Options
+import com.tpov.userguide.presentation.UserGuide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi

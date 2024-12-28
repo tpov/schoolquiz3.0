@@ -175,14 +175,40 @@
           <theme>@style/Theme.Schoolquiz</theme>
         </config>
       </layout>
+      <layout url="file://$PROJECT_DIR$/userguide/src/main/res/layout/design_bottom_sheet.xml">
+        <config>
+          <theme>@android:style/Theme.Material.Light</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/userguide/src/main/res/layout/fragment_info.xml">
+        <config>
+          <theme>@android:style/Theme.Material.Light</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/userguide/src/main/res/layout/item_info.xml">
+        <config>
+          <theme>@android:style/Theme.Material.Light</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/userguide/src/main/res/layout/translation_popup_layout.xml">
+        <config>
+          <theme>@android:style/Theme.Material.Light</theme>
+        </config>
+      </layout>
+      <layout url="file://$PROJECT_DIR$/userguide/src/main/res/layout/userguide_dialog_layout.xml">
+        <config>
+          <theme>@android:style/Theme.Material.Light</theme>
+        </config>
+      </layout>
     </layouts>
   </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Edit color contur and back item">
-      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/TranslateRequest.kt" afterDir="false" />
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add translate after send quiz">
+      <change afterPath="$PROJECT_DIR$/userguide/src/main/res/drawable/cardview_background.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/userguide/src/main/res/values/ids.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
@@ -195,15 +221,26 @@
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/common/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/NotificationHelper.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/core/NotificationHelper.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values-ru/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values-ru/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/ErrorHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/ErrorHandler.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuestionImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuestionImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuestion.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuestion.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/QuestionUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/QuestionUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/res/layout/activity_question.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/layout/activity_question.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/res/values/colors.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/res/values/colors.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/network/src/main/java/com/tpov/network/presentation/chat/ChatFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/network/src/main/java/com/tpov/network/presentation/chat/ChatFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/DotView.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/presentation/DotView.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/GuideItem.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/presentation/GuideItem.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/InfoAdapter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/presentation/InfoAdapter.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/InfoFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/presentation/InfoFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/MainView.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/presentation/MainView.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/Options.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/presentation/Options.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/Userguide.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/presentation/Userguide.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/data/SharedPrefManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/data/SharedPrefManager.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/domain/UserGuideUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/java/com/tpov/userguide/domain/UserGuideUseCase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/res/layout/design_bottom_sheet.xml" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/res/layout/design_bottom_sheet.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/main/res/layout/userguide_dialog_layout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/main/res/layout/userguide_dialog_layout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/userguide/src/test/java/com/tpov/userguide/UserGuideTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/userguide/src/test/java/com/tpov/userguide/UserGuideTest.kt" afterDir="false" />
     </list>
     <list id="81ab6825-6e13-49c0-a4dd-0fe06f8e94eb" name="Node changelist" comment="Add Node" />
     <option name="SHOW_DIALOG" value="false" />
@@ -214,7 +251,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[C:\Users\tpovd\.android\avd\Pixel_7_Pro_API_34.avd]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -259,7 +296,6 @@
         <option value="Python Script" />
         <option value="Class" />
         <option value="Kotlin Interface" />
-        <option value="valueResourceFile" />
         <option value="resourceFile" />
         <option value="layoutResourceFile" />
         <option value="JUnit4 Test Class" />
@@ -268,6 +304,7 @@
         <option value="Kotlin Data Class" />
         <option value="Kotlin Object" />
         <option value="Kotlin Class" />
+        <option value="valueResourceFile" />
       </list>
     </option>
   </component>
@@ -342,50 +379,50 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
-    &quot;PROJECT_TRUSTED_KEY&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ScreenRecorder.SavePath&quot;: &quot;C:\\Users\\tpovd&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
-    &quot;com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary&quot;: &quot;JUnit4&quot;,
-    &quot;com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4&quot;: &quot;&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Rebasing SchoolQuiz4.0&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_directory_selection&quot;: &quot;D:/Programming/Android/schoolquiz3.0/app/src/test/java/com/tpov/schoolquiz&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Programming/Android/schoolquiz3.0/app/src/main/res/raw&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Suggestions&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Android App.app.executor": "Run",
+    "PROJECT_TRUSTED_KEY": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ScreenRecorder.SavePath": "C:\\Users\\tpovd",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary": "JUnit4",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4": "",
+    "git-widget-placeholder": "Rebasing SchoolQuiz4.0",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_directory_selection": "D:/Programming/Android/schoolquiz3.0/app/src/test/java/com/tpov/schoolquiz",
+    "last_opened_file_path": "D:/Programming/Android/schoolquiz3.0/userguide/src/main/res/drawable",
+    "project.structure.last.edited": "Suggestions",
+    "project.structure.proportion": "0.17",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Properties" />
     <option name="LAST_EDITED_BUILD_TYPE" value="release" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Programming\Android\schoolquiz3.0\userguide\src\main\res\drawable" />
       <recent name="D:\Programming\Android\schoolquiz3.0\app\src\main\res\raw" />
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-processor" />
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-processor\src" />
       <recent name="D:\Programming\Android\schoolquiz3.0\common\src\androidTest\java\com\tpov\common" />
-      <recent name="D:\Programming\Android\schoolquiz3.0\app\src\androidTest\java\com\tpov\schoolquiz" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Programming\Android\schoolquiz3.0\userguide\src\main\java\com\tpov\userguide\presentation" />
       <recent name="D:\Programming\Android\schoolquiz3.0\common\src\main\res" />
       <recent name="D:\Programming\Android\schoolquiz3.0\app\src\main\res" />
       <recent name="D:\Programming\Android\schoolquiz3.0\app\src" />
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-processor\src\main\res\META-INF\services" />
-      <recent name="D:\Programming\Android\schoolquiz3.0\logger-processor\src\main\res" />
     </key>
     <key name="CreateTestDialog.Recents.Supers">
       <recent name="" />
@@ -948,68 +985,6 @@
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CreateQuizIntegrationTest" type="AndroidTestRunConfigurationType" factoryName="Android Instrumented Tests" temporary="true" nameIsGenerated="true">
-      <module name="schoolquiz.app.androidTest" />
-      <option name="TESTING_TYPE" value="2" />
-      <option name="METHOD_NAME" value="" />
-      <option name="CLASS_NAME" value="com.tpov.schoolquiz.CreateQuizIntegrationTest" />
-      <option name="PACKAGE_NAME" value="" />
-      <option name="TEST_NAME_REGEX" value="" />
-      <option name="INSTRUMENTATION_RUNNER_CLASS" value="" />
-      <option name="EXTRA_OPTIONS" value="" />
-      <option name="RETENTION_ENABLED" value="No" />
-      <option name="RETENTION_MAX_SNAPSHOTS" value="2" />
-      <option name="RETENTION_COMPRESS_SNAPSHOTS" value="false" />
-      <option name="CLEAR_LOGCAT" value="false" />
-      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
-      <option name="INSPECTION_WITHOUT_ACTIVITY_RESTART" value="false" />
-      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
-      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
-      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
-      <option name="DEBUGGER_TYPE" value="Auto" />
-      <Auto>
-        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
-        <option name="SHOW_STATIC_VARS" value="true" />
-        <option name="WORKING_DIR" value="" />
-        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
-        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
-        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
-      </Auto>
-      <Hybrid>
-        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
-        <option name="SHOW_STATIC_VARS" value="true" />
-        <option name="WORKING_DIR" value="" />
-        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
-        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
-        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
-      </Hybrid>
-      <Java>
-        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
-      </Java>
-      <Native>
-        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
-        <option name="SHOW_STATIC_VARS" value="true" />
-        <option name="WORKING_DIR" value="" />
-        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
-        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
-        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
-        <option name="DEBUG_SANDBOX_SDK" value="false" />
-      </Native>
-      <Profilers>
-        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
-        <option name="STARTUP_PROFILING_ENABLED" value="false" />
-        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
-        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Java/Kotlin Method Sample (legacy)" />
-        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
-        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
-      </Profilers>
-      <method v="2">
-        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="MainActivityTest" type="AndroidTestRunConfigurationType" factoryName="Android Instrumented Tests" temporary="true" nameIsGenerated="true">
       <module name="schoolquiz.app.androidTest" />
       <option name="TESTING_TYPE" value="2" />
@@ -1134,6 +1109,30 @@
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="UserGuideParameterizedTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":userguide:testDebugUnitTest" />
+            <option value="--tests" />
+            <option value="&quot;com.tpov.userguide.UserGuideParameterizedTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
     <configuration name="logger-processor-1.0.0.jar" type="JarApplication" temporary="true">
       <option name="JAR_PATH" value="$PROJECT_DIR$/logger-processor/build/libs/logger-processor-1.0.0.jar" />
       <method v="2" />
@@ -1144,11 +1143,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.UserGuideParameterizedTest" />
         <item itemvalue="JAR Application.logger-processor-1.0.jar" />
         <item itemvalue="JAR Application.logger-processor-1.0.0.jar" />
         <item itemvalue="Android Instrumented Tests.testProfile()" />
         <item itemvalue="Android Instrumented Tests.MainActivityTest" />
-        <item itemvalue="Android Instrumented Tests.CreateQuizIntegrationTest" />
       </list>
     </recent_temporary>
   </component>
@@ -1512,7 +1511,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <option name="localTasksCounter" value="115" />
+    <option name="localTasksCounter" value="116" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -1555,7 +1554,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Create Logger&#10;Fix seccessfull test create quiz" />
     <MESSAGE value="Add more quiz in CreateQuizIntegrationTest" />
     <MESSAGE value="Create Logger Fix seccessfull test create 3 quiz" />
     <MESSAGE value="Add setQuizData in syncWorker" />
@@ -1580,7 +1578,8 @@
     <MESSAGE value="Add setOn click listeners answer button&#10;Edit Error hendler (to Generic)" />
     <MESSAGE value="Fix load and show picture&#10;Filled info question" />
     <MESSAGE value="Edit color contur and back item" />
-    <option name="LAST_COMMIT_MESSAGE" value="Edit color contur and back item" />
+    <MESSAGE value="Add translate after send quiz" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add translate after send quiz" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

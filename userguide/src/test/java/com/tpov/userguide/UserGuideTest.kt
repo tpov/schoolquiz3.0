@@ -1,66 +1,61 @@
 package com.tpov.userguide
 
 import android.content.Context
-import android.content.SharedPreferences
-import android.content.res.Resources
 import android.graphics.drawable.Drawable
-import androidx.fragment.app.FragmentManager
-import io.mockk.Runs
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.just
+import android.view.View
+import com.tpov.userguide.presentation.Options
+import com.tpov.userguide.presentation.UserGuide
 import io.mockk.mockk
-import io.mockk.verify
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
-class UserGuideExhaustiveTest {
+class UserGuideBuildTest {
 
-    private lateinit var context: Context
-    private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var sharedPreferencesEditor: SharedPreferences.Editor
-    private lateinit var resources: Resources
-    private lateinit var fragmentManager: FragmentManager
-    private lateinit var userGuide: UserGuide
-    private lateinit var guideBuilder: UserGuide.GuideBuilder
+    companion object {
+        @JvmStatic
+        fun provideBuildTestCases(): Stream<Arguments> {
+            val mockView: View = mockk()
+            val mockContext: Context = mockk()
+            val mockIcon: Drawable = mockk()
 
-    @Before
-    fun setUp() {
-        context = mockk()
-        sharedPreferences = mockk()
-        sharedPreferencesEditor = mockk()
-        resources = mockk()
-        fragmentManager = mockk()
-        userGuide = mockk()
-        guideBuilder = mockk(relaxed = true) // Relaxed mock returns default values for all functions
-
-        every { context.getSharedPreferences(any(), any()) } returns sharedPreferences
-        every { sharedPreferences.edit() } returns sharedPreferencesEditor
-        every { sharedPreferencesEditor.putInt(any(), any()) } returns sharedPreferencesEditor
-        every { context.resources } returns resources
-        every { resources.getDrawable(any(), any()) } returns mockk<Drawable>()
-        every { userGuide.guideBuilder() } returns guideBuilder
+            return Stream.of(
+                Arguments.of(
+                    UserGuide(mockContext).guideBuilder()
+                        .setViews(listOf(mockView))
+                        .setText("Valid Text")
+                        .setOptions(Options(isInfinityCount = true)),
+                    true
+                ),
+                Arguments.of(
+                    UserGuide(mockContext).guideBuilder()
+                        .setViews(emptyList())
+                        .setText("Valid Text")
+                        .setOptions(Options(isInfinityCount = true)),
+                    false
+                ),
+                Arguments.of(
+                    UserGuide(mockContext).guideBuilder()
+                        .setViews(listOf(mockView))
+                        .setOptions(Options(isInfinityCount = true)),
+                    false
+                )
+            )
+        }
     }
 
-    @Test
-    fun testUserGuideDialogDisplayBasedOnExactMatchKey() {
-        every { guideBuilder.setText("Версия 3.0.18 Коммит") } returns guideBuilder
-        every { guideBuilder.setOptions(any()) } returns guideBuilder
-        every { guideBuilder.build() } returns Unit
-        every { guideBuilder.show() } just Runs
-
-        guideBuilder.setText("Версия 3.0.18 Коммит")
-            .setOptions(Options(showDot = false, exactMatchKey = 4000, idGroupGuide = 1))
-            .build()
-        guideBuilder.show()
-
-        // Проверка вызовов
-        verify { guideBuilder.setText("Версия 3.0.18 Коммит") }
-        verify { guideBuilder.setOptions(Options(showDot = false, exactMatchKey = 4000, idGroupGuide = 1)) }
-        verify { guideBuilder.show() }
-
-        // Подтверждение, что больше не было взаимодействий
-        confirmVerified(guideBuilder)
+    @ParameterizedTest
+    @MethodSource("provideBuildTestCases")
+    fun `test build conditions`(builder: UserGuide.GuideBuilder, shouldBuild: Boolean) {
+        val guideItem = builder.build()
+        if (shouldBuild) {
+            assertNotNull(guideItem, "GuideItem should be created")
+        } else {
+            assertNull(guideItem, "GuideItem should not be created")
+        }
     }
-
 }
+

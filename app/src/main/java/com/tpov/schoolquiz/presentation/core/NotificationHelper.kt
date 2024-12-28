@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.presentation.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
+import android.view.View
 import com.tpov.common.COUNT_SKILL_AMATEUR
 import com.tpov.common.COUNT_SKILL_BEGINNER
 import com.tpov.common.COUNT_SKILL_EXPERT
@@ -10,14 +12,15 @@ import com.tpov.common.COUNT_SKILL_LEGEND
 import com.tpov.common.COUNT_SKILL_PLAYER
 import com.tpov.common.COUNT_SKILL_USERGUIDE_1
 import com.tpov.common.COUNT_SKILL_VETERAN
+import com.tpov.log_api.logger.Logger
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.main.MainActivity
-import com.tpov.userguide.Options
-import com.tpov.userguide.UserGuide
+import com.tpov.userguide.presentation.Options
+import com.tpov.userguide.presentation.UserGuide
 import kotlinx.coroutines.InternalCoroutinesApi
-
+@Logger
 class NotificationHelper(private val context: Context) {
-    private val userguide: UserGuide = UserGuide(context)
+    private val userguide: UserGuide = UserGuide(context, minGlobalKey = 3015, 2016)
     private var counterValue: Int = 0
 
     private val builderNewQualification = userguide.guideBuilder()
@@ -26,17 +29,15 @@ class NotificationHelper(private val context: Context) {
     private val builderGuide = userguide.guideBuilder()
     private val builderUpdateProfile = userguide.guideBuilder()
 
-    init {
-        userguide.setExactMatchKey(4000, 1)
-    }
-
     @SuppressLint("UseCompatLoadingForDrawables")
-    fun setupUserGuide(versionApp: String) {
+    fun setupUserGuide(view: View?) {
+        Log.d("Userguide", "setupUserGuide")
         builderSetupUserGuide
             .setText(context.getString(R.string.commit_3_0_18))
             .setIcon(context.resources.getDrawable(R.mipmap.ic_launcher, context.theme))
-            .setTitleText(versionApp)
-            .setOptions(Options(showDot = false, exactMatchKey = versionApp.toIntOrNull() ?: 0, idGroupGuide = "setupUserGuide".hashCode()))
+            .setTitleText("Добро пожаловать!")
+            .setViews(view)
+            .setOptions(Options(minValueKey = 3015, isInfinityCount = true))
             .build()
     }
 
@@ -45,27 +46,7 @@ class NotificationHelper(private val context: Context) {
         builderUpdateProfile.setTitleText("Награда от разработчиков")
             .setText(textUpdateProfile)
             .setIcon(context.getDrawable(R.drawable.ic_box))
-            .setOptions(Options(idGroupGuide = "updateProfileUserGuide".hashCode(), showWithoutOptions = true))
-    }
-
-    fun showBuilderNewQualification() {
-        builderNewQualification.show()
-    }
-
-    fun showBuilderUpdateProfile() {
-        builderUpdateProfile.show()
-    }
-
-    fun showBuilderSetupUserGuide() {
-        builderSetupUserGuide.show()
-    }
-
-    fun showBuilderNewSmsInChat() {
-        builderNewSmsInChat.show()
-    }
-
-    fun showBuilderGuide() {
-        builderGuide.show()
+            .setOptions(Options(isInfinityCount = true))
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
@@ -73,14 +54,14 @@ class NotificationHelper(private val context: Context) {
         builderNewQualification.setTitleText("Новая квалификация")
             .setText(text)
             .setIcon(context.getDrawable(com.tpov.common.R.drawable.back_main))
-            .setOptions(Options(showDot = false, minValueKey = valueSkill, idGroupGuide = "newQualification".hashCode()))
+            .setOptions(Options(showDot = false, minValueKey = valueSkill))
     }
 
     @OptIn(InternalCoroutinesApi::class)
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun newSmsInChat(number: Int) {
-        builderSetupUserGuide.setView((context as? MainActivity)?.findViewById(R.id.menu_settings))
-            .setOptions(Options(showDot = true, numberDot = number.toString(), showWithoutOptions = number > 0, idGroupGuide = "chat".hashCode()))
+        builderSetupUserGuide.setViews((context as? MainActivity)?.findViewById(R.id.menu_settings))
+            .setOptions(Options(showDot = true, dotText = number.toString(), isInfinityCount = number > 0))
     }
 
        @OptIn(InternalCoroutinesApi::class)
@@ -89,12 +70,11 @@ class NotificationHelper(private val context: Context) {
            builderGuide.setTitleText("Опыт: $numberSkill")
             .setText(textGuide)
             .setIcon(context.getDrawable(R.drawable.star_full))
-            .setOptions(Options(minValueKey = minNumberSkill, idGroupGuide = "guide".hashCode()))
+            .setOptions(Options(minValueKey = minNumberSkill))
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
     fun showNotificationAll(skill: Int?) {
-        userguide.setExactMatchKey(skill ?: 0)
 
         fun buildGuide(textGuide: String, minNumberSkill: Int) {
             guide(skill ?: 0, textGuide, minNumberSkill)
@@ -163,7 +143,5 @@ class NotificationHelper(private val context: Context) {
                 0
             )
         }
-
-        builderGuide.show()
     }
 }
