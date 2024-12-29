@@ -57,6 +57,7 @@
                 android:id="@+id/imv_icon"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
+                android:layout_gravity="center"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
                 app:srcCompat="@android:drawable/btn_star_big_on" />

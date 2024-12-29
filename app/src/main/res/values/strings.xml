@@ -345,6 +345,18 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="nav_my_quests">Мои квесты</string>
     <string name="nav_tasks">Задачи</string>
     <string name="nav_about">О нас</string>
+    <string name="menu_downloads_text">Скачать</string>
+    <string name="menu_profile">Профиль\n</string>
+    <string name="manu_message">Message\n</string>
+    <string name="menu_event">Event</string>
+    <string name="menu_leader_text">Leaders</string>
+    <string name="menu_users_text">Users\n</string>
+    <string name="menu_news_text">News\n</string>
+    <string name="menu_arena_text">Arena\n</string>
+    <string name="menu_friend_text">Friend\n</string>
+    <string name="menu_report_text">Report\n</string>
+    <string name="menu_contact_text">Contact</string>
+    <string name="menu_exit_text">Exit</string>
 
 
 </resources>

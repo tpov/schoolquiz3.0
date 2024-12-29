@@ -47,19 +47,32 @@ import com.tpov.common.presentation.utils.Values.getColorNickname
 import com.tpov.network.presentation.chat.ChatFragment
 import com.tpov.network.presentation.friend.FriendsFragment
 import com.tpov.network.presentation.leaders.LeadersFragment
-import com.tpov.network.presentation.referal.ReferralProgramFragment
-import com.tpov.network.presentation.roles.RolesFragment
+import com.tpov.network.presentation.profile.ContactFragment
+import com.tpov.network.presentation.profile.ProfileFragment
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
-import com.tpov.schoolquiz.presentation.about.AboutFragment
 import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
 import com.tpov.schoolquiz.presentation.core.NotificationHelper
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CONTACT
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_DOWNLOADS
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_EXIT
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_FRIEND
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_HOME
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_LEADER
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_MY_QUIZ
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_PROFILE
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_SETTING
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.currentMenuId
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.setupDynamicMenu
+import com.tpov.schoolquiz.presentation.model.Inset
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.shop.CoastValues.CoastValuesLife.VALUE_COUNT_LIFE
 import com.tpov.shop.presentation.ShopFragment
@@ -120,6 +133,9 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         viewModel.initProfile()
         setupDrawerLayout()
         initBottomMenu()
+        setupDynamicMenu(binding,  Qualification(0, 0, 0, 0, 0, 0),
+            currentSkill = 0,
+            inset = Inset.HOME)
         setupAnimations()
         syncProfile()
         initData()
@@ -604,11 +620,10 @@ getDataToday()
                 val slideX = drawerView.width * slideOffset
                 binding.cv.translationX = slideX
 
-                // Пример взаимодействия с другими элементами
                 binding.progressBar2.alpha =
-                    1 - slideOffset // Меняем прозрачность ProgressBar в зависимости от открытия меню
+                    1 - slideOffset
                 binding.tvPbLoad.translationX =
-                    slideX / 2 // Перемещаем текст в зависимости от открытия меню
+                    slideX / 2
             }
 
             override fun onDrawerOpened(drawerView: View) {}
@@ -617,31 +632,30 @@ getDataToday()
         })
 
         binding.navigationView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.title) {
-                getString(R.string.nav_home) -> switchFragment(MainFragment())
-                getString(R.string.nav_my_quests) -> switchFragment(QuizFragment())
-                getString(R.string.nav_downloads) -> switchFragment(DownloadFragment())
-                getString(R.string.nav_settings) -> switchFragment(SettingsFragment())
-                getString(R.string.nav_tasks) -> switchFragment(QuizFragment())
-                getString(R.string.nav_about) -> switchFragment(AboutFragment())
-
-                getString(R.string.nav_chat) -> switchFragment(ChatFragment())
-                getString(R.string.nav_arena) -> switchFragment(QuizFragment())
-                getString(R.string.nav_leaders) -> switchFragment(LeadersFragment())
-                getString(R.string.nav_tournament) -> switchFragment(QuizFragment())
-                getString(R.string.nav_archive) -> switchFragment(QuizFragment())
-                getString(R.string.nav_referral_program) -> switchFragment(ReferralProgramFragment())
-                getString(R.string.nav_friends) -> switchFragment(FriendsFragment())
-                getString(R.string.nav_roles) -> switchFragment(RolesFragment())
-                getString(R.string.nav_logout) -> {
+            when (menuItem.itemId) {
+                MENU_HOME -> switchFragment(MainFragment())
+                MENU_MY_QUIZ -> switchFragment(QuizFragment())
+                MENU_DOWNLOADS -> switchFragment(DownloadFragment())
+                MENU_SETTING -> switchFragment(SettingsFragment())
+                MENU_PROFILE -> switchFragment(ProfileFragment())
+                MENU_CHAT -> switchFragment(ChatFragment())
+                MENU_LEADER -> switchFragment(LeadersFragment())
+                MENU_FRIEND -> switchFragment(FriendsFragment())
+                MENU_CONTACT -> switchFragment(ContactFragment())
+                MENU_EXIT -> {
                     logout()
                 }
-
                 else -> false
             }
+
+            currentMenuId = menuItem.itemId
+            setupDynamicMenu(binding,  Qualification(200, 200, 200, 200, 200, 300),
+                currentSkill = 500000,
+                inset = Inset.HOME)
             binding.drawerLayout.closeDrawers()
             true
         }
+
     }
 
     private fun logout() {
