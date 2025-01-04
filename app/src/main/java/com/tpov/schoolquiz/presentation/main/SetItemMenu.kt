@@ -8,7 +8,7 @@ import com.tpov.schoolquiz.presentation.model.Role
 
 object SetItemMenu {
 
-    const val MENU_HOME = 0
+    const val MENU_HOME_QUIZ = 0
     const val MENU_MY_QUIZ = 1
     const val MENU_SETTING = 2
     const val MENU_DOWNLOADS = 3
@@ -25,6 +25,8 @@ object SetItemMenu {
     const val MENU_REPORT = 9
     const val MENU_CONTACT = 9
     const val MENU_EXIT = 10
+    const val MENU_CHAT_TOURNAMENT = 11
+    const val MENU_CHAT_BANNED = 12
 
     var currentMenuId = 0
 
@@ -33,7 +35,7 @@ object SetItemMenu {
         qualification: Qualification,
         currentSkill: Int,
         inset: Inset
-    ): Boolean {  // Добавляем возвращаемый тип Boolean
+    ): Boolean {
         val menu = binding.navigationView.menu
         menu.clear()
 
@@ -41,9 +43,8 @@ object SetItemMenu {
             menuItem.inset == inset &&
                     menuItem.id != currentMenuId &&
                     menuItem.requiredRoles.all { (role, level) ->
-                        getRoleLevel(role, qualification) >= level
-                    } &&
-                    currentSkill >= menuItem.requiredSkill
+                        getRoleLevel(role, qualification, currentSkill) >= level
+                    }
         }
 
         binding.navigationView.post {
@@ -57,8 +58,9 @@ object SetItemMenu {
         return true
     }
 
-    private fun getRoleLevel(role: Role, qualification: Qualification): Int {
+    private fun getRoleLevel(role: Role, qualification: Qualification, currentSkill: Int): Int {
         return when (role) {
+            Role.USER -> currentSkill
             Role.TESTER -> qualification.tester
             Role.MODERATOR -> qualification.moderator
             Role.SPONSOR -> qualification.sponsor
@@ -80,7 +82,7 @@ object SetItemMenu {
     fun removeUnwantedMenuItems(binding: ActivityMainBinding) {
         val menu = binding.navigationView.menu
 
-        val keepItems = setOf(SetItemMenu.MENU_HOME, SetItemMenu.MENU_SETTING)
+        val keepItems = setOf(SetItemMenu.MENU_HOME_QUIZ, SetItemMenu.MENU_SETTING)
 
         selectivelyRemoveItemsFromMenu(menu, keepItems)
 
@@ -96,6 +98,7 @@ object SetItemMenu {
             Role.TRANSLATOR -> qualification.translator
             Role.ADMIN -> qualification.admin
             Role.DEVELOPER -> qualification.developer
+            Role.USER -> TODO()
         }
     }
 }

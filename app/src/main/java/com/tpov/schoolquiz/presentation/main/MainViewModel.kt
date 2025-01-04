@@ -366,5 +366,4 @@ class MainViewModel @Inject constructor(
         return 0
     }
 
-
 }

@@ -2,10 +2,10 @@ package com.tpov.common.presentation.quiz
 
 import android.content.Context
 import android.content.res.Configuration
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tpov.common.EVENT_QUIZ_FOR_USER
-import com.tpov.common.EVENT_QUIZ_HOME
+import com.tpov.common.EventQuiz
 import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.StructureData
@@ -29,10 +29,10 @@ class QuizActivityViewModel @Inject constructor(
     val listFlattenedQuizDataFlow: StateFlow<List<FlattenedQuizData>> get() = _listFlattenedQuizDataFlow
     private val _listFlattenedQuizDataFlow = MutableStateFlow<List<FlattenedQuizData>>(emptyList())
 
-    fun getNamePathEvent(event: Int): String {
+    fun getNamePathEvent(event: EventQuiz): String {
         return when (event) {
-            EVENT_QUIZ_HOME -> "Home quiz"
-            EVENT_QUIZ_FOR_USER -> "My quiz"
+            EventQuiz.QUIZ_HOME -> "Home quiz"
+            EventQuiz.QUIZ_BY_USER -> "My quiz"
             else -> "Error quiz"
         }
     }
@@ -198,21 +198,83 @@ class QuizActivityViewModel @Inject constructor(
         return result
     }
 
-    fun initQuestionListByIds(event: Int, idCat: Int, idSubCat: Int) = viewModelScope.launch {
+    fun initQuestionListByIds(event: EventQuiz, idCat: Int, idSubCat: Int) = viewModelScope.launch {
+        val handler = event.let { getEventHandler(it) }
+        _listFlattenedQuizDataFlow.value = handler?.invoke(idCat, idSubCat) ?: emptyList()
+    }
+
+    private fun getEventHandler(event: EventQuiz): suspend (Int, Int) -> List<FlattenedQuizData> {
+        return when (event) {
+            EventQuiz.QUIZ_HOME -> ::handleHomeEvent
+            EventQuiz.QUIZ_TOURNIRE -> ::handleTournamentEvent
+            EventQuiz.QUIZ_ARENA -> ::handleArenaEvent
+//            EventQuiz.QUIZ_FOR_ADMIN -> ::handleAdminEvent
+//            EventQuiz.QUIZ_FOR_MODERATOR -> ::handleModeratorEvent
+//            EventQuiz.QUIZ_FOR_TESTER -> ::handleTesterEvent
+            EventQuiz.QUIZ_BY_USER -> ::handleUserEvent
+            else -> ::handleDefaultEvent
+        }
+    }
+
+    private suspend fun handleTournamentEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+        // Логика для турниров
+        return emptyList() // Замените своей реализацией
+    }
+    private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+        Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
         val flattenedList: MutableList<FlattenedQuizData> = mutableListOf()
-
         val category = structureUseCase.getStructureData()?.event
-            ?.find { it.id == event }?.category?.find { it.id == idCat }
+            ?.find { it.id == EventQuiz.QUIZ_HOME.id }?.category?.find { it.id == idCat }
+
+        Log.d("jij", " $category")
         nameCategory = category?.nameQuiz ?: ""
-
         category?.subcategory?.forEach {
-
+            Log.d("jij", "subCatData: $it")
             if (idSubCat == -1) flattenedList.add(it.toFlattenedQuizData())
             else it.subSubcategory.find { it.id == idSubCat }?.quizData?.forEach {
+                Log.d("jij", "quizData: $it")
                 nameSubCategory = it.nameQuiz
                 flattenedList.add(it.toFlattenedQuizData())
             }
         }
-        _listFlattenedQuizDataFlow.value = flattenedList
+        return flattenedList
     }
+
+    private suspend fun handleUserEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+        Log.d("jij", "handleUserEvent()")
+        val flattenedList: MutableList<FlattenedQuizData> = mutableListOf()
+        val category = structureUseCase.getStructureData()?.event
+            ?.find { it.id == EventQuiz.QUIZ_BY_USER.id }?.category?.find {
+                Log.d("jij", "it.id: ${it.id}")
+                Log.d("jij", "idCat: ${idCat}")
+
+                it.id == idCat }
+
+        category?.subcategory?.forEach {
+            Log.d("jij", "subCatData.name: ${it.nameQuiz}")
+            it.subSubcategory.forEach {subsubCat ->
+                Log.d("jij", "subsubCat.name: ${subsubCat.nameQuiz}")
+                subsubCat.quizData.forEach {
+                    Log.d("jij", "quizData.name: ${it.nameQuiz}")
+                    flattenedList.add(it.toFlattenedQuizData())
+                }
+            }
+        }
+        return flattenedList
+    }
+
+    private suspend fun handleArenaEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+        // Логика для арены
+        return emptyList() // Замените своей реализацией
+    }
+
+    private suspend fun handleDefaultEvent(
+        idCategory: Int,
+        idSubCategory: Int
+    ): List<FlattenedQuizData> {
+        // Универсальный обработчик для необработанных событий
+        println("Обработка по умолчанию для категории $idCategory и подкатегории $idSubCategory")
+        return emptyList()
+    }
+
 }

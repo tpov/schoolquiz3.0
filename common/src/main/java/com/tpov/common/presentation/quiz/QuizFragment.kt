@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.tpov.common.EventQuiz
 import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
@@ -38,7 +40,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     private lateinit var adapter: QuizActivityAdapter
     private var createQuiz = false
 
-    private var idEvent = UNKNOWN_VALUE
+    private var idEvent: EventQuiz? = null
     var idCategory = UNKNOWN_VALUE
     var idSubCategory = UNKNOWN_VALUE
     var idSubsubCategory = UNKNOWN_VALUE
@@ -49,14 +51,14 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         quizViewModel = ViewModelProvider(this, viewModelFactory)[QuizActivityViewModel::class.java]
 
         initGetData()
-        quizViewModel.initQuestionListByIds(idEvent, idCategory, idSubCategory)
+        quizViewModel.initQuestionListByIds(idEvent!!, idCategory, idSubCategory)
         initAdapter()
         initPath()
     }
 
     @SuppressLint("SetTextI18n")
     private fun initPath() {
-        binding.tvEventPath.text = quizViewModel.getNamePathEvent(idEvent) +
+        binding.tvEventPath.text = quizViewModel.getNamePathEvent(idEvent!!) +
                 if (quizViewModel.nameCategory != "") " > " else ""
         binding.tvCatPath.text = quizViewModel.nameCategory +
                 if (quizViewModel.nameSubCategory != "") " > " else ""
@@ -92,7 +94,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     private fun initGetData() {
-        idEvent = arguments?.getInt(KEY_ID_EVENT, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
+        idEvent = arguments?.getInt(KEY_ID_EVENT, UNKNOWN_VALUE)?.let { EventQuiz.fromId(it) }
         idCategory = arguments?.getInt(KEY_ID_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
         idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
         idSubsubCategory =
@@ -111,14 +113,17 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     override fun deleteItem(id: Int) {
     }
 
-    override fun onClick(id: Int, typeQuestion: Boolean) {
-        if (idSubCategory == UNKNOWN_VALUE) {
-            idSubCategory = id
+    override fun onClick(idQuiz: Int, typeQuestion: Boolean) {
+        Log.d("jij", "idEvent: $idEvent")
+        Log.d("jij", "idSubCategory: $idSubCategory ")
+        Log.d("jij", "idQuiz: $idQuiz ")
+        if (idSubCategory == UNKNOWN_VALUE && idEvent == EventQuiz.QUIZ_HOME) {
+            idSubCategory = idQuiz
             restartFragment()
-        } else if (idSubsubCategory == UNKNOWN_VALUE) {
-            navigationProvider?.openQuestionActivity(id, typeQuestion)
+        } else if (idSubsubCategory == UNKNOWN_VALUE && idEvent == EventQuiz.QUIZ_HOME) {
+            navigationProvider?.openQuestionActivity(idQuiz, typeQuestion)
         } else {
-            navigationProvider?.openQuestionActivity(id, typeQuestion)
+            navigationProvider?.openQuestionActivity(idQuiz, typeQuestion)
         }
 
     }
@@ -126,7 +131,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     private fun restartFragment() {
         val fragmentManager = parentFragmentManager
         fragmentManager.beginTransaction()
-            .replace(this.id, newInstance(idEvent, idCategory, idSubCategory, idSubsubCategory))
+            .replace(this.id, newInstance(idEvent!!, idCategory, idSubCategory, idSubsubCategory))
             .addToBackStack(null)
             .commit()
     }
@@ -179,13 +184,13 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
         @JvmStatic
         fun newInstance(
-            idEvent: Int,
-            idCategory: Int,
-            idSubCategory: Int,
-            idSubsubCategory: Int
+            idEvent: EventQuiz,
+            idCategory: Int = 0,
+            idSubCategory: Int = 0,
+            idSubsubCategory: Int = 0
         ): QuizFragment {
             val args = Bundle()
-            args.putInt(KEY_ID_EVENT, idEvent)
+            args.putInt(KEY_ID_EVENT, idEvent.id)
             args.putInt(KEY_ID_CATEGORY, idCategory)
             args.putInt(KEY_ID_SUB_CATEGORY, idSubCategory)
             args.putInt(KEY_ID_SUB_SUB_CATEGORY, idSubsubCategory)

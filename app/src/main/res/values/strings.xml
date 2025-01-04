@@ -93,6 +93,8 @@
     <string name="judgment_toast">Cheating is wrong.</string>
 
     <string name="title_text">Quiz</string>
+    <string name="menu_home_quiz">Home quizz</string>
+    <string name="menu_user_quiz">My Quizz</string>
     <string name="menu_home_text">Home</string>
     <string name="menu_new">Shop</string>
     <string name="menu_info">Info</string>

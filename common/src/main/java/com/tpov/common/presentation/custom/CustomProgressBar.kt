@@ -14,14 +14,7 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
-import com.tpov.common.EVENT_QUIZ_ARENA
-import com.tpov.common.EVENT_QUIZ_FOR_ADMIN
-import com.tpov.common.EVENT_QUIZ_FOR_MODERATOR
-import com.tpov.common.EVENT_QUIZ_FOR_TESTER
-import com.tpov.common.EVENT_QUIZ_FOR_USER
-import com.tpov.common.EVENT_QUIZ_HOME
-import com.tpov.common.EVENT_QUIZ_TOURNIRE
-import com.tpov.common.EVENT_QUIZ_TOURNIRE_LEADER
+import com.tpov.common.EventQuiz
 
 class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
     private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -91,16 +84,16 @@ class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context,
 
             override fun onAnimationEnd(animation: Animator) {
                 when (event) {
-                    EVENT_QUIZ_FOR_USER -> noShowRating(rbEvaluation,bOk,bHelpTranslate,tvEvaluation)
+                    EventQuiz.QUIZ_BY_USER.id -> noShowRating(rbEvaluation,bOk,bHelpTranslate,tvEvaluation)
 
-                    EVENT_QUIZ_FOR_TESTER,
-                    EVENT_QUIZ_FOR_MODERATOR,
-                    EVENT_QUIZ_FOR_ADMIN -> showRating(rbEvaluation, bOk, bHelpTranslate,tvEvaluation)
+                    EventQuiz.QUIZ_FOR_TESTER.id,
+                    EventQuiz.QUIZ_FOR_MODERATOR.id,
+                    EventQuiz.QUIZ_FOR_ADMIN.id -> showRating(rbEvaluation, bOk, bHelpTranslate,tvEvaluation)
 
-                    EVENT_QUIZ_ARENA,
-                    EVENT_QUIZ_TOURNIRE,
-                    EVENT_QUIZ_TOURNIRE_LEADER,
-                    EVENT_QUIZ_HOME -> {
+                    EventQuiz.QUIZ_ARENA.id,
+                    EventQuiz.QUIZ_TOURNIRE.id,
+                    EventQuiz.QUIZ_TOURNIRE_LEADER.id,
+                    EventQuiz.QUIZ_HOME.id -> {
                         if (showStars) showRating(rbEvaluation, bOk, bHelpTranslate, tvEvaluation)
                         else noShowRating(rbEvaluation, bOk, bHelpTranslate, tvEvaluation)
                     }

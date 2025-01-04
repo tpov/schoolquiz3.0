@@ -37,11 +37,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.COUNT_LIFE_POINTS_IN_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
+import com.tpov.common.EventQuiz
 import com.tpov.common.data.utils.TimeManager
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.common.presentation.question.QuestionActivity
-import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.common.presentation.utils.Values
 import com.tpov.common.presentation.utils.Values.getColorNickname
 import com.tpov.network.presentation.chat.ChatFragment
@@ -65,7 +65,7 @@ import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CONTACT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_DOWNLOADS
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_EXIT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_FRIEND
-import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_HOME
+import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_HOME_QUIZ
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_LEADER
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_MY_QUIZ
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_PROFILE
@@ -133,9 +133,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         viewModel.initProfile()
         setupDrawerLayout()
         initBottomMenu()
-        setupDynamicMenu(binding,  Qualification(0, 0, 0, 0, 0, 0),
-            currentSkill = 0,
-            inset = Inset.HOME)
+        setupMenu(MENU_HOME_QUIZ)
         setupAnimations()
         syncProfile()
         initData()
@@ -148,6 +146,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         val notification = NotificationHelper(this)
         notification.setupUserGuide(view)
     }
+
     private fun initData() {
         getDataToday()
 
@@ -633,8 +632,8 @@ getDataToday()
 
         binding.navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                MENU_HOME -> switchFragment(MainFragment())
-                MENU_MY_QUIZ -> switchFragment(QuizFragment())
+                MENU_HOME_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
+                MENU_MY_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_BY_USER))
                 MENU_DOWNLOADS -> switchFragment(DownloadFragment())
                 MENU_SETTING -> switchFragment(SettingsFragment())
                 MENU_PROFILE -> switchFragment(ProfileFragment())
@@ -648,25 +647,31 @@ getDataToday()
                 else -> false
             }
 
-            currentMenuId = menuItem.itemId
-            setupDynamicMenu(binding,  Qualification(200, 200, 200, 200, 200, 300),
-                currentSkill = 500000,
-                inset = Inset.HOME)
+            setupMenu(menuItem.itemId)
             binding.drawerLayout.closeDrawers()
             true
         }
 
     }
 
+    private fun setupMenu(itemId: Int) {
+        currentMenuId = itemId
+        setupDynamicMenu(binding,  Qualification(200, 200, 200, 200, 200, 300),
+            currentSkill = 500000,
+            inset = Inset.HOME)
+    }
     private fun logout() {
 
     }
 
     private fun initBottomMenu() {
-        switchFragment(MainFragment())
+        switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
         binding.bNav.setOnNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.menu_home -> switchFragment(MainFragment())
+                R.id.menu_home -> {
+                    setupMenu(MENU_HOME_QUIZ)
+                    switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
+                }
                 R.id.menu_adb -> switchFragment(ShopFragment())
                 R.id.menu_info -> startInfoFragment()
                 R.id.menu_network -> {

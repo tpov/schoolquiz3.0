@@ -6,11 +6,11 @@ data class MenuItemRequirement(
     val iconRes: Int,
     val inset: Inset,
     val requiredRoles: Map<Role, Int>,
-    val requiredSkill: Int
 )
 
 
 enum class Role {
+    USER,
     TESTER,
     MODERATOR,
     SPONSOR,

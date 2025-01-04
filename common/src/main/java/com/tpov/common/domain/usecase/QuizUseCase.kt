@@ -56,7 +56,8 @@ class QuizUseCase @Inject constructor(private val repositoryQuiz: RepositoryQuiz
     }
 
     suspend fun getQuizById(id: Int): QuizEntity? {
-        Log.d("getQuizById", "${getQuizzes()}")
+        Log.d("getQuizById", "quiz: ${getQuizzes()}")
+        Log.d("getQuizById", "id: ${id}")
         return getQuizzes()?.filter { it.id == id }?.get(0)
     }
 

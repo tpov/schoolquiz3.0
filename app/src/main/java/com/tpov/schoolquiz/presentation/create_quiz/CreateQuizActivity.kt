@@ -22,8 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.tpov.common.EVENT_QUIZ_FOR_USER
-import com.tpov.common.EVENT_QUIZ_HOME
+import com.tpov.common.EventQuiz
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
@@ -318,7 +317,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
             Log.d("dfgdfgdf", "structureData: $structureData")
             categories = mutableListOf("Создать новую категорию")
-            structureData.event.filter { it.id == EVENT_QUIZ_HOME || it.id == EVENT_QUIZ_FOR_USER }
+            structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
                 .forEach {
                     it.category.forEach { cat ->
                         categories.add(cat.nameQuiz)
@@ -328,7 +327,7 @@ class CreateQuizActivity : AppCompatActivity() {
             when (idTree) {
                 1 -> {
                     subcategories = mutableListOf("Создать новую подкатегорию")
-                    structureData.event.filter { it.id == EVENT_QUIZ_HOME || it.id == EVENT_QUIZ_FOR_USER }
+                    structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
                         .forEach {
                             if (init) viewModel.category = it.category.last().nameQuiz
                             it?.category?.filter { it.nameQuiz == viewModel.category }
@@ -342,7 +341,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
                 2 -> {
                     subSubcategories = mutableListOf("Создать новую под-субкатегорию")
-                    structureData.event.filter { it.id == EVENT_QUIZ_HOME || it.id == EVENT_QUIZ_FOR_USER }
+                    structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
                         .forEach {
                             if (init) viewModel.subCategory =
                                 it.category?.filter { it.nameQuiz == viewModel.category }
@@ -358,7 +357,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 }
 
                 3 -> {
-                    structureData.event.filter { it.id == EVENT_QUIZ_HOME || it.id == EVENT_QUIZ_FOR_USER }
+                    structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
                         .forEach {
                             if (init) viewModel.subsubCategory =
                                 it.category?.filter { it.nameQuiz == viewModel.category }
