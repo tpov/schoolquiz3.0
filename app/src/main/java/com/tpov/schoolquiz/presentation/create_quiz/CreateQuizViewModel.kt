@@ -7,10 +7,8 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.tpov.common.BITMAP_LOAD_MAX_HEIGHT
 import com.tpov.common.BITMAP_LOAD_MAX_WIDTH
-import com.tpov.common.EventQuiz
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
@@ -22,15 +20,13 @@ import com.tpov.common.presentation.utils.BitmapUtil
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
 class CreateQuizViewModel @Inject constructor(
     val structureUseCase: StructureUseCase,
-    private val quizUseCase: QuizUseCase,
-    private val questionUseCase: QuestionUseCase,
+    internal val quizUseCase: QuizUseCase,
+    internal val questionUseCase: QuestionUseCase,
 ) : ViewModel() {
 
     var idQuiz = -1
@@ -63,10 +59,16 @@ class CreateQuizViewModel @Inject constructor(
         val (hardQuestions, normalQuestions) = indexedQuestions.partition { it.value.hardQuestion }
 
         val sortedNormalQuestions =
-            sortAndFilterQuestionsForSpinner(normalQuestions,languages).sortedBy { it.value.numQuestion }
+            sortAndFilterQuestionsForSpinner(
+                normalQuestions,
+                languages
+            ).sortedBy { it.value.numQuestion }
 
         val sortedHardQuestions =
-            sortAndFilterQuestionsForSpinner(hardQuestions, languages).sortedBy { it.value.numQuestion }
+            sortAndFilterQuestionsForSpinner(
+                hardQuestions,
+                languages
+            ).sortedBy { it.value.numQuestion }
 
         val combinedQuestions = sortedNormalQuestions + sortedHardQuestions
 
@@ -81,7 +83,11 @@ class CreateQuizViewModel @Inject constructor(
         }.toCollection(ArrayList())
         return questionShortList
     }
-    fun findMissingNumber(isHardQuestion: Boolean, questionsShortEntity: List<QuestionShortEntity>): Int {
+
+    fun findMissingNumber(
+        isHardQuestion: Boolean,
+        questionsShortEntity: List<QuestionShortEntity>
+    ): Int {
         val relevantQuestions = questionsShortEntity.filter { it.hardQuestion == isHardQuestion }
         val maxNumQuestion = relevantQuestions.maxOfOrNull { it.numQuestion } ?: 0
         return maxNumQuestion + 1
@@ -131,6 +137,7 @@ class CreateQuizViewModel @Inject constructor(
 
         return if (commonLanguage) firstLanguage else ""
     }
+
     fun getNewCategory() = if (!isCreateNewCategory) Triple(
         quizEntity?.idCategory ?: 0,
         quizEntity?.idSubcategory ?: 0,
@@ -141,7 +148,10 @@ class CreateQuizViewModel @Inject constructor(
         return Locale.getDefault().language
     }
 
-    private fun sortAndFilterQuestionsForSpinner(questions: List<IndexedValue<QuestionEntity>>, languages: String): List<IndexedValue<QuestionEntity>> {
+    private fun sortAndFilterQuestionsForSpinner(
+        questions: List<IndexedValue<QuestionEntity>>,
+        languages: String
+    ): List<IndexedValue<QuestionEntity>> {
         return questions
             .groupBy { it.value.numQuestion }
             .flatMap { (_, questionsGroup) ->
@@ -155,7 +165,7 @@ class CreateQuizViewModel @Inject constructor(
             }
     }
 
-    suspend fun getStructureData() = structureUseCase.getStructureData()
+    fun initStructureData() = structureUseCase.getStructureData()
 
     fun getAllQuestionsAndLanguagesWithUI(llQuestions: LinearLayout): List<Pair<String, String>> {
         val questionsAndLanguages = mutableListOf<Pair<String, String>>()
@@ -179,57 +189,16 @@ class CreateQuizViewModel @Inject constructor(
         return questionsAndLanguages
     }
 
-    fun insertQuizThis(
-        structureCategoryDataEntity: StructureCategoryDataEntity,
-        quizIt: QuizEntity,
-        questionsIt: ArrayList<QuestionEntity>
-    ) = viewModelScope.launch(Dispatchers.Default) {
-        when (regime) {
-            CreateQuizActivity.REGIME_CREATE_QUIZ -> {
-                val newIdQuiz = getNewIdLocalQuiz()
-                val updatedStructureCategoryData = structureCategoryDataEntity.copy(oldIdQuizId = newIdQuiz, newEventId = EventQuiz.QUIZ_BY_USER.id)
-                val updatedQuizIt = quizIt.copy(id = newIdQuiz, event = EventQuiz.QUIZ_BY_USER.id)
-                questionsIt.replaceAll { it.copy(idQuiz = newIdQuiz) }
+    fun errorCountLanguage() {
 
-                structureUseCase.insertStructureCategoryData(updatedStructureCategoryData)
-                quizUseCase.insertQuiz(updatedQuizIt)
-                questionsIt.forEach { questionUseCase.insertQuestion(it) }
-            }
-
-            CreateQuizActivity.REGIME_EDIT_QUIZ -> {
-                structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)
-                quizUseCase.updateQuiz(quizIt)
-                questionUseCase.deleteQuestionByIdQuiz(quizIt.id!!)
-                questionsIt.forEach { questionUseCase.insertQuestion(it) }
-            }
-
-            CreateQuizActivity.REGIME_EDIT_ARCHIVE_MY_QUIZ -> {
-                val newIdQuiz = getNewIdLocalQuiz()
-val structureCategoryDataEntity = structureCategoryDataEntity.copy(newEventId = 3, oldIdQuizId = newIdQuiz)
-                structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)
-                quizUseCase.updateQuiz(quizIt)
-                questionUseCase.deleteQuestionByIdQuiz(quizIt.id!!)
-                questionsIt.forEach { questionUseCase.insertQuestion(it) }
-            }
-
-            CreateQuizActivity.REGIME_EDIT_ARCHIVE_QUIZ -> {
-            }
-
-            CreateQuizActivity.REGIME_TRANSLATE_QUIZ -> {
-
-            }
-        }
     }
 
-fun errorCountLanguage() {
-
-}
     fun determineLanguage(textBeforeSpace: String): String {
         return getUserLanguage()
     }
 
 
-    private suspend fun getNewIdLocalQuiz(): Int {
+    internal suspend fun getNewIdLocalQuiz(): Int {
         val quizzes = quizUseCase.getQuizzes()
         val usedIds = quizzes?.map { it.id }?.toSet()
 
@@ -276,9 +245,10 @@ fun errorCountLanguage() {
         if (drawable is BitmapDrawable) {
             val bitmap = drawable.bitmap
 
-            val scaledBitmap = if (bitmap.width > BITMAP_LOAD_MAX_WIDTH || bitmap.height > BITMAP_LOAD_MAX_HEIGHT) {
-                BitmapUtil().scaleBitmap(bitmap,BITMAP_LOAD_MAX_WIDTH,BITMAP_LOAD_MAX_HEIGHT)
-            } else bitmap
+            val scaledBitmap =
+                if (bitmap.width > BITMAP_LOAD_MAX_WIDTH || bitmap.height > BITMAP_LOAD_MAX_HEIGHT) {
+                    BitmapUtil().scaleBitmap(bitmap, BITMAP_LOAD_MAX_WIDTH, BITMAP_LOAD_MAX_HEIGHT)
+                } else bitmap
 
             structureUseCase.savePicture(fileName, scaledBitmap)
         }

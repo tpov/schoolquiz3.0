@@ -20,6 +20,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.EventQuiz
@@ -33,16 +36,17 @@ import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
+import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.handler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class CreateQuizActivity : AppCompatActivity() {
+open class CreateQuizActivity : AppCompatActivity() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
-    private lateinit var viewModel: CreateQuizViewModel
+    internal lateinit var viewModel: CreateQuizViewModel
 
     private val PICK_IMAGE_CATEGORY = 1001
     private val PICK_IMAGE_SUBCATEGORY = 1002
@@ -50,7 +54,10 @@ class CreateQuizActivity : AppCompatActivity() {
     private val PICK_IMAGE_QUIZ = 1004
     private val PICK_IMAGE_QUESTION = 1005
 
-    private lateinit var binding: ActivityCreateQuizBinding
+    private var isFullscreen = false
+    private var isCreateCategory = false
+
+    internal lateinit var binding: ActivityCreateQuizBinding
 
     private lateinit var structureData: StructureData
 
@@ -63,7 +70,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
         intent?.let {
             viewModel = ViewModelProvider(this, viewModelFactory)[CreateQuizViewModel::class.java]
-            initData()
+            handler().initData()
         }
 
         viewModel.quizEntity = intent.getParcelableExtra(ARG_QUIZ)
@@ -75,15 +82,12 @@ class CreateQuizActivity : AppCompatActivity() {
                 viewModel.questionsEntity,
                 viewModel.getUserLanguage()
             )
-        initView()
+
+        handler().initViews()
         initSetOnClickListeners()
     }
 
-    private fun initData() = lifecycleScope.launch {
-        structureData = viewModel.getStructureData()!!
-    }
-
-    private fun setupQuestionSpinner() = with(binding) {
+    internal fun setupQuestionSpinner() = with(binding) {
         updateQuestionsAdapter(spNumQuestion)
 
         spNumQuestion.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -128,7 +132,7 @@ class CreateQuizActivity : AppCompatActivity() {
         spNumQuestion.setSelection(viewModel.counter)
     }
 
-    private fun initNewTranslateViews() {
+    internal fun initNewTranslateViews() {
         addQuestionToLayout("", viewModel.getUserLanguage())
         addOrUpdateAnswerGroup(viewModel.idGroup, viewModel.getUserLanguage(), false, "")
     }
@@ -157,6 +161,57 @@ class CreateQuizActivity : AppCompatActivity() {
         imvSubsubcategory.setOnClickListener { pickImageFromGallery(PICK_IMAGE_SUBSUBCATEGORY) }
         imvQuiz.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUIZ) }
         imvQuestion.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUESTION) }
+        imvFullscreen.setOnClickListener {
+            if (isFullscreen) showQuizUI()
+            else hideQuizUI()
+        }
+    }
+
+    private fun hideQuizUI() = with(binding) {
+        tvQuizName.visibility = View.GONE
+        imvQuiz.visibility = View.GONE
+        spCategory.visibility = View.GONE
+        spSubCategory.visibility = View.GONE
+        spSubsubCategory.visibility = View.GONE
+        stroce.visibility = View.GONE
+
+        bCencel.visibility = View.GONE
+        bSave.visibility = View.GONE
+
+        llCreateNewCategory.visibility = View.GONE
+        imvFullscreen.setImageResource(R.drawable.ic_fullscreen_exit)
+
+        hideSystemUI()
+    }
+
+    private fun showQuizUI() = with(binding) {
+        tvQuizName.visibility = View.VISIBLE
+        imvQuiz.visibility = View.VISIBLE
+        spCategory.visibility = View.VISIBLE
+        spSubCategory.visibility = View.VISIBLE
+        spSubsubCategory.visibility = View.VISIBLE
+        stroce.visibility = View.VISIBLE
+
+        bCencel.visibility = View.VISIBLE
+        bSave.visibility = View.VISIBLE
+
+        if (isCreateCategory) llCreateNewCategory.visibility = View.VISIBLE
+        imvFullscreen.setImageResource(R.drawable.ic_fullscreen)
+
+        showSystemUI()
+    }
+
+    private fun hideSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+    private fun showSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
     }
 
     private fun getThisQuizWithUI(): QuizEntity? = with(binding) {
@@ -228,60 +283,13 @@ class CreateQuizActivity : AppCompatActivity() {
         }
     }
 
-    private fun initView() {
-        when (viewModel.regime) {
-            REGIME_CREATE_QUIZ -> {
-                viewModel.updateNewCounterAndShortList(true)
-                setupQuestionSpinner()
-                updateUiQuestion()
-                setupUiQuiz()
-                initNewTranslateViews()
-
-            }
-
-            REGIME_EDIT_QUIZ -> {
-                setupQuestionSpinner()
-                updateUiQuestion()
-                setupUiQuiz()
-
-                binding.bSave.text = "Update"
-            }
-
-            REGIME_EDIT_ARCHIVE_MY_QUIZ -> {
-                setupQuestionSpinner()
-                updateUiQuestion()
-                setupUiQuiz()
-
-                binding.bSave.text = "Update in archive"
-            }
-
-            REGIME_EDIT_ARCHIVE_QUIZ -> {
-                setupQuestionSpinner()
-                updateUiQuestion()
-
-                binding.bSave.text = "Update in archive"
-                hideQuizViews()
-            }
-
-            REGIME_TRANSLATE_QUIZ -> {
-                setupQuestionSpinner()
-                updateUiQuestion()
-
-                hideQuizViews()
-                hideTopQuestionViews()
-                binding.bSave.text = "Save"
-
-            }
-        }
-    }
-
-    private fun hideTopQuestionViews() = with(binding) {
+    internal fun hideTopQuestionViews() = with(binding) {
         imvQuestion.visibility = View.GONE
         spNumQuestion.visibility = View.GONE
         chbTypeQuestion.visibility = View.GONE
     }
 
-    private fun hideQuizViews() = with(binding) {
+    internal fun hideQuizViews() = with(binding) {
         tvQuizName.visibility = View.GONE
         imvQuiz.visibility = View.GONE
         spCategory.visibility = View.GONE
@@ -290,7 +298,7 @@ class CreateQuizActivity : AppCompatActivity() {
         stroce.visibility = View.GONE
     }
 
-    private fun setupUiQuiz() = with(binding) {
+    internal fun setupUiQuiz() = with(binding) {
         tvQuizName.setText(viewModel.quizEntity?.nameQuiz)
 
         setCategorySpinnerListeners()
@@ -367,16 +375,6 @@ class CreateQuizActivity : AppCompatActivity() {
                         }
                 }
             }
-
-            Log.d("dfgdfgdf", "init: $init, idTree: $idTree")
-            Log.d("dfgdfgdf", "categories: $categories")
-            Log.d("dfgdfgdf", "subcategories: $subcategories")
-
-            Log.d("dfgdfgdf", "subSubcategories: $subSubcategories")
-            Log.d("dfgdfgdf", "category: ${viewModel.category}")
-            Log.d("dfgdfgdf", "subCategory: ${viewModel.subCategory}")
-
-            Log.d("dfgdfgdf", "subsubCategory: ${viewModel.subsubCategory}")
 
             when (idTree) {
                 1 -> {
@@ -701,7 +699,7 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
 
-    private fun updateUiQuestion() = with(binding) {
+    internal fun updateUiQuestion() = with(binding) {
         val numQuestionThis = viewModel.questionsShortEntity[viewModel.counter].numQuestion
         val hardQuestionThis = viewModel.questionsShortEntity[viewModel.counter].hardQuestion
         val questionEntitiesLanguage = viewModel.questionsEntity.filter {
@@ -838,7 +836,7 @@ class CreateQuizActivity : AppCompatActivity() {
     private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
         viewModel.questionsEntity.let { questionsIt ->
             viewModel.quizEntity?.let { quizIt ->
-                viewModel.insertQuizThis(structureCategoryDataEntity, quizIt, questionsIt)
+                handler().saveData(structureCategoryDataEntity, quizIt, questionsIt)
                 finish()
             }
         }
