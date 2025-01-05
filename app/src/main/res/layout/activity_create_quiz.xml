@@ -17,7 +17,6 @@
         android:hint="Quiz name"
         android:textColor="@color/white"
         android:textColorHint="@color/white"
-        android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@id/imv_quiz"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -27,7 +26,6 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_margin="16dp"
-        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_upload" />
@@ -41,7 +39,6 @@
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
         android:textColor="@color/white"
-        android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@+id/sp_sub_category"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
@@ -55,7 +52,6 @@
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
         android:textColor="@color/white"
-        android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@+id/sp_subsub_category"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_category"
@@ -69,7 +65,6 @@
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
         android:textColor="@color/white"
-        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_sub_category"
@@ -147,7 +142,6 @@
         android:layout_marginRight="8dp"
         android:layout_marginBottom="16dp"
         android:background="@color/line"
-        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/imv_question"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -248,6 +242,30 @@
 
     </View>
 
+    <Button
+        android:id="@+id/b_before_edit"
+        android:layout_width="0dp"
+        android:layout_height="35dp"
+        android:text="Before edit"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/stroce2"
+        app:layout_constraintEnd_toStartOf="@+id/b_after_edit"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/b_after_edit"
+        android:layout_width="0dp"
+        android:layout_height="35dp"
+        android:textSize="12sp"
+        android:text="After edit"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/stroce2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/b_before_edit" />
+
     <CheckBox
         android:id="@+id/chb_type_question"
         android:layout_width="wrap_content"
@@ -273,7 +291,6 @@
         android:textAllCaps="false"
         android:textColor="@color/red"
         android:textStyle="bold"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/b_save"
         app:layout_constraintStart_toStartOf="parent" />
@@ -341,7 +358,6 @@
         android:textAllCaps="false"
         android:textColor="@color/back_main_green"
         android:textStyle="bold"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/b_cencel" />

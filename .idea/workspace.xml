@@ -206,19 +206,9 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add menu logic&#10;Add menu list">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/RegimeHandler.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/RegimeHandlerImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/CreateHandler.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/EditCompareHandler.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/EditHandler.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/TranslateHandler.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/assetWizardSettings.xml" afterDir="false" />
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Add fullscreeen regime &#10;Add Regime strategy in CreateQuizActivity">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/ic_fullscreen.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/ic_fullscreen.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable/ic_fullscreen_exit.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/drawable/ic_fullscreen_exit.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_create_quiz.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_create_quiz.xml" afterDir="false" />
     </list>
     <list id="81ab6825-6e13-49c0-a4dd-0fe06f8e94eb" name="Node changelist" comment="Add Node" />
@@ -1492,7 +1482,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <option name="localTasksCounter" value="119" />
+    <option name="localTasksCounter" value="120" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -1535,7 +1525,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Fix update profile when update &amp; get tpovId" />
     <MESSAGE value="Create show Profile" />
     <MESSAGE value="Create show Profile in MainActivity" />
     <MESSAGE value="Add update profile &amp; life" />
@@ -1560,7 +1549,8 @@
     <MESSAGE value="Edit menu" />
     <MESSAGE value="Add menu list" />
     <MESSAGE value="Add menu logic&#10;Add menu list" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add menu logic&#10;Add menu list" />
+    <MESSAGE value="Add fullscreeen regime &#10;Add Regime strategy in CreateQuizActivity" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add fullscreeen regime &#10;Add Regime strategy in CreateQuizActivity" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
 </project>

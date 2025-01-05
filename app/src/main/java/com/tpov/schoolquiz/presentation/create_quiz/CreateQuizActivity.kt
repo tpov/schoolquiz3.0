@@ -180,8 +180,30 @@ open class CreateQuizActivity : AppCompatActivity() {
 
         llCreateNewCategory.visibility = View.GONE
         imvFullscreen.setImageResource(R.drawable.ic_fullscreen_exit)
+    }
 
-        hideSystemUI()
+    private fun hideInfoQuestion() = with(binding) {
+        spNumQuestion.visibility = View.GONE
+        chbTypeQuestion.visibility = View.GONE
+        imvFullscreen.visibility = View.GONE
+        imvQuestion.visibility = View.GONE
+
+        bAddAnswer.visibility = View.GONE
+        bAddTranslate.visibility = View.GONE
+        bAddGap.visibility = View.GONE
+
+    }
+
+    private fun showInfoQuestion() = with(binding) {
+        spNumQuestion.visibility = View.VISIBLE
+        chbTypeQuestion.visibility = View.VISIBLE
+        imvFullscreen.visibility = View.VISIBLE
+        imvQuestion.visibility = View.VISIBLE
+
+        bAddAnswer.visibility = View.VISIBLE
+        bAddTranslate.visibility = View.VISIBLE
+        bAddGap.visibility = View.VISIBLE
+
     }
 
     private fun showQuizUI() = with(binding) {
@@ -197,8 +219,6 @@ open class CreateQuizActivity : AppCompatActivity() {
 
         if (isCreateCategory) llCreateNewCategory.visibility = View.VISIBLE
         imvFullscreen.setImageResource(R.drawable.ic_fullscreen)
-
-        showSystemUI()
     }
 
     private fun hideSystemUI() {
