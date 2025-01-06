@@ -7,11 +7,15 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tpov.common.BITMAP_LOAD_MAX_HEIGHT
 import com.tpov.common.BITMAP_LOAD_MAX_WIDTH
+import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.local.StructureCategoryDataEntity
+import com.tpov.common.data.model.local.StructureData
+import com.tpov.common.data.model.local.SubCategoryData
+import com.tpov.common.data.model.local.SubsubCategoryData
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject
@@ -20,6 +24,10 @@ import com.tpov.common.presentation.utils.BitmapUtil
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.model.QuestionShortEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
@@ -36,7 +44,6 @@ class CreateQuizViewModel @Inject constructor(
     var questionsEntity: ArrayList<QuestionEntity> = arrayListOf()
     var questionsShortEntity: ArrayList<QuestionShortEntity> = arrayListOf()
 
-    private var structureCategoryDataEntity = StructureCategoryDataEntity()
     var quizEntity: QuizEntity? = null
 
     var category: String = ""
@@ -48,7 +55,8 @@ class CreateQuizViewModel @Inject constructor(
     var isInitialSetupCategorySpinner3 = true
     var idGroup = 0
 
-    var regime: Int = 0
+    val structureDataFlow: StateFlow<StructureData?> get() = _structureDataFlow
+    private var _structureDataFlow = MutableStateFlow<StructureData?>(null)
 
     fun getQuestionListShortEntity(
         questionList: List<QuestionEntity>,
@@ -165,7 +173,9 @@ class CreateQuizViewModel @Inject constructor(
             }
     }
 
-    fun initStructureData() = structureUseCase.getStructureData()
+    fun initStructureData() = viewModelScope.launch(Dispatchers.IO) {
+        _structureDataFlow.value = structureUseCase.getStructureData()
+    }
 
     fun getAllQuestionsAndLanguagesWithUI(llQuestions: LinearLayout): List<Pair<String, String>> {
         val questionsAndLanguages = mutableListOf<Pair<String, String>>()
@@ -255,4 +265,59 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun getUserName() = SettingConfigObject.settingsConfig.name
+    fun createNewCategory(event: Int, category: String, subCategory: String, subsubCategory: String) = viewModelScope.launch(Dispatchers.IO) {
+        val currentStructure = _structureDataFlow.value ?: return@launch
+
+        // Найти событие
+        val eventItem = currentStructure.event.find { it.id == event } ?: return@launch
+
+        // Работаем с категориями
+        val newCategories = eventItem.category.toMutableList()
+        val categoryItem = newCategories.find { it.nameQuiz == category } ?: CategoryData(
+            id = newCategories.size,
+            nameQuiz = category,
+            subcategory = emptyList()
+        ).also { newCategories.add(it) }
+
+        // Работаем с подкатегориями
+        val newSubCategories = categoryItem.subcategory.toMutableList()
+        val subCategoryItem = newSubCategories.find { it.nameQuiz == subCategory } ?: SubCategoryData(
+            id = newSubCategories.size,
+            nameQuiz = subCategory,
+            subSubcategory = emptyList()
+        ).also { newSubCategories.add(it) }
+
+        // Работаем с под-подкатегориями
+        val newSubSubCategories = subCategoryItem.subSubcategory.toMutableList()
+        if (newSubSubCategories.none { it.nameQuiz == subsubCategory }) {
+            newSubSubCategories.add(SubsubCategoryData(
+                id = newSubSubCategories.size,
+                nameQuiz = subsubCategory
+            ))
+        }
+
+        // Собираем обновленную структуру
+        val updatedEvent = eventItem.copy(
+            category = newCategories.map { cat ->
+                if (cat.nameQuiz == category) {
+                    cat.copy(
+                        subcategory = newSubCategories.map { subCat ->
+                            if (subCat.nameQuiz == subCategory) {
+                                subCat.copy(subSubcategory = newSubSubCategories)
+                            } else subCat
+                        }
+                    )
+                } else cat
+            }
+        )
+
+        // Обновляем состояние
+        _structureDataFlow.value = currentStructure.copy(
+            event = currentStructure.event.map {
+                if (it.id == event) updatedEvent else it
+            }
+        )
+
+        structureUseCase.saveStructureData(_structureDataFlow.value!!)
+    }
 }

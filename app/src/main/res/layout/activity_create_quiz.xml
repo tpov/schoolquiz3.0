@@ -163,10 +163,10 @@
         android:id="@+id/imv_fullscreen"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/imv_question"
-        app:layout_constraintLeft_toRightOf="@+id/chb_type_question"
-        app:layout_constraintRight_toLeftOf="@+id/imv_question"
-        app:layout_constraintTop_toTopOf="@+id/imv_question"
+        android:layout_marginEnd="32dp"
+        android:elevation="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scv_question"
         app:srcCompat="@drawable/ic_fullscreen" />
 
     <Spinner

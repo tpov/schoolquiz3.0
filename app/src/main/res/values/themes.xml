@@ -1,7 +1,7 @@
 <resources>
     <!-- Base application theme. -->
     <style name="Theme.GeoQuiz" parent="Theme.AppCompat.Light">
-
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <!-- Primary brand color. -->
         <!-- Secondary brand color. -->
         <item name="android:fontFamily">@font/cutive_mono</item>

@@ -3,15 +3,11 @@ package com.tpov.schoolquiz.presentation.create_quiz.strategy
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandler
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.binding
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.setupQuestionSpinner
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.setupUiQuiz
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.updateUiQuestion
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.viewModel
 
-class EditCompareHandler : RegimeHandler {
-        override fun initViews() {
+class EditCompareHandler(private val activity: CreateQuizActivity) : RegimeHandler {
+        override fun initViews() = with(activity) {
 
             setupQuestionSpinner()
             updateUiQuestion()
@@ -20,7 +16,7 @@ class EditCompareHandler : RegimeHandler {
             binding.bSave.text = "Update in archive"
         }
 
-        override fun initData() {
+        override fun initData() = with(activity)  {
             TODO("Not yet implemented")
         }
 
@@ -28,7 +24,7 @@ class EditCompareHandler : RegimeHandler {
             structureCategoryDataEntity: StructureCategoryDataEntity,
             quizIt: QuizEntity,
             questionsIt: ArrayList<QuestionEntity>
-        ) {
+        )  = with(activity) {
             val newIdQuiz = viewModel.getNewIdLocalQuiz()
             val structureCategoryDataEntity = structureCategoryDataEntity.copy(newEventId = 3, oldIdQuizId = newIdQuiz)
             viewModel.structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)

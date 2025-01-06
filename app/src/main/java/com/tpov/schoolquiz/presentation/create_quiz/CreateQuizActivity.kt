@@ -11,6 +11,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
@@ -20,6 +21,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -36,9 +38,7 @@ import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.handler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,12 +54,12 @@ open class CreateQuizActivity : AppCompatActivity() {
     private val PICK_IMAGE_QUIZ = 1004
     private val PICK_IMAGE_QUESTION = 1005
 
+    var regime: Int = 0
     private var isFullscreen = false
-    private var isCreateCategory = false
+    internal var isCreateCategory = false
 
-    internal lateinit var binding: ActivityCreateQuizBinding
-
-    private lateinit var structureData: StructureData
+    val handler by lazy { RegimeHandlerImpl(this).handler() }
+    lateinit var binding: ActivityCreateQuizBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,23 +68,38 @@ open class CreateQuizActivity : AppCompatActivity() {
         binding = ActivityCreateQuizBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        intent?.let {
-            viewModel = ViewModelProvider(this, viewModelFactory)[CreateQuizViewModel::class.java]
-            handler().initData()
-        }
+        // Сначала инициализируем viewModel
+        viewModel = ViewModelProvider(this, viewModelFactory)[CreateQuizViewModel::class.java]
 
+        regime = intent.getIntExtra(REGIME, regime)
+        Log.d("sdfesfes" ,"regime: $regime")
+        // Затем вызываем handler().initData()
+        handler.initData()
         viewModel.quizEntity = intent.getParcelableExtra(ARG_QUIZ)
         viewModel.questionsEntity =
             intent.getParcelableArrayListExtra(ARG_QUESTION) ?: arrayListOf()
-        viewModel.regime = intent.getIntExtra(REGIME, viewModel.regime)
         viewModel.questionsShortEntity =
             viewModel.getQuestionListShortEntity(
                 viewModel.questionsEntity,
                 viewModel.getUserLanguage()
             )
 
-        handler().initViews()
+        handler.initViews()
         initSetOnClickListeners()
+        initObservers()
+    }
+
+
+    private fun initObservers() {
+        lifecycleScope.launch {
+            viewModel.structureDataFlow.collect {
+                setCategorySpinnerListeners(it)
+
+                fulledDataSpinnersCategory(true, 1, it)
+                fulledDataSpinnersCategory(true, 2, it)
+                fulledDataSpinnersCategory(true, 3, it)
+            }
+        }
     }
 
     internal fun setupQuestionSpinner() = with(binding) {
@@ -162,8 +177,17 @@ open class CreateQuizActivity : AppCompatActivity() {
         imvQuiz.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUIZ) }
         imvQuestion.setOnClickListener { pickImageFromGallery(PICK_IMAGE_QUESTION) }
         imvFullscreen.setOnClickListener {
-            if (isFullscreen) showQuizUI()
-            else hideQuizUI()
+            Log.d("adwasdwf", "isFullscreen: $isFullscreen")
+            if (isFullscreen) {
+                isFullscreen = false
+                showQuizUI()
+                showSystemUI()
+            }
+            else {
+                isFullscreen = true
+                hideQuizUI()
+                hideSystemUI()
+            }
         }
     }
 
@@ -223,9 +247,17 @@ open class CreateQuizActivity : AppCompatActivity() {
 
     private fun hideSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, window.decorView).let { controller ->
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
+            view.setPadding(0, 0, 0, 0)
+            WindowInsetsCompat.CONSUMED
         }
     }
 
@@ -321,11 +353,6 @@ open class CreateQuizActivity : AppCompatActivity() {
     internal fun setupUiQuiz() = with(binding) {
         tvQuizName.setText(viewModel.quizEntity?.nameQuiz)
 
-        setCategorySpinnerListeners()
-
-        fulledDataSpinnersCategory(true, 1)
-        fulledDataSpinnersCategory(true, 2)
-        fulledDataSpinnersCategory(true, 3)
         val imagePath = viewModel.quizEntity?.picture
         if (!imagePath.isNullOrEmpty()) {
             imvQuiz.setImageURI(Uri.parse(imagePath))
@@ -335,18 +362,17 @@ open class CreateQuizActivity : AppCompatActivity() {
     var categories = mutableListOf("Создать новую категорию")
     var subcategories = mutableListOf("Создать новую подкатегорию")
     var subSubcategories = mutableListOf("Создать новую под-субкатегорию")
-    private fun fulledDataSpinnersCategory(init: Boolean, idTree: Int) {
+    private fun fulledDataSpinnersCategory(
+        init: Boolean,
+        idTree: Int,
+        structureData: StructureData?
+    ) {
         lifecycleScope.launch(Dispatchers.Main) {
-            // Повторные попытки с задержкой до инициализации structureData
-            while (!::structureData.isInitialized) {
-                Log.d("dfgdfgdf", "Ожидание инициализации structureData...")
-                delay(100) // Задержка 100 мс
-            }
 
             Log.d("dfgdfgdf", "structureData: $structureData")
             categories = mutableListOf("Создать новую категорию")
-            structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                .forEach {
+            structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
+                ?.forEach {
                     it.category.forEach { cat ->
                         categories.add(cat.nameQuiz)
                     }
@@ -355,8 +381,8 @@ open class CreateQuizActivity : AppCompatActivity() {
             when (idTree) {
                 1 -> {
                     subcategories = mutableListOf("Создать новую подкатегорию")
-                    structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                        .forEach {
+                    structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
+                        ?.forEach {
                             if (init) viewModel.category = it.category.last().nameQuiz
                             it?.category?.filter { it.nameQuiz == viewModel.category }
                                 ?.getOrNull(0)?.subcategory?.let {
@@ -369,8 +395,8 @@ open class CreateQuizActivity : AppCompatActivity() {
 
                 2 -> {
                     subSubcategories = mutableListOf("Создать новую под-субкатегорию")
-                    structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                        .forEach {
+                    structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
+                        ?.forEach {
                             if (init) viewModel.subCategory =
                                 it.category?.filter { it.nameQuiz == viewModel.category }
                                     ?.getOrNull(0)?.subcategory?.last()?.nameQuiz ?: ""
@@ -385,8 +411,8 @@ open class CreateQuizActivity : AppCompatActivity() {
                 }
 
                 3 -> {
-                    structureData.event.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                        .forEach {
+                    structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
+                        ?.forEach {
                             if (init) viewModel.subsubCategory =
                                 it.category?.filter { it.nameQuiz == viewModel.category }
                                     ?.getOrNull(0)?.subcategory?.filter { it.nameQuiz == viewModel.subsubCategory }
@@ -461,7 +487,7 @@ open class CreateQuizActivity : AppCompatActivity() {
         }
     }
 
-    private fun setCategorySpinnerListeners() {
+    private fun setCategorySpinnerListeners(structureData: StructureData?) {
         Log.d("dfgdfgdf", "setCategorySpinnerListeners()")
         binding.spCategory.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
@@ -483,9 +509,9 @@ open class CreateQuizActivity : AppCompatActivity() {
                         } else {
                             (view as? TextView)?.setTextColor(Color.GREEN)
                             viewModel.category = selectedCategory
-                            fulledDataSpinnersCategory(false, 1)
-                            fulledDataSpinnersCategory(true, 2)
-                            fulledDataSpinnersCategory(true, 3)
+                            fulledDataSpinnersCategory(false, 1, structureData)
+                            fulledDataSpinnersCategory(true, 2, structureData)
+                            fulledDataSpinnersCategory(true, 3, structureData)
                         }
                     }
                 }
@@ -512,8 +538,8 @@ open class CreateQuizActivity : AppCompatActivity() {
                         } else {
                             (view as? TextView)?.setTextColor(Color.GREEN)
                             viewModel.subCategory = selectedSubCategory
-                            fulledDataSpinnersCategory(false, 2)
-                            fulledDataSpinnersCategory(true, 3)
+                            fulledDataSpinnersCategory(false, 2, structureData)
+                            fulledDataSpinnersCategory(true, 3, structureData)
                         }
                     }
                 }
@@ -541,7 +567,7 @@ open class CreateQuizActivity : AppCompatActivity() {
                         } else {
                             (view as? TextView)?.setTextColor(Color.GREEN)
                             viewModel.subsubCategory = selectedSubSubCategory
-                            fulledDataSpinnersCategory(false, 3)
+                            fulledDataSpinnersCategory(false, 3, structureData)
                         }
                     }
                 }
@@ -856,7 +882,7 @@ open class CreateQuizActivity : AppCompatActivity() {
     private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
         viewModel.questionsEntity.let { questionsIt ->
             viewModel.quizEntity?.let { quizIt ->
-                handler().saveData(structureCategoryDataEntity, quizIt, questionsIt)
+                handler.saveData(structureCategoryDataEntity, quizIt, questionsIt)
                 finish()
             }
         }
@@ -879,6 +905,7 @@ open class CreateQuizActivity : AppCompatActivity() {
             questions: List<QuestionEntity>? = null,
             regime: Int
         ): Intent {
+            Log.d("sdfesfes" ,"setRegime: $regime")
             return Intent(context, CreateQuizActivity::class.java).apply {
                 putExtra(ARG_QUIZ, quiz)
                 putParcelableArrayListExtra(ARG_QUESTION, questions?.let { ArrayList(it) })

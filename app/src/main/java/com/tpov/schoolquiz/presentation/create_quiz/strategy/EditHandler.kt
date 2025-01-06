@@ -3,16 +3,12 @@ package com.tpov.schoolquiz.presentation.create_quiz.strategy
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.QuizEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandler
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.binding
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.setupQuestionSpinner
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.setupUiQuiz
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.updateUiQuestion
-import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandlerImpl.viewModel
 
-class EditHandler : RegimeHandler {
-    override fun initViews() {
-        CreateHandler().initViews()
+class EditHandler(private val activity: CreateQuizActivity) : RegimeHandler {
+    override fun initViews()  = with(activity) {
+        CreateHandler(activity).initViews()
 
         setupQuestionSpinner()
         updateUiQuestion()
@@ -22,15 +18,15 @@ class EditHandler : RegimeHandler {
 
     }
 
-    override fun initData() {
-        CreateHandler().initData()
+    override fun initData()  = with(activity) {
+        CreateHandler(activity).initData()
     }
 
     override suspend fun saveData(
         structureCategoryDataEntity: StructureCategoryDataEntity,
         quizIt: QuizEntity,
         questionsIt: ArrayList<QuestionEntity>
-    ) {
+    ) = with(activity)  {
         viewModel.structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)
         viewModel.quizUseCase.updateQuiz(quizIt)
         viewModel.questionUseCase.deleteQuestionByIdQuiz(quizIt.id!!)

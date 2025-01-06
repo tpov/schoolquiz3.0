@@ -1,19 +1,22 @@
 package com.tpov.schoolquiz.presentation.create_quiz
 
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity.Companion.REGIME_CREATE_QUIZ
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity.Companion.REGIME_EDIT_ARCHIVE_QUIZ
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity.Companion.REGIME_EDIT_QUIZ
+import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity.Companion.REGIME_TRANSLATE_QUIZ
 import com.tpov.schoolquiz.presentation.create_quiz.strategy.CreateHandler
 import com.tpov.schoolquiz.presentation.create_quiz.strategy.EditCompareHandler
 import com.tpov.schoolquiz.presentation.create_quiz.strategy.EditHandler
 import com.tpov.schoolquiz.presentation.create_quiz.strategy.TranslateHandler
 
-object RegimeHandlerImpl: CreateQuizActivity() {
+class RegimeHandlerImpl(private val activity: CreateQuizActivity) {
     fun handler(): RegimeHandler {
         val regimeHandlers = mapOf(
-            REGIME_CREATE_QUIZ to CreateHandler(),
-            REGIME_EDIT_QUIZ to EditHandler(),
-            REGIME_EDIT_ARCHIVE_MY_QUIZ to EditArchivedOtherHandler(),
-            REGIME_EDIT_ARCHIVE_QUIZ to EditCompareHandler(),
-            REGIME_TRANSLATE_QUIZ to TranslateHandler()
+            REGIME_CREATE_QUIZ to CreateHandler(activity),
+            REGIME_EDIT_QUIZ to EditHandler(activity),
+            REGIME_EDIT_ARCHIVE_QUIZ to EditCompareHandler(activity),
+            REGIME_TRANSLATE_QUIZ to TranslateHandler(activity)
         )
-        return regimeHandlers[viewModel.regime] ?: null!!
+        return regimeHandlers[activity.regime] ?: throw IllegalArgumentException("Unsupported regime")
     }
 }
