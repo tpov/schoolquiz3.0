@@ -16,7 +16,6 @@ import com.tpov.common.DEFAULT_DATA_IN_GET_CHAT
 import com.tpov.common.DEFAULT_DATA_IN_SEND_CHAT
 import com.tpov.common.DEFAULT_LOCAL_IN_GET_CHAT
 import com.tpov.common.data.manager.SharedPreferencesManager
-import com.tpov.common.data.manager.SharedPreferencesManager.getTpovId
 import com.tpov.network.data.models.local.ChatEntity
 import com.tpov.network.databinding.FragmentChatBinding
 import com.tpov.userguide.presentation.Options
@@ -59,7 +58,6 @@ class ChatFragment : Fragment() {
         chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
         setupRecyclerView()
 
-        val tpovId = getTpovId()
         try {
             val pInfo = context?.packageManager?.getPackageInfo(requireContext().packageName, 0)
             val versionName = pInfo?.versionName
@@ -131,7 +129,6 @@ class ChatFragment : Fragment() {
     override fun onPause() {
         super.onPause()
     }
-
 
     private suspend fun observeChatData() {
         chatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
