@@ -8,6 +8,6 @@ class ChatUseCase @Inject constructor(private val repositoryChat: RepositoryChat
 
     fun remoteChatListener() = repositoryChat.remoteChatListener()
     fun checkForNewMessages(): Boolean {
-return false
+        return false
     }
 }

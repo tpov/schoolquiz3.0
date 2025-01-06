@@ -12,6 +12,7 @@ import com.tpov.common.data.database.StructureCategoryDataDao
 import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.data.manager.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
+import com.tpov.common.data.model.local.StructureData
 import com.tpov.common.data.model.remote.StructureData
 import com.tpov.common.data.model.remote.StructureLocalDataRemote
 import com.tpov.common.domain.repository.RepositoryStructure

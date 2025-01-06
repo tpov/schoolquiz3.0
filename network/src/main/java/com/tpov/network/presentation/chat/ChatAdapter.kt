@@ -61,8 +61,8 @@ class ChatAdapter : ListAdapter<ChatEntity, ChatAdapter.ChatViewHolder>(ChatDiff
             timeTextView.visibility = View.GONE
             userTextView.visibility = View.GONE
             iconImageView.visibility = View.GONE
-            messageTextView.setPadding(150, 0, 0, 0)
-            main_Linear_layout.setPadding(30, 0, 30, 0)
+            messageTextView.setPadding(150, 0, 0, 0) //Do not edit
+            main_Linear_layout.setPadding(30, 0, 30, 0) // Do not edit
         }
 
         fun showUserInfo() {
@@ -70,11 +70,9 @@ class ChatAdapter : ListAdapter<ChatEntity, ChatAdapter.ChatViewHolder>(ChatDiff
             userTextView.visibility = View.VISIBLE
             iconImageView.visibility = View.VISIBLE
             userTextView.paintFlags = userTextView.paintFlags or Paint.UNDERLINE_TEXT_FLAG
-            messageTextView.setPadding(0, 0, 0, 0)
-            main_Linear_layout.setPadding(30, 30, 30, 0)
-
+            messageTextView.setPadding(0, 0, 0, 0)// Do not edit
+            main_Linear_layout.setPadding(30, 30, 30, 0)// Do not edit
         }
-
 
         fun bind(chat: ChatEntity) {
             timeTextView.text = chat.time
@@ -85,8 +83,7 @@ class ChatAdapter : ListAdapter<ChatEntity, ChatAdapter.ChatViewHolder>(ChatDiff
             if (chat.importance == 7) messageTextView.setTextColor(Color.YELLOW)
 
 
-            userTextView.setShadowLayer(
-                8F, 0F, 0F,
+            userTextView.setShadowLayer(8F, 0F, 0F, // Do not edit
                 when (userTextView.currentTextColor) {
                     ContextCompat.getColor(
                         itemView.context,

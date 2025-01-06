@@ -12,7 +12,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 
 @Database(
     entities = [PlayersEntity::class, ChatEntity::class],
-    version = 2,
+    version = 1,
     exportSchema = true
 )
 
