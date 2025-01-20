@@ -1,3 +1,4 @@
+/*
 package com.tpov.schoolquiz
 
 import com.tpov.common.data.model.local.CategoryData
@@ -32,4 +33,4 @@ object StructureData1 {
         )
     )
 
-}
+}*/

@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +19,7 @@ import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
 import com.tpov.common.di.DaggerCommonComponent
 import com.tpov.common.presentation.NavigationProvider
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -83,7 +83,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         binding.rvQuizFragment.itemAnimator = RotateInItemAnimator()
 
         lifecycleScope.launch(Dispatchers.Main) {
-            quizViewModel.listFlattenedQuizDataFlow.collect { list ->
+            quizViewModel.listStructureDataLocalFlow.collect { list ->
                 adapter.submitList(list)
             }
         }
@@ -110,22 +110,17 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         return binding.root
     }
 
-    override fun deleteItem(id: Int) {
-    }
+    override fun deleteItem(pathStructure: PathStructure) {}
 
-    override fun onClick(idQuiz: Int, typeQuestion: Boolean) {
-        Log.d("jij", "idEvent: $idEvent")
-        Log.d("jij", "idSubCategory: $idSubCategory ")
-        Log.d("jij", "idQuiz: $idQuiz ")
+    override fun onClick(pathStructure: PathStructure, typeQuestion: Boolean) {
         if (idSubCategory == UNKNOWN_VALUE && idEvent == EventQuiz.QUIZ_HOME) {
-            idSubCategory = idQuiz
+            idSubCategory = pathStructure.idQuiz
             restartFragment()
         } else if (idSubsubCategory == UNKNOWN_VALUE && idEvent == EventQuiz.QUIZ_HOME) {
-            navigationProvider?.openQuestionActivity(idQuiz, typeQuestion)
+            navigationProvider?.openQuestionActivity(pathStructure, typeQuestion)
         } else {
-            navigationProvider?.openQuestionActivity(idQuiz, typeQuestion)
+            navigationProvider?.openQuestionActivity(pathStructure, typeQuestion)
         }
-
     }
 
     private fun restartFragment() {
@@ -148,14 +143,14 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         return listMap
     }
 
-    override fun editItem(id: Int) {
+    override fun editItem(pathStructure: PathStructure) {
         val fragmentManager = activity?.supportFragmentManager
         fragmentManager?.let {
 
         }
     }
 
-    override fun sendItem(id: Int) {
+    override fun sendItem(pathStructure: PathStructure) {
 
     }
 

@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.di
 
 import android.app.Application
-import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.di.CommonComponent
 import com.tpov.schoolquiz.presentation.AppWorkerFactory
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
@@ -20,7 +19,6 @@ import javax.inject.Singleton
     modules = [AppModule::class, ViewModelModule::class, WorkerModule::class, DatabaseModule::class]
 )
 interface ApplicationComponent {
-    fun provideStructureRatingDataDao(): StructureRatingDataDao
     fun inject(application: Application)
     fun inject(splashScreen: SplashScreen)
     fun inject(mainFragment: MainFragment)

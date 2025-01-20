@@ -5,9 +5,8 @@ import androidx.room.Room
 import com.tpov.common.data.database.CommonDatabase
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.database.QuestionDetailDao
-import com.tpov.common.data.database.QuizDao
-import com.tpov.common.data.database.StructureCategoryDataDao
-import com.tpov.common.data.database.StructureRatingDataDao
+import com.tpov.common.data.database.StructureDataDao
+import com.tpov.common.data.database.StructureEditDataDao
 import dagger.Module
 import dagger.Provides
 
@@ -25,23 +24,18 @@ class DatabaseModuleCommon {
     }
 
     @Provides
-    fun provideStructureRatingDataDao(database: CommonDatabase): StructureRatingDataDao {
-        return database.getStructureRatingDataDao()
-    }
-    @Provides
     fun provideQuestionDetailDao(database: CommonDatabase): QuestionDetailDao {
         return database.getQuestionDetailDao()
     }
     @Provides
-    fun provideStructureCategoryDataDao(database: CommonDatabase): StructureCategoryDataDao {
-        return database.getStructureCategoryDataDao()
+    fun provideStructureEditDataDao(database: CommonDatabase): StructureEditDataDao {
+        return database.getStructureEditDataDao()
     }
-
     @Provides
-    fun provideQuizDao(database: CommonDatabase): QuizDao {
-        return database.getQuizDao()
+    fun provideStructureDataDao(database: CommonDatabase): StructureDataDao {
+        return database.getStructureDataDao()
     }
-
+    
     @Provides
     fun provideQuestionDao(database: CommonDatabase): QuestionDao {
         return database.getQuestionDao()

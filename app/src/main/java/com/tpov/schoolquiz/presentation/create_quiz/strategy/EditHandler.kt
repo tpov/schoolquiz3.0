@@ -1,8 +1,7 @@
 package com.tpov.schoolquiz.presentation.create_quiz.strategy
 
-import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.local.StructureCategoryDataEntity
+import com.tpov.common.EventQuiz
+import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandler
 
@@ -22,14 +21,59 @@ class EditHandler(private val activity: CreateQuizActivity) : RegimeHandler {
         CreateHandler(activity).initData()
     }
 
-    override suspend fun saveData(
-        structureCategoryDataEntity: StructureCategoryDataEntity,
-        quizIt: QuizEntity,
-        questionsIt: ArrayList<QuestionEntity>
-    ) = with(activity)  {
-        viewModel.structureUseCase.insertStructureCategoryData(structureCategoryDataEntity)
-        viewModel.quizUseCase.updateQuiz(quizIt)
-        viewModel.questionUseCase.deleteQuestionByIdQuiz(quizIt.id!!)
-        questionsIt.forEach { viewModel.questionUseCase.insertQuestion(it) }
+    override suspend fun saveData() = with(activity.viewModel){
+        if (eventId == EventQuiz.QUIZ_BY_USER) {
+            deleteOldStructureData()
+            deleteOldQuestions()
+            CreateHandler(activity).saveData()
+        } else {
+            getEditStructureData()
+            questionsEntity.forEach {
+                questionUseCase.insertQuestion(it)
+            }
+        }
+    }
+private fun getEditStructureData() {
+    /*StructureEditData(
+        null,
+        activity.viewModel.pathStructure.idEvent,
+        activity.viewModel.pathStructure.idCategory,
+        activity.viewModel.pathStructure.idSubCategory,
+        activity.viewModel.pathStructure.idSubsubCategory,
+        activity.viewModel.pathStructure.idQuiz,
+
+
+    )*/
+}
+    private suspend fun deleteOldStructureData() {
+        val viewModel = activity.viewModel
+        val quizToDelete = viewModel.quizEntity ?: return
+
+        val rootStructure = viewModel.structureDataFlow.value?.childes?.find {
+            it.id == EventQuiz.QUIZ_BY_USER.id
+        } ?: return
+
+        val updatedStructure = deleteStructureRecursively(rootStructure, quizToDelete)
+        viewModel.updateStructureData(updatedStructure!!, EventQuiz.QUIZ_BY_USER.id)
+    }
+
+    private fun deleteStructureRecursively(
+        currentStructure: StructureDataLocal,
+        quizToDelete: StructureDataLocal
+    ): StructureDataLocal? {
+        if (currentStructure.nameItem == quizToDelete.nameItem) {
+            return null
+        }
+
+        val updatedChildren = currentStructure.childes?.mapNotNull { child ->
+            deleteStructureRecursively(child, quizToDelete)
+        }?.toMutableList()
+
+        return currentStructure.copy(childes = updatedChildren)
+    }
+
+    private suspend fun deleteOldQuestions() {
+        val viewModel = activity.viewModel
+            viewModel.questionUseCase.deleteQuestionByPath(viewModel.pathStructure)
     }
 }

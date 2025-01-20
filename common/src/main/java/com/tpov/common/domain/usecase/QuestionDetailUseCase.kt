@@ -2,37 +2,21 @@ package com.tpov.common.domain.usecase
 
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.domain.repository.RepositoryQuestionDetail
+import com.tpov.common.presentation.model.PathStructure
 import javax.inject.Inject
 
 class QuestionDetailUseCase @Inject constructor(private val repositoryQuestionDetail: RepositoryQuestionDetail) {
 
     suspend fun fetchQuestionDetail(
-        typeId: Int,
-        categoryId: String,
-        subcategoryId: String,
-        subsubcategoryId: String,
-        idQuiz: Int
-    ) = repositoryQuestionDetail
-        .fetchQuestionDetail(typeId, categoryId, subcategoryId, subsubcategoryId, idQuiz)
+        pathStructure: PathStructure
+    ) = repositoryQuestionDetail.fetchQuestionDetails(pathStructure)
 
-    suspend fun pushQuestion(
-        event: Int, categoryId: String, subcategoryId: String,
-        subsubcategoryId: String, idQuiz: Int,
-        questionDetailEntity: QuestionDetailEntity
-    ) {
-        repositoryQuestionDetail.pushQuestionDetail(
-            questionDetailEntity.id!!,
-            event,
-            categoryId,
-            subcategoryId,
-            subsubcategoryId,
-            idQuiz,
-            questionDetailEntity.toQuestionDetail()
-        )
+    suspend fun pushQuestion(questionDetailEntity: QuestionDetailEntity) {
+        repositoryQuestionDetail.pushQuestionDetails(questionDetailEntity)
     }
 
-    suspend fun getQuestionDetailByIdQuiz(idQuiz: Int) =
-        repositoryQuestionDetail.getQuestionDetailByIdQuiz(idQuiz)
+    suspend fun getQuestionDetailByPath(pathStructure: PathStructure) =
+        repositoryQuestionDetail.getQuestionDetailByPath(pathStructure)
 
     suspend fun saveQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
         repositoryQuestionDetail.saveQuestionDetail(questionDetailEntity)
@@ -46,8 +30,8 @@ class QuestionDetailUseCase @Inject constructor(private val repositoryQuestionDe
         repositoryQuestionDetail.deleteQuestionDetailById(idQuiz)
     }
 
-    suspend fun deleteRemoteQuestionDetailByIdQuiz(idQuiz: Int, typeId: Int) {
-        repositoryQuestionDetail.deleteRemoteQuestionDetailByIdQuiz(idQuiz, typeId)
+    suspend fun deleteRemoteQuestionDetailByPath(pathStructure: PathStructure) {
+        repositoryQuestionDetail.deleteRemoteQuestionDetailByPath(pathStructure)
     }
 
 }

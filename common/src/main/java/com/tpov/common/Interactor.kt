@@ -2,12 +2,10 @@ package com.tpov.common
 
 import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import javax.inject.Inject
 
 class Interactor @Inject constructor(
-    private val quizUseCase: QuizUseCase,
     private val questionUseCase: QuestionUseCase,
     private val questionDetailUseCase: QuestionDetailUseCase,
     private val structureUseCase: StructureUseCase

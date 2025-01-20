@@ -31,8 +31,16 @@ data class QuestionEntity(
     @ColumnInfo(name = "hardQuestion")
     val hardQuestion: Boolean = false,
 
+    @ColumnInfo(name = "idEvent")
+    val idEvent: Int,
+    @ColumnInfo(name = "idCategory")
+    val idCategory: Int,
+    @ColumnInfo(name = "idSubCategory")
+    val idSubCategory: Int,
+    @ColumnInfo(name = "idSubsubCategory")
+    val idSubsubCategory: Int,
     @ColumnInfo(name = "idQuiz")
-    val idQuiz: Int = 0,
+    val idQuiz: Int,
 
     @ColumnInfo(name = "language")
     var language: String = "",
@@ -58,7 +66,8 @@ data class QuestionEntity(
         answer = 0,
         nameAnswers = "",
         hardQuestion = false,
-        idQuiz = 0,
+        idEvent = -1,
+        idCategory = -1, idSubCategory = -1, idSubsubCategory = -1, idQuiz = -1,
         language = "",
         lvlTranslate = 0,
         pathPictureQuestion = ""

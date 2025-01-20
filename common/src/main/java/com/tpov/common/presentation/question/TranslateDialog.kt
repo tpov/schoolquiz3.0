@@ -79,11 +79,13 @@ class TranslateDialog : DialogFragment() {
                     questionList?.forEach { question ->
                         Log.d("wadasdaw", "question: $question")
                         val findQuestionByThisNewLanguage =
-                            viewModel.questionUseCase.getQuestionByIdQuiz(quizId).find {
-                                it.language.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)[0] ==
-                                        newLanguage
-                                        && it.numQuestion == question.numQuestion
-                                        && it.hardQuestion == question.hardQuestion
+                            viewModel.pathStructure?.let {
+                                viewModel.questionUseCase.getQuestionByPath(it).find {
+                                    it.language.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)[0] ==
+                                            newLanguage
+                                            && it.numQuestion == question.numQuestion
+                                            && it.hardQuestion == question.hardQuestion
+                                }
                             }
                         if (findQuestionByThisNewLanguage == null) {
                             viewModel.translateANDAddQuestion(question, newLanguage)

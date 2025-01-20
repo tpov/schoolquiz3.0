@@ -16,6 +16,7 @@ import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.remote.QuestionRemote
 import com.tpov.common.data.model.remote.TranslateRequest
 import com.tpov.common.domain.repository.RepositoryQuestion
+import com.tpov.common.presentation.model.PathStructure
 import kotlinx.coroutines.tasks.await
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -72,18 +73,15 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     override suspend fun fetchQuestion(
-        event: Int,
-        categoryId: Int,
-        subcategoryId: Int,
+        pathStructure: PathStructure,
         language: String,
-        idQuiz: Int
-    ): List<QuestionRemote> {
+    ): List<QuestionEntity> {
 
         val baseCollectionReference = baseCollection
-            .document("question$event")
-            .collection(idQuiz.toString())
+            .document("question${pathStructure.idEvent}")
+            .collection("${pathStructure.idCategory}_${pathStructure.idSubCategory}_${pathStructure.idSubsubCategory}")
 
-        val questionRemotes = mutableListOf<QuestionRemote>()
+        val questionRemotes = mutableListOf<QuestionEntity>()
 
         try {
             val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
@@ -94,7 +92,7 @@ class RepositoryQuestionImpl @Inject constructor(
 
             for (questionDocument in questionDocuments) {
                 val questionEntity = questionDocument.toObject(QuestionRemote::class.java)
-                questionEntity?.let { questionRemotes.add(it) }
+                questionEntity?.let { questionRemotes.add(it.toQuestionEntity(pathStructure)) }
                 questionEntity?.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) }
             }
         } catch (e: Exception) {
@@ -104,23 +102,34 @@ class RepositoryQuestionImpl @Inject constructor(
         return questionRemotes
     }
 
-    override suspend fun getQuestionByIdQuiz(idQuiz: Int) = questionDao.getQuestionByIdQuiz(idQuiz)
+    override suspend fun getQuestionsByPath(path: PathStructure) = questionDao.getQuestionsByPath(
+        path.idEvent,
+        path.idCategory,
+        path.idSubCategory,
+        path.idSubsubCategory,
+        path.idQuiz
+    )
 
     override suspend fun saveQuestion(questionEntity: QuestionEntity) {
         questionDao.insertQuestion(questionEntity)
     }
 
     override suspend fun pushQuestion(
-        questionEntity: QuestionRemote,
-        event: Int,
-        idQuiz: Int
+        questionEntity: QuestionEntity,
+        isUpdate: Boolean
     ) {
+        val pathStructure = PathStructure(
+            questionEntity.idEvent,
+            questionEntity.idCategory,
+            questionEntity.idSubCategory,
+            questionEntity.idSubsubCategory,
+            questionEntity.idQuiz
+        )
         questionEntity.pathPictureQuestion?.let { uploadPhotoToServer(it) }
 
-
         val docRef = baseCollection
-            .document("question${event}")
-            .collection(idQuiz.toString())
+            .document("question${pathStructure.idEvent}")
+            .collection("${pathStructure.idCategory}_${pathStructure.idSubCategory}_${pathStructure.idSubsubCategory}")
             .document()
 
         Log.d("Translation", "docRef: ${docRef.path}")
@@ -134,11 +143,9 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     override suspend fun pushQuestionForTranslate(
-        question: QuestionRemote,
-        idQuiz: Int,
+        question: QuestionEntity,
         usePaidTranslation: Boolean,
         toLang: String,
-        event: Int
     ) {
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -146,7 +153,7 @@ class RepositoryQuestionImpl @Inject constructor(
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
-        val request = TranslateRequest(question, idQuiz, usePaidTranslation, toLang,event)
+        val request = TranslateRequest(question, usePaidTranslation, toLang)
 
         val gson = Gson()
         val jsonBody = gson.toJson(request)
@@ -173,20 +180,17 @@ class RepositoryQuestionImpl @Inject constructor(
             Log.e("Translation", "Network error", e)
         }
     }
-    
+
     override suspend fun remoteLangsQuestions(
-        hardQuestion: Boolean,
-        numQuestion: Int,
-        idQuiz: Int,
-        eventQuiz: Int
+        questionEntity: QuestionEntity
     ): List<String> = suspendCoroutine { continuation ->
         val languages = mutableListOf<String>()
 
         baseCollection
-            .document("question$eventQuiz")
-            .collection(idQuiz.toString())
-            .whereEqualTo("hardQuestion", hardQuestion)
-            .whereEqualTo("numQuestion", numQuestion)
+            .document("question${questionEntity.idEvent}")
+            .collection("${questionEntity.idCategory}_${questionEntity.idSubCategory}_${questionEntity.idSubsubCategory}")
+            .whereEqualTo("hardQuestion", questionEntity.hardQuestion)
+            .whereEqualTo("numQuestion", questionEntity.numQuestion)
             .get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
@@ -200,6 +204,7 @@ class RepositoryQuestionImpl @Inject constructor(
                 continuation.resumeWithException(exception)
             }
     }
+
     override suspend fun updateQuestion(questionEntity: QuestionEntity) {
         questionDao.updateQuestion(questionEntity)
     }
@@ -324,7 +329,10 @@ class RepositoryQuestionImpl @Inject constructor(
                 Log.d("PhotoDebug", "File downloaded successfully: ${localFile.length()} bytes")
                 return localFile.absolutePath
             } else {
-                Log.e("PhotoDebug", "File download failed: exists=${localFile.exists()}, size=${localFile.length()}")
+                Log.e(
+                    "PhotoDebug",
+                    "File download failed: exists=${localFile.exists()}, size=${localFile.length()}"
+                )
                 return null
             }
         } catch (e: Exception) {

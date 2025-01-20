@@ -33,6 +33,11 @@ import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.TIME_QUESTION
 import com.tpov.common.databinding.ActivityQuestionBinding
 import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_CATEGORY
+import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_EVENT
+import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_SUB_CATEGORY
+import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_SUB_SUB_CATEGORY
 import com.tpov.common.presentation.utils.Values.context
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.CoroutineScope
@@ -66,6 +71,9 @@ class QuestionActivity : AppCompatActivity() {
     private val binding: ActivityQuestionBinding by lazy {
         ActivityQuestionBinding.inflate(layoutInflater)
     }
+
+    private var eventId = 0
+    private var pathCategory: MutableList<Int> = mutableListOf()
 
     val doter = REGEX_DROP_TEXT
     private var originalText: String = ""
@@ -156,14 +164,13 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun loadQuizData() {
         CoroutineScope(Dispatchers.IO).launch {
-            viewModel.getQuizById()
             viewModel.quiz.collect {
                 it?.let {
                     viewModel.initQuizValues()
                     viewModel.getQuestionList(languageUser!!)
                     viewModel.questionList.collect { questionList ->
                         questionList?.let {
-                            viewModel.getQuestionDetailByIdQuiz()
+                            viewModel.getQuestionDetailByPath()
                             viewModel.questionDetailList.collect { questionDetailList ->
                                 questionDetailList?.let {
                                     viewModel.initQuestionDetail()
@@ -426,7 +433,11 @@ class QuestionActivity : AppCompatActivity() {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun synthInputData() {
-        viewModel.idQuiz = intent.getIntExtra(KEY_ID_QUIZ, 0)
+        viewModel.pathStructure?.idQuiz = intent.getIntExtra(KEY_ID_QUIZ, 0)
+        viewModel.pathStructure?.idCategory = intent.getIntExtra(KEY_ID_CATEGORY, 0)
+        viewModel.pathStructure?.idSubCategory = intent.getIntExtra(KEY_ID_SUB_CATEGORY, 0)
+        viewModel.pathStructure?.idSubsubCategory = intent.getIntExtra(KEY_ID_SUB_SUB_CATEGORY, 0)
+        viewModel.pathStructure?.idEvent = intent.getIntExtra(KEY_ID_EVENT, 0)
         viewModel.hardQuiz = intent.getBooleanExtra(KEY_HARD_QUESTION, false)
         languageUser = intent.getStringExtra(KEY_LANGUAGE_USER)
         viewModel.life = intent.getIntExtra(KEY_LIFE, 0)
@@ -501,8 +512,8 @@ class QuestionActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val KEY_ID_QUIZ = "id_question"
         const val KEY_NAME_USER = "name_user"
+        const val KEY_ID_QUIZ = "id_quiz"
         const val KEY_HARD_QUESTION = "hard_question"
         const val KEY_LANGUAGE_USER = "language_user"
         const val KEY_LIFE = "life"
@@ -513,13 +524,17 @@ class QuestionActivity : AppCompatActivity() {
 
         fun newIntent(
             context: Context,
-            idQuiz: Int,
             hardQuestion: Boolean,
             languageUser: String,
+            pathStructure: PathStructure,
             life: Int
         ): Intent {
             return Intent(context, QuestionActivity::class.java).apply {
-                putExtra(KEY_ID_QUIZ, idQuiz)
+                putExtra(KEY_ID_EVENT, pathStructure.idEvent)
+                putExtra(KEY_ID_CATEGORY, pathStructure.idCategory)
+                putExtra(KEY_ID_SUB_CATEGORY, pathStructure.idSubCategory)
+                putExtra(KEY_ID_SUB_SUB_CATEGORY, pathStructure.idSubsubCategory)
+                putExtra(KEY_ID_QUIZ, pathStructure.idQuiz)
                 putExtra(KEY_HARD_QUESTION, hardQuestion)
                 putExtra(KEY_LANGUAGE_USER, languageUser)
                 putExtra(KEY_LIFE, life)

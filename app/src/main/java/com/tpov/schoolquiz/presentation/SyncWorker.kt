@@ -16,7 +16,6 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.domain.ProfileUseCase
 import com.tpov.schoolquiz.presentation.main.MainViewModel
@@ -32,7 +31,6 @@ class SyncWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted private val workerParams: WorkerParameters,
     private val structureUseCase: StructureUseCase,
-    private val quizUseCase: QuizUseCase,
     private val profileUseCase: ProfileUseCase,
     private val questionUseCase: QuestionUseCase,
     private val viewModelFactory: ViewModelProvider.Factory
@@ -47,10 +45,8 @@ class SyncWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
         val viewModel = ViewModelProvider(ViewModelStore(), viewModelFactory)[MainViewModel::class.java]
         try {
-            Log.d("SyncWorker", "Sync started")
 
-            fetchQuizData()
-            pushQuizData(viewModel)
+            syncQuizData(viewModel)
             syncProfile()
 
             val outputData = Data.Builder()
@@ -62,6 +58,17 @@ class SyncWorker @AssistedInject constructor(
         } catch (e: Exception) {
             Log.e("SyncData", "Error fetching or saving data: ${e.message}")
             Result.failure()
+        }
+    }
+
+    private suspend fun syncQuizData(viewModel: MainViewModel) {
+        val updatedQuizList = structureUseCase.syncStructureDataAndQuestions(1)
+        if (updatedQuizList.isNotEmpty()) {
+            val quizCount = updatedQuizList.size
+
+            showNotification("Sync Complete", "Updated $quizCount quizzes.")
+        } else {
+            showNotification("Sync Complete", "No new data to synchronize.")
         }
     }
 
@@ -81,58 +88,6 @@ class SyncWorker @AssistedInject constructor(
             .setAutoCancel(true)
 
         NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, notificationBuilder.build())
-    }
-
-    private suspend fun pushQuizData(viewModel: MainViewModel) {
-        // Лог начала выполнения функции
-        Log.d("pushQuizData", "Начало синхронизации данных викторин")
-
-        val structureCategoryList = structureUseCase.getStructureCategory()
-        Log.d("pushQuizData", "Получено ${structureCategoryList.size} категорий структуры")
-
-        if (structureCategoryList.isNotEmpty()) {
-            structureCategoryList.forEach { structureCategory ->
-                val idQuiz = structureCategory.oldIdQuizId
-                Log.d("pushQuizData", "Обработка категории с idQuiz: $idQuiz")
-                Log.d("pushQuizData", "structureCategory: $structureCategory")
-
-                val quiz = quizUseCase.getQuizById(idQuiz)
-                Log.d("pushQuizData", "Получена викторина для idQuiz: ${quiz?.id}")
-
-                val questionList = questionUseCase.getQuestionByIdQuiz(idQuiz)
-                Log.d("pushQuizData", "Получено ${questionList.size} вопросов для idQuiz: $idQuiz")
-
-                // Пушим данные викторины в viewModel
-                viewModel.pushTheQuest(structureCategory, quiz!!, questionList)
-                Log.d("pushQuizData", "Данные викторины для idQuiz: $idQuiz успешно отправлены")
-
-                // Удаляем категорию структуры после успешного пуша
-                structureUseCase.deleteStructureCategoryById(structureCategory.id!!)
-                Log.d("pushQuizData", "Категория структуры с id: ${structureCategory.id} удалена")
-            }
-            // Отображаем уведомление по завершению
-            showNotification("Sync Complete", "Pushed ${structureCategoryList.size} quizzes.")
-            Log.d("pushQuizData", "Синхронизация завершена. Pushed ${structureCategoryList.size} quizzes.")
-        } else {
-            Log.d("pushQuizData", "Нет категорий структуры для синхронизации")
-        }
-    }
-
-
-    private suspend fun fetchQuizData() {
-        val updatedQuizList = structureUseCase.syncStructureDataANDquizzes()
-        if (updatedQuizList.isNotEmpty()) {
-            val quizCount = updatedQuizList.size
-
-            Log.d("SyncWorker", "Sync completed with $quizCount updated quizzes")
-            updatedQuizList.forEach { quiz ->
-                Log.d("SyncWorker", "Updated quiz: ${quiz.first}")
-            }
-
-            showNotification("Sync Complete", "Updated $quizCount quizzes.")
-        } else {
-            showNotification("Sync Complete", "No new data to synchronize.")
-        }
     }
 
     private fun createNotificationChannel() {

@@ -1,5 +1,7 @@
 package com.tpov.common.presentation
 
+import com.tpov.common.presentation.model.PathStructure
+
 interface NavigationProvider {
-    fun openQuestionActivity(idQuiz: Int, typeQuestion: Boolean)
+    fun openQuestionActivity(pathStructure: PathStructure, typeQuestion: Boolean)
 }

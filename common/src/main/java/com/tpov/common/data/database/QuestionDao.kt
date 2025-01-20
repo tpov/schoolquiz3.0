@@ -19,12 +19,21 @@ interface QuestionDao {
     @Query("SELECT * FROM question_entity")
     suspend fun getQuestionList(): List<QuestionEntity>
 
-    @Query("SELECT * FROM question_entity WHERE idQuiz LIKE :nameQuiz")
-    suspend fun getQuestionByIdQuiz(nameQuiz: String): List<QuestionEntity>
-
-    @Query("SELECT * FROM question_entity WHERE idQuiz = :id")
-    fun getQuestionByIdQuiz(id: Int): List<QuestionEntity>
-
+    @Query("""
+    SELECT * FROM question_entity 
+    WHERE idEvent = :idEvent
+      AND idCategory = :idCategory
+      AND idSubCategory = :idSubCategory
+      AND idSubsubCategory = :idSubsubCategory
+      AND idQuiz = :idQuiz
+""")
+    fun getQuestionsByPath(
+        idEvent: Int,
+        idCategory: Int,
+        idSubCategory: Int,
+        idSubsubCategory: Int,
+        idQuiz: Int
+    ): List<QuestionEntity>
     @Query("DELETE FROM question_entity WHERE idQuiz IS :id")
     fun deleteQuestionByIdQuiz(id: Int)
 

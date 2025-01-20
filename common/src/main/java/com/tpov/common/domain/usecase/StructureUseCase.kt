@@ -4,22 +4,25 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.util.Log
 import android.widget.Toast
+import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStuctureImpl
-import com.tpov.common.data.model.local.StructureCategoryDataEntity
-import com.tpov.common.data.model.local.StructureData
-import com.tpov.common.data.model.remote.StructureLocalDataRemote
+import com.tpov.common.domain.model.ChangeVersionStructure
+import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.Values.application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 
-class StructureUseCase @Inject constructor(private val repositoryStructureImpl: RepositoryStuctureImpl) {
-
-    suspend fun fetchStructureData() = repositoryStructureImpl.fetchStructureData()
-
-    suspend fun pushStructureRating(ratingData: StructureLocalDataRemote) {
-        repositoryStructureImpl.pushStructureRating(ratingData)
-    }
+class StructureUseCase @Inject constructor(
+    private val repositoryStructureImpl: RepositoryStuctureImpl,
+    private val repositoryQuestionImpl: RepositoryQuestionImpl
+) {
 
     fun savePicture(fileName: String, bitmap: Bitmap) {
         val file = File(application.filesDir, fileName)
@@ -36,116 +39,237 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         }
     }
 
-    suspend fun pushStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
-        repositoryStructureImpl.pushStructureCategoryData(structureCategoryDataEntity)
-    }
-
-    suspend fun retryFailedLocalData() {
-        repositoryStructureImpl.retryFailedRatings()
-    }
-
-
-    private val changedQuizzes = mutableListOf<Pair<String, String>>()
-
     fun logger(i: Int) {
         Log.d("logger", i.toString())
     }
 
+    suspend fun fetchStructureData(event: Int) = StructureDataLocal(childes = repositoryStructureImpl.fetchStructureDataList(event)?.toMutableList())
+
+    suspend fun getStructureData(event: Int) =
+        repositoryStructureImpl.getStructureData(event)
+
     @SuppressLint("SuspiciousIndentation")
-    suspend fun syncStructureDataANDquizzes(): MutableList<Pair<String, String>> {
-        Log.d("SyncData", "Starting data synchronization")
+    suspend fun syncStructureDataAndQuestions(eventId : Int): List<ChangeVersionStructure> {
+        val changedQuizzes = mutableListOf<ChangeVersionStructure>()
 
-        val dataRemote = try {
-            repositoryStructureImpl.fetchStructureData()
-        } catch (e: Exception) {
-            Log.e("SyncData", "Error syncData: ${e.message}")
-            null
-        }
+            val dataRemote: MutableList<StructureDataLocal> = try {
+                repositoryStructureImpl.fetchStructureDataList(eventId)?.toMutableList()!!
+            } catch (e: Exception) {
+                throw e
+            }
 
-        Log.d("SyncData", "Remote data fetched: $dataRemote")
+            var dataLocal: MutableList<StructureDataLocal> = try {
+                repositoryStructureImpl.getStructureData(eventId, -1)?.childes!!.toMutableList()
+            } catch (e: Exception) {
+                throw e
+            }
 
-        val dataLocal = try {
-            repositoryStructureImpl.getStructureData()
-        } catch (e: Exception) {
-            Log.e("SyncData", "Error loading local data: ${e.message}")
-            throw e
-        }
-        Log.d("SyncData", "Local data loaded: $dataLocal")
+            dataRemote?.forEachIndexed { index, categoryRemote ->
+                val categoryLocal = dataLocal.getOrNull(index)
+                val initialPath = PathStructure(
+                    idEvent = eventId,
+                    idCategory = -1,
+                    idSubCategory = -1,
+                    idSubsubCategory = -1,
+                    idQuiz = -1
+                )
+                filledChangedListAndFetchQuestion(
+                    categoryRemote,
+                    categoryLocal,
+                    changedQuizzes,
+                    initialPath
+                )
+            }
+            if (eventId == 1) {
+                dataLocal.forEach { structureDataLocal ->
+                    val initialPath = PathStructure(
+                        idEvent = eventId,
+                        idCategory = structureDataLocal.id!!,
+                        idSubCategory = -1,
+                        idSubsubCategory = -1,
+                        idQuiz = -1
+                    )
 
-        var newDataLocalEmpty: StructureData? = dataRemote?.toStructureDataLocal()
-        Log.d("SyncData", "Converted remote data to local format: $newDataLocalEmpty")
-        if (newDataLocalEmpty == null) {
-            Log.d("SyncData", "No structure data found on the server. Sync canceled.")
-            return emptyList<Pair<String, String>>().toMutableList()
+                    val hasMissingBranches = updateRemoteDataAndPushQuestions(
+                        structureDataLocal,
+                        dataRemote,
+                        initialPath
+                    )
 
-        }
-
-        changedQuizzes.clear()
-        val newDataLocal: StructureData =
-            if (dataLocal == null) {
-                Log.d("SyncData", "No local data found, using new data")
-                newDataLocalEmpty.event.forEach { newEvent ->
-                    newEvent.isShowArchive = isShowArhive()
-                    newEvent.isShowDownload = isShowDownload(newEvent.id)
-                    Log.d("SyncData", "Processing event id: ${newEvent.id}")
-                    newEvent.category.forEach { newCategory ->
-                        newCategory.isShowArchive = isShowArhive()
-                        newCategory.isShowDownload = isShowDownload(newEvent.id)
-                        if (newCategory.isShowDownload) fetchPictureStructure(newCategory.picture)
-                        Log.d("SyncData", "Processing category: ${newCategory.nameQuiz}")
-                        newCategory.subcategory.forEach { newSubcategory ->
-                            newSubcategory.isShowArchive = isShowArhive()
-                            newSubcategory.isShowDownload = isShowDownload(newEvent.id)
-                            if (newSubcategory.isShowDownload) fetchPictureStructure(newCategory.picture)
-                            Log.d("SyncData", "Processing subcategory: ${newSubcategory.nameQuiz}")
-                            newSubcategory.subSubcategory.forEach { newSubsub ->
-                                newSubsub.isShowArchive = isShowArhive()
-                                newSubsub.isShowDownload = isShowDownload(newEvent.id)
-                                if (newSubsub.isShowDownload) fetchPictureStructure(newCategory.picture)
-
-                                newSubsub.quizData.forEach { newQuiz ->
-                                    newQuiz.isShowArchive = isShowArhive()
-                                    newQuiz.isShowDownload = isShowDownload(newEvent.id)
-                                    val quizString =
-                                        "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
-                                    val quizInt =
-                                        "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
-
-                                    Log.d("SyncData", "Adding quiz path: $quizString")
-                                    Log.d("SyncData", "Adding quiz: $newQuiz")
-                                    if (newQuiz.isShowDownload) changedQuizzes.add(
-                                        Pair(
-                                            quizString,
-                                            quizInt
-                                        )
-                                    )
-                                }
-                            }
+                    if (hasMissingBranches) {
+                        dataRemote.forEach { remoteNode ->
+                            repositoryStructureImpl.pushStructureData(
+                                structureDataLocal,
+                                remoteNode.id!!
+                            )
                         }
                     }
                 }
-                newDataLocalEmpty
-            } else {
-                Log.d("SyncData", "Merging local and new data")
-                mergeData(dataLocal, newDataLocalEmpty)
+            }
+            dataLocal = dataRemote.toMutableList()
+            CoroutineScope(Dispatchers.IO).launch {
+                dataLocal = fetchQuizInfo(dataLocal, eventId)
+                repositoryStructureImpl.saveStructureData(
+                    StructureDataLocal().copy(childes = dataLocal),
+                    eventId
+                )
             }
 
-
-        try {
-            saveStructureData(newDataLocal)
-            Log.d("SyncData", "Data saved successfully $newDataLocal")
-        } catch (e: Exception) {
-            Log.e("SyncData", "Error saving data: ${e.message}")
-            throw e
-        }
-
-        Log.d("SyncData", "Data synchronization completed with changes: $changedQuizzes")
         return changedQuizzes
     }
 
-    suspend fun deleteStructureCategoryById(id: Int) {
-        repositoryStructureImpl.deleteCategoryById(id)
+    suspend fun fetchQuizInfo(
+        dataLocal: MutableList<StructureDataLocal>,
+        eventId: Int
+    ): MutableList<StructureDataLocal> {
+
+        suspend fun updateQuizInfoRecursively(
+            node: StructureDataLocal,
+            path: PathStructure
+        ): StructureDataLocal {
+            val currentNodeInfo = try {
+                repositoryStructureImpl.fetchStructureInfo(path)
+            } catch (e: Exception) {
+                null
+            }
+
+            val updatedNode = currentNodeInfo?.let { info ->
+                node.copy(
+                    ratingLocal = info.rating,
+                    starsMaxLocal = info.starsMax,
+                    starsAverageLocal = info.starsAverage,
+                )
+            } ?: node
+
+            if (updatedNode.childes.isNullOrEmpty()) {
+                return updatedNode
+            }
+
+            val updatedChildren = updatedNode.childes!!.map { child ->
+                val newPath = when {
+                    path.idCategory == -1 -> path.copy(idCategory = child.id!!)
+                    path.idSubCategory == -1 -> path.copy(idSubCategory = child.id!!)
+                    path.idSubsubCategory == -1 -> path.copy(idSubsubCategory = child.id!!)
+                    else -> path.copy(idQuiz = child.id!!)
+                }
+                updateQuizInfoRecursively(child, newPath)
+            }
+
+            return updatedNode.copy(childes = updatedChildren.toMutableList())
+        }
+
+        return dataLocal.mapIndexed { index, node ->
+            val initialPath = PathStructure(
+                idEvent = eventId,
+                idCategory = index,
+                idSubCategory = -1,
+                idSubsubCategory = -1,
+                idQuiz = -1
+            )
+            updateQuizInfoRecursively(node, initialPath)
+        }.toMutableList()
     }
+
+    fun updateRemoteDataAndPushQuestions(
+        localNode: StructureDataLocal?,
+        remoteNode: MutableList<StructureDataLocal>,
+        currentPath: PathStructure
+    ): Boolean {
+        var hasZeroDate = false
+
+        if (localNode == null) return false
+
+        if (localNode.childes.isNullOrEmpty()) {
+            ensureAncestorsExistAndUpdate(localNode, remoteNode)
+
+            val existingNode = remoteNode.find { it.nameItem == localNode.nameItem }
+            if (existingNode == null || localNode.dataUpdate.toLong() == 0L ||
+                localNode.dataUpdate.toLong() > existingNode.dataUpdate.toLong()
+            ) {
+                hasZeroDate = true
+                val updatedNode = StructureDataLocal(
+                    getNewIdCategory(remoteNode),
+                    nameItem = localNode.nameItem,
+                    dataUpdate = localNode.dataUpdate,
+                    childes = mutableListOf()
+                )
+                if (existingNode == null) {
+                    remoteNode.add(updatedNode)
+
+                    pushQuestion(currentPath)
+                } else {
+                    remoteNode.remove(existingNode)
+                    remoteNode.add(updatedNode)
+
+                    pushQuestion(currentPath, true)
+                }
+
+            }
+        } else {
+            localNode.childes!!.forEachIndexed { index, child ->
+                val childPath = currentPath.copy(
+                    idSubCategory = if (currentPath.idSubCategory == -1) index else currentPath.idSubCategory,
+                    idSubsubCategory = if (currentPath.idSubCategory != -1 && currentPath.idSubsubCategory == -1) index else currentPath.idSubsubCategory,
+                    idQuiz = if (currentPath.idSubsubCategory != -1) index else -1
+                )
+                val childHasZeroDate = updateRemoteDataAndPushQuestions(
+                    localNode = child,
+                    remoteNode = remoteNode,
+                    currentPath = childPath
+                )
+                hasZeroDate = hasZeroDate || childHasZeroDate
+            }
+        }
+
+        return hasZeroDate
+    }
+
+    private fun pushQuestion(path: PathStructure, isUpdate: Boolean = false) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val questions = repositoryQuestionImpl.getQuestionsByPath(path)
+            questions.forEach { question ->
+                repositoryQuestionImpl.pushQuestion(question, isUpdate)
+            }
+        }
+    }
+
+    fun ensureAncestorsExistAndUpdate(
+        localNode: StructureDataLocal,
+        remoteNode: MutableList<StructureDataLocal>
+    ) {
+        val existingNode = remoteNode.find { it.nameItem == localNode.nameItem }
+
+        if (existingNode == null) {
+            localNode.childes?.forEach { parent ->
+                ensureAncestorsExistAndUpdate(parent, remoteNode)
+            }
+            remoteNode.add(
+                StructureDataLocal(
+                    id = getNewIdCategory(remoteNode),
+                    nameItem = localNode.nameItem,
+                    dataUpdate = localNode.dataUpdate,
+                    childes = mutableListOf()
+                )
+            )
+        } else {
+            if (localNode.dataUpdate.toLong() > existingNode.dataUpdate.toLong()) {
+                remoteNode.remove(existingNode)
+                remoteNode.add(
+                    StructureDataLocal(
+                        id = getNewIdCategory(remoteNode),
+                        nameItem = localNode.nameItem,
+                        dataUpdate = localNode.dataUpdate,
+                        childes = existingNode.childes
+                    )
+                )
+            }
+        }
+    }
+
+    private fun getNewIdCategory(remoteNode: MutableList<StructureDataLocal>): Int? {
+        return 2
+    }
+
 
     private fun isShowDownload(newEventId: Int): Boolean {
         return newEventId == 1 || newEventId == 8
@@ -155,170 +279,56 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         return true
     }
 
-    suspend fun saveStructureData(structureData: StructureData) {
-        repositoryStructureImpl.saveStructureData(structureData)
-    }
+    @OptIn(DelicateCoroutinesApi::class)
+    fun filledChangedListAndFetchQuestion(
+        remoteNode: StructureDataLocal,
+        localNode: StructureDataLocal?,
+        changedQuizzes: MutableList<ChangeVersionStructure>,
+        currentPath: PathStructure
+    ): Boolean {
+        var allChildrenChanged = true
 
-    private fun updateIsShow(newDataLocalEmpty: StructureData) =
-        newDataLocalEmpty.event.forEach { newEvent ->
-            newEvent.isShowArchive = true
-
-            newEvent.category.forEach { newCategory ->
-                newCategory.isShowArchive = true
-                newCategory.subcategory.forEach { newSubcategory ->
-                    newSubcategory.isShowArchive = true
-                    newSubcategory.subSubcategory.forEach { newSubsub ->
-                        newSubsub.isShowArchive = true
-                        newSubsub.quizData.forEach { newQuiz ->
-                            newQuiz.isShowArchive = true
-                        }
+        if (remoteNode.childes.isNullOrEmpty()) {
+            if (localNode?.isShowDownload == true && localNode.dataUpdate.toLong() < remoteNode.dataUpdate.toLong()) {
+                GlobalScope.launch {
+                    repositoryQuestionImpl.deleteQuestionByIdQuiz(currentPath.idQuiz)
+                    repositoryQuestionImpl.fetchQuestion(currentPath, "en").forEach {
+                        repositoryQuestionImpl.saveQuestion(it)
                     }
                 }
+                changedQuizzes.add(
+                    ChangeVersionStructure(
+                        name = remoteNode.nameItem,
+                        pathStructure = currentPath
+                    )
+                )
+                return true
             }
+            return false
         }
 
-    @SuppressLint("SuspiciousIndentation")
-    private fun mergeData(
-        dataLocal: StructureData,
-        newDataLocalEmpty: StructureData
-    ): StructureData {
+        remoteNode.childes!!.forEach { childRemote ->
+            val childLocal = localNode?.childes?.getOrNull(childRemote.id!!)
+            val newPath = currentPath.copy(
+                idCategory = currentPath.idCategory,
+                idSubCategory = if (currentPath.idSubCategory == -1) childRemote.id!! else currentPath.idSubCategory,
+                idSubsubCategory = if (currentPath.idSubCategory != -1 && currentPath.idSubsubCategory == -1) childRemote.id!! else currentPath.idSubsubCategory,
+                idQuiz = if (currentPath.idSubsubCategory != -1) childRemote.id!! else -1
+            )
+            val childChanged = filledChangedListAndFetchQuestion(
+                childRemote,
+                childLocal,
+                changedQuizzes,
+                newPath
+            )
+            allChildrenChanged = allChildrenChanged && childChanged
+        }
 
-        return StructureData(
-            event = newDataLocalEmpty.event.map { newEvent ->
-                val localEvent = dataLocal.event.find { it.id == newEvent.id }
-
-
-                newEvent.copy(
-                    category = newEvent.category.map { newCategory ->
-                        val localCategory = localEvent?.category?.find { it.id == newCategory.id }
-
-                        if (localCategory != null && newCategory.picture != localCategory.picture && newCategory.isShowDownload) {
-                            deleteLocalPictureStructure(localCategory.picture)
-                            fetchPictureStructure(newCategory.picture)
-                        }
-
-                        newCategory.copy(
-                            picture = newCategory.picture,
-                            subcategory = newCategory.subcategory.map { newSubcategory ->
-                                val localSubcategory =
-                                    localCategory?.subcategory?.find { it.id == newSubcategory.id }
-
-                                if (localSubcategory != null && newSubcategory.picture != localSubcategory.picture && newSubcategory.isShowDownload) {
-                                    deleteLocalPictureStructure(localSubcategory.picture)
-                                    fetchPictureStructure(newSubcategory.picture)
-                                }
-
-                                newSubcategory.copy(
-                                    picture = newSubcategory.picture,
-                                    subSubcategory = newSubcategory.subSubcategory.map { newSubsub ->
-                                        val localSubsub =
-                                            localSubcategory?.subSubcategory?.find { it.id == newSubsub.id }
-
-                                        if (localSubsub != null && newSubsub.picture != localSubsub.picture && newSubsub.isShowDownload) {
-                                            deleteLocalPictureStructure(localSubsub.picture)
-                                            fetchPictureStructure(newSubsub.picture)
-                                        }
-
-                                        newSubsub.copy(
-                                            picture = newSubsub.picture,
-                                            quizData = newSubsub.quizData.map { newQuiz ->
-                                                val localQuiz =
-                                                    localSubsub?.quizData?.find { it.idQuiz == newQuiz.idQuiz }
-
-                                                if (localQuiz != null && newQuiz.dataUpdate > localQuiz.dataUpdate) {
-                                                    val quizString =
-                                                        "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
-                                                    val quizInt =
-                                                        "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
-
-                                                    if (newQuiz.isShowDownload && newQuiz.dataUpdate.toLong() > localQuiz.dataUpdate.toLong()) {
-                                                        changedQuizzes.add(
-                                                            Pair(
-                                                                quizString,
-                                                                quizInt
-                                                            )
-                                                        )
-                                                    }
-                                                } else {
-                                                    val quizString =
-                                                        "${newEvent.id}>${newCategory.nameQuiz}>${newSubcategory.nameQuiz}>${newSubsub.nameQuiz}>${newQuiz.nameQuiz}"
-                                                    val quizInt =
-                                                        "${newEvent.id}>${newCategory.id}>${newSubcategory.id}>${newSubsub.id}>${newQuiz.idQuiz}>${newQuiz.tpovId}"
-
-                                                       changedQuizzes.add(
-                                                            Pair(
-                                                                quizString,
-                                                                quizInt
-                                                            )
-                                                        )
-                                                }
-
-                                                newQuiz.copy(
-                                                    picture = newQuiz.picture,
-                                                    ratingLocal = localQuiz?.ratingLocal
-                                                        ?: newQuiz.ratingLocal,
-                                                    starsMaxLocal = localQuiz?.starsMaxLocal
-                                                        ?: newQuiz.starsMaxLocal,
-                                                    isShowArchive = localQuiz?.isShowArchive
-                                                        ?: isShowArhive(),
-                                                    isShowDownload = localQuiz?.isShowDownload
-                                                        ?: isShowDownload(newEvent.id)
-                                                )
-                                            },
-                                            ratingLocal = localSubsub?.ratingLocal
-                                                ?: newSubsub.ratingLocal,
-                                            starsMaxLocal = localSubsub?.starsMaxLocal
-                                                ?: newSubsub.starsMaxLocal,
-                                            isShowArchive = localSubsub?.isShowArchive
-                                                ?: isShowArhive(),
-                                            isShowDownload = localSubsub?.isShowDownload
-                                                ?: isShowDownload(newEvent.id)
-                                        )
-                                    },
-                                    ratingLocal = localSubcategory?.ratingLocal
-                                        ?: newSubcategory.ratingLocal,
-                                    starsMaxLocal = localSubcategory?.starsMaxLocal
-                                        ?: newSubcategory.starsMaxLocal,
-                                    isShowArchive = localSubcategory?.isShowArchive
-                                        ?: isShowArhive(),
-                                    isShowDownload = localSubcategory?.isShowDownload
-                                        ?: isShowDownload(newEvent.id)
-                                )
-                            },
-                            ratingLocal = localCategory?.ratingLocal ?: newCategory.ratingLocal,
-                            starsMaxLocal = localCategory?.starsMaxLocal
-                                ?: newCategory.starsMaxLocal,
-                            isShowArchive = localCategory?.isShowArchive
-                                ?: isShowArhive(),
-                            isShowDownload = localCategory?.isShowDownload
-                                ?: isShowDownload(newEvent.id)
-                        )
-                    },
-                    isShowArchive = localEvent?.isShowArchive ?: isShowArhive(),
-                    isShowDownload = localEvent?.isShowDownload ?: isShowDownload(newEvent.id)
-                )
-            }
-        )
+        return allChildrenChanged
     }
 
-    private fun deleteLocalPictureStructure(name: String) {
-        repositoryStructureImpl.deleteLocalPictureStructure(name)
+    suspend fun updateStructureData(structureDataLocal: StructureDataLocal) {
+        repositoryStructureImpl.updateStructureData(structureDataLocal.toStructureDataEntity())
     }
 
-    private fun fetchPictureStructure(name: String) {
-        repositoryStructureImpl.fetchPictureStructure(name)
-    }
-
-    suspend fun getStructureData(): StructureData? {
-        return repositoryStructureImpl.getStructureData()
-    }
-
-    suspend fun insertStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
-        Log.d("pushQuizData", "structureCategory: $structureCategoryDataEntity")
-        repositoryStructureImpl.insertStructureRating(structureCategoryDataEntity)
-    }
-
-    suspend fun getStructureCategory(): List<StructureCategoryDataEntity> {
-        return repositoryStructureImpl.getStructureCategory()
-    }
 }

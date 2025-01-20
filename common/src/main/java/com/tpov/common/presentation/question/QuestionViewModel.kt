@@ -20,12 +20,11 @@ import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.remote.StructureLocalDataRemote
+import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.LanguageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -43,7 +42,6 @@ import javax.inject.Inject
 @InternalCoroutinesApi
 class QuestionViewModel @Inject constructor(
     var app: Application,
-    var quizUseCase: QuizUseCase,
     var questionUseCase: QuestionUseCase,
     var questionDetailUseCase: QuestionDetailUseCase,
     val structureUseCase: StructureUseCase,
@@ -54,7 +52,7 @@ class QuestionViewModel @Inject constructor(
     var originalAnswerOrder: String = ""
     var numQuestions: Int? = null
     var hardQuiz: Boolean? = null
-    var idQuiz: Int? = null
+    var pathStructure: PathStructure? = null
     var life: Int? = null
 
     var oldCurrentQuestion = 0
@@ -78,8 +76,8 @@ class QuestionViewModel @Inject constructor(
     val currentQuestion: StateFlow<QuestionEntity?> get() = _currentQuestion
     private val _currentQuestion = MutableStateFlow<QuestionEntity?>(null)
 
-    val quiz: StateFlow<QuizEntity?> get() = _quiz
-    private val _quiz = MutableStateFlow<QuizEntity?>(null)
+    val quiz: StateFlow<StructureDataLocal?> get() = _quiz
+    private val _quiz = MutableStateFlow<StructureDataLocal?>(null)
     val questionList: StateFlow<List<QuestionEntity>?> get() = _questionList
     private val _questionList = MutableStateFlow<List<QuestionEntity>?>(null)
     val questionDetailList: StateFlow<List<QuestionDetailEntity>?> get() = _questionDetailList
@@ -102,49 +100,42 @@ class QuestionViewModel @Inject constructor(
     //--------------------------------------------USE CASES---------------------------------------------
 
     fun saveQuizResult() = viewModelScope.launch(Dispatchers.IO) {
-        quizUseCase.saveQuiz(
-            _quiz.value?.copy(
-                starsMaxLocal = quiz.value?.starsMaxLocal ?: _quiz.value?.starsMaxLocal
-                ?: errorHandler.notFoundQuizValue(),
-                starsAverageLocal = quiz.value?.starsAverageLocal ?: _quiz.value?.starsAverageLocal
-                ?: errorHandler.notFoundQuizValue(),
-                ratingLocal = quiz.value?.ratingLocal ?: _quiz.value?.ratingLocal
-                ?: errorHandler.notFoundQuizValue()
-            ) ?: errorHandler.notFoundQuiz()
-        )
-    }
 
-    fun getQuizById() = viewModelScope.launch(Dispatchers.IO) {
-        _quiz.value = quizUseCase.getQuizById(idQuiz ?: errorHandler.notFoundInputData())
     }
-
-//    fun saveQuestion(questionEntity: QuestionEntity) = viewModelScope.launch(Dispatchers.IO) {
-//        questionUseCase.saveQuestion(questionEntity)
-//    }
 
     fun getQuestionList(lng: String) = viewModelScope.launch(Dispatchers.IO) {
         val languagesUser = if (lng == "") Locale.getDefault().language
         else lng
-        val filterQuestionByIdQuiz = questionUseCase.getQuestionByIdQuiz(idQuiz ?: errorHandler.notFoundInputData())
+        val filterQuestionByIdQuiz =
+            questionUseCase.getQuestionByPath(pathStructure ?: errorHandler.notFoundInputData())
         val filterQuestionByHardQuiz = filterQuestionByHardQuiz(
-            filterQuestionByIdQuiz,hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()
+            filterQuestionByIdQuiz, hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()
         )
-        var filterQuestionByLanguage = filterQuestionByMainLanguageUser(filterQuestionByHardQuiz, languagesUser)
-        if (filterQuestionByLanguage.size < (numQuestions?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()))
+        var filterQuestionByLanguage =
+            filterQuestionByMainLanguageUser(filterQuestionByHardQuiz, languagesUser)
+        if (filterQuestionByLanguage.size < (numQuestions
+                ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz())
+        )
             filterQuestionByLanguage = filterQuestionByOtherLanguageUser(
-                filterQuestionByHardQuiz,languagesUser,
+                filterQuestionByHardQuiz, languagesUser,
                 numQuestions ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
             )
         if (filterQuestionByLanguage.isEmpty()) _showTranslateDialog.value = true
         else _questionList.value = filterQuestionByLanguage.sortedBy { it.numQuestion }
     }
 
-    fun getQuestionDetailByIdQuiz() = viewModelScope.launch(Dispatchers.IO) {
-        _questionDetailList.value = questionDetailUseCase.getQuestionDetailByIdQuiz(
-            idQuiz ?: errorHandler.notFoundInputData()
+    fun getQuestionDetailByPath() = viewModelScope.launch(Dispatchers.IO) {
+        _questionDetailList.value = questionDetailUseCase.getQuestionDetailByPath(
+            pathStructure ?: errorHandler.notFoundInputData()
         )?.filter { it.hardQuiz == hardQuiz } ?: listOf(
             QuestionDetailEntity(
-                0, idQuiz ?: errorHandler.notFoundInputData(), getDataToday(),
+                0,
+                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+                pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+                getDataToday(),
                 CODE_EMPTY_ANSWER.toString()
                     .repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
                 hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
@@ -155,7 +146,12 @@ class QuestionViewModel @Inject constructor(
     fun saveQuestionDetail() = viewModelScope.launch(Dispatchers.IO) {
         questionDetailUseCase.saveQuestionDetail(
             QuestionDetailEntity(
-                0, idQuiz ?: errorHandler.notFoundQuizValue(), getDataToday(), codeAnswer,
+                0,                 pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+                pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+                getDataToday(), codeAnswer,
                 hardQuiz ?: errorHandler.notFoundQuizValue(), false
             )
         )
@@ -169,10 +165,6 @@ class QuestionViewModel @Inject constructor(
             questionDetailUseCase.updateQuestionDetail(questionDetailEntity)
         }
 
-    fun pushStructureLocalData(ratingData: StructureLocalDataRemote) =
-        viewModelScope.launch(Dispatchers.IO) {
-            structureUseCase.pushStructureRating(ratingData)
-        }
 
     fun deleteQuestionDetailById(id: Int?): String {
         viewModelScope.launch(Dispatchers.IO) {
@@ -186,6 +178,7 @@ class QuestionViewModel @Inject constructor(
     fun initQuestionValues() {
         _currentQuestion.value = questionList.value?.get(0)
     }
+
     private fun filterQuestionByHardQuiz(
         questionEntityList: List<QuestionEntity>,
         hardQuiz: Boolean
@@ -211,10 +204,7 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun initQuizValues() {
-        numQuestions =
-            if (hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()) quiz.value?.numHQ
-                ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
-            else quiz.value?.numQ ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
+        numQuestions = if (hardQuiz == false) _quiz.value?.numQ else _quiz.value?.numHQ
 
     }
 
@@ -222,7 +212,11 @@ class QuestionViewModel @Inject constructor(
         _questionDetail.value = questionDetailList.value?.find { questionDetail ->
             questionDetail.codeAnswer?.any { it == '0' } ?: false
         } ?: QuestionDetailEntity(
-            0, idQuiz ?: errorHandler.notFoundInputData(), getDataToday(),
+            0,                 pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+            pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
+            pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
+            pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
+            pathStructure?.idEvent ?: errorHandler.notFoundInputData(), getDataToday(),
             "0".repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
             hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
         )
@@ -235,7 +229,8 @@ class QuestionViewModel @Inject constructor(
     fun calculatePercentByCodeAnswer(): Int {
         return codeAnswer
             .filter { it != CODE_EMPTY_ANSWER }
-            .map {(((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()).toDouble() / COUNT_VARIATION_CODE_ANSWER) * 100)
+            .map {
+                (((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()).toDouble() / COUNT_VARIATION_CODE_ANSWER) * 100)
             }
             .average()
             .toInt()
@@ -261,9 +256,8 @@ class QuestionViewModel @Inject constructor(
         _currentQuestion.value = questionList.value?.get(current)
     }
 
-    fun result() {
-        _quiz.value?.starsMaxLocal = calculateStarsMaxLocal()
-        _quiz.value?.starsAverageLocal = calculateStarsAverageLocal()
+    fun saveResult() {
+
         _result.value = calculateResultByCodeAnswer(codeAnswer)
 
         saveQuestionDetail()
@@ -315,7 +309,7 @@ class QuestionViewModel @Inject constructor(
             codeAnswer.substring(0, index) + score.toString() +
                     codeAnswer.substring(index + 1)
         } else codeAnswer.padEnd(index, CODE_EMPTY_ANSWER) + score.toString()
-        if (!codeAnswer.contains(CODE_EMPTY_ANSWER)) result()
+        if (!codeAnswer.contains(CODE_EMPTY_ANSWER)) saveResult()
     }
 
     fun translateANDAddQuestion(question: QuestionEntity, toLang: String) {
@@ -326,10 +320,12 @@ class QuestionViewModel @Inject constructor(
             question.nameAnswers.split(SPLIT_BETWEEN_ANSWERS).forEach { answer ->
                 answers += "${
                     LanguageUtils.getLanguageShortCode(
-                        translateText(answer,question.language,toLang)
-                    )}$SPLIT_BETWEEN_ANSWERS"
+                        translateText(answer, question.language, toLang)
+                    )
+                }$SPLIT_BETWEEN_ANSWERS"
             }
-            newQuestion.nameQuestion = translateText(question.nameQuestion, question.language, toLang)
+            newQuestion.nameQuestion =
+                translateText(question.nameQuestion, question.language, toLang)
             newQuestion.nameAnswers = answers
             newQuestion.language = toLang
             newQuestion.lvlTranslate = LVL_GOOGLE_TRANSLATOR
@@ -368,6 +364,7 @@ class QuestionViewModel @Inject constructor(
             text
         }
     }
+
     fun countNonEmptyAnswers(): Int {
         return codeAnswer.count { it != '0' }
     }

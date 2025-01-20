@@ -4,11 +4,11 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.common.EventQuiz
 import com.tpov.common.UNKNOWN_VALUE
-import com.tpov.common.data.model.local.CategoryData
 import com.tpov.common.di.CommonComponent
 import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.log_api.logger.Logger
@@ -16,6 +16,7 @@ import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.di.DaggerApplicationComponent
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @Logger
@@ -48,16 +49,18 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[MainViewModel::class.java]
 
-        viewModel.categoryData.observe(viewLifecycleOwner) { categoryDataList ->
-            adapter = MainAdapter(categoryDataList, this)
-            recyclerView.adapter = adapter
+        lifecycleScope.launch {
+            viewModel.structureData.collect { categoryDataList ->
+                adapter = MainAdapter(categoryDataList!!, this@MainFragment)
+                recyclerView.adapter = adapter
+            }
         }
         initGetData()
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    override fun onItemClick(category: CategoryData) {
-        val fragment = QuizFragment.newInstance(event!!, category.id, -1, -1)
+    override fun onItemClick(category: Int) {
+        val fragment = QuizFragment.newInstance(event!!, category, -1, -1)
 
         requireActivity().supportFragmentManager.beginTransaction()
             .replace(R.id.title_fragment, fragment)

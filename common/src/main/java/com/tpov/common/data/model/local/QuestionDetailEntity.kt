@@ -11,6 +11,18 @@ data class QuestionDetailEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int?,
 
+    @ColumnInfo(name = "idEvent")
+    val idEvent: Int,
+
+    @ColumnInfo(name = "idCategory")
+    val idCategory: Int,
+
+    @ColumnInfo(name = "idSubCategory")
+    val idSubCategory: Int,
+
+    @ColumnInfo(name = "idSubsubCategory")
+    val idSubsubCategory: Int,
+
     @ColumnInfo(name = "idQuiz")
     val idQuiz: Int,
 
@@ -26,13 +38,17 @@ data class QuestionDetailEntity(
     @ColumnInfo(name = "synth")
     val synth: Boolean
 ) {
-    fun toQuestionDetail() = QuestionDetailRemote(
+    fun toQuestionDetailRemote() = QuestionDetailRemote(
         data, codeAnswer, hardQuiz
     )
 
     constructor() : this(
         id = null,
         idQuiz = -1,
+        idEvent = -1,
+        idCategory = -1,
+        idSubCategory = -1,
+        idSubsubCategory = -1,
         data = "",
         codeAnswer = null,
         hardQuiz = false,

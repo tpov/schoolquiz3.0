@@ -1,6 +1,7 @@
 package com.tpov.common
 
-import com.tpov.common.data.model.local.QuizEntity
+import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.presentation.model.PathStructure
 
 class ErrorHandler(
     val onCloseScreen: () -> Unit,
@@ -33,7 +34,8 @@ class ErrorHandler(
         List::class -> emptyList<Any>() as T
         Set::class -> emptySet<Any>() as T
         Map::class -> emptyMap<Any, Any>() as T
-        QuizEntity::class -> QuizEntity() as T
+        StructureDataLocal::class -> StructureDataLocal() as T
+        PathStructure::class -> PathStructure(-1, -1, -1, -1, -1) as T
         Unit::class -> Unit as T
         else -> null as T
     }

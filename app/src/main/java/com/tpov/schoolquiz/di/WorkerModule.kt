@@ -12,7 +12,6 @@ import kotlin.reflect.KClass
 @Module
 abstract class WorkerModule {
 
-
     @Binds
     @IntoMap
     @WorkerKey(SyncWorker::class)

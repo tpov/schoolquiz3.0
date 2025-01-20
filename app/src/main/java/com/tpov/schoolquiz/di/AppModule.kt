@@ -1,16 +1,11 @@
 package com.tpov.schoolquiz.di
 
-import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.data.RepositoryQuestionImpl
-import com.tpov.common.data.RepositoryQuizImpl
 import com.tpov.common.data.RepositoryStuctureImpl
-import com.tpov.common.data.database.StructureCategoryDataDao
-import com.tpov.common.data.database.StructureRatingDataDao
 import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.data.RepositoryProfileImpl
 import com.tpov.schoolquiz.domain.ProfileUseCase
@@ -24,14 +19,8 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideStructureUseCase(repositoryStuctureImpl: RepositoryStuctureImpl): StructureUseCase {
-        return StructureUseCase(repositoryStuctureImpl)
-    }
-
-    @Provides
-    @Singleton
-    fun provideQuizUseCase(repositoryQuizImpl: RepositoryQuizImpl): QuizUseCase {
-        return QuizUseCase(repositoryQuizImpl)
+    fun provideStructureUseCase(repositoryStuctureImpl: RepositoryStuctureImpl, repositoryQuestionImpl: RepositoryQuestionImpl): StructureUseCase {
+        return StructureUseCase(repositoryStuctureImpl, repositoryQuestionImpl)
     }
 
     @Provides
@@ -44,17 +33,6 @@ class AppModule {
     @Singleton
     fun provideProfileUseCase(repositoryProfileImpl: RepositoryProfileImpl): ProfileUseCase {
         return ProfileUseCase(repositoryProfileImpl)
-    }
-
-    @Provides
-    @Singleton
-    fun provideRepositoryStructureImpl(
-        structureRatingDataDao: StructureRatingDataDao,
-        structureCategoryDataDao: StructureCategoryDataDao,
-        firestore: FirebaseFirestore,
-        context: Context
-    ): RepositoryStuctureImpl {
-        return RepositoryStuctureImpl(structureRatingDataDao,structureCategoryDataDao, firestore, context)
     }
 
     @Provides

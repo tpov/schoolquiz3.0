@@ -22,8 +22,9 @@ import com.tpov.common.MAX_PERCENT_LIGHT_QUIZ_FULL
 import com.tpov.common.PERCENT_1STAR_QUIZ_SHORT
 import com.tpov.common.R
 import com.tpov.common.RATING_QUIZ_ARENA_IN_TOP
-import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.databinding.ActivityQuizItemBinding
+import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.ResizeAndCrop
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -35,7 +36,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val context: Context,
     private val viewModel: QuizActivityViewModel
 ) :
-    ListAdapter<FlattenedQuizData, QuizActivityAdapter.ItemHolder>(ItemComparator()) {
+    ListAdapter<StructureDataLocal, QuizActivityAdapter.ItemHolder>(ItemComparator()) {
     var onDeleteButtonClick: ((RecyclerView.ViewHolder) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
@@ -49,12 +50,12 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     }
 
 
-    class ItemComparator : DiffUtil.ItemCallback<FlattenedQuizData>() {
-        override fun areItemsTheSame(oldItem: FlattenedQuizData, newItem: FlattenedQuizData): Boolean {
+    class ItemComparator : DiffUtil.ItemCallback<StructureDataLocal>() {
+        override fun areItemsTheSame(oldItem: StructureDataLocal, newItem: StructureDataLocal): Boolean {
             return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: FlattenedQuizData, newItem: FlattenedQuizData): Boolean {
+        override fun areContentsTheSame(oldItem: StructureDataLocal, newItem: StructureDataLocal): Boolean {
             return oldItem == newItem
         }
     }
@@ -72,14 +73,13 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         private fun showDialog(
             context: Context,
             nolics: Int,
-            id: Int
+            viewModel: QuizActivityViewModel
         ) {
             val alertDialog = AlertDialog.Builder(context)
                 .setTitle(context.getString(R.string.send_to_arena_title))
                 .setMessage(context.getString(R.string.send_to_arena_text))
                 .setPositiveButton("(-) $nolics nolics") { _, _ ->
-
-                    listener.sendItem(id)
+                    listener.sendItem(viewModel.pathStructure!!)
                 }
                 .setNegativeButton(context.getString(R.string.send_to_arena_negative), null)
                 .create()
@@ -102,7 +102,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             view: View,
             id: Int,
             context: Context,
-            mainViewModel: QuizActivityViewModel
+            quizViewModel: QuizActivityViewModel
         ) {
             val popupMenu = PopupMenu(view.context, view)
             popupMenu.inflate(R.menu.popup_menu)
@@ -110,17 +110,17 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.menu_send -> {
-                        showDialog(context, 200, id)
+                        showDialog(context, 200, quizViewModel)
                         true
                     }
 
                     R.id.menu_delete -> {
-                        listener.deleteItem(id)
+                        listener.deleteItem(quizViewModel.pathStructure!!)
                         true
                     }
 
                     R.id.menu_edit -> {
-                        listener.editItem(id)
+                        listener.editItem(quizViewModel.pathStructure!!)
                         true
                     }
                     else -> false
@@ -131,7 +131,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
         @OptIn(InternalCoroutinesApi::class)
         fun setData(
-            quizEntity: FlattenedQuizData,
+            quizEntity: StructureDataLocal,
             listener: Listener,
             context: Context,
             mainViewModel: QuizActivityViewModel
@@ -168,13 +168,13 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             } catch (e: Exception) {}
 
-            val goHardQuiz = "${context.getString(R.string.go_hard_question)} - ${quizEntity.name}"
+            val goHardQuiz = "${context.getString(R.string.go_hard_question)} - ${quizEntity.nameItem}"
             initView(quizEntity, goHardQuiz, mainViewModel, listener)
         }
 
         @OptIn(InternalCoroutinesApi::class)
         private fun ActivityQuizItemBinding.initViewQuiz5(
-            quizEntity: FlattenedQuizData,
+            quizEntity: StructureDataLocal,
             viewModel: QuizActivityViewModel,
             listener: Listener
         ) {
@@ -201,21 +201,21 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             ratingBar.rating = (quizEntity.ratingLocal.toFloat() / PERCENT_1STAR_QUIZ_SHORT)
             ratingBar.rating = quizEntity.ratingLocal.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
-            mainTitleButton.text = quizEntity.name
+            mainTitleButton.text = quizEntity.nameItem
 
             mainTitleButton.setOnClickListener {
-                listener.onClick(quizEntity.id, chbTypeQuiz.isChecked)
+                listener.onClick(viewModel.pathStructure!!, chbTypeQuiz.isChecked)
             }
 
             tvName.visibility = View.VISIBLE
             tvTime.visibility = View.VISIBLE
-            tvName.text = quizEntity.userName
+            tvName.text = quizEntity.nameCreator
             tvTime.text = quizEntity.dataUpdate
         }
 
         @OptIn(InternalCoroutinesApi::class)
         private fun ActivityQuizItemBinding.initView(
-            quizEntity: FlattenedQuizData,
+            quizEntity: StructureDataLocal,
             goHardQuiz: String,
             viewModel: QuizActivityViewModel,
             listener: Listener
@@ -242,9 +242,9 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
                 (quizEntity.starsMaxLocal.toFloat() / 50F)
             else ratingBar.rating = (((quizEntity.starsMaxLocal.toFloat() - 100F) / 20F) + 2F)
 
-            mainTitleButton.text = quizEntity.name
+            mainTitleButton.text = quizEntity.nameItem
             mainTitleButton.setOnClickListener {
-                listener.onClick(quizEntity.id, chbTypeQuiz.isChecked)
+                listener.onClick(viewModel.pathStructure!!, chbTypeQuiz.isChecked)
             }
         }
 
@@ -265,10 +265,10 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     }
 
     interface Listener {
-        fun deleteItem(id: Int)
-        fun onClick(id: Int, type: Boolean)
-        fun editItem(id: Int)
-        fun sendItem(id: Int)
+        fun deleteItem(pathStructure: PathStructure)
+        fun onClick(pathStructure: PathStructure, type: Boolean)
+        fun editItem(pathStructure: PathStructure)
+        fun sendItem(pathStructure: PathStructure)
         fun reloadData()
     }
 

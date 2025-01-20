@@ -5,29 +5,34 @@ import android.net.Uri
 import android.util.Log
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
-import com.tpov.common.data.database.StructureCategoryDataDao
-import com.tpov.common.data.database.StructureRatingDataDao
+import com.tpov.common.Core.tpovId
+import com.tpov.common.data.database.StructureDataDao
+import com.tpov.common.data.database.StructureEditDataDao
 import com.tpov.common.data.manager.FirebaseRequestInterceptor.executeWithChecksSingleTask
-import com.tpov.common.data.model.local.StructureCategoryDataEntity
-import com.tpov.common.data.model.local.StructureData
-import com.tpov.common.data.model.remote.StructureData
-import com.tpov.common.data.model.remote.StructureLocalDataRemote
+import com.tpov.common.data.model.local.StructureDataEntity
+import com.tpov.common.data.model.local.UpdatedStructureData
+import com.tpov.common.data.model.remote.StructureDataRemote
+import com.tpov.common.data.model.remote.StructureEditData
+import com.tpov.common.data.model.remote.StructureInfoRemote
+import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.repository.RepositoryStructure
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.launch
+import com.tpov.common.presentation.model.PathStructure
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import java.io.File
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class RepositoryStuctureImpl @Inject constructor(
-    private val structureRatingDataDao: StructureRatingDataDao,
-    private val structureCategoryDataDao: StructureCategoryDataDao,
+    private val structureDataDao: StructureDataDao,
+    private val structureEditDataDao: StructureEditDataDao,
     private val firestore: FirebaseFirestore,
     private val context: Context
 ) : RepositoryStructure {
@@ -37,66 +42,26 @@ class RepositoryStuctureImpl @Inject constructor(
     private val ratingFileName = "structure_rating.json"
     private val storageFolder = "quizPhoto"
 
-    override suspend fun fetchStructureData(): StructureData? {
-        Log.d("SyncData", "fetchStructureData()")
-        val fetchTask = {
-            val taskCompletionSource = TaskCompletionSource<StructureData?>()
-            val documentRef = firestore.collection("structures").document("structureData")
 
-            documentRef.get()
-                .addOnSuccessListener { documentSnapshot ->
-                    Log.d("SyncData", "documentSnapshot: $documentSnapshot()")
-                    if (documentSnapshot.exists()) {
-                        Log.d(
-                            "SyncData",
-                            "Document 'structureData' exists. Converting to StructureData object."
-                        )
-                        val structureData = documentSnapshot.toObject(StructureData::class.java)
-                        if (structureData != null) {
-                            Log.d("SyncData", "Successfully parsed 'structureData': $structureData")
-                            taskCompletionSource.setResult(structureData)
-                        } else {
-                            taskCompletionSource.setException(Exception("Data parsing error"))
-                        }
-                    } else {
-                        Log.d(
-                            "SyncData",
-                            "Document 'structureData' does not exist, returning null."
-                        )
-                        taskCompletionSource.setResult(null)
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("SyncData", "Error fetching document: ", exception)
-                    taskCompletionSource.setException(exception)
-                }
+    override suspend fun pushStructureInfoData(
+        ratingData: StructureInfoRemote,
+        path: PathStructure
+    ) {
+        val pathSegments = mutableListOf<String>()
 
-            taskCompletionSource.task
-        }
+        if (path.idEvent != -1) pathSegments.add("idEvent/${path.idEvent}")
+        if (path.idCategory != -1) pathSegments.add("idCategory/${path.idCategory}")
+        if (path.idSubCategory != -1) pathSegments.add("idSubCategory/${path.idSubCategory}")
+        if (path.idSubsubCategory != -1) pathSegments.add("idSubsubCategory/${path.idSubsubCategory}")
+        if (path.idQuiz != -1) pathSegments.add("idQuiz/${path.idQuiz}")
 
-        return try {
-            executeWithChecksSingleTask(fetchTask)
-                .await()
-        } catch (e: FirebaseFirestoreException) {
-            Log.e("SyncData", "Firestore exception: ${e.message}")
-            null
-        } catch (e: TimeoutCancellationException) {
-            Log.e("SyncData", "Request timeout: ${e.message}")
-            null
-        } catch (e: Exception) {
-            Log.e("SyncData", "General error in fetchStructureData: ${e.message}")
-            null
-        }
-    }
+        val fullPath = pathSegments.joinToString("/") + "/listData"
 
-
-    override suspend fun pushStructureRating(ratingData: StructureLocalDataRemote) {
         val pushTask = {
             val taskCompletionSource = TaskCompletionSource<Void>()
-            val dataMap = ratingData.toMap()
 
-            firestore.collection("structureRatings")
-                .add(dataMap)
+            firestore.collection(fullPath)
+                .add(ratingData)
                 .addOnSuccessListener { documentReference ->
                     Log.d("Firestore", "DocumentSnapshot added with ID: ${documentReference.id}")
                     taskCompletionSource.setResult(null)
@@ -110,121 +75,202 @@ class RepositoryStuctureImpl @Inject constructor(
         }
 
         try {
-            executeWithChecksSingleTask(pushTask)
-                .await()
+            executeWithChecksSingleTask(pushTask).await()
         } catch (e: Exception) {
-            Log.e("Firestore", "Failed to push rating data. Saving locally.", e)
-            saveFailedRatingLocally(ratingData)
         }
     }
 
-    override suspend fun saveStructureData(structureData: com.tpov.common.data.model.local.StructureData) {
+    override suspend fun updateStructureData(structureDataEntity: StructureDataEntity) {
+        structureDataDao.updateStructureData(structureDataEntity)
+    }
+
+    override suspend fun pushStructureData(
+        structureDataEntity: StructureDataLocal,
+        categoryId: Int
+    ) {
         try {
-            executeWithChecksSingleTask {
-                val taskCompletionSource = TaskCompletionSource<Void>()
-
-                val json = gson.toJson(structureData)
-                context.openFileOutput(fileName, Context.MODE_PRIVATE).use {
-                    it.write(json.toByteArray())
-                }
-                taskCompletionSource.setResult(null)
-
-                taskCompletionSource.task
-            }.await()
-
-            Log.d("SaveStructureData", "Данные структуры успешно сохранены")
+            val path = "quizzes/$tpovId/$categoryId/structureData"
+            firestore.document(path).set(structureDataEntity).await()
         } catch (e: Exception) {
-            Log.e("SaveStructureData", "Ошибка при сохранении данных структуры", e)
             throw e
         }
     }
 
+    override suspend fun fetchStructureDataList(eventId: Int): List<StructureDataLocal>? {
+        if (eventId == 1) {
+            val basePath = "quizzes/$tpovId"
 
-    override suspend fun pushStructureCategoryData(structureCategoryDataEntity: StructureCategoryDataEntity) {
-        try {
-            val dataMap = structureCategoryDataEntity.toMap()
+            return try {
+                val categories = firestore.collection(basePath)
+                    .get()
+                    .await()
+                    .documents
+                    .mapNotNull { it.id }
 
-            executeWithChecksSingleTask {
-                val taskCompletionSource = TaskCompletionSource<Void>()
-
-                firestore.collection("structureCategory")
-                    .document("structureCategory")  // укажите ваш ID или сгенерируйте его
-                    .set(dataMap)
-                    .addOnSuccessListener {
-                        Log.d("Firestore", "Document successfully written!")
-                        if (structureCategoryDataEntity.newCategoryPhoto != "") pushPictureStructure(
-                            structureCategoryDataEntity.newCategoryPhoto
-                        )
-                        if (structureCategoryDataEntity.newSubCategoryPhoto != "") pushPictureStructure(
-                            structureCategoryDataEntity.newSubCategoryPhoto
-                        )
-                        if (structureCategoryDataEntity.newSubsubCategoryPhoto != "") pushPictureStructure(
-                            structureCategoryDataEntity.newSubsubCategoryPhoto
-                        )
-                        taskCompletionSource.setResult(null)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Firestore", "Error writing document", e)
-                        taskCompletionSource.setException(e)
-
-                        // Если произошла ошибка, сохраняем данные локально
-                        CoroutineScope(Dispatchers.IO).launch {
-                            saveFailedCategoryLocally(structureCategoryDataEntity)
+                categories.flatMap { categoryId ->
+                    firestore.collection("$basePath/category$categoryId/structureData")
+                        .get()
+                        .await()
+                        .documents
+                        .mapNotNull { document ->
+                            document.toObject(StructureDataRemote::class.java)
+                                ?.toStructureDataLocal()
                         }
-                    }
-
-                taskCompletionSource.task
-            }.await() // Ждём завершения задачи
-        } catch (e: Exception) {
-            Log.e("Firestore", "Exception while pushing data", e)
-
-            // Если произошла ошибка, сохраняем данные локально
-            CoroutineScope(Dispatchers.IO).launch {
-                saveFailedCategoryLocally(structureCategoryDataEntity)
-            }
-        }
-    }
-
-
-    override suspend fun saveListUpdateQuiz(list: List<String>) {
-        val sharedPreferences = context.getSharedPreferences("QuizUpdates", Context.MODE_PRIVATE)
-        with(sharedPreferences.edit()) {
-            putString("UpdatedQuizzes", list.joinToString(","))
-            apply()
-        }
-    }
-
-    override suspend fun loadListUpdateQuiz(): List<String> {
-        val sharedPreferences = context.getSharedPreferences("QuizUpdates", Context.MODE_PRIVATE)
-        val data = sharedPreferences.getString("UpdatedQuizzes", "")
-        return data?.split(",")?.filterNot { it.isEmpty() } ?: emptyList()
-    }
-
-    override suspend fun insertStructureRating(structureCategoryDataEntity: StructureCategoryDataEntity) {
-        structureCategoryDataDao.insert(structureCategoryDataEntity)
-    }
-
-    override suspend fun getStructureCategory(): List<StructureCategoryDataEntity> {
-        return structureCategoryDataDao.getAllFailedCategory()
-    }
-
-    override suspend fun deleteCategoryById(id: Int) {
-        structureCategoryDataDao.deleteCategoryById(id)
-    }
-
-
-    override fun deleteLocalPictureStructure(pictureName: String) {
-        val file = File(pictureName)
-        if (file.exists()) {
-            val deleted = file.delete()
-            if (deleted) {
-                println("Удалена локальная фотография: $pictureName")
-            } else {
-                println("Не удалось удалить локальную фотографию: $pictureName")
+                }
+            } catch (e: Exception) {
+                emptyList()
             }
         } else {
-            println("Локальная фотография не найдена: $pictureName")
+            val basePath = "structures/structureData/quiz$eventId"
+
+            return try {
+                val categories = firestore.collection(basePath)
+                    .get()
+                    .await()
+                    .documents
+                    .mapNotNull { it.id }
+
+                categories.flatMap { categoryId ->
+                    firestore.collection("category$categoryId")
+                        .get()
+                        .await()
+                        .documents
+                        .mapNotNull { document ->
+                            document.toObject(StructureDataRemote::class.java)
+                                ?.toStructureDataLocal()
+                        }
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
         }
+    }
+
+    override suspend fun fetchStructureInfoData(
+        path: PathStructure
+    ): StructureInfoRemote? {
+        val pathSegments = mutableListOf<String>()
+
+        if (path.idEvent != -1) pathSegments.add("idEvent/${path.idEvent}")
+        if (path.idCategory != -1) pathSegments.add("idCategory/${path.idCategory}")
+        if (path.idSubCategory != -1) pathSegments.add("idSubCategory/${path.idSubCategory}")
+        if (path.idSubsubCategory != -1) pathSegments.add("idSubsubCategory/${path.idSubsubCategory}")
+        if (path.idQuiz != -1) pathSegments.add("idQuiz/${path.idQuiz}")
+
+        val fullPath = pathSegments.joinToString("/") + "/listData"
+
+        val fetchTask = {
+            val taskCompletionSource = TaskCompletionSource<StructureInfoRemote?>()
+
+            firestore.collection(fullPath)
+                .whereEqualTo("tpovIdUser", tpovId)
+                .limit(1)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    val document = querySnapshot.documents.firstOrNull()
+                    val result = document?.toObject(StructureInfoRemote::class.java)
+                    taskCompletionSource.setResult(result)
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("Firestore", "Error fetching document", exception)
+                    taskCompletionSource.setException(exception)
+                }
+
+            taskCompletionSource.task
+        }
+
+        return try {
+            executeWithChecksSingleTask(fetchTask).await()
+        } catch (e: Exception) {
+            Log.e("Firestore", "Failed to fetch data from Firestore", e)
+            null
+        }
+    }
+
+    override suspend fun saveStructureData(structureData: StructureDataLocal, eventId: Int) {
+        structureDataDao.insertStructureData(structureData.toStructureDataEntity())
+    }
+
+    override suspend fun insertEditStructure(structureEditData: StructureEditData) {
+        structureEditDataDao.insertStructureEditData(structureEditData)
+    }
+
+    override suspend fun pushEditStructure(structureEditData: StructureEditData) {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
+
+        val url = "https://create-quiz-function-762375057396.us-west3.run.app"
+        val data = JSONObject()
+        data.put("structureEditData", structureEditData)
+
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val requestBody = data.toString().toRequestBody(mediaType)
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        val pushTask = {
+            val taskCompletionSource = TaskCompletionSource<StructureEditData>()
+            val call = client.newCall(request)
+
+            call.enqueue(object : okhttp3.Callback {
+                override fun onFailure(call: okhttp3.Call, e: IOException) {
+                    taskCompletionSource.setException(e)
+                }
+
+                override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                    if (response.isSuccessful) {
+
+                    }
+                }
+            })
+
+            taskCompletionSource.task
+        }
+        executeWithChecksSingleTask(pushTask)
+    }
+
+    override suspend fun getEditStructure(): List<StructureEditData> {
+        TODO("Not yet implemented")
+    }
+
+    override fun deleteLocalPictureStructure(updatedStructureData: UpdatedStructureData) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun fetchStructureInfo(path: PathStructure): StructureInfoRemote? {
+        val db = FirebaseFirestore.getInstance()
+
+        val pathSegments = mutableListOf<String>()
+        pathSegments.add("structures")
+        pathSegments.add("structureInfo")
+        pathSegments.add("quiz${path.idEvent}")
+        if (path.idCategory != -1) pathSegments.add("category/${path.idCategory}")
+        if (path.idSubCategory != -1) pathSegments.add("subCategory/${path.idSubCategory}")
+        if (path.idSubsubCategory != -1) pathSegments.add("subsubCategory/${path.idSubsubCategory}")
+        if (path.idQuiz != -1) pathSegments.add("quizzes/${path.idQuiz}")
+        pathSegments.add("infoList/tpovIdList/$tpovId")
+
+        val fullPath = pathSegments.joinToString("/")
+
+        return try {
+            val document = db.document(fullPath).get().await()
+            if (document.exists()) {
+                document.toObject(StructureInfoRemote::class.java)
+            } else null
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error fetching document: ${e.message}")
+            null
+        }
+    }
+
+    override fun fetchPictureStructure(updatedStructureData: UpdatedStructureData) {
+        TODO("Not yet implemented")
     }
 
     fun pushPictureStructure(localPath: String) {
@@ -276,56 +322,10 @@ class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun getStructureData(): com.tpov.common.data.model.local.StructureData? {
-        return withContext(Dispatchers.IO) {
-            val file = context.getFileStreamPath(fileName)
-            (if (file.exists()) {
-                gson.fromJson(
-                    context.openFileInput(fileName).bufferedReader().use { it.readText() },
-                    com.tpov.common.data.model.local.StructureData::class.java
-                )
-            } else null)
-        }
-    }
-
-    private suspend fun saveFailedRatingLocally(ratingData: StructureLocalDataRemote) {
-        structureRatingDataDao.insert(ratingData.toStructureRatingDataEntity())
-    }
-
-    private suspend fun saveFailedCategoryLocally(structureCategoryDataEntity: StructureCategoryDataEntity) {
-        structureCategoryDataDao.insert(structureCategoryDataEntity)
-    }
-
-    suspend fun retryFailedRatings() {
-        val failedRatings = structureRatingDataDao.getAllFailedRatings()
-        for (ratingDataEntity in failedRatings) {
-            try {
-                val dataMap = ratingDataEntity.toStructureRatingData().toMap()
-
-                // Используем перехватчик для отправки данных на сервер
-                executeWithChecksSingleTask {
-                    val taskCompletionSource = TaskCompletionSource<Void>()
-
-                    firestore.collection("structureRatings")
-                        .add(dataMap)
-                        .addOnSuccessListener { documentReference ->
-                            println("DocumentSnapshot added with ID: ${documentReference.id}")
-                            taskCompletionSource.setResult(null)
-                        }
-                        .addOnFailureListener { e ->
-                            println("Error adding document: $e")
-                            taskCompletionSource.setException(e)
-                        }
-
-                    taskCompletionSource.task
-                }.await()
-
-            } catch (e: Exception) {
-                println("Error saving structure rating: $e")
-            }
-        }
-
-        // Очищаем локальные записи после успешной попытки
-        structureRatingDataDao.clearFailedRatings()
+    override suspend fun getStructureData(
+        eventId: Int,
+        vararg path: Int
+    ): StructureDataLocal? {
+        return structureDataDao.getStructureDataByPath(eventId, path.toList())
     }
 }

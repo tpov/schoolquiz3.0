@@ -4,10 +4,8 @@ import android.app.Application
 import android.content.Context
 import com.tpov.common.data.RepositoryQuestionDetailImpl
 import com.tpov.common.data.RepositoryQuestionImpl
-import com.tpov.common.data.RepositoryQuizImpl
 import com.tpov.common.domain.repository.RepositoryQuestion
 import com.tpov.common.domain.repository.RepositoryQuestionDetail
-import com.tpov.common.domain.repository.RepositoryQuiz
 import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import dagger.Module
 import dagger.Provides
@@ -19,10 +17,7 @@ class CommonModule {
     fun provideContext(application: Application): Context {
         return application.applicationContext
     }
-    @Provides
-    fun provideRepositoryQuiz(repositoryQuizImpl: RepositoryQuizImpl): RepositoryQuiz {
-        return repositoryQuizImpl
-    }
+
     @Provides
     fun provideRepositoryQuestionDetail(impl: RepositoryQuestionDetailImpl): RepositoryQuestionDetail {
         return impl

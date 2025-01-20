@@ -8,6 +8,7 @@ import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.remote.QuestionDetailRemote
 import com.tpov.common.domain.repository.RepositoryQuestionDetail
+import com.tpov.common.presentation.model.PathStructure
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -18,20 +19,19 @@ class RepositoryQuestionDetailImpl @Inject constructor(
 ) : RepositoryQuestionDetail {
 
     private val baseCollection = firestore.collection("questionsDetail")
-    override suspend fun fetchQuestionDetail(
-        typeId: Int,
-        categoryId: String,
-        subcategoryId: String,
-        subsubcategoryId: String,
-        idQuiz: Int
-    ): List<QuestionDetailRemote> {
-        Log.d("FirebaseRequestInterceptor", "fetchQuestionDetail")
+
+    override suspend fun fetchQuestionDetails(
+        pathStructure: PathStructure
+    ): List<QuestionDetailEntity> {
+        Log.d("FirebaseRequestInterceptor", "fetchQuestionDetails")
+
         val collectionReference = baseCollection
-            .document("questionDetail$typeId")
-            .collection("questionDetail$typeId")
-            .document(idQuiz.toString())
-            .collection(idQuiz.toString())
-            .document(tpovId.toString())
+            .document("questionDetail${pathStructure.idEvent}")
+            .collection(
+                "${pathStructure.idCategory}_${pathStructure.idSubCategory}_" +
+                        "${pathStructure.idSubsubCategory}_${pathStructure.idQuiz}"
+            )
+            .document("listTpovId")
             .collection(tpovId.toString())
 
         return try {
@@ -39,46 +39,40 @@ class RepositoryQuestionDetailImpl @Inject constructor(
                 collectionReference.get()
             }.await()
 
-            task.documents.mapNotNull { it.toObject(QuestionDetailRemote::class.java) }
+            task.documents.mapNotNull { it.toObject(QuestionDetailRemote::class.java)
+                ?.toQuestionDetailEntity(pathStructure) }
         } catch (e: Exception) {
-            Log.w("Firestore", "Error fetchQuestionDetail", e)
+            Log.w("Firestore", "Error fetching question details", e)
             emptyList()
         }
     }
 
-
-    override suspend fun pushQuestionDetail(
-        id: Int,
-        event: Int,
-        categoryId: String,
-        subcategoryId: String,
-        subsubcategoryId: String,
-        idQuiz: Int,
-        questionDetailRemote: QuestionDetailRemote
-    ) {
+    override suspend fun pushQuestionDetails(questionDetailEntity: QuestionDetailEntity) {
         Log.d("FirebaseRequestInterceptor", "pushQuestionDetail")
         val collectionReference = baseCollection
-            .document("questionDetail$event")
-            .collection("questionDetail$event")
-            .document(idQuiz.toString())
-            .collection(idQuiz.toString())
-            .document(tpovId.toString())
+            .document("questionDetail${questionDetailEntity.idEvent}")
+            .collection(
+                "${questionDetailEntity.idCategory}_${questionDetailEntity.idSubCategory}_" +
+                        "${questionDetailEntity.idSubsubCategory}_${questionDetailEntity.idQuiz}"
+            )
+            .document("listTpovId")
             .collection(tpovId.toString())
 
         try {
             FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                collectionReference.add(questionDetailRemote)
+                collectionReference.add(questionDetailEntity.toQuestionDetailRemote())
             }.await()
 
             questionDetailDao.updateQuizDetail(
-                questionDetailDao.getQuestionDetail(id).copy(synth = true)
+                questionDetailDao.getQuestionDetail(questionDetailEntity.idQuiz).copy(synth = true)
             )
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushQuestionDetail", e)
         }
     }
 
-    override suspend fun getQuestionDetailByIdQuiz(idQuiz: Int) = questionDetailDao.getQuestionDetailByIdQuiz(idQuiz)
+    override suspend fun getQuestionDetailByPath(pathStructure: PathStructure) =
+        questionDetailDao.getQuestionDetailByPath(pathStructure.idEvent, pathStructure.idCategory, pathStructure.idSubCategory, pathStructure.idSubsubCategory, pathStructure.idQuiz)
 
     override suspend fun saveQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
         questionDetailDao.insertQuestionDetail(questionDetailEntity)
@@ -92,22 +86,27 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         questionDetailDao.deleteQuestionDetail(id)
     }
 
-    override suspend fun deleteRemoteQuestionDetailByIdQuiz(idQuiz: Int, typeId: Int) {
-        Log.d("FirebaseRequestInterceptor", "deleteRemoteQuestionDetailByIdQuiz")
-        val collectionReference = baseCollection
-            .document("questionDetail$typeId")
-            .collection("questionDetail$typeId")
-            .document(idQuiz.toString())
-            .collection(idQuiz.toString())
-            .document(tpovId.toString())
-            .collection(tpovId.toString())
-
+    override suspend fun deleteRemoteQuestionDetailByPath(pathStructure: PathStructure) {
         try {
-            FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                collectionReference.document(idQuiz.toString()).delete()
-            }.await()
+            val collectionReference = baseCollection
+                .document("questionDetail${pathStructure.idEvent}")
+                .collection(
+                    "${pathStructure.idCategory}_${pathStructure.idSubCategory}_" +
+                            "${pathStructure.idSubsubCategory}_${pathStructure.idQuiz}"
+                )
+                .document("listTpovId")
+                .collection(tpovId.toString())
+
+            val documents = collectionReference.get().await()
+
+            // Удаляем каждый документ
+            documents.forEach { document ->
+                FirebaseRequestInterceptor.executeWithChecksSingleTask {
+                    document.reference.delete()
+                }.await()
+            }
         } catch (e: Exception) {
-            Log.w("Firestore", "Error deleting remote question detail", e)
+            Log.w("Firestore", "Error deleting question details", e)
         }
     }
 }

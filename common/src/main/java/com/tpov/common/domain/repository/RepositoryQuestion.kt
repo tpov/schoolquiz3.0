@@ -1,38 +1,32 @@
 package com.tpov.common.domain.repository
 
 import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.remote.QuestionRemote
+import com.tpov.common.presentation.model.PathStructure
 
 interface RepositoryQuestion {
     suspend fun getAllMustTrnslLangsPaidQuestions(): Set<String>
 
     suspend fun fetchQuestion(
-        event: Int,
-        categoryId: Int,
-        subcategoryId: Int,
-        pathLanguage: String,
-        idQuiz: Int
-    ): List<QuestionRemote>
+        pathStructure: PathStructure,
+        language: String,
+    ): List<QuestionEntity>
 
-    suspend fun getQuestionByIdQuiz(idQuiz: Int): List<QuestionEntity>
+    suspend fun getQuestionsByPath(path: PathStructure): List<QuestionEntity>
     suspend fun saveQuestion(questionEntity: QuestionEntity)
     suspend fun pushQuestion(
-        questionEntity: QuestionRemote,
-        event: Int,
-        idQuiz: Int
+        questionEntity: QuestionEntity,
+        isUpdate: Boolean = false
     )
 
     suspend fun updateQuestion(questionEntity: QuestionEntity)
     suspend fun deleteQuestionByIdQuiz(idQuiz: Int)
     suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, typeId: Int)
 
-    suspend fun remoteLangsQuestions(hardQuestion: Boolean, numQuestion: Int, idQuiz: Int, eventQuiz: Int): List<String>
+    suspend fun remoteLangsQuestions(questionEntity: QuestionEntity): List<String>
     suspend fun getAllMustTrnslLangsFreeQuestions(): Set<String>
     suspend fun pushQuestionForTranslate(
-        question: QuestionRemote,
-        idQuiz: Int,
+        question: QuestionEntity,
         usePaidTranslation: Boolean,
         toLang: String,
-        event: Int
     )
 }

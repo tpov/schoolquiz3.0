@@ -1,25 +1,19 @@
 package com.tpov.common.data.manager
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.room.TypeConverter
-import java.io.ByteArrayOutputStream
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.tpov.common.data.model.local.StructureDataEntity
 
 class Converters {
-
     @TypeConverter
-    fun fromByteArray(byteArray: ByteArray?): Bitmap? {
-        return byteArray?.let {
-            BitmapFactory.decodeByteArray(it, 0, it.size)
-        }
+    fun fromChildesList(value: List<StructureDataEntity>?): String {
+        return Gson().toJson(value)
     }
 
     @TypeConverter
-    fun toByteArray(bitmap: Bitmap?): ByteArray? {
-        return bitmap?.let {
-            val stream = ByteArrayOutputStream()
-            it.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.toByteArray()
-        }
+    fun toChildesList(value: String): List<StructureDataEntity>? {
+        val listType = object : TypeToken<List<StructureDataEntity>>() {}.type
+        return Gson().fromJson(value, listType)
     }
 }

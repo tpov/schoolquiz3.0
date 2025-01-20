@@ -6,10 +6,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.EventQuiz
-import com.tpov.common.data.model.local.FlattenedQuizData
 import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.StructureData
+import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,11 +23,12 @@ class QuizActivityViewModel @Inject constructor(
     val structureUseCase: StructureUseCase
 ) : ViewModel() {
 
+    val pathStructure: PathStructure? = null
     var nameCategory = ""
     var nameSubCategory = ""
 
-    val listFlattenedQuizDataFlow: StateFlow<List<FlattenedQuizData>> get() = _listFlattenedQuizDataFlow
-    private val _listFlattenedQuizDataFlow = MutableStateFlow<List<FlattenedQuizData>>(emptyList())
+    val listStructureDataLocalFlow: StateFlow<List<StructureDataLocal>> get() = _listStructureDataLocalFlow
+    private val _listStructureDataLocalFlow = MutableStateFlow<List<StructureDataLocal>>(emptyList())
 
     fun getNamePathEvent(event: EventQuiz): String {
         return when (event) {
@@ -108,102 +109,12 @@ class QuizActivityViewModel @Inject constructor(
         return questionList
     }
 
-    fun flattenStructureData(structure: StructureData): List<FlattenedQuizData> {
-        val result = mutableListOf<FlattenedQuizData>()
-
-        structure.event.forEach { event ->
-            event.category.forEach { category ->
-                if (category.isShowDownload) {
-                    result.add(
-                        FlattenedQuizData(
-                            id = category.id,
-                            name = category.nameQuiz,
-                            dataUpdate = category.dataUpdate,
-                            userName = "",
-                            starsMaxLocal = category.starsMaxLocal,
-                            starsMaxRemote = category.starsMaxRemote,
-                            picture = category.picture,
-                            ratingRemote = category.ratingRemote,
-                            ratingLocal = category.ratingLocal,
-                            isShowArchive = category.isShowArchive,
-                            isShowDownload = category.isShowDownload
-                        )
-                    )
-                }
-
-                category.subcategory.forEach { subCategory ->
-                    if (subCategory.isShowDownload) {
-                        result.add(
-                            FlattenedQuizData(
-                                id = subCategory.id,
-                                name = subCategory.nameQuiz,
-                                dataUpdate = subCategory.dataUpdate,
-                                userName = subCategory.userName,
-                                starsMaxLocal = subCategory.starsMaxLocal,
-                                starsMaxRemote = subCategory.starsMaxRemote,
-                                picture = subCategory.picture,
-                                ratingRemote = subCategory.ratingRemote,
-                                ratingLocal = subCategory.ratingLocal,
-                                isShowArchive = subCategory.isShowArchive,
-                                isShowDownload = subCategory.isShowDownload
-                            )
-                        )
-                    }
-
-                    subCategory.subSubcategory.forEach { subSubCategory ->
-                        // Добавляем данные из SubsubCategoryData
-                        if (subSubCategory.isShowDownload) {
-                            result.add(
-                                FlattenedQuizData(
-                                    id = subSubCategory.id,
-                                    name = subSubCategory.nameQuiz,
-                                    dataUpdate = subSubCategory.dataUpdate,
-                                    userName = subSubCategory.userName,
-                                    starsMaxLocal = subSubCategory.starsMaxLocal,
-                                    starsMaxRemote = subSubCategory.starsMaxRemote,
-                                    picture = subSubCategory.picture,
-                                    ratingRemote = subSubCategory.ratingRemote,
-                                    ratingLocal = subSubCategory.ratingLocal,
-                                    isShowArchive = subSubCategory.isShowArchive,
-                                    isShowDownload = subSubCategory.isShowDownload
-                                )
-                            )
-                        }
-
-                        subSubCategory.quizData.forEach { quiz ->
-                            // Добавляем данные из QuizData
-                            if (quiz.isShowDownload) {
-                                result.add(
-                                    FlattenedQuizData(
-                                        id = quiz.idQuiz,
-                                        name = quiz.nameQuiz,
-                                        dataUpdate = quiz.dataUpdate,
-                                        userName = quiz.userName,
-                                        starsMaxLocal = quiz.starsMaxLocal,
-                                        starsMaxRemote = quiz.starsMaxRemote,
-                                        picture = quiz.picture,
-                                        ratingRemote = quiz.ratingRemote,
-                                        ratingLocal = quiz.ratingLocal,
-                                        isShowArchive = quiz.isShowArchive,
-                                        isShowDownload = quiz.isShowDownload
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return result
-    }
-
     fun initQuestionListByIds(event: EventQuiz, idCat: Int, idSubCat: Int) = viewModelScope.launch {
         val handler = event.let { getEventHandler(it) }
-        _listFlattenedQuizDataFlow.value = handler?.invoke(idCat, idSubCat) ?: emptyList()
+        _listStructureDataLocalFlow.value = handler?.invoke(idCat, idSubCat) ?: emptyList()
     }
 
-    private fun getEventHandler(event: EventQuiz): suspend (Int, Int) -> List<FlattenedQuizData> {
+    private fun getEventHandler(event: EventQuiz): suspend (Int, Int) -> List<StructureDataLocal> {
         return when (event) {
             EventQuiz.QUIZ_HOME -> ::handleHomeEvent
             EventQuiz.QUIZ_TOURNIRE -> ::handleTournamentEvent
@@ -216,54 +127,54 @@ class QuizActivityViewModel @Inject constructor(
         }
     }
 
-    private suspend fun handleTournamentEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+    private suspend fun handleTournamentEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
         // Логика для турниров
         return emptyList() // Замените своей реализацией
     }
-    private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+    private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
         Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
-        val flattenedList: MutableList<FlattenedQuizData> = mutableListOf()
-        val category = structureUseCase.getStructureData()?.event
-            ?.find { it.id == EventQuiz.QUIZ_HOME.id }?.category?.find { it.id == idCat }
+        val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
+        val category = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)?.childes
+            ?.find { it.id == EventQuiz.QUIZ_HOME.id }?.childes?.find { it.id == idCat }
 
         Log.d("jij", " $category")
-        nameCategory = category?.nameQuiz ?: ""
-        category?.subcategory?.forEach {
+        nameCategory = category?.nameItem ?: ""
+        category?.childes?.forEach {
             Log.d("jij", "subCatData: $it")
-            if (idSubCat == -1) flattenedList.add(it.toFlattenedQuizData())
-            else it.subSubcategory.find { it.id == idSubCat }?.quizData?.forEach {
+            if (idSubCat == -1) flattenedList.add(it)
+            else it.childes?.find { it.id == idSubCat }?.childes?.forEach {
                 Log.d("jij", "quizData: $it")
-                nameSubCategory = it.nameQuiz
-                flattenedList.add(it.toFlattenedQuizData())
+                nameSubCategory = it.nameItem
+                flattenedList.add(it)
             }
         }
         return flattenedList
     }
 
-    private suspend fun handleUserEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+    private suspend fun handleUserEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
         Log.d("jij", "handleUserEvent()")
-        val flattenedList: MutableList<FlattenedQuizData> = mutableListOf()
-        val category = structureUseCase.getStructureData()?.event
-            ?.find { it.id == EventQuiz.QUIZ_BY_USER.id }?.category?.find {
+        val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
+        val category = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)?.childes
+            ?.find { it.id == EventQuiz.QUIZ_BY_USER.id }?.childes?.find {
                 Log.d("jij", "it.id: ${it.id}")
                 Log.d("jij", "idCat: ${idCat}")
 
                 it.id == idCat }
 
-        category?.subcategory?.forEach {
-            Log.d("jij", "subCatData.name: ${it.nameQuiz}")
-            it.subSubcategory.forEach {subsubCat ->
-                Log.d("jij", "subsubCat.name: ${subsubCat.nameQuiz}")
-                subsubCat.quizData.forEach {
-                    Log.d("jij", "quizData.name: ${it.nameQuiz}")
-                    flattenedList.add(it.toFlattenedQuizData())
+        category?.childes?.forEach {
+            Log.d("jij", "subCatData.name: ${it.nameItem}")
+            it.childes?.forEach {subsubCat ->
+                Log.d("jij", "subsubCat.name: ${subsubCat.nameItem}")
+                subsubCat.childes?.forEach {
+                    Log.d("jij", "quizData.name: ${it.nameItem}")
+                    flattenedList.add(it)
                 }
             }
         }
         return flattenedList
     }
 
-    private suspend fun handleArenaEvent(idCat: Int, idSubCat: Int): List<FlattenedQuizData> {
+    private suspend fun handleArenaEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
         // Логика для арены
         return emptyList() // Замените своей реализацией
     }
@@ -271,7 +182,7 @@ class QuizActivityViewModel @Inject constructor(
     private suspend fun handleDefaultEvent(
         idCategory: Int,
         idSubCategory: Int
-    ): List<FlattenedQuizData> {
+    ): List<StructureDataLocal> {
         // Универсальный обработчик для необработанных событий
         println("Обработка по умолчанию для категории $idCategory и подкатегории $idSubCategory")
         return emptyList()

@@ -21,20 +21,43 @@ interface QuestionDetailDao {
     @Query("SELECT * FROM question_detail_entity WHERE idQuiz LIKE :nameQuiz")
     fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity>
 
-    @Query("SELECT * FROM question_detail_entity WHERE idQuiz = :id")
-    suspend fun getQuestionDetailByIdQuiz(id: Int): List<QuestionDetailEntity>
-
-    @Query("DELETE FROM question_detail_entity WHERE idQuiz IS :id")
-    fun deleteQuestionByIdQuiz(id: Int)
+    @Query("""
+    SELECT * FROM question_detail_entity 
+    WHERE idEvent = :idEvent 
+      AND idCategory = :idCategory 
+      AND idSubCategory = :idSubCategory 
+      AND idSubsubCategory = :idSubsubCategory 
+      AND idQuiz = :idQuiz
+""")
+    suspend fun getQuestionDetailByPath(
+        idEvent: Int,
+        idCategory: Int,
+        idSubCategory: Int,
+        idSubsubCategory: Int,
+        idQuiz: Int
+    ): List<QuestionDetailEntity>
 
     @Query("SELECT * FROM question_detail_entity WHERE id IS :id")
     fun getQuestionDetail(id: Int): QuestionDetailEntity
 
-    @Query("DELETE FROM question_detail_entity WHERE idQuiz IS :id")
-    fun deleteQuestionDetailByIdQuiz(id: Int)
+    @Query("""
+    DELETE FROM question_detail_entity 
+    WHERE idEvent = :idEvent 
+      AND idCategory = :idCategory 
+      AND idSubCategory = :idSubCategory 
+      AND idSubsubCategory = :idSubsubCategory 
+      AND idQuiz = :idQuiz
+""")
+    fun deleteQuestionDetailByPath(
+        idEvent: Int,
+        idCategory: Int,
+        idSubCategory: Int,
+        idSubsubCategory: Int,
+        idQuiz: Int
+    )
 
     @Query("DELETE FROM question_detail_entity WHERE idQuiz = :id AND synth = :synth")
-    fun deleteQuestionDetailByIdQuizAndSynth(id: Int, synth: Boolean = true)
+    fun deleteQuestionDetailByPathAndSynth(id: Int, synth: Boolean = true)
 
     @Query("DELETE FROM question_detail_entity WHERE id IS :id")
     fun deleteQuestionDetail(id: Int)

@@ -10,16 +10,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.BITMAP_LOAD_MAX_HEIGHT
 import com.tpov.common.BITMAP_LOAD_MAX_WIDTH
-import com.tpov.common.data.model.local.CategoryData
+import com.tpov.common.EventQuiz
 import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.local.StructureData
-import com.tpov.common.data.model.local.SubCategoryData
-import com.tpov.common.data.model.local.SubsubCategoryData
+import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.QuizUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject
 import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.BitmapUtil
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
@@ -33,10 +30,10 @@ import javax.inject.Inject
 
 class CreateQuizViewModel @Inject constructor(
     val structureUseCase: StructureUseCase,
-    internal val quizUseCase: QuizUseCase,
     internal val questionUseCase: QuestionUseCase,
 ) : ViewModel() {
 
+    val eventId: EventQuiz? = null
     var idQuiz = -1
     var lvlTranslate = 0
     var counter = 0
@@ -44,19 +41,27 @@ class CreateQuizViewModel @Inject constructor(
     var questionsEntity: ArrayList<QuestionEntity> = arrayListOf()
     var questionsShortEntity: ArrayList<QuestionShortEntity> = arrayListOf()
 
-    var quizEntity: QuizEntity? = null
+    lateinit var pathStructure: PathStructure
 
     var category: String = ""
     var subCategory: String = ""
     var subsubCategory: String = ""
+
+    var categoryStructure: StructureDataLocal = StructureDataLocal()
+    var subCategoryStructure: StructureDataLocal = StructureDataLocal()
+    var subsubCategoryStructure: StructureDataLocal = StructureDataLocal()
+
+    var quizEntity: StructureDataLocal? = null
+    var oldPathStructure: PathStructure? = null
+    var newPathStructure: PathStructure? = null
 
     var isInitialSetupCategorySpinner1 = true
     var isInitialSetupCategorySpinner2 = true
     var isInitialSetupCategorySpinner3 = true
     var idGroup = 0
 
-    val structureDataFlow: StateFlow<StructureData?> get() = _structureDataFlow
-    private var _structureDataFlow = MutableStateFlow<StructureData?>(null)
+    val structureDataFlow: StateFlow<StructureDataLocal?> get() = _structureDataFlow
+    private var _structureDataFlow = MutableStateFlow<StructureDataLocal?>(null)
 
     fun getQuestionListShortEntity(
         questionList: List<QuestionEntity>,
@@ -146,12 +151,6 @@ class CreateQuizViewModel @Inject constructor(
         return if (commonLanguage) firstLanguage else ""
     }
 
-    fun getNewCategory() = if (!isCreateNewCategory) Triple(
-        quizEntity?.idCategory ?: 0,
-        quizEntity?.idSubcategory ?: 0,
-        quizEntity?.idSubsubcategory ?: 0
-    ) else Triple(0, 0, 0)
-
     fun getUserLanguage(): String {
         return Locale.getDefault().language
     }
@@ -174,7 +173,7 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun initStructureData() = viewModelScope.launch(Dispatchers.IO) {
-        _structureDataFlow.value = structureUseCase.getStructureData()
+        _structureDataFlow.value = structureUseCase.getStructureData(eventId?.id!!)
     }
 
     fun getAllQuestionsAndLanguagesWithUI(llQuestions: LinearLayout): List<Pair<String, String>> {
@@ -205,20 +204,6 @@ class CreateQuizViewModel @Inject constructor(
 
     fun determineLanguage(textBeforeSpace: String): String {
         return getUserLanguage()
-    }
-
-
-    internal suspend fun getNewIdLocalQuiz(): Int {
-        val quizzes = quizUseCase.getQuizzes()
-        val usedIds = quizzes?.map { it.id }?.toSet()
-
-        for (i in 1..100) {
-            if (i !in usedIds!!) {
-                return i
-            }
-        }
-
-        throw IllegalStateException("Нет свободных ID до 100")
     }
 
     fun getAnswersWithUI(
@@ -265,59 +250,16 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun getUserName() = SettingConfigObject.settingsConfig.name
-    fun createNewCategory(event: Int, category: String, subCategory: String, subsubCategory: String) = viewModelScope.launch(Dispatchers.IO) {
-        val currentStructure = _structureDataFlow.value ?: return@launch
 
-        // Найти событие
-        val eventItem = currentStructure.event.find { it.id == event } ?: return@launch
+    suspend fun updateStructureData(structureDataLocal: StructureDataLocal, eventId: Int) {
+        structureUseCase.updateStructureData(structureDataLocal)
+    }
 
-        // Работаем с категориями
-        val newCategories = eventItem.category.toMutableList()
-        val categoryItem = newCategories.find { it.nameQuiz == category } ?: CategoryData(
-            id = newCategories.size,
-            nameQuiz = category,
-            subcategory = emptyList()
-        ).also { newCategories.add(it) }
-
-        // Работаем с подкатегориями
-        val newSubCategories = categoryItem.subcategory.toMutableList()
-        val subCategoryItem = newSubCategories.find { it.nameQuiz == subCategory } ?: SubCategoryData(
-            id = newSubCategories.size,
-            nameQuiz = subCategory,
-            subSubcategory = emptyList()
-        ).also { newSubCategories.add(it) }
-
-        // Работаем с под-подкатегориями
-        val newSubSubCategories = subCategoryItem.subSubcategory.toMutableList()
-        if (newSubSubCategories.none { it.nameQuiz == subsubCategory }) {
-            newSubSubCategories.add(SubsubCategoryData(
-                id = newSubSubCategories.size,
-                nameQuiz = subsubCategory
-            ))
-        }
-
-        // Собираем обновленную структуру
-        val updatedEvent = eventItem.copy(
-            category = newCategories.map { cat ->
-                if (cat.nameQuiz == category) {
-                    cat.copy(
-                        subcategory = newSubCategories.map { subCat ->
-                            if (subCat.nameQuiz == subCategory) {
-                                subCat.copy(subSubcategory = newSubSubCategories)
-                            } else subCat
-                        }
-                    )
-                } else cat
-            }
+    fun initQuestions(pathStructure: PathStructure) = viewModelScope.launch {
+        questionsEntity = questionUseCase.getQuestionByPath(pathStructure)
+        questionsShortEntity = getQuestionListShortEntity(
+            questionsEntity,
+            getUserLanguage()
         )
-
-        // Обновляем состояние
-        _structureDataFlow.value = currentStructure.copy(
-            event = currentStructure.event.map {
-                if (it.id == event) updatedEvent else it
-            }
-        )
-
-        structureUseCase.saveStructureData(_structureDataFlow.value!!)
     }
 }

@@ -14,11 +14,11 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
-import com.tpov.common.data.model.local.CategoryData
+import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.schoolquiz.R
 import java.io.File
 
-class MainAdapter(private val items: List<CategoryData>,
+class MainAdapter(private val items: List<StructureDataLocal>,
                   private val listener: OnItemClickListener) : RecyclerView.Adapter<MainAdapter.MainViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MainViewHolder {
@@ -29,7 +29,7 @@ class MainAdapter(private val items: List<CategoryData>,
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {
         holder.bind(items[position])
         holder.itemView.setOnClickListener {
-            listener.onItemClick(items[position])
+            listener.onItemClick(items[position].id!!)
         }
     }
 
@@ -40,8 +40,8 @@ class MainAdapter(private val items: List<CategoryData>,
         private val textView: TextView = itemView.findViewById(R.id.tv_category_title)
         private val ratingBar: RatingBar = itemView.findViewById(R.id.rb_category_title)
 
-        fun bind(category: CategoryData) {
-            textView.text = category.nameQuiz
+        fun bind(category: StructureDataLocal) {
+            textView.text = category.nameItem
             ratingBar.rating = category.ratingLocal.toFloat() / category.starsMaxLocal
 
             category.picture?.let { picturePath ->
@@ -94,5 +94,5 @@ class MainAdapter(private val items: List<CategoryData>,
 }
 
 interface OnItemClickListener {
-    fun onItemClick(category: CategoryData)
+    fun onItemClick(category: Int)
 }

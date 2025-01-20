@@ -27,12 +27,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.tpov.common.EventQuiz
 import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.QuizEntity
-import com.tpov.common.data.model.local.StructureCategoryDataEntity
-import com.tpov.common.data.model.local.StructureData
-import com.tpov.common.presentation.utils.DateUtil
+import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.MainApp
@@ -68,27 +65,21 @@ open class CreateQuizActivity : AppCompatActivity() {
         binding = ActivityCreateQuizBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Сначала инициализируем viewModel
         viewModel = ViewModelProvider(this, viewModelFactory)[CreateQuizViewModel::class.java]
 
         regime = intent.getIntExtra(REGIME, regime)
-        Log.d("sdfesfes" ,"regime: $regime")
-        // Затем вызываем handler().initData()
         handler.initData()
-        viewModel.quizEntity = intent.getParcelableExtra(ARG_QUIZ)
-        viewModel.questionsEntity =
-            intent.getParcelableArrayListExtra(ARG_QUESTION) ?: arrayListOf()
-        viewModel.questionsShortEntity =
-            viewModel.getQuestionListShortEntity(
-                viewModel.questionsEntity,
-                viewModel.getUserLanguage()
-            )
+
+        val pathStructure = intent.getParcelableExtra<PathStructure>(ARG_PATH_STRUCTURE)
+        viewModel.pathStructure.idQuiz = pathStructure?.idQuiz
+            ?: throw IllegalArgumentException("ARG_QUIZ is missing or invalid")
+        viewModel.initQuestions(pathStructure)
+
 
         handler.initViews()
         initSetOnClickListeners()
         initObservers()
     }
-
 
     private fun initObservers() {
         lifecycleScope.launch {
@@ -157,7 +148,7 @@ open class CreateQuizActivity : AppCompatActivity() {
         bSave.setOnClickListener {
             getThisQuestionWithUI()
             getThisQuizWithUI()
-            getStructureCategoryWithUI(viewModel.quizEntity?.event ?: 1)
+            setStructureCategoryWithUI()
             saveQuiz()
         }
         bCencel.setOnClickListener {
@@ -182,8 +173,7 @@ open class CreateQuizActivity : AppCompatActivity() {
                 isFullscreen = false
                 showQuizUI()
                 showSystemUI()
-            }
-            else {
+            } else {
                 isFullscreen = true
                 hideQuizUI()
                 hideSystemUI()
@@ -263,31 +253,26 @@ open class CreateQuizActivity : AppCompatActivity() {
 
     private fun showSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
-        WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+        WindowInsetsControllerCompat(
+            window,
+            window.decorView
+        ).show(WindowInsetsCompat.Type.systemBars())
     }
 
-    private fun getThisQuizWithUI(): QuizEntity? = with(binding) {
+    private fun getThisQuizWithUI() = with(binding) {
         val pathPicture = NamesUtils().getPathPicture()
-        viewModel.quizEntity = (viewModel.quizEntity ?: QuizEntity()).copy(
-            idCategory = viewModel.getNewCategory().first,
-            idSubcategory = viewModel.getNewCategory().second,
-            idSubsubcategory = viewModel.getNewCategory().third,
-            nameQuiz = tvQuizName.text.toString(),
-            userName = viewModel.getUserName(),
-            dataUpdate = DateUtil().getDateQuiz(),
-            numQ = viewModel.questionsShortEntity.filter { !it.hardQuestion }.size,
-            numHQ = viewModel.questionsShortEntity.filter { it.hardQuestion }.size,
-            versionQuiz = viewModel.quizEntity?.versionQuiz?.plus(1) ?: QuizEntity().versionQuiz,
-            picture = pathPicture,
-            languages = viewModel.getLanguageQuizByQuestions(),
+        viewModel.quizEntity = StructureDataLocal().create(
+            tvQuizName.text.toString(),
+            viewModel.questionsShortEntity.filter { !it.hardQuestion }.size,
+            viewModel.questionsShortEntity.filter { it.hardQuestion }.size,
+            viewModel.getLanguageQuizByQuestions(),
+            pathPicture
         )
+
         viewModel.scaledANDSaveImage(imvQuiz, pathPicture)
-        return viewModel.quizEntity
     }
 
-    private var structureCategoryDataEntity = StructureCategoryDataEntity()
-
-    private fun getStructureCategoryWithUI(newEvent: Int) {
+    private fun setStructureCategoryWithUI() {
         val nameCategory = NamesUtils().getPathPicture()
         val nameSubCategory = NamesUtils().getPathPicture()
         val nameSubsubCategory = NamesUtils().getPathPicture()
@@ -296,15 +281,28 @@ open class CreateQuizActivity : AppCompatActivity() {
         viewModel.scaledANDSaveImage(binding.imvSubcategory, nameSubCategory)
         viewModel.scaledANDSaveImage(binding.imvSubsubcategory, nameSubsubCategory)
 
-        structureCategoryDataEntity = StructureCategoryDataEntity().initCreateQuizActivity(
-            viewModel.quizEntity!!,
-            getCategoriesWithLayout(),
-            newEvent,
-            nameCategory,
-            nameSubCategory,
-            nameSubsubCategory,
-            binding.tvQuizName.text.toString()
+        viewModel.categoryStructure = StructureDataLocal().create(
+            getCategoriesWithLayout().first,
+            0,
+            0,
+            viewModel.getLanguageQuizByQuestions(),
+            nameCategory
         )
+        viewModel.subCategoryStructure = StructureDataLocal().create(
+            getCategoriesWithLayout().second,
+            0,
+            0,
+            viewModel.getLanguageQuizByQuestions(),
+            nameSubCategory
+        )
+        viewModel.subsubCategoryStructure = StructureDataLocal().create(
+            getCategoriesWithLayout().third,
+            0,
+            0,
+            viewModel.getLanguageQuizByQuestions(),
+            nameSubsubCategory
+        )
+
     }
 
     private fun getCategoriesWithLayout() = Triple(
@@ -351,7 +349,7 @@ open class CreateQuizActivity : AppCompatActivity() {
     }
 
     internal fun setupUiQuiz() = with(binding) {
-        tvQuizName.setText(viewModel.quizEntity?.nameQuiz)
+        tvQuizName.setText(viewModel.quizEntity?.nameItem)
 
         val imagePath = viewModel.quizEntity?.picture
         if (!imagePath.isNullOrEmpty()) {
@@ -365,60 +363,53 @@ open class CreateQuizActivity : AppCompatActivity() {
     private fun fulledDataSpinnersCategory(
         init: Boolean,
         idTree: Int,
-        structureData: StructureData?
+        structureDataLocal: StructureDataLocal?
     ) {
         lifecycleScope.launch(Dispatchers.Main) {
 
-            Log.d("dfgdfgdf", "structureData: $structureData")
+            Log.d("dfgdfgdf", "structureData: $structureDataLocal")
             categories = mutableListOf("Создать новую категорию")
-            structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                ?.forEach {
-                    it.category.forEach { cat ->
-                        categories.add(cat.nameQuiz)
-                    }
-                }
+            structureDataLocal?.childes?.forEach { cat ->
+                categories.add(cat.nameItem)
+            }
 
             when (idTree) {
                 1 -> {
                     subcategories = mutableListOf("Создать новую подкатегорию")
-                    structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                        ?.forEach {
-                            if (init) viewModel.category = it.category.last().nameQuiz
-                            it?.category?.filter { it.nameQuiz == viewModel.category }
-                                ?.getOrNull(0)?.subcategory?.let {
+                            if (init) viewModel.category = structureDataLocal?.childes?.last()?.nameItem!!
+                            structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
+                                ?.getOrNull(0)?.childes?.let {
                                     it.forEach { cat ->
-                                        subcategories.add(cat.nameQuiz)
+                                        subcategories.add(cat.nameItem)
                                     }
                                 }
-                        }
+
                 }
 
                 2 -> {
                     subSubcategories = mutableListOf("Создать новую под-субкатегорию")
-                    structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                        ?.forEach {
+
                             if (init) viewModel.subCategory =
-                                it.category?.filter { it.nameQuiz == viewModel.category }
-                                    ?.getOrNull(0)?.subcategory?.last()?.nameQuiz ?: ""
-                            it.category?.filter { it.nameQuiz == viewModel.category }
-                                ?.getOrNull(0)?.subcategory?.filter { it.nameQuiz == viewModel.subCategory }
-                                ?.getOrNull(0)?.subSubcategory?.let { subSubcatList ->
+                                structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
+                                    ?.getOrNull(0)?.childes?.last()?.nameItem ?: ""
+                            structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
+                                ?.getOrNull(0)?.childes?.filter { it.nameItem == viewModel.subCategory }
+                                ?.getOrNull(0)?.childes?.let { subSubcatList ->
                                     subSubcatList.forEach { subsubCat ->
-                                        subSubcategories.add(subsubCat.nameQuiz)
+                                        subSubcategories.add(subsubCat.nameItem)
                                     }
                                 }
-                        }
+
                 }
 
                 3 -> {
-                    structureData?.event?.filter { it.id == EventQuiz.QUIZ_HOME.id || it.id == EventQuiz.QUIZ_BY_USER.id }
-                        ?.forEach {
-                            if (init) viewModel.subsubCategory =
-                                it.category?.filter { it.nameQuiz == viewModel.category }
-                                    ?.getOrNull(0)?.subcategory?.filter { it.nameQuiz == viewModel.subsubCategory }
-                                    ?.getOrNull(0)?.subSubcategory?.last()?.nameQuiz ?: ""
 
-                        }
+                            if (init) viewModel.subsubCategory =
+                                structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
+                                    ?.getOrNull(0)?.childes?.filter { it.nameItem == viewModel.subsubCategory }
+                                    ?.getOrNull(0)?.childes?.last()?.nameItem ?: ""
+
+
                 }
             }
 
@@ -487,7 +478,7 @@ open class CreateQuizActivity : AppCompatActivity() {
         }
     }
 
-    private fun setCategorySpinnerListeners(structureData: StructureData?) {
+    private fun setCategorySpinnerListeners(structureData: StructureDataLocal?) {
         Log.d("dfgdfgdf", "setCategorySpinnerListeners()")
         binding.spCategory.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
@@ -722,7 +713,11 @@ open class CreateQuizActivity : AppCompatActivity() {
                             answer.third,
                             answer.second,
                             hardQuestionThis,
-                            viewModel.idQuiz,
+                            viewModel.pathStructure.idEvent,
+                            viewModel.pathStructure.idCategory,
+                            viewModel.pathStructure.idSubCategory,
+                            viewModel.pathStructure.idSubsubCategory,
+                            viewModel.pathStructure.idQuiz,
                             newQuestion.second,
                             viewModel.lvlTranslate
                         )
@@ -880,17 +875,12 @@ open class CreateQuizActivity : AppCompatActivity() {
 
 
     private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
-        viewModel.questionsEntity.let { questionsIt ->
-            viewModel.quizEntity?.let { quizIt ->
-                handler.saveData(structureCategoryDataEntity, quizIt, questionsIt)
-                finish()
-            }
-        }
+        handler.saveData()
+        finish()
     }
 
     companion object {
-        private const val ARG_QUIZ = "arg_quiz"
-        private const val ARG_QUESTION = "arg_question"
+        private const val ARG_PATH_STRUCTURE = "arg_path_structure"
         private const val REGIME = "arg_regime"
 
         const val REGIME_CREATE_QUIZ = 1
@@ -901,15 +891,13 @@ open class CreateQuizActivity : AppCompatActivity() {
 
         fun newInstance(
             context: Context,
-            quiz: QuizEntity? = null,
-            questions: List<QuestionEntity>? = null,
+            pathStructure: PathStructure,
             regime: Int
         ): Intent {
-            Log.d("sdfesfes" ,"setRegime: $regime")
+            Log.d("sdfesfes", "setRegime: $regime")
             return Intent(context, CreateQuizActivity::class.java).apply {
-                putExtra(ARG_QUIZ, quiz)
-                putParcelableArrayListExtra(ARG_QUESTION, questions?.let { ArrayList(it) })
                 putExtra(REGIME, regime)
+                putExtra(ARG_PATH_STRUCTURE, pathStructure)
             }
         }
     }

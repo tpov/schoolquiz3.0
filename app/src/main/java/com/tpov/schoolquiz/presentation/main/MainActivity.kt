@@ -41,6 +41,7 @@ import com.tpov.common.EventQuiz
 import com.tpov.common.data.utils.TimeManager
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.NavigationProvider
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.common.presentation.utils.Values
 import com.tpov.common.presentation.utils.Values.getColorNickname
@@ -161,8 +162,6 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 }
                 return@launch
             }
-            Log.d("test", "initData()")
-            viewModel.getNewStructureDataANDQuizzes()
         }
     }
 
@@ -678,6 +677,7 @@ getDataToday()
                     startActivity(
                         CreateQuizActivity.newInstance(
                         context = this,
+                            pathStructure = PathStructure(EventQuiz.QUIZ_BY_USER.id, -1, -1, -1, -1),
                         regime = CreateQuizActivity.REGIME_CREATE_QUIZ
                     ))
 
@@ -891,12 +891,12 @@ getDataToday()
         const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
     }
 
-    override fun openQuestionActivity(idQuiz: Int, hardQuestion: Boolean) {
+    override fun openQuestionActivity(pathStructure: PathStructure, hardQuestion: Boolean) {
         val intent = QuestionActivity.newIntent(
             context = this,
-            idQuiz = idQuiz,
             hardQuestion = hardQuestion,
             languageUser = settingsConfig.languages,
+            pathStructure = pathStructure,
             life = if (hardQuestion)goldLife else life
         )
         startActivity(intent)
