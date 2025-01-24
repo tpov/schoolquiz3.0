@@ -51,8 +51,10 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
         lifecycleScope.launch {
             viewModel.structureData.collect { categoryDataList ->
-                adapter = MainAdapter(categoryDataList!!, this@MainFragment)
-                recyclerView.adapter = adapter
+                if (categoryDataList != null) {
+                    adapter = MainAdapter(categoryDataList!!, this@MainFragment)
+                    recyclerView.adapter = adapter
+                }
             }
         }
         initGetData()

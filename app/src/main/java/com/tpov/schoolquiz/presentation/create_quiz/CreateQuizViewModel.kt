@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.create_quiz
 
 import android.graphics.drawable.BitmapDrawable
+import android.util.Log
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -34,7 +35,6 @@ class CreateQuizViewModel @Inject constructor(
 ) : ViewModel() {
 
     val eventId: EventQuiz? = null
-    var idQuiz = -1
     var lvlTranslate = 0
     var counter = 0
     var isCreateNewCategory = false
@@ -55,13 +55,20 @@ class CreateQuizViewModel @Inject constructor(
     var oldPathStructure: PathStructure? = null
     var newPathStructure: PathStructure? = null
 
-    var isInitialSetupCategorySpinner1 = true
-    var isInitialSetupCategorySpinner2 = true
-    var isInitialSetupCategorySpinner3 = true
+    var isCreateCategory = false
+    var isCreateSubCategory = false
+    var isCreateSubsubCategory = false
     var idGroup = 0
 
     val structureDataFlow: StateFlow<StructureDataLocal?> get() = _structureDataFlow
     private var _structureDataFlow = MutableStateFlow<StructureDataLocal?>(null)
+    val categoryDataFlow: StateFlow<List<StructureDataLocal>?> get() = _categoryDataFlow
+    private var _categoryDataFlow = MutableStateFlow<List<StructureDataLocal>?>(null)
+
+    val subCategoryDataFlow: StateFlow<List<StructureDataLocal>?> get() = _subCategoryDataFlow
+    private var _subCategoryDataFlow = MutableStateFlow<List<StructureDataLocal>?>(null)
+    val subsubCategoryDataFlow: StateFlow<List<StructureDataLocal>?> get() = _subsubCategoryDataFlow
+    private var _subsubCategoryDataFlow = MutableStateFlow<List<StructureDataLocal>?>(null)
 
     fun getQuestionListShortEntity(
         questionList: List<QuestionEntity>,
@@ -140,6 +147,8 @@ class CreateQuizViewModel @Inject constructor(
             questionsShortEntity.add(newQuestionItem)
             questionsShortEntity.size - 1
         }
+
+        Log.d("rkfgujrdjkgjk", "viewModel.updateNewCounterAndShortList: ${questionsShortEntity}")
     }
 
     fun getLanguageQuizByQuestions(): String {
@@ -173,7 +182,65 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun initStructureData() = viewModelScope.launch(Dispatchers.IO) {
-        _structureDataFlow.value = structureUseCase.getStructureData(eventId?.id!!)
+        Log.d("rkfgujrdjkgjk", "viewModel.initStructureData before: ${questionsShortEntity}")
+        eventId?.let { event ->
+            val listHome = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)
+            val listMyQuiz = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)
+            _structureDataFlow.value =
+                StructureDataLocal(childes = mutableListOf(listMyQuiz!!, listHome!!))
+            Log.d("rkfgujrdjkgjk", "viewModel._structureDataFlow.value... : ${questionsShortEntity}")
+            initCategories(PathStructure(8,-1,-1,-1,-1))
+        } ?: run {
+            _structureDataFlow.value = StructureDataLocal()
+            initCategories(PathStructure(8,-1,-1,-1,-1))
+        }
+        Log.d("rkfgujrdjkgjk", "viewModel.initStructureData after: ${questionsShortEntity}")
+    }
+
+    fun initCategories(pathStructure: PathStructure) {
+        val structureData = _structureDataFlow.value?.childes
+
+        val newCategories = structureData?.flatMap {
+            it.childes ?: emptyList()
+        }?.toMutableList()
+
+        // Проверяем изменились ли названия категорий
+        if (!areNamesEqual(_categoryDataFlow.value, newCategories)) {
+            _categoryDataFlow.value = newCategories
+        }
+
+        structureData?.let { events ->
+            val event = events.getOrNull(pathStructure.idEvent)
+            val categories = event?.childes
+
+            val idCategory = if (pathStructure.idCategory == -1) categories?.lastIndex ?: -1
+            else pathStructure.idCategory
+
+            val newSubCategories = categories?.getOrNull(idCategory)?.childes
+
+            // Проверяем изменились ли названия подкатегорий
+            if (!areNamesEqual(_subCategoryDataFlow.value, newSubCategories)) {
+                _subCategoryDataFlow.value = newSubCategories
+            }
+
+            val idSubCategory = if (pathStructure.idSubCategory == -1) newSubCategories?.lastIndex ?: -1
+            else pathStructure.idSubCategory
+
+            val newSubSubCategories = newSubCategories?.getOrNull(idSubCategory)?.childes
+
+            // Проверяем изменились ли названия под-подкатегорий
+            if (!areNamesEqual(_subsubCategoryDataFlow.value, newSubSubCategories)) {
+                _subsubCategoryDataFlow.value = newSubSubCategories
+            }
+        }
+    }
+
+    private fun areNamesEqual(list1: List<StructureDataLocal>?, list2: List<StructureDataLocal>?): Boolean {
+        if (list1 == null && list2 == null) return true
+        if (list1 == null || list2 == null) return false
+        if (list1.size != list2.size) return false
+
+        return list1.map { it.nameItem } == list2.map { it.nameItem }
     }
 
     fun getAllQuestionsAndLanguagesWithUI(llQuestions: LinearLayout): List<Pair<String, String>> {
@@ -255,7 +322,7 @@ class CreateQuizViewModel @Inject constructor(
         structureUseCase.updateStructureData(structureDataLocal)
     }
 
-    fun initQuestions(pathStructure: PathStructure) = viewModelScope.launch {
+    fun initQuestions() = viewModelScope.launch(Dispatchers.IO) {
         questionsEntity = questionUseCase.getQuestionByPath(pathStructure)
         questionsShortEntity = getQuestionListShortEntity(
             questionsEntity,

@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.presentation.create_quiz.strategy
 
+import android.util.Log
 import com.tpov.common.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
@@ -9,10 +10,13 @@ import kotlinx.coroutines.flow.StateFlow
 class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
     override fun initViews() {
         activity.viewModel.updateNewCounterAndShortList(true)
+
+        Log.d("rkfgujrdjkgjk", "CreateHandler questionsShortEntity : ${activity.viewModel.questionsShortEntity}")
         activity.setupQuestionSpinner()
         activity.updateUiQuestion()
         activity.setupUiQuiz()
         activity.initNewTranslateViews()
+
     }
 
     override fun initData() {
@@ -35,9 +39,7 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
         updateNumQuestions(mergeStructureData)
         activity.viewModel.updateStructureData(mergeStructureData, EventQuiz.QUIZ_BY_USER.id)
         activity.viewModel.questionsEntity.forEach {
-            activity.viewModel.questionUseCase.insertQuestion(
-                it
-            )
+            activity.viewModel.questionUseCase.insertQuestion(it)
         }
     }
 

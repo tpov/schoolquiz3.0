@@ -66,34 +66,112 @@ open class CreateQuizActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         viewModel = ViewModelProvider(this, viewModelFactory)[CreateQuizViewModel::class.java]
-
         regime = intent.getIntExtra(REGIME, regime)
-        handler.initData()
+        viewModel.pathStructure = intent.getParcelableExtra<PathStructure>(ARG_PATH_STRUCTURE)!!
 
-        val pathStructure = intent.getParcelableExtra<PathStructure>(ARG_PATH_STRUCTURE)
-        viewModel.pathStructure.idQuiz = pathStructure?.idQuiz
-            ?: throw IllegalArgumentException("ARG_QUIZ is missing or invalid")
-        viewModel.initQuestions(pathStructure)
+        // Меняем порядок инициализации:
+        handler.initData()     // 1. Инициализируем базовые данные
+        handler.initViews()    // 2. Инициализируем views (здесь создается начальный вопрос)
+        viewModel.initQuestions()  // 3. Загружаем существующие вопросы, если они есть
 
-
-        handler.initViews()
+        Log.d("rkfgujrdjkgjk", "onCreate questionsShortEntity : ${viewModel.questionsShortEntity}")
         initSetOnClickListeners()
-        initObservers()
+        Log.d("rkfgujrdjkgjk", "onCreate initSetOnClickListeners : ${viewModel.questionsShortEntity}")
+        initObserversCategories()
+        Log.d("rkfgujrdjkgjk", "onCreate rkfgujrdjkgjk: ${viewModel.questionsShortEntity}")
     }
 
-    private fun initObservers() {
-        lifecycleScope.launch {
-            viewModel.structureDataFlow.collect {
-                setCategorySpinnerListeners(it)
+    private fun setupSpinner(
+        spinner: Spinner,
+        textView: TextView,
+        items: List<StructureDataLocal>?,
+        onItemSelected: (Int) -> Unit
+    ) {
+        val spinnerItems = mutableListOf("Create")
 
-                fulledDataSpinnersCategory(true, 1, it)
-                fulledDataSpinnersCategory(true, 2, it)
-                fulledDataSpinnersCategory(true, 3, it)
+        items?.let { itemList ->
+            spinnerItems.addAll(itemList.map { it.nameItem })
+        }
+
+        val adapter = ArrayAdapter(
+            this@CreateQuizActivity,
+            android.R.layout.simple_spinner_item,
+            spinnerItems
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+
+        spinner.adapter = adapter
+        spinner.setSelection(spinnerItems.size - 1)
+
+        Log.d("dawdasfesersd", "onItemSelectedListener")
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                Log.d("dawdasfesersd", "onItemSelected: $position")
+                textView.text = spinnerItems[position]
+                onItemSelected(position)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+    }
+
+    private fun initObserversCategories() {
+        lifecycleScope.launch(Dispatchers.IO) {
+
+            viewModel.categoryDataFlow.collect { categories ->
+
+                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):1 ${viewModel.questionsShortEntity}")
+                setupSpinner(binding.spCategory,binding.tvCategory, categories) {position ->
+                    if (position == 0) {
+                        binding.llCreateNewCategory.visibility = View.VISIBLE
+                        viewModel.isCreateCategory = true
+                        viewModel.initCategories(PathStructure(-1, 0, 0,0,0))
+                    } else {
+                        viewModel.isCreateCategory = false
+                        viewModel.initCategories(PathStructure(-1, position, -1,-1,-1))
+                    }
+                }
+
+                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):end ${viewModel.questionsShortEntity}")
+            }
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.subCategoryDataFlow.collect { subcategories ->
+                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):2 ${viewModel.questionsShortEntity}")
+                setupSpinner(binding.spSubCategory,binding.tvSubCategory, subcategories){position ->
+                    if (position == 0) {
+                        binding.llCreateNewCategory.visibility = View.VISIBLE
+                        viewModel.isCreateSubCategory = true
+                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, 0,0,0))
+                    } else {
+                        viewModel.isCreateSubCategory = false
+                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, position,-1,-1))
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewModel.subsubCategoryDataFlow.collect { subsubcategories ->
+                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):3 ${viewModel.questionsShortEntity}")
+                setupSpinner(binding.spSubsubCategory, binding.tvSubsubCategory, subsubcategories){position ->
+                    if (position == 0) {
+                        binding.llCreateNewCategory.visibility = View.VISIBLE
+                        viewModel.isCreateSubsubCategory = true
+                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, viewModel.pathStructure.idSubCategory,0,0))
+                    } else {
+                        viewModel.isCreateSubsubCategory = false
+                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, viewModel.pathStructure.idSubCategory,position,-1))
+                    }
+                }
             }
         }
     }
 
     internal fun setupQuestionSpinner() = with(binding) {
+        Log.d("rkfgujrdjkgjk", "setupQuestionSpinner ${viewModel.questionsShortEntity}")
         updateQuestionsAdapter(spNumQuestion)
 
         spNumQuestion.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -146,9 +224,13 @@ open class CreateQuizActivity : AppCompatActivity() {
     private fun initSetOnClickListeners() = with(binding) {
 
         bSave.setOnClickListener {
+            Log.d("rkfgujrdjkgjk", " bSave.setOnClickListener : ${viewModel.questionsShortEntity}")
             getThisQuestionWithUI()
+            Log.d("rkfgujrdjkgjk", "getThisQuestionWithUI: ${viewModel.questionsShortEntity}")
             getThisQuizWithUI()
+            Log.d("rkfgujrdjkgjk", "getThisQuizWithUI: ${viewModel.questionsShortEntity}")
             setStructureCategoryWithUI()
+            Log.d("rkfgujrdjkgjk", "setStructureCategoryWithUI: ${viewModel.questionsShortEntity}")
             saveQuiz()
         }
         bCencel.setOnClickListener {
@@ -357,217 +439,6 @@ open class CreateQuizActivity : AppCompatActivity() {
         }
     }
 
-    var categories = mutableListOf("Создать новую категорию")
-    var subcategories = mutableListOf("Создать новую подкатегорию")
-    var subSubcategories = mutableListOf("Создать новую под-субкатегорию")
-    private fun fulledDataSpinnersCategory(
-        init: Boolean,
-        idTree: Int,
-        structureDataLocal: StructureDataLocal?
-    ) {
-        lifecycleScope.launch(Dispatchers.Main) {
-
-            Log.d("dfgdfgdf", "structureData: $structureDataLocal")
-            categories = mutableListOf("Создать новую категорию")
-            structureDataLocal?.childes?.forEach { cat ->
-                categories.add(cat.nameItem)
-            }
-
-            when (idTree) {
-                1 -> {
-                    subcategories = mutableListOf("Создать новую подкатегорию")
-                            if (init) viewModel.category = structureDataLocal?.childes?.last()?.nameItem!!
-                            structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
-                                ?.getOrNull(0)?.childes?.let {
-                                    it.forEach { cat ->
-                                        subcategories.add(cat.nameItem)
-                                    }
-                                }
-
-                }
-
-                2 -> {
-                    subSubcategories = mutableListOf("Создать новую под-субкатегорию")
-
-                            if (init) viewModel.subCategory =
-                                structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
-                                    ?.getOrNull(0)?.childes?.last()?.nameItem ?: ""
-                            structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
-                                ?.getOrNull(0)?.childes?.filter { it.nameItem == viewModel.subCategory }
-                                ?.getOrNull(0)?.childes?.let { subSubcatList ->
-                                    subSubcatList.forEach { subsubCat ->
-                                        subSubcategories.add(subsubCat.nameItem)
-                                    }
-                                }
-
-                }
-
-                3 -> {
-
-                            if (init) viewModel.subsubCategory =
-                                structureDataLocal?.childes?.filter { it.nameItem == viewModel.category }
-                                    ?.getOrNull(0)?.childes?.filter { it.nameItem == viewModel.subsubCategory }
-                                    ?.getOrNull(0)?.childes?.last()?.nameItem ?: ""
-
-
-                }
-            }
-
-            when (idTree) {
-                1 -> {
-                    viewModel.isInitialSetupCategorySpinner1 = true
-                    val position: Int = if (init) categories.size - 1
-                    else categories.indexOf(viewModel.category).takeIf { it >= 0 }
-                        ?: (categories.size - 1)
-
-                    val categoryAdapter =
-                        ArrayAdapter(
-                            this@CreateQuizActivity,
-                            android.R.layout.simple_spinner_item,
-                            categories
-                        )
-                    categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-
-                    binding.spCategory.adapter = categoryAdapter
-                    binding.tvCategory.setText(viewModel.category)
-                    binding.spCategory.setSelection(position)
-
-                }
-
-                2 -> {
-                    viewModel.isInitialSetupCategorySpinner2 = true
-                    val position: Int = if (init) subcategories.size - 1
-                    else subcategories.indexOf(viewModel.subCategory).takeIf { it >= 0 }
-                        ?: (subcategories.size - 1)
-
-
-                    val subCategoryAdapter =
-                        ArrayAdapter(
-                            this@CreateQuizActivity,
-                            android.R.layout.simple_spinner_item,
-                            subcategories
-                        )
-                    subCategoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    binding.spSubCategory.adapter = subCategoryAdapter
-
-                    binding.tvSubCategory.setText(viewModel.subCategory)
-                    binding.spSubCategory.setSelection(position)
-                    Log.d("dfgdfgdf", "position: $position")
-                }
-
-                3 -> {
-                    viewModel.isInitialSetupCategorySpinner3 = true
-                    val position: Int = if (init) subSubcategories.size - 1
-                    else subSubcategories.indexOf(viewModel.subsubCategory).takeIf { it >= 0 }
-                        ?: (subSubcategories.size - 1)
-
-                    val subSubCategoryAdapter =
-                        ArrayAdapter(
-                            this@CreateQuizActivity,
-                            android.R.layout.simple_spinner_item,
-                            subSubcategories
-                        )
-                    subSubCategoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    binding.spSubsubCategory.adapter = subSubCategoryAdapter
-
-                    binding.tvSubsubCategory.setText(viewModel.subsubCategory)
-                    binding.spSubsubCategory.setSelection(position)
-                    Log.d("dfgdfgdf", "position: $position")
-                }
-            }
-        }
-    }
-
-    private fun setCategorySpinnerListeners(structureData: StructureDataLocal?) {
-        Log.d("dfgdfgdf", "setCategorySpinnerListeners()")
-        binding.spCategory.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    Log.d("dfgdfgdf", "onItemSelectedListener")
-                    if (viewModel.isInitialSetupCategorySpinner1) {
-
-                        viewModel.isInitialSetupCategorySpinner1 = false
-                        return
-                    } else {
-                        val selectedCategory = parent.getItemAtPosition(position) as String
-                        if (position == 0) {
-                            showCreateNewCategory()
-                        } else {
-                            (view as? TextView)?.setTextColor(Color.GREEN)
-                            viewModel.category = selectedCategory
-                            fulledDataSpinnersCategory(false, 1, structureData)
-                            fulledDataSpinnersCategory(true, 2, structureData)
-                            fulledDataSpinnersCategory(true, 3, structureData)
-                        }
-                    }
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>) {
-                }
-            }
-
-        binding.spSubCategory.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    if (viewModel.isInitialSetupCategorySpinner2) {
-                        viewModel.isInitialSetupCategorySpinner2 = false
-                        return
-                    } else {
-                        val selectedSubCategory = parent.getItemAtPosition(position) as String
-                        if (position == 0) {
-                            showCreateNewCategory()
-                        } else {
-                            (view as? TextView)?.setTextColor(Color.GREEN)
-                            viewModel.subCategory = selectedSubCategory
-                            fulledDataSpinnersCategory(false, 2, structureData)
-                            fulledDataSpinnersCategory(true, 3, structureData)
-                        }
-                    }
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>) {}
-            }
-
-        binding.spSubsubCategory.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    if (viewModel.isInitialSetupCategorySpinner3) {
-                        viewModel.isInitialSetupCategorySpinner3 = false
-                        return
-                    } else {
-                        val selectedSubSubCategory =
-                            parent.getItemAtPosition(position) as String
-
-                        if (position == 0) {
-                            showCreateNewCategory()
-                        } else {
-                            (view as? TextView)?.setTextColor(Color.GREEN)
-                            viewModel.subsubCategory = selectedSubSubCategory
-                            fulledDataSpinnersCategory(false, 3, structureData)
-                        }
-                    }
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>) {}
-            }
-
-    }
-
     private fun showCreateNewCategory() {
         binding.llCreateNewCategory.visibility = View.VISIBLE
         filledTVCategory()
@@ -664,6 +535,9 @@ open class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun getThisQuestionWithUI() {
+        Log.d("rkfgujrdjkgjk", "questionsShortEntity: ${viewModel.questionsShortEntity}")
+        Log.d("rkfgujrdjkgjk", "counter: ${viewModel.counter}")
+        Log.d("rkfgujrdjkgjk", "questionsShortEntity[counter]: ${viewModel.questionsShortEntity[viewModel.counter]}")
         val numQuestionThis = viewModel.questionsShortEntity[viewModel.counter].numQuestion
         val hardQuestionThis = binding.chbTypeQuestion.isChecked
         val newQuestionEntity = viewModel.questionsEntity.filter {
@@ -759,7 +633,6 @@ open class CreateQuizActivity : AppCompatActivity() {
         chbTypeQuestion.isChecked = hardQuestionThis
 
         questionEntitiesLanguage.forEachIndexed { indexLanguage, question ->
-            viewModel.idQuiz = question.idQuiz
             addQuestionToLayout(question.nameQuestion, question.language)
 
             val answers = question.nameAnswers.split("|").toMutableList()
@@ -875,6 +748,7 @@ open class CreateQuizActivity : AppCompatActivity() {
 
 
     private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
+        Log.d("rkfgujrdjkgjk", "saveQuiz: ${viewModel.questionsShortEntity}")
         handler.saveData()
         finish()
     }
