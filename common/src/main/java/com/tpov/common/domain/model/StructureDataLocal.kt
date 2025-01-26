@@ -1,5 +1,6 @@
 package com.tpov.common.domain.model
 
+import android.util.Log
 import com.tpov.common.Core.tpovId
 import com.tpov.common.data.manager.Converters
 import com.tpov.common.data.model.local.StructureDataEntity
@@ -9,7 +10,7 @@ import com.tpov.common.presentation.utils.DateUtil
 
 data class StructureDataLocal(
     val id: Int? = null,
-    var childes: MutableList<StructureDataLocal>? = null,
+    var childes: MutableList<StructureDataLocal?>? = null,
     val nameItem: String = "",
     val dataUpdate: String = "", // for syncs
     val dataCreate: String = "",
@@ -32,6 +33,7 @@ data class StructureDataLocal(
 ) {
 
     fun create(
+        id: Int?,
         nameCategory: String,
         numQuestion: Int,
         numHardQuestion: Int,
@@ -39,7 +41,7 @@ data class StructureDataLocal(
         picture: String
     ) =
         StructureDataLocal(
-            null,
+            id,
             null,
             nameCategory,
             DateUtil().getDateQuiz(),
@@ -52,9 +54,36 @@ data class StructureDataLocal(
             0,
             lang, picture, true, false
         )
+    fun printFullStructure() {
 
-    fun toStructureDataEntity(): StructureDataEntity {
-        val childesJson = Converters().fromChildesList(childes?.map { toStructureDataEntity() })
+        val result = buildString {
+            appendLine("")
+            fun printNode(node: StructureDataLocal?, depth: Int) {
+                if (node == null) return
+
+                val indent = "    ".repeat(depth)
+                val prefix = if (depth > 0) "└── " else ""
+                appendLine("$indent$prefix${node.nameItem} (id=${node.id})")
+
+                node.childes?.filterNotNull()?.forEach { child ->
+                    printNode(child, depth + 1)
+                }
+            }
+
+            printNode(this@StructureDataLocal, 0)
+            appendLine("")
+        }
+
+        Log.d("StructureTree", "\n$result")
+    }
+
+    fun toStructureDataEntity(): StructureDataEntity? {
+        val transformedChildes = childes?.map { child ->
+            child?.toStructureDataEntity()
+        }
+
+        val childesJson = Converters().fromChildesList(transformedChildes)
+
         return StructureDataEntity(
             id = id,
             childesJson = childesJson,

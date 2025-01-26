@@ -80,8 +80,8 @@ class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateStructureData(structureDataEntity: StructureDataEntity) {
-        structureDataDao.updateStructureData(structureDataEntity)
+    override suspend fun updateStructureData(structureDataEntity: StructureDataEntity, eventId: Int) {
+        structureDataDao.insertStructureData(structureDataEntity)
     }
 
     override suspend fun pushStructureData(
@@ -188,7 +188,7 @@ class RepositoryStuctureImpl @Inject constructor(
     }
 
     override suspend fun saveStructureData(structureData: StructureDataLocal, eventId: Int) {
-        structureDataDao.insertStructureData(structureData.toStructureDataEntity())
+        structureDataDao.insertStructureData(structureData.toStructureDataEntity()!!)
     }
 
     override suspend fun insertEditStructure(structureEditData: StructureEditData) {
@@ -326,6 +326,8 @@ class RepositoryStuctureImpl @Inject constructor(
         eventId: Int,
         vararg path: Int
     ): StructureDataLocal? {
+
+        Log.d("initStructureData", "getStructureData")
         return structureDataDao.getStructureDataByPath(eventId, path.toList())
     }
 }

@@ -58,14 +58,14 @@ class StructureUseCase @Inject constructor(
                 throw e
             }
 
-            var dataLocal: MutableList<StructureDataLocal> = try {
-                repositoryStructureImpl.getStructureData(eventId, -1)?.childes!!.toMutableList()
+            var dataLocal: MutableList<StructureDataLocal?>? = try {
+                repositoryStructureImpl.getStructureData(eventId, -1)?.childes?.toMutableList()
             } catch (e: Exception) {
                 throw e
             }
 
             dataRemote?.forEachIndexed { index, categoryRemote ->
-                val categoryLocal = dataLocal.getOrNull(index)
+                val categoryLocal = dataLocal?.getOrNull(index)
                 val initialPath = PathStructure(
                     idEvent = eventId,
                     idCategory = -1,
@@ -81,10 +81,10 @@ class StructureUseCase @Inject constructor(
                 )
             }
             if (eventId == 1) {
-                dataLocal.forEach { structureDataLocal ->
+                dataLocal?.forEach { structureDataLocal ->
                     val initialPath = PathStructure(
                         idEvent = eventId,
-                        idCategory = structureDataLocal.id!!,
+                        idCategory = structureDataLocal?.id!!,
                         idSubCategory = -1,
                         idSubsubCategory = -1,
                         idQuiz = -1
@@ -108,7 +108,7 @@ class StructureUseCase @Inject constructor(
             }
             dataLocal = dataRemote.toMutableList()
             CoroutineScope(Dispatchers.IO).launch {
-                dataLocal = fetchQuizInfo(dataLocal, eventId)
+                dataLocal = fetchQuizInfo(dataLocal!!, eventId!!)
                 repositoryStructureImpl.saveStructureData(
                     StructureDataLocal().copy(childes = dataLocal),
                     eventId
@@ -119,9 +119,9 @@ class StructureUseCase @Inject constructor(
     }
 
     suspend fun fetchQuizInfo(
-        dataLocal: MutableList<StructureDataLocal>,
+        dataLocal: MutableList<StructureDataLocal?>?,
         eventId: Int
-    ): MutableList<StructureDataLocal> {
+    ): MutableList<StructureDataLocal?>? {
 
         suspend fun updateQuizInfoRecursively(
             node: StructureDataLocal,
@@ -147,10 +147,10 @@ class StructureUseCase @Inject constructor(
 
             val updatedChildren = updatedNode.childes!!.map { child ->
                 val newPath = when {
-                    path.idCategory == -1 -> path.copy(idCategory = child.id!!)
-                    path.idSubCategory == -1 -> path.copy(idSubCategory = child.id!!)
-                    path.idSubsubCategory == -1 -> path.copy(idSubsubCategory = child.id!!)
-                    else -> path.copy(idQuiz = child.id!!)
+                    path.idCategory == -1 -> path.copy(idCategory = child?.id!!)
+                    path.idSubCategory == -1 -> path.copy(idSubCategory = child?.id!!)
+                    path.idSubsubCategory == -1 -> path.copy(idSubsubCategory = child?.id!!)
+                    else -> path.copy(idQuiz = child?.id!!)
                 }
                 updateQuizInfoRecursively(child, newPath)
             }
@@ -158,7 +158,7 @@ class StructureUseCase @Inject constructor(
             return updatedNode.copy(childes = updatedChildren.toMutableList())
         }
 
-        return dataLocal.mapIndexed { index, node ->
+        return dataLocal?.mapIndexed { index, node ->
             val initialPath = PathStructure(
                 idEvent = eventId,
                 idCategory = index,
@@ -166,8 +166,8 @@ class StructureUseCase @Inject constructor(
                 idSubsubCategory = -1,
                 idQuiz = -1
             )
-            updateQuizInfoRecursively(node, initialPath)
-        }.toMutableList()
+            updateQuizInfoRecursively(node!!, initialPath)
+        }?.toMutableList()
     }
 
     fun updateRemoteDataAndPushQuestions(
@@ -241,7 +241,7 @@ class StructureUseCase @Inject constructor(
 
         if (existingNode == null) {
             localNode.childes?.forEach { parent ->
-                ensureAncestorsExistAndUpdate(parent, remoteNode)
+                ensureAncestorsExistAndUpdate(parent!!, remoteNode)
             }
             remoteNode.add(
                 StructureDataLocal(
@@ -308,15 +308,15 @@ class StructureUseCase @Inject constructor(
         }
 
         remoteNode.childes!!.forEach { childRemote ->
-            val childLocal = localNode?.childes?.getOrNull(childRemote.id!!)
+            val childLocal = localNode?.childes?.getOrNull(childRemote?.id!!)
             val newPath = currentPath.copy(
                 idCategory = currentPath.idCategory,
-                idSubCategory = if (currentPath.idSubCategory == -1) childRemote.id!! else currentPath.idSubCategory,
-                idSubsubCategory = if (currentPath.idSubCategory != -1 && currentPath.idSubsubCategory == -1) childRemote.id!! else currentPath.idSubsubCategory,
-                idQuiz = if (currentPath.idSubsubCategory != -1) childRemote.id!! else -1
+                idSubCategory = if (currentPath.idSubCategory == -1) childRemote?.id!! else currentPath.idSubCategory,
+                idSubsubCategory = if (currentPath.idSubCategory != -1 && currentPath.idSubsubCategory == -1) childRemote?.id!! else currentPath.idSubsubCategory,
+                idQuiz = if (currentPath.idSubsubCategory != -1) childRemote?.id!! else -1
             )
             val childChanged = filledChangedListAndFetchQuestion(
-                childRemote,
+                childRemote!!,
                 childLocal,
                 changedQuizzes,
                 newPath
@@ -327,8 +327,8 @@ class StructureUseCase @Inject constructor(
         return allChildrenChanged
     }
 
-    suspend fun updateStructureData(structureDataLocal: StructureDataLocal) {
-        repositoryStructureImpl.updateStructureData(structureDataLocal.toStructureDataEntity())
+    suspend fun updateStructureData(structureDataLocal: StructureDataLocal, eventId: Int) {
+        repositoryStructureImpl.updateStructureData(structureDataLocal.toStructureDataEntity()!!, eventId)
     }
 
 }

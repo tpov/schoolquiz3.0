@@ -1,12 +1,13 @@
 package com.tpov.schoolquiz.presentation.create_quiz.strategy
 
+import android.annotation.SuppressLint
 import com.tpov.common.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandler
 
 class EditHandler(private val activity: CreateQuizActivity) : RegimeHandler {
-    override fun initViews()  = with(activity) {
+    override fun initViews(): Unit = with(activity) {
         CreateHandler(activity).initViews()
 
         setupQuestionSpinner()
@@ -14,6 +15,7 @@ class EditHandler(private val activity: CreateQuizActivity) : RegimeHandler {
         setupUiQuiz()
 
         binding.bSave.text = "Update"
+        viewModel.initQuestions()
 
     }
 
@@ -50,7 +52,7 @@ private fun getEditStructureData() {
         val quizToDelete = viewModel.quizEntity ?: return
 
         val rootStructure = viewModel.structureDataFlow.value?.childes?.find {
-            it.id == EventQuiz.QUIZ_BY_USER.id
+            it?.id == EventQuiz.QUIZ_BY_USER.id
         } ?: return
 
         val updatedStructure = deleteStructureRecursively(rootStructure, quizToDelete)
@@ -58,20 +60,21 @@ private fun getEditStructureData() {
     }
 
     private fun deleteStructureRecursively(
-        currentStructure: StructureDataLocal,
-        quizToDelete: StructureDataLocal
+        currentStructure: StructureDataLocal?,
+        quizToDelete: StructureDataLocal?
     ): StructureDataLocal? {
-        if (currentStructure.nameItem == quizToDelete.nameItem) {
+        if (currentStructure?.nameItem == quizToDelete?.nameItem) {
             return null
         }
 
-        val updatedChildren = currentStructure.childes?.mapNotNull { child ->
+        val updatedChildren: MutableList<StructureDataLocal?>? = currentStructure?.childes?.mapNotNull { child ->
             deleteStructureRecursively(child, quizToDelete)
         }?.toMutableList()
 
-        return currentStructure.copy(childes = updatedChildren)
+        return currentStructure?.copy(childes = updatedChildren)
     }
 
+    @SuppressLint("SuspiciousIndentation")
     private suspend fun deleteOldQuestions() {
         val viewModel = activity.viewModel
             viewModel.questionUseCase.deleteQuestionByPath(viewModel.pathStructure)

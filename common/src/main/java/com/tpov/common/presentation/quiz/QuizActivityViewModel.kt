@@ -135,16 +135,16 @@ class QuizActivityViewModel @Inject constructor(
         Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)?.childes
-            ?.find { it.id == EventQuiz.QUIZ_HOME.id }?.childes?.find { it.id == idCat }
+            ?.find { it?.id == EventQuiz.QUIZ_HOME.id }?.childes?.find { it?.id == idCat }
 
         Log.d("jij", " $category")
         nameCategory = category?.nameItem ?: ""
         category?.childes?.forEach {
             Log.d("jij", "subCatData: $it")
-            if (idSubCat == -1) flattenedList.add(it)
-            else it.childes?.find { it.id == idSubCat }?.childes?.forEach {
+            if (idSubCat == -1) flattenedList.add(it!!)
+            else it?.childes?.find { it?.id == idSubCat }?.childes?.forEach {
                 Log.d("jij", "quizData: $it")
-                nameSubCategory = it.nameItem
+                nameSubCategory = it!!.nameItem
                 flattenedList.add(it)
             }
         }
@@ -155,19 +155,18 @@ class QuizActivityViewModel @Inject constructor(
         Log.d("jij", "handleUserEvent()")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)?.childes
-            ?.find { it.id == EventQuiz.QUIZ_BY_USER.id }?.childes?.find {
-                Log.d("jij", "it.id: ${it.id}")
+            ?.find { it?.id == EventQuiz.QUIZ_BY_USER.id }?.childes?.find {
+                Log.d("jij", "it.id: ${it?.id}")
                 Log.d("jij", "idCat: ${idCat}")
-
-                it.id == idCat }
+                it?.id == idCat }
 
         category?.childes?.forEach {
-            Log.d("jij", "subCatData.name: ${it.nameItem}")
-            it.childes?.forEach {subsubCat ->
-                Log.d("jij", "subsubCat.name: ${subsubCat.nameItem}")
-                subsubCat.childes?.forEach {
-                    Log.d("jij", "quizData.name: ${it.nameItem}")
-                    flattenedList.add(it)
+            Log.d("jij", "subCatData.name: ${it?.nameItem}")
+            it?.childes?.forEach {subsubCat ->
+                Log.d("jij", "subsubCat.name: ${subsubCat?.nameItem}")
+                subsubCat?.childes?.forEach {
+                    Log.d("jij", "quizData.name: ${it?.nameItem}")
+                    flattenedList.add(it!!)
                 }
             }
         }

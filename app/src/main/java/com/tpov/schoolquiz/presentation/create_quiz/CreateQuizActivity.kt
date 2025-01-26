@@ -72,7 +72,6 @@ open class CreateQuizActivity : AppCompatActivity() {
         // Меняем порядок инициализации:
         handler.initData()     // 1. Инициализируем базовые данные
         handler.initViews()    // 2. Инициализируем views (здесь создается начальный вопрос)
-        viewModel.initQuestions()  // 3. Загружаем существующие вопросы, если они есть
 
         Log.d("rkfgujrdjkgjk", "onCreate questionsShortEntity : ${viewModel.questionsShortEntity}")
         initSetOnClickListeners()
@@ -84,13 +83,13 @@ open class CreateQuizActivity : AppCompatActivity() {
     private fun setupSpinner(
         spinner: Spinner,
         textView: TextView,
-        items: List<StructureDataLocal>?,
+        items: List<StructureDataLocal?>?,
         onItemSelected: (Int) -> Unit
     ) {
         val spinnerItems = mutableListOf("Create")
 
         items?.let { itemList ->
-            spinnerItems.addAll(itemList.map { it.nameItem })
+            spinnerItems.addAll(itemList.map { it?.nameItem!! })
         }
 
         val adapter = ArrayAdapter(
@@ -344,6 +343,7 @@ open class CreateQuizActivity : AppCompatActivity() {
     private fun getThisQuizWithUI() = with(binding) {
         val pathPicture = NamesUtils().getPathPicture()
         viewModel.quizEntity = StructureDataLocal().create(
+            null,
             tvQuizName.text.toString(),
             viewModel.questionsShortEntity.filter { !it.hardQuestion }.size,
             viewModel.questionsShortEntity.filter { it.hardQuestion }.size,
@@ -364,6 +364,7 @@ open class CreateQuizActivity : AppCompatActivity() {
         viewModel.scaledANDSaveImage(binding.imvSubsubcategory, nameSubsubCategory)
 
         viewModel.categoryStructure = StructureDataLocal().create(
+            null,
             getCategoriesWithLayout().first,
             0,
             0,
@@ -371,6 +372,7 @@ open class CreateQuizActivity : AppCompatActivity() {
             nameCategory
         )
         viewModel.subCategoryStructure = StructureDataLocal().create(
+            null,
             getCategoriesWithLayout().second,
             0,
             0,
@@ -378,6 +380,7 @@ open class CreateQuizActivity : AppCompatActivity() {
             nameSubCategory
         )
         viewModel.subsubCategoryStructure = StructureDataLocal().create(
+            null,
             getCategoriesWithLayout().third,
             0,
             0,

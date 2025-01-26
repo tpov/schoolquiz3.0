@@ -62,47 +62,54 @@ class CreateQuizViewModel @Inject constructor(
 
     val structureDataFlow: StateFlow<StructureDataLocal?> get() = _structureDataFlow
     private var _structureDataFlow = MutableStateFlow<StructureDataLocal?>(null)
-    val categoryDataFlow: StateFlow<List<StructureDataLocal>?> get() = _categoryDataFlow
-    private var _categoryDataFlow = MutableStateFlow<List<StructureDataLocal>?>(null)
+    val categoryDataFlow: StateFlow<List<StructureDataLocal?>?> get() = _categoryDataFlow
+    private var _categoryDataFlow = MutableStateFlow<List<StructureDataLocal?>?>(null)
 
-    val subCategoryDataFlow: StateFlow<List<StructureDataLocal>?> get() = _subCategoryDataFlow
-    private var _subCategoryDataFlow = MutableStateFlow<List<StructureDataLocal>?>(null)
-    val subsubCategoryDataFlow: StateFlow<List<StructureDataLocal>?> get() = _subsubCategoryDataFlow
-    private var _subsubCategoryDataFlow = MutableStateFlow<List<StructureDataLocal>?>(null)
+    val subCategoryDataFlow: StateFlow<List<StructureDataLocal?>?> get() = _subCategoryDataFlow
+    private var _subCategoryDataFlow = MutableStateFlow<List<StructureDataLocal?>?>(null)
+    val subsubCategoryDataFlow: StateFlow<List<StructureDataLocal?>?> get() = _subsubCategoryDataFlow
+    private var _subsubCategoryDataFlow = MutableStateFlow<List<StructureDataLocal?>?>(null)
 
     fun getQuestionListShortEntity(
         questionList: List<QuestionEntity>,
         languages: String
     ): ArrayList<QuestionShortEntity> {
+        Log.d("QuestionDebug", "Input questionList size: ${questionList.size}")
+        Log.d("QuestionDebug", "Input language: $languages")
+
         val indexedQuestions = questionList.withIndex()
+        Log.d("QuestionDebug", "Indexed questions size: ${indexedQuestions.count()}")
 
         val (hardQuestions, normalQuestions) = indexedQuestions.partition { it.value.hardQuestion }
+        Log.d("QuestionDebug", "Hard questions size: ${hardQuestions.size}")
+        Log.d("QuestionDebug", "Normal questions size: ${normalQuestions.size}")
 
-        val sortedNormalQuestions =
-            sortAndFilterQuestionsForSpinner(
-                normalQuestions,
-                languages
-            ).sortedBy { it.value.numQuestion }
+        val sortedNormalQuestions = sortAndFilterQuestionsForSpinner(normalQuestions, languages)
+            .sortedBy { it.value.numQuestion }
+        Log.d("QuestionDebug", "Sorted normal questions size: ${sortedNormalQuestions.size}")
+        Log.d("QuestionDebug", "Sorted normal questions: $sortedNormalQuestions")
 
-        val sortedHardQuestions =
-            sortAndFilterQuestionsForSpinner(
-                hardQuestions,
-                languages
-            ).sortedBy { it.value.numQuestion }
+        val sortedHardQuestions = sortAndFilterQuestionsForSpinner(hardQuestions, languages)
+            .sortedBy { it.value.numQuestion }
+        Log.d("QuestionDebug", "Sorted hard questions size: ${sortedHardQuestions.size}")
+        Log.d("QuestionDebug", "Sorted hard questions: $sortedHardQuestions")
 
         val combinedQuestions = sortedNormalQuestions + sortedHardQuestions
+        Log.d("QuestionDebug", "Combined questions size: ${combinedQuestions.size}")
 
-        val questionShortList = combinedQuestions.mapIndexed { index, indexedValue ->
-            val questionShortEntity = QuestionShortEntity(
+        return combinedQuestions.mapIndexed { index, indexedValue ->
+            QuestionShortEntity(
                 id = index,
                 numQuestion = indexedValue.value.numQuestion,
                 nameQuestion = indexedValue.value.nameQuestion,
                 hardQuestion = indexedValue.value.hardQuestion
             )
-            questionShortEntity
-        }.toCollection(ArrayList())
-        return questionShortList
+        }.toCollection(ArrayList()).also {
+            Log.d("QuestionDebug", "Final list size: ${it.size}")
+            Log.d("QuestionDebug", "Final list: $it")
+        }
     }
+
 
     fun findMissingNumber(
         isHardQuestion: Boolean,
@@ -182,33 +189,27 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun initStructureData() = viewModelScope.launch(Dispatchers.IO) {
-        Log.d("rkfgujrdjkgjk", "viewModel.initStructureData before: ${questionsShortEntity}")
-        eventId?.let { event ->
             val listHome = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)
             val listMyQuiz = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)
-            _structureDataFlow.value =
-                StructureDataLocal(childes = mutableListOf(listMyQuiz!!, listHome!!))
-            Log.d("rkfgujrdjkgjk", "viewModel._structureDataFlow.value... : ${questionsShortEntity}")
+            Log.d("initStructureData", "listHome: ${listHome}")
+            Log.d("initStructureData", "listMyQuiz: ${listMyQuiz}")
+            _structureDataFlow.value = StructureDataLocal(childes = mutableListOf(listMyQuiz, listHome))
+            Log.d("initStructureData", "_structureDataFlow.value: ${_structureDataFlow.value}")
             initCategories(PathStructure(8,-1,-1,-1,-1))
-        } ?: run {
-            _structureDataFlow.value = StructureDataLocal()
-            initCategories(PathStructure(8,-1,-1,-1,-1))
-        }
-        Log.d("rkfgujrdjkgjk", "viewModel.initStructureData after: ${questionsShortEntity}")
     }
 
     fun initCategories(pathStructure: PathStructure) {
         val structureData = _structureDataFlow.value?.childes
 
         val newCategories = structureData?.flatMap {
-            it.childes ?: emptyList()
+            it?.childes ?: emptyList()
         }?.toMutableList()
 
-        // Проверяем изменились ли названия категорий
         if (!areNamesEqual(_categoryDataFlow.value, newCategories)) {
             _categoryDataFlow.value = newCategories
         }
 
+        Log.d("initStructureData", "_categoryDataFlow.value: ${_categoryDataFlow.value}")
         structureData?.let { events ->
             val event = events.getOrNull(pathStructure.idEvent)
             val categories = event?.childes
@@ -218,35 +219,36 @@ class CreateQuizViewModel @Inject constructor(
 
             val newSubCategories = categories?.getOrNull(idCategory)?.childes
 
-            // Проверяем изменились ли названия подкатегорий
             if (!areNamesEqual(_subCategoryDataFlow.value, newSubCategories)) {
                 _subCategoryDataFlow.value = newSubCategories
             }
+            Log.d("initStructureData", "_subCategoryDataFlow.value: ${_subCategoryDataFlow.value}")
 
             val idSubCategory = if (pathStructure.idSubCategory == -1) newSubCategories?.lastIndex ?: -1
             else pathStructure.idSubCategory
 
             val newSubSubCategories = newSubCategories?.getOrNull(idSubCategory)?.childes
 
-            // Проверяем изменились ли названия под-подкатегорий
             if (!areNamesEqual(_subsubCategoryDataFlow.value, newSubSubCategories)) {
                 _subsubCategoryDataFlow.value = newSubSubCategories
             }
+            Log.d("initStructureData", "_subsubCategoryDataFlow.value: ${_subsubCategoryDataFlow.value}")
         }
     }
 
-    private fun areNamesEqual(list1: List<StructureDataLocal>?, list2: List<StructureDataLocal>?): Boolean {
+    private fun areNamesEqual(list1: List<StructureDataLocal?>?, list2: List<StructureDataLocal?>?): Boolean {
         if (list1 == null && list2 == null) return true
         if (list1 == null || list2 == null) return false
         if (list1.size != list2.size) return false
 
-        return list1.map { it.nameItem } == list2.map { it.nameItem }
+        return list1.map { it?.nameItem } == list2.map { it?.nameItem }
     }
 
     fun getAllQuestionsAndLanguagesWithUI(llQuestions: LinearLayout): List<Pair<String, String>> {
         val questionsAndLanguages = mutableListOf<Pair<String, String>>()
         val childCount = llQuestions.childCount
 
+        Log.d("rkfgujrdjkgjk", " getAllQuestionsAndLanguagesWithUI : ${questionsShortEntity}")
         for (i in 0 until childCount) {
             val questionLayout = llQuestions.getChildAt(i) as LinearLayout
 
@@ -262,6 +264,7 @@ class CreateQuizViewModel @Inject constructor(
             questionsAndLanguages.add(Pair(questionText, selectedLanguageCode))
         }
 
+        Log.d("rkfgujrdjkgjk", " getAllQuestionsAndLanguagesWithUI end : ${questionsShortEntity}")
         return questionsAndLanguages
     }
 
@@ -319,14 +322,16 @@ class CreateQuizViewModel @Inject constructor(
     fun getUserName() = SettingConfigObject.settingsConfig.name
 
     suspend fun updateStructureData(structureDataLocal: StructureDataLocal, eventId: Int) {
-        structureUseCase.updateStructureData(structureDataLocal)
+        structureUseCase.updateStructureData(structureDataLocal,eventId)
     }
 
     fun initQuestions() = viewModelScope.launch(Dispatchers.IO) {
+        Log.d("rkfgujrdjkgjk", " initQuestions : ${questionsShortEntity}")
         questionsEntity = questionUseCase.getQuestionByPath(pathStructure)
         questionsShortEntity = getQuestionListShortEntity(
             questionsEntity,
             getUserLanguage()
         )
+        Log.d("rkfgujrdjkgjk", " initQuestions end : ${questionsShortEntity}")
     }
 }

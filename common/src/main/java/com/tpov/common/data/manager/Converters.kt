@@ -7,7 +7,7 @@ import com.tpov.common.data.model.local.StructureDataEntity
 
 class Converters {
     @TypeConverter
-    fun fromChildesList(value: List<StructureDataEntity>?): String {
+    fun fromChildesList(value: List<StructureDataEntity?>?): String {
         return Gson().toJson(value)
     }
 

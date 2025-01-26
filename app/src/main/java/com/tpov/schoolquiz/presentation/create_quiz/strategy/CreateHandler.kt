@@ -23,11 +23,8 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
         activity.viewModel.initStructureData()
     }
 
-    private fun updateNumQuestions(mergeStructureData: StructureDataLocal) {
-        TODO("Not yet implemented")
-    }
-
     override suspend fun saveData() {
+
         val mergeStructureData = mergeNewStructureData(
             activity.viewModel.categoryStructure,
             activity.viewModel.subCategoryStructure,
@@ -35,9 +32,12 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
             activity.viewModel.quizEntity!!,
             activity.viewModel.structureDataFlow
         )
+        mergeStructureData.childes?.forEach {
 
-        updateNumQuestions(mergeStructureData)
-        activity.viewModel.updateStructureData(mergeStructureData, EventQuiz.QUIZ_BY_USER.id)
+            Log.d("StructureTree", "it: $it")
+it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) }
+
+        }
         activity.viewModel.questionsEntity.forEach {
             activity.viewModel.questionUseCase.insertQuestion(it)
         }
@@ -51,49 +51,55 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
         structureDataFlow: StateFlow<StructureDataLocal?>
     ): StructureDataLocal {
         val eventId = EventQuiz.QUIZ_BY_USER.id
+        val currentStructure = structureDataFlow.value ?: StructureDataLocal()
+        currentStructure.printFullStructure()
 
-        val structureCategoryData = structureDataFlow.value?.childes?.find { it.id == eventId }
+        if (currentStructure.childes == null) {
+            currentStructure.childes = mutableListOf()
+        }
 
-        val updateCategoryStructureData =
-            updateStructureDataByFindName(structureCategoryData, categoryStructure)
-        val updateSubCategoryStructureData =
-            updateStructureDataByFindName(updateCategoryStructureData, subCategoryStructure)
-        val updateSubsubCategoryStructureData =
-            updateStructureDataByFindName(updateSubCategoryStructureData, subsubCategoryStructure)
-        val updateQuizEntityData =
-            updateStructureDataByFindName(updateSubsubCategoryStructureData, quizEntity)
+        val eventRoot = currentStructure.childes?.find {
+            it?.id == eventId } ?: run {
+            val newRoot = StructureDataLocal().create(id = eventId, "",0,0,"", "")
+            currentStructure.childes?.add(newRoot)
+            newRoot
+        }
+        eventRoot.findOrCreateChild(categoryStructure)
+            .findOrCreateChild(subCategoryStructure)
+            .findOrCreateChild(subsubCategoryStructure)
+            .findOrCreateChild(quizEntity)
 
-        return updateQuizEntityData ?: structureCategoryData ?: categoryStructure
+        currentStructure.printFullStructure()
+        return currentStructure
     }
 
-    private fun updateStructureDataByFindName(
-        originalCategoryData: StructureDataLocal?,
-        newCategoryData: StructureDataLocal
-    ): StructureDataLocal? {
-        if (originalCategoryData == null) {
-            return newCategoryData.copy(
-                childes = mutableListOf(),
-                id = 1
-            )
+    private fun StructureDataLocal.findOrCreateChild(
+        newChild: StructureDataLocal
+    ): StructureDataLocal {
+        if (childes == null) {
+            childes = mutableListOf()
+        }
+        Log.d("findOrCreateChild", "Current structure: $this")
+        Log.d("findOrCreateChild", "New child to add: $newChild")
+
+        newChild.printFullStructure()
+        this.printFullStructure()
+
+        val existingChild = childes?.find { it?.nameItem == newChild.nameItem }
+
+
+        if (existingChild != null) {
+            Log.d("findOrCreateChild", "Existing child found: $existingChild")
+            return existingChild
         }
 
-        if (originalCategoryData.childes == null) {
-            originalCategoryData.childes = mutableListOf()
-        }
-
-        val foundCategoryData =
-            originalCategoryData.childes?.find { it.nameItem == newCategoryData.nameItem }
-
-        return if (foundCategoryData != null) {
-            foundCategoryData
-        } else {
-            val newId = (originalCategoryData.childes?.size ?: 0) + 1
-            val newStructureCategory = newCategoryData.copy(
-                id = newId,
-                childes = mutableListOf()
-            )
-            originalCategoryData.childes?.add(newStructureCategory)
-            newStructureCategory
-        }
+        val newChildCopy = newChild.copy(
+            id = childes?.size?.plus(1) ?: 1
+        )
+        childes?.add(newChildCopy)
+        this.printFullStructure()
+        newChildCopy.printFullStructure()
+        Log.d("findOrCreateChild", "Added new child: $newChildCopy")
+        return newChildCopy
     }
 }
