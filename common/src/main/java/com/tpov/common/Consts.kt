@@ -17,8 +17,7 @@ enum class EventQuiz(val id: Int) {
     QUIZ_BY_USER(1);
 
     companion object {
-        // Метод для поиска события по `id`
-        fun fromId(id: Int): EventQuiz? = values().find { it.id == id }
+        fun fromId(id: Int): EventQuiz? = entries.find { it.id == id }
     }
 }
 

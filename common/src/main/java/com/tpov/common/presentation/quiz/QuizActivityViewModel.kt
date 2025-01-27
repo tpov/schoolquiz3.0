@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.EventQuiz
+import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.StructureUseCase
@@ -23,17 +24,19 @@ class QuizActivityViewModel @Inject constructor(
     val structureUseCase: StructureUseCase
 ) : ViewModel() {
 
-    val pathStructure: PathStructure? = null
+    var pathStructure: PathStructure? =
+        PathStructure(UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE)
     var nameCategory = ""
     var nameSubCategory = ""
 
     val listStructureDataLocalFlow: StateFlow<List<StructureDataLocal>> get() = _listStructureDataLocalFlow
-    private val _listStructureDataLocalFlow = MutableStateFlow<List<StructureDataLocal>>(emptyList())
+    private val _listStructureDataLocalFlow =
+        MutableStateFlow<List<StructureDataLocal>>(emptyList())
 
-    fun getNamePathEvent(event: EventQuiz): String {
+    fun getNamePathEvent(event: Int): String {
         return when (event) {
-            EventQuiz.QUIZ_HOME -> "Home quiz"
-            EventQuiz.QUIZ_BY_USER -> "My quiz"
+            EventQuiz.QUIZ_HOME.id -> "Home quiz"
+            EventQuiz.QUIZ_BY_USER.id -> "My quiz"
             else -> "Error quiz"
         }
     }
@@ -109,20 +112,22 @@ class QuizActivityViewModel @Inject constructor(
         return questionList
     }
 
-    fun initQuestionListByIds(event: EventQuiz, idCat: Int, idSubCat: Int) = viewModelScope.launch {
+    fun initQuestionListByIds(event: Int, idCat: Int, idSubCat: Int) = viewModelScope.launch {
+        Log.d("ksjergfkjkseklf", "initQuestionListByIds()")
         val handler = event.let { getEventHandler(it) }
+        Log.d("ksjergfkjkseklf", "event.id: ${event}")
         _listStructureDataLocalFlow.value = handler?.invoke(idCat, idSubCat) ?: emptyList()
     }
 
-    private fun getEventHandler(event: EventQuiz): suspend (Int, Int) -> List<StructureDataLocal> {
+    private fun getEventHandler(event: Int): suspend (Int, Int) -> List<StructureDataLocal> {
         return when (event) {
-            EventQuiz.QUIZ_HOME -> ::handleHomeEvent
-            EventQuiz.QUIZ_TOURNIRE -> ::handleTournamentEvent
-            EventQuiz.QUIZ_ARENA -> ::handleArenaEvent
-//            EventQuiz.QUIZ_FOR_ADMIN -> ::handleAdminEvent
-//            EventQuiz.QUIZ_FOR_MODERATOR -> ::handleModeratorEvent
-//            EventQuiz.QUIZ_FOR_TESTER -> ::handleTesterEvent
-            EventQuiz.QUIZ_BY_USER -> ::handleUserEvent
+            EventQuiz.QUIZ_HOME.id -> ::handleHomeEvent
+            EventQuiz.QUIZ_TOURNIRE.id -> ::handleTournamentEvent
+            EventQuiz.QUIZ_ARENA.id -> ::handleArenaEvent
+//            EventQuiz.QUIZ_FOR_ADMIN.id  -> ::handleAdminEvent
+//            EventQuiz.QUIZ_FOR_MODERATOR.id  -> ::handleModeratorEvent
+//            EventQuiz.QUIZ_FOR_TESTER.id  -> ::handleTesterEvent
+            EventQuiz.QUIZ_BY_USER.id -> ::handleUserEvent
             else -> ::handleDefaultEvent
         }
     }
@@ -131,13 +136,14 @@ class QuizActivityViewModel @Inject constructor(
         // Логика для турниров
         return emptyList() // Замените своей реализацией
     }
+
     private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
         Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)?.childes
-            ?.find { it?.id == EventQuiz.QUIZ_HOME.id }?.childes?.find { it?.id == idCat }
+            ?.find { it?.id == idCat }
 
-        Log.d("jij", " $category")
+        Log.d("jij", "category $category")
         nameCategory = category?.nameItem ?: ""
         category?.childes?.forEach {
             Log.d("jij", "subCatData: $it")
@@ -155,14 +161,15 @@ class QuizActivityViewModel @Inject constructor(
         Log.d("jij", "handleUserEvent()")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)?.childes
-            ?.find { it?.id == EventQuiz.QUIZ_BY_USER.id }?.childes?.find {
+            ?.find {
                 Log.d("jij", "it.id: ${it?.id}")
                 Log.d("jij", "idCat: ${idCat}")
-                it?.id == idCat }
+                it?.id == idCat
+            }
 
         category?.childes?.forEach {
             Log.d("jij", "subCatData.name: ${it?.nameItem}")
-            it?.childes?.forEach {subsubCat ->
+            it?.childes?.forEach { subsubCat ->
                 Log.d("jij", "subsubCat.name: ${subsubCat?.nameItem}")
                 subsubCat?.childes?.forEach {
                     Log.d("jij", "quizData.name: ${it?.nameItem}")

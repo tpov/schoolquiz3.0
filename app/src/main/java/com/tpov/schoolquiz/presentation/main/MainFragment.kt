@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -50,19 +51,21 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
         viewModel = ViewModelProvider(requireActivity(), viewModelFactory)[MainViewModel::class.java]
 
         lifecycleScope.launch {
+            Log.d("ksjergfkjkseklf", "lifecycleScope")
             viewModel.structureData.collect { categoryDataList ->
-                if (categoryDataList != null) {
-                    adapter = MainAdapter(categoryDataList!!, this@MainFragment)
+                Log.d("ksjergfkjkseklf", "categoryDataList: $categoryDataList")
+                    adapter = MainAdapter(categoryDataList, this@MainFragment)
                     recyclerView.adapter = adapter
-                }
             }
         }
         initGetData()
+        Log.d("ksjergfkjkseklf", "event?.id!!: ${event?.id!!}")
+        viewModel.initStructureData(event?.id!!)
     }
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onItemClick(category: Int) {
-        val fragment = QuizFragment.newInstance(event!!, category, -1, -1)
+        val fragment = QuizFragment.newInstance(event?.id!!, category, -1, -1)
 
         requireActivity().supportFragmentManager.beginTransaction()
             .replace(R.id.title_fragment, fragment)

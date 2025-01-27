@@ -40,10 +40,14 @@ class MainViewModel @Inject constructor(
 
     val questionData: StateFlow<List<QuestionEntity>?> get() = _questionData
     private val _questionData = MutableStateFlow<List<QuestionEntity>?>(null)
-    val structureData: StateFlow<List<StructureDataLocal>?> get() = _structureData
-    private val _structureData = MutableStateFlow<List<StructureDataLocal>?>(null)
+    val structureData: StateFlow<List<StructureDataLocal?>?> get() = _structureData
+    private val _structureData = MutableStateFlow<List<StructureDataLocal?>?>(null)
 
     var firstStartApp = false
+
+    fun initStructureData(eventId: Int) = viewModelScope.launch(Dispatchers.IO) {
+        _structureData.value = structureUseCase.getStructureData(eventId)?.childes?.toList()
+    }
 
     fun initProfile() {
         Log.d("init", "init")

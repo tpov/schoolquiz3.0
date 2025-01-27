@@ -18,7 +18,7 @@ import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.schoolquiz.R
 import java.io.File
 
-class MainAdapter(private val items: List<StructureDataLocal>,
+class MainAdapter(private val items: List<StructureDataLocal?>?,
                   private val listener: OnItemClickListener) : RecyclerView.Adapter<MainAdapter.MainViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MainViewHolder {
@@ -27,13 +27,13 @@ class MainAdapter(private val items: List<StructureDataLocal>,
     }
 
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {
-        holder.bind(items[position])
+        items?.get(position)?.let { holder.bind(it) }
         holder.itemView.setOnClickListener {
-            listener.onItemClick(items[position].id!!)
+            items?.get(position)?.id?.let { it1 -> listener.onItemClick(it1) }
         }
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int = items?.size ?: 0
 
     class MainViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val imageView: ImageView = itemView.findViewById(R.id.imv_category_title)
