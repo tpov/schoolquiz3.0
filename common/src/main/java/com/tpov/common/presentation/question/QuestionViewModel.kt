@@ -18,6 +18,7 @@ import com.tpov.common.LVL_GOOGLE_TRANSLATOR
 import com.tpov.common.MAX_DROP_ANSWER
 import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
+import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.model.StructureDataLocal
@@ -52,7 +53,8 @@ class QuestionViewModel @Inject constructor(
     var originalAnswerOrder: String = ""
     var numQuestions: Int? = null
     var hardQuiz: Boolean? = null
-    var pathStructure: PathStructure? = null
+    var pathStructure: PathStructure? =
+        PathStructure(UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE)
     var life: Int? = null
 
     var oldCurrentQuestion = 0
@@ -104,24 +106,31 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun getQuestionList(lng: String) = viewModelScope.launch(Dispatchers.IO) {
+        Log.d("jfgksdjefkse", "lng: $lng")
+        Log.d("jfgksdjefkse", "pathStructure: $pathStructure")
         val languagesUser = if (lng == "") Locale.getDefault().language
         else lng
         val filterQuestionByIdQuiz =
             questionUseCase.getQuestionByPath(pathStructure ?: errorHandler.notFoundInputData())
+        Log.d("jfgksdjefkse", "filterQuestionByIdQuiz: $filterQuestionByIdQuiz")
         val filterQuestionByHardQuiz = filterQuestionByHardQuiz(
             filterQuestionByIdQuiz, hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion()
         )
+        Log.d("jfgksdjefkse", "filterQuestionByHardQuiz: $filterQuestionByIdQuiz")
         var filterQuestionByLanguage =
             filterQuestionByMainLanguageUser(filterQuestionByHardQuiz, languagesUser)
+        Log.d("jfgksdjefkse", "filterQuestionByLanguage: $filterQuestionByLanguage")
         if (filterQuestionByLanguage.size < (numQuestions
                 ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz())
+        ) filterQuestionByLanguage = filterQuestionByOtherLanguageUser(
+            filterQuestionByHardQuiz,
+            languagesUser,
+            numQuestions ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
         )
-            filterQuestionByLanguage = filterQuestionByOtherLanguageUser(
-                filterQuestionByHardQuiz, languagesUser,
-                numQuestions ?: errorHandler.notFoundNumberQuestionByTypeHardQuiz()
-            )
         if (filterQuestionByLanguage.isEmpty()) _showTranslateDialog.value = true
         else _questionList.value = filterQuestionByLanguage.sortedBy { it.numQuestion }
+
+        Log.d("jfgksdjefkse", "_questionList.value: ${_questionList.value}")
     }
 
     fun getQuestionDetailByPath() = viewModelScope.launch(Dispatchers.IO) {
@@ -138,7 +147,8 @@ class QuestionViewModel @Inject constructor(
                 getDataToday(),
                 CODE_EMPTY_ANSWER.toString()
                     .repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
-                hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
+                hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(),
+                false
             )
         )
     }
@@ -146,13 +156,16 @@ class QuestionViewModel @Inject constructor(
     fun saveQuestionDetail() = viewModelScope.launch(Dispatchers.IO) {
         questionDetailUseCase.saveQuestionDetail(
             QuestionDetailEntity(
-                0,                 pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+                0,
+                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
                 pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
                 pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
                 pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
                 pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
-                getDataToday(), codeAnswer,
-                hardQuiz ?: errorHandler.notFoundQuizValue(), false
+                getDataToday(),
+                codeAnswer,
+                hardQuiz ?: errorHandler.notFoundQuizValue(),
+                false
             )
         )
     }
@@ -179,22 +192,26 @@ class QuestionViewModel @Inject constructor(
         _currentQuestion.value = questionList.value?.get(0)
     }
 
+    fun initQuizValue() = viewModelScope.launch(Dispatchers.IO) {
+        Log.d("jfgksdjefkse", "$pathStructure")
+        _quiz.value = structureUseCase.getStructureData(pathStructure?.idEvent!!)?.printFullStructure("jfgksdjefkse")?.childes
+                ?.find { it?.id == pathStructure!!.idCategory }?.printFullStructure("jfgksdjefkse")?.childes
+                ?.find { it?.id == pathStructure!!.idSubCategory }?.printFullStructure("jfgksdjefkse")?.childes
+                ?.find { it?.id == pathStructure!!.idSubsubCategory }?.printFullStructure("jfgksdjefkse")?.childes
+                ?.find { it?.id == pathStructure!!.idQuiz }?.printFullStructure("jfgksdjefkse")
+
+    }
+
     private fun filterQuestionByHardQuiz(
-        questionEntityList: List<QuestionEntity>,
-        hardQuiz: Boolean
-    ) =
-        questionEntityList.filter { it.hardQuestion == hardQuiz }
+        questionEntityList: List<QuestionEntity>, hardQuiz: Boolean
+    ) = questionEntityList.filter { it.hardQuestion == hardQuiz }
 
     private fun filterQuestionByMainLanguageUser(
-        questionList: List<QuestionEntity>,
-        languagesUser: String
-    ) =
-        questionList.filter { it.language == languagesUser }
+        questionList: List<QuestionEntity>, languagesUser: String
+    ) = questionList.filter { it.language == languagesUser }
 
     private fun filterQuestionByOtherLanguageUser(
-        questionList: List<QuestionEntity>,
-        languages: String,
-        numQuestion: Int
+        questionList: List<QuestionEntity>, languages: String, numQuestion: Int
     ): List<QuestionEntity> {
         for (language in languages.split(SPLIT_BETWEEN_LANGUAGES)) {
             val questionsForLanguage = questionList.filter { it.language == language }
@@ -212,13 +229,16 @@ class QuestionViewModel @Inject constructor(
         _questionDetail.value = questionDetailList.value?.find { questionDetail ->
             questionDetail.codeAnswer?.any { it == '0' } ?: false
         } ?: QuestionDetailEntity(
-            0,                 pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+            0,
+            pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
             pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
             pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
             pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
-            pathStructure?.idEvent ?: errorHandler.notFoundInputData(), getDataToday(),
+            pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+            getDataToday(),
             "0".repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
-            hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(), false
+            hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(),
+            false
         )
     }
 
@@ -227,13 +247,9 @@ class QuestionViewModel @Inject constructor(
     }.average().toInt()
 
     fun calculatePercentByCodeAnswer(): Int {
-        return codeAnswer
-            .filter { it != CODE_EMPTY_ANSWER }
-            .map {
+        return codeAnswer.filter { it != CODE_EMPTY_ANSWER }.map {
                 (((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()).toDouble() / COUNT_VARIATION_CODE_ANSWER) * 100)
-            }
-            .average()
-            .toInt()
+            }.average().toInt()
     }
 
 
@@ -274,8 +290,8 @@ class QuestionViewModel @Inject constructor(
         } else {
             var correctCount = 0
 
-            val originalOrder = originalAnswerOrder.toString()
-                .take(MAX_DROP_ANSWER).map { it.toString().toInt() }
+            val originalOrder =
+                originalAnswerOrder.toString().take(MAX_DROP_ANSWER).map { it.toString().toInt() }
             val totalCorrectAnswers = originalOrder.size
 
             for (i in selectedTags.indices) {
@@ -306,8 +322,7 @@ class QuestionViewModel @Inject constructor(
         val index = currentQuestion.value?.numQuestion ?: errorHandler.errorGetNumQuestion()
 
         codeAnswer = if (index < codeAnswer.length) {
-            codeAnswer.substring(0, index) + score.toString() +
-                    codeAnswer.substring(index + 1)
+            codeAnswer.substring(0, index) + score.toString() + codeAnswer.substring(index + 1)
         } else codeAnswer.padEnd(index, CODE_EMPTY_ANSWER) + score.toString()
         if (!codeAnswer.contains(CODE_EMPTY_ANSWER)) saveResult()
     }
@@ -341,10 +356,8 @@ class QuestionViewModel @Inject constructor(
                 val languagePair = "${fromLang}_$toLang"
                 Log.d("TranslateDebug", "Language pair: $languagePair")
 
-                val options = TranslatorOptions.Builder()
-                    .setSourceLanguage(fromLang)
-                    .setTargetLanguage(toLang)
-                    .build()
+                val options = TranslatorOptions.Builder().setSourceLanguage(fromLang)
+                    .setTargetLanguage(toLang).build()
 
                 translator = Translation.getClient(options)
 

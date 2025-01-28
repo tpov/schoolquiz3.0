@@ -19,6 +19,7 @@ import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
 import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.log_api.logger.Logger
@@ -47,15 +48,16 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         quizViewModel = ViewModelProvider(this, viewModelFactory)[QuizActivityViewModel::class.java]
 
         initGetData()
-        quizViewModel.initQuestionListByIds(quizViewModel.pathStructure?.idEvent!!, quizViewModel.pathStructure?.idCategory!!, quizViewModel.pathStructure?.idSubCategory!!)
+        quizViewModel.initQuestionListByIds()
         initAdapter()
         initPath()
     }
 
     @SuppressLint("SetTextI18n")
     private fun initPath() {
-        binding.tvEventPath.text = quizViewModel.getNamePathEvent(quizViewModel.pathStructure?.idEvent!!) +
-                if (quizViewModel.nameCategory != "") " > " else ""
+        binding.tvEventPath.text =
+            quizViewModel.getNamePathEvent(quizViewModel.pathStructure?.idEvent!!) +
+                    if (quizViewModel.nameCategory != "") " > " else ""
         binding.tvCatPath.text = quizViewModel.nameCategory +
                 if (quizViewModel.nameSubCategory != "") " > " else ""
         binding.tvSubcatPath.text = quizViewModel.nameSubCategory
@@ -95,8 +97,10 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     private fun initGetData() {
         quizViewModel.pathStructure?.idEvent = arguments?.getInt(KEY_ID_EVENT, UNKNOWN_VALUE)!!
-        quizViewModel.pathStructure?.idCategory = arguments?.getInt(KEY_ID_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
-        quizViewModel.pathStructure?.idSubCategory = arguments?.getInt(KEY_ID_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
+        quizViewModel.pathStructure?.idCategory =
+            arguments?.getInt(KEY_ID_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
+        quizViewModel.pathStructure?.idSubCategory =
+            arguments?.getInt(KEY_ID_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
         quizViewModel.pathStructure?.idSubsubCategory =
             arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
 
@@ -117,21 +121,34 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     override fun deleteItem(pathStructure: PathStructure) {}
 
-    override fun onClick(pathStructure: PathStructure, typeQuestion: Boolean) {
+    override fun onClick(structureDataLocal: StructureDataLocal?, typeQuestion: Boolean) {
         if (quizViewModel.pathStructure?.idSubCategory == UNKNOWN_VALUE && quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_HOME.id) {
-            quizViewModel.pathStructure!!.idSubCategory = pathStructure.idQuiz
-            restartFragment(pathStructure)
+            quizViewModel.pathStructure!!.idSubCategory = structureDataLocal?.id!!
+            restartFragment(quizViewModel.pathStructure!!)
         } else if (quizViewModel.pathStructure?.idSubsubCategory == UNKNOWN_VALUE && quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_HOME.id) {
-            navigationProvider?.openQuestionActivity(pathStructure, typeQuestion)
-        } else {
-            navigationProvider?.openQuestionActivity(pathStructure, typeQuestion)
+            quizViewModel.pathStructure?.idSubsubCategory = structureDataLocal?.id!!
+            restartFragment(quizViewModel.pathStructure!!)
+        } else if (quizViewModel.pathStructure?.idQuiz == UNKNOWN_VALUE && quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_HOME.id) {
+            quizViewModel.pathStructure?.idQuiz = structureDataLocal?.id!!
+            navigationProvider?.openQuestionActivity(quizViewModel.pathStructure!!, typeQuestion)
+        } else if (quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_BY_USER.id) {
+            quizViewModel.pathStructure = quizViewModel.getHomePath[structureDataLocal]
+            navigationProvider?.openQuestionActivity(quizViewModel.pathStructure!!, typeQuestion)
         }
     }
 
     private fun restartFragment(pathStructure: PathStructure) {
         val fragmentManager = parentFragmentManager
         fragmentManager.beginTransaction()
-            .replace(this.id, newInstance(pathStructure.idEvent, pathStructure.idCategory, pathStructure.idSubCategory, pathStructure.idSubsubCategory))
+            .replace(
+                this.id,
+                newInstance(
+                    pathStructure.idEvent,
+                    pathStructure.idCategory,
+                    pathStructure.idSubCategory,
+                    pathStructure.idSubsubCategory
+                )
+            )
             .addToBackStack(null)
             .commit()
     }

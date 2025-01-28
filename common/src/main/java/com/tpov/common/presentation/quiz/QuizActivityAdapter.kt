@@ -19,9 +19,7 @@ import com.bumptech.glide.load.resource.bitmap.GranularRoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.tpov.common.MAX_PERCENT_HARD_QUIZ_FULL
 import com.tpov.common.MAX_PERCENT_LIGHT_QUIZ_FULL
-import com.tpov.common.PERCENT_1STAR_QUIZ_SHORT
 import com.tpov.common.R
-import com.tpov.common.RATING_QUIZ_ARENA_IN_TOP
 import com.tpov.common.databinding.ActivityQuizItemBinding
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.model.PathStructure
@@ -173,47 +171,6 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         }
 
         @OptIn(InternalCoroutinesApi::class)
-        private fun ActivityQuizItemBinding.initViewQuiz5(
-            quizEntity: StructureDataLocal,
-            viewModel: QuizActivityViewModel,
-            listener: Listener
-        ) {
-
-            chbTypeQuiz.visibility = View.GONE
-            imvGradLightQuiz.visibility = View.GONE
-            imvGradHardQuiz.visibility = View.GONE
-
-            chbTypeQuiz.isChecked = false
-
-            if (quizEntity.starsMaxLocal >= MAX_PERCENT_LIGHT_QUIZ_FULL) {
-                imvGradLightQuiz.visibility = View.VISIBLE
-                imvGradHardQuiz.visibility = View.GONE
-                chbTypeQuiz.isChecked = true
-            }
-
-            if (quizEntity.ratingLocal >= RATING_QUIZ_ARENA_IN_TOP) {
-                imvGradLightQuiz.visibility = View.GONE
-                imvGradHardQuiz.visibility = View.VISIBLE
-            }
-
-            chbTypeQuiz.visibility = View.VISIBLE
-            chbTypeQuiz.isChecked = quizEntity.starsMaxLocal >= MAX_PERCENT_LIGHT_QUIZ_FULL
-
-            ratingBar.rating = (quizEntity.ratingLocal.toFloat() / PERCENT_1STAR_QUIZ_SHORT)
-            ratingBar.rating = quizEntity.ratingLocal.toFloat() / MAX_PERCENT_LIGHT_QUIZ_FULL
-            mainTitleButton.text = quizEntity.nameItem
-
-            mainTitleButton.setOnClickListener {
-                listener.onClick(viewModel.pathStructure!!, chbTypeQuiz.isChecked)
-            }
-
-            tvName.visibility = View.VISIBLE
-            tvTime.visibility = View.VISIBLE
-            tvName.text = quizEntity.nameCreator
-            tvTime.text = quizEntity.dataUpdate
-        }
-
-        @OptIn(InternalCoroutinesApi::class)
         private fun ActivityQuizItemBinding.initView(
             quizEntity: StructureDataLocal,
             goHardQuiz: String,
@@ -244,7 +201,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
             mainTitleButton.text = quizEntity.nameItem
             mainTitleButton.setOnClickListener {
-                listener.onClick(viewModel.pathStructure!!, chbTypeQuiz.isChecked)
+                listener.onClick(quizEntity, chbTypeQuiz.isChecked)
             }
         }
 
@@ -266,7 +223,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
     interface Listener {
         fun deleteItem(pathStructure: PathStructure)
-        fun onClick(pathStructure: PathStructure, type: Boolean)
+        fun onClick(pathStructure: StructureDataLocal?, type: Boolean)
         fun editItem(pathStructure: PathStructure)
         fun sendItem(pathStructure: PathStructure)
         fun reloadData()

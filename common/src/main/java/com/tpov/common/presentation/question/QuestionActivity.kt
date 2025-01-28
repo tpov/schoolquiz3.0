@@ -103,6 +103,7 @@ class QuestionActivity : AppCompatActivity() {
         showQuestion()
         makeButtonsDraggable()
         initTranslateDialog()
+        viewModel.initQuizValue()
     }
 
     private fun filledView() {
@@ -164,12 +165,17 @@ class QuestionActivity : AppCompatActivity() {
 
     private fun loadQuizData() {
         CoroutineScope(Dispatchers.IO).launch {
+            Log.d("jfgksdjefkse", "1")
             viewModel.quiz.collect {
+                Log.d("jfgksdjefkse", "2")
                 it?.let {
+                    Log.d("jfgksdjefkse", "3")
                     viewModel.initQuizValues()
                     viewModel.getQuestionList(languageUser!!)
                     viewModel.questionList.collect { questionList ->
-                        questionList?.let {
+                        questionList?.let {questionList ->
+
+                            Log.d("jfgksdjefkse", "4")
                             viewModel.getQuestionDetailByPath()
                             viewModel.questionDetailList.collect { questionDetailList ->
                                 questionDetailList?.let {
@@ -210,8 +216,10 @@ class QuestionActivity : AppCompatActivity() {
     @SuppressLint("DiscouragedApi")
     private fun showQuestion() {
         CoroutineScope(Dispatchers.Main).launch {
+            Log.d("jfgksdjefkse", "currentQuestion")
             viewModel.currentQuestion.collect { currentQuestion ->
                 currentQuestion?.let { question ->
+                    Log.d("jfgksdjefkse", "question: $question")
                     val questionText = question.nameQuestion
                     val answer = question.answer
                     val answersName = question.nameAnswers
@@ -220,7 +228,6 @@ class QuestionActivity : AppCompatActivity() {
                     showViewByTypeQuestion(is8Button, answer, answersName)
                     startTimer(is8Button)
 
-                    // Показываем нужную панель жизней
                     if (viewModel.hardQuiz == true) {
                         binding.llLifeGold.visibility = View.VISIBLE
                         binding.llLife.visibility = View.GONE

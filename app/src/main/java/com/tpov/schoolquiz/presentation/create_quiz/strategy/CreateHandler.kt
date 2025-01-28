@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.presentation.create_quiz.strategy
 
 import android.util.Log
 import com.tpov.common.EventQuiz
+import com.tpov.common.UNKNOWN_VALUE
+import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandler
@@ -11,7 +13,10 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
     override fun initViews() {
         activity.viewModel.updateNewCounterAndShortList(true)
 
-        Log.d("rkfgujrdjkgjk", "CreateHandler questionsShortEntity : ${activity.viewModel.questionsShortEntity}")
+        Log.d(
+            "rkfgujrdjkgjk",
+            "CreateHandler questionsShortEntity : ${activity.viewModel.questionsShortEntity}"
+        )
         activity.setupQuestionSpinner()
         activity.updateUiQuestion()
         activity.setupUiQuiz()
@@ -32,15 +37,25 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
             activity.viewModel.quizEntity!!,
             activity.viewModel.structureDataFlow
         )
+
         mergeStructureData.childes?.forEach {
-
-            Log.d("StructureTree", "it: $it")
-it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) }
-
+            it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) }
         }
+
         activity.viewModel.questionsEntity.forEach {
-            activity.viewModel.questionUseCase.insertQuestion(it)
+            val question = updatePathQuestion(it)
+            activity.viewModel.questionUseCase.insertQuestion(question)
         }
+    }
+
+    private fun updatePathQuestion(questionEntity: QuestionEntity): QuestionEntity {
+        return questionEntity.copy(
+            idEvent = activity.viewModel.pathStructure.idEvent,
+            idCategory = activity.viewModel.pathStructure.idCategory,
+            idSubCategory = activity.viewModel.pathStructure.idSubCategory,
+            idSubsubCategory = activity.viewModel.pathStructure.idSubsubCategory,
+            idQuiz = activity.viewModel.pathStructure.idQuiz
+        )
     }
 
     private fun mergeNewStructureData(
@@ -52,25 +67,35 @@ it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) 
     ): StructureDataLocal {
         val eventId = EventQuiz.QUIZ_BY_USER.id
         val currentStructure = structureDataFlow.value ?: StructureDataLocal()
-        currentStructure.printFullStructure()
+        currentStructure.printFullStructure("jfgksdjefkse")
 
         if (currentStructure.childes == null) {
             currentStructure.childes = mutableListOf()
         }
 
         val eventRoot = currentStructure.childes?.find {
-            it?.id == eventId } ?: run {
-            val newRoot = StructureDataLocal().create(id = eventId, "",0,0,"", "")
+            it?.id == eventId
+        } ?: run {
+            val newRoot = StructureDataLocal().create(id = eventId, "", 0, 0, "", "")
             currentStructure.childes?.add(newRoot)
             newRoot
         }
-        eventRoot.findOrCreateChild(categoryStructure)
-            .findOrCreateChild(subCategoryStructure)
-            .findOrCreateChild(subsubCategoryStructure)
-            .findOrCreateChild(quizEntity)
+        eventRoot.findOrCreateChild(categoryStructure).updatePathByStructureData()
+            .findOrCreateChild(subCategoryStructure).updatePathByStructureData()
+            .findOrCreateChild(subsubCategoryStructure).updatePathByStructureData()
+            .findOrCreateChild(quizEntity).updatePathByStructureData()
 
-        currentStructure.printFullStructure()
         return currentStructure
+    }
+
+    private fun StructureDataLocal.updatePathByStructureData(): StructureDataLocal {
+        activity.viewModel.pathStructure.apply {
+            if (idCategory == UNKNOWN_VALUE) idCategory = id!!
+            else if (idSubCategory == UNKNOWN_VALUE) idSubCategory = id!!
+            else if (idSubsubCategory == UNKNOWN_VALUE) idSubsubCategory = id!!
+            else if (idQuiz == UNKNOWN_VALUE) idQuiz = id!!
+        }
+        return this
     }
 
     private fun StructureDataLocal.findOrCreateChild(
@@ -79,17 +104,10 @@ it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) 
         if (childes == null) {
             childes = mutableListOf()
         }
-        Log.d("findOrCreateChild", "Current structure: $this")
-        Log.d("findOrCreateChild", "New child to add: $newChild")
-
-        newChild.printFullStructure()
-        this.printFullStructure()
 
         val existingChild = childes?.find { it?.nameItem == newChild.nameItem }
 
-
         if (existingChild != null) {
-            Log.d("findOrCreateChild", "Existing child found: $existingChild")
             return existingChild
         }
 
@@ -97,9 +115,6 @@ it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) 
             id = childes?.size?.plus(1) ?: 1
         )
         childes?.add(newChildCopy)
-        this.printFullStructure()
-        newChildCopy.printFullStructure()
-        Log.d("findOrCreateChild", "Added new child: $newChildCopy")
         return newChildCopy
     }
 }

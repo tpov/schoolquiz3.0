@@ -223,13 +223,9 @@ open class CreateQuizActivity : AppCompatActivity() {
     private fun initSetOnClickListeners() = with(binding) {
 
         bSave.setOnClickListener {
-            Log.d("rkfgujrdjkgjk", " bSave.setOnClickListener : ${viewModel.questionsShortEntity}")
             getThisQuestionWithUI()
-            Log.d("rkfgujrdjkgjk", "getThisQuestionWithUI: ${viewModel.questionsShortEntity}")
             getThisQuizWithUI()
-            Log.d("rkfgujrdjkgjk", "getThisQuizWithUI: ${viewModel.questionsShortEntity}")
             setStructureCategoryWithUI()
-            Log.d("rkfgujrdjkgjk", "setStructureCategoryWithUI: ${viewModel.questionsShortEntity}")
             saveQuiz()
         }
         bCencel.setOnClickListener {
@@ -751,7 +747,6 @@ open class CreateQuizActivity : AppCompatActivity() {
 
 
     private fun saveQuiz() = lifecycleScope.launch(Dispatchers.Default) {
-        Log.d("rkfgujrdjkgjk", "saveQuiz: ${viewModel.questionsShortEntity}")
         handler.saveData()
         finish()
     }

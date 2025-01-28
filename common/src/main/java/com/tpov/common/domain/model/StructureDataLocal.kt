@@ -54,7 +54,7 @@ data class StructureDataLocal(
             0,
             lang, picture, true, false
         )
-    fun printFullStructure() {
+    fun printFullStructure(s: String): StructureDataLocal {
 
         val result = buildString {
             appendLine("")
@@ -74,7 +74,8 @@ data class StructureDataLocal(
             appendLine("")
         }
 
-        Log.d("StructureTree", "\n$result")
+        Log.d(s, "\n$result")
+        return this
     }
 
     fun toStructureDataEntity(): StructureDataEntity? {

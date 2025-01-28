@@ -112,14 +112,13 @@ class QuizActivityViewModel @Inject constructor(
         return questionList
     }
 
-    fun initQuestionListByIds(event: Int, idCat: Int, idSubCat: Int) = viewModelScope.launch {
+    fun initQuestionListByIds() = viewModelScope.launch {
         Log.d("ksjergfkjkseklf", "initQuestionListByIds()")
-        val handler = event.let { getEventHandler(it) }
-        Log.d("ksjergfkjkseklf", "event.id: ${event}")
-        _listStructureDataLocalFlow.value = handler?.invoke(idCat, idSubCat) ?: emptyList()
+        val handler = pathStructure?.idEvent?.let { getEventHandler(it) }
+        _listStructureDataLocalFlow.value = handler?.invoke(pathStructure?.idCategory!!, pathStructure?.idSubCategory) ?: emptyList()
     }
 
-    private fun getEventHandler(event: Int): suspend (Int, Int) -> List<StructureDataLocal> {
+    private fun getEventHandler(event: Int): suspend (Int, Int?) -> List<StructureDataLocal> {
         return when (event) {
             EventQuiz.QUIZ_HOME.id -> ::handleHomeEvent
             EventQuiz.QUIZ_TOURNIRE.id -> ::handleTournamentEvent
@@ -132,12 +131,12 @@ class QuizActivityViewModel @Inject constructor(
         }
     }
 
-    private suspend fun handleTournamentEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
+    private suspend fun handleTournamentEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
         // Логика для турниров
         return emptyList() // Замените своей реализацией
     }
 
-    private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
+    private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
         Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)?.childes
@@ -157,7 +156,8 @@ class QuizActivityViewModel @Inject constructor(
         return flattenedList
     }
 
-    private suspend fun handleUserEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
+    var getHomePath: MutableMap<StructureDataLocal, PathStructure> = mutableMapOf()
+    private suspend fun handleUserEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
         Log.d("jij", "handleUserEvent()")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)?.childes
@@ -167,31 +167,31 @@ class QuizActivityViewModel @Inject constructor(
                 it?.id == idCat
             }
 
-        category?.childes?.forEach {
-            Log.d("jij", "subCatData.name: ${it?.nameItem}")
-            it?.childes?.forEach { subsubCat ->
+        category?.childes?.forEach {subCat ->
+            Log.d("jij", "subCatData.name: ${subCat?.nameItem}")
+            subCat?.childes?.forEach { subsubCat ->
                 Log.d("jij", "subsubCat.name: ${subsubCat?.nameItem}")
-                subsubCat?.childes?.forEach {
-                    Log.d("jij", "quizData.name: ${it?.nameItem}")
-                    flattenedList.add(it!!)
+                subsubCat?.childes?.forEach {quiz ->
+                    Log.d("jij", "quizData.name: ${quiz?.nameItem}")
+                    getHomePath[quiz!!] = PathStructure(pathStructure?.idEvent!!, idCat, subCat.id!!, subsubCat.id!!, quiz.id!!)
+                    flattenedList.add(quiz)
                 }
             }
         }
         return flattenedList
     }
 
-    private suspend fun handleArenaEvent(idCat: Int, idSubCat: Int): List<StructureDataLocal> {
+    private suspend fun handleArenaEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
         // Логика для арены
         return emptyList() // Замените своей реализацией
     }
 
     private suspend fun handleDefaultEvent(
         idCategory: Int,
-        idSubCategory: Int
+        idSubCategory: Int?
     ): List<StructureDataLocal> {
         // Универсальный обработчик для необработанных событий
         println("Обработка по умолчанию для категории $idCategory и подкатегории $idSubCategory")
         return emptyList()
     }
-
 }
