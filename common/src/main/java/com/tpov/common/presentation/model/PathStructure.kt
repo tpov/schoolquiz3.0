@@ -11,3 +11,12 @@ data class PathStructure(
     var idSubsubCategory: Int,
     var idQuiz: Int,
 ) : Parcelable
+
+@Parcelize
+data class PathStructureName(
+    var nameEvent: String,
+    var nameCategory: String,
+    var nameSubCategory: String,
+    var nameSubsubCategory: String,
+    var nameQuiz: String,
+) : Parcelable

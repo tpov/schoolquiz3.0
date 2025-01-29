@@ -81,7 +81,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-
     fun updateProfile(profileEntity: ProfileEntity) = viewModelScope.launch(Dispatchers.Default) {
         profileUseCase.updateProfile(profileEntity)
     }

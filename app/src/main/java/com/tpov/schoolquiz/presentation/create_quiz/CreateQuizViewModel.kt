@@ -18,6 +18,7 @@ import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.model.PathStructureName
 import com.tpov.common.presentation.utils.BitmapUtil
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
@@ -64,7 +65,6 @@ class CreateQuizViewModel @Inject constructor(
     private var _structureDataFlow = MutableStateFlow<StructureDataLocal?>(null)
     val categoryDataFlow: StateFlow<List<StructureDataLocal?>?> get() = _categoryDataFlow
     private var _categoryDataFlow = MutableStateFlow<List<StructureDataLocal?>?>(null)
-
     val subCategoryDataFlow: StateFlow<List<StructureDataLocal?>?> get() = _subCategoryDataFlow
     private var _subCategoryDataFlow = MutableStateFlow<List<StructureDataLocal?>?>(null)
     val subsubCategoryDataFlow: StateFlow<List<StructureDataLocal?>?> get() = _subsubCategoryDataFlow
@@ -189,54 +189,85 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun initStructureData() = viewModelScope.launch(Dispatchers.IO) {
-            val listHome = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)
-            val listMyQuiz = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)
-            Log.d("initStructureData", "listHome: ${listHome}")
-            Log.d("initStructureData", "listMyQuiz: ${listMyQuiz}")
-            _structureDataFlow.value = StructureDataLocal(childes = mutableListOf(listMyQuiz, listHome))
-            Log.d("initStructureData", "_structureDataFlow.value: ${_structureDataFlow.value}")
-            initCategories(PathStructure(8,-1,-1,-1,-1))
+        val listHome = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)
+        val listMyQuiz = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)
+        Log.d("initStructureData", "listHome: ${listHome}")
+        Log.d("initStructureData", "listMyQuiz: ${listMyQuiz}")
+        _structureDataFlow.value = StructureDataLocal(childes = mutableListOf(listMyQuiz, listHome))
+        Log.d("initStructureData", "_structureDataFlow.value: ${_structureDataFlow.value}")
+        initCategories(PathStructureName("", "", "", "", ""))
     }
 
-    fun initCategories(pathStructure: PathStructure) {
-        val structureData = _structureDataFlow.value?.childes
+    private val LOG_TAG = "CategoryInitialization"
 
-        val newCategories = structureData?.flatMap {
-            it?.childes ?: emptyList()
-        }?.toMutableList()
-
-        if (!areNamesEqual(_categoryDataFlow.value, newCategories)) {
-            _categoryDataFlow.value = newCategories
+    fun initCategories(pathStructureName: PathStructureName) {
+        val structureData = _structureDataFlow.value ?: run {
+            Log.e(LOG_TAG, "Structure data is null")
+            return
         }
 
-        Log.d("initStructureData", "_categoryDataFlow.value: ${_categoryDataFlow.value}")
-        structureData?.let { events ->
-            val event = events.getOrNull(pathStructure.idEvent)
-            val categories = event?.childes
+        // Отладочная печать структуры
+        StructureDataLocal(childes = structureData.childes)
+            .printFullStructure("$LOG_TAG - Initial structure")
 
-            val idCategory = if (pathStructure.idCategory == -1) categories?.lastIndex ?: -1
-            else pathStructure.idCategory
+        // Ищем категорию для пользовательских квизов
+        val quizByUserCategory = structureData.childes
+            ?.find { it?.id == EventQuiz.QUIZ_BY_USER.id }
+            ?.childes
 
-            val newSubCategories = categories?.getOrNull(idCategory)?.childes
+        _categoryDataFlow.value = quizByUserCategory
 
-            if (!areNamesEqual(_subCategoryDataFlow.value, newSubCategories)) {
-                _subCategoryDataFlow.value = newSubCategories
+        // Определяем имя категории
+        val foundNameCategory = when {
+            pathStructureName.nameCategory.isBlank() ||
+                    pathStructureName.nameCategory == "Create" -> {
+                quizByUserCategory?.lastOrNull()?.nameItem ?: run {
+                    Log.e(LOG_TAG, "No categories available")
+                    return
+                }
             }
-            Log.d("initStructureData", "_subCategoryDataFlow.value: ${_subCategoryDataFlow.value}")
-
-            val idSubCategory = if (pathStructure.idSubCategory == -1) newSubCategories?.lastIndex ?: -1
-            else pathStructure.idSubCategory
-
-            val newSubSubCategories = newSubCategories?.getOrNull(idSubCategory)?.childes
-
-            if (!areNamesEqual(_subsubCategoryDataFlow.value, newSubSubCategories)) {
-                _subsubCategoryDataFlow.value = newSubSubCategories
-            }
-            Log.d("initStructureData", "_subsubCategoryDataFlow.value: ${_subsubCategoryDataFlow.value}")
+            else -> pathStructureName.nameCategory
         }
+
+        Log.d(LOG_TAG, "Selected category: $foundNameCategory")
+
+        val subCategories = structureData.childes
+            ?.mapNotNull { eventStructure ->
+                eventStructure?.printFullStructure("$LOG_TAG - Event structure")
+                eventStructure?.childes
+                    ?.filter { it?.nameItem == foundNameCategory }
+                    ?.flatMap { it?.childes.orEmpty() }
+            }
+            ?.flatten()
+            ?.filterNotNull()
+
+        _subCategoryDataFlow.value = subCategories.orEmpty()
+
+        val foundNameSubCategory = when {
+            pathStructureName.nameSubCategory.isBlank() ||
+                    pathStructureName.nameSubCategory == "Create" -> {
+                subCategories?.lastOrNull()?.nameItem ?: run {
+                    Log.e(LOG_TAG, "No subcategories available")
+                    return
+                }
+            }
+            else -> pathStructureName.nameSubCategory
+        }
+
+        Log.d(LOG_TAG, "Selected subcategory: $foundNameSubCategory")
+
+        val subSubCategories = subCategories
+            ?.filter { it.nameItem == foundNameSubCategory }
+            ?.flatMap { it.childes.orEmpty() }
+            ?.filterNotNull()
+
+        _subsubCategoryDataFlow.value = subSubCategories.orEmpty()
     }
 
-    private fun areNamesEqual(list1: List<StructureDataLocal?>?, list2: List<StructureDataLocal?>?): Boolean {
+    private fun areNamesEqual(
+        list1: List<StructureDataLocal?>?,
+        list2: List<StructureDataLocal?>?
+    ): Boolean {
         if (list1 == null && list2 == null) return true
         if (list1 == null || list2 == null) return false
         if (list1.size != list2.size) return false
@@ -322,7 +353,7 @@ class CreateQuizViewModel @Inject constructor(
     fun getUserName() = SettingConfigObject.settingsConfig.name
 
     suspend fun updateStructureData(structureDataLocal: StructureDataLocal, eventId: Int) {
-        structureUseCase.updateStructureData(structureDataLocal,eventId)
+        structureUseCase.updateStructureData(structureDataLocal, eventId)
     }
 
     fun initQuestions() = viewModelScope.launch(Dispatchers.IO) {

@@ -30,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.model.PathStructureName
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.MainApp
@@ -69,9 +70,8 @@ open class CreateQuizActivity : AppCompatActivity() {
         regime = intent.getIntExtra(REGIME, regime)
         viewModel.pathStructure = intent.getParcelableExtra<PathStructure>(ARG_PATH_STRUCTURE)!!
 
-        // Меняем порядок инициализации:
-        handler.initData()     // 1. Инициализируем базовые данные
-        handler.initViews()    // 2. Инициализируем views (здесь создается начальный вопрос)
+        handler.initData()
+        handler.initViews()
 
         Log.d("rkfgujrdjkgjk", "onCreate questionsShortEntity : ${viewModel.questionsShortEntity}")
         initSetOnClickListeners()
@@ -84,7 +84,7 @@ open class CreateQuizActivity : AppCompatActivity() {
         spinner: Spinner,
         textView: TextView,
         items: List<StructureDataLocal?>?,
-        onItemSelected: (Int) -> Unit
+        onItemSelected: (String) -> Unit
     ) {
         val spinnerItems = mutableListOf("Create")
 
@@ -108,7 +108,7 @@ open class CreateQuizActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 Log.d("dawdasfesersd", "onItemSelected: $position")
                 textView.text = spinnerItems[position]
-                onItemSelected(position)
+                onItemSelected(spinnerItems[position])
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -116,37 +116,41 @@ open class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun initObserversCategories() {
+        var nameCat = ""
+        var nameSubCat = ""
+        var nameSubsubCat = ""
         lifecycleScope.launch(Dispatchers.IO) {
 
             viewModel.categoryDataFlow.collect { categories ->
 
-                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):1 ${viewModel.questionsShortEntity}")
+                Log.d("rkfgujrdjkgjk", "categories: ${categories}")
                 setupSpinner(binding.spCategory,binding.tvCategory, categories) {position ->
-                    if (position == 0) {
+                    nameCat = position
+                    if (position == "Create") {
                         binding.llCreateNewCategory.visibility = View.VISIBLE
                         viewModel.isCreateCategory = true
-                        viewModel.initCategories(PathStructure(-1, 0, 0,0,0))
+                        viewModel.initCategories(PathStructureName("", "", "", "", ""))
                     } else {
                         viewModel.isCreateCategory = false
-                        viewModel.initCategories(PathStructure(-1, position, -1,-1,-1))
+                        viewModel.initCategories(PathStructureName("", position, "","",""))
                     }
                 }
-
-                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):end ${viewModel.questionsShortEntity}")
             }
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
             viewModel.subCategoryDataFlow.collect { subcategories ->
-                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):2 ${viewModel.questionsShortEntity}")
+                Log.d("rkfgujrdjkgjk", "subcategories: ${subcategories}")
                 setupSpinner(binding.spSubCategory,binding.tvSubCategory, subcategories){position ->
-                    if (position == 0) {
+                    nameSubCat = position
+                    if (position == "Create") {
                         binding.llCreateNewCategory.visibility = View.VISIBLE
                         viewModel.isCreateSubCategory = true
-                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, 0,0,0))
+                        viewModel.initCategories(PathStructureName("",nameCat,
+                            "","",""))
                     } else {
                         viewModel.isCreateSubCategory = false
-                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, position,-1,-1))
+                        viewModel.initCategories(PathStructureName("", nameCat, position,"",""))
                     }
                 }
             }
@@ -154,15 +158,15 @@ open class CreateQuizActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             viewModel.subsubCategoryDataFlow.collect { subsubcategories ->
-                Log.d("rkfgujrdjkgjk", "initObserversCategories lifecycleScope.launch(Dispatchers.IO):3 ${viewModel.questionsShortEntity}")
+                Log.d("rkfgujrdjkgjk", "subsubcategories: ${subsubcategories}")
                 setupSpinner(binding.spSubsubCategory, binding.tvSubsubCategory, subsubcategories){position ->
-                    if (position == 0) {
+                    if (position == "Create") {
                         binding.llCreateNewCategory.visibility = View.VISIBLE
                         viewModel.isCreateSubsubCategory = true
-                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, viewModel.pathStructure.idSubCategory,0,0))
+                        viewModel.initCategories(PathStructureName("", nameCat, nameSubCat,"",""))
                     } else {
                         viewModel.isCreateSubsubCategory = false
-                        viewModel.initCategories(PathStructure(-1, viewModel.pathStructure.idCategory, viewModel.pathStructure.idSubCategory,position,-1))
+                        viewModel.initCategories(PathStructureName("", nameCat, nameSubCat,position,""))
                     }
                 }
             }
@@ -611,7 +615,6 @@ open class CreateQuizActivity : AppCompatActivity() {
             idCounters = mutableListOf(mutableListOf())
         }
     }
-
 
     internal fun updateUiQuestion() = with(binding) {
         val numQuestionThis = viewModel.questionsShortEntity[viewModel.counter].numQuestion
