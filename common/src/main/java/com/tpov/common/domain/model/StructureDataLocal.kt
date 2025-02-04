@@ -28,7 +28,7 @@ data class StructureDataLocal(
     val tpovIdMaxStarsGlobal: Int = 0,
     var languages: String = "",
     val picture: String = "",
-    val isShowDownload: Boolean = false,
+    val isShowDownload: Boolean = true,
     val isShowArchive: Boolean = false
 ) {
 
