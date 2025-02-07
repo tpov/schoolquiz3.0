@@ -24,7 +24,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.tpov.common.ANIM_SPRING_VELOCITY_LEFT
 import com.tpov.common.ANIM_SPRING_VELOCITY_RIGHT
-import com.tpov.common.CODE_EMPTY_ANSWER
 import com.tpov.common.DELAY_SHOW_TEXT_IN_QUESTIONACTIVITY
 import com.tpov.common.MAX_CLASSIC_ANSWER
 import com.tpov.common.R
@@ -221,11 +220,10 @@ class QuestionActivity : AppCompatActivity() {
                 currentQuestion?.let { question ->
                     Log.d("jfgksdjefkse", "question: $question")
                     val questionText = question.nameQuestion
-                    val answer = question.answer
                     val answersName = question.nameAnswers
                     val is8Button = questionText.let { doter.containsMatchIn(it) }
 
-                    showViewByTypeQuestion(is8Button, answer, answersName)
+                    showViewByTypeQuestion(is8Button, answersName)
                     startTimer(is8Button)
 
                     if (viewModel.hardQuiz == true) {
@@ -271,15 +269,15 @@ class QuestionActivity : AppCompatActivity() {
         }
     }
 
-    private fun showViewByTypeQuestion(is8Button: Boolean, answer: Int, answersName: String) {
+    private fun showViewByTypeQuestion(is8Button: Boolean, answersName: String) {
         if (is8Button) {
             binding.ll8Answer.visibility = View.VISIBLE
             binding.ll4Answer.visibility = View.GONE
-            show8Answers(answer, answersName)
+            show8Answers(answersName)
         } else {
             binding.ll8Answer.visibility = View.GONE
             binding.ll4Answer.visibility = View.VISIBLE
-            show4Answers(answer, answersName)
+            show4Answers(answersName)
         }
     }
 
@@ -386,16 +384,13 @@ class QuestionActivity : AppCompatActivity() {
         }
     }
 
-    private fun show8Answers(answer: Int?, answersName: String?) {
+    private fun show8Answers(answersName: String?) {
         val answers = answersName?.split(SPLIT_BETWEEN_ANSWERS) ?: return
         val maxAnswers = 8
 
-        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, CODE_EMPTY_ANSWER)
-            ?: CODE_EMPTY_ANSWER.toString().repeat(answers.size)
         val indexedAnswers = answers.withIndex().toList().shuffled()
         val newAnswerOrder =
             indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
-
 
         for (i in buttons8.indices) {
             if (i < indexedAnswers.size && i < maxAnswers) {
@@ -409,17 +404,14 @@ class QuestionActivity : AppCompatActivity() {
 
         setupTextViewForDrop()
 
-        viewModel.originalAnswerOrder =
-            paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER)
+        viewModel.originalAnswerOrder = answersName
         viewModel.newAnswerOrder = newAnswerOrder
     }
 
-    private fun show4Answers(answer: Int?, answersName: String?) {
+    private fun show4Answers(answersName: String?) {
         val answers = answersName?.split(SPLIT_BETWEEN_ANSWERS) ?: return
         val maxAnswers = MAX_CLASSIC_ANSWER
 
-        val paddedAnswerValue = answer?.toString()?.padEnd(answers.size, CODE_EMPTY_ANSWER)
-            ?: CODE_EMPTY_ANSWER.toString().repeat(answers.size)
         val indexedAnswers = answers.withIndex().toList().shuffled()
         val newAnswerOrder =
             indexedAnswers.take(maxAnswers).map { it.index + 1 }.joinToString("").toInt()
@@ -434,7 +426,7 @@ class QuestionActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.originalAnswerOrder = paddedAnswerValue.padStart(maxAnswers, CODE_EMPTY_ANSWER)
+        viewModel.originalAnswerOrder = answersName
         viewModel.newAnswerOrder = newAnswerOrder
     }
 

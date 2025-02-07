@@ -10,7 +10,7 @@ import com.tpov.common.presentation.utils.DateUtil
 
 data class StructureDataLocal(
     val id: Int? = null,
-    var childes: MutableList<StructureDataLocal?>? = null,
+    var children: MutableList<StructureDataLocal?>? = null,
     val nameItem: String = "",
     val dataUpdate: String = "", // for syncs
     val dataCreate: String = "",
@@ -65,7 +65,7 @@ data class StructureDataLocal(
                 val prefix = if (depth > 0) "└── " else ""
                 appendLine("$indent$prefix${node.nameItem} (id=${node.id})")
 
-                node.childes?.filterNotNull()?.forEach { child ->
+                node.children?.filterNotNull()?.forEach { child ->
                     printNode(child, depth + 1)
                 }
             }
@@ -79,7 +79,7 @@ data class StructureDataLocal(
     }
 
     fun toStructureDataEntity(): StructureDataEntity? {
-        val transformedChildes = childes?.map { child ->
+        val transformedChildes = children?.map { child ->
             child?.toStructureDataEntity()
         }
 
@@ -113,7 +113,7 @@ data class StructureDataLocal(
     fun toStructureDataRemote(): StructureDataRemote {
         return StructureDataRemote(
             id = id,
-            childes = childes?.map { toStructureDataRemote() },
+            children = children?.map { toStructureDataRemote() },
             nameItem = nameItem,
             dataUpdate = dataUpdate,
             version = version,

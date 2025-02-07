@@ -4,7 +4,7 @@ import com.tpov.common.domain.model.StructureDataLocal
 
 data class StructureDataRemote(
     val id: Int? = null,
-    val childes: List<StructureDataRemote>? = null,
+    val children: List<StructureDataRemote>? = null,
     val nameItem: String = "",
     val dataUpdate: String = "", // for syncs
     val dataCreate: String = "",
@@ -22,7 +22,7 @@ data class StructureDataRemote(
 ) {
     fun toStructureDataLocal(): StructureDataLocal = StructureDataLocal(
         id,
-        childes.orEmpty().map { it.toStructureDataLocal() }.toMutableList(),
+        children.orEmpty().map { it.toStructureDataLocal() }.toMutableList(),
         nameItem,
         dataUpdate,
         dataCreate,

@@ -7,7 +7,6 @@ import com.tpov.common.presentation.model.PathStructure
 @IgnoreExtraProperties
 data class QuestionRemote (
     val nameQuestion: String,
-    val answer: Int,
     val nameAnswers: String,
     val pathPictureQuestion: String?,
     val lvlTranslate: Int,
@@ -23,7 +22,6 @@ data class QuestionRemote (
             numQuestion = numQuestion,
             nameQuestion = this.nameQuestion,
             pathPictureQuestion = pathPictureQuestion,
-            answer = answer,
             nameAnswers = nameAnswers,
             hardQuestion = hardQuestion,
             idEvent = pathStructure.idEvent,
@@ -37,6 +35,6 @@ data class QuestionRemote (
     }
 
     constructor() : this(
-        "", 0, "", "",  0, 0 ,false, ""
+        "", "", "",  0, 0 ,false, ""
     )
 }

@@ -193,7 +193,7 @@ class CreateQuizViewModel @Inject constructor(
         val listMyQuiz = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)
         Log.d("initStructureData", "listHome: ${listHome}")
         Log.d("initStructureData", "listMyQuiz: ${listMyQuiz}")
-        _structureDataFlow.value = StructureDataLocal(childes = mutableListOf(listMyQuiz, listHome))
+        _structureDataFlow.value = StructureDataLocal(children = mutableListOf(listMyQuiz, listHome))
         Log.d("initStructureData", "_structureDataFlow.value: ${_structureDataFlow.value}")
         initCategories(PathStructureName("", "", "", "", ""))
     }
@@ -207,13 +207,13 @@ class CreateQuizViewModel @Inject constructor(
         }
 
         // Отладочная печать структуры
-        StructureDataLocal(childes = structureData.childes)
+        StructureDataLocal(children = structureData.children)
             .printFullStructure("$LOG_TAG - Initial structure")
 
         // Ищем категорию для пользовательских квизов
-        val quizByUserCategory = structureData.childes
+        val quizByUserCategory = structureData.children
             ?.find { it?.id == EventQuiz.QUIZ_BY_USER.id }
-            ?.childes
+            ?.children
 
         _categoryDataFlow.value = quizByUserCategory
 
@@ -231,12 +231,12 @@ class CreateQuizViewModel @Inject constructor(
 
         Log.d(LOG_TAG, "Selected category: $foundNameCategory")
 
-        val subCategories = structureData.childes
+        val subCategories = structureData.children
             ?.mapNotNull { eventStructure ->
                 eventStructure?.printFullStructure("$LOG_TAG - Event structure")
-                eventStructure?.childes
+                eventStructure?.children
                     ?.filter { it?.nameItem == foundNameCategory }
-                    ?.flatMap { it?.childes.orEmpty() }
+                    ?.flatMap { it?.children.orEmpty() }
             }
             ?.flatten()
             ?.filterNotNull()
@@ -258,7 +258,7 @@ class CreateQuizViewModel @Inject constructor(
 
         val subSubCategories = subCategories
             ?.filter { it.nameItem == foundNameSubCategory }
-            ?.flatMap { it.childes.orEmpty() }
+            ?.flatMap { it.children.orEmpty() }
             ?.filterNotNull()
 
         _subsubCategoryDataFlow.value = subSubCategories.orEmpty()

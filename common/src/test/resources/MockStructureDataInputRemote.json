@@ -1,19 +1,19 @@
 [
   {
     "id": 1,
-    "childes": [
+    "children": [
       {
         "id": 1,
-        "childes": [
+        "children": [
           {
             "id": 1,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_1_3_1_4_1_5",
                     "dataUpdate": 1736249971911,
                     "dataCreate": 1709552371911,
@@ -31,7 +31,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_1_3_1_4_2_5",
                     "dataUpdate": 1736163571912,
                     "dataCreate": 1709638771912,
@@ -49,7 +49,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_1_3_1_4_3_5",
                     "dataUpdate": 1734003571912,
                     "dataCreate": 1720093171912,
@@ -62,24 +62,6 @@
                     "tpovIdMaxStarsGlobal": 568,
                     "picture": "picture_1_1_2_1_3_1_4_3_5.jpg",
                     "languages": "en|ua",
-                    "isShowArchive": true,
-                    "isShow": true
-                  },
-                  {
-                    "id": 4,
-                    "childes": [],
-                    "nameItem": "Quest name 1_1_2_1_3_1_4_4_5",
-                    "dataUpdate": 1735817971912,
-                    "dataCreate": 1707565171912,
-                    "version": 5,
-                    "ratingGlobal": 14,
-                    "starsAverageGlobal": 71,
-                    "starsMaxGlobal": 70,
-                    "tpovIdCreator": 176,
-                    "nameCreator": "Creator 23",
-                    "tpovIdMaxStarsGlobal": 165,
-                    "picture": "picture_1_1_2_1_3_1_4_4_5.jpg",
-                    "languages": "ru|en",
                     "isShowArchive": true,
                     "isShow": true
                   }
@@ -101,10 +83,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_1_3_2_4_1_5",
                     "dataUpdate": 1735385971912,
                     "dataCreate": 1726659571912,
@@ -122,7 +104,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_1_3_2_4_2_5",
                     "dataUpdate": 1736163571912,
                     "dataCreate": 1725363571912,
@@ -172,13 +154,13 @@
           },
           {
             "id": 2,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_2_3_1_4_1_5",
                     "dataUpdate": 1735472371912,
                     "dataCreate": 1730806771912,
@@ -196,7 +178,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_2_3_1_4_2_5",
                     "dataUpdate": 1734089971912,
                     "dataCreate": 1712230771912,
@@ -230,10 +212,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_2_3_2_4_1_5",
                     "dataUpdate": 1735731571912,
                     "dataCreate": 1721129971912,
@@ -251,7 +233,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_2_3_2_4_2_5",
                     "dataUpdate": 1735213171912,
                     "dataCreate": 1728560371912,
@@ -269,7 +251,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_2_3_2_4_3_5",
                     "dataUpdate": 1734176371912,
                     "dataCreate": 1726659571912,
@@ -287,7 +269,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_2_3_2_4_4_5",
                     "dataUpdate": 1735040371912,
                     "dataCreate": 1721993971912,
@@ -337,13 +319,13 @@
           },
           {
             "id": 3,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_3_3_1_4_1_5",
                     "dataUpdate": 1733830771912,
                     "dataCreate": 1723203571912,
@@ -361,7 +343,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_3_3_1_4_2_5",
                     "dataUpdate": 1735731571912,
                     "dataCreate": 1709379571912,
@@ -379,7 +361,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_3_3_1_4_3_5",
                     "dataUpdate": 1735040371912,
                     "dataCreate": 1710934771912,
@@ -413,10 +395,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_3_3_2_4_1_5",
                     "dataUpdate": 1734176371912,
                     "dataCreate": 1709811571912,
@@ -434,7 +416,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_1_2_3_3_2_4_2_5",
                     "dataUpdate": 1736249971912,
                     "dataCreate": 1718710771912,
@@ -500,16 +482,16 @@
       },
       {
         "id": 2,
-        "childes": [
+        "children": [
           {
             "id": 1,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_1_3_1_4_1_5",
                     "dataUpdate": 1734089971912,
                     "dataCreate": 1726573171912,
@@ -527,7 +509,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_1_3_1_4_2_5",
                     "dataUpdate": 1736336371912,
                     "dataCreate": 1707392371912,
@@ -545,7 +527,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_1_3_1_4_3_5",
                     "dataUpdate": 1734521971912,
                     "dataCreate": 1731843571912,
@@ -579,10 +561,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_1_3_2_4_1_5",
                     "dataUpdate": 1734694771912,
                     "dataCreate": 1720179571912,
@@ -600,7 +582,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_1_3_2_4_2_5",
                     "dataUpdate": 1736422771912,
                     "dataCreate": 1732793971912,
@@ -618,7 +600,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_1_3_2_4_3_5",
                     "dataUpdate": 1734089971912,
                     "dataCreate": 1730374771912,
@@ -668,13 +650,13 @@
           },
           {
             "id": 2,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_1_4_1_5",
                     "dataUpdate": 1736336371912,
                     "dataCreate": 1719833971912,
@@ -692,7 +674,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_1_4_2_5",
                     "dataUpdate": 1733917171912,
                     "dataCreate": 1722339571912,
@@ -710,7 +692,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_1_4_3_5",
                     "dataUpdate": 1735299571912,
                     "dataCreate": 1714736371912,
@@ -744,10 +726,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_2_4_1_5",
                     "dataUpdate": 1735472371912,
                     "dataCreate": 1722253171912,
@@ -765,7 +747,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_2_4_2_5",
                     "dataUpdate": 1735299571912,
                     "dataCreate": 1731325171912,
@@ -783,7 +765,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_2_4_3_5",
                     "dataUpdate": 1734262771912,
                     "dataCreate": 1706787571912,
@@ -801,7 +783,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_2_4_4_5",
                     "dataUpdate": 1734694771912,
                     "dataCreate": 1705491571912,
@@ -835,10 +817,10 @@
               },
               {
                 "id": 3,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_3_4_1_5",
                     "dataUpdate": 1734089971912,
                     "dataCreate": 1708515571912,
@@ -856,7 +838,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_3_4_2_5",
                     "dataUpdate": 1735040371912,
                     "dataCreate": 1726400371912,
@@ -874,7 +856,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_3_4_3_5",
                     "dataUpdate": 1734262771912,
                     "dataCreate": 1705664371912,
@@ -892,7 +874,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_3_4_4_5",
                     "dataUpdate": 1735558771912,
                     "dataCreate": 1723117171912,
@@ -926,10 +908,10 @@
               },
               {
                 "id": 4,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_4_4_1_5",
                     "dataUpdate": 1734953971912,
                     "dataCreate": 1713094771912,
@@ -947,7 +929,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_4_4_2_5",
                     "dataUpdate": 1734867571912,
                     "dataCreate": 1710761971912,
@@ -965,7 +947,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_4_4_3_5",
                     "dataUpdate": 1735558771912,
                     "dataCreate": 1732361971912,
@@ -983,7 +965,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_2_3_4_4_4_5",
                     "dataUpdate": 1736163571912,
                     "dataCreate": 1715773171912,
@@ -1033,13 +1015,13 @@
           },
           {
             "id": 3,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_1_4_1_5",
                     "dataUpdate": 1734089971912,
                     "dataCreate": 1721734771912,
@@ -1057,7 +1039,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_1_4_2_5",
                     "dataUpdate": 1734867571912,
                     "dataCreate": 1729510771912,
@@ -1091,10 +1073,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_2_4_1_5",
                     "dataUpdate": 1735990771912,
                     "dataCreate": 1717673971912,
@@ -1112,7 +1094,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_2_4_2_5",
                     "dataUpdate": 1735299571912,
                     "dataCreate": 1705059571912,
@@ -1130,7 +1112,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_2_4_3_5",
                     "dataUpdate": 1736336371912,
                     "dataCreate": 1710329971912,
@@ -1164,10 +1146,10 @@
               },
               {
                 "id": 3,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_3_4_1_5",
                     "dataUpdate": 1734262771912,
                     "dataCreate": 1729165171912,
@@ -1185,7 +1167,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_3_4_2_5",
                     "dataUpdate": 1733830771912,
                     "dataCreate": 1732189171912,
@@ -1203,7 +1185,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_3_4_3_5",
                     "dataUpdate": 1735472371912,
                     "dataCreate": 1707824371912,
@@ -1237,10 +1219,10 @@
               },
               {
                 "id": 4,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_4_4_1_5",
                     "dataUpdate": 1735385971912,
                     "dataCreate": 1710502771912,
@@ -1258,7 +1240,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_4_4_2_5",
                     "dataUpdate": 1736077171912,
                     "dataCreate": 1727350771912,
@@ -1276,7 +1258,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_2_2_3_3_4_4_3_5",
                     "dataUpdate": 1736422771912,
                     "dataCreate": 1730288371912,
@@ -1341,16 +1323,16 @@
       },
       {
         "id": 3,
-        "childes": [
+        "children": [
           {
             "id": 1,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_1_4_1_5",
                     "dataUpdate": 1735731571912,
                     "dataCreate": 1714477171912,
@@ -1368,7 +1350,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_1_4_2_5",
                     "dataUpdate": 1735990771912,
                     "dataCreate": 1717241971912,
@@ -1386,7 +1368,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_1_4_3_5",
                     "dataUpdate": 1734694771912,
                     "dataCreate": 1723894771912,
@@ -1404,7 +1386,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_1_4_4_5",
                     "dataUpdate": 1735558771912,
                     "dataCreate": 1720697971912,
@@ -1438,10 +1420,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_2_4_1_5",
                     "dataUpdate": 1735126771912,
                     "dataCreate": 1727091571912,
@@ -1459,7 +1441,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_2_4_2_5",
                     "dataUpdate": 1736077171912,
                     "dataCreate": 1709379571912,
@@ -1477,7 +1459,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_2_4_3_5",
                     "dataUpdate": 1734608371912,
                     "dataCreate": 1728214771912,
@@ -1495,7 +1477,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_2_4_4_5",
                     "dataUpdate": 1735299571912,
                     "dataCreate": 1722253171912,
@@ -1529,10 +1511,10 @@
               },
               {
                 "id": 3,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_3_4_1_5",
                     "dataUpdate": 1736422771912,
                     "dataCreate": 1720611571912,
@@ -1550,7 +1532,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_1_3_3_4_2_5",
                     "dataUpdate": 1734262771912,
                     "dataCreate": 1714822771912,
@@ -1600,13 +1582,13 @@
           },
           {
             "id": 2,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_1_4_1_5",
                     "dataUpdate": 1735817971912,
                     "dataCreate": 1711712371912,
@@ -1624,7 +1606,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_1_4_2_5",
                     "dataUpdate": 1734089971912,
                     "dataCreate": 1728905971912,
@@ -1642,7 +1624,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_1_4_3_5",
                     "dataUpdate": 1735299571912,
                     "dataCreate": 1727955571912,
@@ -1660,7 +1642,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_1_4_4_5",
                     "dataUpdate": 1735990771912,
                     "dataCreate": 1721907571912,
@@ -1694,10 +1676,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_2_4_1_5",
                     "dataUpdate": 1735126771912,
                     "dataCreate": 1709120371912,
@@ -1715,7 +1697,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_2_4_2_5",
                     "dataUpdate": 1736077171912,
                     "dataCreate": 1733053171912,
@@ -1749,10 +1731,10 @@
               },
               {
                 "id": 3,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_3_4_1_5",
                     "dataUpdate": 1735213171912,
                     "dataCreate": 1721129971912,
@@ -1770,7 +1752,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_3_4_2_5",
                     "dataUpdate": 1734521971912,
                     "dataCreate": 1722512371912,
@@ -1788,7 +1770,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_3_4_3_5",
                     "dataUpdate": 1734262771912,
                     "dataCreate": 1733398771912,
@@ -1822,10 +1804,10 @@
               },
               {
                 "id": 4,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_4_4_1_5",
                     "dataUpdate": 1736077171912,
                     "dataCreate": 1719488371912,
@@ -1843,7 +1825,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_4_4_2_5",
                     "dataUpdate": 1736422771912,
                     "dataCreate": 1724153971912,
@@ -1861,7 +1843,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_2_3_4_4_3_5",
                     "dataUpdate": 1735558771912,
                     "dataCreate": 1720611571912,
@@ -1911,13 +1893,13 @@
           },
           {
             "id": 3,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_1_4_1_5",
                     "dataUpdate": 1735645171912,
                     "dataCreate": 1732966771912,
@@ -1935,7 +1917,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_1_4_2_5",
                     "dataUpdate": 1736163571912,
                     "dataCreate": 1721475571912,
@@ -1969,10 +1951,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_2_4_1_5",
                     "dataUpdate": 1735213171912,
                     "dataCreate": 1718883571912,
@@ -1990,7 +1972,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_2_4_2_5",
                     "dataUpdate": 1735126771912,
                     "dataCreate": 1709811571912,
@@ -2008,7 +1990,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_2_4_3_5",
                     "dataUpdate": 1734176371912,
                     "dataCreate": 1718797171912,
@@ -2026,7 +2008,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_2_4_4_5",
                     "dataUpdate": 1735126771912,
                     "dataCreate": 1726659571912,
@@ -2060,10 +2042,10 @@
               },
               {
                 "id": 3,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_3_4_1_5",
                     "dataUpdate": 1735472371912,
                     "dataCreate": 1729165171912,
@@ -2081,7 +2063,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_3_4_2_5",
                     "dataUpdate": 1735558771912,
                     "dataCreate": 1724326771912,
@@ -2115,10 +2097,10 @@
               },
               {
                 "id": 4,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_4_4_1_5",
                     "dataUpdate": 1734435571912,
                     "dataCreate": 1729856371912,
@@ -2136,7 +2118,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_4_4_2_5",
                     "dataUpdate": 1735299571912,
                     "dataCreate": 1731929971912,
@@ -2202,16 +2184,16 @@
       },
       {
         "id": 4,
-        "childes": [
+        "children": [
           {
             "id": 1,
-            "childes": [
+            "children": [
               {
                 "id": 1,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_1_4_1_5",
                     "dataUpdate": 1735213171912,
                     "dataCreate": 1726054771912,
@@ -2229,7 +2211,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_1_4_2_5",
                     "dataUpdate": 1734176371912,
                     "dataCreate": 1721302771912,
@@ -2247,7 +2229,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_1_4_3_5",
                     "dataUpdate": 1736163571912,
                     "dataCreate": 1718710771912,
@@ -2265,7 +2247,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_1_4_4_5",
                     "dataUpdate": 1733917171912,
                     "dataCreate": 1721302771912,
@@ -2299,10 +2281,10 @@
               },
               {
                 "id": 2,
-                "childes": [
+                "children": [
                   {
                     "id": 1,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_2_4_1_5",
                     "dataUpdate": 1736077171912,
                     "dataCreate": 1721475571912,
@@ -2320,7 +2302,7 @@
                   },
                   {
                     "id": 2,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_2_4_2_5",
                     "dataUpdate": 1734435571912,
                     "dataCreate": 1717933171912,
@@ -2338,7 +2320,7 @@
                   },
                   {
                     "id": 3,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_2_4_3_5",
                     "dataUpdate": 1734349171912,
                     "dataCreate": 1725363571912,
@@ -2356,7 +2338,7 @@
                   },
                   {
                     "id": 4,
-                    "childes": [],
+                    "children": [],
                     "nameItem": "Quest name 1_4_2_1_3_2_4_4_5",
                     "dataUpdate": 1735990771912,
                     "dataCreate": 1719833971912,
@@ -2401,135 +2383,6 @@
             "tpovIdMaxStarsGlobal": 746,
             "picture": "picture_1_4_2_1_3.jpg",
             "languages": "ru|en|ua",
-            "isShowArchive": true,
-            "isShow": true
-          },
-          {
-            "id": 2,
-            "childes": [
-              {
-                "id": 1,
-                "childes": [
-                  {
-                    "id": 1,
-                    "childes": [],
-                    "nameItem": "Quest name 1_4_2_2_3_1_4_1_5",
-                    "dataUpdate": 1735040371912,
-                    "dataCreate": 1724499571912,
-                    "version": 7,
-                    "ratingGlobal": 16,
-                    "starsAverageGlobal": 74,
-                    "starsMaxGlobal": 79,
-                    "tpovIdCreator": 769,
-                    "nameCreator": "Creator 76",
-                    "tpovIdMaxStarsGlobal": 277,
-                    "picture": "picture_1_4_2_2_3_1_4_1_5.jpg",
-                    "languages": "en|ua",
-                    "isShowArchive": true,
-                    "isShow": true
-                  },
-                  {
-                    "id": 2,
-                    "childes": [],
-                    "nameItem": "Quest name 1_4_2_2_3_1_4_2_5",
-                    "dataUpdate": 1736336371912,
-                    "dataCreate": 1719142771912,
-                    "version": 1,
-                    "ratingGlobal": 16,
-                    "starsAverageGlobal": 59,
-                    "starsMaxGlobal": 49,
-                    "tpovIdCreator": 835,
-                    "nameCreator": "Creator 47",
-                    "tpovIdMaxStarsGlobal": 641,
-                    "picture": "picture_1_4_2_2_3_1_4_2_5.jpg",
-                    "languages": "ru|en",
-                    "isShowArchive": true,
-                    "isShow": true
-                  }
-                ],
-                "nameItem": "Sub-subcategory 1_4_2_2_3_1_4",
-                "dataUpdate": 1734262771912,
-                "dataCreate": 1732793971912,
-                "version": 3,
-                "ratingGlobal": 25,
-                "starsAverageGlobal": 31,
-                "starsMaxGlobal": 19,
-                "tpovIdCreator": 100,
-                "nameCreator": "Creator 35",
-                "tpovIdMaxStarsGlobal": 592,
-                "picture": "picture_1_4_2_2_3_1_4.jpg",
-                "languages": "en|ua",
-                "isShowArchive": true,
-                "isShow": true
-              },
-              {
-                "id": 2,
-                "childes": [
-                  {
-                    "id": 1,
-                    "childes": [],
-                    "nameItem": "Quest name 1_4_2_2_3_2_4_1_5",
-                    "dataUpdate": 1735126771912,
-                    "dataCreate": 1724067571912,
-                    "version": 5,
-                    "ratingGlobal": 14,
-                    "starsAverageGlobal": 6,
-                    "starsMaxGlobal": 46,
-                    "tpovIdCreator": 907,
-                    "nameCreator": "Creator 44",
-                    "tpovIdMaxStarsGlobal": 929,
-                    "picture": "picture_1_4_2_2_3_2_4_1_5.jpg",
-                    "languages": "en|ua",
-                    "isShowArchive": true,
-                    "isShow": true
-                  },
-                  {
-                    "id": 2,
-                    "childes": [],
-                    "nameItem": "Quest name 1_4_2_2_3_2_4_2_5",
-                    "dataUpdate": 1735645171912,
-                    "dataCreate": 1711798771912,
-                    "version": 10,
-                    "ratingGlobal": 5,
-                    "starsAverageGlobal": 75,
-                    "starsMaxGlobal": 45,
-                    "tpovIdCreator": 902,
-                    "nameCreator": "Creator 52",
-                    "tpovIdMaxStarsGlobal": 923,
-                    "picture": "picture_1_4_2_2_3_2_4_2_5.jpg",
-                    "languages": "ru|en|ua",
-                    "isShowArchive": true,
-                    "isShow": true
-                  }
-                ],
-                "nameItem": "Sub-subcategory 1_4_2_2_3_2_4",
-                "dataUpdate": 1735731571912,
-                "dataCreate": 1728128371912,
-                "version": 2,
-                "ratingGlobal": 84,
-                "starsAverageGlobal": 36,
-                "starsMaxGlobal": 45,
-                "tpovIdCreator": 867,
-                "nameCreator": "Creator 21",
-                "tpovIdMaxStarsGlobal": 542,
-                "picture": "picture_1_4_2_2_3_2_4.jpg",
-                "languages": "ru|en|ua",
-                "isShowArchive": true,
-                "isShow": true
-              }
-            ],
-            "nameItem": "Subcategory 1_4_2_2_3",
-            "dataUpdate": 1735040371912,
-            "dataCreate": 1728992371912,
-            "version": 1,
-            "ratingGlobal": 25,
-            "starsAverageGlobal": 47,
-            "starsMaxGlobal": 69,
-            "tpovIdCreator": 673,
-            "nameCreator": "Creator 27",
-            "tpovIdMaxStarsGlobal": 345,
-            "picture": "picture_1_4_2_2_3.jpg",
-            "languages": "en|ua",
             "isShowArchive": true,
             "isShow": true
           }

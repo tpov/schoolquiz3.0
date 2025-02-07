@@ -30,7 +30,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class RepositoryStuctureImpl @Inject constructor(
+open class RepositoryStuctureImpl @Inject constructor(
     private val structureDataDao: StructureDataDao,
     private val structureEditDataDao: StructureEditDataDao,
     private val firestore: FirebaseFirestore,
@@ -331,3 +331,4 @@ class RepositoryStuctureImpl @Inject constructor(
         return structureDataDao.getStructureDataByPath(eventId, path.toList())
     }
 }
+

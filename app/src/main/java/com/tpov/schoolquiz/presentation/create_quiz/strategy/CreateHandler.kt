@@ -38,7 +38,7 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
             activity.viewModel.structureDataFlow
         )
 
-        mergeStructureData.childes?.forEach {
+        mergeStructureData.children?.forEach {
             it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) }
         }
 
@@ -69,15 +69,15 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
         val currentStructure = structureDataFlow.value ?: StructureDataLocal()
         currentStructure.printFullStructure("jfgksdjefkse")
 
-        if (currentStructure.childes == null) {
-            currentStructure.childes = mutableListOf()
+        if (currentStructure.children == null) {
+            currentStructure.children = mutableListOf()
         }
 
-        val eventRoot = currentStructure.childes?.find {
+        val eventRoot = currentStructure.children?.find {
             it?.id == eventId
         } ?: run {
             val newRoot = StructureDataLocal().create(id = eventId, "", 0, 0, "", "")
-            currentStructure.childes?.add(newRoot)
+            currentStructure.children?.add(newRoot)
             newRoot
         }
         eventRoot.findOrCreateChild(categoryStructure).updatePathByStructureData()
@@ -101,20 +101,20 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
     private fun StructureDataLocal.findOrCreateChild(
         newChild: StructureDataLocal
     ): StructureDataLocal {
-        if (childes == null) {
-            childes = mutableListOf()
+        if (children == null) {
+            children = mutableListOf()
         }
 
-        val existingChild = childes?.find { it?.nameItem == newChild.nameItem }
+        val existingChild = children?.find { it?.nameItem == newChild.nameItem }
 
         if (existingChild != null) {
             return existingChild
         }
 
         val newChildCopy = newChild.copy(
-            id = childes?.size?.plus(1) ?: 1
+            id = children?.size?.plus(1) ?: 1
         )
-        childes?.add(newChildCopy)
+        children?.add(newChildCopy)
         return newChildCopy
     }
 }

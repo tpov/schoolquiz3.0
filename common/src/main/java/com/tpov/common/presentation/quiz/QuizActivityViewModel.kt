@@ -139,15 +139,15 @@ class QuizActivityViewModel @Inject constructor(
     private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
         Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
-        val category = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)?.childes
+        val category = structureUseCase.getStructureData(EventQuiz.QUIZ_HOME.id)?.children
             ?.find { it?.id == idCat }
 
         Log.d("jij", "category $category")
         nameCategory = category?.nameItem ?: ""
-        category?.childes?.forEach {
+        category?.children?.forEach {
             Log.d("jij", "subCatData: $it")
             if (idSubCat == -1) flattenedList.add(it!!)
-            else it?.childes?.find { it?.id == idSubCat }?.childes?.forEach {
+            else it?.children?.find { it?.id == idSubCat }?.children?.forEach {
                 Log.d("jij", "quizData: $it")
                 nameSubCategory = it!!.nameItem
                 flattenedList.add(it)
@@ -160,18 +160,18 @@ class QuizActivityViewModel @Inject constructor(
     private suspend fun handleUserEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
         Log.d("jij", "handleUserEvent()")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
-        val category = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)?.childes
+        val category = structureUseCase.getStructureData(EventQuiz.QUIZ_BY_USER.id)?.children
             ?.find {
                 Log.d("jij", "it.id: ${it?.id}")
                 Log.d("jij", "idCat: ${idCat}")
                 it?.id == idCat
             }
 
-        category?.childes?.forEach {subCat ->
+        category?.children?.forEach { subCat ->
             Log.d("jij", "subCatData.name: ${subCat?.nameItem}")
-            subCat?.childes?.forEach { subsubCat ->
+            subCat?.children?.forEach { subsubCat ->
                 Log.d("jij", "subsubCat.name: ${subsubCat?.nameItem}")
-                subsubCat?.childes?.forEach {quiz ->
+                subsubCat?.children?.forEach { quiz ->
                     Log.d("jij", "quizData.name: ${quiz?.nameItem}")
                     getHomePath[quiz!!] = PathStructure(pathStructure?.idEvent!!, idCat, subCat.id!!, subsubCat.id!!, quiz.id!!)
                     flattenedList.add(quiz)

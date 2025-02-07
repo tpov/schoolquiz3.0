@@ -2,7 +2,6 @@ package com.tpov.common.domain.usecase
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.util.Log
 import android.widget.Toast
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStuctureImpl
@@ -15,14 +14,16 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 
-class StructureUseCase @Inject constructor(
+open class StructureUseCase @Inject constructor(
     private val repositoryStructureImpl: RepositoryStuctureImpl,
     private val repositoryQuestionImpl: RepositoryQuestionImpl
 ) {
+
 
     fun savePicture(fileName: String, bitmap: Bitmap) {
         val file = File(application.filesDir, fileName)
@@ -43,81 +44,91 @@ class StructureUseCase @Inject constructor(
         Log.d("logger", i.toString())
     }
 
-    suspend fun fetchStructureData(event: Int) = StructureDataLocal(childes = repositoryStructureImpl.fetchStructureDataList(event)?.toMutableList())
+    suspend fun fetchStructureData(event: Int) = StructureDataLocal(children = repositoryStructureImpl.fetchStructureDataList(event)?.toMutableList())
 
     suspend fun getStructureData(event: Int) =
         repositoryStructureImpl.getStructureData(event)
 
     @SuppressLint("SuspiciousIndentation")
-    suspend fun syncStructureDataAndQuestions(eventId : Int): List<ChangeVersionStructure> {
+    suspend fun syncStructureDataAndQuestions(eventId: Int): List<ChangeVersionStructure> {
         val changedQuizzes = mutableListOf<ChangeVersionStructure>()
 
-            val dataRemote: MutableList<StructureDataLocal> = try {
-                repositoryStructureImpl.fetchStructureDataList(eventId)?.toMutableList()!!
-            } catch (e: Exception) {
-                throw e
-            }
+        // Логируем начало синхронизации
+        Log.d("SYNC", "Начало syncStructureDataAndQuestions для eventId = $eventId")
 
-            var dataLocal: MutableList<StructureDataLocal?>? = try {
-                repositoryStructureImpl.getStructureData(eventId, -1)?.childes?.toMutableList()
-            } catch (e: Exception) {
-                throw e
-            }
+        // Получение remote данных
+        val dataRemote: MutableList<StructureDataLocal> = try {
+            repositoryStructureImpl.fetchStructureDataList(eventId)?.toMutableList()!!
+        } catch (e: Exception) {
+            Log.d("SYNC", "Ошибка при fetchStructureDataList: ${e.message}")
+            throw e
+        }
+        Log.d("SYNC", "dataRemote: $dataRemote")
 
-            dataRemote?.forEachIndexed { index, categoryRemote ->
-                val categoryLocal = dataLocal?.getOrNull(index)
+        // Получение local данных
+        var dataLocal: MutableList<StructureDataLocal?>? = try {
+            repositoryStructureImpl.getStructureData(eventId, -1)?.children?.toMutableList()
+        } catch (e: Exception) {
+            Log.d("SYNC", "Ошибка при getStructureData: ${e.message}")
+            throw e
+        }
+        Log.d("SYNC", "dataLocal: $dataLocal")
+
+        // Проходим по remote данным и сравниваем с local
+        dataRemote.forEachIndexed { index, categoryRemote ->
+            val categoryLocal = dataLocal?.getOrNull(index)
+            val initialPath = PathStructure(
+                idEvent = eventId,
+                idCategory = -1,
+                idSubCategory = -1,
+                idSubsubCategory = -1,
+                idQuiz = -1
+            )
+            Log.d("SYNC", "Обработка категории index=$index, remote = $categoryRemote, local = $categoryLocal")
+            filledChangedListAndFetchQuestion(categoryRemote, categoryLocal, changedQuizzes, initialPath)
+        }
+
+        if (eventId == 1) {
+            dataLocal?.forEach { structureDataLocal ->
                 val initialPath = PathStructure(
                     idEvent = eventId,
-                    idCategory = -1,
+                    idCategory = structureDataLocal?.id ?: -1,
                     idSubCategory = -1,
                     idSubsubCategory = -1,
                     idQuiz = -1
                 )
-                filledChangedListAndFetchQuestion(
-                    categoryRemote,
-                    categoryLocal,
-                    changedQuizzes,
-                    initialPath
-                )
-            }
-            if (eventId == 1) {
-                dataLocal?.forEach { structureDataLocal ->
-                    val initialPath = PathStructure(
-                        idEvent = eventId,
-                        idCategory = structureDataLocal?.id!!,
-                        idSubCategory = -1,
-                        idSubsubCategory = -1,
-                        idQuiz = -1
-                    )
-
-                    val hasMissingBranches = updateRemoteDataAndPushQuestions(
-                        structureDataLocal,
-                        dataRemote,
-                        initialPath
-                    )
-
-                    if (hasMissingBranches) {
-                        dataRemote.forEach { remoteNode ->
-                            repositoryStructureImpl.pushStructureData(
-                                structureDataLocal,
-                                remoteNode.id!!
-                            )
-                        }
+                Log.d("SYNC", "Обработка structureDataLocal = $structureDataLocal с initialPath = $initialPath")
+                val hasMissingBranches = updateRemoteDataAndPushQuestions(structureDataLocal, dataRemote, initialPath)
+                Log.d("SYNC", "hasMissingBranches для ${structureDataLocal?.nameItem}: $hasMissingBranches")
+                if (hasMissingBranches) {
+                    dataRemote.forEach { remoteNode ->
+                        Log.d("SYNC", "Вызов pushStructureData для ${structureDataLocal?.nameItem} с remoteNode.id = ${remoteNode.id}")
+                        repositoryStructureImpl.pushStructureData(structureDataLocal!!, remoteNode.id!!)
                     }
                 }
             }
-            dataLocal = dataRemote.toMutableList()
-            CoroutineScope(Dispatchers.IO).launch {
-                dataLocal = fetchQuizInfo(dataLocal!!, eventId!!)
-                repositoryStructureImpl.saveStructureData(
-                    StructureDataLocal().copy(childes = dataLocal),
-                    eventId
-                )
-            }
+        }
+        dataLocal = dataRemote.toMutableList()
 
+        withContext(Dispatchers.IO) {
+            Log.d("SYNC", "Начало fetchQuizInfo в корутине")
+            dataLocal = fetchQuizInfo(dataLocal!!, eventId)
+            Log.d("SYNC", "После fetchQuizInfo, dataLocal = $dataLocal")
+            Log.d("SYNC", "Сохранение структуры данных для eventId = $eventId")
+            repositoryStructureImpl.saveStructureData(StructureDataLocal().copy(children = dataLocal), eventId)
+            Log.d("SYNC", "Сохранение структуры данных завершено")
+        }
+
+        Log.d("SYNC", "Завершение syncStructureDataAndQuestions, changedQuizzes = $changedQuizzes")
         return changedQuizzes
     }
 
+    object Log {
+        fun d(tag: String, msg: String): Int {
+            println("$tag: $msg")
+            return 0
+        }
+    }
     suspend fun fetchQuizInfo(
         dataLocal: MutableList<StructureDataLocal?>?,
         eventId: Int
@@ -141,11 +152,11 @@ class StructureUseCase @Inject constructor(
                 )
             } ?: node
 
-            if (updatedNode.childes.isNullOrEmpty()) {
+            if (updatedNode.children.isNullOrEmpty()) {
                 return updatedNode
             }
 
-            val updatedChildren = updatedNode.childes!!.map { child ->
+            val updatedChildren = updatedNode.children!!.map { child ->
                 val newPath = when {
                     path.idCategory == -1 -> path.copy(idCategory = child?.id!!)
                     path.idSubCategory == -1 -> path.copy(idSubCategory = child?.id!!)
@@ -155,7 +166,7 @@ class StructureUseCase @Inject constructor(
                 updateQuizInfoRecursively(child, newPath)
             }
 
-            return updatedNode.copy(childes = updatedChildren.toMutableList())
+            return updatedNode.copy(children = updatedChildren.toMutableList())
         }
 
         return dataLocal?.mapIndexed { index, node ->
@@ -179,7 +190,7 @@ class StructureUseCase @Inject constructor(
 
         if (localNode == null) return false
 
-        if (localNode.childes.isNullOrEmpty()) {
+        if (localNode.children.isNullOrEmpty()) {
             ensureAncestorsExistAndUpdate(localNode, remoteNode)
 
             val existingNode = remoteNode.find { it.nameItem == localNode.nameItem }
@@ -191,7 +202,7 @@ class StructureUseCase @Inject constructor(
                     getNewIdCategory(remoteNode),
                     nameItem = localNode.nameItem,
                     dataUpdate = localNode.dataUpdate,
-                    childes = mutableListOf()
+                    children = mutableListOf()
                 )
                 if (existingNode == null) {
                     remoteNode.add(updatedNode)
@@ -206,7 +217,7 @@ class StructureUseCase @Inject constructor(
 
             }
         } else {
-            localNode.childes!!.forEachIndexed { index, child ->
+            localNode.children!!.forEachIndexed { index, child ->
                 val childPath = currentPath.copy(
                     idSubCategory = if (currentPath.idSubCategory == -1) index else currentPath.idSubCategory,
                     idSubsubCategory = if (currentPath.idSubCategory != -1 && currentPath.idSubsubCategory == -1) index else currentPath.idSubsubCategory,
@@ -240,7 +251,7 @@ class StructureUseCase @Inject constructor(
         val existingNode = remoteNode.find { it.nameItem == localNode.nameItem }
 
         if (existingNode == null) {
-            localNode.childes?.forEach { parent ->
+            localNode.children?.forEach { parent ->
                 ensureAncestorsExistAndUpdate(parent!!, remoteNode)
             }
             remoteNode.add(
@@ -248,7 +259,7 @@ class StructureUseCase @Inject constructor(
                     id = getNewIdCategory(remoteNode),
                     nameItem = localNode.nameItem,
                     dataUpdate = localNode.dataUpdate,
-                    childes = mutableListOf()
+                    children = mutableListOf()
                 )
             )
         } else {
@@ -259,7 +270,7 @@ class StructureUseCase @Inject constructor(
                         id = getNewIdCategory(remoteNode),
                         nameItem = localNode.nameItem,
                         dataUpdate = localNode.dataUpdate,
-                        childes = existingNode.childes
+                        children = existingNode.children
                     )
                 )
             }
@@ -288,13 +299,22 @@ class StructureUseCase @Inject constructor(
     ): Boolean {
         var allChildrenChanged = true
 
-        if (remoteNode.childes.isNullOrEmpty()) {
+        // Логируем вход в функцию с текущими значениями
+        Log.d("FILLED_CHANGED", "Вход в filledChangedListAndFetchQuestion: remoteNode = $remoteNode, localNode = $localNode, currentPath = $currentPath")
+
+        if (remoteNode.children.isNullOrEmpty()) {
             if (localNode?.isShowDownload == true && localNode.dataUpdate.toLong() < remoteNode.dataUpdate.toLong()) {
+                Log.d("FILLED_CHANGED", "Условие для обновления вопросов выполнено для currentPath = $currentPath. Запускаем асинхронную операцию.")
                 GlobalScope.launch {
+                    Log.d("FILLED_CHANGED", "Начало корутины для currentPath = $currentPath")
                     repositoryQuestionImpl.deleteQuestionByIdQuiz(currentPath.idQuiz)
-                    repositoryQuestionImpl.fetchQuestion(currentPath, "en").forEach {
+                    val questions = repositoryQuestionImpl.fetchQuestion(currentPath, "en")
+                    Log.d("FILLED_CHANGED", "Получены вопросы: $questions для currentPath = $currentPath")
+                    questions.forEach {
                         repositoryQuestionImpl.saveQuestion(it)
+                        Log.d("FILLED_CHANGED", "Вызван saveQuestion для вопроса: $it, currentPath = $currentPath")
                     }
+                    Log.d("FILLED_CHANGED", "Завершение корутины для currentPath = $currentPath")
                 }
                 changedQuizzes.add(
                     ChangeVersionStructure(
@@ -302,19 +322,22 @@ class StructureUseCase @Inject constructor(
                         pathStructure = currentPath
                     )
                 )
+                Log.d("FILLED_CHANGED", "Добавлен ChangeVersionStructure для currentPath = $currentPath")
                 return true
             }
+            Log.d("FILLED_CHANGED", "Условие для обновления вопросов НЕ выполнено для currentPath = $currentPath")
             return false
         }
 
-        remoteNode.childes!!.forEach { childRemote ->
-            val childLocal = localNode?.childes?.getOrNull(childRemote?.id!!)
+        remoteNode.children!!.forEach { childRemote ->
+            val childLocal = localNode?.children?.getOrNull(childRemote?.id!!)
             val newPath = currentPath.copy(
                 idCategory = currentPath.idCategory,
                 idSubCategory = if (currentPath.idSubCategory == -1) childRemote?.id!! else currentPath.idSubCategory,
                 idSubsubCategory = if (currentPath.idSubCategory != -1 && currentPath.idSubsubCategory == -1) childRemote?.id!! else currentPath.idSubsubCategory,
                 idQuiz = if (currentPath.idSubsubCategory != -1) childRemote?.id!! else -1
             )
+            Log.d("FILLED_CHANGED", "Рекурсивный вызов filledChangedListAndFetchQuestion для newPath = $newPath, childRemote = $childRemote, childLocal = $childLocal")
             val childChanged = filledChangedListAndFetchQuestion(
                 childRemote!!,
                 childLocal,
@@ -324,6 +347,7 @@ class StructureUseCase @Inject constructor(
             allChildrenChanged = allChildrenChanged && childChanged
         }
 
+        Log.d("FILLED_CHANGED", "Выход из filledChangedListAndFetchQuestion для currentPath = $currentPath, allChildrenChanged = $allChildrenChanged")
         return allChildrenChanged
     }
 

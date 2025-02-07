@@ -33,7 +33,7 @@ interface StructureDataDao {
         Log.d("initStructureData", "rootStructure: $rootStructure")
 
         // Проверяем корневую структуру
-        if (rootStructure == null || rootStructure.childes.isNullOrEmpty()) {
+        if (rootStructure == null || rootStructure.children.isNullOrEmpty()) {
             Log.d("initStructureData", "Root structure is null or empty")
             return null
         }
@@ -46,14 +46,14 @@ interface StructureDataDao {
 
         // Получаем текущую категорию
         var currentCategory = if (path[0] != -1) {
-            if (path[0] >= rootStructure.childes?.size!!) {
+            if (path[0] >= rootStructure.children?.size!!) {
                 Log.d("initStructureData", "Path[0] out of bounds")
                 return null
             }
             rootStructure
         } else {
             // Безопасно ищем первый элемент по ID
-            rootStructure.childes?.find { it?.id == path.firstOrNull() } ?: run {
+            rootStructure.children?.find { it?.id == path.firstOrNull() } ?: run {
                 Log.d("initStructureData", "Could not find first element")
                 return null
             }
@@ -68,13 +68,13 @@ interface StructureDataDao {
                 return currentCategory
             }
 
-            if (currentCategory.childes.isNullOrEmpty()) {
+            if (currentCategory.children.isNullOrEmpty()) {
                 Log.d("initStructureData", "Current category has no children")
                 return null
             }
 
             // Безопасный поиск следующей категории
-            currentCategory = currentCategory.childes?.find { it?.id == index } ?: run {
+            currentCategory = currentCategory.children?.find { it?.id == index } ?: run {
                 Log.d("initStructureData", "Could not find category with id $index")
                 return null
             }

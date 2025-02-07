@@ -194,10 +194,10 @@ class QuestionViewModel @Inject constructor(
 
     fun initQuizValue() = viewModelScope.launch(Dispatchers.IO) {
         Log.d("jfgksdjefkse", "$pathStructure")
-        _quiz.value = structureUseCase.getStructureData(pathStructure?.idEvent!!)?.printFullStructure("jfgksdjefkse")?.childes
-                ?.find { it?.id == pathStructure!!.idCategory }?.printFullStructure("jfgksdjefkse")?.childes
-                ?.find { it?.id == pathStructure!!.idSubCategory }?.printFullStructure("jfgksdjefkse")?.childes
-                ?.find { it?.id == pathStructure!!.idSubsubCategory }?.printFullStructure("jfgksdjefkse")?.childes
+        _quiz.value = structureUseCase.getStructureData(pathStructure?.idEvent!!)?.printFullStructure("jfgksdjefkse")?.children
+                ?.find { it?.id == pathStructure!!.idCategory }?.printFullStructure("jfgksdjefkse")?.children
+                ?.find { it?.id == pathStructure!!.idSubCategory }?.printFullStructure("jfgksdjefkse")?.children
+                ?.find { it?.id == pathStructure!!.idSubsubCategory }?.printFullStructure("jfgksdjefkse")?.children
                 ?.find { it?.id == pathStructure!!.idQuiz }?.printFullStructure("jfgksdjefkse")
 
     }

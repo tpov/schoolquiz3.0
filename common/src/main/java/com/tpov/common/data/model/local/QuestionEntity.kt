@@ -22,9 +22,6 @@ data class QuestionEntity(
     @ColumnInfo(name = "pictureQuestion")
     var pathPictureQuestion: String? = "",
 
-    @ColumnInfo(name = "answer")
-    val answer: Int = 0,
-
     @ColumnInfo(name = "nameAnswers")
     var nameAnswers: String = "",
 
@@ -49,7 +46,6 @@ data class QuestionEntity(
     var lvlTranslate: Int = 0
 ) : Parcelable {
     fun toQuestionRemote() = QuestionRemote(
-        answer = this.answer,
         nameAnswers = this.nameAnswers,
         pathPictureQuestion = this.pathPictureQuestion,
         nameQuestion = this.nameQuestion,
@@ -63,7 +59,6 @@ data class QuestionEntity(
         id = null,
         numQuestion = 0,
         nameQuestion = "",
-        answer = 0,
         nameAnswers = "",
         hardQuestion = false,
         idEvent = -1,

@@ -51,7 +51,7 @@ private fun getEditStructureData() {
         val viewModel = activity.viewModel
         val quizToDelete = viewModel.quizEntity ?: return
 
-        val rootStructure = viewModel.structureDataFlow.value?.childes?.find {
+        val rootStructure = viewModel.structureDataFlow.value?.children?.find {
             it?.id == EventQuiz.QUIZ_BY_USER.id
         } ?: return
 
@@ -67,11 +67,11 @@ private fun getEditStructureData() {
             return null
         }
 
-        val updatedChildren: MutableList<StructureDataLocal?>? = currentStructure?.childes?.mapNotNull { child ->
+        val updatedChildren: MutableList<StructureDataLocal?>? = currentStructure?.children?.mapNotNull { child ->
             deleteStructureRecursively(child, quizToDelete)
         }?.toMutableList()
 
-        return currentStructure?.copy(childes = updatedChildren)
+        return currentStructure?.copy(children = updatedChildren)
     }
 
     @SuppressLint("SuspiciousIndentation")
