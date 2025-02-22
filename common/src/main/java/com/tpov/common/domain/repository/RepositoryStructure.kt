@@ -8,16 +8,17 @@ import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.model.PathStructure
 
 interface RepositoryStructure {
-    suspend fun fetchStructureDataList(eventId: Int): List<StructureDataLocal>?
+    suspend fun fetchStructureCategoryDataList(eventId: Int): List<StructureDataLocal>?
 
     suspend fun pushStructureData(
         structureDataLocal: StructureDataLocal, categoryNumber: Int)
 
     suspend fun fetchStructureInfoData(path: PathStructure): StructureInfoRemote?
-    suspend fun getStructureData(eventId: Int, vararg path: Int): StructureDataLocal?
+    suspend fun getStructureEventData(eventId: Int, vararg path: Int): List<StructureDataLocal>
     fun fetchPictureStructure(path: String)
 
-    suspend fun saveStructureData(structureData: StructureDataLocal, eventId: Int)
+    suspend fun saveStructureData(structureDataCategoryList: List<StructureDataLocal>,
+                                  eventId: Int)
     suspend fun insertEditStructure(structureEditData: StructureEditData)
     suspend fun pushEditStructure(structureEditData: StructureEditData)
     suspend fun getEditStructure(): List<StructureEditData>

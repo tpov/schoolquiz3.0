@@ -5,6 +5,7 @@ import android.content.Context
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.database.StructureDataDao
 import com.tpov.common.data.database.StructureEditDataDao
+import com.tpov.common.domain.repository.RepositoryException
 import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.common.presentation.question.TranslateDialog
 import com.tpov.common.presentation.quiz.QuizFragment
@@ -20,6 +21,8 @@ interface CommonComponent {
     fun inject(activity: QuestionActivity)
     fun provideStructureDataDao(): StructureDataDao
     fun provideQuestionDao(): QuestionDao
+
+    fun provideRepositoryException(): RepositoryException
     @OptIn(InternalCoroutinesApi::class)
     fun inject(mainFragment: QuizFragment)
     fun inject(translateDialog: TranslateDialog)

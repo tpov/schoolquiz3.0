@@ -1,14 +1,10 @@
 package com.tpov.common
 
-import com.tpov.common.domain.usecase.QuestionDetailUseCase
-import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.domain.repository.RepositoryException
 import javax.inject.Inject
 
 class Interactor @Inject constructor(
-    private val questionUseCase: QuestionUseCase,
-    private val questionDetailUseCase: QuestionDetailUseCase,
-    private val structureUseCase: StructureUseCase
+    private val repositoryException: RepositoryException
 ) {
     fun notFoundInputData() {
 
@@ -51,6 +47,41 @@ class Interactor @Inject constructor(
     }
 
     fun notFountQuestionByLanguageUser() {
+        TODO("Not yet implemented")
+    }
+
+
+    fun initStructureDataLocal() {
+
+        TODO("Not yet implemented")
+    }
+    fun initStructureDataRemote() {
+
+        TODO("Not yet implemented")
+    }
+
+    fun syncLocalStructureData() {
+
+        TODO("Not yet implemented")
+    }
+
+    fun syncRemoteStructureData() {
+
+        TODO("Not yet implemented")
+    }
+
+    fun syncQuestionLocal() {
+
+        TODO("Not yet implemented")
+    }
+
+    fun syncQuestionRemote() {
+
+        TODO("Not yet implemented")
+    }
+
+    fun syncInfo() {
+
         TODO("Not yet implemented")
     }
 

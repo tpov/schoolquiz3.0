@@ -4,5 +4,6 @@ import com.tpov.common.presentation.model.PathStructure
 
 data class ChangeVersionStructure(
     val name: String,
-    val pathStructure: PathStructure
+    val pathStructure: PathStructure,
+    val isCreate: Boolean
 )

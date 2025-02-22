@@ -12,7 +12,6 @@ import com.tpov.common.CODE_EMPTY_ANSWER
 import com.tpov.common.CODE_MAX_SCORE_ANSWER
 import com.tpov.common.CODE_MIN_SCORE_ANSWER
 import com.tpov.common.COUNT_VARIATION_CODE_ANSWER
-import com.tpov.common.ErrorHandler
 import com.tpov.common.Interactor
 import com.tpov.common.LVL_GOOGLE_TRANSLATOR
 import com.tpov.common.MAX_DROP_ANSWER
@@ -25,6 +24,8 @@ import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.domain.utils.StructureDataUtils.findChildren
+import com.tpov.common.presentation.PresentationExceptions
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.LanguageUtils
 import kotlinx.coroutines.Dispatchers
@@ -64,9 +65,13 @@ class QuestionViewModel @Inject constructor(
     private val languageIdentifier = LanguageIdentification.getClient()
     private var translator: Translator? = null
 
-    val errorHandler = ErrorHandler(
-        onCloseScreen = { _closeActivity.value = true },
-        onShowToast = { _toastMessage.value = it },
+    val errorHandler = PresentationExceptions(
+        beforeException = {
+            _toastMessage.value = it
+        },
+        afterException = {
+            _closeActivity.value = true
+        },
         interactor
     )
 
@@ -193,13 +198,13 @@ class QuestionViewModel @Inject constructor(
     }
 
     fun initQuizValue() = viewModelScope.launch(Dispatchers.IO) {
-        Log.d("jfgksdjefkse", "$pathStructure")
-        _quiz.value = structureUseCase.getStructureData(pathStructure?.idEvent!!)?.printFullStructure("jfgksdjefkse")?.children
-                ?.find { it?.id == pathStructure!!.idCategory }?.printFullStructure("jfgksdjefkse")?.children
-                ?.find { it?.id == pathStructure!!.idSubCategory }?.printFullStructure("jfgksdjefkse")?.children
-                ?.find { it?.id == pathStructure!!.idSubsubCategory }?.printFullStructure("jfgksdjefkse")?.children
-                ?.find { it?.id == pathStructure!!.idQuiz }?.printFullStructure("jfgksdjefkse")
-
+        pathStructure?.apply {
+            _quiz.value = structureUseCase.getStructureCategoryList(idEvent)
+                .find { it.id == idCategory }
+                ?.findChildren(idSubCategory)
+                ?.findChildren(idSubsubCategory)
+                ?.findChildren(idQuiz) ?: errorHandler.notFoundPath()
+        } ?: errorHandler.notFoundPath()
     }
 
     private fun filterQuestionByHardQuiz(
@@ -248,8 +253,8 @@ class QuestionViewModel @Inject constructor(
 
     fun calculatePercentByCodeAnswer(): Int {
         return codeAnswer.filter { it != CODE_EMPTY_ANSWER }.map {
-                (((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()).toDouble() / COUNT_VARIATION_CODE_ANSWER) * 100)
-            }.average().toInt()
+            (((it.toInt() - CODE_MIN_SCORE_ANSWER.toInt()).toDouble() / COUNT_VARIATION_CODE_ANSWER) * 100)
+        }.average().toInt()
     }
 
 

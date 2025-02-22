@@ -3,8 +3,10 @@ package com.tpov.schoolquiz.di
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.storage.FirebaseStorage
+import com.tpov.common.Interactor
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStuctureImpl
+import com.tpov.common.di.CommonComponent
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.data.RepositoryProfileImpl
@@ -19,8 +21,27 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideStructureUseCase(repositoryStuctureImpl: RepositoryStuctureImpl, repositoryQuestionImpl: RepositoryQuestionImpl): StructureUseCase {
-        return StructureUseCase(repositoryStuctureImpl, repositoryQuestionImpl)
+    fun provideStructureUseCase(
+        repositoryStuctureImpl: RepositoryStuctureImpl,
+        repositoryQuestionImpl: RepositoryQuestionImpl,
+        interactor: Interactor,
+        commonComponentProvider: CommonComponentProvider
+    ): StructureUseCase {
+        return StructureUseCase(
+            repositoryStuctureImpl,
+            repositoryQuestionImpl,
+            commonComponentProvider.provideCommonComponent().provideRepositoryException(),
+            interactor
+        )
+    }
+    @Provides
+    @Singleton
+    fun provideCommonComponentProvider(commonComponent: CommonComponent): CommonComponentProvider {
+        return object : CommonComponentProvider {
+            override fun provideCommonComponent(): CommonComponent {
+                return commonComponent
+            }
+        }
     }
 
     @Provides

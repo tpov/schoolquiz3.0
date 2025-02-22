@@ -18,6 +18,8 @@ import androidx.work.WorkerParameters
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.domain.ProfileUseCase
+import com.tpov.schoolquiz.presentation.SyncWorker.Companion.CHANNEL_ID
+import com.tpov.schoolquiz.presentation.SyncWorker.Companion.NOTIFICATION_ID
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -35,11 +37,10 @@ class SyncWorker @AssistedInject constructor(
     private val questionUseCase: QuestionUseCase,
     private val viewModelFactory: ViewModelProvider.Factory
 ) : CoroutineWorker(context, workerParams) {
-
     companion object {
-        private const val KEY_SYNC_SUCCESS = "KEY_SYNC_SUCCESS"
-        private const val CHANNEL_ID = "SYNC_NOTIFICATION_CHANNEL"
-        private const val NOTIFICATION_ID = 2
+        const val KEY_SYNC_SUCCESS = "KEY_SYNC_SUCCESS"
+        const val CHANNEL_ID = "SYNC_NOTIFICATION_CHANNEL"
+        const val NOTIFICATION_ID = 2
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
@@ -63,34 +64,31 @@ class SyncWorker @AssistedInject constructor(
 
     private suspend fun syncQuizData(viewModel: MainViewModel) {
         val updatedQuizList = structureUseCase.syncStructureDataAndQuestions(1)
-        if (updatedQuizList.isNotEmpty()) {
-            val quizCount = updatedQuizList.size
+            val quizCount = updatedQuizList
 
-            showNotification("Sync Complete", "Updated $quizCount quizzes.")
-        } else {
-            showNotification("Sync Complete", "No new data to synchronize.")
+            showNotification("Sync Complete", "Updated $quizCount quizzes.", context)
         }
     }
 
     private suspend fun syncProfile() {
-        profileUseCase.syncProfile()
+
     }
 
     @SuppressLint("MissingPermission")
-    private fun showNotification(title: String, message: String) {
-        createNotificationChannel()
+    private fun showNotification(title: String, message: String, context: Context) {
+        createNotificationChannel(context)
 
-        val notificationBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
 
-        NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, notificationBuilder.build())
+        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
-    private fun createNotificationChannel() {
+    private fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Sync Notifications"
             val descriptionText = "Notifications for data synchronization"
@@ -100,7 +98,7 @@ class SyncWorker @AssistedInject constructor(
             }
 
             val notificationManager: NotificationManager =
-                applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }
@@ -109,8 +107,6 @@ class SyncWorker @AssistedInject constructor(
     interface Factory : ChildWorkerFactory {
         override fun create(context: Context, workerParams: WorkerParameters): SyncWorker
     }
-
-}
 
 class AppWorkerFactory @Inject constructor(
     private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>

@@ -30,7 +30,7 @@ data class StructureDataEntity(
     val isShowDownload: Boolean = false,
     val isShowArchive: Boolean = false
 ) {
-    fun toStructureDataLocal(): StructureDataLocal {
+    private fun toStructureDataLocal(): StructureDataLocal {
         val childesList = Converters().toChildesList(childesJson ?: "[]")
         return StructureDataLocal(
             id = id,
@@ -55,5 +55,9 @@ data class StructureDataEntity(
             isShowDownload = isShowDownload,
             isShowArchive = isShowArchive
         )
+    }
+
+    fun toStructureCategoryListLocal(): List<StructureDataLocal>? {
+        return this.toStructureDataLocal().children
     }
 }

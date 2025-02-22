@@ -80,7 +80,10 @@ open class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateStructureData(structureDataEntity: StructureDataEntity, eventId: Int) {
+    override suspend fun updateStructureData(
+        structureDataEntity: StructureDataEntity,
+        eventId: Int
+    ) {
         structureDataDao.insertStructureData(structureDataEntity)
     }
 
@@ -96,7 +99,7 @@ open class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun fetchStructureDataList(eventId: Int): List<StructureDataLocal>? {
+    override suspend fun fetchStructureCategoryDataList(eventId: Int): List<StructureDataLocal>? {
         if (eventId == 1) {
             val basePath = "quizzes/$tpovId"
 
@@ -187,8 +190,16 @@ open class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveStructureData(structureData: StructureDataLocal, eventId: Int) {
-        structureDataDao.insertStructureData(structureData.toStructureDataEntity()!!)
+    override suspend fun saveStructureData(
+        structureDataCategoryList: List<StructureDataLocal>,
+        eventId: Int
+    ) {
+        structureDataDao.insertStructureData(
+            StructureDataLocal(
+                id = eventId,
+                children = structureDataCategoryList.toMutableList()
+            ).toStructureDataEntity()!!
+        )
     }
 
     override suspend fun insertEditStructure(structureEditData: StructureEditData) {
@@ -322,13 +333,13 @@ open class RepositoryStuctureImpl @Inject constructor(
         }
     }
 
-    override suspend fun getStructureData(
+    override suspend fun getStructureEventData(
         eventId: Int,
         vararg path: Int
-    ): StructureDataLocal? {
+    ): List<StructureDataLocal> {
 
         Log.d("initStructureData", "getStructureData")
-        return structureDataDao.getStructureDataByPath(eventId, path.toList())
+        return structureDataDao.getStructureDataByPath(eventId, path.toList())!!
     }
 }
 

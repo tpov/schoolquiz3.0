@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.di
 
 import androidx.work.ListenableWorker
 import com.tpov.schoolquiz.presentation.ChildWorkerFactory
+import com.tpov.schoolquiz.presentation.Factory
 import com.tpov.schoolquiz.presentation.SyncWorker
 import dagger.Binds
 import dagger.MapKey
@@ -15,7 +16,7 @@ abstract class WorkerModule {
     @Binds
     @IntoMap
     @WorkerKey(SyncWorker::class)
-    abstract fun bindSyncWorkerFactory(factory: SyncWorker.Factory): ChildWorkerFactory
+    abstract fun bindSyncWorkerFactory(factory: Factory): ChildWorkerFactory
 }
 
 @MustBeDocumented

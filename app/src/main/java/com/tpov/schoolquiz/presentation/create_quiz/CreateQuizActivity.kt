@@ -587,7 +587,6 @@ open class CreateQuizActivity : AppCompatActivity() {
                             thisNumQuestion,
                             newQuestion.first,
                             pathPictureQuestion,
-                            answer.third,
                             answer.second,
                             hardQuestionThis,
                             viewModel.pathStructure.idEvent,
@@ -638,7 +637,7 @@ open class CreateQuizActivity : AppCompatActivity() {
             addQuestionToLayout(question.nameQuestion, question.language)
 
             val answers = question.nameAnswers.split("|").toMutableList()
-            answers.add(0, answers.removeAt(question.answer - 1))
+            answers.add(0, answers.removeAt(0))
 
             answers.forEachIndexed { indexAnswer, answerText ->
 

@@ -25,67 +25,23 @@ interface StructureDataDao {
     suspend fun getStructureDataByPath(
         eventId: Int,
         path: List<Int>
-    ): StructureDataLocal? {
-        Log.d("initStructureData", "getStructureDataByPath: eventId=$eventId, path=$path")
+    ): List<StructureDataLocal>? {
+        var structure = getStructureEventData(eventId)?.toStructureCategoryListLocal()
 
-        // Получаем корневую структуру
-        val rootStructure = getStructureDataByEventId(eventId)?.toStructureDataLocal()
-        Log.d("initStructureData", "rootStructure: $rootStructure")
-
-        // Проверяем корневую структуру
-        if (rootStructure == null || rootStructure.children.isNullOrEmpty()) {
+        if (structure == null) {
             Log.d("initStructureData", "Root structure is null or empty")
             return null
-        }
-
-        // Проверяем путь
-        if (path.isEmpty()) {
-            Log.d("initStructureData", "Path is empty, returning root")
-            return rootStructure
-        }
-
-        // Получаем текущую категорию
-        var currentCategory = if (path[0] != -1) {
-            if (path[0] >= rootStructure.children?.size!!) {
-                Log.d("initStructureData", "Path[0] out of bounds")
-                return null
-            }
-            rootStructure
         } else {
-            // Безопасно ищем первый элемент по ID
-            rootStructure.children?.find { it?.id == path.firstOrNull() } ?: run {
-                Log.d("initStructureData", "Could not find first element")
-                return null
+            path.forEach { path ->
+                if (path != -1) structure = structure!!.find { it.id == path }?.children
             }
         }
 
-        // Проходим по пути
-        for (i in 1 until path.size) {
-            val index = path[i]
-            Log.d("initStructureData", "Processing index $i: $index")
-
-            if (index == -1) {
-                return currentCategory
-            }
-
-            if (currentCategory.children.isNullOrEmpty()) {
-                Log.d("initStructureData", "Current category has no children")
-                return null
-            }
-
-            // Безопасный поиск следующей категории
-            currentCategory = currentCategory.children?.find { it?.id == index } ?: run {
-                Log.d("initStructureData", "Could not find category with id $index")
-                return null
-            }
-        }
-
-        Log.d("initStructureData", "Final category: $currentCategory")
-        return currentCategory
+        return structure
     }
 
     @Query("SELECT * FROM structure_data WHERE id = :eventId")
-    suspend fun getStructureDataByEventId(eventId: Int): StructureDataEntity?
+    suspend fun getStructureEventData(eventId: Int): StructureDataEntity?
 
     @Query("DELETE FROM structure_data")
     suspend fun deleteAllStructureData()

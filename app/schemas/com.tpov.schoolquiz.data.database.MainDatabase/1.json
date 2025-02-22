@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a20acccee3e8a3fbe96e65563edd22ff",
+    "identityHash": "edb06a9a948e8089befbec3d6bc333da",
     "entities": [
       {
         "tableName": "question_detail_entity",
@@ -80,7 +80,7 @@
       },
       {
         "tableName": "question_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `numQuestion` INTEGER NOT NULL, `nameQuestion` TEXT NOT NULL, `pictureQuestion` TEXT, `answer` INTEGER NOT NULL, `nameAnswers` TEXT NOT NULL, `hardQuestion` INTEGER NOT NULL, `idEvent` INTEGER NOT NULL, `idCategory` INTEGER NOT NULL, `idSubCategory` INTEGER NOT NULL, `idSubsubCategory` INTEGER NOT NULL, `idQuiz` INTEGER NOT NULL, `language` TEXT NOT NULL, `lvlTranslate` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `numQuestion` INTEGER NOT NULL, `nameQuestion` TEXT NOT NULL, `pictureQuestion` TEXT, `nameAnswers` TEXT NOT NULL, `hardQuestion` INTEGER NOT NULL, `idEvent` INTEGER NOT NULL, `idCategory` INTEGER NOT NULL, `idSubCategory` INTEGER NOT NULL, `idSubsubCategory` INTEGER NOT NULL, `idQuiz` INTEGER NOT NULL, `language` TEXT NOT NULL, `lvlTranslate` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -105,12 +105,6 @@
             "columnName": "pictureQuestion",
             "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "answer",
-            "columnName": "answer",
-            "affinity": "INTEGER",
-            "notNull": true
           },
           {
             "fieldPath": "nameAnswers",
@@ -482,7 +476,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a20acccee3e8a3fbe96e65563edd22ff')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'edb06a9a948e8089befbec3d6bc333da')"
     ]
   }
 }

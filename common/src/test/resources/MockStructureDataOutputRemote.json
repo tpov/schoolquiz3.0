@@ -1,7 +1,4 @@
 [
-  {
-    "id": 1,
-    "children": [
       {
         "id": 1,
         "children": [
@@ -2549,20 +2546,4 @@
         "isShowArchive": true,
         "isShow": true
       }
-    ],
-    "nameItem": "Event 1",
-    "dataUpdate": 1735731571912,
-    "dataCreate": 1731584371912,
-    "version": 7,
-    "ratingGlobal": 29,
-    "starsAverageGlobal": 34,
-    "starsMaxGlobal": 56,
-    "tpovIdCreator": 876,
-    "nameCreator": "Creator 49",
-    "tpovIdMaxStarsGlobal": 624,
-    "picture": "picture_1.jpg",
-    "languages": "en|ua",
-    "isShowArchive": true,
-    "isShow": true
-  }
 ]

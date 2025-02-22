@@ -1,7 +1,4 @@
 [
-  {
-    "id": 1,
-    "children": [
       {
         "id": 1,
         "children": [
@@ -1900,61 +1897,6 @@
                   {
                     "id": 1,
                     "children": [],
-                    "nameItem": "Quest name 1_3_2_3_3_1_4_1_5",
-                    "dataUpdate": 1735645171912,
-                    "dataCreate": 1732966771912,
-                    "version": 2,
-                    "ratingGlobal": 35,
-                    "starsAverageGlobal": 25,
-                    "starsMaxGlobal": 33,
-                    "tpovIdCreator": 119,
-                    "nameCreator": "Creator 51",
-                    "tpovIdMaxStarsGlobal": 165,
-                    "picture": "picture_1_3_2_3_3_1_4_1_5.jpg",
-                    "languages": "ru|en|ua",
-                    "isShowArchive": true,
-                    "isShow": true
-                  },
-                  {
-                    "id": 2,
-                    "children": [],
-                    "nameItem": "Quest name 1_3_2_3_3_1_4_2_5",
-                    "dataUpdate": 1736163571912,
-                    "dataCreate": 1721475571912,
-                    "version": 5,
-                    "ratingGlobal": 86,
-                    "starsAverageGlobal": 86,
-                    "starsMaxGlobal": 90,
-                    "tpovIdCreator": 12,
-                    "nameCreator": "Creator 54",
-                    "tpovIdMaxStarsGlobal": 317,
-                    "picture": "picture_1_3_2_3_3_1_4_2_5.jpg",
-                    "languages": "en|ua",
-                    "isShowArchive": true,
-                    "isShow": true
-                  }
-                ],
-                "nameItem": "Sub-subcategory 1_3_2_3_3_1_4",
-                "dataUpdate": 1736077171912,
-                "dataCreate": 1725881971912,
-                "version": 6,
-                "ratingGlobal": 31,
-                "starsAverageGlobal": 13,
-                "starsMaxGlobal": 82,
-                "tpovIdCreator": 645,
-                "nameCreator": "Creator 67",
-                "tpovIdMaxStarsGlobal": 214,
-                "picture": "picture_1_3_2_3_3_1_4.jpg",
-                "languages": "ru|en|ua",
-                "isShowArchive": true,
-                "isShow": true
-              },
-              {
-                "id": 2,
-                "children": [
-                  {
-                    "id": 1,
-                    "children": [],
                     "nameItem": "Quest name 1_3_2_3_3_2_4_1_5",
                     "dataUpdate": 1735213171912,
                     "dataCreate": 1718883571912,
@@ -2041,7 +1983,7 @@
                 "isShow": true
               },
               {
-                "id": 3,
+                "id": 2,
                 "children": [
                   {
                     "id": 1,
@@ -2096,7 +2038,7 @@
                 "isShow": true
               },
               {
-                "id": 4,
+                "id": 3,
                 "children": [
                   {
                     "id": 1,
@@ -2402,20 +2344,4 @@
         "isShowArchive": true,
         "isShow": true
       }
-    ],
-    "nameItem": "Event 1",
-    "dataUpdate": 1735731571912,
-    "dataCreate": 1731584371912,
-    "version": 7,
-    "ratingGlobal": 29,
-    "starsAverageGlobal": 34,
-    "starsMaxGlobal": 56,
-    "tpovIdCreator": 876,
-    "nameCreator": "Creator 49",
-    "tpovIdMaxStarsGlobal": 624,
-    "picture": "picture_1.jpg",
-    "languages": "en|ua",
-    "isShowArchive": true,
-    "isShow": true
-  }
 ]

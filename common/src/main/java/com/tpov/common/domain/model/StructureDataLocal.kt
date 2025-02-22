@@ -1,35 +1,35 @@
 package com.tpov.common.domain.model
 
-import android.util.Log
 import com.tpov.common.Core.tpovId
 import com.tpov.common.data.manager.Converters
 import com.tpov.common.data.model.local.StructureDataEntity
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.usecase.SettingConfigObject
+import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.utils.DateUtil
 
 data class StructureDataLocal(
-    val id: Int? = null,
-    var children: MutableList<StructureDataLocal?>? = null,
-    val nameItem: String = "",
-    val dataUpdate: String = "", // for syncs
-    val dataCreate: String = "",
-    val version: Int = 0,       // for show update user
-    val ratingGlobal: Int = 0,
-    val ratingLocal: Int = 0,
+    var id: Int? = null,
+    var children: MutableList<StructureDataLocal>? = null,
+    var nameItem: String = "",
+    var dataUpdate: String = "", // for syncs
+    var dataCreate: String = "",
+    var version: Int = 0,       // for show update user
+    var ratingGlobal: Int = 0,
+    var ratingLocal: Int = 0,
     var starsMaxLocal: Int = 0,
-    val starsMaxGlobal: Int = 0,
+    var starsMaxGlobal: Int = 0,
     var starsAverageLocal: Int = 0,
-    val starsAverageGlobal: Int = 0,
-    val numHQ: Int = 0,
-    val numQ: Int = 0,
-    val tpovIdCreator: Int = 0,
-    val nameCreator: String = "",
-    val tpovIdMaxStarsGlobal: Int = 0,
+    var starsAverageGlobal: Int = 0,
+    var numHQ: Int = 0,
+    var numQ: Int = 0,
+    var tpovIdCreator: Int = 0,
+    var nameCreator: String = "",
+    var tpovIdMaxStarsGlobal: Int = 0,
     var languages: String = "",
-    val picture: String = "",
-    val isShowDownload: Boolean = true,
-    val isShowArchive: Boolean = false
+    var picture: String = "",
+    var isShowDownload: Boolean = true,
+    var isShowArchive: Boolean = false
 ) {
 
     fun create(
@@ -74,7 +74,7 @@ data class StructureDataLocal(
             appendLine("")
         }
 
-        Log.d(s, "\n$result")
+        StructureUseCase.Log.d(s, "\n$result")
         return this
     }
 

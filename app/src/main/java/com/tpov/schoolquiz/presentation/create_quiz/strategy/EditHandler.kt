@@ -67,7 +67,7 @@ private fun getEditStructureData() {
             return null
         }
 
-        val updatedChildren: MutableList<StructureDataLocal?>? = currentStructure?.children?.mapNotNull { child ->
+        val updatedChildren: MutableList<StructureDataLocal>? = currentStructure?.children?.mapNotNull { child ->
             deleteStructureRecursively(child, quizToDelete)
         }?.toMutableList()
 
