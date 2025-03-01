@@ -1,6 +1,7 @@
 package com.tpov.common.domain.utils
 
 import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
@@ -27,15 +28,15 @@ object StructureDataUtils {
     fun isUpdateStructureLocal(
         structureDataOld: StructureDataLocal?,
         structureDataNew: StructureDataLocal
-    ) = structureDataNew.version > (structureDataOld?.version ?: 0)
+    ) = false
 
     fun isUpdateStructureRemote(
         structureDataLocal: StructureDataLocal,
         structureDataRemote: StructureDataLocal
-    ) = structureDataLocal.version > structureDataRemote.version
+    ) = false
 
     fun MutableList<StructureDataLocal>.updateLocalInfoData(
-        structureDataNew: MutableList<StructureDataLocal>,
+        structureDataNew: List<StructureDataLocal>,
         path: PathStructure
     ): MutableList<StructureDataLocal>? {
         val structureCategoryNew = structureDataNew.find { it.id == path.idCategory }
@@ -76,13 +77,17 @@ object StructureDataUtils {
             idQuiz = -1
         )
     ) {
+        StructureUseCase.Log.d("currentPath", "$currentPath")
+
         structureNodeListNew.forEach { structureNodeNew ->
+            structureNodeNew.printFullStructure("structureNodeNew")
             val nodeId = structureNodeNew.id!!
             val structureNodeOld = findStructureByName(
                 structureNodeListOld ?: mutableListOf(),
                 structureNodeNew
             )
             PathStructureUtils.updatePath(currentPath, nodeId)
+            StructureUseCase.Log.d("updatePath", "$currentPath")
             when {
                 structureNodeOld == null -> {
                     callback.onMissingOldStructure(
@@ -118,6 +123,7 @@ object StructureDataUtils {
             PathStructureUtils.resetPath(currentPath)
         }
     }
+
     data class OldStructureResult(
         val pathOld: PathStructure,
         val structureData: StructureDataLocal?
@@ -128,6 +134,7 @@ object StructureDataUtils {
         structureCategoryDataListNew: MutableList<StructureDataLocal>,
         currentPath: PathStructure
     ): OldStructureResult {
+
         val categoryNew = structureCategoryDataListNew.find { it.id == currentPath.idCategory }
         val categoryOld = findStructureByName(structureCategoryDataListOld, categoryNew)
 
@@ -148,9 +155,34 @@ object StructureDataUtils {
             idQuiz = quizOld?.id ?: -1
         )
 
+        if (currentPath.idCategory == 4 && currentPath.idSubCategory == 1 && currentPath.idSubsubCategory == 1) {
+            StructureUseCase.Log.d(
+                "findStructureDataOld",
+                "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+            )
+
+            StructureUseCase.Log.d("oldPath", "$oldPath")
+            StructureUseCase.Log.d("currentPath", "$currentPath")
+
+            categoryNew?.printFullStructure("categoryNew")
+            categoryOld?.printFullStructure("categoryOld")
+
+            subCategoryNew?.printFullStructure("subCategoryNew")
+            subCategoryOld?.printFullStructure("subCategoryOld")
+
+            subsubCategoryNew?.printFullStructure("subsubCategoryNew")
+            subsubCategoryOld?.printFullStructure("subsubCategoryOld")
+
+            quizNew?.printFullStructure("quizNew")
+            quizOld?.printFullStructure("quizOld")
+
+            StructureUseCase.Log.d(
+                "findStructureDataOld",
+                "-------------------------------------------------------------"
+            )
+        }
         return OldStructureResult(oldPath, quizOld)
     }
-
 
     //Если -1 то возвращаем этот же обьект, так как -1 в пути означакет что не нужно углублятся
     fun StructureDataLocal.findChildren(id: Int): StructureDataLocal? {
@@ -168,8 +200,8 @@ object StructureDataUtils {
                 if (quiz.children == null) {
                     quiz.children = mutableListOf()
                 }
-                node.id = quiz.children?.last()?.id?.plus(1) ?: 1
-                quiz.children?.add(node)
+                val newId = quiz.children?.last()?.id?.plus(1) ?: 1
+                quiz.children?.add(node.copy(id = newId))
             }
 
         return this

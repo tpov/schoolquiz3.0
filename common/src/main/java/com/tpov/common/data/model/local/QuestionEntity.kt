@@ -11,7 +11,7 @@ import kotlinx.parcelize.Parcelize
 @Entity(tableName = "question_entity")
 data class QuestionEntity(
     @PrimaryKey(autoGenerate = true)
-    val id: Int? = null,
+    var id: Int? = null,
 
     @ColumnInfo(name = "numQuestion")
     var numQuestion: Int = 0,
@@ -26,18 +26,18 @@ data class QuestionEntity(
     var nameAnswers: String = "",
 
     @ColumnInfo(name = "hardQuestion")
-    val hardQuestion: Boolean = false,
+    var hardQuestion: Boolean = false,
 
     @ColumnInfo(name = "idEvent")
-    val idEvent: Int,
+    var idEvent: Int,
     @ColumnInfo(name = "idCategory")
-    val idCategory: Int,
+    var idCategory: Int,
     @ColumnInfo(name = "idSubCategory")
-    val idSubCategory: Int,
+    var idSubCategory: Int,
     @ColumnInfo(name = "idSubsubCategory")
-    val idSubsubCategory: Int,
+    var idSubsubCategory: Int,
     @ColumnInfo(name = "idQuiz")
-    val idQuiz: Int,
+    var idQuiz: Int,
 
     @ColumnInfo(name = "language")
     var language: String = "",

@@ -50,6 +50,7 @@ object StructureDataExtention {
         if (exception != null) return this
         try {
             this.currentStage = SyncStage.STRUCTURE_LOCAL_SYNC
+            StructureDataLocal(children = structureCategoryDataListRemote).printFullStructure("syncStateLocalStructureData before")
 
             processStructureDataDifferences(
                 structureNodeListNew = this.structureCategoryDataListRemote,
@@ -62,9 +63,11 @@ object StructureDataExtention {
                         else if (currentPath.idQuiz == -1) currentPath.idSubsubCategory = -1
 
                         this.structureCategoryDataListLocal.addNode(structureNodeNew, currentPath)
+
                     },
                     onHasChildren = { structureNodeOld, structureNodeNew, currentPath ->
                         if (isUpdateStructureLocal(structureNodeOld?.first(), structureNodeNew)) {
+
                             this.structureCategoryDataListLocal
                                 .updateLocalInfoData(
                                     this.structureCategoryDataListRemote,
@@ -84,6 +87,7 @@ object StructureDataExtention {
                 )
             )
 
+            StructureDataLocal(children = structureCategoryDataListRemote).printFullStructure("syncStateLocalStructureData after")
         } catch (e: Exception) {
             exceptionHandler.exceptionSyncLocalStructureData(e.message ?: "")
         }
@@ -109,24 +113,28 @@ object StructureDataExtention {
                             currentPath
                         )
                         if (findLocalQuizByPath.structureData?.isShowDownload == true
-                            || this.eventId == EventQuiz.QUIZ_HOME.id
+                            || this.eventId == EventQuiz.QUIZ_BY_USER.id
                         ) {
                             if (findLocalQuizByPath.structureData != null) {
                                 if (isUpdateStructureRemote(
-                                        findLocalQuizByPath.structureData!!,
+                                        findLocalQuizByPath.structureData,
                                         structureNodeNew
                                     )
                                 ) {
+                                    StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: ")
+                                    StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: $currentPath")
                                     this.changedListLocal.add(
                                         ChangeVersionStructure(
-                                            structureNodeNew.nameItem, currentPath, false
+                                            structureNodeNew.nameItem, currentPath.copy(), false
                                         )
                                     )
                                 }
                             } else {
+                                StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: ")
+                                StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath !isUpdateStructureRemote: $currentPath")
                                 this.changedListLocal.add(
                                     ChangeVersionStructure(
-                                        structureNodeNew.nameItem, currentPath, true
+                                        structureNodeNew.nameItem, currentPath.copy(), true
                                     )
                                 )
                             }
