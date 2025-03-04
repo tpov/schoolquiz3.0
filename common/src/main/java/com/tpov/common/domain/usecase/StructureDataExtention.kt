@@ -121,8 +121,6 @@ object StructureDataExtention {
                                         structureNodeNew
                                     )
                                 ) {
-                                    StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: ")
-                                    StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: $currentPath")
                                     this.changedListLocal.add(
                                         ChangeVersionStructure(
                                             structureNodeNew.nameItem, currentPath.copy(), false
@@ -130,8 +128,6 @@ object StructureDataExtention {
                                     )
                                 }
                             } else {
-                                StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: ")
-                                StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath !isUpdateStructureRemote: $currentPath")
                                 this.changedListLocal.add(
                                     ChangeVersionStructure(
                                         structureNodeNew.nameItem, currentPath.copy(), true
@@ -148,31 +144,38 @@ object StructureDataExtention {
                 this.structureCategoryDataListLocal,
                 this.eventId,
                 callback = CallbackDifferences(
-                    onMissingOldStructure = { _, _, _ -> },
+                    onMissingOldStructure = { structureNodeListOld, structureNodeNew, currentPath ->
+                        structureNodeNew.printFullStructure("structureNodeNew")
+                        structureNodeListOld?.get(0)?.printFullStructure("structureNodeListOld")
+                        StructureUseCase.Log.d("onMissingOldStructure", "currentPath: $currentPath: ")
+                                            },
                     onHasChildren = { _, _, _ -> },
                     onNoChildren = { structureNodeListOld, structureNodeNew, currentPath ->
 
+                        StructureUseCase.Log.d("onNoChildren", "currentPath isUpdateStructureRemote: $currentPath")
                         val findRemoteQuizByPath = findStructureDataOld(
                             this.structureCategoryDataListRemote,
                             this.structureCategoryDataListLocal,
                             currentPath
                         )
+                        findRemoteQuizByPath.structureData?.printFullStructure("onNoChildren")
+                        StructureUseCase.Log.d("onNoChildren", "findRemoteQuizByPath: $findRemoteQuizByPath")
                         if (findRemoteQuizByPath.structureData != null) {
-                            if (isUpdateStructureRemote(
-                                    findRemoteQuizByPath.structureData,
-                                    structureNodeNew
-                                )
-                            ) {
+                            if (isUpdateStructureRemote(findRemoteQuizByPath.structureData, structureNodeNew)) {
+                                StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: ")
+                                StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: $currentPath")
                                 this.changedListRemote.add(
                                     ChangeVersionStructure(
-                                        structureNodeNew.nameItem, currentPath, false
+                                        structureNodeNew.nameItem, currentPath.copy(), false
                                     )
                                 )
                             }
                         } else {
+                            StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath isUpdateStructureRemote: ")
+                            StructureUseCase.Log.d("syncStateChangeListQuestions", "currentPath !isUpdateStructureRemote: $currentPath")
                             this.changedListRemote.add(
                                 ChangeVersionStructure(
-                                    structureNodeNew.nameItem, currentPath, true
+                                    structureNodeNew.nameItem, currentPath.copy(), true
                                 )
                             )
                         }
@@ -247,7 +250,7 @@ object StructureDataExtention {
     }
 
     fun SyncState.syncStateInfoLocal(): SyncState {
-        if (exception != null) return this
+        if (this.exception != null) return this
         try {
             this.currentStage = SyncStage.INFO_UPDATE_LOCAL
             processStructureDataDifferences(

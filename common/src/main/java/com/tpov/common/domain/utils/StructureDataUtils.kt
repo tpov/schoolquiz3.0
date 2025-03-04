@@ -155,7 +155,7 @@ object StructureDataUtils {
             idQuiz = quizOld?.id ?: -1
         )
 
-        if (currentPath.idCategory == 4 && currentPath.idSubCategory == 1 && currentPath.idSubsubCategory == 1) {
+        if (currentPath.idCategory == 3 && currentPath.idSubCategory == 3 && currentPath.idSubsubCategory == 2) {
             StructureUseCase.Log.d(
                 "findStructureDataOld",
                 "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"

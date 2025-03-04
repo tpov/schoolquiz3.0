@@ -45,7 +45,7 @@ class StructureSyncTest {
 
     private lateinit var structureUseCase: StructureUseCase
 
-    private var inputQuestionLocal: MutableList<QuestionEntity>  = mutableListOf()
+    private var inputQuestionLocal: MutableList<QuestionEntity> = mutableListOf()
     private var expectedQuestionLocal: MutableList<QuestionEntity> = mutableListOf()
     private var inputQuestionRemote: MutableList<QuestionEntity> = mutableListOf()
     private var expectedQuestionRemote: MutableList<QuestionEntity> = mutableListOf()
@@ -70,11 +70,16 @@ class StructureSyncTest {
         //    loadJson<QuestionEntity>("MockQuestionOutputLocal.json").toMutableList()
         //inputQuestionRemote =
         //    loadJson<QuestionEntity>("MockQuestionInputRemote.json").toMutableList()
-        expectedQuestionRemote = loadJson<QuestionEntity>("MockQuestionOutputRemote.json").toMutableList()
-        inputDataLocal = loadJson<StructureDataLocal>("MockStructureDataInputLocal.json").toMutableList()
-        expectedOutputLocal = loadJson<StructureDataLocal>("MockStructureDataOutputLocal.json").toMutableList()
-        inputDataRemote = loadJson<StructureDataLocal>("MockStructureDataInputRemote.json").toMutableList()
-        expectedOutputRemote = loadJson<StructureDataLocal>("MockStructureDataOutputRemote.json").toMutableList()
+        expectedQuestionRemote =
+            loadJson<QuestionEntity>("MockQuestionOutputRemote.json").toMutableList()
+        inputDataLocal =
+            loadJson<StructureDataLocal>("MockStructureDataInputLocal.json").toMutableList()
+        expectedOutputLocal =
+            loadJson<StructureDataLocal>("MockStructureDataOutputLocal.json").toMutableList()
+        inputDataRemote =
+            loadJson<StructureDataLocal>("MockStructureDataInputRemote.json").toMutableList()
+        expectedOutputRemote =
+            loadJson<StructureDataLocal>("MockStructureDataOutputRemote.json").toMutableList()
 
         runBlocking {
             `when`(repositoryStructureImpl.getStructureEventData(1))
@@ -88,7 +93,7 @@ class StructureSyncTest {
     fun `test full sync process`() = runBlocking {
         val eventId = 1
 
-        val result = structureUseCase.syncStructureDataAndQuestions(eventId)
+        val result = structureUseCase.syncStructureDataAndGetChangeLists(eventId)
 
         when (result) {
             is SyncStructureResult.Success -> {
@@ -126,9 +131,9 @@ class StructureSyncTest {
 
         assertTrue(result is SyncStructureResult.Success)
 
-        //editQuestionList(inputQuestionLocal, inputDataLocal)
+        editQuestionList(inputQuestionLocal, inputDataLocal)
         editQuestionList(inputQuestionRemote, inputDataRemote)
-        //editQuestionList(expectedQuestionLocal, expectedOutputLocal)
+        editQuestionList(expectedQuestionLocal, expectedOutputLocal)
 
         inputQuestionLocal.forEachIndexed { index, item ->
             if (index % 16 == 15) {
@@ -243,86 +248,35 @@ class StructureSyncTest {
     private fun testInputQuestionLocal(result: SyncStructureResult) {
         when (result) {
             is SyncStructureResult.Success -> {
-
                 var inputQuestionRemoteVar = inputQuestionRemote
                 var inputQuestionLocalVar = inputQuestionLocal
 
-                inputQuestionRemoteVar.forEachIndexed { index, item ->
-                    if (index % 16 == 15) {
-                        StructureUseCase.Log.d(
-                            "assertQuestionRemote item 11111111111111111111111111111111111",
-                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                        )
-                    }
-                }
                 val assertQuestionRemote = inputQuestionRemoteVar.addList(
                     getQuestionListByPath(
                         result.state.changedListRemote,
-                        inputQuestionLocal
+                        inputQuestionLocal,
+                        inputDataLocal,
+                        inputDataRemote
                     )
                 ).toMutableList()
-                inputQuestionRemoteVar.forEachIndexed { index, item ->
-                    if (index % 16 == 15) {
-                        StructureUseCase.Log.d(
-                            "assertQuestionRemote item 2222222222222222222222222",
-                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                        )
-                    }
-                }
+
                 val assertQuestionLocal = inputQuestionLocalVar.addList(
                     getQuestionListByPath(
                         result.state.changedListLocal,
-                        inputQuestionRemote
+                        inputQuestionRemote,
+                        inputDataLocal,
+                        inputDataRemote
                     )
                 ).toMutableList()
-                inputQuestionRemote.forEachIndexed { index, item ->
-                    if (index % 16 == 15) {
-                        StructureUseCase.Log.d(
-                            "assertQuestionRemote item 2222222222222222222222222",
-                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                        )
-                    }
-                }
-                expectedQuestionLocal.forEach { assertQuestion ->
-                    StructureUseCase.Log.d(
-                        "expectedQuestionLocal remove",
-                        "$assertQuestion"
-                    )
-                    assertQuestionRemote.remove(assertQuestionRemote.find { it.copy(id = assertQuestion.id) == assertQuestion }!!)
+
+                inputQuestionLocalVar.forEach { assertQuestion ->
                     assertQuestionLocal.remove(assertQuestionLocal.find { it.copy(id = assertQuestion.id) == assertQuestion }!!)
                 }
 
-                StructureUseCase.Log.d("_______________________after__________________","")
-                StructureUseCase.Log.d(
-                    "assertQuestionRemote",
-                    "${assertQuestionRemote.size}"
-                )
-                StructureUseCase.Log.d(
-                    "assertQuestionLocal",
-                    "${assertQuestionLocal.size}"
-                )
-
-                assertQuestionRemote.forEachIndexed { index, item ->
-                    if (index % 16 == 15) {
-                        StructureUseCase.Log.d(
-                            "assertQuestionRemote after item",
-                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                        )
-                    }
-                }
-                assertQuestionLocal.forEachIndexed { index, item ->
-                    if (index % 16 == 15) {
-                        StructureUseCase.Log.d(
-                            "assertQuestionLocal after item",
-                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                        )
-                    }
-                }
-
-                assertEquals(assertQuestionRemote.size,0)
-                assertEquals(assertQuestionLocal.size,0)
+                assertEquals(assertQuestionLocal.size, 0)
 
             }
+
             is SyncStructureResult.Error -> StructureUseCase.Log.d(
                 "TestDebug",
                 "Sync result: ${result.stage}"
@@ -340,121 +294,13 @@ class StructureSyncTest {
 
     fun getQuestionListByPath(
         changedList: MutableList<ChangeVersionStructure>,
-        questionListOld: List<QuestionEntity>
+        questionListOld: List<QuestionEntity>,
+        structureDataOld: MutableList<StructureDataLocal>,
+        structureDataNew: MutableList<StructureDataLocal>,
     ): List<QuestionEntity> {
         val newQuestionList: MutableList<QuestionEntity> = mutableListOf()
         changedList.forEach { change ->
-            StructureUseCase.Log.d(
-                "expectedQuestion",
-                "change: change:change:change:change:change:change:change:change:change:change:change:change:change:change:change:change:"
-            )
-            StructureUseCase.Log.d("expectedQuestion", "change: ${change}")
 
-            StructureUseCase.Log.d(
-                "expectedQuestion", "idEvent ${
-                    questionListOld.filter { question ->
-                        change.pathStructure.idEvent == question.idEvent
-                    }.size!!
-                }"
-            )
-            questionListOld.filter { question ->
-                change.pathStructure.idEvent == question.idEvent
-            }.forEachIndexed { index, item ->
-                if (index % 16 == 15) {
-                    StructureUseCase.Log.d(
-                        "assertQuestionLocal after item",
-                        "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                    )
-                }
-            }
-            StructureUseCase.Log.d(
-                "expectedQuestion", "idCategory ${
-                    questionListOld.filter { question ->
-                        change.pathStructure.idEvent == question.idEvent
-                                && change.pathStructure.idCategory == question.idCategory
-                    }.size!!
-                }"
-            )
-            questionListOld.filter { question ->
-                change.pathStructure.idEvent == question.idEvent
-                        && change.pathStructure.idCategory == question.idCategory
-            }.forEachIndexed { index, item ->
-                if (index % 16 == 15) {
-                    StructureUseCase.Log.d(
-                        "assertQuestionLocal after item",
-                        "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                    )
-                }
-            }
-            StructureUseCase.Log.d(
-                "expectedQuestion", "idSubCategory ${
-                    questionListOld.filter { question ->
-                        change.pathStructure.idEvent == question.idEvent
-                                && change.pathStructure.idCategory == question.idCategory
-                                && change.pathStructure.idSubCategory == question.idSubCategory
-                    }.size!!
-                }"
-            )
-            questionListOld.filter { question ->
-                change.pathStructure.idEvent == question.idEvent
-                        && change.pathStructure.idCategory == question.idCategory
-                        && change.pathStructure.idSubCategory == question.idSubCategory
-            }.forEachIndexed { index, item ->
-                if (index % 16 == 15) {
-                    StructureUseCase.Log.d(
-                        "assertQuestionLocal after item",
-                        "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                    )
-                }
-            }
-            StructureUseCase.Log.d(
-                "expectedQuestion", "idSubsubCategory ${
-                    questionListOld.filter { question ->
-                        change.pathStructure.idEvent == question.idEvent
-                                && change.pathStructure.idCategory == question.idCategory
-                                && change.pathStructure.idSubCategory == question.idSubCategory
-                                && change.pathStructure.idSubsubCategory == question.idSubsubCategory
-                    }.size!!
-                }"
-            )
-            questionListOld.filter { question ->
-                change.pathStructure.idEvent == question.idEvent
-                        && change.pathStructure.idCategory == question.idCategory
-                        && change.pathStructure.idSubCategory == question.idSubCategory
-                        && change.pathStructure.idSubsubCategory == question.idSubsubCategory
-            }.forEachIndexed { index, item ->
-                if (index % 16 == 15) {
-                    StructureUseCase.Log.d(
-                        "assertQuestionLocal after item",
-                        "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                    )
-                }
-            }
-            StructureUseCase.Log.d(
-                "expectedQuestion", "idQuiz ${
-                    questionListOld.filter { question ->
-                        change.pathStructure.idQuiz == question.idQuiz
-                                && change.pathStructure.idEvent == question.idEvent
-                                && change.pathStructure.idCategory == question.idCategory
-                                && change.pathStructure.idSubCategory == question.idSubCategory
-                                && change.pathStructure.idSubsubCategory == question.idSubsubCategory
-                    }.size!!
-                }"
-            )
-            questionListOld.filter { question ->
-                change.pathStructure.idQuiz == question.idQuiz
-                        && change.pathStructure.idEvent == question.idEvent
-                        && change.pathStructure.idCategory == question.idCategory
-                        && change.pathStructure.idSubCategory == question.idSubCategory
-                        && change.pathStructure.idSubsubCategory == question.idSubsubCategory
-            }.forEachIndexed { index, item ->
-                if (index % 16 == 15) {
-                    StructureUseCase.Log.d(
-                        "assertQuestionLocal after item",
-                        "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                    )
-                }
-            }
             questionListOld.filter { question ->
                 change.pathStructure.idQuiz == question.idQuiz
                         && change.pathStructure.idEvent == question.idEvent
@@ -462,10 +308,27 @@ class StructureSyncTest {
                         && change.pathStructure.idSubCategory == question.idSubCategory
                         && change.pathStructure.idSubsubCategory == question.idSubsubCategory
             }.forEach {
-                newQuestionList.add(it)
+                newQuestionList.add(
+                    it.editPath(
+                        findStructureDataOld(
+                            structureDataOld,
+                            structureDataNew,
+                            change.pathStructure
+                        ).pathOld
+                    )
+                )
             }
         }
         return newQuestionList
+    }
+
+    private fun QuestionEntity.editPath(pathStructure: PathStructure): QuestionEntity {
+        return this.copy(
+            idEvent = pathStructure.idEvent,
+            idCategory = pathStructure.idCategory,
+            idSubCategory = pathStructure.idSubCategory,
+            idSubsubCategory = pathStructure.idSubsubCategory
+        )
     }
 
     private fun testInputStructureDataLocal(result: SyncStructureResult) {

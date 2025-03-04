@@ -63,7 +63,7 @@ class SyncWorker @AssistedInject constructor(
     }
 
     private suspend fun syncQuizData(viewModel: MainViewModel) {
-        val updatedQuizList = structureUseCase.syncStructureDataAndQuestions(1)
+        val updatedQuizList = structureUseCase.syncStructureDataAndGetChangeLists(1)
             val quizCount = updatedQuizList
 
             showNotification("Sync Complete", "Updated $quizCount quizzes.", context)

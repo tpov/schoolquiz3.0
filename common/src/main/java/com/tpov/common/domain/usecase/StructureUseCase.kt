@@ -37,7 +37,7 @@ open class StructureUseCase @Inject constructor(
         repositoryStructureImpl.getStructureEventData(event)
 
     @SuppressLint("SuspiciousIndentation")
-    suspend fun syncStructureDataAndQuestions(eventId: Int): SyncStructureResult {
+    suspend fun syncStructureDataAndGetChangeLists(eventId: Int): SyncStructureResult {
         val syncState = SyncState(eventId)
         init( DomainExceptions(
                 beforeException = { syncState.exception = it },
