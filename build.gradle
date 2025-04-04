@@ -1,8 +1,8 @@
 buildscript {
     ext {
         agp_version = '8.3.1'
-        ksp_version = "1.9.20-1.0.14"
-        kotlin_version = "1.9.20"
+        ksp_version = "2.0.20-1.0.24"
+        kotlin_version = "2.0.20"
     }
 
     repositories {
@@ -13,7 +13,7 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:1.9.20-1.0.14"
+        classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$ksp_version"
         classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.2'
@@ -32,80 +32,60 @@ allprojects {
 
 subprojects {
     afterEvaluate { project ->
-        if (project.plugins.hasPlugin('com.android.application') || project.plugins.hasPlugin('com.android.library')) {
+        if (project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.library")) {
             android {
-                compileSdkVersion 34
+                compileSdk = 34
                 compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_11
-                    targetCompatibility JavaVersion.VERSION_11
-                }
-                packagingOptions {
-                    exclude 'META-INF/INDEX.LIST'
-                    exclude 'META-INF/DEPENDENCIES'
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
                 }
                 kotlinOptions {
-                    jvmTarget = "11"
+                    jvmTarget = "17"
+                }
+                packagingOptions {
+                    exclude("META-INF/INDEX.LIST")
+                    exclude("META-INF/DEPENDENCIES")
                 }
                 defaultConfig {
-                    multiDexEnabled true
+                    multiDexEnabled = true
                 }
                 buildFeatures {
-                    viewBinding true
+                    viewBinding = true
                 }
             }
+
             dependencies {
                 def lifecycle_version = "2.2.0"
 
-                // Exclude conflicting protobuf dependencies
-                configurations {
-                    all {
-                        exclude module: 'httpclient'
-                        exclude module: 'httpcore'
-                    }
-                }
-                configurations.all {
-                    exclude group: 'org.gradle.internal.impldep', module: 'h2'
-                    exclude group: 'org.h2', module: 'h2'
-                }
+                implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
+                implementation("androidx.core:core-ktx:1.13.1")
+                implementation("androidx.appcompat:appcompat:1.7.0")
 
-                implementation 'com.google.protobuf:protobuf-javalite:3.25.1'
+                implementation("androidx.lifecycle:lifecycle-extensions:$lifecycle_version")
+                implementation("androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version")
 
-                implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-                implementation 'androidx.core:core-ktx:1.13.1'
-                implementation 'androidx.appcompat:appcompat:1.7.0'
+                implementation("androidx.room:room-ktx:2.6.1")
+                implementation("androidx.room:room-runtime:2.6.1")
+                implementation("androidx.room:room-common:2.6.1")
+                implementation("androidx.room:room-testing:2.6.1")
 
-                // ViewModel and LiveData
-                implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
-                implementation "androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version"
+                implementation("com.google.dagger:dagger:2.49")
+                implementation("com.google.code.gson:gson:2.10.1")
 
-                implementation 'androidx.room:room-ktx:2.6.1'
-                implementation 'androidx.room:room-runtime:2.6.1'
-                implementation 'androidx.room:room-common:2.6.1'
-                implementation 'androidx.room:room-testing:2.6.1'
+                implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
+                implementation("com.google.firebase:firebase-firestore")
+                implementation("com.google.firebase:firebase-auth-ktx")
+                implementation("com.google.firebase:firebase-database-ktx")
+                implementation("com.google.firebase:firebase-storage-ktx")
 
-                implementation 'com.google.dagger:dagger:2.49'
+                implementation("androidx.work:work-runtime-ktx:2.9.1")
+                implementation("com.android.support:multidex:1.0.3")
+                implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
 
-                implementation 'com.google.code.gson:gson:2.10.1'
-                // Firebase and WorkManager
-                implementation platform("com.google.firebase:firebase-bom:33.2.0")
-                implementation 'com.google.firebase:firebase-firestore'
-                implementation 'com.google.firebase:firebase-auth-ktx'
-                implementation 'com.google.firebase:firebase-database-ktx'
-                implementation 'com.google.firebase:firebase-storage-ktx'
-
-                implementation 'androidx.work:work-runtime-ktx:2.9.1'
-                implementation 'com.android.support:multidex:1.0.3'
-                implementation 'com.google.firebase:firebase-appcheck-playintegrity:18.0.0'
-
-                implementation 'com.google.android.gms:play-services-base:18.5.0'
-                implementation 'com.google.android.gms:play-services-basement:18.4.0'
-                implementation 'com.google.firebase:firebase-functions:21.0.0'
-                implementation 'com.google.firebase:firebase-appcheck-playintegrity'
-                implementation 'com.squareup.okhttp3:okhttp:4.9.3'
-
-                implementation 'com.google.firebase:firebase-functions'
-implementation 'org.assertj:assertj-core:3.23.1'
-                testImplementation 'org.robolectric:robolectric:4.10.3'
+                implementation("com.google.android.gms:play-services-base:18.5.0")
+                implementation("com.google.android.gms:play-services-basement:18.4.0")
+                implementation("com.google.firebase:firebase-functions:21.0.0")
+                implementation("com.squareup.okhttp3:okhttp:4.9.3")
 
                 testImplementation("junit:junit:4.13.2")
                 testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
@@ -113,26 +93,8 @@ implementation 'org.assertj:assertj-core:3.23.1'
                 testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
                 implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
-
-            }
-            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { task ->
-                task.kotlinOptions {
-                    freeCompilerArgs += [
-                            "-Xno-optimize",
-                            "-Xplugin=${project.rootDir}/logger-processor/build/libs/logger-processor-1.0.0.jar",
-                            "-Xplugin-option=com.tpov.logger_processor:androidJarPath=D:/Programming/Android/root/platforms/android-34/android.jar"
-                    ]
-                }
-                task.doFirst {
-                    def pluginJar = file("${project.rootDir}/logger-processor/build/libs/logger-processor-1.0.0.jar")
-                    if (!pluginJar.exists()) {
-                        throw new GradleException("Plugin jar not found: $pluginJar. Build the :logger-processor module first.")
-                    }
-                }
             }
         }
-
-
     }
 }
 

@@ -12,10 +12,12 @@ import com.tpov.common.domain.repository.RepositoryException
 import com.tpov.common.domain.usecase.StructureDataExtention.getResult
 import com.tpov.common.domain.usecase.StructureDataExtention.init
 import com.tpov.common.domain.usecase.StructureDataExtention.initStateStructureData
-import com.tpov.common.domain.usecase.StructureDataExtention.syncStateChangeListQuestions
-import com.tpov.common.domain.usecase.StructureDataExtention.syncStateInfoLocal
-import com.tpov.common.domain.usecase.StructureDataExtention.syncStateInfoRemote
-import com.tpov.common.domain.usecase.StructureDataExtention.syncStateLocalStructureData
+import com.tpov.common.domain.usecase.StructureDataExtention.syncChangeListQuestionsLocal
+import com.tpov.common.domain.usecase.StructureDataExtention.syncChangeListQuestionsRemote
+import com.tpov.common.domain.usecase.StructureDataExtention.syncEditListIdsRemoteQuestion
+import com.tpov.common.domain.usecase.StructureDataExtention.syncInfoLocal
+import com.tpov.common.domain.usecase.StructureDataExtention.syncInfoRemote
+import com.tpov.common.domain.usecase.StructureDataExtention.syncLocalStructureData
 import javax.inject.Inject
 
 open class StructureUseCase @Inject constructor(
@@ -47,10 +49,12 @@ open class StructureUseCase @Inject constructor(
         )
         return syncState
             .initStateStructureData(repositoryStructureImpl)
-            .syncStateChangeListQuestions()
-            .syncStateInfoLocal()
-            .syncStateLocalStructureData()
-            .syncStateInfoRemote()
+            .syncChangeListQuestionsLocal()
+            .syncChangeListQuestionsRemote()
+            .syncInfoLocal()
+            .syncLocalStructureData()
+            .syncEditListIdsRemoteQuestion()
+            .syncInfoRemote()
             .getResult()
     }
 

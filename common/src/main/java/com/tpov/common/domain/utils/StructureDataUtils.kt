@@ -1,5 +1,7 @@
 package com.tpov.common.domain.utils
 
+import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
@@ -129,6 +131,35 @@ object StructureDataUtils {
         val structureData: StructureDataLocal?
     )
 
+    fun MutableList<StructureEditData>.add(fromPath: PathStructure, toPath: PathStructure) {
+        this.add(
+            StructureEditData(
+                1,
+                fromPath.idEvent,
+                fromPath.idCategory,
+                fromPath.idSubCategory,
+                fromPath.idSubsubCategory,
+                fromPath.idQuiz,
+                toPath.idEvent,
+                toPath.idCategory,
+                toPath.idSubCategory,
+                toPath.idSubsubCategory,
+                toPath.idQuiz,
+                "", "", "", "", "",
+                true,
+                false
+            )
+        )
+    }
+
+    fun MutableList<QuestionEntity>.addList(questionList: List<QuestionEntity>): List<QuestionEntity> {
+        questionList.forEach {
+            this.add(it)
+        }
+        this.sortBy { it.id }
+        return this
+    }
+
     fun findStructureDataOld(
         structureCategoryDataListOld: MutableList<StructureDataLocal>,
         structureCategoryDataListNew: MutableList<StructureDataLocal>,
@@ -155,7 +186,7 @@ object StructureDataUtils {
             idQuiz = quizOld?.id ?: -1
         )
 
-        if (currentPath.idCategory == 3 && currentPath.idSubCategory == 3 && currentPath.idSubsubCategory == 2) {
+        if (currentPath.idCategory == 3 && currentPath.idSubCategory == 3 && currentPath.idSubsubCategory == 1) {
             StructureUseCase.Log.d(
                 "findStructureDataOld",
                 "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -174,12 +205,15 @@ object StructureDataUtils {
             subsubCategoryOld?.printFullStructure("subsubCategoryOld")
 
             quizNew?.printFullStructure("quizNew")
-            quizOld?.printFullStructure("quizOld")
+            quizOld?.printFullStructure("quizOld $")
 
             StructureUseCase.Log.d(
                 "findStructureDataOld",
                 "-------------------------------------------------------------"
             )
+
+            StructureUseCase.Log.d("oldPath", "$oldPath")
+            StructureUseCase.Log.d("currentPath", "$currentPath")
         }
         return OldStructureResult(oldPath, quizOld)
     }
@@ -192,7 +226,7 @@ object StructureDataUtils {
 
     fun MutableList<StructureDataLocal>.addNode(
         node: StructureDataLocal,
-        path: PathStructure
+        path: PathStructure,
     ): MutableList<StructureDataLocal> {
         this.find { it.id == path.idCategory }
             ?.findChildren(path.idSubCategory)
@@ -207,6 +241,64 @@ object StructureDataUtils {
         return this
     }
 
+    fun MutableList<StructureDataLocal>.updateEditIdsRemote(
+        path: PathStructure,
+        editIdsList: MutableMap<PathStructure, PathStructure>
+    ) {
+        this.find { it.id == path.idCategory }
+            ?.findChildren(path.idSubCategory)
+            ?.findChildren(path.idSubsubCategory)?.let { quiz ->
+                if (quiz.children == null) {
+                    quiz.children = mutableListOf()
+                }
+                val newId = quiz.children?.last()?.id?.plus(1) ?: 1
+
+                val newPath = path
+
+                if (path.idEvent == -1) {
+                    newPath.idEvent = newId
+                } else if (path.idCategory == -1) {
+                    newPath.idCategory = newId
+                } else if (path.idSubCategory == -1) {
+                    newPath.idSubCategory = newId
+                } else if (path.idSubsubCategory == -1) {
+                    newPath.idSubsubCategory = newId
+                } else {
+                    newPath.idQuiz = newId
+                }
+                editIdsList[path] = newPath
+            }
+    }
+
+    fun MutableList<StructureDataLocal>.updateEditIdsLocal(
+        path: PathStructure,
+        editIdsList: MutableMap<PathStructure, PathStructure>
+    ) {
+        this.find { it.id == path.idCategory }
+            ?.findChildren(path.idSubCategory)
+            ?.findChildren(path.idSubsubCategory)?.let { quiz ->
+                if (quiz.children == null) {
+                    quiz.children = mutableListOf()
+                }
+                val newId = quiz.children?.last()?.id?.plus(1) ?: 1
+
+                val newPath = path
+
+                if (path.idEvent == -1) {
+                    newPath.idEvent = newId
+                } else if (path.idCategory == -1) {
+                    newPath.idCategory = newId
+                } else if (path.idSubCategory == -1) {
+                    newPath.idSubCategory = newId
+                } else if (path.idSubsubCategory == -1) {
+                    newPath.idSubsubCategory = newId
+                } else {
+                    newPath.idQuiz = newId
+                }
+                editIdsList[path] = newPath
+            }
+    }
+
     fun MutableList<StructureDataLocal>.updateNode(
         node: StructureDataLocal,
         path: PathStructure
@@ -215,13 +307,11 @@ object StructureDataUtils {
             ?.findChildren(path.idSubCategory)
             ?.findChildren(path.idSubsubCategory)
             ?.findChildren(path.idQuiz)?.let { existingNode ->
-                // Сохраняем существующий id
                 val currentId = existingNode.id
 
-                // Копируем все свойства кроме id
                 StructureDataLocal::class.memberProperties
                     .filterIsInstance<KMutableProperty1<StructureDataLocal, Any?>>()
-                    .filter { it.name != "id" } // Пропускаем поле id
+                    .filter { it.name != "id" }
                     .forEach { prop ->
                         val value = prop.get(node)
                         if (value != null) {
@@ -229,7 +319,6 @@ object StructureDataUtils {
                         }
                     }
 
-                // Id остается прежним
                 existingNode.id = currentId
             }
         return this

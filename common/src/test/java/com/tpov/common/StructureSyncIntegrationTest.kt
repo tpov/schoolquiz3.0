@@ -12,6 +12,7 @@ import com.tpov.common.domain.repository.RepositoryException
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.domain.utils.CallbackDifferences
 import com.tpov.common.domain.utils.StructureDataUtils
+import com.tpov.common.domain.utils.StructureDataUtils.addList
 import com.tpov.common.domain.utils.StructureDataUtils.findStructureDataOld
 import com.tpov.common.domain.utils.StructureDataUtils.updateNode
 import com.tpov.common.presentation.model.PathStructure
@@ -251,26 +252,137 @@ class StructureSyncTest {
                 var inputQuestionRemoteVar = inputQuestionRemote
                 var inputQuestionLocalVar = inputQuestionLocal
 
-                val assertQuestionRemote = inputQuestionRemoteVar.addList(
+                inputQuestionRemoteVar.forEachIndexed { index, item ->
+                    if (
+                        item.idCategory == 3
+                        && item.idSubCategory == 3
+                    ) {
+                        StructureUseCase.Log.d(
+                            " 1 ",
+                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
+                        )
+                    }
+                }
+
+                // Логирование и вычисление размеров оставляем как есть
+                result.state.editIdsList.forEach { edit ->
+                    StructureUseCase.Log.d(
+                        "editIdsList",
+                        "${edit.idCategoryFrom} - ${edit.idCategoryTo}, ${edit.idSubCategoryFrom} - ${edit.idSubCategoryTo}, ${edit.idSubsubCategoryFrom} - ${edit.idSubsubCategoryTo}, ${edit.idQuizFrom} - ${edit.idQuizTo}"
+                    )
+
+                    val size1 = inputQuestionRemoteVar.filter { it.idEvent == edit.idEventFrom }.size
+                    val size2 = inputQuestionRemoteVar.filter {
+                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom
+                    }.size
+                    val size3 = inputQuestionRemoteVar.filter {
+                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom && it.idSubCategory == edit.idSubCategoryFrom
+                    }.size
+                    val size4 = inputQuestionRemoteVar.filter {
+                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom && it.idSubCategory == edit.idSubCategoryFrom && it.idSubsubCategory == edit.idSubsubCategoryFrom
+                    }.size
+                    val size5 = inputQuestionRemoteVar.filter {
+                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom && it.idSubCategory == edit.idSubCategoryFrom && it.idSubsubCategory == edit.idSubsubCategoryFrom && it.idQuiz == edit.idQuizFrom
+                    }.size
+
+                    StructureUseCase.Log.d("test size", "size1: $size1")
+                    StructureUseCase.Log.d("test size", "size2: $size2")
+                    StructureUseCase.Log.d("test size", "size3: $size3")
+                    StructureUseCase.Log.d("test size", "size4: $size4")
+                    StructureUseCase.Log.d("test size", "size5: $size5")
+                }
+
+// Создаём новый список, применяя все правки в одном проходе
+                val updatedQuestions = inputQuestionRemoteVar.map { question ->
+                    // Ищем подходящий edit для текущего вопроса
+                    val edit = result.state.editIdsList.find { edit ->
+                        question.idEvent == edit.idEventFrom
+                                && question.idCategory == edit.idCategoryFrom
+                                && question.idSubCategory == edit.idSubCategoryFrom
+                                && question.idSubsubCategory == edit.idSubsubCategoryFrom
+                                && question.idQuiz == edit.idQuizFrom
+                    }
+
+                    if (edit != null) {
+                        // Логируем изменения для отладки
+                        StructureUseCase.Log.d(
+                            "editIdsList",
+                            "before edit ids ${question.idCategory}, ${question.idSubCategory}, ${question.idSubsubCategory}, ${question.idQuiz}"
+                        )
+
+                        val edited = question.copy(
+                            idEvent = edit.idEventTo,
+                            idCategory = edit.idCategoryTo,
+                            idSubCategory = edit.idSubCategoryTo,
+                            idSubsubCategory = edit.idSubsubCategoryTo,
+                            idQuiz = edit.idQuizTo
+                        )
+
+                        StructureUseCase.Log.d(
+                            "editIdsList",
+                            "after edit ids ${edited.idCategory}, ${edited.idSubCategory}, ${edited.idSubsubCategory}, ${edited.idQuiz}"
+                        )
+
+                        edited
+                    } else {
+                        question
+                    }
+                }
+
+                inputQuestionRemoteVar = updatedQuestions.toMutableList()
+
+
+                var assertQuestionRemote = inputQuestionRemoteVar.addList(
                     getQuestionListByPath(
                         result.state.changedListRemote,
                         inputQuestionLocal,
-                        inputDataLocal,
-                        inputDataRemote
+                        inputDataRemote,
+                        inputDataLocal
                     )
                 ).toMutableList()
 
-                val assertQuestionLocal = inputQuestionLocalVar.addList(
-                    getQuestionListByPath(
-                        result.state.changedListLocal,
-                        inputQuestionRemote,
-                        inputDataLocal,
-                        inputDataRemote
-                    )
-                ).toMutableList()
+                result.state.changedListRemote.forEach {
 
-                inputQuestionLocalVar.forEach { assertQuestion ->
+                        StructureUseCase.Log.d(
+                            "result.state.changedListRemote",
+                            "${it.pathStructure.idCategory}, ${it.pathStructure.idSubCategory}, ${it.pathStructure.idSubsubCategory}, ${it.pathStructure.idQuiz}"
+                        )
+                }
+
+                assertQuestionRemote.forEachIndexed { index, item ->
+                    if (
+                        item.idCategory == 3
+                        && item.idSubCategory == 3
+                    ) {
+                        StructureUseCase.Log.d(
+                            "3 edit 1",
+                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
+                        )
+                    }
+                }
+
+                val assertQuestionLocal = inputQuestionLocalVar.toMutableList()
+
+
+                assertQuestionRemote.forEachIndexed { index, item ->
+                    StructureUseCase.Log.d(
+                        "assertQuestionRemote after testInputStructureDataLocal item",
+                        "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
+                    )
+                }
+
+                expectedQuestionLocal.forEach { assertQuestion ->
+//                    StructureUseCase.Log.d(
+//                        "expectedQuestionLocal.forEach",
+//                        "${assertQuestion.idCategory}, ${assertQuestion.idSubCategory}, ${assertQuestion.idSubsubCategory}, ${assertQuestion.idQuiz}"
+//                    )
+                    StructureUseCase.Log.d(
+                        "forEach assertQuestion",
+                        "${assertQuestion.idCategory}, ${assertQuestion.idSubCategory}, ${assertQuestion.idSubsubCategory}, ${assertQuestion.idQuiz}"
+                    )
+
                     assertQuestionLocal.remove(assertQuestionLocal.find { it.copy(id = assertQuestion.id) == assertQuestion }!!)
+                    assertQuestionRemote.remove(assertQuestionRemote.find { it.copy(id = assertQuestion.id) == assertQuestion }!!)
                 }
 
                 assertEquals(assertQuestionLocal.size, 0)
@@ -284,40 +396,31 @@ class StructureSyncTest {
         }
     }
 
-    fun MutableList<QuestionEntity>.addList(questionList: List<QuestionEntity>): List<QuestionEntity> {
-        questionList.forEach {
-            this.add(it)
-        }
-        this.sortBy { it.id }
-        return this
-    }
 
     fun getQuestionListByPath(
         changedList: MutableList<ChangeVersionStructure>,
-        questionListOld: List<QuestionEntity>,
+        questionListNew: List<QuestionEntity>,
         structureDataOld: MutableList<StructureDataLocal>,
         structureDataNew: MutableList<StructureDataLocal>,
     ): List<QuestionEntity> {
         val newQuestionList: MutableList<QuestionEntity> = mutableListOf()
         changedList.forEach { change ->
 
-            questionListOld.filter { question ->
-                change.pathStructure.idQuiz == question.idQuiz
-                        && change.pathStructure.idEvent == question.idEvent
-                        && change.pathStructure.idCategory == question.idCategory
-                        && change.pathStructure.idSubCategory == question.idSubCategory
-                        && change.pathStructure.idSubsubCategory == question.idSubsubCategory
-            }.forEach {
-                newQuestionList.add(
-                    it.editPath(
-                        findStructureDataOld(
-                            structureDataOld,
-                            structureDataNew,
-                            change.pathStructure
-                        ).pathOld
-                    )
-                )
+            questionListNew.filter { questions ->
+                change.pathStructure.idQuiz == questions.idQuiz
+                        && change.pathStructure.idEvent == questions.idEvent
+                        && change.pathStructure.idCategory == questions.idCategory
+                        && change.pathStructure.idSubCategory == questions.idSubCategory
+                        && change.pathStructure.idSubsubCategory == questions.idSubsubCategory
+            }.forEach { question ->
+                newQuestionList.add(question)
             }
+        }
+        newQuestionList.forEach {
+            StructureUseCase.Log.d(
+                "getQuestionListByPath return newQuestionList",
+                "${it.idCategory}, ${it.idSubCategory}, ${it.idSubsubCategory}, ${it.idQuiz}"
+            )
         }
         return newQuestionList
     }

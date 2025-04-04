@@ -1,6 +1,7 @@
 package com.tpov.common.domain.model
 
 import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.presentation.model.PathStructure
 
 data class SyncState(
@@ -14,5 +15,6 @@ data class SyncState(
     val allQuizRemote: MutableList<PathStructure> = mutableListOf(),
     val allQuizLocal: MutableList<PathStructure> = mutableListOf(),
     var currentStage: SyncStage = SyncStage.NOT_STARTED,
+    var editIdsList: MutableList<StructureEditData> = mutableListOf(),
     var exception: String? = null
 )

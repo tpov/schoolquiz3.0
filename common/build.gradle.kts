@@ -71,6 +71,6 @@ dependencies {
     kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
 
     implementation ("com.google.auth:google-auth-library-oauth2-http:1.23.0")
-
-
+    implementation ("org.robolectric:robolectric:4.10.3")
+    testImplementation ("org.robolectric:robolectric:4.10.3")
 }
