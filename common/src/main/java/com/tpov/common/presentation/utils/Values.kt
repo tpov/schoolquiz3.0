@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.MutableLiveData
 import com.tpov.common.COUNT_SKILL_AMATEUR
 import com.tpov.common.COUNT_SKILL_BEGINNER
 import com.tpov.common.COUNT_SKILL_EDUCATION
@@ -22,11 +21,6 @@ import com.tpov.common.THROPHY3
 object Values {
     lateinit var context: Context
     lateinit var application: Application
-
-    var synthLiveData = MutableLiveData<Int>()
-    var loadText: MutableLiveData<String> = MutableLiveData()
-    var loadProgress: MutableLiveData<Int> = MutableLiveData()
-    var synth = 0
 
     fun init(context: Context, application: Application) {
         Values.context = context

@@ -19,7 +19,7 @@ interface RepositoryQuestion {
     )
 
     suspend fun updateQuestion(questionEntity: QuestionEntity)
-    suspend fun deleteQuestionByIdQuiz(idQuiz: Int)
+    suspend fun deleteQuestionByPath(path: PathStructure)
     suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, typeId: Int)
 
     suspend fun remoteLangsQuestions(questionEntity: QuestionEntity): List<String>

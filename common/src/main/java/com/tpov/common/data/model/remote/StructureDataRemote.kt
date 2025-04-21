@@ -17,7 +17,7 @@ data class StructureDataRemote(
     val tpovIdMaxStarsGlobal: Int = 0,
     val picture: String = "",
     var languages: String = "",
-    val isShowArchive: Boolean = false,
+    val isShowArchive: Boolean = true,
     val isShow: Boolean = true
 ) {
     fun toStructureDataLocal(): StructureDataLocal = StructureDataLocal(
@@ -25,6 +25,7 @@ data class StructureDataRemote(
         children.orEmpty().map { it.toStructureDataLocal() }.toMutableList(),
         nameItem,
         dataUpdate,
+        "",
         dataCreate,
         version,
         ratingGlobal,

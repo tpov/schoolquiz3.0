@@ -6,10 +6,11 @@ import com.tpov.common.presentation.model.PathStructure
 data class StructureInfoEntity(
     val id: Int?,
     val pathStructure: PathStructure,
+    var dateUpdate: String,
     val tpovIdUser: Int,
-    val rating: Int,
-    val starsMax: Int,
-    val starsAverage: Int,
+    var rating: Int,
+    var starsMax: Int,
+    var starsAverage: Int,
     val countGame: Int
 ) {
     fun toStructureUserInfoRemote(dataRating: String, versionQuiz: Int) = StructureInfoRemote(

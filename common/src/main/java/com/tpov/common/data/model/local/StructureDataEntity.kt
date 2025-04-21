@@ -11,7 +11,8 @@ data class StructureDataEntity(
     val id: Int? = null,
     val childesJson: String? = null,
     val nameItem: String = "",
-    val dataUpdate: String = "", // for syncs
+    val dataUpdateGlobal: String = "", // for syncs
+    val dataUpdateLocal: String = "", // for syncs
     val dataCreate: String = "",
     val version: Int = 0,       // for show update user
     val ratingGlobal: Int = 0,
@@ -28,7 +29,7 @@ data class StructureDataEntity(
     var languages: String = "",
     val picture: String = "",
     val isShowDownload: Boolean = false,
-    val isShowArchive: Boolean = false
+    val isShowArchive: Boolean = true
 ) {
     private fun toStructureDataLocal(): StructureDataLocal {
         val childesList = Converters().toChildesList(childesJson ?: "[]")
@@ -36,7 +37,8 @@ data class StructureDataEntity(
             id = id,
             children = childesList?.map { it.toStructureDataLocal() }?.toMutableList(),
             nameItem = nameItem,
-            dataUpdate = dataUpdate,
+            dataUpdateGlobal = dataUpdateGlobal,
+            dataUpdateLocal = dataUpdateLocal,
             dataCreate = dataCreate,
             version = version,
             ratingGlobal = ratingGlobal,

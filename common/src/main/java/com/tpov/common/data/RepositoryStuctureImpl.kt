@@ -12,6 +12,7 @@ import com.tpov.common.data.database.StructureDataDao
 import com.tpov.common.data.database.StructureEditDataDao
 import com.tpov.common.data.manager.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.model.local.StructureDataEntity
+import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.local.UpdatedStructureData
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.data.model.remote.StructureEditData
@@ -254,7 +255,7 @@ open class RepositoryStuctureImpl @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    override suspend fun fetchStructureInfo(path: PathStructure): StructureInfoRemote? {
+    override suspend fun fetchStructureInfo(path: PathStructure): StructureInfoEntity? {
         val db = FirebaseFirestore.getInstance()
 
         val pathSegments = mutableListOf<String>()
@@ -268,16 +269,16 @@ open class RepositoryStuctureImpl @Inject constructor(
         pathSegments.add("infoList/tpovIdList/$tpovId")
 
         val fullPath = pathSegments.joinToString("/")
-
-        return try {
-            val document = db.document(fullPath).get().await()
-            if (document.exists()) {
-                document.toObject(StructureInfoRemote::class.java)
-            } else null
-        } catch (e: Exception) {
-            Log.e("Firestore", "Error fetching document: ${e.message}")
-            null
-        }
+return null!!
+//        return try {
+//            val document = db.document(fullPath).get().await()
+//            if (document.exists()) {
+//                document.toObject(StructureInfoRemote::class.java)
+//            } else null
+//        } catch (e: Exception) {
+//            Log.e("Firestore", "Error fetching document: ${e.message}")
+//            null
+//        }
     }
 
     override fun fetchPictureStructure(updatedStructureData: UpdatedStructureData) {

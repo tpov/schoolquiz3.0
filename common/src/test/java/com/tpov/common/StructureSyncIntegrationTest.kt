@@ -2,9 +2,12 @@ package com.tpov.common
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.tpov.common.Core.tpovId
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStuctureImpl
 import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.model.ChangeVersionStructure
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.model.SyncStructureResult
@@ -25,6 +28,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.anyOrNull
 import org.robolectric.RobolectricTestRunner
 import java.io.File
 import java.io.FileWriter
@@ -54,6 +58,7 @@ class StructureSyncTest {
     private lateinit var inputDataLocal: MutableList<StructureDataLocal>
     private lateinit var expectedOutputRemote: MutableList<StructureDataLocal>
     private lateinit var inputDataRemote: MutableList<StructureDataLocal>
+    private lateinit var inputLocalInfoRemote: MutableList<StructureInfoEntity>
     private val gson = Gson()
 
     @Before
@@ -77,28 +82,57 @@ class StructureSyncTest {
             loadJson<StructureDataLocal>("MockStructureDataInputLocal.json").toMutableList()
         expectedOutputLocal =
             loadJson<StructureDataLocal>("MockStructureDataOutputLocal.json").toMutableList()
+        inputLocalInfoRemote =
+            loadJson<StructureInfoEntity>("StructureInfoLocalRemoteList.json").toMutableList()
+
         inputDataRemote =
-            loadJson<StructureDataLocal>("MockStructureDataInputRemote.json").toMutableList()
+            StructureDataRemote(children = loadJson<StructureDataRemote>("MockStructureDataInputRemote.json")).toStructureDataLocal().children!!
         expectedOutputRemote =
-            loadJson<StructureDataLocal>("MockStructureDataOutputRemote.json").toMutableList()
+            StructureDataRemote(children = loadJson<StructureDataRemote>("MockStructureDataOutputRemote.json")).toStructureDataLocal().children!!
+
+        //repositoryStructureImpl.fetchStructureInfo(currentPathRemote)
 
         runBlocking {
             `when`(repositoryStructureImpl.getStructureEventData(1))
                 .thenReturn(inputDataLocal)
             `when`(repositoryStructureImpl.fetchStructureCategoryDataList(1))
                 .thenReturn(inputDataRemote)
+
+            `when`(repositoryStructureImpl.fetchStructureInfo(anyOrNull())).thenAnswer { invocation ->
+                getInfoItemLocal(invocation.getArgument<PathStructure>(0))
+            }
         }
+    }
+
+    fun getInfoItemLocal(pathStructure: PathStructure): StructureInfoEntity? {
+        val findLocalInfo = inputLocalInfoRemote.find {
+            it.pathStructure == pathStructure
+        }
+
+
+        val logFind = findStructureDataOld(inputDataLocal, inputDataRemote, PathStructure(1,1,1,2,2))
+        StructureUseCase.Log.d("klsdhjgdkser find", "logFind: $logFind")
+
+
+        StructureUseCase.Log.d(
+            "fdrkfjskefjl345",
+            "pathStructure: ${pathStructure}, findLocalInfo: $findLocalInfo"
+        )
+        return findLocalInfo?.copy()
     }
 
     @Test
     fun `test full sync process`() = runBlocking {
         val eventId = 1
+        //generateStructureInfo()
+            //generateStructureInfoLocal()
 
         val result = structureUseCase.syncStructureDataAndGetChangeLists(eventId)
 
         when (result) {
             is SyncStructureResult.Success -> {
-                result.state.structureInfoRemote.forEach {
+                result.state.structureInfoGlobal.forEach {
+                    StructureUseCase.Log.d("sefsdfsdfsdxfsd", "dateUpdate: ${it}")
                     val oldStructureData = findStructureDataOld(
                         result.state.structureCategoryDataListRemote,
                         result.state.structureCategoryDataListLocal,
@@ -136,24 +170,294 @@ class StructureSyncTest {
         editQuestionList(inputQuestionRemote, inputDataRemote)
         editQuestionList(expectedQuestionLocal, expectedOutputLocal)
 
-        inputQuestionLocal.forEachIndexed { index, item ->
-            if (index % 16 == 15) {
-                StructureUseCase.Log.d(
-                    "inputQuestionLocal before testInputStructureDataLocal item",
-                    "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                )
-            }
-        }
-        inputQuestionRemote.forEachIndexed { index, item ->
-            if (index % 16 == 15) {
-                StructureUseCase.Log.d(
-                    "assertQuestionRemote before testInputStructureDataLocal item",
-                    "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                )
-            }
-        }
         testInputStructureDataLocal(result)
         testInputQuestionLocal(result)
+    }
+
+    private fun generateStructureInfoLocal() {
+        val localList: MutableList<StructureInfoEntity> = mutableListOf()
+
+
+        StructureDataUtils.processStructureDataDifferences(
+            inputDataRemote.toMutableList(),
+            expectedOutputLocal.toMutableList(),
+            1,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ -> },
+                onHasChildren = { structureDataRemote, structureDataOutput, path ->
+
+                    val inputDataLocal =
+                        findStructureDataOld(inputDataLocal, expectedOutputLocal, path.copy())
+
+                    structureDataOutput.ratingLocal = (Math.random() * 100).toInt()
+                    structureDataOutput.starsMaxLocal = (Math.random() * 100).toInt()
+                    structureDataOutput.starsAverageLocal = (Math.random() * 100).toInt()
+
+                    if (inputDataLocal.structureData == null) {
+
+                        structureDataRemote?.get(0)!!.let {
+                            localList.add(
+                                StructureInfoEntity(
+                                    null,
+                                    path.copy(),
+                                    structureDataOutput.dataUpdateLocal,
+                                    tpovId,
+                                    structureDataOutput.ratingLocal,
+                                    structureDataOutput.starsMaxLocal,
+                                    structureDataOutput.starsAverageLocal,
+                                    0
+                                )
+                            )
+                        }
+
+                    } else {
+                        inputDataLocal.structureData!!.ratingLocal = structureDataOutput.ratingLocal
+                        inputDataLocal.structureData!!.starsMaxLocal = structureDataOutput.starsMaxLocal
+                        inputDataLocal.structureData!!.starsAverageLocal =
+                            structureDataOutput.starsAverageLocal
+                        if (inputDataLocal.structureData?.dataUpdateLocal!! < structureDataOutput.dataUpdateLocal) {
+
+                            structureDataRemote?.get(0).let {
+                                localList.add(
+                                    StructureInfoEntity(
+                                        null,
+                                        path.copy(),
+                                        structureDataOutput.dataUpdateLocal,
+                                        tpovId,
+                                        structureDataOutput.ratingLocal,
+                                        structureDataOutput.starsMaxLocal,
+                                        structureDataOutput.starsAverageLocal,
+                                        0
+                                    )
+                                )
+                            }
+
+                        }
+                    }
+
+
+                },
+                onNoChildren = { structureDataRemote, structureDataOutput, path ->
+
+                    val inputDataLocal =
+                        findStructureDataOld(inputDataLocal, expectedOutputLocal, path.copy())
+
+                    structureDataOutput.ratingLocal = (Math.random() * 100).toInt()
+                    structureDataOutput.starsMaxLocal = (Math.random() * 100).toInt()
+                    structureDataOutput.starsAverageLocal = (Math.random() * 100).toInt()
+
+                    if (inputDataLocal.structureData == null) {
+
+                        structureDataRemote?.get(0)!!.let {
+                            localList.add(
+                                StructureInfoEntity(
+                                    null,
+                                    path.copy(),
+                                    structureDataOutput.dataUpdateLocal,
+                                    tpovId,
+                                    structureDataOutput.ratingLocal,
+                                    structureDataOutput.starsMaxLocal,
+                                    structureDataOutput.starsAverageLocal,
+                                    0
+                                )
+                            )
+                        }
+
+                    } else {
+                        inputDataLocal.structureData!!.ratingLocal = structureDataOutput.ratingLocal
+                        inputDataLocal.structureData!!.starsMaxLocal = structureDataOutput.starsMaxLocal
+                        inputDataLocal.structureData!!.starsAverageLocal =
+                            structureDataOutput.starsAverageLocal
+                        if (inputDataLocal.structureData?.dataUpdateLocal!! < structureDataOutput.dataUpdateLocal) {
+
+                            structureDataRemote?.get(0).let {
+                                localList.add(
+                                    StructureInfoEntity(
+                                        null,
+                                        path.copy(),
+                                        structureDataOutput.dataUpdateLocal,
+                                        tpovId,
+                                        structureDataOutput.ratingLocal,
+                                        structureDataOutput.starsMaxLocal,
+                                        structureDataOutput.starsAverageLocal,
+                                        0
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        saveFile(localList, "localList")
+        saveFile(expectedOutputLocal, "expectedOutputLocal")
+        saveFile(inputDataLocal, "inputDataLocal")
+    }
+
+    private fun generateStructureInfo() {
+
+        val structureDataInfoList = insertStructureInfoLocal()
+
+        structureDataInfoList.forEach { structureDataInfo ->
+            structureDataInfo.rating = (Math.random() * 100).toInt()
+            structureDataInfo.starsMax = (Math.random() * 100).toInt()
+            structureDataInfo.starsAverage = (Math.random() * 100).toInt()
+        }
+
+        inputDataLocal.forEach {
+
+            StructureUseCase.Log.d(
+                "onHasChildren forEach",
+                "structureData.dataUpdateLocal: ${it.dataUpdateLocal}"
+            )
+        }
+
+        StructureDataUtils.processStructureDataDifferences(
+            inputDataLocal.toMutableList(),
+            inputDataLocal.toMutableList(),
+            1,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ -> },
+                onHasChildren = { _, structureData, path ->
+                    structureDataInfoList.find {
+                        it.pathStructure.idEvent == path.idEvent
+                                && it.pathStructure.idCategory == path.idCategory
+                                && it.pathStructure.idSubCategory == path.idSubCategory
+                                && it.pathStructure.idSubsubCategory == path.idSubsubCategory
+                                && it.pathStructure.idQuiz == path.idQuiz
+                    }!!.apply {
+                        structureData.ratingLocal = rating
+                        structureData.starsMaxLocal = starsMax
+                        structureData.starsAverageLocal = starsAverage
+                    }
+                    StructureUseCase.Log.d(
+                        "onHasChildren",
+                        "structureData.dataUpdateLocal: ${structureData.dataUpdateLocal}"
+                    )
+                    StructureUseCase.Log.d(
+                        "onHasChildren",
+                        "structureData.dataUpdateLocal: ${structureData.dataUpdateGlobal}"
+                    )
+                },
+
+                onNoChildren = { _, structureData, path ->
+                    structureDataInfoList.find {
+                        it.pathStructure.idEvent == path.idEvent
+                                && it.pathStructure.idCategory == path.idCategory
+                                && it.pathStructure.idSubCategory == path.idSubCategory
+                                && it.pathStructure.idSubsubCategory == path.idSubsubCategory
+                                && it.pathStructure.idQuiz == path.idQuiz
+                    }!!.apply {
+                        structureData.ratingLocal = rating
+                        structureData.starsMaxLocal = starsMax
+                        structureData.starsAverageLocal = starsAverage
+                    }
+                    StructureUseCase.Log.d(
+                        "onHasChildren",
+                        "structureData.dataUpdateLocal: ${structureData.dataUpdateLocal}"
+                    )
+                    StructureUseCase.Log.d(
+                        "onHasChildren",
+                        "structureData.dataUpdateLocal: ${structureData.dataUpdateGlobal}"
+                    )
+                }
+            )
+        )
+
+        StructureDataUtils.processStructureDataDifferences(
+            expectedOutputLocal.toMutableList(),
+            expectedOutputLocal.toMutableList(),
+            1,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ -> },
+                onHasChildren = { _, structureData, path ->
+                    structureDataInfoList.find {
+                        it.pathStructure.idEvent == path.idEvent
+                                && it.pathStructure.idCategory == path.idCategory
+                                && it.pathStructure.idSubCategory == path.idSubCategory
+                                && it.pathStructure.idSubsubCategory == path.idSubsubCategory
+                                && it.pathStructure.idQuiz == path.idQuiz
+                    }!!.apply {
+                        structureData.ratingLocal = rating
+                        structureData.starsMaxLocal = starsMax
+                        structureData.starsAverageLocal = starsAverage
+                    }
+                },
+
+                onNoChildren = { _, structureData, path ->
+                    structureDataInfoList.find {
+                        it.pathStructure.idEvent == path.idEvent
+                                && it.pathStructure.idCategory == path.idCategory
+                                && it.pathStructure.idSubCategory == path.idSubCategory
+                                && it.pathStructure.idSubsubCategory == path.idSubsubCategory
+                                && it.pathStructure.idQuiz == path.idQuiz
+                    }!!.apply {
+                        structureData.ratingLocal = rating
+                        structureData.starsMaxLocal = starsMax
+                        structureData.starsAverageLocal = starsAverage
+                    }
+                }
+            )
+        )
+        saveFile(inputDataLocal, "inputDataLocal")
+        saveFile(expectedOutputLocal, "expectedOutputLocal")
+        saveFile(structureDataInfoList, "structureDataInfoList")
+
+    }
+
+    private fun <T> saveFile(file: T, fileName: String) {
+        val json = gson.toJson(file)
+        val file = File("$fileName.json")
+        file.parentFile?.mkdirs()
+        FileWriter(file).use { writer ->
+            writer.write(json)
+        }
+    }
+
+    private fun insertStructureInfoLocal(): MutableList<StructureInfoEntity> {
+        var structureInfoRemoteList: MutableList<StructureInfoEntity> = mutableListOf()
+
+        StructureDataUtils.processStructureDataDifferences(
+            expectedOutputLocal.toMutableList(),
+            expectedOutputLocal.toMutableList(),
+            1,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ -> },
+                onHasChildren = { _, structureData, path ->
+                    structureInfoRemoteList.add(
+                        StructureInfoEntity(
+                            structureData.ratingLocal,
+                            path.copy(),
+                            structureData.dataUpdateGlobal,
+                            tpovId,
+                            structureData.ratingLocal,
+                            structureData.starsMaxLocal,
+                            structureData.starsAverageLocal,
+                            0
+                        )
+                    )
+                },
+
+                onNoChildren = { _, structureData, path ->
+                    structureInfoRemoteList.add(
+                        StructureInfoEntity(
+                            structureData.ratingLocal,
+                            path.copy(),
+                            structureData.dataUpdateGlobal,
+                            tpovId,
+                            structureData.ratingLocal,
+                            structureData.starsMaxLocal,
+                            structureData.starsAverageLocal,
+                            0
+                        )
+                    )
+                }
+            )
+        )
+
+        return structureInfoRemoteList
+
     }
 
     // Метод для сохранения списка вопросов в новый файл
@@ -183,11 +487,7 @@ class StructureSyncTest {
                 onMissingOldStructure = { _, _, _ -> },
                 onHasChildren = { _, _, _ -> },
                 onNoChildren = { structureNodeListOld, structureNodeNew, currentPath ->
-                    StructureUseCase.Log.d("countQuiz", "$countQuiz")
-                    StructureUseCase.Log.d("currentPath", "$currentPath")
                     countQuiz++
-                    structureNodeNew.printFullStructure("structureNodeNew")
-                    structureNodeListOld?.get(0)?.printFullStructure("structureNodeListOld")
                     arrayListOf(1).toList().forEach { eventid ->
                         arrayListOf(50, 200).forEach { lvlTranslate ->
                             arrayListOf("ua", "ru").forEach { language ->
@@ -205,9 +505,6 @@ class StructureSyncTest {
                                             eventid
                                         )
                                         counter++
-
-                                        StructureUseCase.Log.d("counter", "$counter")
-                                        StructureUseCase.Log.d("size", "${questionList.size}")
                                     }
                                 }
                             }
@@ -252,49 +549,7 @@ class StructureSyncTest {
                 var inputQuestionRemoteVar = inputQuestionRemote
                 var inputQuestionLocalVar = inputQuestionLocal
 
-                inputQuestionRemoteVar.forEachIndexed { index, item ->
-                    if (
-                        item.idCategory == 3
-                        && item.idSubCategory == 3
-                    ) {
-                        StructureUseCase.Log.d(
-                            " 1 ",
-                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                        )
-                    }
-                }
-
-                // Логирование и вычисление размеров оставляем как есть
-                result.state.editIdsList.forEach { edit ->
-                    StructureUseCase.Log.d(
-                        "editIdsList",
-                        "${edit.idCategoryFrom} - ${edit.idCategoryTo}, ${edit.idSubCategoryFrom} - ${edit.idSubCategoryTo}, ${edit.idSubsubCategoryFrom} - ${edit.idSubsubCategoryTo}, ${edit.idQuizFrom} - ${edit.idQuizTo}"
-                    )
-
-                    val size1 = inputQuestionRemoteVar.filter { it.idEvent == edit.idEventFrom }.size
-                    val size2 = inputQuestionRemoteVar.filter {
-                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom
-                    }.size
-                    val size3 = inputQuestionRemoteVar.filter {
-                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom && it.idSubCategory == edit.idSubCategoryFrom
-                    }.size
-                    val size4 = inputQuestionRemoteVar.filter {
-                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom && it.idSubCategory == edit.idSubCategoryFrom && it.idSubsubCategory == edit.idSubsubCategoryFrom
-                    }.size
-                    val size5 = inputQuestionRemoteVar.filter {
-                        it.idEvent == edit.idEventFrom && it.idCategory == edit.idCategoryFrom && it.idSubCategory == edit.idSubCategoryFrom && it.idSubsubCategory == edit.idSubsubCategoryFrom && it.idQuiz == edit.idQuizFrom
-                    }.size
-
-                    StructureUseCase.Log.d("test size", "size1: $size1")
-                    StructureUseCase.Log.d("test size", "size2: $size2")
-                    StructureUseCase.Log.d("test size", "size3: $size3")
-                    StructureUseCase.Log.d("test size", "size4: $size4")
-                    StructureUseCase.Log.d("test size", "size5: $size5")
-                }
-
-// Создаём новый список, применяя все правки в одном проходе
                 val updatedQuestions = inputQuestionRemoteVar.map { question ->
-                    // Ищем подходящий edit для текущего вопроса
                     val edit = result.state.editIdsList.find { edit ->
                         question.idEvent == edit.idEventFrom
                                 && question.idCategory == edit.idCategoryFrom
@@ -304,23 +559,12 @@ class StructureSyncTest {
                     }
 
                     if (edit != null) {
-                        // Логируем изменения для отладки
-                        StructureUseCase.Log.d(
-                            "editIdsList",
-                            "before edit ids ${question.idCategory}, ${question.idSubCategory}, ${question.idSubsubCategory}, ${question.idQuiz}"
-                        )
-
                         val edited = question.copy(
                             idEvent = edit.idEventTo,
                             idCategory = edit.idCategoryTo,
                             idSubCategory = edit.idSubCategoryTo,
                             idSubsubCategory = edit.idSubsubCategoryTo,
                             idQuiz = edit.idQuizTo
-                        )
-
-                        StructureUseCase.Log.d(
-                            "editIdsList",
-                            "after edit ids ${edited.idCategory}, ${edited.idSubCategory}, ${edited.idSubsubCategory}, ${edited.idQuiz}"
                         )
 
                         edited
@@ -331,55 +575,22 @@ class StructureSyncTest {
 
                 inputQuestionRemoteVar = updatedQuestions.toMutableList()
 
-
                 var assertQuestionRemote = inputQuestionRemoteVar.addList(
                     getQuestionListByPath(
-                        result.state.changedListRemote,
+                        result.state.changedListQuestionRemote,
                         inputQuestionLocal,
                         inputDataRemote,
                         inputDataLocal
                     )
                 ).toMutableList()
 
-                result.state.changedListRemote.forEach {
-
-                        StructureUseCase.Log.d(
-                            "result.state.changedListRemote",
-                            "${it.pathStructure.idCategory}, ${it.pathStructure.idSubCategory}, ${it.pathStructure.idSubsubCategory}, ${it.pathStructure.idQuiz}"
-                        )
-                }
-
-                assertQuestionRemote.forEachIndexed { index, item ->
-                    if (
-                        item.idCategory == 3
-                        && item.idSubCategory == 3
-                    ) {
-                        StructureUseCase.Log.d(
-                            "3 edit 1",
-                            "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                        )
-                    }
-                }
-
                 val assertQuestionLocal = inputQuestionLocalVar.toMutableList()
-
-
-                assertQuestionRemote.forEachIndexed { index, item ->
-                    StructureUseCase.Log.d(
-                        "assertQuestionRemote after testInputStructureDataLocal item",
-                        "${item.idCategory}, ${item.idSubCategory}, ${item.idSubsubCategory}, ${item.idQuiz}"
-                    )
-                }
 
                 expectedQuestionLocal.forEach { assertQuestion ->
 //                    StructureUseCase.Log.d(
 //                        "expectedQuestionLocal.forEach",
 //                        "${assertQuestion.idCategory}, ${assertQuestion.idSubCategory}, ${assertQuestion.idSubsubCategory}, ${assertQuestion.idQuiz}"
 //                    )
-                    StructureUseCase.Log.d(
-                        "forEach assertQuestion",
-                        "${assertQuestion.idCategory}, ${assertQuestion.idSubCategory}, ${assertQuestion.idSubsubCategory}, ${assertQuestion.idQuiz}"
-                    )
 
                     assertQuestionLocal.remove(assertQuestionLocal.find { it.copy(id = assertQuestion.id) == assertQuestion }!!)
                     assertQuestionRemote.remove(assertQuestionRemote.find { it.copy(id = assertQuestion.id) == assertQuestion }!!)

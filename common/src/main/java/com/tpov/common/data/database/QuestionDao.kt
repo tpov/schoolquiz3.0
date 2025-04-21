@@ -37,8 +37,19 @@ interface QuestionDao {
     @Query("DELETE FROM question_entity WHERE idQuiz IS :id")
     fun deleteQuestionByIdQuiz(id: Int)
 
-    @Query("DELETE FROM question_entity WHERE id IS :id")
-    fun deleteQuestion(id: Int)
+    @Query("""
+    DELETE FROM question_entity 
+    WHERE idEvent = :idEvent
+      AND idCategory = :idCategory
+      AND idSubCategory = :idSubCategory
+      AND idSubsubCategory = :idSubsubCategory
+      AND idQuiz = :idQuiz
+""")
+    fun deleteQuestion(idEvent: Int,
+                       idCategory: Int,
+                       idSubCategory: Int,
+                       idSubsubCategory: Int,
+                       idQuiz: Int)
 
     @Update
     fun updateQuestion(questionEntity: QuestionEntity)

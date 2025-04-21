@@ -15,7 +15,7 @@ data class StructureInfoRemote(
     fun toStructureInfoEntity(
         pathStructure: PathStructure
     ) = StructureInfoEntity(
-        null, pathStructure,
-        tpovIdUser = tpovId, rating, starsMax, starsAverage, countGame
+        null, pathStructure, dataRating,
+        tpovId, rating, starsMax, starsAverage, countGame
     )
 }

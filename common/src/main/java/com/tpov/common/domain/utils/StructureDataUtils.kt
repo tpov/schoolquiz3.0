@@ -1,7 +1,9 @@
 package com.tpov.common.domain.utils
 
 import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.remote.StructureEditData
+import com.tpov.common.domain.model.OldStructureResult
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
@@ -66,12 +68,20 @@ object StructureDataUtils {
         return nodeOld
     }
 
+    fun List<StructureInfoEntity>.findInfoByPath(path: PathStructure) = this.find {
+        it.pathStructure == path
+    }
+
+    fun List<StructureInfoEntity>.findChangeByPath(path: PathStructure) = this.find {
+        it.pathStructure == path
+    }
+
     fun processStructureDataDifferences(
         structureNodeListNew: MutableList<StructureDataLocal>,
         structureNodeListOld: MutableList<StructureDataLocal>?,
         eventId: Int,
         callback: CallbackDifferences,
-        currentPath: PathStructure = PathStructure(
+        currentPathNew: PathStructure = PathStructure(
             idEvent = eventId,
             idCategory = -1,
             idSubCategory = -1,
@@ -79,57 +89,57 @@ object StructureDataUtils {
             idQuiz = -1
         )
     ) {
-        StructureUseCase.Log.d("currentPath", "$currentPath")
 
         structureNodeListNew.forEach { structureNodeNew ->
-            structureNodeNew.printFullStructure("structureNodeNew")
+            //StructureUseCase.Log.d("onHasChildren processStructureDataDifferences", "1 structureData.dataUpdateLocal: ${structureNodeNew.dataUpdateLocal}")
             val nodeId = structureNodeNew.id!!
             val structureNodeOld = findStructureByName(
                 structureNodeListOld ?: mutableListOf(),
                 structureNodeNew
             )
-            PathStructureUtils.updatePath(currentPath, nodeId)
-            StructureUseCase.Log.d("updatePath", "$currentPath")
+
+            // StructureUseCase.Log.d("onHasChildren processStructureDataDifferences", "2 structureData.dataUpdateLocal: ${structureNodeNew.dataUpdateLocal}")
+            PathStructureUtils.updatePath(currentPathNew, nodeId)
+            // StructureUseCase.Log.d("updatePath", "$currentPath")
             when {
                 structureNodeOld == null -> {
                     callback.onMissingOldStructure(
                         structureNodeListOld,
                         structureNodeNew,
-                        currentPath
+                        currentPathNew
                     )
                 }
 
                 structureNodeNew.children?.isNotEmpty() == true -> {
+
+
                     callback.onHasChildren(
                         mutableListOf(structureNodeOld),
                         structureNodeNew,
-                        currentPath
+                        currentPathNew
                     )
                     processStructureDataDifferences(
                         structureNodeNew.children!!,
                         structureNodeOld.children,
                         eventId,
                         callback,
-                        currentPath
+                        currentPathNew
                     )
                 }
 
                 else -> {
+
                     callback.onNoChildren(
                         mutableListOf(structureNodeOld),
                         structureNodeNew,
-                        currentPath
+                        currentPathNew
                     )
+                    //  StructureUseCase.Log.d("onHasChildren processStructureDataDifferences", "4 structureData.dataUpdateLocal: ${structureNodeNew.dataUpdateLocal}")
                 }
             }
-            PathStructureUtils.resetPath(currentPath)
+            PathStructureUtils.resetPath(currentPathNew)
         }
     }
-
-    data class OldStructureResult(
-        val pathOld: PathStructure,
-        val structureData: StructureDataLocal?
-    )
 
     fun MutableList<StructureEditData>.add(fromPath: PathStructure, toPath: PathStructure) {
         this.add(
@@ -170,23 +180,33 @@ object StructureDataUtils {
         val categoryOld = findStructureByName(structureCategoryDataListOld, categoryNew)
 
         val subCategoryNew = categoryNew?.findChildren(currentPath.idSubCategory)
-        val subCategoryOld = findStructureByName(categoryOld?.children, subCategoryNew)
+        val subCategoryOld = if (currentPath.idSubCategory == -1) categoryOld else findStructureByName(
+            categoryOld?.children,
+            subCategoryNew
+        )
 
         val subsubCategoryNew = subCategoryNew?.findChildren(currentPath.idSubsubCategory)
-        val subsubCategoryOld = findStructureByName(subCategoryOld?.children, subsubCategoryNew)
+        val subsubCategoryOld =
+            if (currentPath.idSubsubCategory == -1) subCategoryOld else findStructureByName(
+                subCategoryOld?.children,
+                subsubCategoryNew
+            )
 
         val quizNew = subsubCategoryNew?.findChildren(currentPath.idQuiz)
-        val quizOld = findStructureByName(subsubCategoryOld?.children, quizNew)
+        val quizOld = if (currentPath.idQuiz == -1) subsubCategoryOld else findStructureByName(
+            subsubCategoryOld?.children,
+            quizNew
+        )
 
         val oldPath = PathStructure(
             idEvent = currentPath.idEvent,
             idCategory = categoryOld?.id ?: -1,
-            idSubCategory = subCategoryOld?.id ?: -1,
-            idSubsubCategory = subsubCategoryOld?.id ?: -1,
-            idQuiz = quizOld?.id ?: -1
+            idSubCategory = if (currentPath.idSubCategory == -1) -1 else subCategoryOld?.id ?: -1,
+            idSubsubCategory = if (currentPath.idSubsubCategory == -1) -1 else subsubCategoryOld?.id ?: -1,
+            idQuiz = if (currentPath.idQuiz == -1) -1 else quizOld?.id ?: -1
         )
 
-        if (currentPath.idCategory == 3 && currentPath.idSubCategory == 3 && currentPath.idSubsubCategory == 1) {
+        if (currentPath.idCategory == 1 && currentPath.idSubCategory == 1 && currentPath.idSubsubCategory == 2) {
             StructureUseCase.Log.d(
                 "findStructureDataOld",
                 "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -215,6 +235,7 @@ object StructureDataUtils {
             StructureUseCase.Log.d("oldPath", "$oldPath")
             StructureUseCase.Log.d("currentPath", "$currentPath")
         }
+
         return OldStructureResult(oldPath, quizOld)
     }
 

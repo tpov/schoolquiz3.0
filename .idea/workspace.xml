@@ -207,52 +207,42 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Fix sync add questions">
-      <change afterPath="$PROJECT_DIR$/logger-compiler-plugin/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logger-compiler-plugin/build.gradle.kts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/resources/META-INF/services/org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logger-gradle-plugin/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logger-gradle-plugin/build.gradle.kts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logger-gradle-plugin/gradle.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logger-gradle-plugin/src/main/java/com/tpov/logger_gradle_plugin/LoggerGradlePlugin.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logger-gradle-plugin/src/main/resources/META-INF/gradle-plugins/com.tpov.gradle-plugin.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/setting/ProgressSingleton.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/OldStructureResult.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/test/resources/MockStructureInfoDataInputRemote.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/src/test/resources/StructureInfoLocalRemoteList.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/kotlinc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/kotlinc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/common/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MockStructureDataInputLocal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MockStrucutreDataInputRemote" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/setting/ParamSynth.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuestionImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryQuestionImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStuctureImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStuctureImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/database/QuestionDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/database/QuestionDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureDataEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureDataEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureInfoEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureInfoEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureDataRemote.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureDataRemote.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureInfoRemote.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureInfoRemote.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/StructureDataLocal.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/StructureDataLocal.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/SyncState.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/SyncState.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuestion.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryQuestion.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryStructure.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryStructure.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/QuestionUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/QuestionUseCase.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureDataExtention.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureDataExtention.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureUseCase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/QuestionUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/QuestionUtils.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/StructureDataUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/StructureDataUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/utils/Values.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/utils/Values.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/test/java/com/tpov/common/StructureSyncIntegrationTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/test/java/com/tpov/common/StructureSyncIntegrationTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataInputLocal.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataInputLocal.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataInputRemote.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataInputRemote.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataOutputLocal.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataOutputLocal.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataOutputRemote.json" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/test/resources/MockStructureDataOutputRemote.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log-api/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/log-api/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/Core.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/Core.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/CreateAsyncData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/CreateAsyncData.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/DetectArchLayer.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/DetectArchLayer.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/GenerateCodeUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/GenerateCodeUtils.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/IrGenerationExtensionReader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/IrGenerationExtensionReader.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/IrGenerationExtensionWriter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/IrGenerationExtensionWriter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/LogAndroid.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/LogAndroid.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/LoggerPlugin.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/LoggerPlugin.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logger-processor/src/main/java/com/tpov/logger_processor/ReadCodeUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/logger-compiler-plugin/src/main/java/com/tpov/logger_compiler_plugin/ReadCodeUtils.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
     </list>
     <list id="81ab6825-6e13-49c0-a4dd-0fe06f8e94eb" name="Node changelist" comment="Add Node" />
     <option name="SHOW_DIALOG" value="false" />
@@ -413,7 +403,7 @@
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_directory_selection&quot;: &quot;D:/Programming/Android/schoolquiz3.0/app/src/test/java/com/tpov/schoolquiz&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Programming/Android/schoolquiz3.0/logger-gradle-plugin/src/main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Programming/Android/schoolquiz3.0/common/src/test/resources&quot;,
     &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.17&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
@@ -426,9 +416,9 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Programming\Android\schoolquiz3.0\common\src\test\resources" />
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-gradle-plugin\src\main" />
       <recent name="D:\Programming\Android\schoolquiz3.0\logger-compiler-plugin\src\main" />
-      <recent name="D:\Programming\Android\schoolquiz3.0\common\src\test\resources" />
       <recent name="D:\Programming\Android\schoolquiz3.0\app\src\main\java\com\tpov\schoolquiz\presentation\main" />
       <recent name="D:\Programming\Android\schoolquiz3.0\userguide\src\main\res\drawable" />
     </key>
@@ -1531,7 +1521,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <option name="localTasksCounter" value="128" />
+    <option name="localTasksCounter" value="129" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">

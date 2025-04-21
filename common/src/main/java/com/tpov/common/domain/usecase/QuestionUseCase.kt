@@ -55,8 +55,8 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         repositoryQuestion.updateQuestion(questionEntity)
     }
 
-    suspend fun deleteQuestionByPath(idQuiz: PathStructure) {
-        repositoryQuestion.deleteQuestionByIdQuiz(idQuiz.idEvent)
+    suspend fun deleteQuestionByPath(pathStructure: PathStructure) {
+        repositoryQuestion.deleteQuestionByPath(pathStructure)
     }
 
     suspend fun deleteRemoteQuestionByIdQuiz(

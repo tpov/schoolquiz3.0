@@ -1,6 +1,5 @@
 package com.tpov.common.domain.usecase
 
-import android.annotation.SuppressLint
 import com.tpov.common.Interactor
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStuctureImpl
@@ -17,7 +16,14 @@ import com.tpov.common.domain.usecase.StructureDataExtention.syncChangeListQuest
 import com.tpov.common.domain.usecase.StructureDataExtention.syncEditListIdsRemoteQuestion
 import com.tpov.common.domain.usecase.StructureDataExtention.syncInfoLocal
 import com.tpov.common.domain.usecase.StructureDataExtention.syncInfoRemote
-import com.tpov.common.domain.usecase.StructureDataExtention.syncLocalStructureData
+import com.tpov.common.domain.usecase.StructureDataExtention.syncQuestionDetails
+import com.tpov.common.domain.usecase.StructureDataExtention.updateLocalQuestion
+import com.tpov.common.domain.usecase.StructureDataExtention.updateLocalStructureData
+import com.tpov.common.domain.usecase.StructureDataExtention.updateRemoteQuestion
+import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoGlobal
+import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoLocal
+import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureNumberQuestion
+import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureRemote
 import javax.inject.Inject
 
 open class StructureUseCase @Inject constructor(
@@ -38,10 +44,10 @@ open class StructureUseCase @Inject constructor(
     suspend fun getStructureCategoryList(event: Int) =
         repositoryStructureImpl.getStructureEventData(event)
 
-    @SuppressLint("SuspiciousIndentation")
     suspend fun syncStructureDataAndGetChangeLists(eventId: Int): SyncStructureResult {
         val syncState = SyncState(eventId)
-        init( DomainExceptions(
+        init(
+            DomainExceptions(
                 beforeException = { syncState.exception = it },
                 afterException = {},
                 interactor
@@ -52,14 +58,24 @@ open class StructureUseCase @Inject constructor(
             .syncChangeListQuestionsLocal()
             .syncChangeListQuestionsRemote()
             .syncInfoLocal()
-            .syncLocalStructureData()
+            .updateLocalStructureData()
             .syncEditListIdsRemoteQuestion()
             .syncInfoRemote()
+            .updateStructureInfoGlobal()
+            .updateStructureInfoLocal(repositoryStructureImpl)
+            .updateLocalQuestion(repositoryQuestionImpl)
+            .updateRemoteQuestion(repositoryQuestionImpl)
+            .updateStructureNumberQuestion(repositoryQuestionImpl)
+            .updateStructureRemote()
+            .syncQuestionDetails()
             .getResult()
     }
 
     suspend fun updateStructureData(structureDataLocal: StructureDataLocal, eventId: Int) {
-        repositoryStructureImpl.updateStructureData(structureDataLocal.toStructureDataEntity()!!, eventId)
+        repositoryStructureImpl.updateStructureData(
+            structureDataLocal.toStructureDataEntity()!!,
+            eventId
+        )
     }
 
     object Log {

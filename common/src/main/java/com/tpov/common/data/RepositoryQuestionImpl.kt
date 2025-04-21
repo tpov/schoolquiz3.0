@@ -209,8 +209,8 @@ class RepositoryQuestionImpl @Inject constructor(
         questionDao.updateQuestion(questionEntity)
     }
 
-    override suspend fun deleteQuestionByIdQuiz(idQuiz: Int) {
-        questionDao.deleteQuestion(idQuiz)
+    override suspend fun deleteQuestionByPath(path: PathStructure) {
+        questionDao.deleteQuestion(path.idEvent, path.idCategory, path.idSubCategory, path.idSubsubCategory, path.idQuiz)
     }
 
     override suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, event: Int) {

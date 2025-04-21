@@ -1,6 +1,7 @@
 package com.tpov.common.domain.repository
 
 import com.tpov.common.data.model.local.StructureDataEntity
+import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.local.UpdatedStructureData
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.data.model.remote.StructureInfoRemote
@@ -25,7 +26,7 @@ interface RepositoryStructure {
 
     fun deleteLocalPictureStructure(updatedStructureData: UpdatedStructureData) // This is StructureEdit?
     fun fetchPictureStructure(updatedStructureData: UpdatedStructureData)
-    suspend fun fetchStructureInfo(path: PathStructure): StructureInfoRemote?
+    suspend fun fetchStructureInfo(path: PathStructure): StructureInfoEntity?
     suspend fun pushStructureInfoData(ratingData: StructureInfoRemote, path: PathStructure)
     suspend fun updateStructureData(structureDataEntity: StructureDataEntity, eventId: Int)
 }

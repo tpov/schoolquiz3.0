@@ -12,7 +12,8 @@ data class StructureDataLocal(
     var id: Int? = null,
     var children: MutableList<StructureDataLocal>? = null,
     var nameItem: String = "",
-    var dataUpdate: String = "", // for syncs
+    var dataUpdateGlobal: String = "", // for syncs
+    var dataUpdateLocal: String = "", // for syncs
     var dataCreate: String = "",
     var version: Int = 0,       // for show update user
     var ratingGlobal: Int = 0,
@@ -29,7 +30,7 @@ data class StructureDataLocal(
     var languages: String = "",
     var picture: String = "",
     var isShowDownload: Boolean = true,
-    var isShowArchive: Boolean = false
+    var isShowArchive: Boolean = true
 ) {
 
     fun create(
@@ -44,6 +45,7 @@ data class StructureDataLocal(
             id,
             null,
             nameCategory,
+            DateUtil().getDateQuiz(),
             DateUtil().getDateQuiz(),
             DateUtil().getDateQuiz(),
             0,0,0,0,0,0,0,
@@ -89,7 +91,8 @@ data class StructureDataLocal(
             id = id,
             childesJson = childesJson,
             nameItem = nameItem,
-            dataUpdate = dataUpdate,
+            dataUpdateGlobal = dataUpdateGlobal,
+            dataUpdateLocal = dataUpdateLocal,
             dataCreate = dataCreate,
             version = version,
             ratingGlobal = ratingGlobal,
@@ -115,7 +118,7 @@ data class StructureDataLocal(
             id = id,
             children = children?.map { toStructureDataRemote() },
             nameItem = nameItem,
-            dataUpdate = dataUpdate,
+            dataUpdate = dataUpdateGlobal,
             version = version,
             ratingGlobal = ratingGlobal,
             starsMaxGlobal = starsMaxGlobal,
