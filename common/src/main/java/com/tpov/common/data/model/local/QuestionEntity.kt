@@ -30,12 +30,16 @@ data class QuestionEntity(
 
     @ColumnInfo(name = "idEvent")
     var idEvent: Int,
+
     @ColumnInfo(name = "idCategory")
     var idCategory: Int,
+
     @ColumnInfo(name = "idSubCategory")
     var idSubCategory: Int,
+
     @ColumnInfo(name = "idSubsubCategory")
     var idSubsubCategory: Int,
+
     @ColumnInfo(name = "idQuiz")
     var idQuiz: Int,
 
@@ -44,6 +48,7 @@ data class QuestionEntity(
 
     @ColumnInfo(name = "lvlTranslate")
     var lvlTranslate: Int = 0
+
 ) : Parcelable {
     fun toQuestionRemote() = QuestionRemote(
         nameAnswers = this.nameAnswers,

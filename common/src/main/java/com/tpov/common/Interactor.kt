@@ -38,7 +38,7 @@ class Interactor @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    fun sendErrorRemote() {
+    fun sendErrorToRemote() {
         TODO("Not yet implemented")
     }
 

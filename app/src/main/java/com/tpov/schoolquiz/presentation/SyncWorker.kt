@@ -15,16 +15,20 @@ import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import com.tpov.common.EventQuiz
+import com.tpov.common.domain.model.LockServerResult
+import com.tpov.common.domain.model.SyncStructureResult
 import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.SettingLocalDBUseCase
+import com.tpov.common.domain.usecase.SettingServerDBUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.schoolquiz.domain.ProfileUseCase
-import com.tpov.schoolquiz.presentation.SyncWorker.Companion.CHANNEL_ID
-import com.tpov.schoolquiz.presentation.SyncWorker.Companion.NOTIFICATION_ID
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Provider
@@ -35,6 +39,8 @@ class SyncWorker @AssistedInject constructor(
     private val structureUseCase: StructureUseCase,
     private val profileUseCase: ProfileUseCase,
     private val questionUseCase: QuestionUseCase,
+    private val settingServerUseCase: SettingServerDBUseCase,
+    private val settingLocalDBUseCase: SettingLocalDBUseCase,
     private val viewModelFactory: ViewModelProvider.Factory
 ) : CoroutineWorker(context, workerParams) {
     companion object {
@@ -44,7 +50,8 @@ class SyncWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
-        val viewModel = ViewModelProvider(ViewModelStore(), viewModelFactory)[MainViewModel::class.java]
+        val viewModel =
+            ViewModelProvider(ViewModelStore(), viewModelFactory)[MainViewModel::class.java]
         try {
 
             syncQuizData(viewModel)
@@ -63,12 +70,46 @@ class SyncWorker @AssistedInject constructor(
     }
 
     private suspend fun syncQuizData(viewModel: MainViewModel) {
-        val updatedQuizList = structureUseCase.syncStructureDataAndGetChangeLists(1)
-            val quizCount = updatedQuizList
+        for (eventId in EventQuiz.QUIZ_BY_USER.id..EventQuiz.QUIZ_HOME.id) {
 
-            showNotification("Sync Complete", "Updated $quizCount quizzes.", context)
+            var lockResult: LockServerResult
+            while (true) {
+                lockResult = settingServerUseCase.lockStructureData()
+                when (lockResult) {
+                    is LockServerResult.Success -> break
+                    is LockServerResult.AlreadyLocked -> {
+                        delay(1000)
+                    }
+                    is LockServerResult.Error -> return
+                }
+            }
+
+            val result = structureUseCase.syncStructureDataAndGetChangeLists(eventId)
+
+            if (result is SyncStructureResult.Success) {
+                try {
+
+
+                    showNotification("Sync Complete", "Updated quizzes.", context)
+                    val unlockResult = settingServerUseCase.unlockStructureData()
+
+                    if (unlockResult is LockServerResult.Error) {
+                        settingLocalDBUseCase.rollbackStructureData()
+                        return
+                    }
+                } catch (e: Exception) {
+                    settingLocalDBUseCase.rollbackStructureData()
+                    return
+                }
+            } else {
+                settingLocalDBUseCase.rollbackStructureData()
+                return
+            }
         }
     }
+
+
+
 
     private suspend fun syncProfile() {
 
@@ -108,20 +149,20 @@ class SyncWorker @AssistedInject constructor(
         override fun create(context: Context, workerParams: WorkerParameters): SyncWorker
     }
 
-class AppWorkerFactory @Inject constructor(
-    private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>
-) : WorkerFactory() {
+    class AppWorkerFactory @Inject constructor(
+        private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>
+    ) : WorkerFactory() {
 
-    override fun createWorker(
-        appContext: Context,
-        workerClassName: String,
-        workerParameters: WorkerParameters
-    ): ListenableWorker? {
-        val factoryProvider = workerFactories[Class.forName(workerClassName)] ?: return null
-        return factoryProvider.get().create(appContext, workerParameters)
+        override fun createWorker(
+            appContext: Context,
+            workerClassName: String,
+            workerParameters: WorkerParameters
+        ): ListenableWorker? {
+            val factoryProvider = workerFactories[Class.forName(workerClassName)] ?: return null
+            return factoryProvider.get().create(appContext, workerParameters)
+        }
     }
-}
 
-interface ChildWorkerFactory {
-    fun create(context: Context, workerParams: WorkerParameters): SyncWorker
-}
+    interface ChildWorkerFactory {
+        fun create(context: Context, workerParams: WorkerParameters): SyncWorker
+    }

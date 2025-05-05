@@ -13,7 +13,7 @@ data class StructureDataLocal(
     var children: MutableList<StructureDataLocal>? = null,
     var nameItem: String = "",
     var dataUpdateGlobal: String = "", // for syncs
-    var dataUpdateLocal: String = "", // for syncs
+    var dataUpdateLocal: String = "", // for syncs -1 - delete
     var dataCreate: String = "",
     var version: Int = 0,       // for show update user
     var ratingGlobal: Int = 0,

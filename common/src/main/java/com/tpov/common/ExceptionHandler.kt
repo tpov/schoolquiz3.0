@@ -15,7 +15,7 @@ open class ExceptionHandler(
     ): T {
         beforeException(message)
         interactorAction()
-        interactor.sendErrorRemote()
+        interactor.sendErrorToRemote()
         afterException()
         return getDefaultValue()
     }

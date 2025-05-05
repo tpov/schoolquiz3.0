@@ -5,7 +5,6 @@ import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.domain.model.OldStructureResult
 import com.tpov.common.domain.model.StructureDataLocal
-import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
@@ -29,15 +28,11 @@ object StructureDataUtils {
         }
     }
 
-    fun isUpdateStructureLocal(
+    fun isUpdateStructure(
         structureDataOld: StructureDataLocal?,
         structureDataNew: StructureDataLocal
-    ) = false
+    ) = structureDataOld?.version!! > structureDataNew.version
 
-    fun isUpdateStructureRemote(
-        structureDataLocal: StructureDataLocal,
-        structureDataRemote: StructureDataLocal
-    ) = false
 
     fun MutableList<StructureDataLocal>.updateLocalInfoData(
         structureDataNew: List<StructureDataLocal>,
@@ -180,10 +175,11 @@ object StructureDataUtils {
         val categoryOld = findStructureByName(structureCategoryDataListOld, categoryNew)
 
         val subCategoryNew = categoryNew?.findChildren(currentPath.idSubCategory)
-        val subCategoryOld = if (currentPath.idSubCategory == -1) categoryOld else findStructureByName(
-            categoryOld?.children,
-            subCategoryNew
-        )
+        val subCategoryOld =
+            if (currentPath.idSubCategory == -1) categoryOld else findStructureByName(
+                categoryOld?.children,
+                subCategoryNew
+            )
 
         val subsubCategoryNew = subCategoryNew?.findChildren(currentPath.idSubsubCategory)
         val subsubCategoryOld =
@@ -202,41 +198,45 @@ object StructureDataUtils {
             idEvent = currentPath.idEvent,
             idCategory = categoryOld?.id ?: -1,
             idSubCategory = if (currentPath.idSubCategory == -1) -1 else subCategoryOld?.id ?: -1,
-            idSubsubCategory = if (currentPath.idSubsubCategory == -1) -1 else subsubCategoryOld?.id ?: -1,
+            idSubsubCategory = if (currentPath.idSubsubCategory == -1) -1 else subsubCategoryOld?.id
+                ?: -1,
             idQuiz = if (currentPath.idQuiz == -1) -1 else quizOld?.id ?: -1
         )
 
-        if (currentPath.idCategory == 1 && currentPath.idSubCategory == 1 && currentPath.idSubsubCategory == 2) {
-            StructureUseCase.Log.d(
-                "findStructureDataOld",
-                "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-            )
-
-            StructureUseCase.Log.d("oldPath", "$oldPath")
-            StructureUseCase.Log.d("currentPath", "$currentPath")
-
-            categoryNew?.printFullStructure("categoryNew")
-            categoryOld?.printFullStructure("categoryOld")
-
-            subCategoryNew?.printFullStructure("subCategoryNew")
-            subCategoryOld?.printFullStructure("subCategoryOld")
-
-            subsubCategoryNew?.printFullStructure("subsubCategoryNew")
-            subsubCategoryOld?.printFullStructure("subsubCategoryOld")
-
-            quizNew?.printFullStructure("quizNew")
-            quizOld?.printFullStructure("quizOld $")
-
-            StructureUseCase.Log.d(
-                "findStructureDataOld",
-                "-------------------------------------------------------------"
-            )
-
-            StructureUseCase.Log.d("oldPath", "$oldPath")
-            StructureUseCase.Log.d("currentPath", "$currentPath")
-        }
-
         return OldStructureResult(oldPath, quizOld)
+    }
+
+    fun getPathPositionByPathStructure(
+        structureDataLocal: StructureDataLocal,
+        pathStructure: PathStructure
+    ): PathStructure {
+        return PathStructure(
+            idEvent = pathStructure.idEvent,
+
+            idCategory = structureDataLocal.children
+                ?.indexOfFirst { it.id == pathStructure.idCategory }
+                ?.takeIf { it >= 0 }
+                ?.let { it + 1 } ?: -1,
+
+            idSubCategory = structureDataLocal.findChildren(pathStructure.idCategory)?.children
+                ?.indexOfFirst { it.id == pathStructure.idSubCategory }
+                ?.takeIf { it >= 0 }
+                ?.let { it + 1 } ?: -1,
+
+            idSubsubCategory = structureDataLocal.findChildren(pathStructure.idCategory)
+                ?.findChildren(pathStructure.idSubCategory)?.children
+                ?.indexOfFirst { it.id == pathStructure.idSubsubCategory }
+                ?.takeIf { it >= 0 }
+                ?.let { it + 1 } ?: -1,
+
+
+            idQuiz = structureDataLocal.findChildren(pathStructure.idCategory)
+                ?.findChildren(pathStructure.idSubCategory)
+                ?.findChildren(pathStructure.idSubsubCategory)?.children
+                ?.indexOfFirst { it.id == pathStructure.idQuiz }
+                ?.takeIf { it >= 0 }
+                ?.let { it + 1 } ?: -1,
+        )
     }
 
     //Если -1 то возвращаем этот же обьект, так как -1 в пути означакет что не нужно углублятся
@@ -260,6 +260,45 @@ object StructureDataUtils {
             }
 
         return this
+    }
+
+    fun MutableList<StructureDataLocal>.removeNode(
+        path: PathStructure
+    ): Boolean {
+        val category = this.find { it.id == path.idCategory }
+
+        when {
+            path.idQuiz > 0 -> {
+                // Удаляем квиз
+                val subCategory = category?.findChildren(path.idSubCategory)
+                val subsubCategory = subCategory?.findChildren(path.idSubsubCategory)
+
+                subsubCategory?.children?.removeIf { it.id == path.idQuiz }
+                return true
+            }
+
+            path.idSubsubCategory > 0 -> {
+                // Удаляем подподкатегорию
+                val subCategory = category?.findChildren(path.idSubCategory)
+
+                subCategory?.children?.removeIf { it.id == path.idSubsubCategory }
+                return true
+            }
+
+            path.idSubCategory > 0 -> {
+                // Удаляем подкатегорию
+                category?.children?.removeIf { it.id == path.idSubCategory }
+                return true
+            }
+
+            path.idCategory > 0 -> {
+                // Удаляем категорию
+                this.removeIf { it.id == path.idCategory }
+                return true
+            }
+        }
+
+        return false
     }
 
     fun MutableList<StructureDataLocal>.updateEditIdsRemote(
@@ -289,6 +328,13 @@ object StructureDataUtils {
                 }
                 editIdsList[path] = newPath
             }
+    }
+
+    fun StructureDataLocal.editThisIds(editIds: StructureEditData) {
+        this.id = if (editIds.idSubCategoryTo == -1) editIds.idCategoryTo
+        else if (editIds.idSubsubCategoryTo == -1) editIds.idSubCategoryTo
+        else if (editIds.idQuizTo == -1) editIds.idSubsubCategoryTo
+        else editIds.idQuizTo
     }
 
     fun MutableList<StructureDataLocal>.updateEditIdsLocal(

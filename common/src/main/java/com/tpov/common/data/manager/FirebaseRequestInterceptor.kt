@@ -99,7 +99,6 @@ object FirebaseRequestInterceptor {
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
                     val isOpenServer = document.getBoolean("isOpenServer") ?: false
-                    Log.d("FirebaseRequestInterceptor", "isOpenServer fetched: $isOpenServer")
                     taskCompletionSource.setResult(isOpenServer)
                 } else {
                     Log.e("FirebaseRequestInterceptor", "Document not found")

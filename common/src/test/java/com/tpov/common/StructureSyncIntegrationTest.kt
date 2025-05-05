@@ -1,24 +1,33 @@
 package com.tpov.common
 
+import StructureDataUtils.StructureDataUtils.structureData
+import StructureDataUtils.StructureDataUtils.structureDataNew
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.tpov.common.Core.tpovId
+import com.tpov.common.data.RepositoryQuestionDetailImpl
 import com.tpov.common.data.RepositoryQuestionImpl
-import com.tpov.common.data.RepositoryStuctureImpl
+import com.tpov.common.data.RepositoryStructureImpl
+import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.model.ChangeVersionStructure
 import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.domain.model.SyncState
 import com.tpov.common.domain.model.SyncStructureResult
 import com.tpov.common.domain.repository.RepositoryException
+import com.tpov.common.domain.usecase.StructureDataExtention.syncEditStructureIdsListLocal
+import com.tpov.common.domain.usecase.StructureDataExtention.updateIdsStructureDataLocal
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.domain.utils.CallbackDifferences
 import com.tpov.common.domain.utils.StructureDataUtils
 import com.tpov.common.domain.utils.StructureDataUtils.addList
 import com.tpov.common.domain.utils.StructureDataUtils.findStructureDataOld
+import com.tpov.common.domain.utils.StructureDataUtils.getPathPositionByPathStructure
 import com.tpov.common.domain.utils.StructureDataUtils.updateNode
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.DateUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -33,14 +42,17 @@ import org.robolectric.RobolectricTestRunner
 import java.io.File
 import java.io.FileWriter
 import java.lang.reflect.Type
+import kotlin.random.Random
 
 @RunWith(RobolectricTestRunner::class)
 class StructureSyncTest {
     @Mock
-    private lateinit var repositoryStructureImpl: RepositoryStuctureImpl
+    private lateinit var repositoryStructureImpl: RepositoryStructureImpl
 
     @Mock
     private lateinit var repositoryQuestionImpl: RepositoryQuestionImpl
+    @Mock
+    private lateinit var repositoryQuestionDetailImpl: RepositoryQuestionDetailImpl
 
     @Mock
     private lateinit var repositoryException: RepositoryException
@@ -53,6 +65,9 @@ class StructureSyncTest {
     private var inputQuestionLocal: MutableList<QuestionEntity> = mutableListOf()
     private var expectedQuestionLocal: MutableList<QuestionEntity> = mutableListOf()
     private var inputQuestionRemote: MutableList<QuestionEntity> = mutableListOf()
+    private var questionDetailInputLocal: MutableList<QuestionDetailEntity> = mutableListOf()
+    private var questionDetailInputRemote: MutableList<QuestionDetailEntity> = mutableListOf()
+    private var questionDetailOutputLocal: MutableList<QuestionDetailEntity> = mutableListOf()
     private var expectedQuestionRemote: MutableList<QuestionEntity> = mutableListOf()
     private lateinit var expectedOutputLocal: MutableList<StructureDataLocal>
     private lateinit var inputDataLocal: MutableList<StructureDataLocal>
@@ -67,6 +82,7 @@ class StructureSyncTest {
         structureUseCase = StructureUseCase(
             repositoryStructureImpl,
             repositoryQuestionImpl,
+            repositoryQuestionDetailImpl,
             repositoryException,
             interactor
         )
@@ -108,31 +124,42 @@ class StructureSyncTest {
         val findLocalInfo = inputLocalInfoRemote.find {
             it.pathStructure == pathStructure
         }
-
-
-        val logFind = findStructureDataOld(inputDataLocal, inputDataRemote, PathStructure(1,1,1,2,2))
-        StructureUseCase.Log.d("klsdhjgdkser find", "logFind: $logFind")
-
-
-        StructureUseCase.Log.d(
-            "fdrkfjskefjl345",
-            "pathStructure: ${pathStructure}, findLocalInfo: $findLocalInfo"
-        )
         return findLocalInfo?.copy()
+    }
+
+
+    @Test
+    fun testGetPathPositionByPathStructure() {
+        assertEquals(getPathPositionByPathStructure(structureData, PathStructure(1,6,6,-1,-1)), PathStructure(1,4,3,-1,-1))
+        assertEquals(getPathPositionByPathStructure(structureData, PathStructure(1,4,-1,-1,-1)), PathStructure(1,3,-1,-1,-1))
+        assertEquals(getPathPositionByPathStructure(structureData, PathStructure(1,6,6,3,-1)), PathStructure(1,4,3,1,-1))
+        assertEquals(getPathPositionByPathStructure(structureData, PathStructure(1,6,6,8,-1)), PathStructure(1,4,3,2,-1))
+
+        val syncState = SyncState(1)
+        syncState.structureCategoryDataListLocal = structureData.children!!
+        syncState
+            .syncEditStructureIdsListLocal()
+            .updateIdsStructureDataLocal()
+
+        StructureDataLocal(children = syncState.structureCategoryDataListLocal).printFullStructure("assertEquals 1")
+        StructureDataLocal(children = structureDataNew.children).printFullStructure("assertEquals 2")
+        StructureDataLocal(children = structureData.children).printFullStructure("assertEquals 3")
+
+        assertEquals(syncState.structureCategoryDataListLocal, structureDataNew.children)
     }
 
     @Test
     fun `test full sync process`() = runBlocking {
         val eventId = 1
         //generateStructureInfo()
-            //generateStructureInfoLocal()
+        //generateStructureInfoLocal()
+
 
         val result = structureUseCase.syncStructureDataAndGetChangeLists(eventId)
 
         when (result) {
             is SyncStructureResult.Success -> {
                 result.state.structureInfoGlobal.forEach {
-                    StructureUseCase.Log.d("sefsdfsdfsdxfsd", "dateUpdate: ${it}")
                     val oldStructureData = findStructureDataOld(
                         result.state.structureCategoryDataListRemote,
                         result.state.structureCategoryDataListLocal,
@@ -170,8 +197,28 @@ class StructureSyncTest {
         editQuestionList(inputQuestionRemote, inputDataRemote)
         editQuestionList(expectedQuestionLocal, expectedOutputLocal)
 
+        saveFile(
+            generateQuestionInfo(inputDataLocal, inputQuestionLocal, questionDetailInputLocal),
+            "questionDetailLocalInput"
+        )
+        saveFile(
+            generateQuestionInfo(
+                inputDataRemote,
+                inputQuestionRemote,
+                questionDetailInputRemote
+            ), "questionDetailRemoteInput"
+        )
+        saveFile(
+            generateQuestionInfo(
+                expectedOutputLocal,
+                expectedQuestionLocal,
+                questionDetailOutputLocal
+            ), "questionDetailLocalOutput"
+        )
+
         testInputStructureDataLocal(result)
         testInputQuestionLocal(result)
+
     }
 
     private fun generateStructureInfoLocal() {
@@ -205,14 +252,17 @@ class StructureSyncTest {
                                     structureDataOutput.ratingLocal,
                                     structureDataOutput.starsMaxLocal,
                                     structureDataOutput.starsAverageLocal,
-                                    0
+                                    0,
+                                    structureDataOutput.languages,
+                                    structureDataOutput.isShowArchive
                                 )
                             )
                         }
 
                     } else {
                         inputDataLocal.structureData!!.ratingLocal = structureDataOutput.ratingLocal
-                        inputDataLocal.structureData!!.starsMaxLocal = structureDataOutput.starsMaxLocal
+                        inputDataLocal.structureData!!.starsMaxLocal =
+                            structureDataOutput.starsMaxLocal
                         inputDataLocal.structureData!!.starsAverageLocal =
                             structureDataOutput.starsAverageLocal
                         if (inputDataLocal.structureData?.dataUpdateLocal!! < structureDataOutput.dataUpdateLocal) {
@@ -227,7 +277,9 @@ class StructureSyncTest {
                                         structureDataOutput.ratingLocal,
                                         structureDataOutput.starsMaxLocal,
                                         structureDataOutput.starsAverageLocal,
-                                        0
+                                        0,
+                                        structureDataOutput.languages,
+                                        structureDataOutput.isShowArchive
                                     )
                                 )
                             }
@@ -258,14 +310,17 @@ class StructureSyncTest {
                                     structureDataOutput.ratingLocal,
                                     structureDataOutput.starsMaxLocal,
                                     structureDataOutput.starsAverageLocal,
-                                    0
+                                    0,
+                                    structureDataOutput.languages,
+                                    structureDataOutput.isShowArchive
                                 )
                             )
                         }
 
                     } else {
                         inputDataLocal.structureData!!.ratingLocal = structureDataOutput.ratingLocal
-                        inputDataLocal.structureData!!.starsMaxLocal = structureDataOutput.starsMaxLocal
+                        inputDataLocal.structureData!!.starsMaxLocal =
+                            structureDataOutput.starsMaxLocal
                         inputDataLocal.structureData!!.starsAverageLocal =
                             structureDataOutput.starsAverageLocal
                         if (inputDataLocal.structureData?.dataUpdateLocal!! < structureDataOutput.dataUpdateLocal) {
@@ -280,7 +335,9 @@ class StructureSyncTest {
                                         structureDataOutput.ratingLocal,
                                         structureDataOutput.starsMaxLocal,
                                         structureDataOutput.starsAverageLocal,
-                                        0
+                                        0,
+                                        structureDataOutput.languages,
+                                        structureDataOutput.isShowArchive
                                     )
                                 )
                             }
@@ -305,14 +362,6 @@ class StructureSyncTest {
             structureDataInfo.starsAverage = (Math.random() * 100).toInt()
         }
 
-        inputDataLocal.forEach {
-
-            StructureUseCase.Log.d(
-                "onHasChildren forEach",
-                "structureData.dataUpdateLocal: ${it.dataUpdateLocal}"
-            )
-        }
-
         StructureDataUtils.processStructureDataDifferences(
             inputDataLocal.toMutableList(),
             inputDataLocal.toMutableList(),
@@ -331,14 +380,6 @@ class StructureSyncTest {
                         structureData.starsMaxLocal = starsMax
                         structureData.starsAverageLocal = starsAverage
                     }
-                    StructureUseCase.Log.d(
-                        "onHasChildren",
-                        "structureData.dataUpdateLocal: ${structureData.dataUpdateLocal}"
-                    )
-                    StructureUseCase.Log.d(
-                        "onHasChildren",
-                        "structureData.dataUpdateLocal: ${structureData.dataUpdateGlobal}"
-                    )
                 },
 
                 onNoChildren = { _, structureData, path ->
@@ -353,14 +394,6 @@ class StructureSyncTest {
                         structureData.starsMaxLocal = starsMax
                         structureData.starsAverageLocal = starsAverage
                     }
-                    StructureUseCase.Log.d(
-                        "onHasChildren",
-                        "structureData.dataUpdateLocal: ${structureData.dataUpdateLocal}"
-                    )
-                    StructureUseCase.Log.d(
-                        "onHasChildren",
-                        "structureData.dataUpdateLocal: ${structureData.dataUpdateGlobal}"
-                    )
                 }
             )
         )
@@ -406,6 +439,71 @@ class StructureSyncTest {
 
     }
 
+    private fun getCodeAnswerByPath(
+        pathStructure: PathStructure,
+        questionList: MutableList<QuestionEntity>,
+        hardQuestion: Boolean
+    ): String {
+        val questionPathList = questionList.filter {
+            it.idEvent == pathStructure.idEvent
+                    && it.idCategory == pathStructure.idCategory
+                    && it.idSubCategory == pathStructure.idSubCategory
+                    && it.idSubsubCategory == pathStructure.idSubsubCategory
+                    && it.idQuiz == pathStructure.idQuiz
+        }
+        StructureUseCase.Log.d("dfhfghjghj", "questionPathList: ${questionPathList.size}")
+        val questionType = questionPathList.filter { hardQuestion && it.language == "en" }
+
+        StructureUseCase.Log.d("dfhfghjghj", "questionType: ${questionType.size}")
+        var codeAnswer = ""
+        questionType.forEach {
+            codeAnswer += Random.nextInt(0, 3)
+        }
+        StructureUseCase.Log.d("dfhfghjghj", "codeAnswer: ${codeAnswer.length}")
+        return codeAnswer
+
+    }
+
+    private fun generateQuestionInfo(
+        structureData: MutableList<StructureDataLocal>,
+        questionList: MutableList<QuestionEntity>,
+        questionDetailInputLocal: MutableList<QuestionDetailEntity>
+    ): ArrayList<QuestionDetailEntity> {
+
+        val questionDetail = arrayListOf<QuestionDetailEntity>()
+        StructureDataUtils.processStructureDataDifferences(
+            structureData,
+            structureData,
+            1,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ -> },
+                onHasChildren = { _, _, _ -> },
+                onNoChildren = { _, structureData, path ->
+                    repeat(Random.nextInt(0, 10)) {
+                        arrayListOf(true, false).forEach { typeQuestion ->
+                            questionDetail.add(
+                                QuestionDetailEntity(
+                                    null,
+                                    path.idEvent,
+                                    path.idCategory,
+                                    path.idSubCategory,
+                                    path.idSubsubCategory,
+                                    path.idQuiz,
+                                    DateUtil().getDateQuiz(),
+                                    getCodeAnswerByPath(path, questionList, typeQuestion),
+                                    typeQuestion,
+                                    false
+                                )
+                            )
+                        }
+                    }
+                }
+            )
+        )
+
+        return questionDetail
+    }
+
     private fun <T> saveFile(file: T, fileName: String) {
         val json = gson.toJson(file)
         val file = File("$fileName.json")
@@ -434,7 +532,9 @@ class StructureSyncTest {
                             structureData.ratingLocal,
                             structureData.starsMaxLocal,
                             structureData.starsAverageLocal,
-                            0
+                            0,
+                            structureData.languages,
+                            structureData.isShowArchive
                         )
                     )
                 },
@@ -449,7 +549,9 @@ class StructureSyncTest {
                             structureData.ratingLocal,
                             structureData.starsMaxLocal,
                             structureData.starsAverageLocal,
-                            0
+                            0,
+                            structureData.languages,
+                            structureData.isShowArchive
                         )
                     )
                 }
@@ -490,7 +592,7 @@ class StructureSyncTest {
                     countQuiz++
                     arrayListOf(1).toList().forEach { eventid ->
                         arrayListOf(50, 200).forEach { lvlTranslate ->
-                            arrayListOf("ua", "ru").forEach { language ->
+                            arrayListOf("ua", "ru", "en").forEach { language ->
                                 arrayListOf(true, false).forEach { hardQuestion ->
                                     arrayListOf(1, 2).forEach { numQuestion ->
 

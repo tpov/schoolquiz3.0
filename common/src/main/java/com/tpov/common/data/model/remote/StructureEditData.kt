@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity
 data class StructureEditData(
     @PrimaryKey(autoGenerate = true)
-    val id: Int,
+    val id: Int?,
     val idEventFrom: Int,
     val idCategoryFrom: Int,
     val idSubCategoryFrom: Int,

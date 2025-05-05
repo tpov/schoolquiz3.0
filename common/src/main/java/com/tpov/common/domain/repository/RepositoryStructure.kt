@@ -17,6 +17,7 @@ interface RepositoryStructure {
     suspend fun fetchStructureInfoData(path: PathStructure): StructureInfoRemote?
     suspend fun getStructureEventData(eventId: Int, vararg path: Int): List<StructureDataLocal>
     fun fetchPictureStructure(path: String)
+    fun clearStructureEdit()
 
     suspend fun saveStructureData(structureDataCategoryList: List<StructureDataLocal>,
                                   eventId: Int)

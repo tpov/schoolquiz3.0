@@ -10,12 +10,14 @@ data class StructureInfoRemote(
     val countGame: Int,
     val dataRating: String,
     val versionQuiz: Int,
-    val tpovId: Int
+    val tpovId: Int,
+    val languages: String,
+    val isShowArchive: Boolean
 ) {
     fun toStructureInfoEntity(
         pathStructure: PathStructure
     ) = StructureInfoEntity(
         null, pathStructure, dataRating,
-        tpovId, rating, starsMax, starsAverage, countGame
+        tpovId, rating, starsMax, starsAverage, countGame, languages, isShowArchive
     )
 }
