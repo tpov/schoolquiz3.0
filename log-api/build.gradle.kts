@@ -21,8 +21,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "com.tpov.log_api"
-            artifactId = "logger"
+            groupId = "com.tpov"
+            artifactId = "log-api"
             version = "1.0.1"
             from(components["java"])
         }

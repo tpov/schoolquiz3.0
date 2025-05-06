@@ -140,7 +140,7 @@ class QuizActivityViewModel @Inject constructor(
         Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureCategoryList(EventQuiz.QUIZ_HOME.id)
-            .find { it.id == idCat }
+            ?.find { it.id == idCat }
 
         nameCategory = category?.nameItem ?: ""
         category?.children?.forEach {
@@ -157,7 +157,7 @@ class QuizActivityViewModel @Inject constructor(
     private suspend fun handleUserEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
         val category = structureUseCase.getStructureCategoryList(EventQuiz.QUIZ_BY_USER.id)
-            .find {it.id == idCat }
+            ?.find {it.id == idCat }
 
         category?.children?.forEach { subCat ->
             subCat.children?.forEach { subsubCat ->

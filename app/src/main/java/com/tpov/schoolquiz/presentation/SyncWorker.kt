@@ -55,7 +55,7 @@ class SyncWorker @AssistedInject constructor(
         try {
 
             syncQuizData(viewModel)
-            syncProfile()
+            profileUseCase.syncProfile()
 
             val outputData = Data.Builder()
                 .putBoolean(KEY_SYNC_SUCCESS, true)
@@ -80,6 +80,7 @@ class SyncWorker @AssistedInject constructor(
                     is LockServerResult.AlreadyLocked -> {
                         delay(1000)
                     }
+
                     is LockServerResult.Error -> return
                 }
             }
@@ -106,13 +107,6 @@ class SyncWorker @AssistedInject constructor(
                 return
             }
         }
-    }
-
-
-
-
-    private suspend fun syncProfile() {
-
     }
 
     @SuppressLint("MissingPermission")
@@ -143,7 +137,7 @@ class SyncWorker @AssistedInject constructor(
             notificationManager.createNotificationChannel(channel)
         }
     }
-
+}
     @AssistedFactory
     interface Factory : ChildWorkerFactory {
         override fun create(context: Context, workerParams: WorkerParameters): SyncWorker

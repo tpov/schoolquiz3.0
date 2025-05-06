@@ -46,7 +46,7 @@ class MainViewModel @Inject constructor(
     var firstStartApp = false
 
     fun initStructureData(eventId: Int) = viewModelScope.launch(Dispatchers.IO) {
-        _structureData.value = structureUseCase.getStructureCategoryList(eventId)?.children?.toList()
+        _structureData.value = structureUseCase.getStructureCategoryList(eventId)?.toList()
     }
 
     fun initProfile() {

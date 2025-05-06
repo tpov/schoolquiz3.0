@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.presentation.create_quiz.strategy
 
-import android.util.Log
 import com.tpov.common.EventQuiz
 import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionEntity
@@ -12,11 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
     override fun initViews() {
         activity.viewModel.updateNewCounterAndShortList(true)
-
-        Log.d(
-            "rkfgujrdjkgjk",
-            "CreateHandler questionsShortEntity : ${activity.viewModel.questionsShortEntity}"
-        )
+        
         activity.setupQuestionSpinner()
         activity.updateUiQuestion()
         activity.setupUiQuiz()
@@ -38,7 +33,7 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
             activity.viewModel.structureDataFlow
         )
 
-        mergeStructureData.children?.forEach {
+        mergeStructureData.forEach {
             it?.let { activity.viewModel.updateStructureData(it, EventQuiz.QUIZ_BY_USER.id) }
         }
 
@@ -63,24 +58,16 @@ class CreateHandler(private val activity: CreateQuizActivity) : RegimeHandler {
         subCategoryStructure: StructureDataLocal,
         subsubCategoryStructure: StructureDataLocal,
         quizEntity: StructureDataLocal,
-        structureDataFlow: StateFlow<StructureDataLocal?>
-    ): StructureDataLocal {
+        structureDataFlow: StateFlow<List<StructureDataLocal>?>
+    ): List<StructureDataLocal> {
         val eventId = EventQuiz.QUIZ_BY_USER.id
-        val currentStructure = structureDataFlow.value ?: StructureDataLocal()
-        currentStructure.printFullStructure("jfgksdjefkse")
+        var currentStructure = structureDataFlow.value
 
-        if (currentStructure.children == null) {
-            currentStructure.children = mutableListOf()
+        if (currentStructure == null) {
+            currentStructure = mutableListOf()
         }
 
-        val eventRoot = currentStructure.children?.find {
-            it?.id == eventId
-        } ?: run {
-            val newRoot = StructureDataLocal().create(id = eventId, "", 0, 0, "", "")
-            currentStructure.children?.add(newRoot)
-            newRoot
-        }
-        eventRoot.findOrCreateChild(categoryStructure).updatePathByStructureData()
+        StructureDataLocal(children = currentStructure.toMutableList()).findOrCreateChild(categoryStructure).updatePathByStructureData()
             .findOrCreateChild(subCategoryStructure).updatePathByStructureData()
             .findOrCreateChild(subsubCategoryStructure).updatePathByStructureData()
             .findOrCreateChild(quizEntity).updatePathByStructureData()

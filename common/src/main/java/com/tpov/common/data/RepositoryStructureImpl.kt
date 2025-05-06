@@ -341,10 +341,10 @@ return null!!
     override suspend fun getStructureEventData(
         eventId: Int,
         vararg path: Int
-    ): List<StructureDataLocal> {
+    ): List<StructureDataLocal>? {
 
         Log.d("initStructureData", "getStructureData")
-        return structureDataDao.getStructureDataByPath(eventId, path.toList())!!
+        return structureDataDao.getStructureDataByPath(eventId, path.toList())
     }
 }
 

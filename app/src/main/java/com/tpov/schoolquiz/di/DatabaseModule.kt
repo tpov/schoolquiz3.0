@@ -26,4 +26,5 @@ class DatabaseModule {
     fun provideProfileDao(database: MainDatabase): ProfileDao {
         return database.getProfileDao()
     }
+
 }

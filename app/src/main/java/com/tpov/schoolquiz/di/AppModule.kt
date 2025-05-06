@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.storage.FirebaseStorage
 import com.tpov.common.Interactor
+import com.tpov.common.data.RepositoryQuestionDetailImpl
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStructureImpl
 import com.tpov.common.di.CommonComponent
@@ -24,12 +25,14 @@ class AppModule {
     fun provideStructureUseCase(
         repositoryStructureImpl: RepositoryStructureImpl,
         repositoryQuestionImpl: RepositoryQuestionImpl,
+        repositoryQuestionDetailImpl: RepositoryQuestionDetailImpl,
         interactor: Interactor,
         commonComponentProvider: CommonComponentProvider
     ): StructureUseCase {
         return StructureUseCase(
             repositoryStructureImpl,
             repositoryQuestionImpl,
+            repositoryQuestionDetailImpl,
             commonComponentProvider.provideCommonComponent().provideRepositoryException(),
             interactor
         )

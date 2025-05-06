@@ -206,39 +206,37 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="Fix sync StructureData info local">
-      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositorySettingServerImpl.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/LockResult.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositorySettingLocal.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositorySettingServer.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/SettingLocalDBUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/SettingServerDBUseCase.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/src/test/java/com/tpov/common/StructureDataUtils.kt" afterDir="false" />
+    <list default="true" id="5af0db75-4be5-4ef3-8f7e-967bab06300d" name="Changes" comment="run">
+      <change afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositorySettingLocalImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/checksums.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/md5-checksums.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/checksums/sha1-checksums.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.7/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/AppModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/AppModule.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/DatabaseModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/di/DatabaseModule.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/SyncWorker.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/SyncWorker.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/ExceptionHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/ExceptionHandler.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/Interactor.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/Interactor.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStuctureImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStructureImpl.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/manager/FirebaseRequestInterceptor.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/manager/FirebaseRequestInterceptor.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuestionEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/QuestionEntity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureInfoEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/local/StructureInfoEntity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureEditData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureEditData.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureInfoRemote.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/model/remote/StructureInfoRemote.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/StructureDataLocal.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/model/StructureDataLocal.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/CreateQuizViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/CreateHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/CreateHandler.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/EditHandler.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/create_quiz/strategy/EditHandler.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/tpov/schoolquiz/presentation/main/MainViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStructureImpl.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/data/RepositoryStructureImpl.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonComponent.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonComponent.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonModule.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/di/CommonModule.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryStructure.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/repository/RepositoryStructure.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureDataExtention.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureDataExtention.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/usecase/StructureUseCase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/QuestionUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/QuestionUtils.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/StructureDataUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/domain/utils/StructureDataUtils.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/src/test/java/com/tpov/common/StructureSyncIntegrationTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/test/java/com/tpov/common/StructureSyncIntegrationTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/question/QuestionViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/question/QuestionViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/common/src/main/java/com/tpov/common/presentation/quiz/QuizActivityViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log-api/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/log-api/build.gradle.kts" afterDir="false" />
     </list>
     <list id="81ab6825-6e13-49c0-a4dd-0fe06f8e94eb" name="Node changelist" comment="Add Node" />
     <option name="SHOW_DIALOG" value="false" />
@@ -249,7 +247,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[17e6bcfc]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[DeviceId(pluginId=PhysicalDevice, isTemplate=false, identifier=serial=17e6bcfc)]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -444,14 +442,14 @@
       <recent name="com.tpov.schoolquiz.presentation.main" />
     </key>
     <key name="CopyKotlinDeclarationDialog.RECENTS_KEY">
+      <recent name="com.tpov.common.data" />
       <recent name="com.tpov.common.domain.repository" />
       <recent name="com.tpov.common.domain.usecase" />
-      <recent name="com.tpov.common.data" />
       <recent name="com.tpov.schoolquiz.presentation.create_quiz" />
       <recent name="com.tpov.logger_processor" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.StructureSyncTest.testGetPathPositionByPathStructure">
+  <component name="RunManager" selected="Android App.app">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
       <module name="schoolquiz.app" />
       <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
@@ -1518,7 +1516,7 @@
       <option name="project" value="LOCAL" />
       <updated>1691436092639</updated>
     </task>
-    <option name="localTasksCounter" value="130" />
+    <option name="localTasksCounter" value="131" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -1561,9 +1559,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/schoolquiz" />
     </ignored-roots>
-    <MESSAGE value="Add quiz path" />
-    <MESSAGE value="Add translate dialog" />
-    <MESSAGE value="Add translate request" />
     <MESSAGE value="Add setOn click listeners answer button&#10;Edit Error hendler (to Generic)" />
     <MESSAGE value="Fix load and show picture&#10;Filled info question" />
     <MESSAGE value="Edit color contur and back item" />
@@ -1586,7 +1581,10 @@
     <MESSAGE value="Fix syncTest local question" />
     <MESSAGE value="Fix sync add questions" />
     <MESSAGE value="Fix sync StructureData info local" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix sync StructureData info local" />
+    <MESSAGE value="Add processing the result in syncQuizData" />
+    <MESSAGE value="build (edit di)" />
+    <MESSAGE value="run" />
+    <option name="LAST_COMMIT_MESSAGE" value="run" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="XDebuggerManager">

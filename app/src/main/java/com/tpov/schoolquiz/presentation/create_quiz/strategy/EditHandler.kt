@@ -51,7 +51,7 @@ private fun getEditStructureData() {
         val viewModel = activity.viewModel
         val quizToDelete = viewModel.quizEntity ?: return
 
-        val rootStructure = viewModel.structureDataFlow.value?.children?.find {
+        val rootStructure = viewModel.structureDataFlow.value?.find {
             it?.id == EventQuiz.QUIZ_BY_USER.id
         } ?: return
 

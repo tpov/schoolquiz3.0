@@ -45,7 +45,7 @@ object StructureDataExtention {
                     ?.toMutableList() ?: exceptionHandler.exceptionInitStructureRemoteData()
 
             this.structureCategoryDataListLocal =
-                repositoryStructureImpl.getStructureEventData(this.eventId).toMutableList()
+                repositoryStructureImpl.getStructureEventData(this.eventId)?.toMutableList() ?: mutableListOf()
 
         } catch (e: Exception) {
             exceptionHandler.exceptionInitStructureRemoteData(e.message ?: "")
@@ -380,7 +380,6 @@ object StructureDataExtention {
         //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
 
-repositoryStructureImpl.
         // } catch (e: Exception) {
         //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
         //   }

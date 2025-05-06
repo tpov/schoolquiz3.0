@@ -200,7 +200,7 @@ class QuestionViewModel @Inject constructor(
     fun initQuizValue() = viewModelScope.launch(Dispatchers.IO) {
         pathStructure?.apply {
             _quiz.value = structureUseCase.getStructureCategoryList(idEvent)
-                .find { it.id == idCategory }
+                ?.find { it.id == idCategory }
                 ?.findChildren(idSubCategory)
                 ?.findChildren(idSubsubCategory)
                 ?.findChildren(idQuiz) ?: errorHandler.notFoundPath()

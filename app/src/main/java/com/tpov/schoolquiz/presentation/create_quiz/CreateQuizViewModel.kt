@@ -192,7 +192,7 @@ class CreateQuizViewModel @Inject constructor(
     fun initStructureData() = viewModelScope.launch(Dispatchers.IO) {
         val listHome = structureUseCase.getStructureCategoryList(EventQuiz.QUIZ_HOME.id)
         val listMyQuiz = structureUseCase.getStructureCategoryList(EventQuiz.QUIZ_BY_USER.id)
-        _structureEventListFlow.value = listOf(StructureDataLocal().copy(id = EventQuiz.QUIZ_HOME.id, children = listMyQuiz.toMutableList()), StructureDataLocal().copy(id = EventQuiz.QUIZ_BY_USER.id, children = listHome.toMutableList()))
+        _structureEventListFlow.value = listOf(StructureDataLocal().copy(id = EventQuiz.QUIZ_HOME.id, children = listMyQuiz?.toMutableList()), StructureDataLocal().copy(id = EventQuiz.QUIZ_BY_USER.id, children = listHome?.toMutableList()))
         initCategories(PathStructureName("", "", "", "", ""))
     }
 
@@ -226,8 +226,8 @@ class CreateQuizViewModel @Inject constructor(
              .mapNotNull { eventStructure ->
                 eventStructure .printFullStructure("$LOG_TAG - Event structure")
                 eventStructure .children
-                    ?.filter { it .nameItem == foundNameCategory }
-                    ?.flatMap { it .children.orEmpty() }
+                    ?.filter { it.nameItem == foundNameCategory }
+                    ?.flatMap { it.children.orEmpty() }
             } .flatten()
 
         _subCategoryDataFlow.value = subCategories
