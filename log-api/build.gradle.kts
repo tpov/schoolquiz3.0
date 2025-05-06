@@ -4,6 +4,7 @@ plugins {
     id("maven-publish")
 }
 
+// These will be overridden by the publish script
 group = "com.tpov.log_api"
 version = "1.0.0"
 
@@ -18,21 +19,8 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "com.tpov"
-            artifactId = "log-api"
-            version = "1.0.1"
-            from(components["java"])
-        }
-    }
-    repositories {
-        maven {
-            url = uri("${System.getProperty("user.home")}/.m2/repository")
-        }
-    }
-}
+// Apply common publishing configuration
+apply(from = "../publish.gradle.kts")
 
 repositories {
     mavenLocal()

@@ -19,21 +19,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.0")
 }
 
-publishing {
-    publications {
-        create("maven", MavenPublication::class.java) {
-            groupId = "com.tpov.logger"
-            artifactId = "logger-compiler-plugin"
-            version = "1.0.0"
-            from(components["java"])
-        }
-    }
-    repositories {
-        maven {
-            url = uri("${System.getProperty("user.home")}/.m2/repository")
-        }
-    }
-}
+// Apply common publishing configuration
+apply(from = "../publish.gradle.kts")
 
 repositories {
     mavenLocal()
