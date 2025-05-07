@@ -20,6 +20,8 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.2'
         classpath "com.tpov.logger:logger-gradle-plugin:$logger_plugin_version"
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.6"
+        classpath "org.jlleitschuh.gradle:ktlint-gradle:12.1.0"
     }
 }
 

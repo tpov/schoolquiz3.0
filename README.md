@@ -38,3 +38,9 @@ cd schoolquiz3.0
     <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/33009369/273196784-cb73ab71-3377-4053-8cad-4061fec9b2bd.png" width="300px" alt="schoolquiz app logo" />
   </a>
 </p>
+
+## Лицензия
+
+Этот проект распространяется по лицензии MIT. При использовании, публикации или модификации кода обязательно указывайте источник и автора: **TPOV**.
+
+Полный текст лицензии — в файле [LICENSE](./LICENSE).

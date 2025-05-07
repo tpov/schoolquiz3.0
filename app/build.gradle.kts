@@ -1,0 +1,110 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt")
+    id("kotlin-parcelize")
+    id("com.google.gms.google-services")
+    id("com.tpov.logger.gradle-plugin")
+    id("io.gitlab.arturbosch.detekt")
+    id("org.jlleitschuh.gradle.ktlint")
+}
+
+kapt {
+    correctErrorTypes = true
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
+        arg("kapt.verbose", "true")
+    }
+}
+
+android {
+    namespace = "com.tpov.schoolquiz"
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
+    compileSdk = 34
+
+    sourceSets["androidTest"].assets.srcDirs("$projectDir/schemas")
+
+    defaultConfig {
+        applicationId = "com.tpov.schoolquiz"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 30018
+        versionName = "3.0.18-rc"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["room.schemaLocation"] = "$projectDir/schemas"
+            }
+        }
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+
+    buildFeatures {
+        viewBinding = true
+    }
+}
+
+dependencies {
+    implementation(project(":userguide"))
+    implementation(project(":common"))
+    implementation(project(":shop"))
+    implementation(project(":settings"))
+    implementation(project(":network"))
+
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+
+    implementation("com.android.billingclient:billing:7.0.0")
+    implementation("com.google.android.gms:play-services-ads:23.3.0")
+    implementation("androidx.gridlayout:gridlayout:1.0.0")
+
+    implementation("com.squareup.retrofit2:adapter-rxjava2:2.9.0")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("androidx.annotation:annotation:1.8.2")
+    implementation("androidx.databinding:databinding-runtime:8.5.2")
+    implementation("com.google.mlkit:language-id-common:16.1.0")
+
+    implementation("com.google.mlkit:language-id:17.0.6")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("org.jetbrains.kotlin:kotlin-parcelize-runtime:${rootProject.extra["kotlin_version"]}")
+
+    implementation("com.squareup.picasso:picasso:2.71828")
+    implementation("jp.wasabeef:picasso-transformations:2.4.0")
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+    kapt("com.github.bumptech.glide:compiler:4.15.1")
+    implementation("androidx.hilt:hilt-common:1.2.0")
+    implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
+    implementation("androidx.test.ext:junit-ktx:1.2.1")
+    implementation("androidx.test.espresso:espresso-core:3.6.1")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
+    implementation("jp.wasabeef:glide-transformations:4.3.0")
+
+    kapt("androidx.room:room-compiler:2.6.1")
+    kapt("com.google.dagger:dagger-compiler:2.49")
+    implementation("com.squareup.inject:assisted-inject-annotations-dagger2:0.8.1")
+    kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.8.1")
+
+    implementation("com.google.guava:guava:30.1-jre")
+
+    androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    testImplementation("org.robolectric:robolectric:4.10.3")
+} 
