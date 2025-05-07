@@ -3,7 +3,6 @@ package com.tpov.schoolquiz
 import android.app.Application
 import android.content.Context
 import android.util.Log
-import androidx.multidex.MultiDex
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import com.google.firebase.FirebaseApp
@@ -128,7 +127,6 @@ class MainApp : Application(), Configuration.Provider, CommonComponentProvider {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
-        MultiDex.install(this)
     }
     override fun provideCommonComponent(): CommonComponent {
         return commonComponent
