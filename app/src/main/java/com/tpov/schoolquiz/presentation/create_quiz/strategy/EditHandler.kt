@@ -1,10 +1,13 @@
 package com.tpov.schoolquiz.presentation.create_quiz.strategy
 
 import android.annotation.SuppressLint
+import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.common.EventQuiz
+import com.tpov.common.data.model.local.StructureEditData
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.create_quiz.RegimeHandler
+import kotlinx.coroutines.tasks.await
 
 class EditHandler(private val activity: CreateQuizActivity) : RegimeHandler {
     override fun initViews(): Unit = with(activity) {
@@ -35,18 +38,20 @@ class EditHandler(private val activity: CreateQuizActivity) : RegimeHandler {
             }
         }
     }
-private fun getEditStructureData() {
-    /*StructureEditData(
-        null,
-        activity.viewModel.pathStructure.idEvent,
-        activity.viewModel.pathStructure.idCategory,
-        activity.viewModel.pathStructure.idSubCategory,
-        activity.viewModel.pathStructure.idSubsubCategory,
-        activity.viewModel.pathStructure.idQuiz,
+
+    private fun getEditStructureData() {
+        /*StructureEditData(
+            null,
+            activity.viewModel.pathStructure.idEvent,
+            activity.viewModel.pathStructure.idCategory,
+            activity.viewModel.pathStructure.idSubCategory,
+            activity.viewModel.pathStructure.idSubsubCategory,
+            activity.viewModel.pathStructure.idQuiz,
 
 
-    )*/
-}
+        )*/
+    }
+
     private suspend fun deleteOldStructureData() {
         val viewModel = activity.viewModel
         val quizToDelete = viewModel.quizEntity ?: return
@@ -78,5 +83,19 @@ private fun getEditStructureData() {
     private suspend fun deleteOldQuestions() {
         val viewModel = activity.viewModel
             viewModel.questionUseCase.deleteQuestionByPath(viewModel.pathStructure)
+    }
+
+    suspend fun pushEditStructure(structureEditData: StructureEditData) {
+        val functions = FirebaseFunctions.getInstance("us-central1")
+        val data = hashMapOf("structureEditData" to structureEditData)
+        try {
+            val result = functions
+                .getHttpsCallable("editStructure")
+                .call(data)
+                .await()
+            // обработка результата, если нужно
+        } catch (e: Exception) {
+            // обработка ошибки
+        }
     }
 }

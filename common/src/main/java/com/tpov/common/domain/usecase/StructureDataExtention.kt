@@ -330,7 +330,7 @@ object StructureDataExtention {
     }
 
 
-    fun SyncState.updateStructureNumberQuestion(repositoryQuestionImpl: RepositoryQuestionImpl): SyncState {
+    fun SyncState.updateStructureLocalNumberQuestion(repositoryQuestionImpl: RepositoryQuestionImpl): SyncState {
         if (exception != null) return this
         //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE

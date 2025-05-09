@@ -25,7 +25,7 @@ import com.tpov.common.domain.usecase.StructureDataExtention.updateLocalStructur
 import com.tpov.common.domain.usecase.StructureDataExtention.updateRemoteQuestion
 import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoGlobal
 import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoLocal
-import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureNumberQuestion
+import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureLocalNumberQuestion
 import javax.inject.Inject
 
 open class StructureUseCase @Inject constructor(
@@ -69,7 +69,7 @@ open class StructureUseCase @Inject constructor(
             .updateLocalQuestion(repositoryQuestionImpl)
             .addEditIdsStructureRemote(repositoryStructureImpl)
             .clearStructureLocal(repositoryQuestionImpl, repositoryQuestionDetailImpl)
-            .updateStructureNumberQuestion(repositoryQuestionImpl)
+            .updateStructureLocalNumberQuestion(repositoryQuestionImpl)
             .syncQuestionDetails(repositoryQuestionDetailImpl)
             .updateRemoteQuestion(repositoryQuestionImpl)
             .editStructureRemote(repositoryStructureImpl)
