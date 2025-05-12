@@ -5,7 +5,7 @@ import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.presentation.model.PathStructure
 
 data class SyncState(
-    var eventId: Int,
+    var eventId: EventQuiz,
     var structureCategoryDataListLocal: MutableList<StructureDataLocal> = mutableListOf(),
     var structureCategoryDataListRemote: MutableList<StructureDataLocal> = mutableListOf(),
     var changedListQuestionLocal: MutableList<ChangeVersionStructure> = mutableListOf(),

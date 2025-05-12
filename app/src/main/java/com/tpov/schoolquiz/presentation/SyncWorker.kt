@@ -9,21 +9,17 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStore
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import com.tpov.common.EventQuiz
+import com.tpov.common.ExceptionInteractor
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.LockServerResult
 import com.tpov.common.domain.model.SyncStructureResult
-import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.SettingLocalDBUseCase
-import com.tpov.common.domain.usecase.SettingServerDBUseCase
-import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.domain.usecase.SyncInteractor
 import com.tpov.schoolquiz.domain.ProfileUseCase
-import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -36,11 +32,9 @@ import javax.inject.Provider
 class SyncWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted private val workerParams: WorkerParameters,
-    private val structureUseCase: StructureUseCase,
+    private val syncInteractor: SyncInteractor,
     private val profileUseCase: ProfileUseCase,
-    private val questionUseCase: QuestionUseCase,
-    private val settingServerUseCase: SettingServerDBUseCase,
-    private val settingLocalDBUseCase: SettingLocalDBUseCase,
+    private val exceptionInteractor: ExceptionInteractor,
     private val viewModelFactory: ViewModelProvider.Factory
 ) : CoroutineWorker(context, workerParams) {
     companion object {
@@ -50,11 +44,9 @@ class SyncWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
-        val viewModel =
-            ViewModelProvider(ViewModelStore(), viewModelFactory)[MainViewModel::class.java]
         try {
 
-            syncQuizData(viewModel)
+            syncQuizData()
             profileUseCase.syncProfile()
 
             val outputData = Data.Builder()
@@ -69,12 +61,12 @@ class SyncWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun syncQuizData(viewModel: MainViewModel) {
-        for (eventId in EventQuiz.QUIZ_BY_USER.id..EventQuiz.QUIZ_HOME.id) {
+    private suspend fun syncQuizData() {
+        for (event in EventQuiz.entries) {
 
             var lockResult: LockServerResult
             while (true) {
-                lockResult = settingServerUseCase.lockStructureData()
+                lockResult = syncInteractor.lockStructureData()
                 when (lockResult) {
                     is LockServerResult.Success -> break
                     is LockServerResult.AlreadyLocked -> {
@@ -85,25 +77,23 @@ class SyncWorker @AssistedInject constructor(
                 }
             }
 
-            val result = structureUseCase.syncStructureDataAndGetChangeLists(eventId)
+            val result = syncInteractor.syncQuizes(event, exceptionInteractor)
 
             if (result is SyncStructureResult.Success) {
                 try {
-
-
                     showNotification("Sync Complete", "Updated quizzes.", context)
-                    val unlockResult = settingServerUseCase.unlockStructureData()
+                    val unlockResult = syncInteractor.unlockStructureData()
 
                     if (unlockResult is LockServerResult.Error) {
-                        settingLocalDBUseCase.rollbackStructureData()
+                        syncInteractor.rollbackStructureData()
                         return
                     }
                 } catch (e: Exception) {
-                    settingLocalDBUseCase.rollbackStructureData()
+                    syncInteractor.rollbackStructureData()
                     return
                 }
             } else {
-                settingLocalDBUseCase.rollbackStructureData()
+                syncInteractor.rollbackStructureData()
                 return
             }
         }

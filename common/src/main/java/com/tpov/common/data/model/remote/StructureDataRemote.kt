@@ -21,7 +21,6 @@ data class StructureDataRemote(
     val isShow: Boolean = true
 ) {
     fun toStructureDataLocal(): StructureDataLocal = StructureDataLocal(
-        id,
         children.orEmpty().map { it.toStructureDataLocal() }.toMutableList(),
         nameItem,
         dataUpdate,

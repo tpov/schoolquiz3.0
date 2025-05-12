@@ -11,20 +11,20 @@ data class QuestionDetailEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int?,
 
-    @ColumnInfo(name = "idEvent")
-    val idEvent: Int,
+    @ColumnInfo(name = "event")
+    val event: String,
 
-    @ColumnInfo(name = "idCategory")
-    val idCategory: Int,
+    @ColumnInfo(name = "category")
+    val category: String,
 
-    @ColumnInfo(name = "idSubCategory")
-    val idSubCategory: Int,
+    @ColumnInfo(name = "subCategory")
+    val subCategory: String,
 
-    @ColumnInfo(name = "idSubsubCategory")
-    val idSubsubCategory: Int,
+    @ColumnInfo(name = "subsubCategory")
+    val subsubCategory: String,
 
-    @ColumnInfo(name = "idQuiz")
-    val idQuiz: Int,
+    @ColumnInfo(name = "quiz")
+    val quiz: String,
 
     @ColumnInfo(name = "data")
     val data: String,
@@ -44,11 +44,11 @@ data class QuestionDetailEntity(
 
     constructor() : this(
         id = null,
-        idQuiz = -1,
-        idEvent = -1,
-        idCategory = -1,
-        idSubCategory = -1,
-        idSubsubCategory = -1,
+        quiz = "",
+        event = "",
+        category = "",
+        subCategory = "",
+        subsubCategory = "",
         data = "",
         codeAnswer = null,
         hardQuiz = false,

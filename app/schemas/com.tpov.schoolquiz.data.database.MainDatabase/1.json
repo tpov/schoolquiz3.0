@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "edb06a9a948e8089befbec3d6bc333da",
+    "identityHash": "0ef376f396ca00c475a221c19d3b3e21",
     "entities": [
       {
         "tableName": "question_detail_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `idEvent` INTEGER NOT NULL, `idCategory` INTEGER NOT NULL, `idSubCategory` INTEGER NOT NULL, `idSubsubCategory` INTEGER NOT NULL, `idQuiz` INTEGER NOT NULL, `data` TEXT NOT NULL, `codeAnswer` TEXT, `hardQuiz` INTEGER NOT NULL, `synth` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `event` TEXT NOT NULL, `category` TEXT NOT NULL, `subCategory` TEXT NOT NULL, `subsubCategory` TEXT NOT NULL, `quiz` TEXT NOT NULL, `data` TEXT NOT NULL, `codeAnswer` TEXT, `hardQuiz` INTEGER NOT NULL, `synth` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -15,33 +15,33 @@
             "notNull": false
           },
           {
-            "fieldPath": "idEvent",
-            "columnName": "idEvent",
-            "affinity": "INTEGER",
+            "fieldPath": "event",
+            "columnName": "event",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idCategory",
-            "columnName": "idCategory",
-            "affinity": "INTEGER",
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idSubCategory",
-            "columnName": "idSubCategory",
-            "affinity": "INTEGER",
+            "fieldPath": "subCategory",
+            "columnName": "subCategory",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idSubsubCategory",
-            "columnName": "idSubsubCategory",
-            "affinity": "INTEGER",
+            "fieldPath": "subsubCategory",
+            "columnName": "subsubCategory",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idQuiz",
-            "columnName": "idQuiz",
-            "affinity": "INTEGER",
+            "fieldPath": "quiz",
+            "columnName": "quiz",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -80,7 +80,7 @@
       },
       {
         "tableName": "question_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `numQuestion` INTEGER NOT NULL, `nameQuestion` TEXT NOT NULL, `pictureQuestion` TEXT, `nameAnswers` TEXT NOT NULL, `hardQuestion` INTEGER NOT NULL, `idEvent` INTEGER NOT NULL, `idCategory` INTEGER NOT NULL, `idSubCategory` INTEGER NOT NULL, `idSubsubCategory` INTEGER NOT NULL, `idQuiz` INTEGER NOT NULL, `language` TEXT NOT NULL, `lvlTranslate` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `numQuestion` INTEGER NOT NULL, `nameQuestion` TEXT NOT NULL, `pictureQuestion` TEXT, `nameAnswers` TEXT NOT NULL, `hardQuestion` INTEGER NOT NULL, `event` TEXT NOT NULL, `category` TEXT NOT NULL, `subCategory` TEXT NOT NULL, `subsubCategory` TEXT NOT NULL, `quiz` TEXT NOT NULL, `language` TEXT NOT NULL, `lvlTranslate` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -119,33 +119,33 @@
             "notNull": true
           },
           {
-            "fieldPath": "idEvent",
-            "columnName": "idEvent",
-            "affinity": "INTEGER",
+            "fieldPath": "event",
+            "columnName": "event",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idCategory",
-            "columnName": "idCategory",
-            "affinity": "INTEGER",
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idSubCategory",
-            "columnName": "idSubCategory",
-            "affinity": "INTEGER",
+            "fieldPath": "subCategory",
+            "columnName": "subCategory",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idSubsubCategory",
-            "columnName": "idSubsubCategory",
-            "affinity": "INTEGER",
+            "fieldPath": "subsubCategory",
+            "columnName": "subsubCategory",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "idQuiz",
-            "columnName": "idQuiz",
-            "affinity": "INTEGER",
+            "fieldPath": "quiz",
+            "columnName": "quiz",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -476,7 +476,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'edb06a9a948e8089befbec3d6bc333da')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0ef376f396ca00c475a221c19d3b3e21')"
     ]
   }
 }

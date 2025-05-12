@@ -12,14 +12,14 @@ import com.tpov.common.CODE_EMPTY_ANSWER
 import com.tpov.common.CODE_MAX_SCORE_ANSWER
 import com.tpov.common.CODE_MIN_SCORE_ANSWER
 import com.tpov.common.COUNT_VARIATION_CODE_ANSWER
-import com.tpov.common.Interactor
+import com.tpov.common.ExceptionInteractor
 import com.tpov.common.LVL_GOOGLE_TRANSLATOR
 import com.tpov.common.MAX_DROP_ANSWER
 import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
-import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.domain.model.EventQuiz.Companion.fromInput
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import com.tpov.common.domain.usecase.QuestionUseCase
@@ -46,8 +46,8 @@ class QuestionViewModel @Inject constructor(
     var app: Application,
     var questionUseCase: QuestionUseCase,
     var questionDetailUseCase: QuestionDetailUseCase,
-    val structureUseCase: StructureUseCase,
-    val interactor: Interactor
+    var structureUseCase: StructureUseCase,
+    val interactor: ExceptionInteractor
 ) : AndroidViewModel(app) {
 
     var newAnswerOrder: Int = 0
@@ -55,7 +55,7 @@ class QuestionViewModel @Inject constructor(
     var numQuestions: Int? = null
     var hardQuiz: Boolean? = null
     var pathStructure: PathStructure? =
-        PathStructure(UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE)
+        PathStructure()
     var life: Int? = null
 
     var oldCurrentQuestion = 0
@@ -144,11 +144,11 @@ class QuestionViewModel @Inject constructor(
         )?.filter { it.hardQuiz == hardQuiz } ?: listOf(
             QuestionDetailEntity(
                 0,
-                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
-                pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
-                pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
-                pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
-                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameEvent ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameSubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameSubsubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameEvent ?: errorHandler.notFoundInputData(),
                 getDataToday(),
                 CODE_EMPTY_ANSWER.toString()
                     .repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
@@ -160,13 +160,12 @@ class QuestionViewModel @Inject constructor(
 
     fun saveQuestionDetail() = viewModelScope.launch(Dispatchers.IO) {
         questionDetailUseCase.saveQuestionDetail(
-            QuestionDetailEntity(
-                0,
-                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
-                pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
-                pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
-                pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
-                pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+            QuestionDetailEntity(         0,
+                pathStructure?.nameEvent ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameSubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameSubsubCategory ?: errorHandler.notFoundInputData(),
+                pathStructure?.nameEvent ?: errorHandler.notFoundInputData(),
                 getDataToday(),
                 codeAnswer,
                 hardQuiz ?: errorHandler.notFoundQuizValue(),
@@ -199,11 +198,11 @@ class QuestionViewModel @Inject constructor(
 
     fun initQuizValue() = viewModelScope.launch(Dispatchers.IO) {
         pathStructure?.apply {
-            _quiz.value = structureUseCase.getStructureCategoryList(idEvent)
-                ?.find { it.id == idCategory }
-                ?.findChildren(idSubCategory)
-                ?.findChildren(idSubsubCategory)
-                ?.findChildren(idQuiz) ?: errorHandler.notFoundPath()
+            _quiz.value = structureUseCase.getStructureEventData(fromInput(nameEvent)!!)
+                ?.find { it.nameItem == nameCategory }
+                ?.findChildren(nameSubCategory)
+                ?.findChildren(nameSubsubCategory)
+                ?.findChildren(nameQuiz) ?: errorHandler.notFoundPath()
         } ?: errorHandler.notFoundPath()
     }
 
@@ -235,11 +234,11 @@ class QuestionViewModel @Inject constructor(
             questionDetail.codeAnswer?.any { it == '0' } ?: false
         } ?: QuestionDetailEntity(
             0,
-            pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
-            pathStructure?.idCategory ?: errorHandler.notFoundInputData(),
-            pathStructure?.idSubCategory ?: errorHandler.notFoundInputData(),
-            pathStructure?.idSubsubCategory ?: errorHandler.notFoundInputData(),
-            pathStructure?.idEvent ?: errorHandler.notFoundInputData(),
+            pathStructure?.nameEvent ?: errorHandler.notFoundInputData(),
+            pathStructure?.nameCategory ?: errorHandler.notFoundInputData(),
+            pathStructure?.nameSubCategory ?: errorHandler.notFoundInputData(),
+            pathStructure?.nameSubsubCategory ?: errorHandler.notFoundInputData(),
+            pathStructure?.nameEvent ?: errorHandler.notFoundInputData(),
             getDataToday(),
             "0".repeat(numQuestions ?: errorHandler.notFoundQuizValue()),
             hardQuiz ?: errorHandler.notFoundInitTypeHardQuestion(),

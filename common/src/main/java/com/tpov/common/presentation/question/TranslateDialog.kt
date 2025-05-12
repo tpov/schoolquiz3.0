@@ -51,7 +51,6 @@ class TranslateDialog : DialogFragment() {
     @OptIn(InternalCoroutinesApi::class)
     private fun setupUI() {
         Log.d("wadasdaw", "setupUI")
-        var quizId = 0
         var firstQuestion = false
         viewLifecycleOwner.lifecycleScope.launch {
             Log.d("wadasdaw", "lifecycleScope")
@@ -59,14 +58,14 @@ class TranslateDialog : DialogFragment() {
                     Log.d("wadasdaw", "collect")
                     quiz?.languages?.let { languagesString ->
                         Log.d("wadasdaw", "languagesString: $languagesString")
-                        quizId = quiz.id!!
+
 
                         val languages = languagesString
                             .split(SPLIT_BETWEEN_LANGUAGES)
                             .map { it.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)[0] }
 
-                        initSpinner(languages, quizId, languages[0])
-                        initButtons(quiz.id, languages[0])
+                        initSpinner(languages, quiz.nameItem, languages[0])
+                        initButtons(quiz.nameItem, languages[0])
                     }
             }
         }
@@ -99,7 +98,7 @@ class TranslateDialog : DialogFragment() {
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    private fun initButtons(idQuiz: Int?, mainLangQuiz: String) {
+    private fun initButtons(nameItem: String, mainLangQuiz: String) {
         val selectLang = LanguageUtils.getLanguageFullName(
             binding.spLanguages.selectedItem.toString()
         )
@@ -123,7 +122,7 @@ class TranslateDialog : DialogFragment() {
         }
     }
 
-    private fun initSpinner(languages: List<String>, idQuiz: Int, mainLanguageQuiz: String) {
+    private fun initSpinner(languages: List<String>, nameItem: String, mainLanguageQuiz: String) {
         val adapter = ArrayAdapter(
             requireContext(),
             R.layout.simple_spinner_item,
@@ -138,7 +137,7 @@ class TranslateDialog : DialogFragment() {
                 position: Int,
                 id: Long
             ) {
-                initButtons(idQuiz, mainLanguageQuiz)
+                initButtons(nameItem, mainLanguageQuiz)
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}

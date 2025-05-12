@@ -6,7 +6,7 @@ import com.tpov.common.presentation.model.PathStructure
 open class ExceptionHandler(
     val beforeException: (String) -> Unit,
     val afterException: () -> Unit,
-    val interactor: Interactor
+    val interactor: ExceptionInteractor
 ) {
 
     inline fun <reified T> handleException(
@@ -36,7 +36,7 @@ open class ExceptionHandler(
         Set::class -> emptySet<Any>() as T
         Map::class -> emptyMap<Any, Any>() as T
         StructureDataLocal::class -> StructureDataLocal() as T
-        PathStructure::class -> PathStructure(-1, -1, -1, -1, -1) as T
+        PathStructure::class -> PathStructure("","","","","") as T
         Unit::class -> Unit as T
         else -> null as T
     }

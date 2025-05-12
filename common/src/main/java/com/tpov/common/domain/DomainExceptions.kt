@@ -1,12 +1,12 @@
 package com.tpov.common.domain
 
 import com.tpov.common.ExceptionHandler
-import com.tpov.common.Interactor
+import com.tpov.common.ExceptionInteractor
 
 open class DomainExceptions(
     beforeException: (String) -> Unit,
     afterException: () -> Unit,
-    interactor: Interactor,
+    interactor: ExceptionInteractor,
 ) : ExceptionHandler(
     beforeException,
     afterException,

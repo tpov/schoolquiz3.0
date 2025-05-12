@@ -37,8 +37,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.COUNT_LIFE_POINTS_IN_LIFE
 import com.tpov.common.DELAY_SHOW_TEXT_IN_MAINACTIVITY_NICK
-import com.tpov.common.EventQuiz
 import com.tpov.common.data.utils.TimeManager
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.common.presentation.model.PathStructure
@@ -59,7 +59,6 @@ import com.tpov.schoolquiz.presentation.contact.Contacts
 import com.tpov.schoolquiz.presentation.core.NewValue.setNewSkill
 import com.tpov.schoolquiz.presentation.core.NotificationHelper
 import com.tpov.schoolquiz.presentation.core.SharedPreferencesManager
-import com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CONTACT
@@ -674,12 +673,6 @@ getDataToday()
                 R.id.menu_adb -> switchFragment(ShopFragment())
                 R.id.menu_info -> startInfoFragment()
                 R.id.menu_network -> {
-                    startActivity(
-                        CreateQuizActivity.newInstance(
-                        context = this,
-                            pathStructure = PathStructure(EventQuiz.QUIZ_BY_USER.id, -1, -1, -1, -1),
-                        regime = CreateQuizActivity.REGIME_CREATE_QUIZ
-                    ))
 
                 }
 

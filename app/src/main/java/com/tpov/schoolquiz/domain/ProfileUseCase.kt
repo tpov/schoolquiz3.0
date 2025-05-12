@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.domain
 
-import android.util.Log
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.fierbase.Profile
 import com.tpov.schoolquiz.data.fierbase.toProfile
@@ -12,7 +11,6 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
     suspend fun getProfileFlow() = repositoryProfile.getProfileFlow()
 
     suspend fun insertAndPushProfile(profile: ProfileEntity) {
-        Log.d("qweqwe", "1 $profile")
         repositoryProfile.insertProfile(profile)
         repositoryProfile.pushProfile(profile.toProfile())
     }
@@ -26,7 +24,6 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
     }
 
     suspend fun syncProfile() {
-        Log.d("qweqwe", "syncProfile")
         val localProfile = repositoryProfile.getProfile()
         val remoteProfile = repositoryProfile.fetchProfile(localProfile.tpovId) ?: localProfile.toProfile()
 
@@ -51,6 +48,6 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
         repositoryProfile.pushProfile(newProfile.toProfile())
         repositoryProfile.updateProfile(newProfile)
 
-    }
 
+    }
 }

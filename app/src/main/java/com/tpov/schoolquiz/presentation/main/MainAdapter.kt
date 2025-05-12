@@ -29,7 +29,7 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {
         items?.get(position)?.let { holder.bind(it) }
         holder.itemView.setOnClickListener {
-            items?.get(position)?.id?.let { it1 -> listener.onItemClick(it1) }
+            items?.get(position)?.nameItem?.let { it1 -> listener.onItemClick(it1) }
         }
     }
 
@@ -94,5 +94,5 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
 }
 
 interface OnItemClickListener {
-    fun onItemClick(category: Int)
+    fun onItemClick(category: String)
 }

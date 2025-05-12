@@ -24,6 +24,9 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
         )
     }
 
+    suspend fun fetchQuestion(pathStructure: PathStructure, languages: String) =
+        repositoryQuestion.fetchQuestion(pathStructure, languages)
+
     suspend fun pushQuestionForTranslate(
         question: QuestionEntity,
         localLangsQuestions: Set<String>,

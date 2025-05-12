@@ -23,25 +23,25 @@ interface StructureDataDao {
 
     @Transaction
     suspend fun getStructureDataByPath(
-        eventId: Int,
-        path: List<Int>
+        event:String,
+        path: List<String>
     ): List<StructureDataLocal>? {
-        var structure = getStructureEventData(eventId)?.toStructureCategoryListLocal()
+        var structure = getStructureEventData(event)?.toStructureCategoryListLocal()
 
         if (structure == null) {
             Log.d("initStructureData", "Root structure is null or empty")
             return null
         } else {
             path.forEach { path ->
-                if (path != -1) structure = structure!!.find { it.id == path }?.children
+                if (path != "") structure = structure!!.find { it.nameItem == path }?.children
             }
         }
 
         return structure
     }
 
-    @Query("SELECT * FROM structure_data WHERE id = :eventId")
-    suspend fun getStructureEventData(eventId: Int): StructureDataEntity?
+    @Query("SELECT * FROM structure_data WHERE nameItem = :event")
+    suspend fun getStructureEventData(event: String): StructureDataEntity?
 
     @Query("DELETE FROM structure_data")
     suspend fun deleteAllStructureData()

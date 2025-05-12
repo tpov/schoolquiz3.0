@@ -8,17 +8,11 @@ import androidx.room.PrimaryKey
 data class StructureEditData(
     @PrimaryKey(autoGenerate = true)
     val id: Int?,
-    val idEventFrom: Int,
-    val idCategoryFrom: Int,
-    val idSubCategoryFrom: Int,
-    val idSubsubCategoryFrom: Int,
-    val idQuizFrom: Int,
-
-    val idEventTo: Int,
-    val idCategoryTo: Int,
-    val idSubCategoryTo: Int,
-    val idSubsubCategoryTo: Int,
-    val idQuizTo: Int,
+    val nameEventFrom: String,
+    val nameCategoryFrom: String,
+    val nameSubCategoryFrom: String,
+    val nameSubsubCategoryFrom: String,
+    val nameQuizFrom: String,
 
     val nameEventTo: String,
     val nameCategoryTo: String,

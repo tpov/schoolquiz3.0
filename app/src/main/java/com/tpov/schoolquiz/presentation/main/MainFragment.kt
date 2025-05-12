@@ -8,9 +8,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tpov.common.EventQuiz
 import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.di.CommonComponent
+import com.tpov.common.domain.model.EventQuiz
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.quiz.QuizFragment
 import com.tpov.log_api.logger.Logger
 import com.tpov.schoolquiz.MainApp
@@ -59,13 +60,12 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
             }
         }
         initGetData()
-        Log.d("ksjergfkjkseklf", "event?.id!!: ${event?.id!!}")
-        viewModel.initStructureData(event?.id!!)
+        viewModel.initStructureData(event!!)
     }
 
     @OptIn(InternalCoroutinesApi::class)
-    override fun onItemClick(category: Int) {
-        val fragment = QuizFragment.newInstance(event?.id!!, category, -1, -1)
+    override fun onItemClick(category: String) {
+        val fragment = QuizFragment.newInstance(PathStructure( event?.name!!, category, "","", ""))
 
         requireActivity().supportFragmentManager.beginTransaction()
             .replace(R.id.title_fragment, fragment)
@@ -75,7 +75,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
     @OptIn(InternalCoroutinesApi::class)
     private fun initGetData() {
-        event = arguments?.getInt(QuizFragment.KEY_ID_EVENT, UNKNOWN_VALUE)?.let { EventQuiz.fromId(it) }
+        event = arguments?.getString(QuizFragment.KEY_ID_EVENT, UNKNOWN_VALUE)?.let { EventQuiz.fromInput(it) }
     }
 
     companion object {

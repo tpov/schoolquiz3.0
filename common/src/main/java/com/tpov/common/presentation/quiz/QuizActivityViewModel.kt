@@ -5,9 +5,8 @@ import android.content.res.Configuration
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tpov.common.EventQuiz
-import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
@@ -25,7 +24,7 @@ class QuizActivityViewModel @Inject constructor(
 ) : ViewModel() {
 
     var pathStructure: PathStructure? =
-        PathStructure(UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE)
+        PathStructure()
     var nameCategory = ""
     var nameSubCategory = ""
 
@@ -33,10 +32,10 @@ class QuizActivityViewModel @Inject constructor(
     private val _listStructureDataLocalFlow =
         MutableStateFlow<List<StructureDataLocal>>(emptyList())
 
-    fun getNamePathEvent(event: Int): String {
+    fun getNamePathEvent(event: String): String {
         return when (event) {
-            EventQuiz.QUIZ_HOME.id -> "Home quiz"
-            EventQuiz.QUIZ_BY_USER.id -> "My quiz"
+            EventQuiz.QUIZ_HOME.name -> "Home quiz"
+            EventQuiz.QUIZ_BY_USER.name -> "My quiz"
             else -> "Error quiz"
         }
     }
@@ -114,38 +113,37 @@ class QuizActivityViewModel @Inject constructor(
 
     fun initQuestionListByIds() = viewModelScope.launch {
         Log.d("ksjergfkjkseklf", "initQuestionListByIds()")
-        val handler = pathStructure?.idEvent?.let { getEventHandler(it) }
-        _listStructureDataLocalFlow.value = handler?.invoke(pathStructure?.idCategory!!, pathStructure?.idSubCategory) ?: emptyList()
+        val handler = pathStructure?.nameEvent?.let { getEventHandler(it) }
+        _listStructureDataLocalFlow.value = handler?.invoke(pathStructure!!) ?: emptyList()
     }
 
-    private fun getEventHandler(event: Int): suspend (Int, Int?) -> List<StructureDataLocal> {
+    private fun getEventHandler(event: String): suspend (PathStructure) -> List<StructureDataLocal> {
         return when (event) {
-            EventQuiz.QUIZ_HOME.id -> ::handleHomeEvent
-            EventQuiz.QUIZ_TOURNIRE.id -> ::handleTournamentEvent
-            EventQuiz.QUIZ_ARENA.id -> ::handleArenaEvent
-//            EventQuiz.QUIZ_FOR_ADMIN.id  -> ::handleAdminEvent
-//            EventQuiz.QUIZ_FOR_MODERATOR.id  -> ::handleModeratorEvent
-//            EventQuiz.QUIZ_FOR_TESTER.id  -> ::handleTesterEvent
-            EventQuiz.QUIZ_BY_USER.id -> ::handleUserEvent
+            EventQuiz.QUIZ_HOME.name -> ::handleHomeEvent
+            EventQuiz.QUIZ_TOURNIRE.name -> ::handleTournamentEvent
+            EventQuiz.QUIZ_ARENA.name -> ::handleArenaEvent
+//            EventQuiz.QUIZ_FOR_ADMIN.name  -> ::handleAdminEvent
+//            EventQuiz.QUIZ_FOR_MODERATOR.name  -> ::handleModeratorEvent
+//            EventQuiz.QUIZ_FOR_TESTER.name  -> ::handleTesterEvent
+            EventQuiz.QUIZ_BY_USER.name -> ::handleUserEvent
             else -> ::handleDefaultEvent
         }
     }
 
-    private suspend fun handleTournamentEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
+    private suspend fun handleTournamentEvent(pathStructure: PathStructure): List<StructureDataLocal> {
         // Логика для турниров
         return emptyList() // Замените своей реализацией
     }
 
-    private suspend fun handleHomeEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
-        Log.d("jij", "idCat: $idCat, idSubCat: $idSubCat")
+    private suspend fun handleHomeEvent(pathStructure: PathStructure): List<StructureDataLocal> {
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
-        val category = structureUseCase.getStructureCategoryList(EventQuiz.QUIZ_HOME.id)
-            ?.find { it.id == idCat }
+        val category = structureUseCase.getStructureEventData(EventQuiz.QUIZ_HOME)
+            ?.find { it.nameItem == pathStructure.nameCategory}
 
         nameCategory = category?.nameItem ?: ""
         category?.children?.forEach {
-            if (idSubCat == -1) flattenedList.add(it)
-            else it.children?.find { it.id == idSubCat }?.children?.forEach {
+            if (pathStructure.nameSubCategory == "") flattenedList.add(it)
+            else it.children?.find { it.nameItem == pathStructure.nameSubCategory }?.children?.forEach {
                 nameSubCategory = it.nameItem
                 flattenedList.add(it)
             }
@@ -154,15 +152,15 @@ class QuizActivityViewModel @Inject constructor(
     }
 
     var getHomePath: MutableMap<StructureDataLocal, PathStructure> = mutableMapOf()
-    private suspend fun handleUserEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
+    private suspend fun handleUserEvent(pathStructure: PathStructure): List<StructureDataLocal> {
         val flattenedList: MutableList<StructureDataLocal> = mutableListOf()
-        val category = structureUseCase.getStructureCategoryList(EventQuiz.QUIZ_BY_USER.id)
-            ?.find {it.id == idCat }
+        val category = structureUseCase.getStructureEventData(EventQuiz.QUIZ_BY_USER)
+            ?.find {it.nameItem == pathStructure.nameCategory }
 
         category?.children?.forEach { subCat ->
             subCat.children?.forEach { subsubCat ->
                 subsubCat.children?.forEach { quiz ->
-                    getHomePath[quiz] = PathStructure(pathStructure?.idEvent!!, idCat, subCat.id!!, subsubCat.id!!, quiz.id!!)
+                    getHomePath[quiz] = PathStructure(pathStructure?.nameEvent!!, nameCategory, subCat.nameItem!!, subsubCat.nameItem!!, quiz.nameItem!!)
                     flattenedList.add(quiz)
                 }
             }
@@ -170,17 +168,14 @@ class QuizActivityViewModel @Inject constructor(
         return flattenedList
     }
 
-    private suspend fun handleArenaEvent(idCat: Int, idSubCat: Int?): List<StructureDataLocal> {
+    private suspend fun handleArenaEvent(pathStructure: PathStructure): List<StructureDataLocal> {
         // Логика для арены
         return emptyList() // Замените своей реализацией
     }
 
     private suspend fun handleDefaultEvent(
-        idCategory: Int,
-        idSubCategory: Int?
+        pathStructure: PathStructure
     ): List<StructureDataLocal> {
-        // Универсальный обработчик для необработанных событий
-        println("Обработка по умолчанию для категории $idCategory и подкатегории $idSubCategory")
         return emptyList()
     }
 }

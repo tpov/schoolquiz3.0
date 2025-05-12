@@ -5,11 +5,9 @@ import com.tpov.common.data.manager.Converters
 import com.tpov.common.data.model.local.StructureDataEntity
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.usecase.SettingConfigObject
-import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.utils.DateUtil
 
 data class StructureDataLocal(
-    var id: Int? = null,
     var children: MutableList<StructureDataLocal>? = null,
     var nameItem: String = "",
     var dataUpdateGlobal: String = "", // for syncs
@@ -42,7 +40,6 @@ data class StructureDataLocal(
         picture: String
     ) =
         StructureDataLocal(
-            id,
             null,
             nameCategory,
             DateUtil().getDateQuiz(),
@@ -65,7 +62,7 @@ data class StructureDataLocal(
 
                 val indent = "    ".repeat(depth)
                 val prefix = if (depth > 0) "└── " else ""
-                appendLine("$indent$prefix${node.nameItem} (id=${node.id})")
+                appendLine("$indent$prefix${node.nameItem} ")
 
                 node.children?.filterNotNull()?.forEach { child ->
                     printNode(child, depth + 1)
@@ -76,7 +73,6 @@ data class StructureDataLocal(
             appendLine("")
         }
 
-        StructureUseCase.Log.d(s, "\n$result")
         return this
     }
 
@@ -88,7 +84,6 @@ data class StructureDataLocal(
         val childesJson = Converters().fromChildesList(transformedChildes)
 
         return StructureDataEntity(
-            id = id,
             childesJson = childesJson,
             nameItem = nameItem,
             dataUpdateGlobal = dataUpdateGlobal,
@@ -115,7 +110,6 @@ data class StructureDataLocal(
 
     fun toStructureDataRemote(): StructureDataRemote {
         return StructureDataRemote(
-            id = id,
             children = children?.map { toStructureDataRemote() },
             nameItem = nameItem,
             dataUpdate = dataUpdateGlobal,

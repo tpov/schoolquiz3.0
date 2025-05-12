@@ -34,7 +34,6 @@ data class StructureDataEntity(
     private fun toStructureDataLocal(): StructureDataLocal {
         val childesList = Converters().toChildesList(childesJson ?: "[]")
         return StructureDataLocal(
-            id = id,
             children = childesList?.map { it.toStructureDataLocal() }?.toMutableList(),
             nameItem = nameItem,
             dataUpdateGlobal = dataUpdateGlobal,

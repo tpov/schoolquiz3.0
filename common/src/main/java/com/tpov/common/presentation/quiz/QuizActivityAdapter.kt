@@ -50,7 +50,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
     class ItemComparator : DiffUtil.ItemCallback<StructureDataLocal>() {
         override fun areItemsTheSame(oldItem: StructureDataLocal, newItem: StructureDataLocal): Boolean {
-            return oldItem.id == newItem.id
+            return oldItem.nameItem == newItem.nameItem
         }
 
         override fun areContentsTheSame(oldItem: StructureDataLocal, newItem: StructureDataLocal): Boolean {

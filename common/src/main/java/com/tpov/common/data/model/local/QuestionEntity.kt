@@ -28,20 +28,20 @@ data class QuestionEntity(
     @ColumnInfo(name = "hardQuestion")
     var hardQuestion: Boolean = false,
 
-    @ColumnInfo(name = "idEvent")
-    var idEvent: Int,
+    @ColumnInfo(name = "event")
+    var event: String,
 
-    @ColumnInfo(name = "idCategory")
-    var idCategory: Int,
+    @ColumnInfo(name = "category")
+    var category: String,
 
-    @ColumnInfo(name = "idSubCategory")
-    var idSubCategory: Int,
+    @ColumnInfo(name = "subCategory")
+    var subCategory: String,
 
-    @ColumnInfo(name = "idSubsubCategory")
-    var idSubsubCategory: Int,
+    @ColumnInfo(name = "subsubCategory")
+    var subsubCategory: String,
 
-    @ColumnInfo(name = "idQuiz")
-    var idQuiz: Int,
+    @ColumnInfo(name = "quiz")
+    var quiz: String,
 
     @ColumnInfo(name = "language")
     var language: String = "",
@@ -66,8 +66,7 @@ data class QuestionEntity(
         nameQuestion = "",
         nameAnswers = "",
         hardQuestion = false,
-        idEvent = -1,
-        idCategory = -1, idSubCategory = -1, idSubsubCategory = -1, idQuiz = -1,
+        event = "", category = "", subCategory = "", subsubCategory = "", quiz = "",
         language = "",
         lvlTranslate = 0,
         pathPictureQuestion = ""

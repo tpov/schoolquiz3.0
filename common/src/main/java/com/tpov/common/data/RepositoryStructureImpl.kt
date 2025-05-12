@@ -13,10 +13,10 @@ import com.tpov.common.data.database.StructureEditDataDao
 import com.tpov.common.data.manager.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.model.local.StructureDataEntity
 import com.tpov.common.data.model.local.StructureInfoEntity
-import com.tpov.common.data.model.local.UpdatedStructureData
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.data.model.remote.StructureInfoRemote
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.repository.RepositoryStructure
 import com.tpov.common.presentation.model.PathStructure
@@ -50,11 +50,11 @@ open class RepositoryStructureImpl @Inject constructor(
     ) {
         val pathSegments = mutableListOf<String>()
 
-        if (path.idEvent != -1) pathSegments.add("idEvent/${path.idEvent}")
-        if (path.idCategory != -1) pathSegments.add("idCategory/${path.idCategory}")
-        if (path.idSubCategory != -1) pathSegments.add("idSubCategory/${path.idSubCategory}")
-        if (path.idSubsubCategory != -1) pathSegments.add("idSubsubCategory/${path.idSubsubCategory}")
-        if (path.idQuiz != -1) pathSegments.add("idQuiz/${path.idQuiz}")
+        if (path.nameEvent != "") pathSegments.add("idEvent/${path.nameEvent}")
+        if (path.nameCategory != "") pathSegments.add("idCategory/${path.nameCategory}")
+        if (path.nameSubCategory != "") pathSegments.add("idSubCategory/${path.nameSubCategory}")
+        if (path.nameSubsubCategory != "") pathSegments.add("idSubsubCategory/${path.nameSubsubCategory}")
+        if (path.nameQuiz != "") pathSegments.add("idQuiz/${path.nameQuiz}")
 
         val fullPath = pathSegments.joinToString("/") + "/listData"
 
@@ -83,25 +83,25 @@ open class RepositoryStructureImpl @Inject constructor(
 
     override suspend fun updateStructureData(
         structureDataEntity: StructureDataEntity,
-        eventId: Int
+        event : String
     ) {
         structureDataDao.insertStructureData(structureDataEntity)
     }
 
     override suspend fun pushStructureData(
         structureDataEntity: StructureDataLocal,
-        categoryId: Int
+        category: String
     ) {
         try {
-            val path = "quizzes/$tpovId/$categoryId/structureData"
+            val path = "quizzes/$tpovId/$category/structureData"
             firestore.document(path).set(structureDataEntity).await()
         } catch (e: Exception) {
             throw e
         }
     }
 
-    override suspend fun fetchStructureCategoryDataList(eventId: Int): List<StructureDataLocal>? {
-        if (eventId == 1) {
+    override suspend fun fetchStructureCategoryDataList(event: String): List<StructureDataLocal>? {
+        if (event == EventQuiz.QUIZ_BY_USER.name) {
             val basePath = "quizzes/$tpovId"
 
             return try {
@@ -125,7 +125,7 @@ open class RepositoryStructureImpl @Inject constructor(
                 emptyList()
             }
         } else {
-            val basePath = "structures/structureData/quiz$eventId"
+            val basePath = "structures/structureData/quiz$event"
 
             return try {
                 val categories = firestore.collection(basePath)
@@ -155,11 +155,11 @@ open class RepositoryStructureImpl @Inject constructor(
     ): StructureInfoRemote? {
         val pathSegments = mutableListOf<String>()
 
-        if (path.idEvent != -1) pathSegments.add("idEvent/${path.idEvent}")
-        if (path.idCategory != -1) pathSegments.add("idCategory/${path.idCategory}")
-        if (path.idSubCategory != -1) pathSegments.add("idSubCategory/${path.idSubCategory}")
-        if (path.idSubsubCategory != -1) pathSegments.add("idSubsubCategory/${path.idSubsubCategory}")
-        if (path.idQuiz != -1) pathSegments.add("idQuiz/${path.idQuiz}")
+        if (path.nameEvent != "") pathSegments.add("idEvent/${path.nameEvent}")
+        if (path.nameCategory != "") pathSegments.add("idCategory/${path.nameCategory}")
+        if (path.nameSubCategory != "") pathSegments.add("idSubCategory/${path.nameSubCategory}")
+        if (path.nameSubsubCategory != "") pathSegments.add("idSubsubCategory/${path.nameSubsubCategory}")
+        if (path.nameQuiz != "") pathSegments.add("idQuiz/${path.nameQuiz}")
 
         val fullPath = pathSegments.joinToString("/") + "/listData"
 
@@ -193,11 +193,11 @@ open class RepositoryStructureImpl @Inject constructor(
 
     override suspend fun saveStructureData(
         structureDataCategoryList: List<StructureDataLocal>,
-        eventId: Int
+        event: String
     ) {
         structureDataDao.insertStructureData(
             StructureDataLocal(
-                id = eventId,
+                nameItem = event,
                 children = structureDataCategoryList.toMutableList()
             ).toStructureDataEntity()!!
         )
@@ -251,7 +251,7 @@ open class RepositoryStructureImpl @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    override fun deleteLocalPictureStructure(updatedStructureData: UpdatedStructureData) {
+    override fun deleteLocalPictureStructure(namePicture: String) {
         TODO("Not yet implemented")
     }
 
@@ -261,11 +261,11 @@ open class RepositoryStructureImpl @Inject constructor(
         val pathSegments = mutableListOf<String>()
         pathSegments.add("structures")
         pathSegments.add("structureInfo")
-        pathSegments.add("quiz${path.idEvent}")
-        if (path.idCategory != -1) pathSegments.add("category/${path.idCategory}")
-        if (path.idSubCategory != -1) pathSegments.add("subCategory/${path.idSubCategory}")
-        if (path.idSubsubCategory != -1) pathSegments.add("subsubCategory/${path.idSubsubCategory}")
-        if (path.idQuiz != -1) pathSegments.add("quizzes/${path.idQuiz}")
+        pathSegments.add("quiz${path.nameEvent}")
+        if (path.nameCategory != "") pathSegments.add("category/${path.nameCategory}")
+        if (path.nameSubCategory != "") pathSegments.add("subCategory/${path.nameSubCategory}")
+        if (path.nameSubsubCategory != "") pathSegments.add("subsubCategory/${path.nameSubsubCategory}")
+        if (path.nameQuiz != "") pathSegments.add("quizzes/${path.nameQuiz}")
         pathSegments.add("infoList/tpovIdList/$tpovId")
 
         val fullPath = pathSegments.joinToString("/")
@@ -281,17 +281,11 @@ return null!!
 //        }
     }
 
-    override fun fetchPictureStructure(updatedStructureData: UpdatedStructureData) {
-        TODO("Not yet implemented")
-    }
 
-    override fun clearStructureEdit() {
-        TODO("Not yet implemented")
-    }
 
-    fun pushPictureStructure(localPath: String) {
-        val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$localPath")
-        val localFile = File(localPath)
+    fun pushPictureStructure(namePicture: String) {
+        val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$namePicture")
+        val localFile = File(namePicture)
 
         localFile.parentFile?.let {
             if (!it.exists()) {
@@ -300,25 +294,25 @@ return null!!
         }
 
         if (!localFile.exists()) {
-            println("Файл не найден: $localPath")
+            println("Файл не найден: $namePicture")
             return
         }
 
         executeWithChecksSingleTask {
             storageRef.putFile(Uri.fromFile(localFile))
                 .addOnSuccessListener {
-                    println("Фотография загружена успешно: $localPath")
+                    println("Фотография загружена успешно: $namePicture")
                 }
                 .addOnFailureListener { exception ->
-                    println("Ошибка при загрузке фотографии: $localPath")
+                    println("Ошибка при загрузке фотографии: $namePicture")
                     exception.printStackTrace()
                 }
         }
     }
 
-    override fun fetchPictureStructure(path: String) {
-        val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$path")
-        val localFile = File(context.filesDir, path)
+    override fun fetchPictureStructure(namePicture: String) {
+        val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$namePicture")
+        val localFile = File(context.filesDir, namePicture)
 
         localFile.parentFile?.let {
             if (!it.exists()) {
@@ -329,22 +323,31 @@ return null!!
         executeWithChecksSingleTask {
             storageRef.getFile(localFile)
                 .addOnSuccessListener {
-                    println("Фотография загружена успешно: $path")
+                    println("Фотография загружена успешно: $namePicture")
                 }
                 .addOnFailureListener { exception ->
-                    println("Ошибка при загрузке фотографии: $path")
+                    println("Ошибка при загрузке фотографии: $namePicture")
                     exception.printStackTrace()
                 }
         }
     }
 
+    override fun fetchPictureStructure(path: PathStructure) {
+        TODO("Not yet implemented")
+    }
+
+
+    override fun clearStructureEdit() {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getStructureEventData(
-        eventId: Int,
-        vararg path: Int
+        eevent: String,
+        vararg path: String
     ): List<StructureDataLocal>? {
 
         Log.d("initStructureData", "getStructureData")
-        return structureDataDao.getStructureDataByPath(eventId, path.toList())
+        return structureDataDao.getStructureDataByPath(eevent, path.toList())
     }
 }
 

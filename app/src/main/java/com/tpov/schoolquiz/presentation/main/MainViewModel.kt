@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.tpov.common.Core
 import com.tpov.common.Core.tpovIdFlow
 import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
@@ -45,8 +46,8 @@ class MainViewModel @Inject constructor(
 
     var firstStartApp = false
 
-    fun initStructureData(eventId: Int) = viewModelScope.launch(Dispatchers.IO) {
-        _structureData.value = structureUseCase.getStructureCategoryList(eventId)?.toList()
+    fun initStructureData(event: EventQuiz) = viewModelScope.launch(Dispatchers.IO) {
+        _structureData.value = structureUseCase.getStructureEventData(event)?.toList()
     }
 
     fun initProfile() {
@@ -134,11 +135,11 @@ class MainViewModel @Inject constructor(
                 val localLanguagesQuestions: Set<String> = questionsEntity.filter {
                     it.hardQuestion == question.hardQuestion
                             && it.numQuestion == question.numQuestion
-                            && it.idQuiz == question.idQuiz
-                            && it.idCategory == question.idCategory
-                            && it.idSubCategory == question.idSubCategory
-                            && it.idEvent == question.idEvent
-                            && it.idSubsubCategory == question.idSubsubCategory
+                            && it.quiz == question.quiz
+                            && it.category == question.category
+                            && it.subCategory == question.subCategory
+                            && it.event == question.event
+                            && it.subsubCategory == question.subsubCategory
                 }.map { it.language }.toSet()
 
                 questionUseCase.pushQuestionForTranslate(
@@ -149,12 +150,10 @@ class MainViewModel @Inject constructor(
     }
 
     fun syncProfile() = viewModelScope.launch(Dispatchers.Default) {
-
         profileUseCase.syncProfile()
     }
 
     private suspend fun pushQuestion(questionEntity: QuestionEntity) {
-        Log.d("pushTheQuiz", "pushingQuestion")
         questionUseCase.pushQuestion(questionEntity)
     }
 }

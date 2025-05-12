@@ -14,7 +14,7 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
-import com.tpov.common.EventQuiz
+import com.tpov.common.domain.model.EventQuiz
 
 class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
     private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG)

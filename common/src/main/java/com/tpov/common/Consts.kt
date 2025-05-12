@@ -5,21 +5,7 @@ const val RATING_QUIZ_EVENT_BED = 1
 const val RATING_QUIZ_ALL_POINTS_IN_FB = 100
 const val COUNT_STARS_QUIZ_RATING = 3
 const val TIME_QUESTION = 30 //min
-const val UNKNOWN_VALUE = -1
-enum class EventQuiz(val id: Int) {
-    QUIZ_HOME(8),
-    QUIZ_TOURNIRE_LEADER(7),
-    QUIZ_TOURNIRE(6),
-    QUIZ_ARENA(5),
-    QUIZ_FOR_ADMIN(4),
-    QUIZ_FOR_MODERATOR(3),
-    QUIZ_FOR_TESTER(2),
-    QUIZ_BY_USER(1);
-
-    companion object {
-        fun fromId(id: Int): EventQuiz? = entries.find { it.id == id }
-    }
-}
+const val UNKNOWN_VALUE = ""
 
 const val DEFAULT_TPOVID = 0
 const val DEFAULT_TPOVID_COOL_START = -1

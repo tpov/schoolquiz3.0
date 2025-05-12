@@ -1,28 +1,25 @@
 package com.tpov.common.domain.usecase
 
 import com.tpov.common.Core.tpovId
-import com.tpov.common.EventQuiz
-import com.tpov.common.data.RepositoryQuestionDetailImpl
-import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStructureImpl
 import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.domain.DomainExceptions
 import com.tpov.common.domain.model.ChangeVersionStructure
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.model.SyncStage
 import com.tpov.common.domain.model.SyncState
 import com.tpov.common.domain.model.SyncStructureResult
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.utils.CallbackDifferences
 import com.tpov.common.domain.utils.QuestionUtils.isDownloadQuestionForOptimization
-import com.tpov.common.domain.utils.StructureDataUtils.addNode
-import com.tpov.common.domain.utils.StructureDataUtils.editThisIds
+import com.tpov.common.domain.utils.StructureDataUtils.addNodeByPath
 import com.tpov.common.domain.utils.StructureDataUtils.findInfoByPath
 import com.tpov.common.domain.utils.StructureDataUtils.findStructureDataOld
-import com.tpov.common.domain.utils.StructureDataUtils.getPathPositionByPathStructure
 import com.tpov.common.domain.utils.StructureDataUtils.isUpdateStructure
 import com.tpov.common.domain.utils.StructureDataUtils.processStructureDataDifferences
-import com.tpov.common.domain.utils.StructureDataUtils.removeNode
+import com.tpov.common.domain.utils.StructureDataUtils.removeNodeByPath
 import com.tpov.common.domain.utils.StructureDataUtils.updateLocalInfoData
 import com.tpov.common.presentation.model.PathStructure
 import kotlinx.coroutines.runBlocking
@@ -36,16 +33,16 @@ object StructureDataExtention {
         exceptionHandler = handler
     }
 
-    suspend fun SyncState.initStateStructureData(repositoryStructureImpl: RepositoryStructureImpl): SyncState {
+    suspend fun SyncState.initStateStructureData(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
         try {
             this.currentStage = SyncStage.STRUCTURE_FETCH
             this.structureCategoryDataListRemote =
-                repositoryStructureImpl.fetchStructureCategoryDataList(this.eventId)
+                structureUseCase.fetchStructureCategoryDataList(this.eventId)
                     ?.toMutableList() ?: exceptionHandler.exceptionInitStructureRemoteData()
 
             this.structureCategoryDataListLocal =
-                repositoryStructureImpl.getStructureEventData(this.eventId)?.toMutableList() ?: mutableListOf()
+                structureUseCase.getStructureEventData(this.eventId)?.toMutableList() ?: mutableListOf()
 
         } catch (e: Exception) {
             exceptionHandler.exceptionInitStructureRemoteData(e.message ?: "")
@@ -62,14 +59,14 @@ object StructureDataExtention {
             processStructureDataDifferences(
                 structureNodeListNew = this.structureCategoryDataListRemote,
                 structureNodeListOld = this.structureCategoryDataListLocal,
-                eventId = this.eventId,
+                event = this.eventId,
                 callback = CallbackDifferences(
                     onMissingOldStructure = { _, structureNodeNew, currentPath ->
-                        if (currentPath.idSubCategory == -1) currentPath.idCategory = -1
-                        else if (currentPath.idSubsubCategory == -1) currentPath.idSubCategory = -1
-                        else if (currentPath.idQuiz == -1) currentPath.idSubsubCategory = -1
+                        if (currentPath.nameSubCategory == "") currentPath.nameCategory = ""
+                        else if (currentPath.nameSubsubCategory == "") currentPath.nameSubCategory = ""
+                        else if (currentPath.nameQuiz == "") currentPath.nameSubsubCategory = ""
 
-                        this.structureCategoryDataListLocal.addNode(structureNodeNew, currentPath)
+                        this.structureCategoryDataListLocal.addNodeByPath(structureNodeNew, currentPath)
 
                     },
                     onHasChildren = { structureNodeOld, structureNodeNew, currentPath ->
@@ -174,7 +171,7 @@ object StructureDataExtention {
         if (exception != null) return this
         // try {
         this.currentStage = SyncStage.QUESTION_CHANGE_LIST
-        if (this.eventId == EventQuiz.QUIZ_BY_USER.id) {
+        if (this.eventId == EventQuiz.QUIZ_BY_USER) {
             processStructureDataDifferences(
                 this.structureCategoryDataListLocal,
                 this.structureCategoryDataListLocal,
@@ -253,7 +250,7 @@ object StructureDataExtention {
     /**
      * Редактируем вопросы согласно списку changedListQuestionLocal
      */
-    fun SyncState.updateLocalQuestion(repositoryQuestionImpl: RepositoryQuestionImpl): SyncState {
+    fun SyncState.updateLocalQuestion(questionUseCase: QuestionUseCase): SyncState {
         if (exception != null) return this
         // try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
@@ -261,24 +258,27 @@ object StructureDataExtention {
             this@updateLocalQuestion.changedListQuestionLocal.forEach { change ->
                 try {
                     val remoteQuestions =
-                        repositoryQuestionImpl.fetchQuestion(change.pathStructure, "ru|ua|en")
+                        questionUseCase.fetchQuestion(change.pathStructure, settingsConfig.languages)
                     val pathLocal = findStructureDataOld(
                         this@updateLocalQuestion.structureCategoryDataListLocal,
                         this@updateLocalQuestion.structureCategoryDataListRemote,
                         change.pathStructure
                     ).pathOld
 
-                    if (!change.isCreate) repositoryQuestionImpl.deleteQuestionByPath(pathLocal)
+                    if (!change.isCreate) questionUseCase.deleteQuestionByPath(pathLocal)
 
                     remoteQuestions.forEach {
-                        repositoryQuestionImpl.saveQuestion(
-                            it.copy(
-                                idCategory = pathLocal.idCategory,
-                                idSubsubCategory = pathLocal.idSubsubCategory,
-                                idSubCategory = pathLocal.idSubCategory,
-                                idQuiz = pathLocal.idQuiz
+
+                        runBlocking {
+                            questionUseCase.insertQuestion(
+                                it.copy(
+                                    category = pathLocal.nameCategory,
+                                    subsubCategory = pathLocal.nameSubsubCategory,
+                                    subCategory = pathLocal.nameSubCategory,
+                                    quiz = pathLocal.nameQuiz
+                                )
                             )
-                        )
+                        }
                     }
                 } catch (e: Exception) {
 
@@ -297,7 +297,7 @@ object StructureDataExtention {
     /**
      * Редактируем вопросы согласно списку changedListQuestionRemote
      */
-    fun SyncState.updateRemoteQuestion(repositoryQuestionImpl: RepositoryQuestionImpl): SyncState {
+    fun SyncState.updateRemoteQuestion(questionUseCase: QuestionUseCase): SyncState {
         if (exception != null) return this
         // try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
@@ -305,15 +305,14 @@ object StructureDataExtention {
             this@updateRemoteQuestion.changedListQuestionRemote.forEach { change ->
                 try {
                     if (change.name == "-1") {
-                        repositoryQuestionImpl.deleteQuestionByPath(change.pathStructure)
-                        if (!change.isCreate) repositoryQuestionImpl.deleteQuestionByPath(change.pathStructure)
+                        questionUseCase.deleteQuestionByPath(change.pathStructure)
+                        if (!change.isCreate) questionUseCase.deleteQuestionByPath(change.pathStructure)
                     } else {
-                        val localQuestions =
-                            repositoryQuestionImpl.getQuestionsByPath(change.pathStructure)
+                        val localQuestions = questionUseCase.getQuestionByPath(change.pathStructure)
 
-                        if (!change.isCreate) repositoryQuestionImpl.deleteQuestionByPath(change.pathStructure)
+                        if (!change.isCreate) questionUseCase.deleteQuestionByPath(change.pathStructure)
 
-                        localQuestions.forEach { repositoryQuestionImpl.pushQuestion(it) }
+                        localQuestions.forEach { questionUseCase.pushQuestion(it) }
                     }
                 } catch (e: Exception) {
 
@@ -330,7 +329,7 @@ object StructureDataExtention {
     }
 
 
-    fun SyncState.updateStructureLocalNumberQuestion(repositoryQuestionImpl: RepositoryQuestionImpl): SyncState {
+    fun SyncState.updateStructureLocalNumberQuestion(questionUseCase: QuestionUseCase): SyncState {
         if (exception != null) return this
         //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
@@ -389,8 +388,8 @@ object StructureDataExtention {
 
 
     fun SyncState.clearStructureLocal(
-        repositoryQuestionImpl: RepositoryQuestionImpl,
-        repositoryQuestionDetailImpl: RepositoryQuestionDetailImpl
+        questionUseCase: QuestionUseCase,
+        questionDetailUseCase: QuestionDetailUseCase
     ): SyncState {
         if (exception != null) return this
         //  try {
@@ -405,10 +404,10 @@ object StructureDataExtention {
                 onMissingOldStructure = { _, _, _ -> },
                 onHasChildren = { _, structureDataNew, currentPath ->
                     if (structureDataNew.dataUpdateLocal == "-1") {
-                        structureCategoryDataListLocal.removeNode(currentPath)
+                        structureCategoryDataListLocal.removeNodeByPath(currentPath)
                         runBlocking {
-                            repositoryQuestionImpl.deleteQuestionByPath(currentPath)
-                            repositoryQuestionDetailImpl.deleteRemoteQuestionDetailByPath(
+                            questionUseCase.deleteQuestionByPath(currentPath)
+                            questionDetailUseCase.deleteRemoteQuestionDetailByPath(
                                 currentPath
                             )
                         }
@@ -417,10 +416,10 @@ object StructureDataExtention {
                 },
                 onNoChildren = { _, structureDataNew, currentPath ->
                     if (structureDataNew.dataUpdateLocal == "-1") {
-                        structureCategoryDataListLocal.removeNode(currentPath)
+                        structureCategoryDataListLocal.removeNodeByPath(currentPath)
                         runBlocking {
-                            repositoryQuestionImpl.deleteQuestionByPath(currentPath)
-                            repositoryQuestionDetailImpl.deleteRemoteQuestionDetailByPath(
+                            questionUseCase.deleteQuestionByPath(currentPath)
+                            questionDetailUseCase.deleteRemoteQuestionDetailByPath(
                                 currentPath
                             )
                         }
@@ -438,7 +437,7 @@ object StructureDataExtention {
     /**
      * Помечаем квесты которые нужно удалить на сервере
      */
-    fun SyncState.addEditIdsStructureRemote(repositoryStructureImpl: RepositoryStructureImpl): SyncState {
+    fun SyncState.addEditIdsStructureRemote(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
         //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
@@ -454,16 +453,11 @@ object StructureDataExtention {
                         runBlocking {
                             val structureEditRemote = StructureEditData(
                                 null,
-                                currentPath.idEvent,
-                                currentPath.idCategory,
-                                currentPath.idSubCategory,
-                                currentPath.idSubsubCategory,
-                                currentPath.idQuiz,
-                                currentPath.idEvent,
-                                currentPath.idCategory,
-                                currentPath.idSubCategory,
-                                currentPath.idSubsubCategory,
-                                currentPath.idQuiz,
+                                currentPath.nameEvent,
+                                currentPath.nameCategory,
+                                currentPath.nameSubCategory,
+                                currentPath.nameSubsubCategory,
+                                currentPath.nameQuiz,
                                 "",
                                 "",
                                 "",
@@ -472,7 +466,7 @@ object StructureDataExtention {
                                 true,
                                 true
                             )
-                            repositoryStructureImpl.insertEditStructure(structureEditRemote)
+                            structureUseCase.insertEditStructure(structureEditRemote)
                         }
                     }
                 },
@@ -482,16 +476,11 @@ object StructureDataExtention {
                         runBlocking {
                             val structureEditRemote = StructureEditData(
                                 null,
-                                currentPath.idEvent,
-                                currentPath.idCategory,
-                                currentPath.idSubCategory,
-                                currentPath.idSubsubCategory,
-                                currentPath.idQuiz,
-                                currentPath.idEvent,
-                                currentPath.idCategory,
-                                currentPath.idSubCategory,
-                                currentPath.idSubsubCategory,
-                                currentPath.idQuiz,
+                                currentPath.nameEvent,
+                                currentPath.nameCategory,
+                                currentPath.nameSubCategory,
+                                currentPath.nameSubsubCategory,
+                                currentPath.nameQuiz,
                                 "",
                                 "",
                                 "",
@@ -500,7 +489,7 @@ object StructureDataExtention {
                                 true,
                                 true
                             )
-                            repositoryStructureImpl.insertEditStructure(structureEditRemote)
+                            structureUseCase.insertEditStructure(structureEditRemote)
                         }
                     }
                 }
@@ -513,7 +502,7 @@ object StructureDataExtention {
         return this
     }
 
-    fun SyncState.syncQuestionDetails(repositoryQuestionDetailImpl: RepositoryQuestionDetailImpl): SyncState {
+    fun SyncState.syncQuestionDetails(questionDetailUseCase: QuestionDetailUseCase): SyncState {
         if (exception != null) return this
         //  try {
 
@@ -528,18 +517,16 @@ object StructureDataExtention {
                 onHasChildren = { _, _, _ -> },
                 onNoChildren = { _, structureDataNew, currentPath ->
                     runBlocking {
-                        val questionDetailListRemote =
-                            repositoryQuestionDetailImpl.fetchQuestionDetails(currentPath)
-                        val questionDetailListLocal =
-                            repositoryQuestionDetailImpl.getQuestionDetailByPath(currentPath)
+                        val questionDetailListRemote = questionDetailUseCase.fetchQuestionDetail(currentPath)
+                        val questionDetailListLocal = questionDetailUseCase.getQuestionDetailByPath(currentPath)
 
                         questionDetailListRemote.forEach { questionDetailRemote ->
-                            if (questionDetailListLocal.find { it.data == questionDetailRemote.data } == null)
-                                repositoryQuestionDetailImpl.saveQuestionDetail(questionDetailRemote)
+                            if (questionDetailListLocal?.find { it.data == questionDetailRemote.data } == null)
+                                questionDetailUseCase.saveQuestionDetail(questionDetailRemote)
                         }
 
-                        questionDetailListLocal.forEach { questionDetailLocal ->
-                            if (!questionDetailLocal.synth) repositoryQuestionDetailImpl.pushQuestionDetails(
+                        questionDetailListLocal?.forEach { questionDetailLocal ->
+                            if (!questionDetailLocal.synth) questionDetailUseCase.pushQuestionDetail(
                                 questionDetailLocal
                             )
                         }
@@ -554,143 +541,20 @@ object StructureDataExtention {
         return this
     }
 
-    fun SyncState.editStructureRemote(repositoryStructureImpl: RepositoryStructureImpl): SyncState {
+    fun SyncState.editStructureRemote(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
         //  try {
 
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
         runBlocking {
-            repositoryStructureImpl.getEditStructure().forEach {
-                repositoryStructureImpl.pushEditStructure(it)
+            structureUseCase.getEditStructure().forEach {
+                structureUseCase.pushEditStructure(it)
             }
-            repositoryStructureImpl.clearStructureEdit()
+            structureUseCase.clearStructureEdit()
             // } catch (e: Exception) {
             //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
             //   }
         }
-        return this
-    }
-
-    fun SyncState.syncEditStructureIdsListLocal(): SyncState {
-        if (exception != null) return this
-        //  try {
-
-        this.currentStage = SyncStage.INFO_UPDATE_REMOTE
-
-        processStructureDataDifferences(
-            this.structureCategoryDataListLocal,
-            this.structureCategoryDataListLocal,
-            this.eventId,
-            callback = CallbackDifferences(
-                onMissingOldStructure = { _, _, _ -> },
-                onHasChildren = { _, structureData, currentPath ->
-                    val positionPath = getPathPositionByPathStructure(
-                        StructureDataLocal(children = this.structureCategoryDataListLocal),
-                        currentPath
-                    )
-                    if (positionPath != currentPath) {
-                        this.editIdsList.add(
-                            StructureEditData(
-                                null,
-                                currentPath.idEvent,
-                                currentPath.idCategory,
-                                currentPath.idSubCategory,
-                                currentPath.idSubsubCategory,
-                                currentPath.idQuiz,
-
-                                positionPath.idEvent,
-                                positionPath.idCategory,
-                                positionPath.idSubCategory,
-                                positionPath.idSubsubCategory,
-                                positionPath.idQuiz,
-
-                                "", "", "", "", "", true, false
-                            )
-                        )
-                    }
-                },
-                onNoChildren = { _, structureData, currentPath ->
-                    val positionPath = getPathPositionByPathStructure(
-                        StructureDataLocal(children = this.structureCategoryDataListLocal),
-                        currentPath
-                    )
-                    if (positionPath != currentPath) {
-                        this.editIdsList.add(
-                            StructureEditData(
-                                null,
-                                currentPath.idEvent,
-                                currentPath.idCategory,
-                                currentPath.idSubCategory,
-                                currentPath.idSubsubCategory,
-                                currentPath.idQuiz,
-
-                                positionPath.idEvent,
-                                positionPath.idCategory,
-                                positionPath.idSubCategory,
-                                positionPath.idSubsubCategory,
-                                positionPath.idQuiz,
-
-                                "", "", "", "", "", true, false
-                            )
-                        )
-                    }
-                }
-            ),
-        )
-
-        return this
-    }
-
-    fun SyncState.updateIdsStructureDataLocal(): SyncState {
-        if (exception != null) return this
-        //  try {
-        //залогировать тут все, почему-то нчиего не меняет
-        this.editIdsList.forEach { editIds ->
-            val findCategory =
-                this.structureCategoryDataListLocal.find { it.id == editIds.idCategoryFrom }
-            if (editIds.idSubCategoryTo == -1) {
-                if (findCategory != null) {
-                    findCategory.editThisIds(editIds)
-                }
-            } else {
-                val findSubCategory =
-                    findCategory?.children?.find { it.id == editIds.idSubCategoryFrom }
-                if (editIds.idSubsubCategoryTo == -1) {
-                    if (findSubCategory != null) {
-                        findSubCategory.editThisIds(editIds)
-                    }
-                } else {
-                    val findSubsubCategoryFrom =
-                        findSubCategory?.children?.find { it.id == editIds.idSubsubCategoryFrom }
-                    if (editIds.idQuizTo == -1) {
-                        if (findSubsubCategoryFrom != null) {
-                            findSubsubCategoryFrom.editThisIds(editIds)
-                        }
-                    } else {
-                        val findQuizEventFrom =
-                            findSubsubCategoryFrom?.children?.find { it.id == editIds.idQuizFrom }
-                        if (findQuizEventFrom != null) {
-                            findQuizEventFrom.editThisIds(editIds)
-                        }
-                    }
-                }
-            }
-        }
-        this.currentStage = SyncStage.INFO_UPDATE_REMOTE
-
-        return this
-    }
-
-    fun SyncState.editStructureDataRemoteByStructureEdit(repositoryStructureImpl: RepositoryStructureImpl): SyncState {
-        if (exception != null) return this
-        //  try {
-
-        this.currentStage = SyncStage.INFO_UPDATE_REMOTE
-
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        //   }
-
         return this
     }
 
@@ -725,7 +589,7 @@ object StructureDataExtention {
         return this
     }
 
-    fun SyncState.updateStructureInfoLocal(repositoryStructureImpl: RepositoryStructureImpl): SyncState {
+    fun SyncState.updateStructureInfoLocal(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
 
@@ -737,8 +601,7 @@ object StructureDataExtention {
                 onMissingOldStructure = { _, _, _ -> },
                 onHasChildren = { structureDataLocal, structureDataRemote, currentPathRemote ->
                     runBlocking {
-                        val changeLocal =
-                            repositoryStructureImpl.fetchStructureInfo(currentPathRemote.copy())
+                        val changeLocal = structureUseCase.fetchStructureInfo(currentPathRemote.copy())
 
                         changeLocal?.let {
 
@@ -757,8 +620,7 @@ object StructureDataExtention {
                 onNoChildren = { structureDataLocal, structureDataRemote, currentPathRemote ->
 
                     runBlocking {
-                        val changeLocal =
-                            repositoryStructureImpl.fetchStructureInfo(currentPathRemote.copy())
+                        val changeLocal = structureUseCase.fetchStructureInfo(currentPathRemote.copy())
 
                         changeLocal?.let {
 

@@ -19,13 +19,12 @@ import com.tpov.common.domain.model.SyncStructureResult
 import com.tpov.common.domain.repository.RepositoryException
 import com.tpov.common.domain.usecase.StructureDataExtention.syncEditStructureIdsListLocal
 import com.tpov.common.domain.usecase.StructureDataExtention.updateIdsStructureDataLocal
-import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.domain.usecase.SyncInteractor
 import com.tpov.common.domain.utils.CallbackDifferences
 import com.tpov.common.domain.utils.StructureDataUtils
 import com.tpov.common.domain.utils.StructureDataUtils.addList
 import com.tpov.common.domain.utils.StructureDataUtils.findStructureDataOld
 import com.tpov.common.domain.utils.StructureDataUtils.getPathPositionByPathStructure
-import com.tpov.common.domain.utils.StructureDataUtils.updateNode
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.DateUtil
 import kotlinx.coroutines.runBlocking
@@ -58,9 +57,9 @@ class StructureSyncTest {
     private lateinit var repositoryException: RepositoryException
 
     @Mock
-    private lateinit var interactor: Interactor
+    private lateinit var interactor: ExceptionInteractor
 
-    private lateinit var structureUseCase: StructureUseCase
+    private lateinit var syncInteractor: SyncInteractor
 
     private var inputQuestionLocal: MutableList<QuestionEntity> = mutableListOf()
     private var expectedQuestionLocal: MutableList<QuestionEntity> = mutableListOf()
@@ -79,7 +78,7 @@ class StructureSyncTest {
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        structureUseCase = StructureUseCase(
+        syncInteractor = SyncInteractor(
             repositoryStructureImpl,
             repositoryQuestionImpl,
             repositoryQuestionDetailImpl,
@@ -155,7 +154,7 @@ class StructureSyncTest {
         //generateStructureInfoLocal()
 
 
-        val result = structureUseCase.syncStructureDataAndGetChangeLists(eventId)
+        val result = syncInteractor.syncStructureDataAndGetChangeLists(eventId)
 
         when (result) {
             is SyncStructureResult.Success -> {
@@ -185,7 +184,7 @@ class StructureSyncTest {
                 }
             }
 
-            is SyncStructureResult.Error -> StructureUseCase.Log.d(
+            is SyncStructureResult.Error -> SyncInteractor.Log.d(
                 "TestDebug",
                 "Sync result: ${result.stage}"
             )
@@ -451,15 +450,15 @@ class StructureSyncTest {
                     && it.idSubsubCategory == pathStructure.idSubsubCategory
                     && it.idQuiz == pathStructure.idQuiz
         }
-        StructureUseCase.Log.d("dfhfghjghj", "questionPathList: ${questionPathList.size}")
+        SyncInteractor.Log.d("dfhfghjghj", "questionPathList: ${questionPathList.size}")
         val questionType = questionPathList.filter { hardQuestion && it.language == "en" }
 
-        StructureUseCase.Log.d("dfhfghjghj", "questionType: ${questionType.size}")
+        SyncInteractor.Log.d("dfhfghjghj", "questionType: ${questionType.size}")
         var codeAnswer = ""
         questionType.forEach {
             codeAnswer += Random.nextInt(0, 3)
         }
-        StructureUseCase.Log.d("dfhfghjghj", "codeAnswer: ${codeAnswer.length}")
+        SyncInteractor.Log.d("dfhfghjghj", "codeAnswer: ${codeAnswer.length}")
         return codeAnswer
 
     }
@@ -570,7 +569,7 @@ class StructureSyncTest {
         FileWriter(file).use { writer ->
             writer.write(json)
         }
-        StructureUseCase.Log.d("TestDebug", "Generated questions saved to $filePath")
+        SyncInteractor.Log.d("TestDebug", "Generated questions saved to $filePath")
     }
 
     private fun editQuestionList(
@@ -702,7 +701,7 @@ class StructureSyncTest {
 
             }
 
-            is SyncStructureResult.Error -> StructureUseCase.Log.d(
+            is SyncStructureResult.Error -> SyncInteractor.Log.d(
                 "TestDebug",
                 "Sync result: ${result.stage}"
             )
@@ -730,7 +729,7 @@ class StructureSyncTest {
             }
         }
         newQuestionList.forEach {
-            StructureUseCase.Log.d(
+            SyncInteractor.Log.d(
                 "getQuestionListByPath return newQuestionList",
                 "${it.idCategory}, ${it.idSubCategory}, ${it.idSubsubCategory}, ${it.idQuiz}"
             )
@@ -753,7 +752,7 @@ class StructureSyncTest {
                 assertEquals(expectedOutputLocal, result.state.structureCategoryDataListLocal)
             }
 
-            is SyncStructureResult.Error -> StructureUseCase.Log.d(
+            is SyncStructureResult.Error -> SyncInteractor.Log.d(
                 "TestDebug",
                 "Sync result: ${result.stage}"
             )

@@ -1,97 +1,34 @@
 package com.tpov.common.domain.usecase
 
-import com.tpov.common.Interactor
-import com.tpov.common.data.RepositoryQuestionDetailImpl
-import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStructureImpl
-import com.tpov.common.domain.DomainExceptions
+import com.tpov.common.data.model.remote.StructureEditData
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
-import com.tpov.common.domain.model.SyncState
-import com.tpov.common.domain.model.SyncStructureResult
-import com.tpov.common.domain.repository.RepositoryException
-import com.tpov.common.domain.usecase.StructureDataExtention.addEditIdsStructureRemote
-import com.tpov.common.domain.usecase.StructureDataExtention.clearStructureLocal
-import com.tpov.common.domain.usecase.StructureDataExtention.editStructureRemote
-import com.tpov.common.domain.usecase.StructureDataExtention.getResult
-import com.tpov.common.domain.usecase.StructureDataExtention.init
-import com.tpov.common.domain.usecase.StructureDataExtention.initStateStructureData
-import com.tpov.common.domain.usecase.StructureDataExtention.syncChangeListQuestionsLocal
-import com.tpov.common.domain.usecase.StructureDataExtention.syncChangeListQuestionsRemote
-import com.tpov.common.domain.usecase.StructureDataExtention.syncInfoGlobal
-import com.tpov.common.domain.usecase.StructureDataExtention.syncInfoLocal
-import com.tpov.common.domain.usecase.StructureDataExtention.syncQuestionDetails
-import com.tpov.common.domain.usecase.StructureDataExtention.updateLocalQuestion
-import com.tpov.common.domain.usecase.StructureDataExtention.updateLocalStructureData
-import com.tpov.common.domain.usecase.StructureDataExtention.updateRemoteQuestion
-import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoGlobal
-import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoLocal
-import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureLocalNumberQuestion
+import com.tpov.common.presentation.model.PathStructure
 import javax.inject.Inject
 
-open class StructureUseCase @Inject constructor(
-    private val repositoryStructureImpl: RepositoryStructureImpl,
-    private val repositoryQuestionImpl: RepositoryQuestionImpl,
-    private val repositoryQuestionDetailImpl: RepositoryQuestionDetailImpl,
-    private val repositoryException: RepositoryException,
-    private val interactor: Interactor
-) {
+class StructureUseCase @Inject constructor(private val repositoryStructureImpl: RepositoryStructureImpl) {
 
-    fun logger(i: Int) {
-        Log.d("logger", i.toString())
+    suspend fun fetchStructureCategoryDataList(event: EventQuiz) =
+        repositoryStructureImpl.fetchStructureCategoryDataList(event.name)
+
+    suspend fun getStructureEventData(event: EventQuiz) = repositoryStructureImpl.getStructureEventData(event.name)
+
+    suspend fun fetchStructureInfo(pathStructure: PathStructure) = repositoryStructureImpl.fetchStructureInfo(pathStructure)
+
+    suspend fun insertEditStructure(structureEditData: StructureEditData) {
+        repositoryStructureImpl.insertEditStructure(structureEditData)
     }
 
-    suspend fun fetchStructureData(event: Int) = StructureDataLocal(
-        children = repositoryStructureImpl.fetchStructureCategoryDataList(event)?.toMutableList()
-    )
+    suspend fun getEditStructure() = repositoryStructureImpl.getEditStructure()
+    suspend fun pushEditStructure(structureEditData: StructureEditData) = repositoryStructureImpl.pushEditStructure(structureEditData)
 
-    suspend fun getStructureCategoryList(event: Int) =
-        repositoryStructureImpl.getStructureEventData(event)
-
-    suspend fun syncStructureDataAndGetChangeLists(eventId: Int): SyncStructureResult {
-        val syncState = SyncState(eventId)
-        init(
-            DomainExceptions(
-                beforeException = { syncState.exception = it },
-                afterException = {},
-                interactor
-            )
-        )
-
-        return syncState
-            .initStateStructureData(repositoryStructureImpl)
-            .syncChangeListQuestionsLocal()
-            .syncChangeListQuestionsRemote()
-            .syncInfoLocal()
-            .updateLocalStructureData()
-            .syncInfoGlobal()
-            .updateStructureInfoGlobal()
-            .updateStructureInfoLocal(repositoryStructureImpl)
-            .updateLocalQuestion(repositoryQuestionImpl)
-            .addEditIdsStructureRemote(repositoryStructureImpl)
-            .clearStructureLocal(repositoryQuestionImpl, repositoryQuestionDetailImpl)
-            .updateStructureLocalNumberQuestion(repositoryQuestionImpl)
-            .syncQuestionDetails(repositoryQuestionDetailImpl)
-            .updateRemoteQuestion(repositoryQuestionImpl)
-            .editStructureRemote(repositoryStructureImpl)
-            //.syncEditStructureIdsListLocal()
-            //.updateIdsStructureDataLocal()
-            //.updateIdsQuestions()
-            //.updateIdsQuestionDetail()
-            .getResult()
+    suspend fun clearStructureEdit() {
+        repositoryStructureImpl.clearStructureEdit()
     }
 
-    suspend fun updateStructureData(structureDataLocal: StructureDataLocal, eventId: Int) {
-        repositoryStructureImpl.updateStructureData(
-            structureDataLocal.toStructureDataEntity()!!,
-            eventId
-        )
+    suspend fun updateStructureData(structureDataLocal: StructureDataLocal, event: EventQuiz) {
+        repositoryStructureImpl.updateStructureData(structureDataLocal.toStructureDataEntity()!!, event.name)
     }
 
-    object Log {
-        fun d(tag: String, msg: String): Int {
-            println("$tag: $msg")
-            return 0
-        }
-    }
 }
-

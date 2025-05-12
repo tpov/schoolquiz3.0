@@ -11,7 +11,7 @@ class QuestionDetailUseCase @Inject constructor(private val repositoryQuestionDe
         pathStructure: PathStructure
     ) = repositoryQuestionDetail.fetchQuestionDetails(pathStructure)
 
-    suspend fun pushQuestion(questionDetailEntity: QuestionDetailEntity) {
+    suspend fun pushQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
         repositoryQuestionDetail.pushQuestionDetails(questionDetailEntity)
     }
 

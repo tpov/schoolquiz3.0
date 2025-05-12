@@ -3,7 +3,7 @@ package com.tpov.common
 import com.tpov.common.domain.repository.RepositoryException
 import javax.inject.Inject
 
-class Interactor @Inject constructor(
+class ExceptionInteractor @Inject constructor(
     private val repositoryException: RepositoryException
 ) {
     fun notFoundInputData() {
@@ -57,7 +57,6 @@ class Interactor @Inject constructor(
     }
     fun initStructureDataRemote() {
 
-        TODO("Not yet implemented")
     }
 
     fun syncLocalStructureData() {

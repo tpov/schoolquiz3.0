@@ -432,11 +432,11 @@ class QuestionActivity : AppCompatActivity() {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun synthInputData() {
-        viewModel.pathStructure?.idQuiz = intent.getIntExtra(KEY_ID_QUIZ, 0)
-        viewModel.pathStructure?.idCategory = intent.getIntExtra(KEY_ID_CATEGORY, 0)
-        viewModel.pathStructure?.idSubCategory = intent.getIntExtra(KEY_ID_SUB_CATEGORY, 0)
-        viewModel.pathStructure?.idSubsubCategory = intent.getIntExtra(KEY_ID_SUB_SUB_CATEGORY, 0)
-        viewModel.pathStructure?.idEvent = intent.getIntExtra(KEY_ID_EVENT, 0)
+        viewModel.pathStructure?.nameQuiz = intent.getStringExtra(KEY_ID_QUIZ) ?: ""
+        viewModel.pathStructure?.nameCategory = intent.getStringExtra(KEY_ID_CATEGORY) ?: ""
+        viewModel.pathStructure?.nameSubCategory = intent.getStringExtra(KEY_ID_SUB_CATEGORY) ?: ""
+        viewModel.pathStructure?.nameSubsubCategory = intent.getStringExtra(KEY_ID_SUB_SUB_CATEGORY) ?: ""
+        viewModel.pathStructure?.nameEvent = intent.getStringExtra(KEY_ID_EVENT) ?: ""
         viewModel.hardQuiz = intent.getBooleanExtra(KEY_HARD_QUESTION, false)
         languageUser = intent.getStringExtra(KEY_LANGUAGE_USER)
         viewModel.life = intent.getIntExtra(KEY_LIFE, 0)
@@ -529,11 +529,11 @@ class QuestionActivity : AppCompatActivity() {
             life: Int
         ): Intent {
             return Intent(context, QuestionActivity::class.java).apply {
-                putExtra(KEY_ID_EVENT, pathStructure.idEvent)
-                putExtra(KEY_ID_CATEGORY, pathStructure.idCategory)
-                putExtra(KEY_ID_SUB_CATEGORY, pathStructure.idSubCategory)
-                putExtra(KEY_ID_SUB_SUB_CATEGORY, pathStructure.idSubsubCategory)
-                putExtra(KEY_ID_QUIZ, pathStructure.idQuiz)
+                putExtra(KEY_ID_EVENT, pathStructure.nameEvent)
+                putExtra(KEY_ID_CATEGORY, pathStructure.nameCategory)
+                putExtra(KEY_ID_SUB_CATEGORY, pathStructure.nameSubCategory)
+                putExtra(KEY_ID_SUB_SUB_CATEGORY, pathStructure.nameSubsubCategory)
+                putExtra(KEY_ID_QUIZ, pathStructure.nameQuiz)
                 putExtra(KEY_HARD_QUESTION, hardQuestion)
                 putExtra(KEY_LANGUAGE_USER, languageUser)
                 putExtra(KEY_LIFE, life)

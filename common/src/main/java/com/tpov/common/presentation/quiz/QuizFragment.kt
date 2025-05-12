@@ -13,12 +13,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.tpov.common.EventQuiz
 import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
 import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.common.presentation.model.PathStructure
@@ -56,7 +56,7 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     @SuppressLint("SetTextI18n")
     private fun initPath() {
         binding.tvEventPath.text =
-            quizViewModel.getNamePathEvent(quizViewModel.pathStructure?.idEvent!!) +
+            quizViewModel.pathStructure?.nameEvent!! +
                     if (quizViewModel.nameCategory != "") " > " else ""
         binding.tvCatPath.text = quizViewModel.nameCategory +
                 if (quizViewModel.nameSubCategory != "") " > " else ""
@@ -96,18 +96,10 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     }
 
     private fun initGetData() {
-        quizViewModel.pathStructure?.idEvent = arguments?.getInt(KEY_ID_EVENT, UNKNOWN_VALUE)!!
-        quizViewModel.pathStructure?.idCategory =
-            arguments?.getInt(KEY_ID_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
-        quizViewModel.pathStructure?.idSubCategory =
-            arguments?.getInt(KEY_ID_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
-        quizViewModel.pathStructure?.idSubsubCategory =
-            arguments?.getInt(KEY_ID_SUB_SUB_CATEGORY, UNKNOWN_VALUE) ?: UNKNOWN_VALUE
-
-        Log.d("gdrkgjksdle", "idEvent ${quizViewModel.pathStructure?.idEvent}")
-        Log.d("gdrkgjksdle", "idCategory ${quizViewModel.pathStructure?.idCategory}")
-        Log.d("gdrkgjksdle", "idSubCategory ${quizViewModel.pathStructure?.idSubCategory}")
-        Log.d("gdrkgjksdle", "idSubsubCategory ${quizViewModel.pathStructure?.idSubsubCategory}")
+        quizViewModel.pathStructure?.nameEvent = arguments?.getString(KEY_ID_EVENT)!!
+        quizViewModel.pathStructure?.nameCategory = arguments?.getString(KEY_ID_CATEGORY) ?: ""
+        quizViewModel.pathStructure?.nameSubCategory = arguments?.getString(KEY_ID_SUB_CATEGORY) ?: ""
+        quizViewModel.pathStructure?.nameSubsubCategory = arguments?.getString(KEY_ID_SUB_SUB_CATEGORY) ?: ""
     }
 
     override fun onCreateView(
@@ -122,16 +114,16 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
     override fun deleteItem(pathStructure: PathStructure) {}
 
     override fun onClick(structureDataLocal: StructureDataLocal?, typeQuestion: Boolean) {
-        if (quizViewModel.pathStructure?.idSubCategory == UNKNOWN_VALUE && quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_HOME.id) {
-            quizViewModel.pathStructure!!.idSubCategory = structureDataLocal?.id!!
+        if (quizViewModel.pathStructure?.nameSubCategory == UNKNOWN_VALUE && quizViewModel.pathStructure?.nameEvent == EventQuiz.QUIZ_HOME.name) {
+            quizViewModel.pathStructure!!.nameSubCategory = structureDataLocal?.nameItem!!
             restartFragment(quizViewModel.pathStructure!!)
-        } else if (quizViewModel.pathStructure?.idSubsubCategory == UNKNOWN_VALUE && quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_HOME.id) {
-            quizViewModel.pathStructure?.idSubsubCategory = structureDataLocal?.id!!
+        } else if (quizViewModel.pathStructure?.nameSubsubCategory == UNKNOWN_VALUE && quizViewModel.pathStructure?.nameEvent == EventQuiz.QUIZ_HOME.name) {
+            quizViewModel.pathStructure?.nameSubsubCategory = structureDataLocal?.nameItem!!
             restartFragment(quizViewModel.pathStructure!!)
-        } else if (quizViewModel.pathStructure?.idQuiz == UNKNOWN_VALUE && quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_HOME.id) {
-            quizViewModel.pathStructure?.idQuiz = structureDataLocal?.id!!
+        } else if (quizViewModel.pathStructure?.nameQuiz == UNKNOWN_VALUE && quizViewModel.pathStructure?.nameEvent == EventQuiz.QUIZ_HOME.name) {
+            quizViewModel.pathStructure?.nameQuiz = structureDataLocal?.nameItem!!
             navigationProvider?.openQuestionActivity(quizViewModel.pathStructure!!, typeQuestion)
-        } else if (quizViewModel.pathStructure?.idEvent == EventQuiz.QUIZ_BY_USER.id) {
+        } else if (quizViewModel.pathStructure?.nameEvent == EventQuiz.QUIZ_BY_USER.name) {
             quizViewModel.pathStructure = quizViewModel.getHomePath[structureDataLocal]
             navigationProvider?.openQuestionActivity(quizViewModel.pathStructure!!, typeQuestion)
         }
@@ -142,12 +134,12 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
         fragmentManager.beginTransaction()
             .replace(
                 this.id,
-                newInstance(
-                    pathStructure.idEvent,
-                    pathStructure.idCategory,
-                    pathStructure.idSubCategory,
-                    pathStructure.idSubsubCategory
-                )
+                newInstance(PathStructure(
+                    pathStructure.nameEvent,
+                    pathStructure.nameCategory,
+                    pathStructure.nameSubCategory,
+                    pathStructure.nameSubsubCategory
+                ))
             )
             .addToBackStack(null)
             .commit()
@@ -200,20 +192,13 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
         @JvmStatic
         fun newInstance(
-            idEvent: Int,
-            idCategory: Int = 0,
-            idSubCategory: Int = 0,
-            idSubsubCategory: Int = 0
+            pathStructure: PathStructure
         ): QuizFragment {
             val args = Bundle()
-            args.putInt(KEY_ID_EVENT, idEvent)
-            args.putInt(KEY_ID_CATEGORY, idCategory)
-            args.putInt(KEY_ID_SUB_CATEGORY, idSubCategory)
-            args.putInt(KEY_ID_SUB_SUB_CATEGORY, idSubsubCategory)
-            Log.d("gdrkgjksdle", "put idEvent ${idEvent}")
-            Log.d("gdrkgjksdle", "put idEvent ${idEvent}")
-            Log.d("gdrkgjksdle", "put idEvent ${idEvent}")
-            Log.d("gdrkgjksdle", "put idEvent ${idEvent}")
+            args.putString(KEY_ID_EVENT, pathStructure.nameEvent)
+            args.putString(KEY_ID_CATEGORY, pathStructure.nameCategory)
+            args.putString(KEY_ID_SUB_CATEGORY, pathStructure.nameSubCategory)
+            args.putString(KEY_ID_SUB_SUB_CATEGORY, pathStructure.nameSubsubCategory)
             val fragment = QuizFragment()
             fragment.arguments = args
             return fragment

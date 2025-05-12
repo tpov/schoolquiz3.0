@@ -4,21 +4,21 @@ import com.tpov.common.presentation.model.PathStructure
 
 object PathStructureUtils {
 
-    fun updatePath(path: PathStructure, nodeId: Int) {
+    fun updatePath(path: PathStructure, nameItem: String) {
         when {
-            path.idCategory == -1 -> path.idCategory = nodeId
-            path.idSubCategory == -1 -> path.idSubCategory = nodeId
-            path.idSubsubCategory == -1 -> path.idSubsubCategory = nodeId
-            else -> path.idQuiz = nodeId
+            path.nameCategory == "" -> path.nameCategory = nameItem
+            path.nameSubCategory == "" -> path.nameSubCategory = nameItem
+            path.nameSubsubCategory == "" -> path.nameSubsubCategory = nameItem
+            else -> path.nameQuiz = nameItem
         }
     }
 
     fun resetPath(path: PathStructure) {
         when {
-            path.idQuiz != -1 -> path.idQuiz = -1
-            path.idSubsubCategory != -1 -> path.idSubsubCategory = -1
-            path.idSubCategory != -1 -> path.idSubCategory = -1
-            path.idCategory != -1 -> path.idCategory = -1
+            path.nameQuiz != "" -> path.nameQuiz = ""
+            path.nameSubsubCategory != "" -> path.nameSubsubCategory = ""
+            path.nameSubCategory != "" -> path.nameSubCategory = ""
+            path.nameCategory != "" -> path.nameCategory = ""
         }
     }
 }

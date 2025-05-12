@@ -24,11 +24,11 @@ data class QuestionRemote (
             pathPictureQuestion = pathPictureQuestion,
             nameAnswers = nameAnswers,
             hardQuestion = hardQuestion,
-            idEvent = pathStructure.idEvent,
-            idQuiz = pathStructure.idQuiz,
-            idCategory = pathStructure.idCategory,
-            idSubCategory = pathStructure.idSubCategory,
-            idSubsubCategory = pathStructure.idSubsubCategory,
+            event = pathStructure.nameEvent,
+            quiz = pathStructure.nameQuiz,
+            category = pathStructure.nameCategory,
+            subCategory = pathStructure.nameSubCategory,
+            subsubCategory = pathStructure.nameSubsubCategory,
             language = language,
             lvlTranslate = lvlTranslate
         )

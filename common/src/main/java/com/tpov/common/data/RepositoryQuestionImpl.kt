@@ -78,8 +78,8 @@ class RepositoryQuestionImpl @Inject constructor(
     ): List<QuestionEntity> {
 
         val baseCollectionReference = baseCollection
-            .document("question${pathStructure.idEvent}")
-            .collection("${pathStructure.idCategory}_${pathStructure.idSubCategory}_${pathStructure.idSubsubCategory}")
+            .document("question${pathStructure.nameEvent}")
+            .collection("${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_${pathStructure.nameSubsubCategory}")
 
         val questionRemotes = mutableListOf<QuestionEntity>()
 
@@ -103,11 +103,11 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     override suspend fun getQuestionsByPath(path: PathStructure) = questionDao.getQuestionsByPath(
-        path.idEvent,
-        path.idCategory,
-        path.idSubCategory,
-        path.idSubsubCategory,
-        path.idQuiz
+        path.nameEvent,
+        path.nameCategory,
+        path.nameSubCategory,
+        path.nameSubsubCategory,
+        path.nameQuiz
     )
 
     override suspend fun saveQuestion(questionEntity: QuestionEntity) {
@@ -119,17 +119,17 @@ class RepositoryQuestionImpl @Inject constructor(
         isUpdate: Boolean
     ) {
         val pathStructure = PathStructure(
-            questionEntity.idEvent,
-            questionEntity.idCategory,
-            questionEntity.idSubCategory,
-            questionEntity.idSubsubCategory,
-            questionEntity.idQuiz
+            questionEntity.event,
+            questionEntity.category,
+            questionEntity.subCategory,
+            questionEntity.subsubCategory,
+            questionEntity.quiz
         )
         questionEntity.pathPictureQuestion?.let { uploadPhotoToServer(it) }
 
         val docRef = baseCollection
-            .document("question${pathStructure.idEvent}")
-            .collection("${pathStructure.idCategory}_${pathStructure.idSubCategory}_${pathStructure.idSubsubCategory}")
+            .document("question${pathStructure.nameEvent}")
+            .collection("${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_${pathStructure.nameSubsubCategory}")
             .document()
 
         Log.d("Translation", "docRef: ${docRef.path}")
@@ -187,8 +187,8 @@ class RepositoryQuestionImpl @Inject constructor(
         val languages = mutableListOf<String>()
 
         baseCollection
-            .document("question${questionEntity.idEvent}")
-            .collection("${questionEntity.idCategory}_${questionEntity.idSubCategory}_${questionEntity.idSubsubCategory}")
+            .document("question${questionEntity.event}")
+            .collection("${questionEntity.category}_${questionEntity.subCategory}_${questionEntity.subsubCategory}")
             .whereEqualTo("hardQuestion", questionEntity.hardQuestion)
             .whereEqualTo("numQuestion", questionEntity.numQuestion)
             .get()
@@ -210,7 +210,7 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     override suspend fun deleteQuestionByPath(path: PathStructure) {
-        questionDao.deleteQuestion(path.idEvent, path.idCategory, path.idSubCategory, path.idSubsubCategory, path.idQuiz)
+        questionDao.deleteQuestion(path.nameEvent, path.nameCategory, path.nameSubCategory, path.nameSubsubCategory, path.nameQuiz)
     }
 
     override suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, event: Int) {

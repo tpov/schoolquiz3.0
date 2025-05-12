@@ -11,11 +11,11 @@ data class QuestionDetailRemote(
     fun toQuestionDetailEntity(pathStructure: PathStructure, id: Int? = null, synth: Boolean = true) =
         QuestionDetailEntity(
             id = id,
-            idEvent = pathStructure.idEvent,
-            idCategory = pathStructure.idCategory,
-            idSubCategory = pathStructure.idSubCategory,
-            idSubsubCategory = pathStructure.idSubsubCategory,
-            idQuiz = pathStructure.idQuiz,
+            event = pathStructure.nameEvent,
+            category = pathStructure.nameCategory,
+            subCategory = pathStructure.nameSubCategory,
+            subsubCategory = pathStructure.nameSubsubCategory,
+            quiz = pathStructure.nameQuiz,
             data = data,
             codeAnswer = codeAnswer,
             hardQuiz = hardQuiz,

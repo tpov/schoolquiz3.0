@@ -26,10 +26,10 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         Log.d("FirebaseRequestInterceptor", "fetchQuestionDetails")
 
         val collectionReference = baseCollection
-            .document("questionDetail${pathStructure.idEvent}")
+            .document("questionDetail${pathStructure.nameEvent}")
             .collection(
-                "${pathStructure.idCategory}_${pathStructure.idSubCategory}_" +
-                        "${pathStructure.idSubsubCategory}_${pathStructure.idQuiz}"
+                "${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_" +
+                        "${pathStructure.nameSubsubCategory}_${pathStructure.nameQuiz}"
             )
             .document("listTpovId")
             .collection(tpovId.toString())
@@ -50,10 +50,10 @@ class RepositoryQuestionDetailImpl @Inject constructor(
     override suspend fun pushQuestionDetails(questionDetailEntity: QuestionDetailEntity) {
         Log.d("FirebaseRequestInterceptor", "pushQuestionDetail")
         val collectionReference = baseCollection
-            .document("questionDetail${questionDetailEntity.idEvent}")
+            .document("questionDetail${questionDetailEntity.event}")
             .collection(
-                "${questionDetailEntity.idCategory}_${questionDetailEntity.idSubCategory}_" +
-                        "${questionDetailEntity.idSubsubCategory}_${questionDetailEntity.idQuiz}"
+                "${questionDetailEntity.category}_${questionDetailEntity.subCategory}_" +
+                        "${questionDetailEntity.subsubCategory}_${questionDetailEntity.quiz}"
             )
             .document("listTpovId")
             .collection(tpovId.toString())
@@ -63,16 +63,14 @@ class RepositoryQuestionDetailImpl @Inject constructor(
                 collectionReference.add(questionDetailEntity.toQuestionDetailRemote())
             }.await()
 
-            questionDetailDao.updateQuizDetail(
-                questionDetailDao.getQuestionDetail(questionDetailEntity.idQuiz).copy(synth = true)
-            )
+            questionDetailDao.updateQuizDetail(questionDetailEntity.copy(synth = true))
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushQuestionDetail", e)
         }
     }
 
     override suspend fun getQuestionDetailByPath(pathStructure: PathStructure) =
-        questionDetailDao.getQuestionDetailByPath(pathStructure.idEvent, pathStructure.idCategory, pathStructure.idSubCategory, pathStructure.idSubsubCategory, pathStructure.idQuiz)
+        questionDetailDao.getQuestionDetailByPath(pathStructure.nameEvent, pathStructure.nameCategory, pathStructure.nameSubCategory, pathStructure.nameSubsubCategory, pathStructure.nameQuiz)
 
     override suspend fun saveQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
         questionDetailDao.insertQuestionDetail(questionDetailEntity)
@@ -89,10 +87,10 @@ class RepositoryQuestionDetailImpl @Inject constructor(
     override suspend fun deleteRemoteQuestionDetailByPath(pathStructure: PathStructure) {
         try {
             val collectionReference = baseCollection
-                .document("questionDetail${pathStructure.idEvent}")
+                .document("questionDetail${pathStructure.nameEvent}")
                 .collection(
-                    "${pathStructure.idCategory}_${pathStructure.idSubCategory}_" +
-                            "${pathStructure.idSubsubCategory}_${pathStructure.idQuiz}"
+                    "${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_" +
+                            "${pathStructure.nameSubsubCategory}_${pathStructure.nameQuiz}"
                 )
                 .document("listTpovId")
                 .collection(tpovId.toString())
