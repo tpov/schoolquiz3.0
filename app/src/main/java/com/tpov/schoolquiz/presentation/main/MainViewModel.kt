@@ -65,13 +65,15 @@ class MainViewModel @Inject constructor(
     }
 
     private fun initControllers() {
-        profileInteractor.updateShowLife()
-        profileInteractor.updateNick()
-        profileInteractor.updateAddPoints()
-        profileInteractor.updatePoints()
-        profileInteractor.updatePremium()
-        profileInteractor.updateDaysInGameForBox()
-        profileInteractor.updateLoadStatus()
+        viewModelScope.launch(Dispatchers.IO) {
+            profileInteractor.updateShowLife()
+            profileInteractor.updateNick()
+            profileInteractor.updateAddPoints()
+            profileInteractor.updatePoints()
+            profileInteractor.updatePremium()
+            profileInteractor.updateDaysInGameForBox()
+            profileInteractor.updateLoadStatus()
+        }
     }
 
     fun createHeartDrawable(lifePoints: Int, heartIndex: Int, isGold: Boolean) =

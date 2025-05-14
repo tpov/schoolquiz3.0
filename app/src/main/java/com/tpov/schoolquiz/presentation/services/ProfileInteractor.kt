@@ -14,7 +14,6 @@ import com.tpov.schoolquiz.presentation.main.profile_state.PremiumController
 import com.tpov.schoolquiz.presentation.main.profile_state.TaskController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,94 +30,80 @@ class ProfileInteractor @Inject constructor(
     val premiumController = PremiumController(context)
     val taskController = TaskController(context)
 
-    fun updateShowLife() {
-        runBlocking {
-            profileUseCase.getProfileFlow()?.first()?.let {
-                livesController.stopTimer()
-                livesController.startTimer(
-                    standardLife = it.standardLife,
-                    standardHearts = it.standardHearts,
-                    goldLife = it.goldLife,
-                    goldHearts = it.goldHearts,
-                    lastUpdateTime = it.dateCloseApp.toLong()
+    suspend fun updateShowLife() {
+        profileUseCase.getProfileFlow()?.first()?.let {
+            livesController.stopTimer()
+            livesController.startTimer(
+                standardLife = it.standardLife,
+                standardHearts = it.standardHearts,
+                goldLife = it.goldLife,
+                goldHearts = it.goldHearts,
+                lastUpdateTime = it.dateCloseApp.toLong()
+            )
+        } ?: run {
+            delay(1000)
+            updateShowLife()
+        }
+    }
+
+    suspend fun updateNick() {
+        profileUseCase.getProfileFlow()?.first()?.let {
+            nicknameController.setNickname(it.nickname ?: "...", it.trophy)
+        }
+    }
+
+    suspend fun updateAddPoints() {
+        profileUseCase.getProfileFlow()?.first()?.let {
+            addPointsController.setCoins(
+                AddPoints(
+                    it.addPointsGold.toLong(),
+                    it.addPointsSkill.toLong(),
+                    it.addPointsNolics.toLong(),
+                    it.addTrophy,
+                    it.addMassage
                 )
-            } ?: {
-                runBlocking {
-                    delay(1000)
-                    updateShowLife()
-                }
-            }
+            )
         }
     }
 
-    fun updateNick() {
-        runBlocking {
-            profileUseCase.getProfileFlow()?.first()?.let {
-                nicknameController.setNickname(it.nickname ?: "...", it.trophy)
-            }
-        }
-    }
-
-    fun updateAddPoints() {
-        runBlocking {
-            profileUseCase.getProfileFlow()?.first()?.let {
-                addPointsController.setCoins(
-                    AddPoints(
-                        it.addPointsGold.toLong(),
-                        it.addPointsSkill.toLong(),
-                        it.addPointsNolics.toLong(),
-                        it.addTrophy,
-                        it.addMassage
-                    )
+    suspend fun updatePoints() {
+        profileUseCase.getProfileFlow()?.first()?.let {
+            pointsController.setCoins(
+                Points(
+                    it.pointsGold.toLong(),
+                    it.pointsSkill.toLong(),
+                    it.pointsNolics.toLong(),
+                    it.trophy,
+                    it.friends
                 )
-            }
+            )
         }
     }
 
-    fun updatePoints() {
-        runBlocking {
-            profileUseCase.getProfileFlow()?.first()?.let {
-                pointsController.setCoins(
-                    Points(
-                        it.pointsGold.toLong(),
-                        it.pointsSkill.toLong(),
-                        it.pointsNolics.toLong(),
-                        it.trophy,
-                        it.friends
-                    )
-                )
-            }
+    suspend fun updatePremium() {
+        profileUseCase.getProfileFlow()?.first()?.let {
+            premiumController.setPremium(it.datePremium)
         }
     }
 
-    fun updatePremium() {
-        runBlocking {
-            profileUseCase.getProfileFlow()?.first()?.let {
-                premiumController.setPremium(it.datePremium)
-            }
-        }
-    }
-    
-    fun updateDaysInGameForBox() {
-        runBlocking {
-            profileUseCase.getProfileFlow()?.first()?.let {
-                daysInGameController.setDaysInGame(Box(it.countBox.toLong(), it.timeLastOpenBox, it.countDayBox.toLong()))
-            }
+    suspend fun updateDaysInGameForBox() {
+        profileUseCase.getProfileFlow()?.first()?.let {
+            daysInGameController.setDaysInGame(Box(it.countBox.toLong(), it.timeLastOpenBox, it.countDayBox.toLong()))
         }
     }
 
     fun updateLoadStatus() {
         taskController.reset()
     }
-    
+
     fun addLoadingTask(taskName: String, maxCount: Int = 100) {
         taskController.addTask(taskName, maxCount)
     }
-    
+
     fun updateTaskProgress(taskName: String, progress: Int, total: Int) {
         taskController.updateTaskProgress(taskName, progress, total)
     }
-    
+
     fun completeTask(taskName: String) {
         taskController.completeTask(taskName)
     }

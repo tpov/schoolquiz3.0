@@ -71,11 +71,11 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
  private val listGoldLives by lazy {
         listOf(binding.pbLifeGold1)
     }
-    // Initialize lists after binding is set
-    private val boxDays = listOf(
+
+    private val boxDays by lazy{ listOf(
     binding.boxDay1, binding.boxDay2, binding.boxDay3, binding.boxDay4, binding.boxDay5,
     binding.boxDay6, binding.boxDay7, binding.boxDay8, binding.boxDay9, binding.boxDay10
-    )
+    )}
 
     @SuppressLint("SetTextI18n")
     @RequiresApi(Build.VERSION_CODES.O)
@@ -85,8 +85,6 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         setContentView(binding.root)
 
         Values.init(this, application)
-
-
 
         initViewModel()
         observeData()
