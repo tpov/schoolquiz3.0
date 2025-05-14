@@ -87,32 +87,34 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
     private fun savePreferences() {
         val defaultConfig = SettingConfigModel.defaultMiddle()
 
-        val login =
-            findPreference<EditTextPreference>(getString(R.string.key_login))?.text ?: defaultConfig.login
+        val login = findPreference<EditTextPreference>(getString(R.string.key_login))?.text ?: defaultConfig.login
         val password = findPreference<EditTextPreference>(getString(R.string.key_password))?.text
             ?: defaultConfig.password
-        val name =
-            findPreference<EditTextPreference>(getString(R.string.key_name))?.text ?: defaultConfig.name
+        val name = findPreference<EditTextPreference>(getString(R.string.key_name))?.text ?: defaultConfig.name
         val nickname = findPreference<EditTextPreference>(getString(R.string.key_nickname))?.text
             ?: defaultConfig.nickname
         val nicknameColor = findPreference<EditTextPreference>(getString(R.string.key_nickname_color))?.text?.toIntOrNull()
             ?: defaultConfig.nicknameColor
         val birthday = findPreference<EditTextPreference>(getString(R.string.key_birthday))?.text
             ?: defaultConfig.birthday
-        val city =
-            findPreference<EditTextPreference>(getString(R.string.key_city))?.text ?: defaultConfig.city
+        val city = findPreference<EditTextPreference>(getString(R.string.key_city))?.text ?: defaultConfig.city
         val logo = findPreference<EditTextPreference>(getString(R.string.key_logo))?.text?.toIntOrNull()
             ?: defaultConfig.logo
         val languages = findPreference<EditTextPreference>(getString(R.string.key_languages))?.text
             ?: defaultConfig.languages
+        val life = findPreference<EditTextPreference>(getString(R.string.key_life))?.text?.toIntOrNull()
+            ?: defaultConfig.life
+        val goldLife = findPreference<EditTextPreference>(getString(R.string.key_goldlife))?.text?.toIntOrNull()
+            ?: defaultConfig.goldLife
+        val premium = findPreference<SwitchPreferenceCompat>(getString(R.string.key_premium))?.isChecked
+            ?: defaultConfig.premium
         val profileSyncFrequency = findPreference<ListPreference>(getString(R.string.key_profile_sync_frequency))?.value?.let { value ->
             value.toIntOrNull() ?: defaultConfig.profileSyncFrequency
         } ?: defaultConfig.profileSyncFrequency
         val questsSyncFrequency = findPreference<ListPreference>(getString(R.string.key_quests_sync_frequency))?.value?.let { value ->
             value.toIntOrNull() ?: defaultConfig.questsSyncFrequency
         } ?: defaultConfig.questsSyncFrequency
-        val notificationsEnabled =
-            findPreference<SwitchPreferenceCompat>(getString(R.string.key_notifications))?.isChecked
+        val notificationsEnabled = findPreference<SwitchPreferenceCompat>(getString(R.string.key_notifications))?.isChecked
                 ?: defaultConfig.notificationsEnabled
         val eventNotificationsFrequency = findPreference<ListPreference>(getString(R.string.key_event_notifications_frequency))?.value?.let { value ->
             value.toIntOrNull() ?: defaultConfig.eventNotificationsFrequency
@@ -132,6 +134,9 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
             birthday,
             city,
             logo,
+life,
+            goldLife,
+            premium,
             languages,
             profileSyncFrequency,
             questsSyncFrequency,

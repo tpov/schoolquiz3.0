@@ -45,7 +45,6 @@ import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_SETTING
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.currentMenuId
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.setupDynamicMenu
 import com.tpov.schoolquiz.presentation.model.Inset
-import com.tpov.schoolquiz.presentation.services.ProfileInteractor
 import com.tpov.schoolquiz.presentation.setting.SettingsFragment
 import com.tpov.shop.presentation.ShopFragment
 import com.tpov.userguide.presentation.UserGuide
@@ -138,7 +137,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 }
             }
 
-                        viewModel.updateProfile(
+            viewModel.updateProfile(
                 goldHearts = state.goldHearts,
                 countGoldLife = state.goldHearts,
                 goldLife = state.goldLife,
@@ -153,15 +152,22 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         viewModel.addPointsState.collect { state ->
             if (state.addGold > 0L) {
                 showUserGuide("Вам начислили: ${state.addGold} золота")
-                viewModel.updateProfile(gold = viewModel.profileState.value?.pointsGold?.toLong()?.plus(state.addGold), addGold = 0)
+                viewModel.updateProfile(
+                    gold = viewModel.profileState.value?.pointsGold?.toLong()?.plus(state.addGold),
+                    addGold = 0
+                )
             }
             if (state.addSkill > 0L) {
                 showUserGuide("Вам начислили: ${state.addSkill} опыта")
-                viewModel.updateProfile(skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill), addSkill = 0)
+                viewModel.updateProfile(
+                    skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill), addSkill = 0
+                )
             }
             if (state.addNolics > 0L) {
                 showUserGuide("Вам начислили: ${state.addNolics} ноликов")
-                viewModel.updateProfile(nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics), addNolics = 0)
+                viewModel.updateProfile(
+                    nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics), addNolics = 0
+                )
             }
             if (state.addTrophy.isNotEmpty()) {
                 showUserGuide("Вам начислили трофеи: ${state.addTrophy}")

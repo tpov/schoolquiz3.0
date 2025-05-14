@@ -64,7 +64,9 @@ subprojects {
             dependencies {
                 def lifecycle_version = "2.2.0"
 
-                implementation(project(':log-api'))
+
+
+              //  implementation project(":log-api")
                 implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
                 implementation("androidx.core:core-ktx:1.13.1")
                 implementation("androidx.appcompat:appcompat:1.7.0")

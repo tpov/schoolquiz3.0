@@ -48,6 +48,9 @@
     <string name="key_birthday">birthday</string>
     <string name="key_city">city</string>
     <string name="key_logo">logo</string>
+    <string name="key_life">life</string>
+    <string name="key_goldlife">goldlife</string>
+    <string name="key_premium">key_premium</string>
     <string name="key_languages">languages</string>
     <string name="key_notifications">notifications</string>
     <string name="key_event_notifications_frequency">event_notifications_frequency</string>
