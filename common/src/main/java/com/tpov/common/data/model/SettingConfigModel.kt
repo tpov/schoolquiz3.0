@@ -10,6 +10,8 @@ data class SettingConfigModel(
     var birthday: String = "",
     var city: String = "",
     var logo: Int = 0,
+    var life: Int = 0,
+    var goldLife: Int = 0,
     var premium: Boolean = false,
     var languages: String = "",
     var profileSyncFrequency: Int,

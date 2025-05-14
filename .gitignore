@@ -1,4 +1,18 @@
-# Logs
+# Backup files
+*.bak
+*.bak?
+*.backup
+
+# Custom plugins that cause build issues
+/logger-gradle-plugin/ 
+
+# Personal optimization settings
+gradle.properties
+local.properties
+build_script.sh
+build_with_log.sh
+.idea/compiler.xml
+.idea/gradle.xml # Logs
 logs
 *.log
 npm-debug.log*
@@ -16817,3 +16831,10 @@ local.properties
 *.exe
 *.
 /.vscode/
+# Backup files
+*.bak
+*.bak?
+*.backup
+
+# Custom plugins that cause build issues
+/logger-gradle-plugin/ 

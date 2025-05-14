@@ -11,7 +11,7 @@ import com.tpov.schoolquiz.presentation.main.profile_state.LivesController
 import com.tpov.schoolquiz.presentation.main.profile_state.NicknameController
 import com.tpov.schoolquiz.presentation.main.profile_state.PointsController
 import com.tpov.schoolquiz.presentation.main.profile_state.PremiumController
-import com.tpov.schoolquiz.presentation.setting.Task
+import com.tpov.schoolquiz.presentation.main.profile_state.TaskController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -29,6 +29,7 @@ class ProfileInteractor @Inject constructor(
     val addPointsController = AddPointsController(context)
     val nicknameController = NicknameController(context)
     val premiumController = PremiumController(context)
+    val taskController = TaskController(context)
 
     fun updateShowLife() {
         runBlocking {
@@ -97,6 +98,7 @@ class ProfileInteractor @Inject constructor(
             }
         }
     }
+    
     fun updateDaysInGameForBox() {
         runBlocking {
             profileUseCase.getProfileFlow()?.first()?.let {
@@ -106,11 +108,22 @@ class ProfileInteractor @Inject constructor(
     }
 
     fun updateLoadStatus() {
-        Task
+        taskController.reset()
+    }
+    
+    fun addLoadingTask(taskName: String, maxCount: Int = 100) {
+        taskController.addTask(taskName, maxCount)
+    }
+    
+    fun updateTaskProgress(taskName: String, progress: Int, total: Int) {
+        taskController.updateTaskProgress(taskName, progress, total)
+    }
+    
+    fun completeTask(taskName: String) {
+        taskController.completeTask(taskName)
     }
 
     fun stopLifesUpdate() {
         livesController.stopTimer()
     }
-
 }

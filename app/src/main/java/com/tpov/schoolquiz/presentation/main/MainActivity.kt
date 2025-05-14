@@ -64,12 +64,8 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
 
-    @Inject
-    lateinit var profileInteractor: ProfileInteractor
-
-    lateinit var binding: ActivityMainBinding
-    lateinit var viewModel: MainViewModel
-
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var viewModel: MainViewModel
     private val listLives by lazy {
         listOf(binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5)
     }
@@ -89,14 +85,9 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         setContentView(binding.root)
 
         Values.init(this, application)
+
         initViewModel()
-
-        observeLife()
-        observeAddAPoints()
-        observerPremium()
-        observeDayInGameAndBox()
-
-        viewModel.initProfile()
+        observeData()
         setupDrawerLayout()
         initBottomMenu()
         setupMenu(MENU_HOME_QUIZ)
@@ -105,59 +96,40 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         initUserguide(view)
     }
 
-    private fun observeAddAPoints() = lifecycleScope.launch {
-        val userguide = UserGuide(this@MainActivity).guideBuilder()
-
-        profileInteractor.addPointsController.addPointsState.collect { state ->
-            if (state.addGold > 0L) {
-                userguide.setText("Вам начислили: ${state.addGold} золота").build()
-                viewModel.updateProfile(gold = gold + state.addGold)
-            }
-            if (state.addSkill > 0L) {
-                userguide.setText("Вам начислили: ${state.addSkill} опыта").build()
-                viewModel.updateProfile(skill = addSkill + state.addGold)
-            }
-            if (state.addNolics > 0L) {
-                userguide.setText("Вам начислили: ${state.addNolics} ноликов").build()
-                viewModel.updateProfile(skill = nolics + state.addNolics)
-            }
-            if (state.addTrophy.isNotEmpty()) {
-                userguide.setText("Вам начислили трофеи: ${state.addTrophy}").build()
-                viewModel.updateProfile(trophy = trophy + state.addTrophy)
-            }
-
-            userguide.setText("Вам пришло сообщение от разработчика: ${state.addMassage}").build()
-            profileInteractor.updatePoints()
-
-        }
+    private fun initViewModel() {
+        (application as MainApp).applicationComponent.inject(this)
+        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
+        viewModel.initProfile()
     }
 
-    private fun observerPremium() = lifecycleScope.launch {
-        profileInteractor.premiumController.premiumState.collect {
-            binding.tvCountPremiun.text = it
-        }
+    private fun observeData() {
+        observeLife()
+        observeAddPoints()
+        observePremium()
+        observeDayInGameAndBox()
+        observeTaskStatus()
     }
 
     private fun observeLife() = lifecycleScope.launch {
-        profileInteractor.livesController.livesState.collect { state ->
+        viewModel.livesState.collect { state ->
             listLives.forEachIndexed { index, imageView ->
-            if (index < state.standardHearts) {
-                imageView.visibility = View.VISIBLE
-                imageView.setImageDrawable(
-                    profileInteractor.livesController.createHeartDrawable(
-                        lifePoints = state.standardLife,
-                        heartIndex = index,
-                        isGold = false
+                if (index < state.standardHearts) {
+                    imageView.visibility = View.VISIBLE
+                    imageView.setImageDrawable(
+                        viewModel.createHeartDrawable(
+                            lifePoints = state.standardLife,
+                            heartIndex = index,
+                            isGold = false
+                        )
                     )
-                )
-            } else imageView.visibility = View.GONE
-        }
+                } else imageView.visibility = View.GONE
+            }
 
             listGoldLives[0].apply {
                 visibility = if (state.goldHearts > 0) View.VISIBLE else View.GONE
                 if (state.goldHearts > 0) {
                     setImageDrawable(
-                        profileInteractor.livesController.createHeartDrawable(
+                        viewModel.createHeartDrawable(
                             lifePoints = state.goldLife,
                             heartIndex = 0,
                             isGold = true
@@ -166,23 +138,55 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 }
             }
 
-            viewModel.updateProfile(state.goldHearts, state.goldHearts, state.goldLife, state.updateTime, state.standardLife, state.standardHearts)
+                        viewModel.updateProfile(
+                goldHearts = state.goldHearts,
+                countGoldLife = state.goldHearts,
+                goldLife = state.goldLife,
+                updateTime = state.updateTime,
+                standardLife = state.standardLife,
+                standardHearts = state.standardHearts
+            )
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        profileInteractor.stopLifesUpdate()
+    private fun observeAddPoints() = lifecycleScope.launch {
+        viewModel.addPointsState.collect { state ->
+            if (state.addGold > 0L) {
+                showUserGuide("Вам начислили: ${state.addGold} золота")
+                viewModel.updateProfile(gold = viewModel.profileState.value?.pointsGold?.toLong()?.plus(state.addGold), addGold = 0)
+            }
+            if (state.addSkill > 0L) {
+                showUserGuide("Вам начислили: ${state.addSkill} опыта")
+                viewModel.updateProfile(skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill), addSkill = 0)
+            }
+            if (state.addNolics > 0L) {
+                showUserGuide("Вам начислили: ${state.addNolics} ноликов")
+                viewModel.updateProfile(nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics), addNolics = 0)
+            }
+            if (state.addTrophy.isNotEmpty()) {
+                showUserGuide("Вам начислили трофеи: ${state.addTrophy}")
+                viewModel.updateProfile(trophy = viewModel.profileState.value?.trophy + state.addTrophy, addTrophy = "")
+            }
+            if (state.addMassage.isNotEmpty()) {
+                showUserGuide("Вам пришло сообщение от разработчика: ${state.addMassage}")
+            }
+        }
     }
 
-    fun initUserguide(view: View) {
-        val notification = NotificationHelper(this)
-        notification.setupUserGuide(view)
+    private fun showUserGuide(text: String) {
+        UserGuide(this).guideBuilder()
+            .setText(text)
+            .build()
     }
 
+    private fun observePremium() = lifecycleScope.launch {
+        viewModel.premiumState.collect {
+            binding.tvCountPremiun.text = it
+        }
+    }
 
     private fun observeDayInGameAndBox() = lifecycleScope.launch {
-        profileInteractor.daysInGameController.daysInGameState.collect {
+        viewModel.daysInGameState.collect {
             boxDays.take(it.countDayBox.toInt()).forEach {
                 it.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.green))
             }
@@ -192,9 +196,25 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         }
     }
 
-    private fun initViewModel() {
-        (application as MainApp).applicationComponent.inject(this)
-        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
+    private fun observeTaskStatus() = lifecycleScope.launch {
+        viewModel.taskState.collect { state ->
+            binding.tvPbLoad.text = state.currentTaskName.ifEmpty { getString(R.string.loading_completed) }
+            binding.progressBar2.progress = (state.progressPercentage * 100).toInt()
+
+            val visibility = if (state.isRunning && state.tasks.isNotEmpty()) View.VISIBLE else View.GONE
+            binding.tvPbLoad.visibility = visibility
+            binding.progressBar2.visibility = visibility
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.stopLifesUpdate()
+    }
+
+    fun initUserguide(view: View) {
+        val notification = NotificationHelper(this)
+        notification.setupUserGuide(view)
     }
 
     private fun setupDrawerLayout() {
@@ -346,7 +366,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
             hardQuestion = hardQuestion,
             languageUser = settingsConfig.languages,
             pathStructure = pathStructure,
-            life = if (hardQuestion) goldLife else life
+            life = if (hardQuestion) settingsConfig.goldLife else settingsConfig.life
         )
         startActivity(intent)
     }

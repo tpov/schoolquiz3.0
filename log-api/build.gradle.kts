@@ -5,8 +5,8 @@ plugins {
 }
 
 // These will be overridden by the publish script
-group = "com.tpov.log_api"
-version = "1.0.0"
+group = "com.tpov"
+version = "1.0.1"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -16,6 +16,19 @@ java {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
+    }
+}
+
+// Явная конфигурация для публикации
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            artifactId = "log-api"
+            from(components["java"])
+        }
+    }
+    repositories {
+        mavenLocal()
     }
 }
 

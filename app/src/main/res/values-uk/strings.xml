@@ -59,10 +59,10 @@
     <string name="userguide_new_qualif_player_amateur">Ви отримали звання - Аматор</string>
     <string name="userguide_new_qualif_player_beginner">Ви отримали звання - Початківець</string>
     <string name="userguide_new_qualif_player_player">Ви отримали звання - Гравець</string>
-    <string name="userguide_massage_add_gold">Додано золота: %1$i шт</string>
-    <string name="userguide_massage_add_nolic">Додано нуликів: %1$i шт</string>
-    <string name="userguide_massage_add_trophy">Додано трофеїв: %1$i шт</string>
-    <string name="userguide_massage_add_skill">Додано досвіду: %1$i шт</string>
+    <string name="userguide_massage_add_gold">Додано золота: %1$d шт</string>
+    <string name="userguide_massage_add_nolic">Додано нуликів: %1$d шт</string>
+    <string name="userguide_massage_add_trophy">Додано трофеїв: %1$d шт</string>
+    <string name="userguide_massage_add_skill">Додано досвіду: %1$d шт</string>
     <string name="userguide_title_add_points">Винагорода від розробників</string>
 
     <string name="error_get_box_day">Помилка при отриманні коробки дня</string>
@@ -84,8 +84,7 @@
 
     <string name="toast_error_found_question">Помилка при знаходженні питань</string>
     <string name="toast_ad_use_limit">Ви досягли щоденного ліміту</string>
-    <string name="toast_ad_error_load">Помилка завантаження реклами: %1$s
-    </string>
+    <string name="toast_ad_error_load">Помилка завантаження реклами: %1$s</string>
     <string name="toast_ad_loaded">Реклама завантажена</string>
 
     <string name="userguide_massage_text_legend">Привіт мій друг, ти пройшов не легкий шлях від Новачка до Легенди через всю дорогу перешкод і труднощів, я бажаю щоб тобі був безвозмездний успіх у житті також, як і в цій грі. \n Визнаю, ми також йшли по не легкій дорозі, щоб зробити всі умови, щоб наші чудові гравці, дійшли до цієї межі. Цей текст я пишу на етапі альфа версії квесту, але сподіваюсь, ми дійдемо до моменту коли наші гравці візьмуть Легенду. Дякуємо тобі за великий внесок в наше співтовариство, кожен з вас справді важливий. Можу запропонувати податися до нас на роботу, можливо саме у нас ти також зможеш показати весь потенціал. Удачі!</string>
@@ -316,5 +315,5 @@
     <string name="donate_сake">Торт</string>
     <string name="donate_team_meal">Обід для команди</string>
     <string name="info_life_1_title">Життя</string>
-    <string name="info_life_1_massage">Частину життя витрачають на те, щоб виконати квест (33%), все життя витрачають на те, щоб знайти відповідь на легке запитання. \\n- Життя відновлюються з часом, 1 життя приблизно за годину (вам не обов’язково бути в самій грі, її можна закрити). Спочатку доступний 1 слот для життя, в магазині можна купити до 5 слотів (тобто 5 життів)</string>
+    <string name="info_life_1_massage">Частину життя витрачають на те, щоб виконати квест (33%), все життя витрачають на те, щоб знайти відповідь на легке запитання. \\n- Життя відновлюються з часом, 1 життя приблизно за годину (вам не обов'язково бути в самій грі, її можна закрити). Спочатку доступний 1 слот для життя, в магазині можна купити до 5 слотів (тобто 5 життів)</string>
 </resources>

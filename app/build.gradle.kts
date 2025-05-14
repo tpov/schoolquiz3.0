@@ -60,6 +60,7 @@ dependencies {
     implementation(project(":shop"))
     implementation(project(":settings"))
     implementation(project(":network"))
+    implementation(project(":log-api"))
 
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
@@ -107,4 +108,4 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     testImplementation("org.robolectric:robolectric:4.10.3")
-} 
+}

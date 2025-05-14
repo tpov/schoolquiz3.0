@@ -73,10 +73,10 @@
     <string name="userguide_new_qualif_player_amateur">You`ve earned the title - Amateur</string>
     <string name="userguide_new_qualif_player_beginner">You`ve earned the title - Beginner</string>
     <string name="userguide_new_qualif_player_player">You`ve earned the title - Player</string>
-    <string name="userguide_massage_add_gold">Gold added: %1$i things</string>
-    <string name="userguide_massage_add_nolic">Zeroes added: %1$i things</string>
-    <string name="userguide_massage_add_trophy">Trophies added: %1$i things</string>
-    <string name="userguide_massage_add_skill">Experience added: %1$i things</string>
+    <string name="userguide_massage_add_gold">Gold added: %1$d things</string>
+    <string name="userguide_massage_add_nolic">Zeroes added: %1$d things</string>
+    <string name="userguide_massage_add_trophy">Trophies added: %1$d things</string>
+    <string name="userguide_massage_add_skill">Experience added: %1$d things</string>
     <string name="userguide_title_add_points">Reward from Developers</string>
 
     <string name="true_button">True</string>
@@ -164,21 +164,21 @@ In general, the timer starts if you read an unanswered question.</string>
 
     <string name="userguide_new_qualif_player_title">Your skill = %1$d</string>
 
-    <string name="userguide_new_qualif_translate1" translatable="false">Translator 1 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_translate2" translatable="false">Translator 2 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_translate3" translatable="false">Translator 3 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_tester1" translatable="false">Tester 1 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_tester2" translatable="false">Tester 2 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_tester3" translatable="false">Tester 3 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_moderator1" translatable="false">Moderator 1 lvl: %1$i points</string>
-    <string name="userguide_new_qualif_moderator2" translatable="false">Moderator 2 lvl: %1$i points</string>
-    <string name="userguide_new_qualif_moderator3" translatable="false">Moderator 3 lvl: %1$i points</string>
-    <string name="userguide_new_qualif_admin1" translatable="false">Admin 1 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_admin2" translatable="false">Admin 2 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_admin3" translatable="false">Admin 3 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_developer1" translatable="false">Developer 1 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_developer2" translatable="false">Developer 2 lvl: %1%i points</string>
-    <string name="userguide_new_qualif_developer3" translatable="false">Developer 3 lvl: %1%i points</string>
+    <string name="userguide_new_qualif_translate1" translatable="false">Translator 1 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_translate2" translatable="false">Translator 2 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_translate3" translatable="false">Translator 3 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_tester1" translatable="false">Tester 1 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_tester2" translatable="false">Tester 2 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_tester3" translatable="false">Tester 3 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_moderator1" translatable="false">Moderator 1 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_moderator2" translatable="false">Moderator 2 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_moderator3" translatable="false">Moderator 3 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_admin1" translatable="false">Admin 1 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_admin2" translatable="false">Admin 2 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_admin3" translatable="false">Admin 3 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_developer1" translatable="false">Developer 1 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_developer2" translatable="false">Developer 2 lvl: %1$d points</string>
+    <string name="userguide_new_qualif_developer3" translatable="false">Developer 3 lvl: %1$d points</string>
     <string name="error_get_life_counts">Error get life counts</string>
     <string name="new_qualification">New qualification</string>
     <string name="userguide_title_developer_massage">Developer massage</string>
@@ -268,9 +268,11 @@ In general, the timer starts if you read an unanswered question.</string>
 
     <string name="fb_load_server_load">Awaiting server access</string>
 
-    <string name="fb_load_text_load_new_massage">New messages: %1$d</string>
+    <string name="fb_load_text_load_new_massage">New messages:%1$d</string>
 
-    <string name="flash_card_layout_front_1">The profile card shows how strong you are compared to the best player in percentage terms by different parameters.</string>
+    <string name="loading_completed">Loading completed</string>
+
+    <string name="flash_card_layout_front_1">The profile card shows how strong you are compared to the best player in percentage terms based on various parameters.</string>
 
     <string name="flash_card_layout_front_2">Green graph shows how good you are as a player, how well you play \n Red - how much you contribute to the game, how important you are to the game</string>
 
@@ -337,7 +339,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="donate_team_meal">Lunch for the team</string>
     <string name="shop_fragment_donate_title">You can donate several times</string>
     <string name="info_life_1_title">Life</string>
-    <string name="info_life_1_massage">Part of life is spent trying to complete a quest (33%), a whole life is spent trying to find out the answer to an easy question. \n- Lives are restored over time, 1 life in about an hour (you don’t have to be in the game itself, you can close it). Initially, 1 slot for life is available, in the store you can buy up to 5 slots (that is, 5 lives)</string>
+    <string name="info_life_1_massage">Part of life is spent trying to complete a quest (33%), a whole life is spent trying to find out the answer to an easy question. \n- Lives are restored over time, 1 life in about an hour (you don't have to be in the game itself, you can close it). Initially, 1 slot for life is available, in the store you can buy up to 5 slots (that is, 5 lives)</string>
     <string name="nav_arena">Арена</string>
     <string name="nav_tournament">Турниры</string>
     <string name="nav_archive">Архив</string>

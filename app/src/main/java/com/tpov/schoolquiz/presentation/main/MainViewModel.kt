@@ -15,6 +15,8 @@ import com.tpov.common.presentation.model.PathStructure
 import com.tpov.log_api.logger.Logger
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.ProfileUseCase
+import com.tpov.schoolquiz.domain.ProfileInteractor
+import com.tpov.schoolquiz.presentation.services.ProfileInteractor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +36,8 @@ class MainViewModel @Inject constructor(
     private val structureUseCase: StructureUseCase,
     private val questionUseCase: QuestionUseCase,
     private val profileUseCase: ProfileUseCase,
-    private val context: Context
+    private val context: Context,
+    private val profileInteractor: ProfileInteractor
 ) : ViewModel() {
 
     val profileState: StateFlow<ProfileEntity?> get() = _profileState
@@ -45,14 +48,38 @@ class MainViewModel @Inject constructor(
     val structureData: StateFlow<List<StructureDataLocal?>?> get() = _structureData
     private val _structureData = MutableStateFlow<List<StructureDataLocal?>?>(null)
 
+    val taskState = profileInteractor.taskController.taskState
+    val livesState = profileInteractor.livesController.livesState
+    val addPointsState = profileInteractor.addPointsController.addPointsState
+    val premiumState = profileInteractor.premiumController.premiumState
+    val daysInGameState = profileInteractor.daysInGameController.daysInGameState
+
     var firstStartApp = false
 
     init {
+        initControllers()
         runBlocking {
             profileState.collect {
 
             }
         }
+    }
+
+    private fun initControllers() {
+        profileInteractor.updateShowLife()
+        profileInteractor.updateNick()
+        profileInteractor.updateAddPoints()
+        profileInteractor.updatePoints()
+        profileInteractor.updatePremium()
+        profileInteractor.updateDaysInGameForBox()
+        profileInteractor.updateLoadStatus()
+    }
+
+    fun createHeartDrawable(lifePoints: Int, heartIndex: Int, isGold: Boolean) =
+        profileInteractor.livesController.createHeartDrawable(lifePoints, heartIndex, isGold)
+
+    fun stopLifesUpdate() {
+        profileInteractor.stopLifesUpdate()
     }
 
     fun initStructureData(event: EventQuiz) = viewModelScope.launch(Dispatchers.IO) {
@@ -93,6 +120,50 @@ class MainViewModel @Inject constructor(
 
     fun updateProfile(profileEntity: ProfileEntity) = viewModelScope.launch(Dispatchers.Default) {
         profileUseCase.updateProfile(profileEntity)
+    }
+
+    // Метод для обновления конкретных полей профиля
+    fun updateProfile(
+        gold: Long? = null,
+        skill: Long? = null,
+        nolics: Long? = null,
+        trophy: String? = null,
+        addGold: Long? = null,
+        addSkill: Long? = null,
+        addNolics: Long? = null,
+        addTrophy: String? = null,
+        addMassage: String? = null,
+        goldHearts: Int? = null,
+        countGoldLife: Int? = null,
+        goldLife: Int? = null,
+        updateTime: Long? = null,
+        standardLife: Int? = null,
+        standardHearts: Int? = null
+    ) = viewModelScope.launch(Dispatchers.Default) {
+        val currentProfile = _profileState.value ?: return@launch
+
+        val updatedProfile = currentProfile.copy(
+            pointsGold = gold?.toInt() ?: currentProfile.pointsGold,
+            pointsSkill = skill?.toInt() ?: currentProfile.pointsSkill,
+            pointsNolics = nolics?.toInt() ?: currentProfile.pointsNolics,
+            trophy = trophy ?: currentProfile.trophy,
+            addPointsGold = addGold?.toInt() ?: currentProfile.addPointsGold,
+            addPointsSkill = addSkill?.toInt() ?: currentProfile.addPointsSkill,
+            addPointsNolics = addNolics?.toInt() ?: currentProfile.addPointsNolics,
+            addTrophy = addTrophy ?: currentProfile.addTrophy,
+            addMassage =addMassage ?: currentProfile.addMassage ,
+            goldHearts = goldHearts ?: currentProfile.goldHearts,
+            goldLife = goldLife ?: currentProfile.goldLife,
+            dateCloseApp = updateTime?.toString() ?: currentProfile.dateCloseApp,
+            standardLife = standardLife ?: currentProfile.standardLife,
+            standardHearts = standardHearts ?: currentProfile.standardHearts
+        )
+
+        // Обновляем профиль в базе данных
+        profileUseCase.updateProfile(updatedProfile)
+
+        // Обновляем локальное состояние
+        _profileState.value = updatedProfile
     }
 
     fun createProfile() = viewModelScope.launch(Dispatchers.Default) {
@@ -164,5 +235,21 @@ class MainViewModel @Inject constructor(
 
     private suspend fun pushQuestion(questionEntity: QuestionEntity) {
         questionUseCase.pushQuestion(questionEntity)
+    }
+
+    fun addTask(name: String, maxCount: Int = 100) {
+        profileInteractor.addLoadingTask(name, maxCount)
+    }
+
+    fun updateTaskProgress(name: String, progress: Int, total: Int) {
+        profileInteractor.updateTaskProgress(name, progress, total)
+    }
+
+    fun completeTask(name: String) {
+        profileInteractor.completeTask(name)
+    }
+
+    fun resetTasks() {
+        profileInteractor.updateLoadStatus()
     }
 }

@@ -3,7 +3,7 @@ buildscript {
         agp_version = '8.3.1'
         ksp_version = "1.9.22-1.0.16"
         kotlin_version = "1.9.22"
-        logger_plugin_version = "1.0.0"
+        logger_plugin_version = "1.0.1"
     }
 
     repositories {
@@ -64,7 +64,7 @@ subprojects {
             dependencies {
                 def lifecycle_version = "2.2.0"
 
-                implementation("com.tpov:log-api:1.0.1")
+                implementation(project(':log-api'))
                 implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
                 implementation("androidx.core:core-ktx:1.13.1")
                 implementation("androidx.appcompat:appcompat:1.7.0")
