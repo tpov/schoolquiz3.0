@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.time.Instant
 import java.util.Locale
 import javax.inject.Inject
@@ -45,6 +46,14 @@ class MainViewModel @Inject constructor(
     private val _structureData = MutableStateFlow<List<StructureDataLocal?>?>(null)
 
     var firstStartApp = false
+
+    init {
+        runBlocking {
+            profileState.collect {
+
+            }
+        }
+    }
 
     fun initStructureData(event: EventQuiz) = viewModelScope.launch(Dispatchers.IO) {
         _structureData.value = structureUseCase.getStructureEventData(event)?.toList()

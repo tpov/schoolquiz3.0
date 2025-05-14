@@ -5,7 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.schoolquiz.data.database.ProfileDao
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.fierbase.Profile
+import com.tpov.schoolquiz.data.fierbase.ProfileRemote
 import com.tpov.schoolquiz.domain.repository.RepositoryProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
@@ -19,7 +19,7 @@ class RepositoryProfileImpl @Inject constructor(
         return profileDao.getProfileFlow()
     }
 
-    override suspend fun fetchProfile(tpovId: Int): Profile? {
+    override suspend fun fetchProfile(tpovId: Int): ProfileRemote? {
         val profilesRef = firestore.collection("profiles")
 Log.d("FirebaseRequestInterceptor", "fetchProfile $tpovId")
         return try {
@@ -29,7 +29,7 @@ Log.d("FirebaseRequestInterceptor", "fetchProfile $tpovId")
 
             if (task.exists()) {
                 val profileData = task.data
-                Profile().fromHashMap(profileData!!)
+                ProfileRemote().fromHashMap(profileData!!)
             } else {
                 null
             }
@@ -40,13 +40,13 @@ Log.d("FirebaseRequestInterceptor", "fetchProfile $tpovId")
     }
 
 
-    override suspend fun pushProfile(profile: Profile) {
+    override suspend fun pushProfile(profileRemote: ProfileRemote) {
         val profilesRef = firestore.collection("profiles")
 
         Log.d("FirebaseRequestInterceptor", "pushProfile")
         try {
             FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                profilesRef.document(profile.tpovId.toString()).set(profile.toHashMap())
+                profilesRef.document(profileRemote.tpovId.toString()).set(profileRemote.toHashMap())
             }.await()
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushProfile", e)

@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.domain
 
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.fierbase.Profile
+import com.tpov.schoolquiz.data.fierbase.ProfileRemote
 import com.tpov.schoolquiz.data.fierbase.toProfile
 import com.tpov.schoolquiz.domain.repository.RepositoryProfile
 import javax.inject.Inject
@@ -19,8 +19,8 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
         repositoryProfile.updateProfile(profile)
     }
 
-    suspend fun pushProfile(profile: Profile) {
-        repositoryProfile.pushProfile(profile)
+    suspend fun pushProfile(profileRemote: ProfileRemote) {
+        repositoryProfile.pushProfile(profileRemote)
     }
 
     suspend fun syncProfile() {
