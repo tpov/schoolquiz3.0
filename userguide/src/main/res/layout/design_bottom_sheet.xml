@@ -79,7 +79,7 @@
                 android:layout_height="60dp"
                 android:visibility="gone"
                 android:layout_weight="1"
-                app:srcCompat="@drawable/ic_video" />
+                app:srcCompat="@drawable/ic_check" />
 
             <ImageView
                 android:id="@+id/imv_ok"

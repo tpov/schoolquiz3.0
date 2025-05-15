@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     lateinit var viewModelFactory: ViewModelProvider.Factory
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var viewModel: MainViewModel
+    lateinit var viewModel: MainViewModel
     private val listLives by lazy {
         listOf(binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5)
     }

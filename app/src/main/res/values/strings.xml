@@ -1,12 +1,6 @@
 <resources>
     <!-- ... -->
-    <string name="commit_3_0_18">
-        1- Fix get box after show ads
-2 - Add scroll name quiz
-3 - Fix arena (checking for lives)
-4 - Fix update result quiz
-4 - Fix close userguide when click outside
-    </string>
+    <string name="commit_3_0_18">1- Fix get box after show ads\n2 - Add scroll name quiz\n3 - Fix arena (checking for lives)\n4 - Fix update result quiz\n5 - Fix close userguide when click outside</string>
 
     <string-array name="nick_colors">
         <item>Красный</item>
@@ -126,7 +120,7 @@
     <string name="load_api_question">Load api question</string>
 
     <string name="start_massage_1">Quiz – is a true–false quest, which initially has basic questions with the possibility of adding your own, answering which you earn points 1–100.</string>
-    <string name="start_massage_2">After clicking on the name of the quest, you go to the stage of passing, which consists of 2 parts (easy questions and difficult ones). Initially, you go through easy questions, which can earn a maximum of 83.3% (2 stars), if you score 2 stars – for the next passage of the quest, you will answer difficult questions with which you can score 83.3 – 100% (2–3 stars)</string>
+    <string name="start_massage_2" formatted="false">After clicking on the name of the quest, you go to the stage of passing, which consists of 2 parts (easy questions and difficult ones). Initially, you go through easy questions, which can earn a maximum of 83.3% (2 stars), if you score 2 stars – for the next passage of the quest, you will answer difficult questions with which you can score 83.3 – 100% (2–3 stars)</string>
     <string name="start_massage_3">Quests can also be deleted - by clicking on the trash can, with a pop-up window with confirmation, as well as the ability not to delete the questions themselves from the database (We recommend checking the box - delete all questions)</string>
     <string name="start_massage_4">You can also share quests, with or without answers, depending on whether you check the box, difficult questions will be marked with a *. (Basic questions do not show answers if you share them)</string>
     <string name="start_massage_7">Near the button with the name of the quest there is an indicator that indicates the difficulty of the questions after pressing it, it can have 2 states, lite question / hard question. Below there are 3 numbers that show: number of easy questions / difficult / number of attempts to pass. Above the stars there are two indications: the left one is the average percentage for all attempts, the right one is best result. The stars show the best result. Date - this is the date the quest was created, the name of the best result is displayed above the date, if it was specified.</string>
@@ -339,7 +333,7 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="donate_team_meal">Lunch for the team</string>
     <string name="shop_fragment_donate_title">You can donate several times</string>
     <string name="info_life_1_title">Life</string>
-    <string name="info_life_1_massage">Part of life is spent trying to complete a quest (33%), a whole life is spent trying to find out the answer to an easy question. \n- Lives are restored over time, 1 life in about an hour (you don't have to be in the game itself, you can close it). Initially, 1 slot for life is available, in the store you can buy up to 5 slots (that is, 5 lives)</string>
+    <string name="info_life_1_massage">Part of life is spent trying to complete a quest (33%), a whole life is spent trying to find out the answer to an easy question. \\n- Lives are restored over time, 1 life in about an hour (you don\'t have to be in the game itself, you can close it). Initially, 1 slot for life is available, in the store you can buy up to 5 slots (that is, 5 lives)</string>
     <string name="nav_arena">Арена</string>
     <string name="nav_tournament">Турниры</string>
     <string name="nav_archive">Архив</string>

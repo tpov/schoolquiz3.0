@@ -51,13 +51,19 @@ class IrGenerationExtensionWriter : IrGenerationExtension {
         }, null)
     }
 
-    // IrGenerationExtensionWriter.kt
     @OptIn(FirIncompatiblePluginAPI::class)
     private fun IrFunction.generateLogs(
         pathList: Set<String>,
         pluginContext: IrPluginContext
     ) {
-        val logAndroid = LogAndroid(pluginContext)
+        // Всегда используем Android LogProvider
+        val logProvider = try {
+            AndroidLogProvider(pluginContext)
+        } catch (e: IllegalStateException) {
+            // Если Android Logger недоступен, используем Java Logger
+            LogProvider.create(pluginContext)
+        }
+        
         val functionName = name.toString()
 
         val findFunAsyncList = asyncList
@@ -75,39 +81,56 @@ class IrGenerationExtensionWriter : IrGenerationExtension {
                 append("[Thread ${threadInfo}] ")
                 append("Entering function: $functionName")
                 append(" (Path: $path)")
-                append(" (findFunAsyncList: $findFunAsyncList)")
             }
 
             val logLevel = DetectArchLayer.getIdLayer(this)
             val logSymbol = when (logLevel) {
-                1 -> logAndroid.logVSymbol // Presentation layer - Verbose
-                2 -> logAndroid.logDSymbol // ViewModel layer - Debug
-                3 -> logAndroid.logISymbol // Domain layer - Info
-                4 -> logAndroid.logWSymbol // Data layer - Warning
-                else -> logAndroid.logESymbol // Unknown - Error
+                1 -> logProvider.logVSymbol // Presentation layer - Verbose
+                2 -> logProvider.logDSymbol // ViewModel layer - Debug
+                3 -> logProvider.logISymbol // Domain layer - Info
+                4 -> logProvider.logWSymbol // Data layer - Warning
+                else -> logProvider.logESymbol // Unknown - Error
             }
 
             // Создаем вызов функции логирования
-            IrCallImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                pluginContext.irBuiltIns.unitType,
-                logSymbol,
-                typeArgumentsCount = 0,
-                valueArgumentsCount = 2
-            ).apply {
-                putValueArgument(0, IrConstImpl.string(
+            if (logProvider is JavaLogProvider) {
+                IrCallImpl(
                     UNDEFINED_OFFSET,
                     UNDEFINED_OFFSET,
-                    pluginContext.irBuiltIns.stringType,
-                    "LoggerPlugin"
-                ))
-                putValueArgument(1, IrConstImpl.string(
+                    pluginContext.irBuiltIns.unitType,
+                    logSymbol,
+                    typeArgumentsCount = 0,
+                    valueArgumentsCount = 1
+                ).apply {
+                    putValueArgument(0, IrConstImpl.string(
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        pluginContext.irBuiltIns.stringType,
+                        "[LoggerPlugin] $logMessage"
+                    ))
+                }
+            } else {
+                IrCallImpl(
                     UNDEFINED_OFFSET,
                     UNDEFINED_OFFSET,
-                    pluginContext.irBuiltIns.stringType,
-                    logMessage
-                ))
+                    pluginContext.irBuiltIns.unitType,
+                    logSymbol,
+                    typeArgumentsCount = 0,
+                    valueArgumentsCount = 2
+                ).apply {
+                    putValueArgument(0, IrConstImpl.string(
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        pluginContext.irBuiltIns.stringType,
+                        "LoggerPlugin"
+                    ))
+                    putValueArgument(1, IrConstImpl.string(
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        pluginContext.irBuiltIns.stringType,
+                        logMessage
+                    ))
+                }
             }
         }
 

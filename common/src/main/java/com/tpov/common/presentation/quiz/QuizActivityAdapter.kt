@@ -27,6 +27,7 @@ import com.tpov.common.presentation.utils.ResizeAndCrop
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
+import javax.inject.Inject
 
 @Logger
 class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
@@ -136,7 +137,6 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
         ) = with(binding) {
 
             try {
-
                 val file = File(context.cacheDir, "${quizEntity.picture}")
 
                 fun dpToPx(dp: Int, context: Context): Int {
@@ -154,7 +154,7 @@ class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
 
                 Glide.with(context)
                     .asBitmap()
-                    .load(file)
+                    .load(file as File)
                     .apply(
                         RequestOptions()
                             .override(widthInPx, heightInPx)

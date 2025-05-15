@@ -5,6 +5,8 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -38,6 +40,7 @@ import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_EVENT
 import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_SUB_CATEGORY
 import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_SUB_SUB_CATEGORY
 import com.tpov.common.presentation.utils.Values.context
+import com.tpov.common.presentation.utils.ViewModelFactory
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

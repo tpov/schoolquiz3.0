@@ -1,7 +1,7 @@
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    kotlin("jvm") version "1.9.22"
+    kotlin("jvm")
 }
 
 // These will be overridden by the publish script

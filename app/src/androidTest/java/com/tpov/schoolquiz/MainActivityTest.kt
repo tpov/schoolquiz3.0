@@ -82,7 +82,7 @@ class MainActivityTest {
                             Assert.assertEquals(
                                 receivedProfiles[0]?.copy(
                                     addPointsGold = 1, addPointsSkill = 2, addPointsNolics = 123,
-                                    countGold = receivedProfiles[2]?.countGold ?: 0, // Значение указываем явно для теста
+                                    goldHearts = receivedProfiles[2]?.goldHearts ?: 0, // Значение указываем явно для теста
                                     tpovId = tpovId,
                                     tester = receivedProfiles[2]?.tester,  // Игнорируем изменение tester
                                 ),
@@ -99,7 +99,7 @@ class MainActivityTest {
                         4 -> {
                             Assert.assertEquals(
                                 receivedProfiles[0]?.copy(
-                                    countGold = 2,
+                                    goldHearts = 2,
                                     tpovId = tpovId,
                                     tester = 0,
                                     addTrophy = "",

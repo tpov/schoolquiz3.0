@@ -15,7 +15,6 @@ import com.tpov.common.presentation.model.PathStructure
 import com.tpov.log_api.logger.Logger
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.ProfileUseCase
-import com.tpov.schoolquiz.domain.ProfileInteractor
 import com.tpov.schoolquiz.presentation.services.ProfileInteractor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview

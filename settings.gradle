@@ -5,16 +5,10 @@ include ':common'
 include ':shop'
 include ':userguide'
 include ':network'
-include ':log-api'
 include ':core'
+include ':log-api'
 include ':logger-compiler-plugin'
-// Удаляем logger-gradle-plugin из основного проекта, чтобы использовать его как внешнюю зависимость
-// из локального Maven репозитория (опубликованную через publishToMavenLocal)
-
-// Включаем сборку плагина для его использования непосредственно из исходных файлов
-includeBuild('logger-gradle-plugin') {
-    dependencySubstitution {
-        // При запросе артефакта будет использоваться проект
-        substitute(module('com.tpov.logger:logger-gradle-plugin')).using(project(':'))
-    }
-}
+include ':logger-processor'
+include ':test-app'
+include ':logger-gradle-plugin'
+// Используем logger-gradle-plugin как внешнюю зависимость из локального Maven репозитория

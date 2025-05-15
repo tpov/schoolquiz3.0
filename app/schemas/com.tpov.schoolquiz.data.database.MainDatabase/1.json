@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "0ef376f396ca00c475a221c19d3b3e21",
+    "identityHash": "9b4b02e85435cdfc94bb43b1f8f6c5e6",
     "entities": [
       {
         "tableName": "question_detail_entity",
@@ -172,7 +172,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT, `name` TEXT NOT NULL, `nickname` TEXT, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `dateBanned` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `timeInGamesSmsPoints` INTEGER NOT NULL, `timeInGamesCountQuestions` INTEGER NOT NULL, `timeInGamesCountTrueQuestion` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `addMassage` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `dateCloseApp` TEXT NOT NULL, `languages` TEXT NOT NULL, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT NOT NULL, `coundDayBox` INTEGER NOT NULL, `countLife` INTEGER NOT NULL, `count` INTEGER NOT NULL, `countGoldLife` INTEGER NOT NULL, `countGold` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT, `name` TEXT NOT NULL, `nickname` TEXT, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `dateBanned` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `smsCount` INTEGER NOT NULL, `countAnswer` INTEGER NOT NULL, `countTrueAnswer` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `addMassage` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `dateCloseApp` TEXT NOT NULL, `languages` TEXT NOT NULL, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT NOT NULL, `countDayBox` INTEGER NOT NULL, `launchCount` INTEGER NOT NULL, `standardLife` INTEGER NOT NULL, `standardHearts` INTEGER NOT NULL, `goldLife` INTEGER NOT NULL, `goldHearts` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -265,20 +265,20 @@
             "notNull": true
           },
           {
-            "fieldPath": "timeInGamesSmsPoints",
-            "columnName": "timeInGamesSmsPoints",
+            "fieldPath": "smsCount",
+            "columnName": "smsCount",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "timeInGamesCountQuestions",
-            "columnName": "timeInGamesCountQuestions",
+            "fieldPath": "countAnswer",
+            "columnName": "countAnswer",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "timeInGamesCountTrueQuestion",
-            "columnName": "timeInGamesCountTrueQuestion",
+            "fieldPath": "countTrueAnswer",
+            "columnName": "countTrueAnswer",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -433,32 +433,38 @@
             "notNull": true
           },
           {
-            "fieldPath": "coundDayBox",
-            "columnName": "coundDayBox",
+            "fieldPath": "countDayBox",
+            "columnName": "countDayBox",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "countLife",
-            "columnName": "countLife",
+            "fieldPath": "launchCount",
+            "columnName": "launchCount",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "count",
-            "columnName": "count",
+            "fieldPath": "standardLife",
+            "columnName": "standardLife",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "countGoldLife",
-            "columnName": "countGoldLife",
+            "fieldPath": "standardHearts",
+            "columnName": "standardHearts",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "countGold",
-            "columnName": "countGold",
+            "fieldPath": "goldLife",
+            "columnName": "goldLife",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "goldHearts",
+            "columnName": "goldHearts",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -476,7 +482,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0ef376f396ca00c475a221c19d3b3e21')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9b4b02e85435cdfc94bb43b1f8f6c5e6')"
     ]
   }
 }
