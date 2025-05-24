@@ -68,12 +68,13 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     private val listLives by lazy {
         listOf(binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5)
     }
-    private val listGoldLives by lazy {
+ private val listGoldLives by lazy {
         listOf(binding.pbLifeGold1)
     }
+    // Initialize lists after binding is set
     private val boxDays = listOf(
-        binding.boxDay1, binding.boxDay2, binding.boxDay3, binding.boxDay4, binding.boxDay5,
-        binding.boxDay6, binding.boxDay7, binding.boxDay8, binding.boxDay9, binding.boxDay10
+    binding.boxDay1, binding.boxDay2, binding.boxDay3, binding.boxDay4, binding.boxDay5,
+    binding.boxDay6, binding.boxDay7, binding.boxDay8, binding.boxDay9, binding.boxDay10
     )
 
     @SuppressLint("SetTextI18n")
@@ -84,6 +85,8 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         setContentView(binding.root)
 
         Values.init(this, application)
+
+
 
         initViewModel()
         observeData()

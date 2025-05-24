@@ -19,7 +19,7 @@ kotlin {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.0")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.24")
 }
 
 // Apply common publishing configuration
