@@ -90,12 +90,10 @@ dependencies {
     implementation("jp.wasabeef:picasso-transformations:2.4.0")
     implementation("com.github.bumptech.glide:glide:4.15.1")
     kapt("com.github.bumptech.glide:compiler:4.15.1")
-    implementation("androidx.hilt:hilt-common:1.2.0")
     implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
     implementation("androidx.test.ext:junit-ktx:1.2.1")
     implementation("androidx.test.espresso:espresso-core:3.6.1")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
-    implementation("jp.wasabeef:glide-transformations:4.3.0")
+    kapt("jp.wasabeef:glide-transformations:4.3.0")
 
     kapt("androidx.room:room-compiler:2.6.1")
     kapt("com.google.dagger:dagger-compiler:2.49")
@@ -108,4 +106,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     testImplementation("org.robolectric:robolectric:4.10.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 }

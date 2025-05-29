@@ -11,4 +11,3 @@ include ':logger-compiler-plugin'
 include ':logger-processor'
 include ':test-app'
 include ':logger-gradle-plugin'
-// Используем logger-gradle-plugin как внешнюю зависимость из локального Maven репозитория

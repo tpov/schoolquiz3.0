@@ -28,7 +28,14 @@ data class StructureDataLocal(
     var languages: String = "",
     var picture: String = "",
     var isShowDownload: Boolean = true,
-    var isShowArchive: Boolean = true
+    var isShowArchive: Boolean = true,
+    var hasGeneratedQuiz: Boolean = false,
+    var quizId: Int = 0,
+    var isPurchased: Boolean = false,
+    var isBought: Boolean = false,
+    var isBoughtTime: String = "",
+    var isDownload: Boolean = false,
+    var show: Boolean = true
 ) {
 
     fun create(
@@ -40,18 +47,34 @@ data class StructureDataLocal(
         picture: String
     ) =
         StructureDataLocal(
-            null,
-            nameCategory,
-            DateUtil().getDateQuiz(),
-            DateUtil().getDateQuiz(),
-            DateUtil().getDateQuiz(),
-            0,0,0,0,0,0,0,
-            numHardQuestion,
-            numQuestion,
-            tpovId,
-            SettingConfigObject.settingsConfig.name,
-            0,
-            lang, picture, true, false
+            children = null,
+            nameItem = nameCategory,
+            dataUpdateGlobal = DateUtil().getDateQuiz(),
+            dataUpdateLocal = DateUtil().getDateQuiz(),
+            dataCreate = DateUtil().getDateQuiz(),
+            version = 0,
+            ratingGlobal = 0,
+            ratingLocal = 0,
+            starsMaxLocal = 0,
+            starsMaxGlobal = 0,
+            starsAverageLocal = 0,
+            starsAverageGlobal = 0,
+            numHQ = numHardQuestion,
+            numQ = numQuestion,
+            tpovIdCreator = tpovId,
+            nameCreator = SettingConfigObject.settingsConfig.name,
+            tpovIdMaxStarsGlobal = 0,
+            languages = lang,
+            picture = picture,
+            isShowDownload = true,
+            isShowArchive = false,
+            hasGeneratedQuiz = false,
+            quizId = 0,
+            isPurchased = false,
+            isBought = false,
+            isBoughtTime = "",
+            isDownload = false,
+            show = true
         )
     fun printFullStructure(s: String): StructureDataLocal {
 
@@ -72,7 +95,7 @@ data class StructureDataLocal(
             printNode(this@StructureDataLocal, 0)
             appendLine("")
         }
-
+        println(result)
         return this
     }
 

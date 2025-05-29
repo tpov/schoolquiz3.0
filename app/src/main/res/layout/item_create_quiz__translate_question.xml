@@ -5,7 +5,7 @@
     android:orientation="horizontal">
 
     <EditText
-        android:id="@+id/tv_question_text1"
+        android:id="@+id/tv_question_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -13,7 +13,7 @@
         android:textColor="@color/white" />
 
     <Spinner
-        android:id="@+id/sp_language_question1"
+        android:id="@+id/sp_language_question"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/white" />

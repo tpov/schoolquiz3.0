@@ -31,4 +31,10 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
         repositoryStructureImpl.updateStructureData(structureDataLocal.toStructureDataEntity()!!, event.name)
     }
 
+    suspend fun updateStructureDataList(structureDataLocal: List<StructureDataLocal>, event: EventQuiz) {
+        structureDataLocal.forEach {
+            repositoryStructureImpl.updateStructureData(it.toStructureDataEntity()!!, event.name)
+        }
+    }
+
 }

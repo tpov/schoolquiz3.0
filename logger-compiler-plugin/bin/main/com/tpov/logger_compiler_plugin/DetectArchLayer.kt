@@ -27,7 +27,7 @@ object DetectArchLayer {
         var currentParent: IrDeclarationParent? = declaration.parent
         while (currentParent != null) {
             val fqName = when (currentParent) {
-                is IrPackageFragment -> currentParent.fqName.asString() // Используем fqName вместо packageFqName
+                is IrPackageFragment -> currentParent.packageFqName.asString() // Используем fqName вместо packageFqName
                 is IrDeclarationWithName -> currentParent.fqNameWhenAvailable?.asString()
                 else -> null
             }
