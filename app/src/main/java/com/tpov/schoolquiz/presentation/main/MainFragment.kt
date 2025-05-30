@@ -60,7 +60,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
             }
         }
         initGetData()
-        viewModel.initStructureData(event!!)
+        viewModel.initStructureData(event ?: EventQuiz.QUIZ_BY_USER)
     }
 
     @OptIn(InternalCoroutinesApi::class)

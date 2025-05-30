@@ -427,7 +427,7 @@
                         android:layout_marginLeft="4dp"
                         android:paddingLeft="4dp"
                         android:singleLine="true"
-                        android:text="Name"
+                        android:text="Profile don't created"
                         android:textColor="#939E8D"
                         android:textSize="20sp"
                         android:textStyle="bold" />

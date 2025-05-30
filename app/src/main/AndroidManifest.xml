@@ -26,7 +26,8 @@
         </provider>
 
         <activity
-            android:name="com.tpov.schoolquiz.presentation.main.MainActivity"/>
+            android:name="com.tpov.schoolquiz.presentation.main.MainActivity"
+            android:theme="@style/Theme.GeoQuiz.NoActionBar.DarkStatusBar"/>
         <activity android:name="com.tpov.common.presentation.question.QuestionActivity" />
         <activity android:name="com.tpov.schoolquiz.presentation.create_quiz.CreateQuizActivity" />
         <activity

@@ -4,8 +4,6 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tpov.common.Core
-import com.tpov.common.Core.tpovIdFlow
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
@@ -20,13 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import java.time.Instant
-import java.util.Locale
 import javax.inject.Inject
 
 @Logger
@@ -57,11 +50,6 @@ class MainViewModel @Inject constructor(
 
     init {
         initControllers()
-        runBlocking {
-            profileState.collect {
-
-            }
-        }
     }
 
     private fun initControllers() {
@@ -87,43 +75,14 @@ class MainViewModel @Inject constructor(
         _structureData.value = structureUseCase.getStructureEventData(event)?.toList()
     }
 
-    fun initProfile() {
-        Log.d("init", "init")
-        viewModelScope.launch(Dispatchers.Default) {
-            var previousProfile: ProfileEntity? = null
-
-            combine(
-                profileUseCase.getProfileFlow() ?: flowOf(null),
-                tpovIdFlow
-            ) { profile, currentTpovId ->
-                profile to currentTpovId
-            }
-                .debounce(500)
-                .collect { (profile, currentTpovId) ->
-
-                    Log.d(
-                        "init",
-                        "previousProfile: $previousProfile, profile: $profile, currentTpovId: $currentTpovId"
-                    )
-                    if ((profile != previousProfile) && currentTpovId != 0 || (profile != previousProfile) || profile == null) {
-                        Log.d("init", "profile: $profile")
-                        _profileState.value = profile
-                        if (profile == null && currentTpovId != 0) {
-                            createProfile()
-                        } else {
-                            //profileUseCase.syncProfile()
-                        }
-                        previousProfile = profile
-                    }
-                }
-        }
+    fun initProfile() = viewModelScope.launch(Dispatchers.Default) {
+            _profileState.value = profileUseCase.getProfileFlow()?.first()
     }
 
     fun updateProfile(profileEntity: ProfileEntity) = viewModelScope.launch(Dispatchers.Default) {
         profileUseCase.updateProfile(profileEntity)
     }
 
-    // Метод для обновления конкретных полей профиля
     fun updateProfile(
         gold: Long? = null,
         skill: Long? = null,
@@ -165,21 +124,6 @@ class MainViewModel @Inject constructor(
 
         // Обновляем локальное состояние
         _profileState.value = updatedProfile
-    }
-
-    fun createProfile() = viewModelScope.launch(Dispatchers.Default) {
-        Log.d("createProfile", "createProfile()")
-        val currentTimestamp = Instant.now().epochSecond
-        val daysSinceEpoch = Instant.now().epochSecond / 86400
-
-        profileUseCase.insertAndPushProfile(
-            ProfileEntity(
-                dataCreateAcc = currentTimestamp.toString(),
-                languages = Locale.getDefault().language,
-                timeLastOpenBox = daysSinceEpoch.toString(),
-                tpovId = Core.tpovId
-            )
-        )
     }
 
     suspend fun pushUserQuestions(
