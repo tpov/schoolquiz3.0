@@ -44,6 +44,7 @@ class MainViewModel @Inject constructor(
     val livesState = profileInteractor.livesController.livesState
     val addPointsState = profileInteractor.addPointsController.addPointsState
     val premiumState = profileInteractor.premiumController.premiumState
+    val nicknameState = profileInteractor.nicknameController.nicknameState
     val daysInGameState = profileInteractor.daysInGameController.daysInGameState
 
     var firstStartApp = false

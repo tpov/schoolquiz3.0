@@ -8,8 +8,7 @@ import android.view.animation.Animation
 import android.view.animation.Animation.AnimationListener
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
@@ -18,7 +17,6 @@ import com.tpov.schoolquiz.presentation.AppWorkerFactory
 import com.tpov.schoolquiz.presentation.SyncWorker
 import com.tpov.schoolquiz.presentation.main.MainActivity
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @SuppressLint("CustomSplashScreen")
@@ -36,7 +34,7 @@ class SplashScreen : AppCompatActivity() {
         setContentView(binding.root)
 
         (application as MainApp).applicationComponent.inject(this)
-        setupPeriodicSync()
+        startInitialSetupAndSyncAndObserve()
         createAnimation()
     }
 
@@ -81,20 +79,24 @@ class SplashScreen : AppCompatActivity() {
         }
     }
 
+    private fun startInitialSetupAndSyncAndObserve() {
+        // Implementation of startInitialSetupAndSyncAndObserve function
+        val initialSyncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+            .build()
+
+        val workManager = WorkManager.getInstance(this)
+        workManager.enqueue(initialSyncRequest)
+
+        workManager.getWorkInfoByIdLiveData(initialSyncRequest.id)
+            .observe(this) { workInfo ->
+                if (workInfo != null && workInfo.state.isFinished) {
+                    //startMainActivity()
+                }
+            }
+    }
+
     private fun startMainActivity() {
         startActivity(Intent(this, MainActivity::class.java))
         finish()
-    }
-
-    private fun setupPeriodicSync() {
-
-        val syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(1, TimeUnit.MINUTES)
-            .build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "SyncWork",
-            ExistingPeriodicWorkPolicy.KEEP,
-            syncRequest
-        )
     }
 }

@@ -11,7 +11,6 @@ import com.google.firebase.functions.functions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import com.tpov.common.data.database.QuestionDao
-import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.data.model.remote.QuestionRemote
 import com.tpov.common.data.model.remote.TranslateRequest
@@ -84,9 +83,7 @@ class RepositoryQuestionImpl @Inject constructor(
         val questionRemotes = mutableListOf<QuestionEntity>()
 
         try {
-            val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                baseCollectionReference.get()
-            }.await()
+            val task = baseCollectionReference.get().await()
 
             val questionDocuments = task.documents
 
@@ -134,9 +131,7 @@ class RepositoryQuestionImpl @Inject constructor(
 
         Log.d("Translation", "docRef: ${docRef.path}")
         try {
-            FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                docRef.set(questionEntity)
-            }.await()
+            docRef.set(questionEntity).await()
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushing question", e)
         }
@@ -183,7 +178,7 @@ class RepositoryQuestionImpl @Inject constructor(
 
     override suspend fun remoteLangsQuestions(
         questionEntity: QuestionEntity
-    ): List<String> = suspendCoroutine { continuation ->
+    ): List<String> = suspendCoroutine<List<String>> { continuation ->
         val languages = mutableListOf<String>()
 
         baseCollection
@@ -214,16 +209,14 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     override suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, event: Int) {
-        Log.d("FirebaseRequestInterceptor", "deleteRemoteQuestionByIdQuiz")
+        Log.d("RepositoryQuestionImpl", "deleteRemoteQuestionByIdQuiz")
         val baseCollectionReference = baseCollection
             .document("question$event")
             .collection(idQuiz.toString())
 
         try {
-            // Используем перехватчик для получения всех документов в коллекции
-            val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                baseCollectionReference.get()
-            }.await()
+            // Получаем все документы в коллекции
+            val task = baseCollectionReference.get().await()
 
             val questionDocuments = task.documents
 
@@ -234,18 +227,14 @@ class RepositoryQuestionImpl @Inject constructor(
                 questionEntity?.pathPictureQuestion?.let { path ->
                     val photoRef = storage.reference.child(path)
                     try {
-                        FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                            photoRef.delete()
-                        }.await() // Удаление фото через перехватчик
+                        photoRef.delete().await()
                     } catch (e: Exception) {
                         Log.e("Firestore", "Ошибка при удалении изображения: $path", e)
                     }
                 }
 
                 // Удаление документа
-                FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                    document.reference.delete()
-                }.await()
+                document.reference.delete().await()
             }
         } catch (e: Exception) {
             Log.w("Firestore", "Error deleting remote questions", e)
@@ -264,97 +253,69 @@ class RepositoryQuestionImpl @Inject constructor(
                         if (task.isSuccessful) {
                             Log.d("FirebaseAuth", "Анонимный пользователь создан")
                             // Продолжаем загрузку файла после успешной аутентификации
-                            uploadFileWithInterceptor(pathPhoto)
+                            uploadFile(pathPhoto)
                         } else {
                             Log.e("FirebaseAuth", "Ошибка анонимной аутентификации", task.exception)
                         }
                     }
             } else {
                 // Если пользователь уже авторизован, продолжаем загрузку
-                uploadFileWithInterceptor(pathPhoto)
+                uploadFile(pathPhoto)
             }
         }
     }
 
-    private fun uploadFileWithInterceptor(pathPhoto: String) {
-        Log.d("FirebaseRequestInterceptor", "uploadFileWithInterceptor")
-        FirebaseRequestInterceptor.executeWithChecksSingleTask {
-            val storageRef = storage.reference.child(pathPhoto)
-            storageRef.putFile(Uri.parse(pathPhoto))
-        }.addOnSuccessListener {
-            Log.d("FirebaseStorage", "Фото загружено успешно")
-        }.addOnFailureListener {
-            Log.e("FirebaseStorage", "Ошибка при загрузке фото", it)
-        }
+    private fun uploadFile(pathPhoto: String) {
+        Log.d("FirebaseStorage", "Starting file upload")
+        val storageRef = storage.reference.child(pathPhoto)
+        storageRef.putFile(Uri.parse(pathPhoto))
+            .addOnSuccessListener {
+                Log.d("FirebaseStorage", "Фото загружено успешно")
+            }
+            .addOnFailureListener {
+                Log.e("FirebaseStorage", "Ошибка при загрузке фото", it)
+            }
     }
-
 
     private suspend fun downloadPhotoToLocalPath(pathPhoto: String): String? {
-        Log.d("PhotoDebug", "Starting download: $pathPhoto")
+        return try {
+            val storageRef = storage.reference.child(pathPhoto)
+            val localFile = File(context.filesDir, pathPhoto.substringAfterLast('/'))
 
-        if (pathPhoto.isBlank()) {
-            Log.d("PhotoDebug", "Path is blank")
-            return null
-        }
-
-        // Убедимся что путь содержит только имя файла
-        val fileName = if (pathPhoto.contains("/")) {
-            pathPhoto.substringAfterLast("/")
-        } else {
-            pathPhoto
-        }
-
-        val photoDir = File(context.filesDir, "questionPhoto").apply {
-            if (!exists()) {
-                val created = mkdirs()
-                Log.d("PhotoDebug", "Created directory: $created")
+            if (!localFile.exists()) {
+                localFile.parentFile?.mkdirs() // Создаем родительские директории при необходимости
             }
-        }
 
-        val localFile = File(photoDir, fileName)
-        Log.d("PhotoDebug", "Local file path: ${localFile.absolutePath}")
+            val downloadTask = storageRef.getFile(localFile)
 
-        try {
-            val storageRef = storage.reference
-            // Используем полный путь к файлу в Storage
-            val photoRef = storageRef.child("questionPhoto/$fileName")
-            Log.d("PhotoDebug", "Storage reference created for: questionPhoto/$fileName")
+            downloadTask.await()
 
-            // Загружаем файл
-            FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                photoRef.getFile(localFile)
-            }.await()
-
-            if (localFile.exists() && localFile.length() > 0) {
-                Log.d("PhotoDebug", "File downloaded successfully: ${localFile.length()} bytes")
-                return localFile.absolutePath
-            } else {
-                Log.e(
-                    "PhotoDebug",
-                    "File download failed: exists=${localFile.exists()}, size=${localFile.length()}"
-                )
-                return null
-            }
+            Log.d("RepositoryQuestionImpl", "Photo downloaded successfully to: ${localFile.absolutePath}")
+            localFile.absolutePath
         } catch (e: Exception) {
-            Log.e("PhotoDebug", "Download error", e)
-            return null
+            Log.e("RepositoryQuestionImpl", "Error downloading photo: $pathPhoto", e)
+            null
         }
     }
 
     private suspend fun deletePhotoFromServer(pathPhoto: String) {
-        Log.d("FirebaseRequestInterceptor", "deletePhotoFromServer")
         if (pathPhoto.isNotBlank()) {
-            val storageRef = storage.reference
-            val photoRef = storageRef.child(pathPhoto)
-
+            val photoRef = storage.reference.child(pathPhoto)
             try {
-                FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                    photoRef.delete()
-                }.await()
+                photoRef.delete().await()
+                Log.d("RepositoryQuestionImpl", "Photo deleted successfully from server: $pathPhoto")
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("RepositoryQuestionImpl", "Error deleting photo from server: $pathPhoto", e)
             }
         }
+    }
+
+    // Вспомогательная функция для преобразования QuestionRemote в QuestionEntity
+    private fun QuestionRemote.toQuestionEntity(): QuestionEntity {
+        // Implementation of toQuestionEntity function
+        // This function should return a QuestionEntity object based on the current QuestionRemote object
+        // Implementation details should be provided here
+        throw UnsupportedOperationException("Method not implemented")
     }
 
 }

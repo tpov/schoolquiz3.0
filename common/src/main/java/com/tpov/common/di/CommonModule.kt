@@ -18,6 +18,9 @@ import com.tpov.common.domain.repository.RepositorySettingServer
 import com.tpov.common.domain.usecase.QuestionDetailUseCase
 import dagger.Module
 import dagger.Provides
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 @Module(includes = [ViewModelModule::class])
 class CommonModule {
@@ -61,5 +64,10 @@ class CommonModule {
     fun provideRepositorySettingLocal(
         firestore: FirebaseFirestore): RepositorySettingLocal {
         return RepositorySettingLocalImpl(firestore)
+    }
+
+    @Provides
+    fun provideCoroutineScope(): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
 }

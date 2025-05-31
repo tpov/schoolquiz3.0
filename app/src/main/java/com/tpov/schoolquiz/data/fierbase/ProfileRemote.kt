@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.data.fierbase
 
 import com.google.firebase.database.IgnoreExtraProperties
-import com.tpov.common.data.utils.TimeManager
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 
 @IgnoreExtraProperties
@@ -15,8 +14,9 @@ data class ProfileRemote constructor(
     val qualification: Qualification = Qualification(),
     val life: Life = Life(),
     val box: Box = Box(),
+    val authUid: String? = null
+)
 
-    )
 @IgnoreExtraProperties
 data class Basic(
     val tpovId: Long = 0L,
@@ -133,71 +133,73 @@ data class Dates(
 fun ProfileEntity.toProfile(): ProfileRemote {
     return ProfileRemote(
         basic = Basic(
-            tpovId = tpovId.toLong(),
+            tpovId = this.tpovId?.toLong() ?: 0L,
             login = this.login ?: "",
             name = this.name,
             nickname = this.nickname ?: "",
             birthday = this.birthday,
-            city = this.city!!,
-            logo = this.logo.toLong(),
+            city = this.city ?: "",
+            languages = this.languages ?: "",
             comander = this.commander.toLong(),
-            languages = this.languages.toString()
+            logo = this.logo.toLong(),
         ),
         points = Points(
             gold = this.pointsGold.toLong(),
-            skill = this.pointsSkill.toLong()!!,
-            nolics = this.pointsNolics.toLong()!!,
-            trophy = this.trophy.toString(),
-            friends = this.friends
+            skill = this.pointsSkill.toLong(),
+            nolics = this.pointsNolics.toLong(),
+            trophy = this.trophy ?: "",
+            friends = this.friends ?: "",
         ),
         buy = Buy(
-            quizPlace = this.buyQuizPlace.toLong()!!,
-            theme = this.buyTheme!!,
-            music = this.buyMusic!!,
-            logo = this.buyLogo!!
+            quizPlace = this.buyQuizPlace.toLong(),
+            theme = this.buyTheme,
+            music = this.buyMusic,
+            logo = this.buyLogo,
         ),
         timeInGames = TimeInGames(
-            timeInQuiz = this.timeInGamesInQuiz.toLong()!!,
-            timeInChat = this.timeInGamesInChat.toLong()!!,
-            smsPoints = this.smsCount.toLong()!!,
+            timeInQuiz = this.timeInGamesInQuiz.toLong(),
+            timeInChat = this.timeInGamesInChat.toLong(),
+            smsPoints = this.smsCount.toLong(),
             countQuestions = this.countAnswer.toLong(),
             countTrueQuestion = this.countTrueAnswer.toLong(),
-            quizRating = this.timeInQuizRating.toLong()
+            quizRating = this.timeInQuizRating.toLong(),
         ),
         addPoints = AddPoints(
             this.addPointsGold.toLong(),
             this.addPointsSkill.toLong(),
             this.addPointsNolics.toLong(),
             this.addTrophy,
-            this.addMassage
+            this.addMassage,
         ),
-        dates = Dates(this.dataCreateAcc!!, this.dateSynch!!, this.datePremium, this.dateBanned),
+        dates = Dates(this.dataCreateAcc ?: "", this.dateSynch, this.datePremium, this.dateBanned),
         qualification = Qualification(
-            this.sponsor?.toLong()!!,
-            this.tester?.toLong()!!,
-            this.translater.toLong()!!,
-            this.moderator.toLong()!!,
-            this.admin.toLong()!!,
-            this.developer.toLong()!!
+            this.sponsor?.toLong() ?: 0L,
+            this.tester?.toLong() ?: 0L,
+            this.translater.toLong(),
+            this.moderator.toLong(),
+            this.admin.toLong(),
+            this.developer.toLong(),
         ),
         life = Life(
-            this.standardHearts.toLong()!!,
-            this.goldHearts.toLong()!!,
+            this.standardHearts.toLong(),
+            this.goldHearts.toLong(),
         ),
         box = Box(
-            this.countBox.toLong()!!,
-            this.timeLastOpenBox!!,
-            this.countDayBox.toLong()!!
-        )
+            this.countBox.toLong(),
+            this.timeLastOpenBox ?: "",
+            this.countDayBox.toLong(),
+        ),
+        authUid = this.authUid
     )
 }
 
-fun ProfileRemote.toProfileEntity(goldHearts: Int, standardLife: Int): ProfileEntity {
+fun ProfileRemote.toProfileEntity(): ProfileEntity {
     return ProfileEntity(
         id = null,
         tpovId = this.basic.tpovId.toInt(),
         login = this.basic.login,
         name = this.basic.name,
+        nickname = this.basic.nickname,
         birthday = this.basic.birthday,
         pointsGold = this.points.gold.toInt(),
         pointsSkill = this.points.skill.toInt(),
@@ -211,9 +213,13 @@ fun ProfileRemote.toProfileEntity(goldHearts: Int, standardLife: Int): ProfileEn
         friends = this.points.friends,
         city = this.basic.city,
         logo = this.basic.logo.toInt(),
-       timeInGamesInQuiz = this.timeInGames.timeInQuiz.toInt(),
+        commander = this.basic.comander.toInt(),
+        timeInGamesInQuiz = this.timeInGames.timeInQuiz.toInt(),
         timeInGamesInChat = this.timeInGames.timeInChat.toInt(),
         smsCount = this.timeInGames.smsPoints.toInt(),
+        countAnswer = this.timeInGames.countQuestions?.toInt() ?: 0,
+        countTrueAnswer = this.timeInGames.countTrueQuestion.toInt(),
+        timeInQuizRating = this.timeInGames.quizRating.toInt(),
         addPointsGold = this.addPoints.addGold.toInt(),
         addPointsSkill = this.addPoints.addSkill.toInt(),
         addPointsNolics = this.addPoints.addNolics.toInt(),
@@ -221,28 +227,24 @@ fun ProfileRemote.toProfileEntity(goldHearts: Int, standardLife: Int): ProfileEn
         addMassage = this.addPoints.addMassage,
         dataCreateAcc = this.dates.dataCreateAcc,
         dateSynch = this.dates.dateSynch,
+        dateCloseApp = "",
         languages = this.basic.languages,
+        status = 0,
         sponsor = this.qualification.sponsor.toInt(),
         tester = this.qualification.tester.toInt(),
         translater = this.qualification.translater.toInt(),
         moderator = this.qualification.moderator.toInt(),
         admin = this.qualification.admin.toInt(),
         developer = this.qualification.developer.toInt(),
-        nickname = this.basic.nickname,
-        countDayBox = this.box.countDayBox.toInt(),
         countBox = this.box.countBox.toInt(),
         timeLastOpenBox = this.box.timeLastOpenBox,
-        goldHearts = goldHearts.toInt(),
-        standardLife = standardLife.toInt(),
-        goldLife = this.life.countGoldLife.toInt(),
-        standardHearts = this.life.countLife.toInt(),
-        dateCloseApp = TimeManager.getCurrentTime(),
-        countAnswer = this.timeInGames.countQuestions?.toInt() ?: 0,
-        countTrueAnswer = this.timeInGames.countTrueQuestion.toInt(),
-        timeInQuizRating = this.timeInGames.quizRating.toInt(),
-        commander = this.basic.comander.toInt(),
-        dateBanned = this.dates.dateBanned,
-        launchCount = 0
+        countDayBox = this.box.countDayBox.toInt(),
+        launchCount = 0,
+        standardLife = this.life.countLife.toInt(),
+        standardHearts = this.life.countGoldLife.toInt(),
+        goldLife = 0,
+        goldHearts = 0,
+        authUid = this.authUid
     )
 }
 
@@ -321,14 +323,15 @@ fun fromHashMap(data: Map<String, Any>): ProfileRemote {
             countBox = boxMap["countBox"] as? Long ?: 0L,
             timeLastOpenBox = boxMap["timeLastOpenBox"] as? String ?: "",
             countDayBox = boxMap["countDayBox"] as? Long ?: 0L
-        )
+        ),
+        authUid = data["authUid"] as? String
     )
 }
 
 // Метод для преобразования ProfileRemote в HashMap для Firestore
 fun ProfileRemote.toHashMap(): Map<String, Any> {
     val result = HashMap<String, Any>()
-    
+
     // Basic
     val basicMap = HashMap<String, Any>()
     basicMap["tpovId"] = this.basic.tpovId
@@ -341,7 +344,7 @@ fun ProfileRemote.toHashMap(): Map<String, Any> {
     basicMap["comander"] = this.basic.comander
     basicMap["logo"] = this.basic.logo
     result["basic"] = basicMap
-    
+
     // Points
     val pointsMap = HashMap<String, Any>()
     pointsMap["gold"] = this.points.gold
@@ -350,7 +353,7 @@ fun ProfileRemote.toHashMap(): Map<String, Any> {
     pointsMap["trophy"] = this.points.trophy
     pointsMap["friends"] = this.points.friends
     result["points"] = pointsMap
-    
+
     // Buy
     val buyMap = HashMap<String, Any>()
     buyMap["quizPlace"] = this.buy.quizPlace
@@ -358,7 +361,7 @@ fun ProfileRemote.toHashMap(): Map<String, Any> {
     buyMap["music"] = this.buy.music
     buyMap["logo"] = this.buy.logo
     result["buy"] = buyMap
-    
+
     // TimeInGames
     val timeInGamesMap = HashMap<String, Any>()
     timeInGamesMap["timeInQuiz"] = this.timeInGames.timeInQuiz
@@ -368,7 +371,7 @@ fun ProfileRemote.toHashMap(): Map<String, Any> {
     timeInGamesMap["countTrueQuestion"] = this.timeInGames.countTrueQuestion
     timeInGamesMap["quizRating"] = this.timeInGames.quizRating
     result["timeInGames"] = timeInGamesMap
-    
+
     // AddPoints
     val addPointsMap = HashMap<String, Any>()
     addPointsMap["addGold"] = this.addPoints.addGold
@@ -377,7 +380,7 @@ fun ProfileRemote.toHashMap(): Map<String, Any> {
     addPointsMap["addTrophy"] = this.addPoints.addTrophy
     addPointsMap["addMassage"] = this.addPoints.addMassage
     result["addPoints"] = addPointsMap
-    
+
     // Dates
     val datesMap = HashMap<String, Any>()
     datesMap["dataCreateAcc"] = this.dates.dataCreateAcc
@@ -385,7 +388,7 @@ fun ProfileRemote.toHashMap(): Map<String, Any> {
     datesMap["datePremium"] = this.dates.datePremium
     datesMap["dateBanned"] = this.dates.dateBanned
     result["dates"] = datesMap
-    
+
     // Qualification
     val qualificationMap = HashMap<String, Any>()
     qualificationMap["sponsor"] = this.qualification.sponsor
@@ -395,19 +398,19 @@ fun ProfileRemote.toHashMap(): Map<String, Any> {
     qualificationMap["admin"] = this.qualification.admin
     qualificationMap["developer"] = this.qualification.developer
     result["qualification"] = qualificationMap
-    
+
     // Life
     val lifeMap = HashMap<String, Any>()
     lifeMap["countLife"] = this.life.countLife
     lifeMap["countGoldLife"] = this.life.countGoldLife
     result["life"] = lifeMap
-    
+
     // Box
     val boxMap = HashMap<String, Any>()
     boxMap["countBox"] = this.box.countBox
     boxMap["timeLastOpenBox"] = this.box.timeLastOpenBox
     boxMap["countDayBox"] = this.box.countDayBox
     result["box"] = boxMap
-    
+
     return result
 }

@@ -18,7 +18,7 @@ interface ProfileDao {
     fun getProfileFlow(): Flow<ProfileEntity>
 
     @Query("SELECT * FROM profiles")
-    fun getProfile(): ProfileEntity
+    fun getProfile(): ProfileEntity?
 
     @Query("SELECT * FROM profiles WHERE tpovId LIKE :tpovId")
     fun getProfileByTpovId(tpovId: Int): ProfileEntity

@@ -10,7 +10,6 @@ import com.google.gson.Gson
 import com.tpov.common.Core.tpovId
 import com.tpov.common.data.database.StructureDataDao
 import com.tpov.common.data.database.StructureEditDataDao
-import com.tpov.common.data.manager.FirebaseRequestInterceptor.executeWithChecksSingleTask
 import com.tpov.common.data.model.local.StructureDataEntity
 import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.remote.StructureDataRemote
@@ -20,6 +19,9 @@ import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.repository.RepositoryStructure
 import com.tpov.common.presentation.model.PathStructure
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -35,7 +37,8 @@ open class RepositoryStructureImpl @Inject constructor(
     private val structureDataDao: StructureDataDao,
     private val structureEditDataDao: StructureEditDataDao,
     private val firestore: FirebaseFirestore,
-    private val context: Context
+    private val context: Context,
+    private val externalScope: CoroutineScope
 ) : RepositoryStructure {
 
     private val gson = Gson()
@@ -76,7 +79,7 @@ open class RepositoryStructureImpl @Inject constructor(
         }
 
         try {
-            executeWithChecksSingleTask(pushTask).await()
+            pushTask().await()
         } catch (e: Exception) {
         }
     }
@@ -184,7 +187,7 @@ open class RepositoryStructureImpl @Inject constructor(
         }
 
         return try {
-            executeWithChecksSingleTask(fetchTask).await()
+            fetchTask().await()
         } catch (e: Exception) {
             Log.e("Firestore", "Failed to fetch data from Firestore", e)
             null
@@ -244,11 +247,11 @@ open class RepositoryStructureImpl @Inject constructor(
 
             taskCompletionSource.task
         }
-        executeWithChecksSingleTask(pushTask)
+        pushTask()
     }
 
     override suspend fun getEditStructure(): List<StructureEditData> {
-        TODO("Not yet implemented")
+        return structureEditDataDao.getAllStructureEditData()
     }
 
     override fun deleteLocalPictureStructure(namePicture: String) {
@@ -298,16 +301,14 @@ return null!!
             return
         }
 
-        executeWithChecksSingleTask {
-            storageRef.putFile(Uri.fromFile(localFile))
-                .addOnSuccessListener {
-                    println("Фотография загружена успешно: $namePicture")
-                }
-                .addOnFailureListener { exception ->
-                    println("Ошибка при загрузке фотографии: $namePicture")
-                    exception.printStackTrace()
-                }
-        }
+        storageRef.putFile(Uri.fromFile(localFile))
+            .addOnSuccessListener {
+                println("Фотография загружена успешно: $namePicture")
+            }
+            .addOnFailureListener { exception ->
+                println("Ошибка при загрузке фотографии: $namePicture")
+                exception.printStackTrace()
+            }
     }
 
     override fun fetchPictureStructure(namePicture: String) {
@@ -320,16 +321,14 @@ return null!!
             }
         }
 
-        executeWithChecksSingleTask {
-            storageRef.getFile(localFile)
-                .addOnSuccessListener {
-                    println("Фотография загружена успешно: $namePicture")
-                }
-                .addOnFailureListener { exception ->
-                    println("Ошибка при загрузке фотографии: $namePicture")
-                    exception.printStackTrace()
-                }
-        }
+        storageRef.getFile(localFile)
+            .addOnSuccessListener {
+                println("Фотография загружена успешно: $namePicture")
+            }
+            .addOnFailureListener { exception ->
+                println("Ошибка при загрузке фотографии: $namePicture")
+                exception.printStackTrace()
+            }
     }
 
     override fun fetchPictureStructure(path: PathStructure) {
@@ -338,7 +337,10 @@ return null!!
 
 
     override fun clearStructureEdit() {
-        TODO("Not yet implemented")
+        // Clear StructureEditData from local database
+        externalScope.launch(Dispatchers.IO) {
+            structureEditDataDao.clearAllStructureEditData()
+        }
     }
 
     override suspend fun getStructureEventData(

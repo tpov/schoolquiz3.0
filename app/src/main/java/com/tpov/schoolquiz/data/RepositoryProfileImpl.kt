@@ -1,12 +1,15 @@
 package com.tpov.schoolquiz.data
 
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.common.data.manager.FirebaseRequestInterceptor
+import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.common.data.model.NewProfileIds
 import com.tpov.schoolquiz.data.database.ProfileDao
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.fierbase.ProfileRemote
 import com.tpov.schoolquiz.data.fierbase.fromHashMap
+import com.tpov.schoolquiz.data.fierbase.toHashMap
 import com.tpov.schoolquiz.domain.repository.RepositoryProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
@@ -15,18 +18,18 @@ import javax.inject.Inject
 class RepositoryProfileImpl @Inject constructor(
     private val profileDao: ProfileDao,
     private val firestore: FirebaseFirestore,
+    private val firebaseFunctions: FirebaseFunctions
 ) : RepositoryProfile {
+    private val baseCollection = firestore.collection("profiles")
+
     override suspend fun getProfileFlow(): Flow<ProfileEntity?>? {
         return profileDao.getProfileFlow()
     }
 
     override suspend fun fetchProfile(tpovId: Int): ProfileRemote? {
-        val profilesRef = firestore.collection("profiles")
-Log.d("FirebaseRequestInterceptor", "fetchProfile $tpovId")
+        Log.d("FirebaseStorage", "fetchProfile $tpovId")
         return try {
-            val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                profilesRef.document(tpovId.toString()).get()
-            }.await()
+            val task = baseCollection.document(tpovId.toString()).get().await()
 
             if (task.exists()) {
                 val profileData = task.data
@@ -40,106 +43,75 @@ Log.d("FirebaseRequestInterceptor", "fetchProfile $tpovId")
         }
     }
 
-
     override suspend fun pushProfile(profileRemote: ProfileRemote) {
-        val profilesRef = firestore.collection("profiles")
-
-        Log.d("FirebaseRequestInterceptor", "pushProfile")
+        Log.d("FirebaseStorage", "pushProfile")
         try {
-            // Создаем HashMap для Firestore
-            val data = HashMap<String, Any>()
-            
-            // Basic
-            val basicMap = HashMap<String, Any>()
-            basicMap["tpovId"] = profileRemote.basic.tpovId
-            basicMap["login"] = profileRemote.basic.login
-            basicMap["name"] = profileRemote.basic.name
-            basicMap["nickname"] = profileRemote.basic.nickname
-            basicMap["birthday"] = profileRemote.basic.birthday
-            basicMap["city"] = profileRemote.basic.city
-            basicMap["languages"] = profileRemote.basic.languages
-            basicMap["comander"] = profileRemote.basic.comander
-            basicMap["logo"] = profileRemote.basic.logo
-            data["basic"] = basicMap
-            
-            // Points
-            val pointsMap = HashMap<String, Any>()
-            pointsMap["gold"] = profileRemote.points.gold
-            pointsMap["skill"] = profileRemote.points.skill
-            pointsMap["nolics"] = profileRemote.points.nolics
-            pointsMap["trophy"] = profileRemote.points.trophy
-            pointsMap["friends"] = profileRemote.points.friends
-            data["points"] = pointsMap
-            
-            // Buy
-            val buyMap = HashMap<String, Any>()
-            buyMap["quizPlace"] = profileRemote.buy.quizPlace
-            buyMap["theme"] = profileRemote.buy.theme
-            buyMap["music"] = profileRemote.buy.music
-            buyMap["logo"] = profileRemote.buy.logo
-            data["buy"] = buyMap
-            
-            // TimeInGames
-            val timeInGamesMap = HashMap<String, Any>()
-            timeInGamesMap["timeInQuiz"] = profileRemote.timeInGames.timeInQuiz
-            timeInGamesMap["timeInChat"] = profileRemote.timeInGames.timeInChat
-            timeInGamesMap["smsPoints"] = profileRemote.timeInGames.smsPoints
-            timeInGamesMap["countQuestions"] = profileRemote.timeInGames.countQuestions ?: 0L
-            timeInGamesMap["countTrueQuestion"] = profileRemote.timeInGames.countTrueQuestion
-            timeInGamesMap["quizRating"] = profileRemote.timeInGames.quizRating
-            data["timeInGames"] = timeInGamesMap
-            
-            // AddPoints
-            val addPointsMap = HashMap<String, Any>()
-            addPointsMap["addGold"] = profileRemote.addPoints.addGold
-            addPointsMap["addSkill"] = profileRemote.addPoints.addSkill
-            addPointsMap["addNolics"] = profileRemote.addPoints.addNolics
-            addPointsMap["addTrophy"] = profileRemote.addPoints.addTrophy
-            addPointsMap["addMassage"] = profileRemote.addPoints.addMassage
-            data["addPoints"] = addPointsMap
-            
-            // Dates
-            val datesMap = HashMap<String, Any>()
-            datesMap["dataCreateAcc"] = profileRemote.dates.dataCreateAcc
-            datesMap["dateSynch"] = profileRemote.dates.dateSynch
-            datesMap["datePremium"] = profileRemote.dates.datePremium
-            datesMap["dateBanned"] = profileRemote.dates.dateBanned
-            data["dates"] = datesMap
-            
-            // Qualification
-            val qualificationMap = HashMap<String, Any>()
-            qualificationMap["sponsor"] = profileRemote.qualification.sponsor
-            qualificationMap["tester"] = profileRemote.qualification.tester
-            qualificationMap["translater"] = profileRemote.qualification.translater
-            qualificationMap["moderator"] = profileRemote.qualification.moderator
-            qualificationMap["admin"] = profileRemote.qualification.admin
-            qualificationMap["developer"] = profileRemote.qualification.developer
-            data["qualification"] = qualificationMap
-            
-            // Life
-            val lifeMap = HashMap<String, Any>()
-            lifeMap["countLife"] = profileRemote.life.countLife
-            lifeMap["countGoldLife"] = profileRemote.life.countGoldLife
-            data["life"] = lifeMap
-            
-            // Box
-            val boxMap = HashMap<String, Any>()
-            boxMap["countBox"] = profileRemote.box.countBox
-            boxMap["timeLastOpenBox"] = profileRemote.box.timeLastOpenBox
-            boxMap["countDayBox"] = profileRemote.box.countDayBox
-            data["box"] = boxMap
-            
-            FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                profilesRef.document(profileRemote.basic.tpovId.toString()).set(data)
-            }.await()
+            baseCollection.document(profileRemote.basic.tpovId.toString()).set(profileRemote.toHashMap()).await()
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushProfile", e)
         }
     }
 
-
-    override suspend fun getProfile(): ProfileEntity {
+    override suspend fun getProfile(): ProfileEntity? {
         return profileDao.getProfile()
+    }
+
+    override suspend fun getNewTpovId(): NewProfileIds {
+        // Добавляем анонимную аутентификацию перед вызовом функции
+        try {
+            val authResult = FirebaseAuth.getInstance().signInAnonymously().await()
+            Log.d("RepositoryProfileImpl", "Anonymous authentication successful: ${authResult.user?.uid}")
+        } catch (e: Exception) {
+            Log.e("RepositoryProfileImpl", "Anonymous authentication failed", e)
+            // Если анонимная аутентификация не удалась, возможно, стоит выбросить ошибку
+            // или вернуть специальный объект, указывающий на сбой.
+            // В данном случае, я просто логирую ошибку и продолжу попытку вызвать функцию.
+            // Если функция все еще требует аутентификации, она выбросит свою ошибку.
+        }
+
+        Log.d("RepositoryProfileImpl", "Calling Firebase Function to get new tpovId and unique hash from server")
+        return try {
+            // Вызываем вашу Firebase функцию generateNewTpovId
+            val result = firebaseFunctions
+                .getHttpsCallable("generateNewTpovId") // Укажите здесь точное имя вашей функции
+                .call()
+                .await()
+
+            // Ожидаем, что функция возвращает Map с ключами "tpovId" (Int) и "authUid" (String)
+            val data = result.data as? Map<String, Any>
+
+            if (data != null) {
+                val tpovIdAny = data["tpovId"]
+                val authUidAny = data["authUid"]
+
+                // Пробуем привести любое число к Long для tpovId
+                val newTpovId: Long? = when (tpovIdAny) {
+                    is Number -> tpovIdAny.toLong()
+                    else -> null
+                }
+                // authUid ожидаем как String
+                val authUid = authUidAny as? String
+
+                if (newTpovId != null && authUid != null) {
+                    val newIdInt = newTpovId.toInt()
+                    Log.d("RepositoryProfileImpl", "Received new tpovId: $newIdInt, authUid: $authUid")
+
+                    // Now returning both values as NewProfileIds object
+                    return NewProfileIds(newIdInt, authUid)
+                } else {
+                    // Добавляем в лог, что именно не удалось спарсить
+                    Log.e("RepositoryProfileImpl", "Firebase Function returned data in unexpected format: $data. Parsed: tpovId=$newTpovId, authUid=$authUid")
+                    throw IllegalStateException("Failed to get valid tpovId and authUid from Firebase Function")
+                }
+            } else {
+                Log.e("RepositoryProfileImpl", "Firebase Function did not return a Map")
+                throw IllegalStateException("Failed to get data from Firebase Function")
+            }
+        } catch (e: Exception) {
+            Log.e("RepositoryProfileImpl", "Error calling Firebase Function generateNewTpovId", e)
+            // Обработка ошибок вызова функции
+            throw e // Перебрасываем исключение
+        }
     }
 
     override suspend fun insertProfile(profile: ProfileEntity) {

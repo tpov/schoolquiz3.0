@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "9b4b02e85435cdfc94bb43b1f8f6c5e6",
+    "identityHash": "6268ccd4e18329f22d5363430c751bd0",
     "entities": [
       {
         "tableName": "question_detail_entity",
@@ -172,7 +172,7 @@
       },
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER NOT NULL, `login` TEXT, `name` TEXT NOT NULL, `nickname` TEXT, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `dateBanned` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `smsCount` INTEGER NOT NULL, `countAnswer` INTEGER NOT NULL, `countTrueAnswer` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `addMassage` TEXT NOT NULL, `dataCreateAcc` TEXT NOT NULL, `dateSynch` TEXT NOT NULL, `dateCloseApp` TEXT NOT NULL, `languages` TEXT NOT NULL, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT NOT NULL, `countDayBox` INTEGER NOT NULL, `launchCount` INTEGER NOT NULL, `standardLife` INTEGER NOT NULL, `standardHearts` INTEGER NOT NULL, `goldLife` INTEGER NOT NULL, `goldHearts` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER, `tpovId` INTEGER, `login` TEXT, `name` TEXT NOT NULL, `nickname` TEXT, `birthday` TEXT NOT NULL, `datePremium` TEXT NOT NULL, `dateBanned` TEXT NOT NULL, `trophy` TEXT NOT NULL, `friends` TEXT NOT NULL, `city` TEXT NOT NULL, `logo` INTEGER NOT NULL, `commander` INTEGER NOT NULL, `timeInGamesInQuiz` INTEGER NOT NULL, `timeInGamesInChat` INTEGER NOT NULL, `smsCount` INTEGER NOT NULL, `countAnswer` INTEGER NOT NULL, `countTrueAnswer` INTEGER NOT NULL, `timeInQuizRating` INTEGER NOT NULL, `pointsGold` INTEGER NOT NULL, `pointsSkill` INTEGER NOT NULL, `pointsNolics` INTEGER NOT NULL, `buyQuizPlace` INTEGER NOT NULL, `buyTheme` TEXT NOT NULL, `buyMusic` TEXT NOT NULL, `buyLogo` TEXT NOT NULL, `addPointsGold` INTEGER NOT NULL, `addPointsSkill` INTEGER NOT NULL, `addPointsNolics` INTEGER NOT NULL, `addTrophy` TEXT NOT NULL, `addMassage` TEXT NOT NULL, `dataCreateAcc` TEXT, `dateSynch` TEXT NOT NULL, `dateCloseApp` TEXT NOT NULL, `languages` TEXT, `status` INTEGER NOT NULL, `sponsor` INTEGER, `tester` INTEGER, `translater` INTEGER NOT NULL, `moderator` INTEGER NOT NULL, `admin` INTEGER NOT NULL, `developer` INTEGER NOT NULL, `countBox` INTEGER NOT NULL, `timeLastOpenBox` TEXT, `countDayBox` INTEGER NOT NULL, `launchCount` INTEGER NOT NULL, `standardLife` INTEGER NOT NULL, `standardHearts` INTEGER NOT NULL, `goldLife` INTEGER NOT NULL, `goldHearts` INTEGER NOT NULL, `authUid` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -184,7 +184,7 @@
             "fieldPath": "tpovId",
             "columnName": "tpovId",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "login",
@@ -364,7 +364,7 @@
             "fieldPath": "dataCreateAcc",
             "columnName": "dataCreateAcc",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "dateSynch",
@@ -382,6 +382,12 @@
             "fieldPath": "languages",
             "columnName": "languages",
             "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -430,7 +436,7 @@
             "fieldPath": "timeLastOpenBox",
             "columnName": "timeLastOpenBox",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "countDayBox",
@@ -467,6 +473,12 @@
             "columnName": "goldHearts",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "authUid",
+            "columnName": "authUid",
+            "affinity": "TEXT",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -482,7 +494,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9b4b02e85435cdfc94bb43b1f8f6c5e6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6268ccd4e18329f22d5363430c751bd0')"
     ]
   }
 }

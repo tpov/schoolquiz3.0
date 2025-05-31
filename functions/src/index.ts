@@ -76,6 +76,94 @@ export const editStructure = functions.https.onCall(async (data: StructureEditDa
   return { success: true, toPath };
 });
 
+export const generateNewTpovId = functions.https.onCall(async (data, context) => {
+  console.log('Function generateNewTpovId started.'); // Log at the very beginning
+
+  // Возвращаем проверку аутентификации
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'The function must be called while authenticated.'
+    );
+  }
+
+  const authUid = context.auth?.uid || null; // Handle potentially undefined context.auth
+  console.log(`authUid determined: ${authUid}`); // Log authUid
+
+  console.log('Attempting to get Firestore instance.'); // Log before getting db instance
+  const db = admin.firestore();
+  console.log('Firestore instance obtained.'); // Log after getting db instance
+
+  console.log('Attempting to define lastIdRef.'); // Log before defining lastIdRef
+  const lastIdRef = db.collection('variable').doc('lastId'); // Define lastIdRef here
+  console.log('lastIdRef defined.'); // Log after defining lastIdRef
+
+
+  // Check if the lastId document exists and create it with tpovId = 0 if not
+  console.log('Attempting to check/create initial lastId document.'); // Log before check/create block
+  try {
+    const lastIdDocInitial = await lastIdRef.get();
+    if (!lastIdDocInitial.exists) {
+      await lastIdRef.set({ tpovId: 0 });
+      console.log('Created initial variable/lastId document.');
+    } else {
+      console.log('Initial variable/lastId document already exists.');
+    }
+  } catch (error) {
+    console.error('Error checking or creating initial lastId document:', error);
+    // Optionally, re-throw the error or handle it appropriately
+    throw new functions.https.HttpsError('internal', 'Failed to initialize lastId document.', error);
+  }
+  console.log('Finished check/create initial lastId document.'); // Log after check/create block
+
+
+  console.log('Attempting to start Firestore transaction.'); // Log before starting transaction
+  return db.runTransaction(async (transaction) => {
+    console.log('Inside Firestore transaction block.'); // Log start of transaction within the block
+
+    const lastIdRef = db.collection('variable').doc('lastId'); // Redefine inside transaction for transaction context
+    console.log('Attempting to get lastId document within transaction.'); // Log before get
+    const lastIdDoc = await transaction.get(lastIdRef);
+    console.log(`Finished getting lastId document within transaction. Exists: ${lastIdDoc.exists}.`); // Log after get
+
+    let currentTpovId = 0;
+    if (lastIdDoc.exists) {
+      currentTpovId = lastIdDoc.data()?.tpovId || 0;
+    }
+
+    const newTpovId = currentTpovId + 1;
+    console.log(`Current tpovId: ${currentTpovId}, New tpovId: ${newTpovId}`); // Log ID values
+
+    // Update lastId
+    console.log('Attempting to set new tpovId in lastId document within transaction.'); // Log before set
+    transaction.set(lastIdRef, { tpovId: newTpovId });
+    console.log('Finished setting new tpovId in lastId document within transaction.'); // Log after set
+
+    // Create profile entry using authUid as document ID only if authUid is not null
+    if (authUid) {
+      const listTpovIdRef = db.collection('variable').doc('listTpovId').collection('tokens').doc(authUid);
+      console.log(`Attempting to set token document for authUid: ${authUid} within transaction.`); // Log before set token
+      transaction.set(listTpovIdRef, {
+        status: 1, // Assuming 1 is for anonymous/newly created
+        tpovId: newTpovId,
+      });
+      console.log(`Finished setting token document for authUid: ${authUid} within transaction.`); // Log after set token
+    } else {
+        console.log('authUid is null, skipping token document creation.'); // Log if skipping token creation
+    }
+
+    console.log('Transaction operations defined, returning from transaction block.'); // Log before returning from the async block
+    return { tpovId: newTpovId, authUid: authUid };
+  }).then(result => {
+    console.log('Transaction promise resolved. Transaction success:', result); // More specific success log
+    return result;
+  }).catch(error => {
+    console.error('Transaction promise rejected. Transaction failed:', error); // More specific failure log
+    console.error('Transaction failed with error details:', error.code, error.details); // Added more specific error logging
+    throw new functions.https.HttpsError('internal', 'Failed to generate new tpovId.', error);
+  });
+});
+
 // Вспомогательные функции
 function buildPath(idEvent: number, idCategory: number, idSubCategory: number, idSubsubCategory: number, idQuiz: number) {
   let path = `structures/structureData/event/${idEvent}`;

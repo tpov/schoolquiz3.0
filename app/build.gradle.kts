@@ -91,6 +91,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.15.1")
     kapt("com.github.bumptech.glide:compiler:4.15.1")
     implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
+    implementation("com.google.firebase:firebase-functions-ktx")
     implementation("androidx.test.ext:junit-ktx:1.2.1")
     implementation("androidx.test.espresso:espresso-core:3.6.1")
     kapt("jp.wasabeef:glide-transformations:4.3.0")

@@ -4,7 +4,6 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.Core.tpovId
 import com.tpov.common.data.database.QuestionDetailDao
-import com.tpov.common.data.manager.FirebaseRequestInterceptor
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.remote.QuestionDetailRemote
 import com.tpov.common.domain.repository.RepositoryQuestionDetail
@@ -20,27 +19,23 @@ class RepositoryQuestionDetailImpl @Inject constructor(
 
     private val baseCollection = firestore.collection("questionsDetail")
 
-    override suspend fun fetchQuestionDetails(
-        pathStructure: PathStructure
-    ): List<QuestionDetailEntity> {
-        Log.d("FirebaseRequestInterceptor", "fetchQuestionDetails")
+    override suspend fun fetchQuestionDetails(path: PathStructure): List<QuestionDetailEntity> {
+        Log.d("FirebaseStorage", "fetchQuestionDetails")
 
         val collectionReference = baseCollection
-            .document("questionDetail${pathStructure.nameEvent}")
+            .document("questionDetail${path.nameEvent}")
             .collection(
-                "${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_" +
-                        "${pathStructure.nameSubsubCategory}_${pathStructure.nameQuiz}"
+                "${path.nameCategory}_${path.nameSubCategory}_" +
+                        "${path.nameSubsubCategory}_${path.nameQuiz}"
             )
             .document("listTpovId")
             .collection(tpovId.toString())
 
         return try {
-            val task = FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                collectionReference.get()
-            }.await()
+            val task = collectionReference.get().await()
 
             task.documents.mapNotNull { it.toObject(QuestionDetailRemote::class.java)
-                ?.toQuestionDetailEntity(pathStructure) }
+                ?.toQuestionDetailEntity(path) }
         } catch (e: Exception) {
             Log.w("Firestore", "Error fetching question details", e)
             emptyList()
@@ -48,7 +43,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
     }
 
     override suspend fun pushQuestionDetails(questionDetailEntity: QuestionDetailEntity) {
-        Log.d("FirebaseRequestInterceptor", "pushQuestionDetail")
+        Log.d("FirebaseStorage", "pushQuestionDetail")
         val collectionReference = baseCollection
             .document("questionDetail${questionDetailEntity.event}")
             .collection(
@@ -59,9 +54,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
             .collection(tpovId.toString())
 
         try {
-            FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                collectionReference.add(questionDetailEntity.toQuestionDetailRemote())
-            }.await()
+            collectionReference.add(questionDetailEntity.toQuestionDetailRemote()).await()
 
             questionDetailDao.updateQuizDetail(questionDetailEntity.copy(synth = true))
         } catch (e: Exception) {
@@ -99,9 +92,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
 
             // Удаляем каждый документ
             documents.forEach { document ->
-                FirebaseRequestInterceptor.executeWithChecksSingleTask {
-                    document.reference.delete()
-                }.await()
+                document.reference.delete().await()
             }
         } catch (e: Exception) {
             Log.w("Firestore", "Error deleting question details", e)

@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.services
 
 import android.content.Context
+import android.util.Log
 import com.tpov.schoolquiz.data.fierbase.AddPoints
 import com.tpov.schoolquiz.data.fierbase.Box
 import com.tpov.schoolquiz.data.fierbase.Points
@@ -48,6 +49,7 @@ class ProfileInteractor @Inject constructor(
 
     suspend fun updateNick() {
         profileUseCase.getProfileFlow()?.first()?.let {
+            Log.d("fsdrfsf", it.toString())
             nicknameController.setNickname(it.nickname ?: "...", it.trophy)
         }
     }
@@ -88,7 +90,7 @@ class ProfileInteractor @Inject constructor(
 
     suspend fun updateDaysInGameForBox() {
         profileUseCase.getProfileFlow()?.first()?.let {
-            daysInGameController.setDaysInGame(Box(it.countBox.toLong(), it.timeLastOpenBox, it.countDayBox.toLong()))
+            daysInGameController.setDaysInGame(Box(it.countBox.toLong(), it.dateCloseApp, it.countDayBox.toLong()))
         }
     }
 

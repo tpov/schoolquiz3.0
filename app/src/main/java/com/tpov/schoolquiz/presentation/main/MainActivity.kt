@@ -106,6 +106,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         observeLife()
         observeAddPoints()
         observePremium()
+        observeNickname()
         observeDayInGameAndBox()
         observeTaskStatus()
     }
@@ -189,6 +190,11 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     private fun observePremium() = lifecycleScope.launch {
         viewModel.premiumState.collect {
             binding.tvCountPremiun.text = it
+        }
+    }
+    private fun observeNickname() = lifecycleScope.launch {
+        viewModel.nicknameState.collect {
+            binding.tvName.text = it
         }
     }
 
