@@ -20,16 +20,16 @@ import javax.inject.Singleton
 
 @Singleton
 class ProfileInteractor @Inject constructor(
-    private val context: Context,
+    private val context: Context? = null,
     private val profileUseCase: ProfileUseCase
 ) {
-    val livesController = LivesController(context)
-    val daysInGameController = DaysInGameController(context)
-    val pointsController = PointsController(context)
-    val addPointsController = AddPointsController(context)
-    val nicknameController = NicknameController(context)
-    val premiumController = PremiumController(context)
-    val taskController = TaskController(context)
+    val livesController = LivesController(context!!)
+    val daysInGameController = DaysInGameController(context!!)
+    val pointsController = PointsController(context!!)
+    val addPointsController = AddPointsController(context!!)
+    val nicknameController = NicknameController()
+    val premiumController = PremiumController(context!!)
+    val taskController = TaskController(context!!)
 
     suspend fun updateShowLife() {
         profileUseCase.getProfileFlow()?.first()?.let {

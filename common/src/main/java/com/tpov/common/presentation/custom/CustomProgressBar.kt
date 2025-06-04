@@ -87,7 +87,7 @@ class CustomProgressBar(context: Context?, attrs: AttributeSet?) : View(context,
                     EventQuiz.QUIZ_BY_USER.id -> noShowRating(rbEvaluation,bOk,bHelpTranslate,tvEvaluation)
 
                     EventQuiz.QUIZ_FOR_TESTER.id,
-                    EventQuiz.QUIZ_FOR_MODERATOR.id,
+                    EventQuiz.QUIZ_FOR_TRANSLATOR.id,
                     EventQuiz.QUIZ_FOR_ADMIN.id -> showRating(rbEvaluation, bOk, bHelpTranslate,tvEvaluation)
 
                     EventQuiz.QUIZ_ARENA.id,

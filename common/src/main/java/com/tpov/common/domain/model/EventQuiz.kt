@@ -6,7 +6,7 @@ enum class EventQuiz(val id: Int) {
     QUIZ_TOURNIRE(6),
     QUIZ_ARENA(5),
     QUIZ_FOR_ADMIN(4),
-    QUIZ_FOR_MODERATOR(3),
+    QUIZ_FOR_TRANSLATOR(3),
     QUIZ_FOR_TESTER(2),
     QUIZ_BY_USER(1);
 

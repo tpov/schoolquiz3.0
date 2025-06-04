@@ -34,25 +34,38 @@ class PreferencesManager(var context: Context) {
     fun getSettings(): SettingConfigModel {
         val defaultConfig = SettingConfigModel.defaultMiddle()
         return SettingConfigModel(
-            preferences.getInt("tpovId", 0),
+            preferences.getInt(context.getString(R.string.tpovId), 0),
             preferences.getString(context.getString(R.string.key_login), defaultConfig.login) ?: defaultConfig.login,
-            preferences.getString(context.getString(R.string.key_password), defaultConfig.password) ?: defaultConfig.password,
+            preferences.getString(context.getString(R.string.key_password), defaultConfig.password)
+                ?: defaultConfig.password,
             preferences.getString(context.getString(R.string.key_name), defaultConfig.name) ?: defaultConfig.name,
             preferences.getInt(context.getString(R.string.key_nickname_color), defaultConfig.nicknameColor),
-            preferences.getString(context.getString(R.string.key_nickname), defaultConfig.nickname) ?: defaultConfig.nickname,
-            preferences.getString(context.getString(R.string.key_birthday), defaultConfig.birthday) ?: defaultConfig.birthday,
+            preferences.getString(context.getString(R.string.key_nickname), defaultConfig.nickname)
+                ?: defaultConfig.nickname,
+            preferences.getString(context.getString(R.string.key_birthday), defaultConfig.birthday)
+                ?: defaultConfig.birthday,
             preferences.getString(context.getString(R.string.key_city), defaultConfig.city) ?: defaultConfig.city,
             preferences.getInt(context.getString(R.string.key_logo), defaultConfig.logo),
             preferences.getInt(context.getString(R.string.key_life), defaultConfig.life),
             preferences.getInt(context.getString(R.string.key_goldlife), defaultConfig.goldLife),
             preferences.getBoolean(context.getString(R.string.key_premium), defaultConfig.premium),
-            preferences.getString(context.getString(R.string.key_languages), defaultConfig.languages) ?: defaultConfig.languages,
-            preferences.getInt(context.getString(R.string.key_profile_sync_frequency), defaultConfig.profileSyncFrequency) ?: defaultConfig.profileSyncFrequency,
-            preferences.getInt(context.getString(R.string.key_quests_sync_frequency), defaultConfig.questsSyncFrequency) ?: defaultConfig.questsSyncFrequency,
+            preferences.getString(context.getString(R.string.key_languages), defaultConfig.languages)
+                ?: defaultConfig.languages,
+            preferences.getInt(
+                context.getString(R.string.key_profile_sync_frequency),
+                defaultConfig.profileSyncFrequency
+            ) ?: defaultConfig.profileSyncFrequency,
+            preferences.getInt(context.getString(R.string.key_quests_sync_frequency), defaultConfig.questsSyncFrequency)
+                ?: defaultConfig.questsSyncFrequency,
             preferences.getBoolean(context.getString(R.string.key_notifications), defaultConfig.notificationsEnabled),
-            preferences.getInt(context.getString(R.string.key_event_notifications_frequency), defaultConfig.eventNotificationsFrequency) ?: defaultConfig.eventNotificationsFrequency,
-            preferences.getString(context.getString(R.string.key_lessons_alarm_time), defaultConfig.lessonsAlarmTime) ?: defaultConfig.lessonsAlarmTime,
-            preferences.getStringSet(context.getString(R.string.key_lessons_alarm_days), defaultConfig.lessonsAlarmDays) ?: defaultConfig.lessonsAlarmDays
+            preferences.getInt(
+                context.getString(R.string.key_event_notifications_frequency),
+                defaultConfig.eventNotificationsFrequency
+            ) ?: defaultConfig.eventNotificationsFrequency,
+            preferences.getString(context.getString(R.string.key_lessons_alarm_time), defaultConfig.lessonsAlarmTime)
+                ?: defaultConfig.lessonsAlarmTime,
+            preferences.getStringSet(context.getString(R.string.key_lessons_alarm_days), defaultConfig.lessonsAlarmDays)
+                ?: defaultConfig.lessonsAlarmDays
         )
     }
 }

@@ -10,12 +10,14 @@ import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.tpov.common.domain.usecase.SettingConfigObject
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivitySplashScreenBinding
 import com.tpov.schoolquiz.presentation.AppWorkerFactory
 import com.tpov.schoolquiz.presentation.SyncWorker
 import com.tpov.schoolquiz.presentation.main.MainActivity
+import com.tpov.setting.data.PreferencesManager
 import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
@@ -36,6 +38,12 @@ class SplashScreen : AppCompatActivity() {
         (application as MainApp).applicationComponent.inject(this)
         startInitialSetupAndSyncAndObserve()
         createAnimation()
+
+        syncSettings()
+    }
+
+    private fun syncSettings() {
+        SettingConfigObject.updateSettings( PreferencesManager(this).getSettings() )
     }
 
     private fun View.setVisible(visible: Boolean) {
@@ -91,6 +99,7 @@ class SplashScreen : AppCompatActivity() {
             .observe(this) { workInfo ->
                 if (workInfo != null && workInfo.state.isFinished) {
                     //startMainActivity()
+
                 }
             }
     }

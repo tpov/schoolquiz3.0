@@ -46,7 +46,23 @@ class RepositoryProfileImpl @Inject constructor(
     override suspend fun pushProfile(profileRemote: ProfileRemote) {
         Log.d("FirebaseStorage", "pushProfile")
         try {
-            baseCollection.document(profileRemote.basic.tpovId.toString()).set(profileRemote.toHashMap()).await()
+            // Call the validateProfileUpdate function instead of directly updating
+            val result = firebaseFunctions
+                .getHttpsCallable("validateProfileUpdate")
+                .call(mapOf(
+                    "tpovId" to profileRemote.basic.tpovId,
+                    "profileData" to profileRemote.toHashMap(),
+                    "isServerUpdate" to false // По умолчанию считаем, что это клиентское обновление
+                ))
+                .await()
+
+            val data = result.data as? Map<*, *>
+            if (data != null && data["success"] == true) {
+                val suspiciousChanges = data["suspiciousChanges"] as? List<*>
+                if (suspiciousChanges?.isNotEmpty() == true) {
+                    Log.w("Firestore", "Suspicious changes detected: $suspiciousChanges")
+                }
+            }
         } catch (e: Exception) {
             Log.w("Firestore", "Error pushProfile", e)
         }
@@ -56,33 +72,35 @@ class RepositoryProfileImpl @Inject constructor(
         return profileDao.getProfile()
     }
 
-    override suspend fun getNewTpovId(): NewProfileIds {
+    override suspend fun getNewTpovId(): NewProfileIds? {
+        Log.d("RepositoryProfileImpl", "Starting getNewTpovId")
         // Добавляем анонимную аутентификацию перед вызовом функции
         try {
+            Log.d("RepositoryProfileImpl", "Attempting anonymous authentication")
             val authResult = FirebaseAuth.getInstance().signInAnonymously().await()
             Log.d("RepositoryProfileImpl", "Anonymous authentication successful: ${authResult.user?.uid}")
         } catch (e: Exception) {
             Log.e("RepositoryProfileImpl", "Anonymous authentication failed", e)
-            // Если анонимная аутентификация не удалась, возможно, стоит выбросить ошибку
-            // или вернуть специальный объект, указывающий на сбой.
-            // В данном случае, я просто логирую ошибку и продолжу попытку вызвать функцию.
-            // Если функция все еще требует аутентификации, она выбросит свою ошибку.
+            return null // Возвращаем null при ошибке аутентификации
         }
 
         Log.d("RepositoryProfileImpl", "Calling Firebase Function to get new tpovId and unique hash from server")
         return try {
             // Вызываем вашу Firebase функцию generateNewTpovId
-            val result = firebaseFunctions
-                .getHttpsCallable("generateNewTpovId") // Укажите здесь точное имя вашей функции
-                .call()
-                .await()
+            Log.d("RepositoryProfileImpl", "Getting HttpsCallable for generateNewTpovId")
+            val callable = firebaseFunctions.getHttpsCallable("generateNewTpovId")
+            Log.d("RepositoryProfileImpl", "Calling generateNewTpovId function")
+            val result = callable.call().await()
+            Log.d("RepositoryProfileImpl", "Function call completed, result: $result")
 
             // Ожидаем, что функция возвращает Map с ключами "tpovId" (Int) и "authUid" (String)
             val data = result.data as? Map<String, Any>
+            Log.d("RepositoryProfileImpl", "Parsed result data: $data")
 
             if (data != null) {
                 val tpovIdAny = data["tpovId"]
                 val authUidAny = data["authUid"]
+                Log.d("RepositoryProfileImpl", "Raw values - tpovId: $tpovIdAny, authUid: $authUidAny")
 
                 // Пробуем привести любое число к Long для tpovId
                 val newTpovId: Long? = when (tpovIdAny) {
@@ -94,23 +112,19 @@ class RepositoryProfileImpl @Inject constructor(
 
                 if (newTpovId != null && authUid != null) {
                     val newIdInt = newTpovId.toInt()
-                    Log.d("RepositoryProfileImpl", "Received new tpovId: $newIdInt, authUid: $authUid")
-
-                    // Now returning both values as NewProfileIds object
+                    Log.d("RepositoryProfileImpl", "Successfully parsed - new tpovId: $newIdInt, authUid: $authUid")
                     return NewProfileIds(newIdInt, authUid)
                 } else {
-                    // Добавляем в лог, что именно не удалось спарсить
-                    Log.e("RepositoryProfileImpl", "Firebase Function returned data in unexpected format: $data. Parsed: tpovId=$newTpovId, authUid=$authUid")
-                    throw IllegalStateException("Failed to get valid tpovId and authUid from Firebase Function")
+                    Log.e("RepositoryProfileImpl", "Failed to parse values - tpovId: $newTpovId, authUid: $authUid")
+                    return null
                 }
             } else {
                 Log.e("RepositoryProfileImpl", "Firebase Function did not return a Map")
-                throw IllegalStateException("Failed to get data from Firebase Function")
+                return null
             }
         } catch (e: Exception) {
             Log.e("RepositoryProfileImpl", "Error calling Firebase Function generateNewTpovId", e)
-            // Обработка ошибок вызова функции
-            throw e // Перебрасываем исключение
+            return null // Возвращаем null при любой ошибке
         }
     }
 

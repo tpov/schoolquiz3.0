@@ -1,6 +1,6 @@
 package com.tpov.common.presentation.utils
 
-import com.tpov.common.Core
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 
 class NamesUtils {
     fun getPathPicture(): String {
@@ -8,6 +8,6 @@ class NamesUtils {
         val randomString = (1..5)
             .map { chars.random() }
             .joinToString("")
-        return "${Core.tpovId}_$randomString.jpg"
+        return "${settingsConfig.tpovId}_$randomString.jpg"
     }
 }

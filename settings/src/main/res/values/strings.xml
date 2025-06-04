@@ -79,5 +79,6 @@
     <string name="summary_event_notifications_frequency">Выберите частоту уведомлений о событиях</string>
     <string name="summary_lessons_frequency_time">Выберите время занятий</string>
     <string name="summary_lessons_frequency_days">Выберите дни недели для занятий</string>
+    <string name="tpovId">tpovId</string>
 
 </resources>

@@ -1,17 +1,17 @@
 package com.tpov.schoolquiz.domain
 
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.tpov.common.data.model.ProfileStatus
-import com.tpov.common.presentation.utils.DateUtil
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.data.fierbase.ProfileRemote
 import com.tpov.schoolquiz.data.fierbase.toProfile
+import com.tpov.schoolquiz.domain.ProfileExtention.createAnonymousProfile
+import com.tpov.schoolquiz.domain.ProfileExtention.updateFromRemote
 import com.tpov.schoolquiz.domain.repository.RepositoryProfile
 import javax.inject.Inject
 
 class ProfileUseCase @Inject constructor(private val repositoryProfile: RepositoryProfile) {
-
-    private val TAG = "ProfileUseCase"
 
     suspend fun getProfileFlow() = repositoryProfile.getProfileFlow()
 
@@ -29,64 +29,32 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
     }
 
     suspend fun syncProfile() {
-        Log.d(TAG, "syncProfile: Starting sync")
+        val currentProfile = repositoryProfile.getProfile()
+        val isAuthenticated =
+            FirebaseAuth.getInstance().currentUser?.uid != null && repositoryProfile.getProfile()?.tpovId != null
+        val isOffline = currentProfile?.status == ProfileStatus.OFFLINE.statusCode
 
-        var newLocalProfile = if (repositoryProfile.getProfile() == null) {
-            Log.d(TAG, "syncProfile: Condition - getProfile() is null")
-            val newTpovId = repositoryProfile.getNewTpovId()
-            ProfileEntity().create(newTpovId)
-
-        } else if (repositoryProfile.getProfile()?.status == ProfileStatus.OFFLINE.statusCode) {
-            Log.d(TAG, "syncProfile: Condition - status is OFFLINE")
-            val newTpovId = repositoryProfile.getNewTpovId()
-
-            val newProfile = ProfileEntity().copy(
-                tpovId = newTpovId.tpovId,
-                nickname = "User${newTpovId.tpovId}",
-                status = ProfileStatus.ANONYMOUS.statusCode,
-                authUid = newTpovId.uniqueHash
-            )
-            newProfile
-        } else repositoryProfile.getProfile()!!
-
-        Log.d(TAG, "syncProfile: Initial newLocalProfile tpovId = ${newLocalProfile.tpovId}")
-
-        if (newLocalProfile.tpovId != null) {
-            Log.d(TAG, "syncProfile: Attempting to fetch remote profile for tpovId = ${newLocalProfile.tpovId}")
-            repositoryProfile.fetchProfile(newLocalProfile.tpovId!!)?.let { remoteProfile ->
-                Log.d(TAG, "syncProfile: Successfully fetched remote profile")
-                newLocalProfile = newLocalProfile.copy(
-                    nickname = remoteProfile.basic.nickname,
-                    addMassage = remoteProfile.addPoints.addMassage,
-                    addPointsGold = remoteProfile.addPoints.addGold.toInt(),
-                    addPointsNolics = remoteProfile.addPoints.addNolics.toInt(),
-                    addPointsSkill = remoteProfile.addPoints.addSkill.toInt(),
-                    addTrophy = remoteProfile.addPoints.addTrophy,
-
-                    admin = remoteProfile.qualification.admin.toInt(),
-                    developer = remoteProfile.qualification.developer.toInt(),
-                    sponsor = remoteProfile.qualification.sponsor.toInt(),
-                    tester = remoteProfile.qualification.tester.toInt(),
-                    moderator = remoteProfile.qualification.moderator.toInt(),
-                    translater = remoteProfile.qualification.translater.toInt(),
-
-                    dateBanned = remoteProfile.dates.dateBanned,
-                    datePremium = remoteProfile.dates.datePremium,
-                    dateSynch = DateUtil().getDateQuiz()
-                )
-                Log.d(TAG, "syncProfile: Updated newLocalProfile with remote data")
-
-            } ?: run {
-                Log.d(TAG, "syncProfile: Failed to fetch remote profile (returned null)")
+        var newLocalProfile = when {
+            currentProfile == null -> ProfileEntity().create(repositoryProfile.getNewTpovId())
+            isOffline || !isAuthenticated -> {
+                val newTpovId = repositoryProfile.getNewTpovId()
+                if (newTpovId != null) currentProfile.createAnonymousProfile(newTpovId)
+                else currentProfile
             }
-            repositoryProfile.pushProfile(newLocalProfile.toProfile())
-        } else {
-            Log.d(TAG, "syncProfile: Cannot fetch remote profile - tpovId is null")
+            else -> currentProfile
         }
 
-        Log.d(TAG, "syncProfile: Updating local profile in database")
-        repositoryProfile.insertProfile(newLocalProfile)
-        Log.d(TAG, "syncProfile: Finished sync")
-    }
+        if (isAuthenticated) {
+            Log.d("gdrfgdfrg", "isAuthenticated")
+            repositoryProfile.fetchProfile(newLocalProfile.tpovId ?: 0)?.let { remoteProfile ->
+                Log.d("gdrfgdfrg", "isAuthenticated")
+                newLocalProfile = newLocalProfile.updateFromRemote(remoteProfile)
+            }
 
+            repositoryProfile.pushProfile(newLocalProfile.toProfile())
+        }
+
+        repositoryProfile.insertProfile(newLocalProfile)
+
+    }
 }

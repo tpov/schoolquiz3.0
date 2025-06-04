@@ -14,7 +14,7 @@ interface RepositoryProfile {
 
     suspend fun getProfile(): ProfileEntity?
 
-    suspend fun getNewTpovId(): NewProfileIds
+    suspend fun getNewTpovId(): NewProfileIds?
 
     suspend fun insertProfile(profile: ProfileEntity)
 

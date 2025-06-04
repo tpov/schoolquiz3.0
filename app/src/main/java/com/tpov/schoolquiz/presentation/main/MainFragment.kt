@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tpov.common.UNKNOWN_VALUE
 import com.tpov.common.di.CommonComponent
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.presentation.model.PathStructure
@@ -75,7 +74,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
     @OptIn(InternalCoroutinesApi::class)
     private fun initGetData() {
-        event = arguments?.getString(QuizFragment.KEY_ID_EVENT, UNKNOWN_VALUE)?.let { EventQuiz.fromInput(it) }
+        event = arguments?.getInt(QuizFragment.KEY_ID_EVENT)?.let { EventQuiz.fromInput(it) }
     }
 
     companion object {

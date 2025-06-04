@@ -2,11 +2,11 @@ package com.tpov.common.data
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.common.Core.tpovId
 import com.tpov.common.data.database.QuestionDetailDao
 import com.tpov.common.data.model.local.QuestionDetailEntity
 import com.tpov.common.data.model.remote.QuestionDetailRemote
 import com.tpov.common.domain.repository.RepositoryQuestionDetail
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.model.PathStructure
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -29,7 +29,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
                         "${path.nameSubsubCategory}_${path.nameQuiz}"
             )
             .document("listTpovId")
-            .collection(tpovId.toString())
+            .collection(settingsConfig.tpovId.toString())
 
         return try {
             val task = collectionReference.get().await()
@@ -51,7 +51,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
                         "${questionDetailEntity.subsubCategory}_${questionDetailEntity.quiz}"
             )
             .document("listTpovId")
-            .collection(tpovId.toString())
+            .collection(settingsConfig.tpovId.toString())
 
         try {
             collectionReference.add(questionDetailEntity.toQuestionDetailRemote()).await()
@@ -86,7 +86,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
                             "${pathStructure.nameSubsubCategory}_${pathStructure.nameQuiz}"
                 )
                 .document("listTpovId")
-                .collection(tpovId.toString())
+                .collection(settingsConfig.tpovId.toString())
 
             val documents = collectionReference.get().await()
 

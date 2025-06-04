@@ -7,7 +7,6 @@ import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
-import com.tpov.common.Core.tpovId
 import com.tpov.common.data.database.StructureDataDao
 import com.tpov.common.data.database.StructureEditDataDao
 import com.tpov.common.data.model.local.StructureDataEntity
@@ -18,6 +17,7 @@ import com.tpov.common.data.model.remote.StructureInfoRemote
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.repository.RepositoryStructure
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.model.PathStructure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -96,7 +96,7 @@ open class RepositoryStructureImpl @Inject constructor(
         category: String
     ) {
         try {
-            val path = "quizzes/$tpovId/$category/structureData"
+            val path = "quizzes/${settingsConfig.tpovId}/$category/structureData"
             firestore.document(path).set(structureDataEntity).await()
         } catch (e: Exception) {
             throw e
@@ -105,7 +105,7 @@ open class RepositoryStructureImpl @Inject constructor(
 
     override suspend fun fetchStructureCategoryDataList(event: String): List<StructureDataLocal>? {
         if (event == EventQuiz.QUIZ_BY_USER.name) {
-            val basePath = "quizzes/$tpovId"
+            val basePath = "quizzes/${settingsConfig.tpovId}"
 
             return try {
                 val categories = firestore.collection(basePath)
@@ -170,7 +170,7 @@ open class RepositoryStructureImpl @Inject constructor(
             val taskCompletionSource = TaskCompletionSource<StructureInfoRemote?>()
 
             firestore.collection(fullPath)
-                .whereEqualTo("tpovIdUser", tpovId)
+                .whereEqualTo("tpovIdUser", settingsConfig.tpovId)
                 .limit(1)
                 .get()
                 .addOnSuccessListener { querySnapshot ->
@@ -269,7 +269,7 @@ open class RepositoryStructureImpl @Inject constructor(
         if (path.nameSubCategory != "") pathSegments.add("subCategory/${path.nameSubCategory}")
         if (path.nameSubsubCategory != "") pathSegments.add("subsubCategory/${path.nameSubsubCategory}")
         if (path.nameQuiz != "") pathSegments.add("quizzes/${path.nameQuiz}")
-        pathSegments.add("infoList/tpovIdList/$tpovId")
+        pathSegments.add("infoList/tpovIdList/${settingsConfig.tpovId}")
 
         val fullPath = pathSegments.joinToString("/")
 return null!!

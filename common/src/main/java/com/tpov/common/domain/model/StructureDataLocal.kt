@@ -1,10 +1,9 @@
 package com.tpov.common.domain.model
 
-import com.tpov.common.Core.tpovId
 import com.tpov.common.data.manager.Converters
 import com.tpov.common.data.model.local.StructureDataEntity
 import com.tpov.common.data.model.remote.StructureDataRemote
-import com.tpov.common.domain.usecase.SettingConfigObject
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.utils.DateUtil
 
 data class StructureDataLocal(
@@ -61,8 +60,8 @@ data class StructureDataLocal(
             starsAverageGlobal = 0,
             numHQ = numHardQuestion,
             numQ = numQuestion,
-            tpovIdCreator = tpovId,
-            nameCreator = SettingConfigObject.settingsConfig.name,
+            tpovIdCreator = settingsConfig.tpovId,
+            nameCreator = settingsConfig.name,
             tpovIdMaxStarsGlobal = 0,
             languages = lang,
             picture = picture,

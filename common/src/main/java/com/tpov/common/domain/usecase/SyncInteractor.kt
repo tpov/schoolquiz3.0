@@ -32,10 +32,10 @@ open class SyncInteractor @Inject constructor(
     private val questionDetailUseCase: QuestionDetailUseCase
 ) {
 
-    fun unlockStructureData() = settingServerDBUseCase.unlockStructureData()
-    fun lockStructureData() = settingServerDBUseCase.lockStructureData()
-    fun isLockServer() = settingServerDBUseCase.isLockServer()
-    fun rollbackStructureData() = settingLocalDBUseCase.rollbackStructureData()
+    fun unlockStructureData(event: EventQuiz) = settingServerDBUseCase.unlockStructureData(event)
+    fun lockStructureData(event: EventQuiz) = settingServerDBUseCase.lockStructureData(event)
+    fun isLockServer(event: EventQuiz) = settingServerDBUseCase.isLockServer(event)
+    fun rollbackStructureData(event: EventQuiz) = settingLocalDBUseCase.rollbackStructureData(event)
 
     suspend fun syncQuizes(eventQuiz: EventQuiz, exceptionInteractor: ExceptionInteractor): SyncStructureResult {
         val syncState = SyncState(eventQuiz)

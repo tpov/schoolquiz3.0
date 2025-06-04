@@ -18,13 +18,18 @@ import com.tpov.common.ExceptionInteractor
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.LockServerResult
 import com.tpov.common.domain.model.SyncStructureResult
+import com.tpov.common.domain.usecase.SettingConfigObject
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.SyncInteractor
 import com.tpov.schoolquiz.domain.ProfileUseCase
+import com.tpov.setting.data.PreferencesManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Provider
@@ -46,8 +51,9 @@ class SyncWorker @AssistedInject constructor(
     override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
         try {
 
-            syncQuizData()
             profileUseCase.syncProfile()
+            syncSettings()
+            syncQuizData()
 
             val outputData = Data.Builder()
                 .putBoolean(KEY_SYNC_SUCCESS, true)
@@ -61,12 +67,26 @@ class SyncWorker @AssistedInject constructor(
         }
     }
 
+    private fun syncSettings() {
+        runBlocking {
+            val profile = profileUseCase.getProfileFlow()?.first()
+            val prefManager = PreferencesManager(context)
+            SettingConfigObject.updateSettings(
+                prefManager.getSettings().copy(
+                    tpovId = profile?.tpovId ?: 0,
+                    nickname = profile?.nickname ?: "Nickname in server is not found"
+                )
+            )
+            prefManager.saveSettings(settingsConfig)
+        }
+    }
+
     private suspend fun syncQuizData() {
         for (event in EventQuiz.entries) {
 
             var lockResult: LockServerResult
             while (true) {
-                lockResult = syncInteractor.lockStructureData()
+                lockResult = syncInteractor.lockStructureData(event)
                 when (lockResult) {
                     is LockServerResult.Success -> break
                     is LockServerResult.AlreadyLocked -> {
@@ -82,18 +102,18 @@ class SyncWorker @AssistedInject constructor(
             if (result is SyncStructureResult.Success) {
                 try {
                     showNotification("Sync Complete", "Updated quizzes.", context)
-                    val unlockResult = syncInteractor.unlockStructureData()
+                    val unlockResult = syncInteractor.unlockStructureData(event)
 
                     if (unlockResult is LockServerResult.Error) {
-                        syncInteractor.rollbackStructureData()
+                        syncInteractor.rollbackStructureData(event)
                         return
                     }
                 } catch (e: Exception) {
-                    syncInteractor.rollbackStructureData()
+                    syncInteractor.rollbackStructureData(event)
                     return
                 }
             } else {
-                syncInteractor.rollbackStructureData()
+                syncInteractor.rollbackStructureData(event)
                 return
             }
         }

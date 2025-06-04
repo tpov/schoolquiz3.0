@@ -2,9 +2,9 @@ package com.tpov.common.data
 
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FirebaseFirestore
-import com.tpov.common.Core.tpovId
 import com.tpov.common.domain.model.LockServerResult
 import com.tpov.common.domain.repository.RepositorySettingLocal
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import javax.inject.Inject
 
 
@@ -23,13 +23,13 @@ class RepositorySettingLocalImpl @Inject constructor(
             val isOpen = lockData["isOpen"] as? Boolean ?: true
             val userId = (lockData["tpovIdUser"] as? Long)?.toInt() ?: 0
 
-            if (!isOpen && userId != tpovId) {
+            if (!isOpen && userId != settingsConfig.tpovId) {
                 return LockServerResult.AlreadyLocked
             }
 
             val updatedMap = mapOf(
                 "isOpen" to false,
-                "tpovIdUser" to tpovId
+                "tpovIdUser" to settingsConfig.tpovId
             )
 
             Tasks.await(configDoc.update(fieldStructureDataName, updatedMap))
@@ -48,7 +48,7 @@ class RepositorySettingLocalImpl @Inject constructor(
             val isOpen = lockData["isOpen"] as? Boolean ?: true
             val userId = (lockData["tpovIdUser"] as? Long)?.toInt() ?: 0
 
-            if (isOpen || userId != tpovId) {
+            if (isOpen || userId != settingsConfig.tpovId) {
                 return LockServerResult.Success
             }
 
@@ -74,7 +74,7 @@ class RepositorySettingLocalImpl @Inject constructor(
             val userId = (lockData["tpovIdUser"] as? Long)?.toInt() ?: 0
 
             if (isOpen) LockServerResult.Success
-            else if (userId == tpovId) LockServerResult.Success
+            else if (userId == settingsConfig.tpovId) LockServerResult.Success
             else LockServerResult.AlreadyLocked
 
         } catch (e: Exception) {

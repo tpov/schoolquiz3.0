@@ -1,10 +1,11 @@
 package com.tpov.common.domain.repository
 
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.LockServerResult
 
 interface RepositorySettingServer {
-    fun lockStructureData(): LockServerResult
-    fun unlockStructureData(): LockServerResult
+    fun lockStructureData(event: EventQuiz): LockServerResult
+    fun unlockStructureData(event: EventQuiz): LockServerResult
 
-    fun isLockServer(): LockServerResult
+    fun isLockServer(event: EventQuiz): LockServerResult
 }

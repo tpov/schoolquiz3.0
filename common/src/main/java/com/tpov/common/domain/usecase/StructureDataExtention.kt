@@ -1,6 +1,5 @@
 package com.tpov.common.domain.usecase
 
-import com.tpov.common.Core.tpovId
 import com.tpov.common.data.RepositoryStructureImpl
 import com.tpov.common.data.model.local.StructureInfoEntity
 import com.tpov.common.data.model.remote.StructureEditData
@@ -678,7 +677,7 @@ object StructureDataExtention {
                 null,
                 currentPath.copy(),
                 structureData.dataUpdateGlobal,
-                tpovId,
+                settingsConfig.tpovId,
                 structureData.ratingGlobal,
                 structureData.starsMaxGlobal,
                 structureData.starsAverageGlobal,
@@ -716,7 +715,7 @@ object StructureDataExtention {
                 null,
                 currentPath.copy(),
                 structureDataLocal.dataUpdateLocal,
-                tpovId,
+                settingsConfig.tpovId,
                 structureDataLocal.ratingLocal,
                 structureDataLocal.starsMaxLocal,
                 structureDataLocal.starsAverageLocal,
