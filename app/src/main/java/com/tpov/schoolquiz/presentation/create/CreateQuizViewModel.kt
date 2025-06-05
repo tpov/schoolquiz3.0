@@ -273,6 +273,7 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun onQuestionTextChanged(updatedTranslateQuestion: TranslateQuestion) {
+        Log.d("awdawd", "_questionList: before")
         val currentList = _questionList.value.toMutableList() ?: return
         val currentQuestionNumber = _currentQuestionNumber.value
 
@@ -297,14 +298,21 @@ class CreateQuizViewModel @Inject constructor(
     fun addTranslate() {
         val availableLanguages = settingsConfig.languages.split(SPLIT_BETWEEN_LANGUAGES)
         val currentLanguages = _currentQuestionTranslationsState.value.map { it.language }
+        val currentList = _questionList.value.toMutableList() ?: return
+        val currentQuestionNumber = _currentQuestionNumber.value
+
+        val question = currentList.find {
+            it.numQuestion == currentQuestionNumber
+        }
 
         // Находим первый доступный язык, которого еще нет в списке
         val newLanguage = languagesFullNames.firstOrNull { it !in currentLanguages } ?: return
 
         _questionList.value = questionList.value + QuestionEntity().copy(
-            numQuestion = currentQuestionNumber.value,
+            numQuestion = currentQuestionNumber,
             hardQuestion = typeQuestionCheckBoxState.value.getType(),
-            language = newLanguage
+            language = newLanguage,
+            nameAnswers = List((question?.nameAnswers?.split(SPLIT_BETWEEN_ANSWERS)?.size?.minus(1)) ?: 1) { "|" }.joinToString("")
         )
 
         updateQuestionsState()
