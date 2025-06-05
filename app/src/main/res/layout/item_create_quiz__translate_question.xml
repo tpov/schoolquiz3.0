@@ -12,10 +12,11 @@
         android:maxLines="3"
         android:textColor="@color/white" />
 
-    <Spinner
+    <com.tpov.schoolquiz.presentation.create.CustomSpinner
         android:id="@+id/sp_language_question"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/white" />
+        android:textColor="@color/white"
+        android:popupBackground="@color/spinner_dropdown_background" />
 
 </LinearLayout>

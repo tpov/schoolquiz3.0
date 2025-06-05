@@ -14,6 +14,7 @@ import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.LanguageUtils.languagesFullNames
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
 import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
@@ -298,7 +299,7 @@ class CreateQuizViewModel @Inject constructor(
         val currentLanguages = _currentQuestionTranslationsState.value.map { it.language }
 
         // Находим первый доступный язык, которого еще нет в списке
-        val newLanguage = availableLanguages.firstOrNull { it !in currentLanguages } ?: return
+        val newLanguage = languagesFullNames.firstOrNull { it !in currentLanguages } ?: return
 
         _questionList.value = questionList.value + QuestionEntity().copy(
             numQuestion = currentQuestionNumber.value,

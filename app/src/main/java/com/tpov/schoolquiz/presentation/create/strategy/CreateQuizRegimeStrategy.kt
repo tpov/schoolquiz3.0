@@ -36,7 +36,7 @@ class CreateQuizRegimeStrategy(
         stroceBottom = isUiState.Visible,
         bBeforeEditTranslate = TextUiState.Hidden,
         bAfterEditTranslate = TextUiState.Hidden,
-        typeQuestionCheckBoxState = CheckBoxUiState.Visible(true, text = "Hard"),
+        typeQuestionCheckBoxState = CheckBoxUiState.Visible(true),
         cancelButtonUiState = TextUiState.Visible(),
         addAnswerButtonUiState = TextUiState.Visible(),
         addTranslateButtonUiState = TextUiState.Visible(),

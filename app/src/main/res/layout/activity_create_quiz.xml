@@ -30,7 +30,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_upload" />
 
-    <Spinner
+    <com.tpov.schoolquiz.presentation.create.CustomSpinner
         android:id="@+id/sp_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -38,33 +38,30 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
-        android:textColor="@color/white"
         app:layout_constraintEnd_toStartOf="@+id/sp_sub_category"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
-    <Spinner
+    <com.tpov.schoolquiz.presentation.create.CustomSpinner
         android:id="@+id/sp_sub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
-        android:textColor="@color/white"
         app:layout_constraintEnd_toStartOf="@+id/sp_subsub_category"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_category"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
-    <Spinner
+    <com.tpov.schoolquiz.presentation.create.CustomSpinner
         android:id="@+id/sp_subsub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:layout_weight="1"
-        android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/sp_sub_category"
@@ -168,13 +165,12 @@
         app:layout_constraintTop_toBottomOf="@+id/rv_translate_questions"
         app:srcCompat="@drawable/ic_fullscreen" />
 
-    <Spinner
+    <com.tpov.schoolquiz.presentation.create.CustomSpinner
         android:id="@+id/sp_num_question"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
         android:text="Question 1/n"
-        android:textColor="@color/white"
         android:textSize="10sp"
         app:layout_constraintBottom_toBottomOf="@+id/imv_question"
         app:layout_constraintHorizontal_weight="1"

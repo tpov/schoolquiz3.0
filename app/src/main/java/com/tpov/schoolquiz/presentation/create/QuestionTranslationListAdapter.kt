@@ -3,13 +3,11 @@ package com.tpov.schoolquiz.presentation.create
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.EditText
-import android.widget.Spinner
-import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.tpov.common.presentation.utils.LanguageUtils.languagesFullNames
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.create.model.TranslateQuestion
 
@@ -31,32 +29,27 @@ class QuestionTranslationListAdapter(
     }
 
     class TranslationViewHolder(itemView: View, private val onQuestionTextChanged: (updatedTranslateQuestion: TranslateQuestion) -> Unit) : RecyclerView.ViewHolder(itemView) {
-        private val spLanguage: Spinner = itemView.findViewById(R.id.sp_language_question)
+        private val spLanguage: CustomSpinner = itemView.findViewById(R.id.sp_language_question)
         private val edtQuestionText: EditText = itemView.findViewById(R.id.tv_question_text)
 
         private var currentLanguage: String = ""
 
         init {
-            edtQuestionText.doAfterTextChanged { editable ->
-                val language = currentLanguage
-                val updatedQuestion = TranslateQuestion(language = language, question = editable.toString())
-                onQuestionTextChanged.invoke(updatedQuestion)
-            }
+            val languages = languagesFullNames.toList() // Add your languages here
+            spLanguage.setItems(languages)
         }
 
         fun bind(translateQuestion: TranslateQuestion) {
             currentLanguage = translateQuestion.language
-            
-            // Создаем адаптер для Spinner с одним элементом - текущим языком
-            val adapter = ArrayAdapter(
-                itemView.context,
-                android.R.layout.simple_spinner_item,
-                listOf(translateQuestion.language)
-            ).apply {
-                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+            // Устанавливаем текущий язык в спиннер
+            val languages = languagesFullNames.toList()
+            spLanguage.setItems(languages)
+            val index = languages.indexOf(translateQuestion.language)
+            if (index >= 0) {
+                spLanguage.setSelection(index)
             }
-            spLanguage.adapter = adapter
-            
+
             if (edtQuestionText.text.toString() != translateQuestion.question) {
                 edtQuestionText.setText(translateQuestion.question)
             }

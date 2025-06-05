@@ -6,8 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -81,29 +79,16 @@ class CreateQuizActivity : AppCompatActivity() {
     private fun setupListeners() {
          binding.bSave.setOnClickListener { viewModel.saveDataForCurrentRegime() }
 
-        binding.spCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-            }
+        binding.spCategory.setOnItemSelectedListener { selectedItem ->
+            // Ваш код обработки выбора
         }
 
-         binding.spSubCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-            }
+         binding.spSubCategory.setOnItemSelectedListener { selectedItem ->
+            // Ваш код обработки выбора
         }
 
-         binding.spSubsubCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-            }
+         binding.spSubsubCategory.setOnItemSelectedListener { selectedItem ->
+            // Ваш код обработки выбора
         }
 
         binding.bAddAnswer.setOnClickListener {
@@ -201,36 +186,29 @@ class CreateQuizActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.categorySpinnerUiState.collect { state ->
                     when (state) {
                         is SpinnerUiState.Hidden -> binding.spCategory.visibility = View.GONE
                         is SpinnerUiState.Visible -> {
                             binding.spCategory.visibility = View.VISIBLE
-                            val adapter =
-                                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, state.items ?: emptyList()) // Handle null items
-                            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                            binding.spCategory.adapter = adapter
-                            binding.spCategory.setSelection(state.selectedIndex ?: 0) // Handle null selectedIndex
+                            binding.spCategory.setItems(state.items ?: emptyList())
                             binding.spCategory.isEnabled = state.isEnabled
                         }
                     }
                 }
             }
         }
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.subCategorySpinnerUiState.collect { state ->
                     when (state) {
                         is SpinnerUiState.Hidden -> binding.spSubCategory.visibility = View.GONE
                         is SpinnerUiState.Visible -> {
                             binding.spSubCategory.visibility = View.VISIBLE
-                            val adapter =
-                                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, state.items ?: emptyList())
-                            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                            binding.spSubCategory.adapter = adapter
-                            binding.spSubCategory.setSelection(state.selectedIndex ?: 0)
+                            binding.spSubCategory.setItems(state.items ?: emptyList())
                             binding.spSubCategory.isEnabled = state.isEnabled
                         }
                     }
@@ -238,18 +216,14 @@ class CreateQuizActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.subsubCategorySpinnerUiState.collect { state ->
                     when (state) {
                         is SpinnerUiState.Hidden -> binding.spSubsubCategory.visibility = View.GONE
                         is SpinnerUiState.Visible -> {
                             binding.spSubsubCategory.visibility = View.VISIBLE
-                            val adapter =
-                                ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, state.items ?: emptyList())
-                            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                            binding.spSubsubCategory.adapter = adapter
-                            binding.spSubsubCategory.setSelection(state.selectedIndex ?: 0)
+                            binding.spSubsubCategory.setItems(state.items ?: emptyList())
                             binding.spSubsubCategory.isEnabled = state.isEnabled
                         }
                     }
@@ -298,7 +272,7 @@ class CreateQuizActivity : AppCompatActivity() {
                          is SpinnerUiState.Hidden -> binding.spNumQuestion.visibility = View.GONE
                         is SpinnerUiState.Visible -> {
                              binding.spNumQuestion.visibility = View.VISIBLE
-                             // Spinner items will be updated by observing viewModel.allQuestionsState
+                             binding.spNumQuestion.setItems(state.items ?: emptyList())
                              binding.spNumQuestion.isEnabled = state.isEnabled
                         }
                     }
@@ -460,15 +434,11 @@ class CreateQuizActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.questionList.collect { allQuestions ->
-                    // Update UI based on allQuestionsState (e.g., update question number spinner)
-                    // Example:
-                     val questionNumbers = allQuestions.indices.map { (it + 1).toString() }
-                     val adapter = ArrayAdapter(this@CreateQuizActivity, android.R.layout.simple_spinner_item, questionNumbers)
-                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                     binding.spNumQuestion.adapter = adapter
+                    val questionNumbers = allQuestions.indices.map { (it + 1).toString() }
+                    binding.spNumQuestion.setItems(questionNumbers)
                 }
             }
         }
@@ -478,7 +448,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 viewModel.currentQuestionNumber.collect { index ->
                     // Update UI based on the current question index
                      // Example: Select item in question number spinner
-                     if (index >= 0 && index < binding.spNumQuestion.count) {
+                     if (index >= 0 && index < binding.spNumQuestion.count()) {
                          binding.spNumQuestion.setSelection(index)
                      }
                 }

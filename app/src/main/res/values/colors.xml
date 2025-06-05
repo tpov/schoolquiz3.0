@@ -21,4 +21,13 @@
     <color name="back_main_green">#3CAF50</color>
     <color name="back_main_red">#F44336</color>
 
+    <color name="spinner_background">#1A237E</color>
+    <color name="spinner_dropdown_background">#424242</color>
+    <color name="spinner_selected_background">#303F9F</color>
+    <color name="spinner_selected_item">#4CAF50</color>
+
+    <color name="colorPrimary">#2196F3</color>
+    <color name="colorPrimaryDark">#1976D2</color>
+    <color name="colorAccent">#FF4081</color>
+
 </resources>
