@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create
+package com.tpov.schoolquiz.presentation.create.strategy
 
 sealed class CreateQuizUiState {
     object Loading : CreateQuizUiState()

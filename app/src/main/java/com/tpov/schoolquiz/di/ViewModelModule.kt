@@ -1,12 +1,15 @@
 package com.tpov.schoolquiz.di
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.common.presentation.utils.ViewModelFactory
+import com.tpov.schoolquiz.presentation.create.CreateQuizViewModel
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module
+import dagger.Provides
 import dagger.multibindings.IntoMap
 import kotlin.reflect.KClass
 
@@ -20,6 +23,18 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(MainViewModel::class)
     abstract fun bindMainViewModel(viewModel: MainViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(CreateQuizViewModel::class)
+    abstract fun bindCreateQuizViewModel(viewModel: CreateQuizViewModel): ViewModel
+
+    companion object {
+        @Provides
+        fun provideSavedStateHandle(): SavedStateHandle {
+            return SavedStateHandle()
+        }
+    }
 }
 
 @MustBeDocumented

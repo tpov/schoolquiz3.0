@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -47,14 +48,18 @@ class AnswerListAdapter(
             // Add TextWatchers to EditTexts
             answerEditTexts.forEachIndexed { index, editText ->
                 val textWatcher = editText.doAfterTextChanged { editable ->
-                    // Get the language from the bound item
-                    // Use the stored language
                     val language = currentLanguage
-                    // Collect current text from all EditTexts in this ViewHolder
-                    val currentTexts = answerEditTexts.map { it.text.toString() }.toMutableList()
 
-                    // Create the updated TranslateAnswer object
-                    val updatedTranslateAnswer = TranslateAnswer(currentTexts, language)
+                    // Collect all visible fields, including empty ones
+                    val visibleTexts = mutableListOf<String>()
+                    answerEditTexts.forEach { editText ->
+                        if (editText.isVisible) {
+                            visibleTexts.add(editText.text.toString())
+                        }
+                    }
+
+                    // Create the updated TranslateAnswer object with visible texts
+                    val updatedTranslateAnswer = TranslateAnswer(visibleTexts, language)
 
                     // Call the callback function with the updated object
                     onAnswerOptionsChanged.invoke(updatedTranslateAnswer)
@@ -77,36 +82,44 @@ class AnswerListAdapter(
                     val text = translateAnswer.listAnswer[index]
                     // Only update text if it's different to avoid unnecessary triggering of listeners
                     if (editText.text.toString() != text) {
-                         editText.setText(text)
+                        editText.setText(text)
                     }
                     editText.visibility = View.VISIBLE
-                    editText.isEnabled = true // Assuming enabled by default when visible
+                    editText.isEnabled = true
+
+                    // Set green text color for the first EditText
+                    if (index == 0) {
+                        editText.setTextColor(itemView.context.getColor(android.R.color.holo_green_dark))
+                    } else {
+                        editText.setTextColor(itemView.context.getColor(android.R.color.white))
+                    }
+
                 } else {
                     // Hide or clear EditText if there's no corresponding answer option
                     editText.visibility = View.GONE
                     editText.text.clear() // Clear text when hiding
-                    editText.isEnabled = false // Disable when hidden
+                    editText.isEnabled = false
                 }
             }
-             // Add listeners back after binding new data
+            // Add listeners back after binding new data
             addListeners()
         }
 
         // Helper function to remove TextWatchers
         private fun removeListeners() {
             answerEditTexts.forEachIndexed { index, editText ->
-                 if (index < textWatchers.size) {
-                      editText.removeTextChangedListener(textWatchers[index])
-                 }
+                if (index < textWatchers.size) {
+                    editText.removeTextChangedListener(textWatchers[index])
+                }
             }
         }
 
         // Helper function to add TextWatchers
         private fun addListeners() {
-             answerEditTexts.forEachIndexed { index, editText ->
-                 if (index < textWatchers.size) {
-                      editText.addTextChangedListener(textWatchers[index])
-                 }
+            answerEditTexts.forEachIndexed { index, editText ->
+                if (index < textWatchers.size) {
+                    editText.addTextChangedListener(textWatchers[index])
+                }
             }
         }
     }

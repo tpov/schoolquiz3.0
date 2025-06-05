@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -31,6 +32,8 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.core.NotificationHelper
+import com.tpov.schoolquiz.presentation.create.CreateQuizActivity
+import com.tpov.schoolquiz.presentation.create.CreateQuizViewModel
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CONTACT
@@ -94,6 +97,20 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         setupAnimations()
         val view = findViewById<View?>(R.id.menu_network)
         initUserguide(view)
+        initSetOnClickListeners()
+    }
+
+    private fun initSetOnClickListeners() {
+        binding.fabAddItem.setOnClickListener {
+            val intent = CreateQuizActivity.newIntent(
+                context = this,
+                regime = CreateQuizViewModel.REGIME_CREATE_QUIZ
+            ).apply {
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            startActivity(intent)
+        }
     }
 
     private fun initViewModel() {

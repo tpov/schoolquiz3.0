@@ -4,24 +4,26 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
-import com.tpov.schoolquiz.presentation.create.model.ContainerUiState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
 import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
 import com.tpov.schoolquiz.presentation.create.model.TextUiState
+import com.tpov.schoolquiz.presentation.create.model.isUiState
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -38,9 +40,7 @@ class CreateQuizActivity : AppCompatActivity() {
     private var currentRegime: Int = -1
     private var pathStructure: PathStructure? = null
 
-    private val viewModel: CreateQuizViewModel by viewModels {
-        viewModelFactory
-    }
+    private lateinit var viewModel: CreateQuizViewModel
 
     companion object {
         private const val EXTRA_REGIME = "extra_regime"
@@ -56,8 +56,12 @@ class CreateQuizActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        supportActionBar?.hide()
+        (application as? MainApp)?.applicationComponent?.inject(this)
         binding = ActivityCreateQuizBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        viewModel = ViewModelProvider(this, viewModelFactory)[CreateQuizViewModel::class.java]
 
         currentRegime = intent.getIntExtra("extra_regime", -1)
         pathStructure = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -131,19 +135,38 @@ class CreateQuizActivity : AppCompatActivity() {
     }
 
     private fun setupAnswersRecyclerView() {
-        // Setup RecyclerView for answers
-        // Example:
-        // answerListAdapter = AnswerListAdapter { updatedAnswer -> viewModel.onAnswerOptionsChanged(updatedAnswer) }
-        // binding.rvAnswers.layoutManager = LinearLayoutManager(this)
-        // binding.rvAnswers.adapter = answerListAdapter
+        val answersAdapter = AnswerListAdapter { updatedAnswer ->
+            viewModel.onAnswerOptionsChanged(updatedAnswer)
+        }
+
+        binding.rvTranslateAnswers.layoutManager = LinearLayoutManager(this)
+        binding.rvTranslateAnswers.adapter = answersAdapter
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.answerListState.collect { answersList ->
+                    answersAdapter.submitList(answersList)
+                }
+            }
+        }
     }
 
     private fun setupQuestionTranslationsRecyclerView() {
-        // Setup RecyclerView for question translations
-        // Example:
-        // questionTranslationListAdapter = QuestionTranslationListAdapter { updatedTranslation -> viewModel.onQuestionTextChanged(updatedTranslation) }
-        // binding.rvQuestionTranslations.layoutManager = LinearLayoutManager(this)
-        // binding.rvQuestionTranslations.adapter = questionTranslationListAdapter
+        val translationsAdapter = QuestionTranslationListAdapter { updatedQuestion ->
+            viewModel.onQuestionTextChanged(updatedQuestion)
+        }
+
+        binding.rvTranslateQuestions.layoutManager = LinearLayoutManager(this)
+        binding.rvTranslateQuestions.adapter = translationsAdapter
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.currentQuestionTranslationsState.collect { translationsList ->
+                    Log.d("drgsef", "translationsList: ${translationsList}")
+                    translationsAdapter.submitList(translationsList)
+                }
+            }
+        }
     }
 
 
@@ -397,8 +420,8 @@ class CreateQuizActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
                 viewModel.llCreateNewCategoryUiState.collect { state ->
                     binding.llCreateNewCategory.visibility = when (state) {
-                        ContainerUiState.Hidden -> View.GONE
-                        ContainerUiState.Visible -> View.VISIBLE
+                        isUiState.Hidden -> View.GONE
+                        isUiState.Visible -> View.VISIBLE
                     }
                 }
             }
@@ -408,8 +431,8 @@ class CreateQuizActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
                 viewModel.stroceTopUiState.collect { state ->
                      binding.stroceTop.visibility = when (state) {
-                        ContainerUiState.Hidden -> View.GONE
-                        ContainerUiState.Visible -> View.VISIBLE
+                        isUiState.Hidden -> View.GONE
+                        isUiState.Visible -> View.VISIBLE
                     }
                 }
             }
@@ -419,8 +442,8 @@ class CreateQuizActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
                 viewModel.stroceBottomUiState.collect { state ->
                     binding.stroceBottom.visibility = when (state) {
-                        ContainerUiState.Hidden -> View.GONE
-                        ContainerUiState.Visible -> View.VISIBLE
+                        isUiState.Hidden -> View.GONE
+                        isUiState.Visible -> View.VISIBLE
                     }
                 }
             }
@@ -439,16 +462,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
         lifecycleScope.launch { // Use lifecycleScope
             repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.currentQuestionTranslationsState.collect { translationsList ->
-                    // Update UI for question translations list
-                    // Example: Update RecyclerView adapter
-                }
-            }
-        }
-
-         lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.allQuestionsState.collect { allQuestions ->
+                viewModel.questionList.collect { allQuestions ->
                     // Update UI based on allQuestionsState (e.g., update question number spinner)
                     // Example:
                      val questionNumbers = allQuestions.indices.map { (it + 1).toString() }
@@ -461,7 +475,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
         lifecycleScope.launch { // Use lifecycleScope
             repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.currentQuestionIndexState.collect { index ->
+                viewModel.currentQuestionNumber.collect { index ->
                     // Update UI based on the current question index
                      // Example: Select item in question number spinner
                      if (index >= 0 && index < binding.spNumQuestion.count) {

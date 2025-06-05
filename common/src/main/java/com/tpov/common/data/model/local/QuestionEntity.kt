@@ -60,6 +60,9 @@ data class QuestionEntity(
         language = this.language
     )
 
+//    fun createEmptyQuestion() = QuestionEntity(
+//        numQuestion = 1
+//    )
     constructor() : this(
         id = null,
         numQuestion = 0,

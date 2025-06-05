@@ -1,23 +1,28 @@
 package com.tpov.schoolquiz.presentation.create
 
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.tpov.common.SPLIT_BETWEEN_ANSWERS
+import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
-import com.tpov.schoolquiz.presentation.create.model.ContainerUiState
-import com.tpov.schoolquiz.presentation.create.model.CreateQuizUiModelState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
+import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
 import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
 import com.tpov.schoolquiz.presentation.create.model.TextUiState
 import com.tpov.schoolquiz.presentation.create.model.TranslateAnswer
 import com.tpov.schoolquiz.presentation.create.model.TranslateQuestion
+import com.tpov.schoolquiz.presentation.create.model.getType
+import com.tpov.schoolquiz.presentation.create.model.isUiState
 import com.tpov.schoolquiz.presentation.create.strategy.CreateQuizRegimeStrategy
 import com.tpov.schoolquiz.presentation.create.strategy.EditArchiveQuizRegimeStrategy
 import com.tpov.schoolquiz.presentation.create.strategy.EditQuizRegimeStrategy
@@ -25,9 +30,10 @@ import com.tpov.schoolquiz.presentation.create.strategy.QuizRegimeStrategy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import javax.inject.Provider
 
-class CreateQuizViewModel constructor(
+class CreateQuizViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val structureUseCase: StructureUseCase,
     private val questionUseCase: QuestionUseCase
@@ -97,20 +103,20 @@ class CreateQuizViewModel constructor(
     private val _afterEditTranslateButtonUiState = MutableStateFlow<TextUiState>(TextUiState.Hidden) // Corrected name
     val afterEditTranslateButtonUiState: StateFlow<TextUiState> = _afterEditTranslateButtonUiState // Corrected name
 
-     private val _cancelButtonUiState = MutableStateFlow<TextUiState>(TextUiState.Hidden)
+    private val _cancelButtonUiState = MutableStateFlow<TextUiState>(TextUiState.Hidden)
     val cancelButtonUiState: StateFlow<TextUiState> = _cancelButtonUiState
 
     private val _typeQuestionCheckBoxState = MutableStateFlow<CheckBoxUiState>(CheckBoxUiState.Hidden)
     val typeQuestionCheckBoxState: StateFlow<CheckBoxUiState> = _typeQuestionCheckBoxState
 
-    private val _llCreateNewCategoryUiState = MutableStateFlow<ContainerUiState>(ContainerUiState.Hidden) // Added
-    val llCreateNewCategoryUiState: StateFlow<ContainerUiState> = _llCreateNewCategoryUiState // Added
+    private val _llCreateNewCategoryUiState = MutableStateFlow<isUiState>(isUiState.Hidden) // Added
+    val llCreateNewCategoryUiState: StateFlow<isUiState> = _llCreateNewCategoryUiState // Added
 
-    private val _stroceTopUiState = MutableStateFlow<ContainerUiState>(ContainerUiState.Hidden) // Added
-    val stroceTopUiState: StateFlow<ContainerUiState> = _stroceTopUiState // Added
+    private val _stroceTopUiState = MutableStateFlow<isUiState>(isUiState.Hidden) // Added
+    val stroceTopUiState: StateFlow<isUiState> = _stroceTopUiState // Added
 
-     private val _stroceBottomUiState = MutableStateFlow<ContainerUiState>(ContainerUiState.Hidden) // Added
-    val stroceBottomUiState: StateFlow<ContainerUiState> = _stroceBottomUiState // Added
+    private val _stroceBottomUiState = MutableStateFlow<isUiState>(isUiState.Hidden) // Added
+    val stroceBottomUiState: StateFlow<isUiState> = _stroceBottomUiState // Added
 
 
     // StateFlow for the list of answers (data list, not UI state wrapper)
@@ -121,13 +127,12 @@ class CreateQuizViewModel constructor(
     private val _currentQuestionTranslationsState = MutableStateFlow<List<TranslateQuestion>>(emptyList())
     val currentQuestionTranslationsState: StateFlow<List<TranslateQuestion>> = _currentQuestionTranslationsState
 
-    // StateFlow for the list of *all* main questions in the quiz
-    private val _allQuestionsState = MutableStateFlow<List<QuestionEntity>>(emptyList()) // Using QuestionEntity as the main question representation
-    val allQuestionsState: StateFlow<List<QuestionEntity>> = _allQuestionsState
+    private val _questionList = MutableStateFlow<List<QuestionEntity>>(emptyList())
+    val questionList: StateFlow<List<QuestionEntity>> = _questionList
 
     // StateFlow for the index of the currently selected main question
-    private val _currentQuestionIndexState = MutableStateFlow<Int>(0)
-    val currentQuestionIndexState: StateFlow<Int> = _currentQuestionIndexState
+    private val _currentQuestionNumber = MutableStateFlow<Int>(1)
+    val currentQuestionNumber: StateFlow<Int> = _currentQuestionNumber
 
     private lateinit var currentRegimeStrategy: QuizRegimeStrategy
 
@@ -149,34 +154,15 @@ class CreateQuizViewModel constructor(
         updateUiState(initialUiStateModel)
 
         viewModelScope.launch {
-            try {
-                val loadedUiStateModel = currentRegimeStrategy.loadData(pathStructure ?: PathStructure())
-                beforeQuestion = loadedUiStateModel.questionList ?: listOf()
-                updateUiState(loadedUiStateModel)
+            val loadedUiStateModel = currentRegimeStrategy.loadData(pathStructure ?: PathStructure())
+            beforeQuestion = loadedUiStateModel.questionList ?: listOf()
+            updateUiState(loadedUiStateModel)
 
-                val loadedAllQuestions: List<QuestionEntity> = emptyList()
-                _allQuestionsState.value = loadedAllQuestions
-
-                // Select the first question by default
-                if (loadedAllQuestions.isNotEmpty()) {
-
-                } else {
-                    _currentQuestionIndexState.value = -1
-                    _currentQuestionTranslationsState.value = emptyList()
-                    _answerListState.value = emptyList()
-                }
-
-            } catch (e: Exception) {
-                 _allQuestionsState.value = emptyList()
-                 _currentQuestionIndexState.value = -1
-                 _currentQuestionTranslationsState.value = emptyList()
-                 _answerListState.value = emptyList()
-            }
         }
     }
 
     // Private function to update all individual StateFlows based on the UI state model
-    private fun updateUiState(model: CreateQuizUiModelState) {
+    private fun updateUiState(model: QuizUiModelState) {
         // Use ?.let to update only if the corresponding field in the model is not null
         model.quizNameUiState?.let { _quizNameUiState.value = it }
         model.categorySpinnerUiState?.let { _categorySpinnerUiState.value = it }
@@ -185,6 +171,7 @@ class CreateQuizViewModel constructor(
         model.quizImageUiState?.let { _quizImageUiState.value = it }
         model.questionImageUiState?.let { _questionImageUiState.value = it }
         model.fullscreenButtonUiState?.let { _fullscreenButtonUiState.value = it }
+        model.questionNumberSpinnerUiState?.let { _questionNumberSpinnerUiState.value = it }
         model.saveQuizButtonUiState?.let { _saveQuizButtonUiState.value = it }
 
         // Update other individual StateFlows if present in CreateQuizUiModelState
@@ -193,80 +180,133 @@ class CreateQuizViewModel constructor(
         model.bBeforeEditTranslate?.let { _beforeEditTranslateButtonUiState.value = it }
         model.bAfterEditTranslate?.let { _afterEditTranslateButtonUiState.value = it }
         model.cancelButtonUiState?.let { _cancelButtonUiState.value = it }
-        model.typeQuestionCheckBoxState?.let { _typeQuestionCheckBoxState.value = it }
         model.llCreateNewCategory?.let { _llCreateNewCategoryUiState.value = it }
         model.stroceTop?.let { _stroceTopUiState.value = it }
         model.stroceBottom?.let { _stroceBottomUiState.value = it }
 
-        // Update spinner UI state based on questionListState size (will be handled by Activity observing allQuestionsState)
-        // model.questionNumberSpinnerUiState?.let { _questionNumberSpinnerUiState.value = it }
-    }
 
-    // --- Functions for handling user actions (for the list of answers) ---
-
-    // Function to add a new answer option to all languages of the *current* question
-    fun addAnswerOption() {
-        // Check if the answer options limit is reached
-        val currentAnswers = _answerListState.value
-        val currentAnswerOptionsCount = currentAnswers.firstOrNull()?.listAnswer?.size ?: 0
-
-        if (currentAnswerOptionsCount < MAX_ANSWER_OPTIONS_LIMIT) {
-            // Create a new list of TranslateAnswer with an added empty option
-            val updatedAnswers = currentAnswers.map { translateAnswer ->
-                // Create a new MutableList, add an empty string
-                val updatedListAnswer = translateAnswer.listAnswer.toMutableList()
-                updatedListAnswer.add("")
-                // Create a new copy of TranslateAnswer with the updated list
-                translateAnswer.copy(listAnswer = updatedListAnswer)
-            }
-            // Update the StateFlow of the answers list for the current question
-            _answerListState.value = updatedAnswers
-            // TODO: Reflect this change back in the _allQuestionsState for the current question
+        model.questionList?.let {
+            _questionList.value = it
+            updateQuestionsState(it)
         }
     }
 
-    // Function to update the list of answer options for a specific TranslateAnswer object of the *current* question
+    fun updateQuestionsState(
+        questionList: List<QuestionEntity> = this.questionList.value,
+        numQuestion: Int = currentQuestionNumber.value,
+        hardQuestion: Boolean = false
+    ) {
+
+        val currentQuestion = questionList.filter { it.hardQuestion == hardQuestion && it.numQuestion == numQuestion }
+        val currentQuestionTranslate: MutableList<TranslateQuestion> = mutableListOf()
+        val currentAnswerTranslate: MutableList<TranslateAnswer> = mutableListOf()
+
+        Log.d("drgsef", " 1: ${questionList}")
+        Log.d("drgsef", "size 2: ${currentQuestion.size}")
+        Log.d("drgsef", "hardQuestion: ${hardQuestion}")
+        Log.d("drgsef", "numQuestion flow: ${numQuestion}")
+        currentQuestion.forEach {
+            Log.d("drgsef", "it: ${it}")
+            currentQuestionTranslate.add(TranslateQuestion(it.nameQuestion, it.language))
+            currentAnswerTranslate.add(
+                TranslateAnswer(
+                    it.nameAnswers.split(SPLIT_BETWEEN_ANSWERS).toMutableList(),
+                    it.language
+                )
+            )
+        }
+
+        _typeQuestionCheckBoxState.value = CheckBoxUiState.Visible(hardQuestion)
+        _currentQuestionTranslationsState.value = currentQuestionTranslate
+        _answerListState.value = currentAnswerTranslate
+
+    }
+
+    // Function to add a new answer option to all languages of the *current* question
+    fun addAnswerOption() {
+        val currentList = _questionList.value.toMutableList() ?: return
+        val currentQuestionNumber = _currentQuestionNumber.value
+
+            // Находим все вопросы с текущим номером и типом
+            val questionsToUpdate = currentList.filter {
+                it.numQuestion == currentQuestionNumber &&
+                it.hardQuestion == typeQuestionCheckBoxState.value.getType()
+            }
+
+            questionsToUpdate.forEach { question ->
+                val index = currentList.indexOf(question)
+                if (index != -1) {
+                    currentList[index] = question.copy(
+                        nameAnswers = question.nameAnswers + SPLIT_BETWEEN_ANSWERS
+                    )
+                }
+
+            _questionList.value = currentList
+            updateQuestionsState()
+        }
+    }
+
     fun onAnswerOptionsChanged(updatedTranslateAnswer: TranslateAnswer) {
-        val currentAnswers = _answerListState.value.toMutableList()
-        val index = currentAnswers.indexOfFirst { it.language == updatedTranslateAnswer.language }
-        if (index != -1) {
-            currentAnswers[index] = updatedTranslateAnswer
-            _answerListState.value = currentAnswers.toList() // Update the StateFlow with the modified list
-             // TODO: Reflect this change back in the _allQuestionsState for the current question
+        val currentList = _questionList.value.toMutableList() ?: return
+        val currentQuestionNumber = _currentQuestionNumber.value
+
+        Log.d("drgsef", "updatedTranslateAnswer: ${updatedTranslateAnswer}")
+        Log.d("drgsef", "listAnswer: ${updatedTranslateAnswer.listAnswer.joinToString(SPLIT_BETWEEN_ANSWERS)}")
+
+        val questionIndex = currentList.indexOfFirst {
+            it.numQuestion == currentQuestionNumber &&
+                it.language == updatedTranslateAnswer.language
+        }
+
+        if (questionIndex != -1) {
+            currentList[questionIndex] = currentList[questionIndex].copy(
+                nameAnswers = updatedTranslateAnswer.listAnswer.joinToString(SPLIT_BETWEEN_ANSWERS),
+                language = updatedTranslateAnswer.language
+            )
+
+            if (updatedTranslateAnswer.listAnswer.size >= MAX_ANSWER_OPTIONS_LIMIT) _addAnswerButtonUiState.value = TextUiState.Visible(isEnabled = false)
+            else _addAnswerButtonUiState.value = TextUiState.Visible(isEnabled = true)
+
+            _questionList.value = currentList
         }
     }
 
     fun onQuestionTextChanged(updatedTranslateQuestion: TranslateQuestion) {
-        val currentTranslations = _currentQuestionTranslationsState.value.toMutableList()
-        val index = currentTranslations.indexOfFirst { it.language == updatedTranslateQuestion.language }
-        if (index != -1) {
-            currentTranslations[index] = updatedTranslateQuestion
-            _currentQuestionTranslationsState.value = currentTranslations.toList() // Update the StateFlow with the modified list
+        val currentList = _questionList.value.toMutableList() ?: return
+        val currentQuestionNumber = _currentQuestionNumber.value
+
+        val questionIndex = currentList.indexOfFirst {
+            it.numQuestion == currentQuestionNumber &&
+                it.language == updatedTranslateQuestion.language
         }
+
+        if (questionIndex != -1) {
+            currentList[questionIndex] = currentList[questionIndex].copy(
+                nameQuestion = updatedTranslateQuestion.question,
+                language = updatedTranslateQuestion.language
+            )
+
+            _questionList.value = currentList
+        }
+
+        Log.d("awdawd", "_questionList: ${_questionList.value}")
     }
 
     // Function to add a new translation (language) for the current question and answers
     fun addTranslate() {
-        // TODO: Determine the new language.
-        val newLanguage = "New Language" // Placeholder
+        val availableLanguages = settingsConfig.languages.split(SPLIT_BETWEEN_LANGUAGES)
+        val currentLanguages = _currentQuestionTranslationsState.value.map { it.language }
 
-        val currentQuestionTranslations = _currentQuestionTranslationsState.value.toMutableList()
-        val currentAnswers = _answerListState.value.toMutableList()
+        // Находим первый доступный язык, которого еще нет в списке
+        val newLanguage = availableLanguages.firstOrNull { it !in currentLanguages } ?: return
 
-        // Check if language already exists in either list
-        val languageExists = currentQuestionTranslations.any { it.language == newLanguage } ||
-                             currentAnswers.any { it.language == newLanguage }
+        _questionList.value = questionList.value + QuestionEntity().copy(
+            numQuestion = currentQuestionNumber.value,
+            hardQuestion = typeQuestionCheckBoxState.value.getType(),
+            language = newLanguage
+        )
 
-        if (!languageExists) {
-            currentQuestionTranslations.add(TranslateQuestion(language = newLanguage, question = ""))
-            _currentQuestionTranslationsState.value = currentQuestionTranslations.toList()
-
-            val numberOfAnswerOptions = currentAnswers.firstOrNull()?.listAnswer?.size ?: 0
-            val emptyAnswerOptions = MutableList(numberOfAnswerOptions) { "" }
-            currentAnswers.add(TranslateAnswer(language = newLanguage, listAnswer = emptyAnswerOptions))
-            _answerListState.value = currentAnswers.toList()
-
-        }
+        updateQuestionsState()
     }
 
     fun onQuestionTranslationsChanged(updatedTranslateQuestion: TranslateQuestion) {
@@ -274,7 +314,8 @@ class CreateQuizViewModel constructor(
         val index = currentTranslations.indexOfFirst { it.language == updatedTranslateQuestion.language }
         if (index != -1) {
             currentTranslations[index] = updatedTranslateQuestion
-            _currentQuestionTranslationsState.value = currentTranslations.toList() // Update the StateFlow with the modified list
+            _currentQuestionTranslationsState.value =
+                currentTranslations.toList() // Update the StateFlow with the modified list
         }
     }
 

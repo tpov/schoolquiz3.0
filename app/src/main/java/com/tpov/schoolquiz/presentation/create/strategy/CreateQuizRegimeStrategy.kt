@@ -1,17 +1,19 @@
 package com.tpov.schoolquiz.presentation.create.strategy
 
+import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
 import com.tpov.common.data.model.local.QuestionEntity
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
-import com.tpov.schoolquiz.presentation.create.model.ContainerUiState
-import com.tpov.schoolquiz.presentation.create.model.CreateQuizUiModelState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
+import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
 import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
 import com.tpov.schoolquiz.presentation.create.model.TextUiState
+import com.tpov.schoolquiz.presentation.create.model.isUiState
 
 
 class CreateQuizRegimeStrategy(
@@ -19,34 +21,32 @@ class CreateQuizRegimeStrategy(
     val questionUseCase: QuestionUseCase
 ) : QuizRegimeStrategy {
 
-    override fun setupUiState() = CreateQuizUiModelState(
+    override fun setupUiState() = QuizUiModelState(
         quizNameUiState = TextUiState.Visible(),
         quizImageUiState = ImageUiState.Visible(),
         categorySpinnerUiState = SpinnerUiState.Visible(),
         subCategorySpinnerUiState = SpinnerUiState.Visible(),
         subsubCategorySpinnerUiState = SpinnerUiState.Visible(),
 
-        llCreateNewCategory = ContainerUiState.Hidden,
-        stroceTop = ContainerUiState.Visible,
+        llCreateNewCategory = isUiState.Hidden,
+        stroceTop = isUiState.Visible,
         questionImageUiState = ImageUiState.Visible(),
         fullscreenButtonUiState = CheckBoxUiState.Visible(false),
         questionNumberSpinnerUiState = SpinnerUiState.Visible(),
-        stroceBottom = ContainerUiState.Visible,
+        stroceBottom = isUiState.Visible,
         bBeforeEditTranslate = TextUiState.Hidden,
         bAfterEditTranslate = TextUiState.Hidden,
-        typeQuestionCheckBoxState = CheckBoxUiState.Visible(true),
+        typeQuestionCheckBoxState = CheckBoxUiState.Visible(true, text = "Hard"),
         cancelButtonUiState = TextUiState.Visible(),
         addAnswerButtonUiState = TextUiState.Visible(),
         addTranslateButtonUiState = TextUiState.Visible(),
         addGapButtonUiState = TextUiState.Visible(),
-        saveQuizButtonUiState = TextUiState.Visible(),
+        saveQuizButtonUiState = TextUiState.Visible()
     )
 
-    override suspend fun loadData(pathStructure: PathStructure): CreateQuizUiModelState {
-        val homeQuizCategoryStructure =
-            structureUseCase.getStructureEventData(EventQuiz.fromInput(EventQuiz.QUIZ_HOME)!!)
-        val userQuizCategoryStructure =
-            structureUseCase.getStructureEventData(EventQuiz.fromInput(EventQuiz.QUIZ_BY_USER)!!)
+    override suspend fun loadData(pathStructure: PathStructure): QuizUiModelState {
+        val homeQuizCategoryStructure = structureUseCase.getStructureEventData(EventQuiz.QUIZ_HOME)
+        val userQuizCategoryStructure = structureUseCase.getStructureEventData(EventQuiz.QUIZ_BY_USER)
 
         val categoryList: MutableList<String> = mutableListOf()
         val subcategoryList: MutableList<String> = mutableListOf()
@@ -61,12 +61,18 @@ class CreateQuizRegimeStrategy(
             structure.children?.mapTo(subsubCategoryList) { it.nameItem }
         }
 
-        return CreateQuizUiModelState(
+        return QuizUiModelState(
             categorySpinnerUiState = SpinnerUiState.Visible(categoryList, 0),
             subCategorySpinnerUiState = SpinnerUiState.Visible(subcategoryList, 0),
             subsubCategorySpinnerUiState = SpinnerUiState.Visible(subsubCategoryList, 0),
+            questionList = listOf(QuestionEntity().copy(numQuestion = 1, language = settingsConfig.languages.split(
+                SPLIT_BETWEEN_LANGUAGES).first(), nameAnswers = "|"))
         )
     }
+
+    override fun fullscreen(isFullscreen: Boolean)  = QuizUiModelState(
+
+    )
 
     override suspend fun saveData(questionList: List<QuestionEntity>, structureList: List<StructureDataLocal>) {
 

@@ -31,6 +31,9 @@ class PreferencesManager(var context: Context) {
         }
     }
 
+    fun updateSettings() {
+
+    }
     fun getSettings(): SettingConfigModel {
         val defaultConfig = SettingConfigModel.defaultMiddle()
         return SettingConfigModel(

@@ -3,8 +3,9 @@ package com.tpov.schoolquiz.presentation.create
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.EditText
-import android.widget.TextView
+import android.widget.Spinner
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -20,7 +21,7 @@ class QuestionTranslationListAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TranslationViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_create_quiz__translate_question, parent, false) // Assuming a layout for question translations
+            .inflate(R.layout.item_create_quiz__translate_question, parent, false)
         return TranslationViewHolder(view, onQuestionTextChanged)
     }
 
@@ -30,14 +31,13 @@ class QuestionTranslationListAdapter(
     }
 
     class TranslationViewHolder(itemView: View, private val onQuestionTextChanged: (updatedTranslateQuestion: TranslateQuestion) -> Unit) : RecyclerView.ViewHolder(itemView) {
-        private val tvLanguage: TextView = itemView.findViewById(R.id.sp_language_question) // Assuming ID for language TextView
-        private val edtQuestionText: EditText = itemView.findViewById(R.id.tv_question_text) // Assuming ID for question text EditText
+        private val spLanguage: Spinner = itemView.findViewById(R.id.sp_language_question)
+        private val edtQuestionText: EditText = itemView.findViewById(R.id.tv_question_text)
 
-        private var currentLanguage: String = "" // Keep track of the currently bound language
+        private var currentLanguage: String = ""
 
         init {
             edtQuestionText.doAfterTextChanged { editable ->
-                // Get the language from the bound item
                 val language = currentLanguage
                 val updatedQuestion = TranslateQuestion(language = language, question = editable.toString())
                 onQuestionTextChanged.invoke(updatedQuestion)
@@ -45,8 +45,18 @@ class QuestionTranslationListAdapter(
         }
 
         fun bind(translateQuestion: TranslateQuestion) {
-            currentLanguage = translateQuestion.language // Store the language
-            tvLanguage.text = translateQuestion.language
+            currentLanguage = translateQuestion.language
+            
+            // Создаем адаптер для Spinner с одним элементом - текущим языком
+            val adapter = ArrayAdapter(
+                itemView.context,
+                android.R.layout.simple_spinner_item,
+                listOf(translateQuestion.language)
+            ).apply {
+                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+            spLanguage.adapter = adapter
+            
             if (edtQuestionText.text.toString() != translateQuestion.question) {
                 edtQuestionText.setText(translateQuestion.question)
             }
@@ -55,7 +65,7 @@ class QuestionTranslationListAdapter(
 
     private class TranslationDiffCallback : DiffUtil.ItemCallback<TranslateQuestion>() {
         override fun areItemsTheSame(oldItem: TranslateQuestion, newItem: TranslateQuestion): Boolean {
-            return oldItem.language == newItem.language // Assuming language is the unique identifier
+            return oldItem.language == newItem.language
         }
 
         override fun areContentsTheSame(oldItem: TranslateQuestion, newItem: TranslateQuestion): Boolean {

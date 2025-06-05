@@ -22,6 +22,7 @@ import com.tpov.common.domain.usecase.SettingConfigObject
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.SyncInteractor
 import com.tpov.schoolquiz.domain.ProfileUseCase
+import com.tpov.schoolquiz.presentation.services.ProfileInteractor
 import com.tpov.setting.data.PreferencesManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -40,6 +41,7 @@ class SyncWorker @AssistedInject constructor(
     private val syncInteractor: SyncInteractor,
     private val profileUseCase: ProfileUseCase,
     private val exceptionInteractor: ExceptionInteractor,
+    private val profileInteractor: ProfileInteractor,
     private val viewModelFactory: ViewModelProvider.Factory
 ) : CoroutineWorker(context, workerParams) {
     companion object {
@@ -67,6 +69,11 @@ class SyncWorker @AssistedInject constructor(
         }
     }
 
+    private suspend fun updateProfileView() {
+        profileInteractor.updateNick()
+        profileInteractor.addLoadingTask("sync profile", 50)
+    }
+
     private fun syncSettings() {
         runBlocking {
             val profile = profileUseCase.getProfileFlow()?.first()
@@ -74,7 +81,8 @@ class SyncWorker @AssistedInject constructor(
             SettingConfigObject.updateSettings(
                 prefManager.getSettings().copy(
                     tpovId = profile?.tpovId ?: 0,
-                    nickname = profile?.nickname ?: "Nickname in server is not found"
+                    nickname = profile?.nickname ?: "Nickname in server is not found",
+                    languages = profile?.languages ?: ""
                 )
             )
             prefManager.saveSettings(settingsConfig)

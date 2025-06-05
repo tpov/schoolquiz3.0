@@ -9,7 +9,6 @@ import com.tpov.schoolquiz.data.fierbase.ProfileRemote
 object ProfileExtention {
     fun ProfileEntity.createAnonymousProfile(tpovId: NewProfileIds): ProfileEntity {
         return this.copy(
-            id = tpovId.tpovId,
             tpovId = tpovId.tpovId,
             nickname = "User${tpovId.tpovId}",
             status = ProfileStatus.ANONYMOUS.statusCode,
@@ -41,7 +40,6 @@ object ProfileExtention {
             pointsGold = remoteProfile.points.gold.toInt(),
             trophy = remoteProfile.points.trophy,
             tpovId = remoteProfile.basic.tpovId.toInt(),
-                id = remoteProfile.basic.tpovId.toInt()
         )
     }
 

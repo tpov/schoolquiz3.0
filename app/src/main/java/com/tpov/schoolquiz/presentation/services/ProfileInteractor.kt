@@ -50,7 +50,7 @@ class ProfileInteractor @Inject constructor(
     suspend fun updateNick() {
         profileUseCase.getProfileFlow()?.first()?.let {
             Log.d("fsdrfsf", it.toString())
-            nicknameController.setNickname(it.nickname ?: "...", it.trophy)
+            nicknameController.setNickname(it.nickname ?: "Profile offline status", it.trophy)
         }
     }
 

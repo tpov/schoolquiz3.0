@@ -40,6 +40,10 @@ object LanguageUtils {
         return if (index != -1) languagesShortCodes[index] else languageFullName
     }
 
+    fun List<String>.sortByUserPriority(): List<String> {
+        return emptyList()
+    }
+
     val ratingNum = arrayOf(0, 1, 2, 3)
 
     val languagesWithCheckBox = listOf(
