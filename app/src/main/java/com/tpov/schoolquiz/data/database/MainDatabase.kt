@@ -6,8 +6,8 @@ import androidx.room.TypeConverters
 import com.tpov.common.data.database.QuestionDao
 import com.tpov.common.data.database.QuestionDetailDao
 import com.tpov.common.data.manager.Converters
-import com.tpov.common.data.model.local.QuestionDetailEntity
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionDetailEntity
+import com.tpov.common.data.model.entity.QuestionEntity
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 
 @Database(

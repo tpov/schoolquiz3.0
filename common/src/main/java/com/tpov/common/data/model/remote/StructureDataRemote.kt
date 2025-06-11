@@ -1,6 +1,6 @@
 package com.tpov.common.data.model.remote
 
-import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.data.model.local.StructureDataLocal
 
 data class StructureDataRemote(
     val id: Int? = null,

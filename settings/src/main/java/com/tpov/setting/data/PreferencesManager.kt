@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.tpov.common.data.model.SettingConfigModel
+import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import com.tpov.setting.R
 
 class PreferencesManager(var context: Context) {
@@ -20,7 +21,10 @@ class PreferencesManager(var context: Context) {
             putString(context.getString(R.string.key_birthday), config.birthday)
             putString(context.getString(R.string.key_city), config.city)
             putInt(context.getString(R.string.key_logo), config.logo)
-            putString(context.getString(R.string.key_languages), config.languages)
+            putString(
+                context.getString(R.string.key_languages),
+                config.languages.joinToString(",") { it.name }
+            )
             putInt(context.getString(R.string.key_profile_sync_frequency), config.profileSyncFrequency)
             putInt(context.getString(R.string.key_quests_sync_frequency), config.questsSyncFrequency)
             putBoolean(context.getString(R.string.key_notifications), config.notificationsEnabled)
@@ -52,9 +56,14 @@ class PreferencesManager(var context: Context) {
             preferences.getInt(context.getString(R.string.key_life), defaultConfig.life),
             preferences.getInt(context.getString(R.string.key_goldlife), defaultConfig.goldLife),
             preferences.getBoolean(context.getString(R.string.key_premium), defaultConfig.premium),
-            preferences.getString(context.getString(R.string.key_languages), defaultConfig.languages)
+            preferences.getString(context.getString(R.string.key_languages),
+                defaultConfig.languages.joinToString(",") { it.name }
+            )
+                ?.split(",")
+                ?.map { it.trim().toLanguageUtils() }
                 ?: defaultConfig.languages,
-            preferences.getInt(
+
+        preferences.getInt(
                 context.getString(R.string.key_profile_sync_frequency),
                 defaultConfig.profileSyncFrequency
             ) ?: defaultConfig.profileSyncFrequency,

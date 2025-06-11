@@ -3,18 +3,25 @@ package com.tpov.common.presentation
 import com.tpov.common.ExceptionHandler
 import com.tpov.common.ExceptionInteractor
 
-class PresentationExceptions(
+class QuestionScreenExceptions(
     beforeException: (String) -> Unit,
     afterException: () -> Unit,
     interactor: ExceptionInteractor
 ) : ExceptionHandler(
     beforeException, afterException , interactor
 ) {
-    inline fun <reified T> notFoundQuiz(): T =
-        handleException("notFoundQuiz") { interactor.notFoundQuiz() }
+
+    inline fun <reified T : Any> notFoundQuiz(): T {
+        return handleException("notFoundQuiz") { interactor.notFoundQuiz() }
+    }
+
+    inline fun <reified T : Any> notFoundEventQuiz(nameEvent: String): T {
+        return handleException("notFound event quiz: $nameEvent") { interactor.notFoundQuiz() }
+    }
 
     inline fun <reified T> notFoundInputData(): T =
         handleException("Input data not found") { interactor.notFoundInputData() }
+
     inline fun <reified T> notFoundPath(): T =
         handleException("Input data not found") { interactor.notFoundInputData() }
 
@@ -39,8 +46,11 @@ class PresentationExceptions(
             interactor.notFountQuestionByLanguageUser()
         }
 
+    inline fun <reified T> notFindQuestion(): T =
+        handleException("notFindQuestion") {
+            interactor.notFountQuestionByLanguageUser()
+        }
+
     inline fun <reified T> errorTranslate(): T =
         handleException("Error in translation") { }
-
-
 }

@@ -9,13 +9,13 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import com.tpov.common.data.database.StructureDataDao
 import com.tpov.common.data.database.StructureEditDataDao
-import com.tpov.common.data.model.local.StructureDataEntity
-import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.entity.StructureDataEntity
+import com.tpov.common.data.model.entity.StructureInfoEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.data.model.remote.StructureInfoRemote
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.repository.RepositoryStructure
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.model.PathStructure

@@ -8,12 +8,12 @@ import com.tpov.common.Core.tpovId
 import com.tpov.common.data.RepositoryQuestionDetailImpl
 import com.tpov.common.data.RepositoryQuestionImpl
 import com.tpov.common.data.RepositoryStructureImpl
-import com.tpov.common.data.model.local.QuestionDetailEntity
-import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.entity.QuestionDetailEntity
+import com.tpov.common.data.model.entity.QuestionEntity
+import com.tpov.common.data.model.entity.StructureInfoEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.model.ChangeVersionStructure
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.model.SyncState
 import com.tpov.common.domain.model.SyncStructureResult
 import com.tpov.common.domain.repository.RepositoryException

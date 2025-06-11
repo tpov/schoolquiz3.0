@@ -3,6 +3,7 @@ package com.tpov.common
 import com.tpov.common.domain.repository.RepositoryException
 import javax.inject.Inject
 
+
 class ExceptionInteractor @Inject constructor(
     private val repositoryException: RepositoryException
 ) {

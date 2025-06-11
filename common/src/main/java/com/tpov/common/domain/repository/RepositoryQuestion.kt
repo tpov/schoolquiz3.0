@@ -1,32 +1,33 @@
 package com.tpov.common.domain.repository
 
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.LanguageUtils
 
 interface RepositoryQuestion {
-    suspend fun getAllMustTrnslLangsPaidQuestions(): Set<String>
+    suspend fun getAllMustTrnslLangsPaidQuestions(): Set<LanguageUtils>
 
     suspend fun fetchQuestion(
         pathStructure: PathStructure,
-        language: String,
-    ): List<QuestionEntity>
+        language: List<LanguageUtils>,
+    ): List<QuestionLocal>
 
-    suspend fun getQuestionsByPath(path: PathStructure): List<QuestionEntity>
-    suspend fun saveQuestion(questionEntity: QuestionEntity)
+    suspend fun getQuestionsByPath(path: PathStructure): List<QuestionLocal>
+    suspend fun saveQuestion(questionEntity: QuestionLocal)
     suspend fun pushQuestion(
-        questionEntity: QuestionEntity,
+        questionLocal: QuestionLocal,
         isUpdate: Boolean = false
     )
 
-    suspend fun updateQuestion(questionEntity: QuestionEntity)
+    suspend fun updateQuestion(questionLocal: QuestionLocal)
     suspend fun deleteQuestionByPath(path: PathStructure)
     suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, typeId: Int)
 
-    suspend fun remoteLangsQuestions(questionEntity: QuestionEntity): List<String>
-    suspend fun getAllMustTrnslLangsFreeQuestions(): Set<String>
+    suspend fun remoteLangsQuestions(questionLocal: QuestionLocal): List<LanguageUtils>
+    suspend fun getAllMustTrnslLangsFreeQuestions(): Set<LanguageUtils>
     suspend fun pushQuestionForTranslate(
-        question: QuestionEntity,
+        questionLocal: QuestionLocal,
         usePaidTranslation: Boolean,
-        toLang: String,
+        toLang: LanguageUtils,
     )
 }

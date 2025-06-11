@@ -1,15 +1,16 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
+import com.tpov.common.data.model.local.QuestionLocal
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.log_api.logger.Logger
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
 import com.tpov.schoolquiz.domain.ProfileUseCase
@@ -128,44 +129,41 @@ class MainViewModel @Inject constructor(
     }
 
     suspend fun pushUserQuestions(
-        questionsEntity: ArrayList<QuestionEntity>,
+        questionLocalList: ArrayList<QuestionLocal>,
         pathStructure: PathStructure
     ) {
 
         maybePushQuestionForTranslate(
-            questionsEntity,
-            getContainsLang(questionsEntity),
+            questionLocalList,
+            getContainsLang(questionLocalList),
             pathStructure
         )
 
-        questionsEntity.forEach {
+        questionLocalList.forEach {
             pushQuestion(it)
         }
     }
 
-    private fun getContainsLang(questions: List<QuestionEntity>): String {
-        return "" //TODO
+    private fun getContainsLang(questions: List<QuestionLocal>): LanguageUtils {
+        return LanguageUtils.ENGLISH
     }
 
     fun maybePushQuestionForTranslate(
-        questionsEntity: ArrayList<QuestionEntity>,
-        mainLanguageQuiz: String,
+        questionLocalList: ArrayList<QuestionLocal>,
+        mainLanguageQuiz: LanguageUtils,
         structureEditData: PathStructure
     ) {
-        Log.e("Translation", "maybePushQuestionForTranslate()")
-        Log.e("Translation", "questionsEntity: $questionsEntity")
-        Log.e("Translation", "mainLanguageQuiz: $mainLanguageQuiz")
-        val mainQuestions = questionsEntity.filter { it.language == mainLanguageQuiz }
+        val mainQuestions = questionLocalList.filter { it.language == mainLanguageQuiz }
         mainQuestions.forEach { question ->
             viewModelScope.launch(Dispatchers.IO) {
-                val localLanguagesQuestions: Set<String> = questionsEntity.filter {
+                val localLanguagesQuestions: Set<LanguageUtils> = questionLocalList.filter {
                     it.hardQuestion == question.hardQuestion
                             && it.numQuestion == question.numQuestion
-                            && it.quiz == question.quiz
-                            && it.category == question.category
-                            && it.subCategory == question.subCategory
-                            && it.event == question.event
-                            && it.subsubCategory == question.subsubCategory
+                            && it.pathStructure.nameQuiz == question.pathStructure.nameQuiz
+                            && it.pathStructure.nameCategory == question.pathStructure.nameCategory
+                            && it.pathStructure.nameSubCategory == question.pathStructure.nameSubCategory
+                            && it.pathStructure.nameEvent == question.pathStructure.nameEvent
+                            && it.pathStructure.nameSubsubCategory == question.pathStructure.nameSubsubCategory
                 }.map { it.language }.toSet()
 
                 questionUseCase.pushQuestionForTranslate(
@@ -179,8 +177,8 @@ class MainViewModel @Inject constructor(
         profileUseCase.syncProfile()
     }
 
-    private suspend fun pushQuestion(questionEntity: QuestionEntity) {
-        questionUseCase.pushQuestion(questionEntity)
+    private suspend fun pushQuestion(questionLocal: QuestionLocal) {
+        questionUseCase.pushQuestion(questionLocal)
     }
 
     fun addTask(name: String, maxCount: Int = 100) {

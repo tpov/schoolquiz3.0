@@ -5,9 +5,9 @@ import android.content.res.Configuration
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.log_api.logger.Logger

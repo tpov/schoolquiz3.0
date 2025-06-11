@@ -1,6 +1,6 @@
 package com.tpov.common.data.model.remote
 
-import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.entity.StructureInfoEntity
 import com.tpov.common.presentation.model.PathStructure
 
 data class StructureInfoRemote(

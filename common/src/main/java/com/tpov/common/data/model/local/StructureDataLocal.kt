@@ -1,7 +1,7 @@
-package com.tpov.common.domain.model
+package com.tpov.common.data.model.local
 
 import com.tpov.common.data.manager.Converters
-import com.tpov.common.data.model.local.StructureDataEntity
+import com.tpov.common.data.model.entity.StructureDataEntity
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.utils.DateUtil

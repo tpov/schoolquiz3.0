@@ -1,6 +1,6 @@
 package com.tpov.schoolquiz.presentation.create.strategy
 
-import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.data.model.local.StructureDataLocal
 
 
 val inputStructureData = mutableListOf(

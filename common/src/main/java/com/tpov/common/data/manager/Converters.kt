@@ -3,7 +3,7 @@ package com.tpov.common.data.manager
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.tpov.common.data.model.local.StructureDataEntity
+import com.tpov.common.data.model.entity.StructureDataEntity
 
 class Converters {
     @TypeConverter

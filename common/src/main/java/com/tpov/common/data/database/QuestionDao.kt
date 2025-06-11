@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
 
 @Dao
 interface QuestionDao {

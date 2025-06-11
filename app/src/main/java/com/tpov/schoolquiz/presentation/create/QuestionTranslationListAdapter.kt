@@ -8,8 +8,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
-import com.tpov.common.presentation.utils.LanguageUtils.languagesFullNames
+import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.create.model.TranslateQuestion
 
@@ -34,25 +33,25 @@ class QuestionTranslationListAdapter(
         private val spLanguage: CustomSpinner = itemView.findViewById(R.id.sp_language_question)
         private val edtQuestionText: EditText = itemView.findViewById(R.id.tv_question_text)
 
-        private var currentLanguage: List<String> = listOf()
+        private var currentLanguage: LanguageUtils = LanguageUtils.ENGLISH
 
         init {
-            val languages = languagesFullNames.toList()
+            val languages =  LanguageUtils.entries.map { it.fullName }
             spLanguage.setItems(languages)
             edtQuestionText.doAfterTextChanged { text ->
                 val updatedQuestion = TranslateQuestion(
-                    language = currentLanguage.joinToString(SPLIT_BETWEEN_LANGUAGES),
-                    question = text.toString()
+                    question = text.toString(),
+                        language = currentLanguage,
                 )
                 onQuestionTextChanged(updatedQuestion)
             }
         }
 
         fun bind(translateQuestion: TranslateQuestion) {
-            currentLanguage = translateQuestion.language.split(SPLIT_BETWEEN_LANGUAGES)
+            currentLanguage = translateQuestion.language
 
-            spLanguage.setItems(currentLanguage)
-            val index = currentLanguage.indexOf(translateQuestion.language)
+            spLanguage.setItems(listOf( currentLanguage.fullName))
+            val index = LanguageUtils.entries.indexOf(translateQuestion.language)
             if (index >= 0) {
                 spLanguage.setSelection(index)
             }

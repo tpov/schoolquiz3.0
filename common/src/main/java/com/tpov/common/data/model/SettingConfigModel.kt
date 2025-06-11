@@ -1,5 +1,8 @@
 package com.tpov.common.data.model
 
+import com.tpov.common.presentation.utils.LanguageUtils
+import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
+
 data class SettingConfigModel(
     var tpovId: Int = 0,
     var login: String = "",
@@ -13,7 +16,7 @@ data class SettingConfigModel(
     var life: Int = 0,
     var goldLife: Int = 0,
     var premium: Boolean = false,
-    var languages: String = "",
+    var languages: List<LanguageUtils> = listOf( LanguageUtils.ENGLISH),
     var profileSyncFrequency: Int,
     var questsSyncFrequency: Int,
     var notificationsEnabled: Boolean = true,
@@ -52,7 +55,11 @@ data class SettingConfigModel(
                 city = map["city"] as? String ?: "",
                 premium = map["premium"] as? Boolean ?: false,
                 logo = (map["logo"] as? Long)?.toInt() ?: 0,
-                languages = map["languages"] as? String ?: "",
+                languages = (map["languages"] as? String)
+                    ?.split(",")
+                    ?.map { it.trim().toLanguageUtils() }
+                    ?: listOf(LanguageUtils.ENGLISH)
+                ,
                 profileSyncFrequency = map["profileSyncFrequency"] as? Int ?: 1,
                 questsSyncFrequency = map["questsSyncFrequency"] as? Int ?: 1,
                 notificationsEnabled = map["notificationsEnabled"] as? Boolean ?: true,

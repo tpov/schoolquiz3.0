@@ -1,4 +1,4 @@
-package com.tpov.common.data.model.local
+package com.tpov.common.data.model.entity
 
 import com.tpov.common.data.model.remote.StructureInfoRemote
 import com.tpov.common.presentation.model.PathStructure

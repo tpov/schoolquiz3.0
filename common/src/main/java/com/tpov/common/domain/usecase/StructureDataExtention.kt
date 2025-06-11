@@ -1,12 +1,12 @@
 package com.tpov.common.domain.usecase
 
 import com.tpov.common.data.RepositoryStructureImpl
-import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.entity.StructureInfoEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.domain.DomainExceptions
 import com.tpov.common.domain.model.ChangeVersionStructure
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.model.SyncStage
 import com.tpov.common.domain.model.SyncState
 import com.tpov.common.domain.model.SyncStructureResult
@@ -267,16 +267,8 @@ object StructureDataExtention {
                     if (!change.isCreate) questionUseCase.deleteQuestionByPath(pathLocal)
 
                     remoteQuestions.forEach {
-
                         runBlocking {
-                            questionUseCase.insertQuestion(
-                                it.copy(
-                                    category = pathLocal.nameCategory,
-                                    subsubCategory = pathLocal.nameSubsubCategory,
-                                    subCategory = pathLocal.nameSubCategory,
-                                    quiz = pathLocal.nameQuiz
-                                )
-                            )
+                            questionUseCase.insertQuestion(it.copy(pathStructure = pathLocal))
                         }
                     }
                 } catch (e: Exception) {
@@ -525,7 +517,7 @@ object StructureDataExtention {
                         }
 
                         questionDetailListLocal?.forEach { questionDetailLocal ->
-                            if (!questionDetailLocal.synth) questionDetailUseCase.pushQuestionDetail(
+                            if (!questionDetailLocal.sync) questionDetailUseCase.pushQuestionDetail(
                                 questionDetailLocal
                             )
                         }

@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.tpov.common.data.model.local.QuestionDetailEntity
+import com.tpov.common.data.model.entity.QuestionDetailEntity
 
 @Dao
 interface QuestionDetailDao {
@@ -18,16 +18,16 @@ interface QuestionDetailDao {
     @Query("SELECT * FROM question_detail_entity")
     fun getQuestionDetailList(): List<QuestionDetailEntity>
 
-    @Query("SELECT * FROM question_detail_entity WHERE quiz LIKE :nameQuiz")
+    @Query("SELECT * FROM question_detail_entity WHERE quizName LIKE :nameQuiz")
     fun getQuestionDetailListByNameQuiz(nameQuiz: String): List<QuestionDetailEntity>
 
     @Query("""
     SELECT * FROM question_detail_entity
-    WHERE event = :event
-      AND category = :category
-      AND subCategory = :subCategory
-      AND subsubCategory = :subsubCategory
-      AND quiz = :quiz
+    WHERE eventName = :event
+      AND categoryName = :category
+      AND subCategoryName = :subCategory
+      AND subsubCategoryName = :subsubCategory
+      AND quizName = :quiz
 """)
     suspend fun getQuestionDetailByPath(
         event: String,
@@ -42,11 +42,11 @@ interface QuestionDetailDao {
 
     @Query("""
     DELETE FROM question_detail_entity
-    WHERE event = :event
-      AND category = :category
-      AND subCategory = :subCategory
-      AND subsubCategory = :subsubCategory
-      AND quiz = :quiz
+    WHERE eventName = :event
+      AND categoryName = :category
+      AND subCategoryName = :subCategory
+      AND subsubCategoryName = :subsubCategory
+      AND quizName = :quiz
 """)
     fun deleteQuestionDetailByPath(
         event:String,
@@ -56,7 +56,7 @@ interface QuestionDetailDao {
         quiz:String
     )
 
-    @Query("DELETE FROM question_detail_entity WHERE quiz = :id AND synth = :synth")
+    @Query("DELETE FROM question_detail_entity WHERE quizName = :id AND synth = :synth")
     fun deleteQuestionDetailByPathAndSynth(id: Int, synth: Boolean = true)
 
     @Query("DELETE FROM question_detail_entity WHERE id IS :id")

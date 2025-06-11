@@ -17,6 +17,7 @@ import com.tpov.common.SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG
 import com.tpov.common.databinding.DialogTranslateBinding
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.utils.LanguageUtils
+import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -30,7 +31,7 @@ class TranslateDialog : DialogFragment() {
     @OptIn(InternalCoroutinesApi::class)
     private val viewModel: QuestionViewModel by activityViewModels()
 
-    private var newLanguage = "" //short
+    private var newLanguageCode = LanguageUtils.ENGLISH
     private var onTranslationComplete: ((String) -> Unit)? = null
 
     override fun onCreateView(
@@ -80,17 +81,17 @@ class TranslateDialog : DialogFragment() {
                         val findQuestionByThisNewLanguage =
                             viewModel.pathStructure?.let {
                                 viewModel.questionUseCase.getQuestionByPath(it).find {
-                                    it.language.split(SPLIT_BETWEEN_LVL_TRANSLATE_AND_LANG)[0] ==
-                                            newLanguage
+                                    it.language.code ==
+                                            newLanguageCode.code
                                             && it.numQuestion == question.numQuestion
                                             && it.hardQuestion == question.hardQuestion
                                 }
                             }
                         if (findQuestionByThisNewLanguage == null) {
-                            viewModel.translateANDAddQuestion(question, newLanguage)
+                            viewModel.translateANDAddQuestion(question, newLanguageCode)
                         }
                     }
-                    viewModel.getQuestionList(newLanguage)
+                    viewModel.getQuestionList(listOf( newLanguageCode))
                     dismiss()
                 } else firstQuestion = true
             }
@@ -99,17 +100,13 @@ class TranslateDialog : DialogFragment() {
 
     @OptIn(InternalCoroutinesApi::class)
     private fun initButtons(nameItem: String, mainLangQuiz: String) {
-        val selectLang = LanguageUtils.getLanguageFullName(
-            binding.spLanguages.selectedItem.toString()
-        )
-        val translateLang = settingsConfig.languages.firstOrNull()?.toString()?.let {
-            LanguageUtils.getLanguageFullName(it)
-        } ?: LanguageUtils.getLanguageFullName(Locale.getDefault().language)
+        val selectLang = binding.spLanguages.selectedItem.toString()
+        val translateLang = settingsConfig.languages.firstOrNull()?.toString()?.toLanguageUtils() ?: Locale.getDefault().language.toLanguageUtils()
         binding.bLoad.text = selectLang
-        binding.bTranslate.text = translateLang
+        binding.bTranslate.text = translateLang.fullName
         binding.bTranslate.setOnClickListener {
-            newLanguage = LanguageUtils.getLanguageShortCode(translateLang)
-            viewModel.getQuestionList(mainLangQuiz)
+            newLanguageCode = translateLang
+            viewModel.getQuestionList(listOf( mainLangQuiz.toLanguageUtils()))
         }
 
         binding.bCancel.setOnClickListener {
@@ -117,8 +114,8 @@ class TranslateDialog : DialogFragment() {
         }
 
         binding.bLoad.setOnClickListener {
-            newLanguage = LanguageUtils.getLanguageShortCode(binding.bLoad.text.toString())
-            viewModel.getQuestionList(newLanguage)
+            newLanguageCode = binding.bLoad.text.toString().toLanguageUtils()
+            viewModel.getQuestionList(listOf( newLanguageCode))
         }
     }
 

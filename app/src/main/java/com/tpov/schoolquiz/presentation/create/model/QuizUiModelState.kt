@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.presentation.create.model
 
 import android.net.Uri
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuestionLocal
 
 data class QuizUiModelState(
     val quizNameUiState: TextUiState? = null,
@@ -40,7 +40,7 @@ data class QuizUiModelState(
     val subCategoryList: List<String>? = null,
     val subsubCategoryList: List<String>? = null,
 
-    val questionList: List<QuestionEntity>? = listOf()
+    val questionList: List<QuestionLocal>? = listOf()
 )
 
 

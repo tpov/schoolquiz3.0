@@ -10,6 +10,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.presentation.create.model.TranslateAnswer
 
@@ -42,7 +43,7 @@ class AnswerListAdapter(
         // Keep track of TextWatchers to avoid adding duplicates
         private val textWatchers = mutableListOf<android.text.TextWatcher>()
 
-        private var currentLanguage: String = "" // Keep track of the currently bound language
+        private var currentLanguage: LanguageUtils = LanguageUtils.ENGLISH
 
         init {
             // Add TextWatchers to EditTexts
@@ -71,7 +72,7 @@ class AnswerListAdapter(
 
         fun bind(translateAnswer: TranslateAnswer) {
             currentLanguage = translateAnswer.language // Store the language
-            tvAnswerLanguage.text = translateAnswer.language
+            tvAnswerLanguage.text = translateAnswer.language.fullName
 
             // Remove existing listeners before binding new data
             removeListeners()

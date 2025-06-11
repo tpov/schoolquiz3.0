@@ -21,6 +21,7 @@ import com.tpov.common.domain.model.SyncStructureResult
 import com.tpov.common.domain.usecase.SettingConfigObject
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.SyncInteractor
+import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import com.tpov.schoolquiz.domain.ProfileUseCase
 import com.tpov.schoolquiz.presentation.services.ProfileInteractor
 import com.tpov.setting.data.PreferencesManager
@@ -82,7 +83,7 @@ class SyncWorker @AssistedInject constructor(
                 prefManager.getSettings().copy(
                     tpovId = profile?.tpovId ?: 0,
                     nickname = profile?.nickname ?: "Nickname in server is not found",
-                    languages = profile?.languages ?: ""
+                    languages = listOf((profile?.languages ?: "").toLanguageUtils())
                 )
             )
             prefManager.saveSettings(settingsConfig)

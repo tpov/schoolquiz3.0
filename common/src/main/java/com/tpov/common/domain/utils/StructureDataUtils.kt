@@ -1,11 +1,11 @@
 package com.tpov.common.domain.utils
 
-import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.entity.QuestionEntity
+import com.tpov.common.data.model.entity.StructureInfoEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.OldStructureResult
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.model.PathStructure
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties

@@ -14,7 +14,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
-import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.schoolquiz.R
 import java.io.File
 

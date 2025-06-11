@@ -1,5 +1,6 @@
 package com.tpov.common.domain.model
 
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.presentation.model.PathStructure
 
 data class OldStructureResult(

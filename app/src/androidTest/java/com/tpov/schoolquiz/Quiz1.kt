@@ -1,7 +1,7 @@
 /*
 package com.tpov.schoolquiz
 
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
 import com.tpov.common.data.model.local.StructureCategoryDataEntity
 
 object Quiz1 {

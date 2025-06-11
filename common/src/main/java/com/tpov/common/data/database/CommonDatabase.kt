@@ -4,9 +4,9 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.tpov.common.data.manager.Converters
-import com.tpov.common.data.model.local.QuestionDetailEntity
-import com.tpov.common.data.model.local.QuestionEntity
-import com.tpov.common.data.model.local.StructureDataEntity
+import com.tpov.common.data.model.entity.QuestionDetailEntity
+import com.tpov.common.data.model.entity.QuestionEntity
+import com.tpov.common.data.model.entity.StructureDataEntity
 import com.tpov.common.data.model.remote.StructureEditData
 
 @Database(

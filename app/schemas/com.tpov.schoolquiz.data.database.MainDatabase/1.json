@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6268ccd4e18329f22d5363430c751bd0",
+    "identityHash": "2cc109209999311cab6714d2c898fe64",
     "entities": [
       {
         "tableName": "question_detail_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `event` TEXT NOT NULL, `category` TEXT NOT NULL, `subCategory` TEXT NOT NULL, `subsubCategory` TEXT NOT NULL, `quiz` TEXT NOT NULL, `data` TEXT NOT NULL, `codeAnswer` TEXT, `hardQuiz` INTEGER NOT NULL, `synth` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `eventName` TEXT NOT NULL, `categoryName` TEXT NOT NULL, `subCategoryName` TEXT NOT NULL, `subsubCategoryName` TEXT NOT NULL, `quizName` TEXT NOT NULL, `data` TEXT NOT NULL, `codeAnswer` TEXT, `hardQuiz` INTEGER NOT NULL, `synth` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -15,32 +15,32 @@
             "notNull": false
           },
           {
-            "fieldPath": "event",
-            "columnName": "event",
+            "fieldPath": "eventName",
+            "columnName": "eventName",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "category",
-            "columnName": "category",
+            "fieldPath": "categoryName",
+            "columnName": "categoryName",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "subCategory",
-            "columnName": "subCategory",
+            "fieldPath": "subCategoryName",
+            "columnName": "subCategoryName",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "subsubCategory",
-            "columnName": "subsubCategory",
+            "fieldPath": "subsubCategoryName",
+            "columnName": "subsubCategoryName",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "quiz",
-            "columnName": "quiz",
+            "fieldPath": "quizName",
+            "columnName": "quizName",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -494,7 +494,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6268ccd4e18329f22d5363430c751bd0')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2cc109209999311cab6714d2c898fe64')"
     ]
   }
 }

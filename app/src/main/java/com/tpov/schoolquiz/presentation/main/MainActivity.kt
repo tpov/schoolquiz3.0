@@ -394,7 +394,6 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         val intent = QuestionActivity.newIntent(
             context = this,
             hardQuestion = hardQuestion,
-            languageUser = settingsConfig.languages,
             pathStructure = pathStructure,
             life = if (hardQuestion) settingsConfig.goldLife else settingsConfig.life
         )

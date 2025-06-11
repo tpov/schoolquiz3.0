@@ -1,9 +1,9 @@
-package com.tpov.common.data.model.local
+package com.tpov.common.data.model.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.tpov.common.data.manager.Converters
-import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.data.model.local.StructureDataLocal
 
 @Entity(tableName = "structure_data")
 data class StructureDataEntity(

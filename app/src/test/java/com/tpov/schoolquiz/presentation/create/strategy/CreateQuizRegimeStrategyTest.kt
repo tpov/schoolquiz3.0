@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.presentation.create.strategy
 
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import kotlinx.coroutines.runBlocking

@@ -3,7 +3,7 @@ package com.tpov.common.data
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.data.database.QuestionDetailDao
-import com.tpov.common.data.model.local.QuestionDetailEntity
+import com.tpov.common.data.model.local.QuestionDetailLocal
 import com.tpov.common.data.model.remote.QuestionDetailRemote
 import com.tpov.common.domain.repository.RepositoryQuestionDetail
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
@@ -19,14 +19,14 @@ class RepositoryQuestionDetailImpl @Inject constructor(
 
     private val baseCollection = firestore.collection("questionsDetail")
 
-    override suspend fun fetchQuestionDetails(path: PathStructure): List<QuestionDetailEntity> {
+    override suspend fun fetchQuestionDetails(path: PathStructure): List<QuestionDetailLocal> {
         Log.d("FirebaseStorage", "fetchQuestionDetails")
 
         val collectionReference = baseCollection
             .document("questionDetail${path.nameEvent}")
             .collection(
                 "${path.nameCategory}_${path.nameSubCategory}_" +
-                        "${path.nameSubsubCategory}_${path.nameQuiz}"
+                    "${path.nameSubsubCategory}_${path.nameQuiz}"
             )
             .document("listTpovId")
             .collection(settingsConfig.tpovId.toString())
@@ -34,43 +34,35 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         return try {
             val task = collectionReference.get().await()
 
-            task.documents.mapNotNull { it.toObject(QuestionDetailRemote::class.java)
-                ?.toQuestionDetailEntity(path) }
+            task.documents.mapNotNull {
+                it.toObject(QuestionDetailRemote::class.java)
+                    ?.toQuestionDetailEntity(path)?.toQuestionDetailLocal()
+            }
         } catch (e: Exception) {
             Log.w("Firestore", "Error fetching question details", e)
             emptyList()
         }
     }
 
-    override suspend fun pushQuestionDetails(questionDetailEntity: QuestionDetailEntity) {
-        Log.d("FirebaseStorage", "pushQuestionDetail")
-        val collectionReference = baseCollection
-            .document("questionDetail${questionDetailEntity.event}")
-            .collection(
-                "${questionDetailEntity.category}_${questionDetailEntity.subCategory}_" +
-                        "${questionDetailEntity.subsubCategory}_${questionDetailEntity.quiz}"
-            )
-            .document("listTpovId")
-            .collection(settingsConfig.tpovId.toString())
+    override suspend fun pushQuestionDetails(questionDetailLocal: QuestionDetailLocal) {
 
-        try {
-            collectionReference.add(questionDetailEntity.toQuestionDetailRemote()).await()
-
-            questionDetailDao.updateQuizDetail(questionDetailEntity.copy(synth = true))
-        } catch (e: Exception) {
-            Log.w("Firestore", "Error pushQuestionDetail", e)
-        }
     }
 
     override suspend fun getQuestionDetailByPath(pathStructure: PathStructure) =
-        questionDetailDao.getQuestionDetailByPath(pathStructure.nameEvent, pathStructure.nameCategory, pathStructure.nameSubCategory, pathStructure.nameSubsubCategory, pathStructure.nameQuiz)
+        questionDetailDao.getQuestionDetailByPath(
+            pathStructure.nameEvent,
+            pathStructure.nameCategory,
+            pathStructure.nameSubCategory,
+            pathStructure.nameSubsubCategory,
+            pathStructure.nameQuiz
+        ).map { it.toQuestionDetailLocal() }
 
-    override suspend fun saveQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
-        questionDetailDao.insertQuestionDetail(questionDetailEntity)
+    override suspend fun saveQuestionDetail(questionDetailLocal: QuestionDetailLocal) {
+        questionDetailDao.insertQuestionDetail(questionDetailLocal.toQuestionDetailEntity())
     }
 
-    override suspend fun updateQuestionDetail(questionDetailEntity: QuestionDetailEntity) {
-        questionDetailDao.updateQuizDetail(questionDetailEntity)
+    override suspend fun updateQuestionDetail(questionDetailLocal: QuestionDetailLocal) {
+        questionDetailDao.updateQuizDetail(questionDetailLocal.toQuestionDetailEntity())
     }
 
     override suspend fun deleteQuestionDetailById(id: Int) {
@@ -83,7 +75,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
                 .document("questionDetail${pathStructure.nameEvent}")
                 .collection(
                     "${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_" +
-                            "${pathStructure.nameSubsubCategory}_${pathStructure.nameQuiz}"
+                        "${pathStructure.nameSubsubCategory}_${pathStructure.nameQuiz}"
                 )
                 .document("listTpovId")
                 .collection(settingsConfig.tpovId.toString())

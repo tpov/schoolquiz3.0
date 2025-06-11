@@ -1,6 +1,7 @@
 package com.tpov.common.domain.model
 
-import com.tpov.common.data.model.local.StructureInfoEntity
+import com.tpov.common.data.model.entity.StructureInfoEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.presentation.model.PathStructure
 

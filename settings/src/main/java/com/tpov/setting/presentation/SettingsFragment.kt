@@ -11,6 +11,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.tpov.common.data.model.SettingConfigModel
+import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import com.tpov.setting.R
 import com.tpov.setting.data.PreferencesManager
 import com.tpov.setting.domain.SettingsDomain
@@ -42,7 +43,9 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
         findPreference<EditTextPreference>(getString(R.string.key_birthday))?.text = settings.birthday
         findPreference<EditTextPreference>(getString(R.string.key_city))?.text = settings.city
         findPreference<EditTextPreference>(getString(R.string.key_logo))?.text = settings.logo.toString()
-        findPreference<EditTextPreference>(getString(R.string.key_languages))?.text = settings.languages
+        findPreference<EditTextPreference>(getString(R.string.key_languages))?.text =
+            settings.languages.joinToString(",") { it.name } // или .code
+
         findPreference<ListPreference>(getString(R.string.key_profile_sync_frequency))?.value =
             settings.profileSyncFrequency.toString()
         findPreference<ListPreference>(getString(R.string.key_quests_sync_frequency))?.value =
@@ -108,7 +111,9 @@ internal class SettingsFragment : PreferenceFragmentCompat() {
             val city = findPreference<EditTextPreference>(getString(R.string.key_city))?.text ?: defaultConfig.city
             val logo = findPreference<EditTextPreference>(getString(R.string.key_logo))?.text?.toIntOrNull()
                 ?: defaultConfig.logo
-            val languages = findPreference<EditTextPreference>(getString(R.string.key_languages))?.text
+            val languages =     findPreference<EditTextPreference>(getString(R.string.key_languages))?.text
+                ?.split(",")
+                ?.map { it.trim().toLanguageUtils() }
                 ?: defaultConfig.languages
             val life = findPreference<EditTextPreference>(getString(R.string.key_life))?.text?.toIntOrNull()
                 ?: defaultConfig.life

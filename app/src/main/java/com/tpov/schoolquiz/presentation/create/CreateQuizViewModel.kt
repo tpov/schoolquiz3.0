@@ -8,13 +8,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.SPLIT_BETWEEN_ANSWERS
-import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
-import com.tpov.common.presentation.utils.LanguageUtils.languagesFullNames
+import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
 import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
@@ -128,8 +127,8 @@ class CreateQuizViewModel @Inject constructor(
     private val _currentQuestionTranslationsState = MutableStateFlow<List<TranslateQuestion>>(emptyList())
     val currentQuestionTranslationsState: StateFlow<List<TranslateQuestion>> = _currentQuestionTranslationsState
 
-    private val _questionList = MutableStateFlow<List<QuestionEntity>>(emptyList())
-    val questionList: StateFlow<List<QuestionEntity>> = _questionList
+    private val _questionList = MutableStateFlow<List<QuestionLocal>>(emptyList())
+    val questionList: StateFlow<List<QuestionLocal>> = _questionList
 
     // StateFlow for the index of the currently selected main question
     private val _currentQuestionNumber = MutableStateFlow<Int>(1)
@@ -137,8 +136,8 @@ class CreateQuizViewModel @Inject constructor(
 
     private lateinit var currentRegimeStrategy: QuizRegimeStrategy
 
-    private var beforeQuestion: List<QuestionEntity> = listOf()
-    private var afterQuestion: List<QuestionEntity> = listOf()
+    private var beforeQuestion: List<QuestionLocal> = listOf()
+    private var afterQuestion: List<QuestionLocal> = listOf()
 
     init {
         val currentRegime = savedStateHandle.get<Int>("extra_regime") ?: -1
@@ -193,7 +192,7 @@ class CreateQuizViewModel @Inject constructor(
     }
 
     fun updateQuestionsState(
-        questionList: List<QuestionEntity> = this.questionList.value,
+        questionList: List<QuestionLocal> = this.questionList.value,
         numQuestion: Int = currentQuestionNumber.value,
         hardQuestion: Boolean = false
     ) {
@@ -202,12 +201,7 @@ class CreateQuizViewModel @Inject constructor(
         val currentQuestionTranslate: MutableList<TranslateQuestion> = mutableListOf()
         val currentAnswerTranslate: MutableList<TranslateAnswer> = mutableListOf()
 
-        Log.d("drgsef", " 1: ${questionList}")
-        Log.d("drgsef", "size 2: ${currentQuestion.size}")
-        Log.d("drgsef", "hardQuestion: ${hardQuestion}")
-        Log.d("drgsef", "numQuestion flow: ${numQuestion}")
         currentQuestion.forEach {
-            Log.d("drgsef", "it: ${it}")
             currentQuestionTranslate.add(TranslateQuestion(it.nameQuestion, it.language))
             currentAnswerTranslate.add(
                 TranslateAnswer(
@@ -296,7 +290,7 @@ class CreateQuizViewModel @Inject constructor(
 
     // Function to add a new translation (language) for the current question and answers
     fun addTranslate() {
-        val availableLanguages = settingsConfig.languages.split(SPLIT_BETWEEN_LANGUAGES)
+        val availableLanguages = settingsConfig.languages
         val currentLanguages = _currentQuestionTranslationsState.value.map { it.language }
         val currentList = _questionList.value.toMutableList() ?: return
         val currentQuestionNumber = _currentQuestionNumber.value
@@ -305,10 +299,9 @@ class CreateQuizViewModel @Inject constructor(
             it.numQuestion == currentQuestionNumber
         }
 
-        // Находим первый доступный язык, которого еще нет в списке
-        val newLanguage = languagesFullNames.firstOrNull { it !in currentLanguages } ?: return
+        val newLanguage = LanguageUtils.entries.firstOrNull { it !in currentLanguages } ?: return
 
-        _questionList.value = questionList.value + QuestionEntity().copy(
+        _questionList.value = questionList.value + QuestionLocal().copy(
             numQuestion = currentQuestionNumber,
             hardQuestion = typeQuestionCheckBoxState.value.getType(),
             language = newLanguage,

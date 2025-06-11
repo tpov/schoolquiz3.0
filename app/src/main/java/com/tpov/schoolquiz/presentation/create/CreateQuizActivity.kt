@@ -238,7 +238,6 @@ class CreateQuizActivity : AppCompatActivity() {
                         is ImageUiState.Hidden -> binding.imvQuestion.visibility = View.GONE
                         is ImageUiState.Visible -> {
                             binding.imvQuestion.visibility = View.VISIBLE
-                            // TODO: Set image if ImageUiState.Visible has an image Uri
                             binding.imvQuestion.isEnabled = state.isEnabled
                         }
                     }
@@ -288,7 +287,6 @@ class CreateQuizActivity : AppCompatActivity() {
                          is TextUiState.Hidden -> binding.bAddAnswer.visibility = View.GONE
                         is TextUiState.Visible -> {
                              binding.bAddAnswer.visibility = View.VISIBLE
-                             // TODO: Set text if TextUiState.Visible has a text property
                              binding.bAddAnswer.isEnabled = state.isEnabled
                         }
                     }
@@ -303,7 +301,6 @@ class CreateQuizActivity : AppCompatActivity() {
                         is TextUiState.Hidden -> binding.bSave.visibility = View.GONE
                         is TextUiState.Visible -> {
                             binding.bSave.visibility = View.VISIBLE
-                            // TODO: Set text if TextUiState.Visible has a text property
                             binding.bSave.isEnabled = state.isEnabled
                         }
                     }

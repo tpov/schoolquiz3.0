@@ -1,9 +1,9 @@
 package com.tpov.common.data.model.remote
 
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
 
 data class TranslateRequest(
     val question: QuestionEntity,
     val usePaidTranslation: Boolean,
-    val toLang: String,
+    val toLangCode: String,
         )

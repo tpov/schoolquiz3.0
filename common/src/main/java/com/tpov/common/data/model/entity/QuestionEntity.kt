@@ -1,10 +1,13 @@
-package com.tpov.common.data.model.local
+package com.tpov.common.data.model.entity
 
 import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.data.model.remote.QuestionRemote
+import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -60,7 +63,7 @@ data class QuestionEntity(
         language = this.language
     )
 
-//    fun createEmptyQuestion() = QuestionEntity(
+    //    fun createEmptyQuestion() = QuestionEntity(
 //        numQuestion = 1
 //    )
     constructor() : this(
@@ -75,4 +78,10 @@ data class QuestionEntity(
         pathPictureQuestion = ""
     )
 
+    fun toQuestionLocal() = QuestionLocal(
+        id, numQuestion, nameQuestion, pathPictureQuestion, nameAnswers, hardQuestion, PathStructure(
+            event, category, subCategory, subsubCategory, quiz),
+            language = this.language.toLanguageUtils(),
+            lvlTranslate
+        )
 }

@@ -7,8 +7,8 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.tpov.common.data.model.local.StructureDataEntity
-import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.data.model.entity.StructureDataEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 
 @Dao
 interface StructureDataDao {

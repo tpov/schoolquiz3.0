@@ -1,6 +1,6 @@
 package com.tpov.common.data.model.remote
 
-import com.tpov.common.data.model.local.QuestionDetailEntity
+import com.tpov.common.data.model.entity.QuestionDetailEntity
 import com.tpov.common.presentation.model.PathStructure
 
 data class QuestionDetailRemote(
@@ -11,11 +11,11 @@ data class QuestionDetailRemote(
     fun toQuestionDetailEntity(pathStructure: PathStructure, id: Int? = null, synth: Boolean = true) =
         QuestionDetailEntity(
             id = id,
-            event = pathStructure.nameEvent,
-            category = pathStructure.nameCategory,
-            subCategory = pathStructure.nameSubCategory,
-            subsubCategory = pathStructure.nameSubsubCategory,
-            quiz = pathStructure.nameQuiz,
+            eventName = pathStructure.nameEvent,
+            categoryName = pathStructure.nameCategory,
+            subCategoryName = pathStructure.nameSubCategory,
+            subsubCategoryName = pathStructure.nameSubsubCategory,
+            quizName = pathStructure.nameQuiz,
             data = data,
             codeAnswer = codeAnswer,
             hardQuiz = hardQuiz,

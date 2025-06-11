@@ -20,14 +20,13 @@ import com.bumptech.glide.request.RequestOptions
 import com.tpov.common.MAX_PERCENT_HARD_QUIZ_FULL
 import com.tpov.common.MAX_PERCENT_LIGHT_QUIZ_FULL
 import com.tpov.common.R
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.databinding.ActivityQuizItemBinding
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.ResizeAndCrop
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
-import javax.inject.Inject
 
 @Logger
 class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(

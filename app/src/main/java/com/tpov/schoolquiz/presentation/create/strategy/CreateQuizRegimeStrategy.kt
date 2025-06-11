@@ -1,9 +1,8 @@
 package com.tpov.schoolquiz.presentation.create.strategy
 
-import com.tpov.common.SPLIT_BETWEEN_LANGUAGES
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuestionLocal
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
@@ -65,8 +64,8 @@ class CreateQuizRegimeStrategy(
             categorySpinnerUiState = SpinnerUiState.Visible(categoryList, 0),
             subCategorySpinnerUiState = SpinnerUiState.Visible(subcategoryList, 0),
             subsubCategorySpinnerUiState = SpinnerUiState.Visible(subsubCategoryList, 0),
-            questionList = listOf(QuestionEntity().copy(numQuestion = 1, language = settingsConfig.languages.split(
-                SPLIT_BETWEEN_LANGUAGES).first(), nameAnswers = "|"))
+            questionList = listOf(
+                QuestionLocal().copy(numQuestion = 1, language = settingsConfig.languages.first(), nameAnswers = "|"))
         )
     }
 
@@ -74,7 +73,7 @@ class CreateQuizRegimeStrategy(
 
     )
 
-    override suspend fun saveData(questionList: List<QuestionEntity>, structureList: List<StructureDataLocal>) {
+    override suspend fun saveData(questionList: List<QuestionLocal>, structureList: List<StructureDataLocal>) {
 
         var structureCategoryHomeList = structureUseCase.getStructureEventData(EventQuiz.QUIZ_BY_USER)?.toMutableList() ?: mutableListOf()
 

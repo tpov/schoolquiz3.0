@@ -1,35 +1,36 @@
 package com.tpov.common.domain.usecase
 
 import android.util.Log
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.domain.repository.RepositoryQuestion
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.LanguageUtils
 import javax.inject.Inject
 
 class QuestionUseCase @Inject constructor(private val repositoryQuestion: RepositoryQuestion) {
 
-    suspend fun getQuestionByPath(pathStructure: PathStructure): ArrayList<QuestionEntity> {
+    suspend fun getQuestionByPath(pathStructure: PathStructure): ArrayList<QuestionLocal> {
         val questionList = repositoryQuestion.getQuestionsByPath(pathStructure)
         return ArrayList(questionList)
     }
 
-    suspend fun insertQuestion(questionEntity: QuestionEntity) {
-        Log.d("insertQuestion", "$questionEntity")
-        repositoryQuestion.saveQuestion(questionEntity)
+    suspend fun insertQuestion(questionLocal: QuestionLocal) {
+        Log.d("insertQuestion", "$questionLocal")
+        repositoryQuestion.saveQuestion(questionLocal)
     }
 
-    suspend fun pushQuestion(questionEntity: QuestionEntity) {
+    suspend fun pushQuestion(questionLocal: QuestionLocal) {
         repositoryQuestion.pushQuestion(
-            questionEntity
+            questionLocal
         )
     }
 
-    suspend fun fetchQuestion(pathStructure: PathStructure, languages: String) =
+    suspend fun fetchQuestion(pathStructure: PathStructure, languages: List<LanguageUtils>) =
         repositoryQuestion.fetchQuestion(pathStructure, languages)
 
     suspend fun pushQuestionForTranslate(
-        question: QuestionEntity,
-        localLangsQuestions: Set<String>,
+        question: QuestionLocal,
+        localLangsQuestions: Set<LanguageUtils>,
     ) {
         val remoteLangsQuestions = repositoryQuestion.remoteLangsQuestions(question).toSet()
         val allLangsQuestions = remoteLangsQuestions + localLangsQuestions
@@ -45,17 +46,17 @@ class QuestionUseCase @Inject constructor(private val repositoryQuestion: Reposi
     }
 
     private suspend fun pushTranslation(
-        question: QuestionEntity,
+        question: QuestionLocal,
         isPaid: Boolean,
-        toLang: String,
+        toLang: LanguageUtils,
     ) {
         repositoryQuestion.pushQuestionForTranslate(
             question, isPaid, toLang
         )
     }
 
-    suspend fun updateQuestion(questionEntity: QuestionEntity) {
-        repositoryQuestion.updateQuestion(questionEntity)
+    suspend fun updateQuestion(questionLocal: QuestionLocal) {
+        repositoryQuestion.updateQuestion(questionLocal)
     }
 
     suspend fun deleteQuestionByPath(pathStructure: PathStructure) {

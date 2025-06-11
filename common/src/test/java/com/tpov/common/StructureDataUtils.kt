@@ -1,6 +1,6 @@
 package StructureDataUtils
 
-import com.tpov.common.domain.model.StructureDataLocal
+import com.tpov.common.data.model.local.StructureDataLocal
 
 object StructureDataUtils {
     val structureData = StructureDataLocal(

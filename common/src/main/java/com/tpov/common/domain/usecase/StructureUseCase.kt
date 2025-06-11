@@ -1,9 +1,9 @@
 package com.tpov.common.domain.usecase
 
 import com.tpov.common.data.RepositoryStructureImpl
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.model.PathStructure
 import javax.inject.Inject
 

@@ -1,7 +1,7 @@
 package com.tpov.common.data.model.remote
 
 import com.google.firebase.firestore.IgnoreExtraProperties
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
 import com.tpov.common.presentation.model.PathStructure
 
 @IgnoreExtraProperties

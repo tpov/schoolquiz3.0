@@ -5,8 +5,6 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -34,13 +32,14 @@ import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.TIME_QUESTION
 import com.tpov.common.databinding.ActivityQuestionBinding
 import com.tpov.common.di.DaggerCommonComponent
+import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_CATEGORY
 import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_EVENT
 import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_SUB_CATEGORY
 import com.tpov.common.presentation.quiz.QuizFragment.Companion.KEY_ID_SUB_SUB_CATEGORY
+import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.common.presentation.utils.Values.context
-import com.tpov.common.presentation.utils.ViewModelFactory
 import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +65,7 @@ private const val REQUEST_CODE_CHEAT = 0
 class QuestionActivity : AppCompatActivity() {
 
     lateinit var viewModel: QuestionViewModel
-    private var languageUser: String? = null
+    private var languageUser: List<LanguageUtils>? = null
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
@@ -173,7 +172,7 @@ class QuestionActivity : AppCompatActivity() {
                 it?.let {
                     Log.d("jfgksdjefkse", "3")
                     viewModel.initQuizValues()
-                    viewModel.getQuestionList(languageUser!!)
+                    viewModel.getQuestionList(settingsConfig.languages)
                     viewModel.questionList.collect { questionList ->
                         questionList?.let {questionList ->
 
@@ -441,7 +440,7 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.pathStructure?.nameSubsubCategory = intent.getStringExtra(KEY_ID_SUB_SUB_CATEGORY) ?: ""
         viewModel.pathStructure?.nameEvent = intent.getStringExtra(KEY_ID_EVENT) ?: ""
         viewModel.hardQuiz = intent.getBooleanExtra(KEY_HARD_QUESTION, false)
-        languageUser = intent.getStringExtra(KEY_LANGUAGE_USER)
+        languageUser = settingsConfig.languages
         viewModel.life = intent.getIntExtra(KEY_LIFE, 0)
 
     }
@@ -527,7 +526,6 @@ class QuestionActivity : AppCompatActivity() {
         fun newIntent(
             context: Context,
             hardQuestion: Boolean,
-            languageUser: String,
             pathStructure: PathStructure,
             life: Int
         ): Intent {
@@ -538,7 +536,6 @@ class QuestionActivity : AppCompatActivity() {
                 putExtra(KEY_ID_SUB_SUB_CATEGORY, pathStructure.nameSubsubCategory)
                 putExtra(KEY_ID_QUIZ, pathStructure.nameQuiz)
                 putExtra(KEY_HARD_QUESTION, hardQuestion)
-                putExtra(KEY_LANGUAGE_USER, languageUser)
                 putExtra(KEY_LIFE, life)
             }
         }

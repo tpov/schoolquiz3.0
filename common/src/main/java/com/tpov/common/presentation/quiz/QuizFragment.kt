@@ -14,12 +14,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tpov.common.UNKNOWN_VALUE
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
+import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.utils.RotateInItemAnimator
 import com.tpov.common.databinding.FragmentQuizBinding
 import com.tpov.common.di.DaggerCommonComponent
 import com.tpov.common.domain.model.EventQuiz
-import com.tpov.common.domain.model.StructureDataLocal
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.log_api.logger.Logger

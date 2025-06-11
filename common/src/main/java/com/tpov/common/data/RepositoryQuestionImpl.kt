@@ -11,11 +11,14 @@ import com.google.firebase.functions.functions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import com.tpov.common.data.database.QuestionDao
-import com.tpov.common.data.model.local.QuestionEntity
+import com.tpov.common.data.model.entity.QuestionEntity
+import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.data.model.remote.QuestionRemote
 import com.tpov.common.data.model.remote.TranslateRequest
 import com.tpov.common.domain.repository.RepositoryQuestion
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.LanguageUtils
+import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import kotlinx.coroutines.tasks.await
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -37,7 +40,8 @@ class RepositoryQuestionImpl @Inject constructor(
 
     private val functions = Firebase.functions
     private val baseCollection = firestore.collection("questions")
-    override suspend fun getAllMustTrnslLangsPaidQuestions(): Set<String> {
+
+    override suspend fun getAllMustTrnslLangsPaidQuestions(): Set<LanguageUtils> {
         return try {
             val snapshot = firestore
                 .collection("variable")
@@ -46,7 +50,7 @@ class RepositoryQuestionImpl @Inject constructor(
                 .await()
 
             val languages = snapshot.get("languagesGoogleTranslate") as? List<String>
-            languages?.toSet() ?: emptySet()
+            languages?.map { it.toLanguageUtils() }?.toSet() ?: emptySet()
 
         } catch (e: Exception) {
             Log.e("Firestore", "Error getting paid translation languages", e)
@@ -54,7 +58,7 @@ class RepositoryQuestionImpl @Inject constructor(
         }
     }
 
-    override suspend fun getAllMustTrnslLangsFreeQuestions(): Set<String> {
+    override suspend fun getAllMustTrnslLangsFreeQuestions(): Set<LanguageUtils> {
         return try {
             val snapshot = firestore
                 .collection("variable")
@@ -63,24 +67,20 @@ class RepositoryQuestionImpl @Inject constructor(
                 .await()
 
             val languages = snapshot.get("languagesFreeTranslate") as? List<String>
-            languages?.toSet() ?: emptySet()
-
+            languages?.map { it.toLanguageUtils() }?.toSet() ?: emptySet()
         } catch (e: Exception) {
             Log.e("Firestore", "Error getting free translation languages", e)
             emptySet()
         }
     }
 
-    override suspend fun fetchQuestion(
-        pathStructure: PathStructure,
-        language: String,
-    ): List<QuestionEntity> {
+    override suspend fun fetchQuestion(pathStructure: PathStructure, language: List<LanguageUtils>): List<QuestionLocal> {
 
         val baseCollectionReference = baseCollection
             .document("question${pathStructure.nameEvent}")
             .collection("${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_${pathStructure.nameSubsubCategory}")
 
-        val questionRemotes = mutableListOf<QuestionEntity>()
+        val questionLocal = mutableListOf<QuestionLocal>()
 
         try {
             val task = baseCollectionReference.get().await()
@@ -88,15 +88,15 @@ class RepositoryQuestionImpl @Inject constructor(
             val questionDocuments = task.documents
 
             for (questionDocument in questionDocuments) {
-                val questionEntity = questionDocument.toObject(QuestionRemote::class.java)
-                questionEntity?.let { questionRemotes.add(it.toQuestionEntity(pathStructure)) }
-                questionEntity?.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) }
+                val questionRemote = questionDocument.toObject(QuestionRemote::class.java)
+                questionRemote?.let { questionLocal.add(it.toQuestionEntity(pathStructure).toQuestionLocal()) }
+                questionRemote?.pathPictureQuestion?.let { downloadPhotoToLocalPath(it) }
             }
         } catch (e: Exception) {
             Log.w("Firestore", "Error fetching questions", e)
         }
 
-        return questionRemotes
+        return questionLocal
     }
 
     override suspend fun getQuestionsByPath(path: PathStructure) = questionDao.getQuestionsByPath(
@@ -105,16 +105,15 @@ class RepositoryQuestionImpl @Inject constructor(
         path.nameSubCategory,
         path.nameSubsubCategory,
         path.nameQuiz
-    )
+    ).map { it.toQuestionLocal() }
 
-    override suspend fun saveQuestion(questionEntity: QuestionEntity) {
-        questionDao.insertQuestion(questionEntity)
+
+    override suspend fun saveQuestion(questionLocal: QuestionLocal) {
+        questionDao.insertQuestion(questionLocal.toQuestionEntity())
     }
 
-    override suspend fun pushQuestion(
-        questionEntity: QuestionEntity,
-        isUpdate: Boolean
-    ) {
+    override suspend fun pushQuestion(questionLocal: QuestionLocal, isUpdate: Boolean) {
+        val questionEntity = questionLocal.toQuestionEntity()
         val pathStructure = PathStructure(
             questionEntity.event,
             questionEntity.category,
@@ -138,9 +137,9 @@ class RepositoryQuestionImpl @Inject constructor(
     }
 
     override suspend fun pushQuestionForTranslate(
-        question: QuestionEntity,
+        questionLocal: QuestionLocal,
         usePaidTranslation: Boolean,
-        toLang: String,
+        toLang: LanguageUtils
     ) {
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -148,7 +147,7 @@ class RepositoryQuestionImpl @Inject constructor(
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
-        val request = TranslateRequest(question, usePaidTranslation, toLang)
+        val request = TranslateRequest(questionLocal.toQuestionEntity(), usePaidTranslation, toLang.code)
 
         val gson = Gson()
         val jsonBody = gson.toJson(request)
@@ -176,36 +175,42 @@ class RepositoryQuestionImpl @Inject constructor(
         }
     }
 
-    override suspend fun remoteLangsQuestions(
-        questionEntity: QuestionEntity
-    ): List<String> = suspendCoroutine<List<String>> { continuation ->
-        val languages = mutableListOf<String>()
+    override suspend fun remoteLangsQuestions(questionLocal: QuestionLocal) =
+        suspendCoroutine<List<LanguageUtils>> { continuation ->
+            val questionEntity = questionLocal.toQuestionEntity()
+            val languages = mutableListOf<LanguageUtils>()
 
-        baseCollection
-            .document("question${questionEntity.event}")
-            .collection("${questionEntity.category}_${questionEntity.subCategory}_${questionEntity.subsubCategory}")
-            .whereEqualTo("hardQuestion", questionEntity.hardQuestion)
-            .whereEqualTo("numQuestion", questionEntity.numQuestion)
-            .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    document.getString("language")?.let {
-                        languages.add(it)
+            baseCollection
+                .document("question${questionEntity.event}")
+                .collection("${questionEntity.category}_${questionEntity.subCategory}_${questionEntity.subsubCategory}")
+                .whereEqualTo("hardQuestion", questionEntity.hardQuestion)
+                .whereEqualTo("numQuestion", questionEntity.numQuestion)
+                .get()
+                .addOnSuccessListener { documents ->
+                    for (document in documents) {
+                        document.getString("language")?.let {
+                            languages.add(it.toLanguageUtils())
+                        }
                     }
+                    continuation.resume(languages)
                 }
-                continuation.resume(languages)
-            }
-            .addOnFailureListener { exception ->
-                continuation.resumeWithException(exception)
-            }
-    }
+                .addOnFailureListener { exception ->
+                    continuation.resumeWithException(exception)
+                }
+        }
 
-    override suspend fun updateQuestion(questionEntity: QuestionEntity) {
-        questionDao.updateQuestion(questionEntity)
+    override suspend fun updateQuestion(questionLocal: QuestionLocal) {
+        questionDao.updateQuestion(questionLocal.toQuestionEntity())
     }
 
     override suspend fun deleteQuestionByPath(path: PathStructure) {
-        questionDao.deleteQuestion(path.nameEvent, path.nameCategory, path.nameSubCategory, path.nameSubsubCategory, path.nameQuiz)
+        questionDao.deleteQuestion(
+            path.nameEvent,
+            path.nameCategory,
+            path.nameSubCategory,
+            path.nameSubsubCategory,
+            path.nameQuiz
+        )
     }
 
     override suspend fun deleteRemoteQuestionByIdQuiz(idQuiz: Int, event: Int) {
@@ -215,7 +220,6 @@ class RepositoryQuestionImpl @Inject constructor(
             .collection(idQuiz.toString())
 
         try {
-            // Получаем все документы в коллекции
             val task = baseCollectionReference.get().await()
 
             val questionDocuments = task.documents
