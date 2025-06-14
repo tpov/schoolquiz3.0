@@ -11,7 +11,7 @@ import com.tpov.common.data.model.entity.QuestionEntity
 interface QuestionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertQuestion(name: QuestionEntity)
+    suspend fun insertQuestion(name: QuestionEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuestionList(name: List<QuestionEntity>)

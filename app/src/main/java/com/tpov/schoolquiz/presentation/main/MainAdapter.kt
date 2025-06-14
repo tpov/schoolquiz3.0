@@ -11,6 +11,7 @@ import android.widget.RatingBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
@@ -66,7 +67,7 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
                             override fun onLoadFailed(
                                 e: GlideException?,
                                 model: Any?,
-                                target: Target<Drawable>?,
+                                target: Target<Drawable>,
                                 isFirstResource: Boolean
                             ): Boolean {
                                 Log.e("Glide", "Ошибка загрузки изображения", e)
@@ -74,10 +75,10 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
                             }
 
                             override fun onResourceReady(
-                                resource: Drawable?,
-                                model: Any?,
+                                resource: Drawable,
+                                model: Any,
                                 target: Target<Drawable>?,
-                                dataSource: com.bumptech.glide.load.DataSource?,
+                                dataSource: DataSource,
                                 isFirstResource: Boolean
                             ): Boolean {
                                 return false

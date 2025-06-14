@@ -1,6 +1,5 @@
 package com.tpov.common.domain.utils
 
-import com.tpov.common.data.model.entity.QuestionEntity
 import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.question.QuestionListResult
@@ -11,9 +10,9 @@ typealias numHardQuestion = Int
 
 object QuestionUtils {
 
-    fun getNumsQuestion(questions: List<QuestionEntity>): Pair<numLightQuestion, numHardQuestion> {
-        val lightCount = questions.count { !it.hardQuestion }
-        val hardCount = questions.count { it.hardQuestion }
+    fun getNumsQuestion(questions: List<QuestionLocal>,mainLanguage: LanguageUtils): Pair<numLightQuestion, numHardQuestion> {
+        val lightCount = questions.count { !it.hardQuestion && it.language == mainLanguage}
+        val hardCount = questions.count { it.hardQuestion && it.language == mainLanguage }
         return Pair(lightCount, hardCount)
     }
 

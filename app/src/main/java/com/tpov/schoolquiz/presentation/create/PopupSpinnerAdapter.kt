@@ -12,7 +12,8 @@ class PopupSpinnerAdapter(
     private val items: List<String>,
     private val onItemClick: (Int) -> Unit,
     private val recyclerView: RecyclerView,
-    private val spinnerTextView: TextView
+    private val spinnerTextView: TextView,
+    private val actionItemPosition: Int = -1
 ) : RecyclerView.Adapter<PopupSpinnerAdapter.ViewHolder>() {
 
     var selectedPosition: Int = -1
@@ -31,13 +32,24 @@ class PopupSpinnerAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.textView.text = items[position]
         holder.textView.isSelected = (position == selectedPosition)
-        holder.textView.setTextColor(Color.WHITE)
-        holder.view.setBackgroundColor(
-            if (position == selectedPosition)
-                holder.view.context.getColor(R.color.spinner_selected_item)
-            else
+        
+        val isActionItem = position == actionItemPosition
+        
+        // Style differently if it's an action item
+        if (isActionItem) {
+            holder.textView.setTextColor(Color.GREEN)
+            holder.view.setBackgroundColor(
                 holder.view.context.getColor(R.color.spinner_dropdown_background)
-        )
+            )
+        } else {
+            holder.textView.setTextColor(Color.WHITE)
+            holder.view.setBackgroundColor(
+                if (position == selectedPosition)
+                    holder.view.context.getColor(R.color.spinner_selected_item)
+                else
+                    holder.view.context.getColor(R.color.spinner_dropdown_background)
+            )
+        }
 
         // Анимация выдвигания при открытии - каждый элемент "вырастает" из предыдущего
         if (!isClosing) {
@@ -59,7 +71,9 @@ class PopupSpinnerAdapter(
 
         holder.view.setOnClickListener {
             if (!isClosing) {
-                selectedPosition = position
+                if (position != actionItemPosition) {
+                    selectedPosition = position
+                }
                 onItemClick(position)
             }
         }
@@ -70,7 +84,7 @@ class PopupSpinnerAdapter(
 
         // Анимируем закрытие всех элементов кроме выбранного
         for (i in itemCount - 1 downTo 0) { // Идем в обратном порядке - снизу вверх
-            if (i != selectedPosition) {
+            if (i != selectedPosition || i == actionItemPosition) {
                 val holder = recyclerView.findViewHolderForAdapterPosition(i) as? ViewHolder
                 holder?.view?.let { itemView ->
                     // Устанавливаем точку масштабирования вверх элемента
@@ -86,28 +100,30 @@ class PopupSpinnerAdapter(
             }
         }
 
-        // Выбранный элемент остается видимым до конца
-        val selectedHolder = recyclerView.findViewHolderForAdapterPosition(selectedPosition) as? ViewHolder
-        selectedHolder?.view?.let { selectedView ->
-            // Небольшая задержка, чтобы дождаться закрытия остальных элементов
-            selectedView.postDelayed({
-                // Вычисляем позицию spinnerTextView относительно выбранного элемента
-                val spinnerLocation = IntArray(2)
-                spinnerTextView.getLocationOnScreen(spinnerLocation)
-                val selectedItemLocation = IntArray(2)
-                selectedView.getLocationOnScreen(selectedItemLocation)
+        // Если выбранный элемент - не action item, анимируем его
+        if (selectedPosition != actionItemPosition) {
+            val selectedHolder = recyclerView.findViewHolderForAdapterPosition(selectedPosition) as? ViewHolder
+            selectedHolder?.view?.let { selectedView ->
+                // Небольшая задержка, чтобы дождаться закрытия остальных элементов
+                selectedView.postDelayed({
+                    // Вычисляем позицию spinnerTextView относительно выбранного элемента
+                    val spinnerLocation = IntArray(2)
+                    spinnerTextView.getLocationOnScreen(spinnerLocation)
+                    val selectedItemLocation = IntArray(2)
+                    selectedView.getLocationOnScreen(selectedItemLocation)
 
-                val deltaY = spinnerLocation[1] - selectedItemLocation[1].toFloat()
+                    val deltaY = spinnerLocation[1] - selectedItemLocation[1].toFloat()
 
-                // Анимируем перемещение выбранного элемента на место спиннера
-                selectedView.animate()
-                    .translationY(deltaY)
-                    .setDuration(250)
-                    .withEndAction {
-                        onItemClick(selectedPosition) // Закрываем спиннер после анимации
-                    }
-                    .start()
-            }, (itemCount * 30L) + 100) // Ждем завершения анимации закрытия + небольшой запас
+                    // Анимируем перемещение выбранного элемента на место спиннера
+                    selectedView.animate()
+                        .translationY(deltaY)
+                        .setDuration(250)
+                        .withEndAction {
+                            onItemClick(selectedPosition) // Закрываем спиннер после анимации
+                        }
+                        .start()
+                }, (itemCount * 30L) + 100) // Ждем завершения анимации закрытия + небольшой запас
+            }
         }
     }
 

@@ -356,5 +356,13 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="menu_contact_text">Contact</string>
     <string name="menu_exit_text">Exit</string>
 
+    <string name="add_category">Добавить категорию</string>
+    <string name="add_subcategory">Добавить квиз</string>
+    <string name="add_subsubcategory">Добавить тему</string>
+    <string name="add_question">Добавить вопрос</string>
+    <string name="no_categories">Нет категорий</string>
+    <string name="error_categories">Ошибка загрузки категорий</string>
+    <string name="cancel">Отмена</string>
+    <string name="add">Добавить</string>
 
 </resources>

@@ -27,5 +27,5 @@ interface RepositoryStructure {
     fun fetchPictureStructure(path: PathStructure)
     suspend fun fetchStructureInfo(path: PathStructure): StructureInfoEntity?
     suspend fun pushStructureInfoData(ratingData: StructureInfoRemote, path: PathStructure)
-    suspend fun updateStructureData(structureDataEntity: StructureDataEntity, event: String)
+    suspend fun insertStructureData(structureDataEntity: StructureDataEntity, event: String)
 }

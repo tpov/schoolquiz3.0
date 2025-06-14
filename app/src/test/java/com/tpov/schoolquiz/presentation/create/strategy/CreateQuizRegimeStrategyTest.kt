@@ -17,6 +17,8 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import android.content.Context
+import android.graphics.drawable.Drawable
 
 @RunWith(org.mockito.junit.MockitoJUnitRunner::class)
 class CreateQuizRegimeStrategyTest {
@@ -27,13 +29,16 @@ class CreateQuizRegimeStrategyTest {
     @Mock
     lateinit var questionUseCase: QuestionUseCase
 
+    @Mock
+    lateinit var defaultImage: Drawable
+
     @Captor
     lateinit var structureDataCaptor: ArgumentCaptor<List<StructureDataLocal>>
 
     @Test
     fun testSaveData_sequentialCalls() = runBlocking {
         // Create instance of the strategy
-        val strategy = CreateQuizRegimeStrategy(structureUseCase, questionUseCase)
+        val strategy = CreateQuizRegimeStrategy(structureUseCase, questionUseCase, context)
 
         // Initialize the user's structure data with inputStructureData for sequential tests.
         // We use a mutable list to simulate the state being updated by updateStructureData.

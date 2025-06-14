@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.presentation.create
 
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.SavedStateHandle
@@ -12,6 +14,7 @@ import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.domain.utils.QuestionUtils
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
@@ -139,6 +142,35 @@ class CreateQuizViewModel @Inject constructor(
     private var beforeQuestion: List<QuestionLocal> = listOf()
     private var afterQuestion: List<QuestionLocal> = listOf()
 
+    // Модель для создания новой категории
+    data class NewCategoryData(
+        val categoryName: String = "",
+        val categoryImage: String? = null,
+        val subCategoryName: String = "",
+        val subCategoryImage: String? = null,
+        val subSubCategoryName: String = "",
+        val subSubCategoryImage: String? = null
+    )
+
+    val pictureQuestionMap = mutableMapOf<Pair<Int, Boolean>, BitmapDrawable>()
+
+    fun setPhotoQuestion(bitmapDrawable: BitmapDrawable) {
+        pictureQuestionMap[Pair(currentQuestionNumber.value, typeQuestionCheckBoxState.value.getType())] = bitmapDrawable
+    }
+
+    // StateFlow для хранения данных о новых категориях
+    private val _newCategoryData = MutableStateFlow(NewCategoryData())
+    val newCategoryData: StateFlow<NewCategoryData> = _newCategoryData
+
+    // StateFlow для управления видимостью раздела создания новых категорий
+    private val _showNewCategoryFields = MutableStateFlow(false)
+    val showNewCategoryFields: StateFlow<Boolean> = _showNewCategoryFields
+
+    // Метод для переключения видимости раздела создания новых категорий
+    fun toggleNewCategoryFields() {
+        _showNewCategoryFields.value = !_showNewCategoryFields.value
+    }
+
     init {
         val currentRegime = savedStateHandle.get<Int>("extra_regime") ?: -1
         val pathStructure = savedStateHandle.get<PathStructure?>("extra_path_structure")
@@ -157,13 +189,10 @@ class CreateQuizViewModel @Inject constructor(
             val loadedUiStateModel = currentRegimeStrategy.loadData(pathStructure ?: PathStructure())
             beforeQuestion = loadedUiStateModel.questionList ?: listOf()
             updateUiState(loadedUiStateModel)
-
         }
     }
 
-    // Private function to update all individual StateFlows based on the UI state model
     private fun updateUiState(model: QuizUiModelState) {
-        // Use ?.let to update only if the corresponding field in the model is not null
         model.quizNameUiState?.let { _quizNameUiState.value = it }
         model.categorySpinnerUiState?.let { _categorySpinnerUiState.value = it }
         model.subCategorySpinnerUiState?.let { _subCategorySpinnerUiState.value = it }
@@ -174,7 +203,6 @@ class CreateQuizViewModel @Inject constructor(
         model.questionNumberSpinnerUiState?.let { _questionNumberSpinnerUiState.value = it }
         model.saveQuizButtonUiState?.let { _saveQuizButtonUiState.value = it }
 
-        // Update other individual StateFlows if present in CreateQuizUiModelState
         model.addAnswerButtonUiState?.let { _addAnswerButtonUiState.value = it }
         model.addTranslateButtonUiState?.let { _addTranslateButtonUiState.value = it }
         model.bBeforeEditTranslate?.let { _beforeEditTranslateButtonUiState.value = it }
@@ -183,7 +211,6 @@ class CreateQuizViewModel @Inject constructor(
         model.llCreateNewCategory?.let { _llCreateNewCategoryUiState.value = it }
         model.stroceTop?.let { _stroceTopUiState.value = it }
         model.stroceBottom?.let { _stroceBottomUiState.value = it }
-
 
         model.questionList?.let {
             _questionList.value = it
@@ -196,25 +223,60 @@ class CreateQuizViewModel @Inject constructor(
         numQuestion: Int = currentQuestionNumber.value,
         hardQuestion: Boolean = false
     ) {
+        questionList.forEach {
+            Log.d("sjkfljeskf", "1 $it")
+        }
 
         val currentQuestion = questionList.filter { it.hardQuestion == hardQuestion && it.numQuestion == numQuestion }
-        val currentQuestionTranslate: MutableList<TranslateQuestion> = mutableListOf()
-        val currentAnswerTranslate: MutableList<TranslateAnswer> = mutableListOf()
-
         currentQuestion.forEach {
-            currentQuestionTranslate.add(TranslateQuestion(it.nameQuestion, it.language))
-            currentAnswerTranslate.add(
-                TranslateAnswer(
-                    it.nameAnswers.split(SPLIT_BETWEEN_ANSWERS).toMutableList(),
-                    it.language
-                )
+            Log.d("sjkfljeskf", "2 $it")
+        }
+
+        Log.d("sjkfljeskf", "2 $numQuestion")
+
+        // Создаем новые списки напрямую через map
+        val currentQuestionTranslate = currentQuestion.map {
+            TranslateQuestion(it.nameQuestion, it.language)
+        }
+
+        val currentAnswerTranslate = currentQuestion.map {
+            TranslateAnswer(
+                it.nameAnswers.split(SPLIT_BETWEEN_ANSWERS).toMutableList(),
+                it.language
             )
         }
 
+        _currentQuestionNumber.value = numQuestion
+        _questionNumberSpinnerUiState.value = SpinnerUiState.Visible(
+            items = questionList.filter {it.language == settingsConfig.languages[0] }.map { "${it.numQuestion}${if (it.hardQuestion) "*" else ""}. ${it.nameQuestion}" },
+            selectedIndex = numQuestion - 1
+        )
+        _questionList.value = questionList
         _typeQuestionCheckBoxState.value = CheckBoxUiState.Visible(hardQuestion)
-        _currentQuestionTranslationsState.value = currentQuestionTranslate
-        _answerListState.value = currentAnswerTranslate
 
+        currentQuestionTranslate.forEach {
+            Log.d("sjkfljeskf", "currentQuestionTranslate $it")
+        }
+        currentAnswerTranslate.forEach {
+            Log.d("sjkfljeskf", "currentAnswerTranslate $it")
+        }
+
+        _currentQuestionTranslationsState.value = emptyList()
+        _currentQuestionTranslationsState.value = currentQuestionTranslate
+        _answerListState.value = emptyList()
+        _answerListState.value = currentAnswerTranslate
+    }
+
+    fun selectCategory(name: String) {
+        // _categorySpinnerUiState.value = SpinnerUiState.Visible(mutableListOf( name ).add(categorySpinnerUiState.value) )
+    }
+
+    fun selectSubCategory(name: String) {
+        // _subCategorySpinnerUiState.value = SpinnerUiState.Visible(mutableListOf( name ).add(subCategorySpinnerUiState.value) )
+    }
+
+    fun selectSubsubCategory(name: String) {
+        // _subsubCategorySpinnerUiState.value = SpinnerUiState.Visible(mutableListOf( name ).add(subsubCategorySpinnerUiState.value) )
     }
 
     // Function to add a new answer option to all languages of the *current* question
@@ -222,19 +284,19 @@ class CreateQuizViewModel @Inject constructor(
         val currentList = _questionList.value.toMutableList() ?: return
         val currentQuestionNumber = _currentQuestionNumber.value
 
-            // Находим все вопросы с текущим номером и типом
-            val questionsToUpdate = currentList.filter {
-                it.numQuestion == currentQuestionNumber &&
+        // Находим все вопросы с текущим номером и типом
+        val questionsToUpdate = currentList.filter {
+            it.numQuestion == currentQuestionNumber &&
                 it.hardQuestion == typeQuestionCheckBoxState.value.getType()
-            }
+        }
 
-            questionsToUpdate.forEach { question ->
-                val index = currentList.indexOf(question)
-                if (index != -1) {
-                    currentList[index] = question.copy(
-                        nameAnswers = question.nameAnswers + SPLIT_BETWEEN_ANSWERS
-                    )
-                }
+        questionsToUpdate.forEach { question ->
+            val index = currentList.indexOf(question)
+            if (index != -1) {
+                currentList[index] = question.copy(
+                    nameAnswers = question.nameAnswers + SPLIT_BETWEEN_ANSWERS
+                )
+            }
 
             _questionList.value = currentList
             updateQuestionsState()
@@ -244,9 +306,6 @@ class CreateQuizViewModel @Inject constructor(
     fun onAnswerOptionsChanged(updatedTranslateAnswer: TranslateAnswer) {
         val currentList = _questionList.value.toMutableList() ?: return
         val currentQuestionNumber = _currentQuestionNumber.value
-
-        Log.d("drgsef", "updatedTranslateAnswer: ${updatedTranslateAnswer}")
-        Log.d("drgsef", "listAnswer: ${updatedTranslateAnswer.listAnswer.joinToString(SPLIT_BETWEEN_ANSWERS)}")
 
         val questionIndex = currentList.indexOfFirst {
             it.numQuestion == currentQuestionNumber &&
@@ -259,7 +318,8 @@ class CreateQuizViewModel @Inject constructor(
                 language = updatedTranslateAnswer.language
             )
 
-            if (updatedTranslateAnswer.listAnswer.size >= MAX_ANSWER_OPTIONS_LIMIT) _addAnswerButtonUiState.value = TextUiState.Visible(isEnabled = false)
+            if (updatedTranslateAnswer.listAnswer.size >= MAX_ANSWER_OPTIONS_LIMIT) _addAnswerButtonUiState.value =
+                TextUiState.Visible(isEnabled = false)
             else _addAnswerButtonUiState.value = TextUiState.Visible(isEnabled = true)
 
             _questionList.value = currentList
@@ -296,7 +356,7 @@ class CreateQuizViewModel @Inject constructor(
         val currentQuestionNumber = _currentQuestionNumber.value
 
         val question = currentList.find {
-            it.numQuestion == currentQuestionNumber
+            it.numQuestion == currentQuestionNumber && it.hardQuestion == typeQuestionCheckBoxState.value.getType()
         }
 
         val newLanguage = LanguageUtils.entries.firstOrNull { it !in currentLanguages } ?: return
@@ -305,10 +365,34 @@ class CreateQuizViewModel @Inject constructor(
             numQuestion = currentQuestionNumber,
             hardQuestion = typeQuestionCheckBoxState.value.getType(),
             language = newLanguage,
-            nameAnswers = List((question?.nameAnswers?.split(SPLIT_BETWEEN_ANSWERS)?.size?.minus(1)) ?: 1) { "|" }.joinToString("")
+            nameAnswers = List(
+                (question?.nameAnswers?.split(SPLIT_BETWEEN_ANSWERS)?.size?.minus(1)) ?: 1
+            ) { SPLIT_BETWEEN_ANSWERS }.joinToString("")
         )
 
         updateQuestionsState()
+    }
+
+    fun createNewQuestion() {
+        val newNumQuestionAllType = QuestionUtils.getNumsQuestion(questionList.value, settingsConfig.languages[0])
+        val newNumQuestionThisType: Int =
+            if (typeQuestionCheckBoxState.value.getType()) newNumQuestionAllType.second + 1
+            else newNumQuestionAllType.first + 1
+
+        val newQuestionList = questionList.value + QuestionLocal(
+            id = null,
+            numQuestion = newNumQuestionThisType,
+            nameAnswers = SPLIT_BETWEEN_ANSWERS,
+            hardQuestion = false,
+            language = settingsConfig.languages[0]
+        )
+        Log.d("sjkfljeskf", "createNewQuestion: $newNumQuestionThisType")
+
+        updateQuestionsState(
+            numQuestion = newNumQuestionThisType,
+            hardQuestion = false,
+            questionList = newQuestionList
+        )
     }
 
     fun onQuestionTranslationsChanged(updatedTranslateQuestion: TranslateQuestion) {
@@ -322,10 +406,58 @@ class CreateQuizViewModel @Inject constructor(
     }
 
 
-    fun saveDataForCurrentRegime() {
-        viewModelScope.launch {
+    fun saveDataForCurrentRegime(
+        structureDataLocal: List<String>,
+        structureDataImageList: List<BitmapDrawable>,
+        defaultImage: Drawable
+    ) {
+        val combined: List<Pair<String, BitmapDrawable>> =
+            structureDataLocal.zip(structureDataImageList) { name, image ->
+                name to image
+            }
 
+        viewModelScope.launch {
+            currentRegimeStrategy.saveData(questionList.value, pictureQuestionMap, combined, defaultImage)
         }
     }
+
+
+    fun updateCheckBox() {
+        val currentState = _typeQuestionCheckBoxState.value.getType()
+        _typeQuestionCheckBoxState.value = CheckBoxUiState.Visible(!currentState, isInit = false)
+
+        val questionThis = questionList.value.filter {
+            it.numQuestion == currentQuestionNumber.value && it.hardQuestion == currentState
+        }
+
+        questionThis.forEach {
+            it.hardQuestion = !currentState
+        }
+    }
+
+    fun onQuestionLanguageChanged(oldLanguage: LanguageUtils, newLanguage: LanguageUtils) {
+        val currentList = _questionList.value.toMutableList() ?: return
+        val currentQuestionNumber = _currentQuestionNumber.value
+
+        val questionIndex = currentList.indexOfFirst {
+            it.numQuestion == currentQuestionNumber &&
+                it.language == oldLanguage
+        }
+
+        if (questionIndex != -1) {
+            // Создаем копию вопроса с новым языком
+            currentList[questionIndex] = currentList[questionIndex].copy(
+                language = newLanguage
+            )
+
+            Log.d("awdawd", "Language changed from $oldLanguage to $newLanguage for question $currentQuestionNumber")
+
+            // Обновляем список вопросов
+            _questionList.value = currentList
+            // Обновляем интерфейс
+            updateQuestionsState()
+        }
+    }
+
 
 }

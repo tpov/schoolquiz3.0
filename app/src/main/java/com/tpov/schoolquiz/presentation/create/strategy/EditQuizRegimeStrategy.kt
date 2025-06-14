@@ -1,7 +1,9 @@
 package com.tpov.schoolquiz.presentation.create.strategy
 
+import android.content.Context
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import com.tpov.common.data.model.local.QuestionLocal
-import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
@@ -13,7 +15,10 @@ import com.tpov.schoolquiz.presentation.create.model.TextUiState
 import com.tpov.schoolquiz.presentation.create.model.isUiState
 
 
-class EditQuizRegimeStrategy(structureUseCase: StructureUseCase, questionUseCase: QuestionUseCase) : QuizRegimeStrategy {
+class EditQuizRegimeStrategy(
+    val structureUseCase: StructureUseCase,
+    val questionUseCase: QuestionUseCase
+) : QuizRegimeStrategy {
     override fun setupUiState() = QuizUiModelState(
         quizNameUiState = TextUiState.Visible(),
         quizImageUiState = ImageUiState.Visible(),
@@ -44,9 +49,15 @@ class EditQuizRegimeStrategy(structureUseCase: StructureUseCase, questionUseCase
         TODO("Not yet implemented")
     }
 
-    override suspend fun saveData(questionList: List<QuestionLocal>, structureList: List<StructureDataLocal>) {
+    override suspend fun saveData(
+        questionList: List<QuestionLocal>,
+        bitmapList: MutableMap<Pair<Int, Boolean>, BitmapDrawable>,
+        structureList: List<Pair<String, BitmapDrawable>>,
+        defaultImage: Drawable
+    ) {
         TODO("Not yet implemented")
     }
+
 
 
 }

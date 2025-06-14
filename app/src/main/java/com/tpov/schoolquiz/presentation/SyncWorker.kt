@@ -87,6 +87,7 @@ class SyncWorker @AssistedInject constructor(
                 )
             )
             prefManager.saveSettings(settingsConfig)
+            updateProfileView()
         }
     }
 

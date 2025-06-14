@@ -73,7 +73,7 @@ sealed class SpinnerUiState {
 
 sealed class CheckBoxUiState {
     data object Hidden : CheckBoxUiState()
-    data class Visible(val isChecked: Boolean? = null, val isEnabled: Boolean? = null, val text: String? = null) :
+    data class Visible(val isChecked: Boolean? = null, val isEnabled: Boolean? = null, val text: String? = null, val isInit : Boolean = true) :
         CheckBoxUiState()
 }
 

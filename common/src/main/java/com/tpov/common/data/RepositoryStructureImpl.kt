@@ -84,7 +84,7 @@ open class RepositoryStructureImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateStructureData(
+    override suspend fun insertStructureData(
         structureDataEntity: StructureDataEntity,
         event : String
     ) {

@@ -14,27 +14,30 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
 
     suspend fun getStructureEventData(event: EventQuiz) = repositoryStructureImpl.getStructureEventData(event.name)
 
-    suspend fun fetchStructureInfo(pathStructure: PathStructure) = repositoryStructureImpl.fetchStructureInfo(pathStructure)
+    suspend fun fetchStructureInfo(pathStructure: PathStructure) =
+        repositoryStructureImpl.fetchStructureInfo(pathStructure)
 
     suspend fun insertEditStructure(structureEditData: StructureEditData) {
         repositoryStructureImpl.insertEditStructure(structureEditData)
     }
 
     suspend fun getEditStructure() = repositoryStructureImpl.getEditStructure()
-    suspend fun pushEditStructure(structureEditData: StructureEditData) = repositoryStructureImpl.pushEditStructure(structureEditData)
+    suspend fun pushEditStructure(structureEditData: StructureEditData) =
+        repositoryStructureImpl.pushEditStructure(structureEditData)
 
     suspend fun clearStructureEdit() {
         repositoryStructureImpl.clearStructureEdit()
     }
 
-    suspend fun updateStructureData(structureDataLocal: StructureDataLocal, event: EventQuiz) {
-        repositoryStructureImpl.updateStructureData(structureDataLocal.toStructureDataEntity()!!, event.name)
+    suspend fun insertStructureData(structureDataLocal: StructureDataLocal, event: EventQuiz) {
+
+        StructureDataLocal( children = mutableListOf( structureDataLocal)).printFullStructure("drl;gklpsdre")
+        repositoryStructureImpl.insertStructureData(structureDataLocal.toStructureDataEntity()!!, event.name)
     }
 
     suspend fun updateStructureDataList(structureDataLocal: List<StructureDataLocal>, event: EventQuiz) {
         structureDataLocal.forEach {
-            repositoryStructureImpl.updateStructureData(it.toStructureDataEntity()!!, event.name)
+            repositoryStructureImpl.insertStructureData(it.toStructureDataEntity()!!, event.name)
         }
     }
-
 }

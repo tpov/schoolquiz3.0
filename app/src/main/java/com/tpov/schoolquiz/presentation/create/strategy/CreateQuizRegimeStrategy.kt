@@ -1,5 +1,9 @@
 package com.tpov.schoolquiz.presentation.create.strategy
 
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.util.Log
+import com.tpov.common.Core
 import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
@@ -7,6 +11,7 @@ import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
+import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
 import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
@@ -73,35 +78,93 @@ class CreateQuizRegimeStrategy(
 
     )
 
-    override suspend fun saveData(questionList: List<QuestionLocal>, structureList: List<StructureDataLocal>) {
 
+
+    override suspend fun saveData(
+        questionList: List<QuestionLocal>,
+        bitmapList: MutableMap<Pair<Int, Boolean>, BitmapDrawable>,
+        structureList: List<Pair<String, BitmapDrawable>>,
+        defaultImage: Drawable
+    ) {
         var structureCategoryHomeList = structureUseCase.getStructureEventData(EventQuiz.QUIZ_BY_USER)?.toMutableList() ?: mutableListOf()
 
-        var structureCategoryHome = structureCategoryHomeList.find { it.nameItem == structureList[0].nameItem }
+        var structureCategoryHome = structureCategoryHomeList.find { it.nameItem == structureList[0].first }
         if (structureCategoryHome == null) {
-            structureCategoryHome = StructureDataLocal(nameItem = structureList[0].nameItem, children = mutableListOf())
+            structureCategoryHome = StructureDataLocal(nameItem = structureList[0].first, children = mutableListOf())
             structureCategoryHomeList.add(structureCategoryHome)
         }
+        structureCategoryHome.printFullStructure("drl;gklpsdre 1")
+        // Save category image if not default
+        if (!isDefaultImage(structureList[0].second, defaultImage)) {
+            val categoryImagePath = NamesUtils().getPathPicture()
+            Core.savePicture(categoryImagePath, structureList[0].second.bitmap)
+            structureCategoryHome.picture = categoryImagePath
+        } else {
+            structureCategoryHome.picture = ""
+        }
 
-        var structureSubCategoryHome = structureCategoryHome.children?.find { it.nameItem == structureList[1].nameItem }
+        var structureSubCategoryHome = structureCategoryHome.children?.find { it.nameItem == structureList[1].first }
         if (structureSubCategoryHome == null) {
-            structureSubCategoryHome = StructureDataLocal(nameItem = structureList[1].nameItem, children = mutableListOf())
+            structureSubCategoryHome = StructureDataLocal(nameItem = structureList[1].first, children = mutableListOf())
             structureCategoryHome.children?.add(structureSubCategoryHome)
         }
-        var structureSubsubCategoryHome = structureSubCategoryHome.children?.find { it.nameItem == structureList[2].nameItem }
-        if (structureSubsubCategoryHome == null) {
-            structureSubsubCategoryHome = StructureDataLocal(nameItem = structureList[2].nameItem, children = mutableListOf())
-            structureSubCategoryHome.children?.add(structureSubsubCategoryHome)
+        // Save subcategory image if not default
+        if (!isDefaultImage(structureList[1].second, defaultImage)) {
+            val subCategoryImagePath = NamesUtils().getPathPicture()
+            Core.savePicture(subCategoryImagePath, structureList[1].second.bitmap)
+            structureSubCategoryHome.picture = subCategoryImagePath
+        } else {
+            structureSubCategoryHome.picture = ""
         }
 
-        var structureQuizHome = structureSubsubCategoryHome.children?.find { it.nameItem == structureList[3].nameItem }
-        if (structureQuizHome == null) {
-            structureQuizHome = StructureDataLocal(nameItem = structureList[3].nameItem)
-            structureSubsubCategoryHome.children?.add(structureQuizHome)
+        var structureSubSubCategoryHome = structureSubCategoryHome.children?.find { it.nameItem == structureList[2].first }
+        if (structureSubSubCategoryHome == null) {
+            structureSubSubCategoryHome = StructureDataLocal(nameItem = structureList[2].first, children = mutableListOf())
+            structureSubCategoryHome.children?.add(structureSubSubCategoryHome)
+        }
+        // Save subsubcategory image if not default
+        if (!isDefaultImage(structureList[2].second, defaultImage)) {
+            val subSubCategoryImagePath = NamesUtils().getPathPicture()
+            Core.savePicture(subSubCategoryImagePath, structureList[2].second.bitmap)
+            structureSubSubCategoryHome.picture = subSubCategoryImagePath
+        } else {
+            structureSubSubCategoryHome.picture = ""
         }
 
-        structureUseCase.updateStructureDataList(structureCategoryHomeList, EventQuiz.QUIZ_BY_USER)
-        questionList.forEach { questionUseCase.insertQuestion(it) }
+        Log.d("drl;gklpsdre", "4")
+        // Save questions
+        questionList.forEach { question ->
+            val questionImage = bitmapList[question.numQuestion to false]
+            val answerImage = bitmapList[question.numQuestion to true]
+
+            // Save question image if not default
+            if (!isDefaultImage(questionImage, defaultImage)) {
+                val questionImagePath = NamesUtils().getPathPicture()
+                Core.savePicture(questionImagePath, questionImage!!.bitmap)
+                question.pathPictureQuestion = questionImagePath
+            } else {
+                question.pathPictureQuestion = ""
+            }
+
+            // Save answer image if not default
+            if (!isDefaultImage(answerImage, defaultImage)) {
+                val answerImagePath = NamesUtils().getPathPicture()
+                Core.savePicture(answerImagePath, answerImage!!.bitmap)
+                question.pathPictureQuestion = answerImagePath
+            } else {
+                question.pathPictureQuestion = null
+            }
+
+            questionUseCase.insertQuestion(question)
+        }
+
+        structureCategoryHome.printFullStructure("drl;gklpsdre 2")
+        structureUseCase.insertStructureData(structureCategoryHome, EventQuiz.QUIZ_BY_USER)
+    }
+
+    private fun isDefaultImage(drawable: Drawable?, defaultImage: Drawable): Boolean {
+        if (drawable == null) return true
+        return drawable.constantState == defaultImage.constantState
     }
 
 }
