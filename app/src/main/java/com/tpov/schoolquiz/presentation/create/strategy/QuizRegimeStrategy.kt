@@ -12,7 +12,7 @@ interface QuizRegimeStrategy {
     fun fullscreen(isFullscreen: Boolean): QuizUiModelState
     suspend fun saveData(
         questionList: List<QuestionLocal>,
-        bitmapList: MutableMap<Pair<Int, Boolean>, BitmapDrawable>,
+        bitmapList: Map<Pair<Int, Boolean>, BitmapDrawable>,
         structureList: List<Pair<String, BitmapDrawable>>,
         defaultImage: Drawable
     )

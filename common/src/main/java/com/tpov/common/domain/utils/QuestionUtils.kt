@@ -40,4 +40,16 @@ object QuestionUtils {
         return if (this.isEmpty()) QuestionListResult.EmptyTranslation
         else QuestionListResult.Success(this)
     }
+
+    fun MutableList<QuestionLocal>?.updateQuestionsByNumber(
+        questionNumber: Int,
+        isHard: Boolean,
+        update: (QuestionLocal) -> QuestionLocal
+    ): List<QuestionLocal> {
+        return this?.map { question ->
+            if (question.numQuestion == questionNumber && question.hardQuestion == isHard) {
+                update(question)
+            } else question
+        } ?: emptyList()
+    }
 }

@@ -71,6 +71,7 @@ object StructureDataUtils {
         it.pathStructure == path
     }
 
+        //как оказалось это просто гениальное решение упростить код
     fun processStructureDataDifferences(
         structureNodeListNew: MutableList<StructureDataLocal>,
         structureNodeListOld: MutableList<StructureDataLocal>?,

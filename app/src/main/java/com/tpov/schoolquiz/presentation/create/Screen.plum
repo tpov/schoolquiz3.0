@@ -1,0 +1,237 @@
+@startuml CreateQuizArchitecture
+
+!theme plain
+
+package "Presentation Layer" {
+  class CreateQuizActivity {
+    -binding: ActivityCreateQuizBinding
+    -viewModel: CreateQuizViewModel
+    -currentRegime: Int
+    -pathStructure: PathStructure?
+    -currentImageUploadType: ImageUploadType
+    +onCreate()
+    +setupListeners()
+    +observeUIState()
+    +setupAnswersRecyclerView()
+    +setupQuestionTranslationsRecyclerView()
+    +onActivityResult()
+    +convertToBitmapDrawable()
+    +openImagePicker()
+    +optimizeImageForSaving()
+  }
+
+  enum ImageUploadType {
+    QUIZ
+    QUESTION
+    CATEGORY
+    SUB_CATEGORY
+    SUB_SUB_CATEGORY
+  }
+}
+
+package "ViewModel Layer" {
+  class CreateQuizViewModel {
+    -savedStateHandle: SavedStateHandle
+    -structureUseCase: StructureUseCase
+    -questionUseCase: QuestionUseCase
+    -_uiState: MutableStateFlow<QuizUiModelState>
+    +uiState: StateFlow<QuizUiModelState>
+    -questionStateManager: QuestionStateManager
+    -categoryStateManager: CategoryStateManager
+    -uiElementsManager: UiElementsStateManager
+    -currentRegimeStrategy: QuizRegimeStrategy
+    +selectCategory(Triple<String,String,String>)
+    +toggleNewCategoryFields()
+    +addAnswerOption()
+    +onAnswerOptionsChanged(TranslateAnswer)
+    +onQuestionTextChanged(TranslateQuestion)
+    +addTranslate()
+    +createNewQuestion()
+    +selectQuestion(Int, Boolean)
+    +updateCheckBox()
+    +onQuestionLanguageChanged(LanguageUtils, LanguageUtils)
+    +setPhotoQuestion(BitmapDrawable)
+    +saveDataForCurrentRegime()
+  }
+}
+
+package "State Management" {
+  class QuestionStateManager {
+    -uiState: MutableStateFlow<QuizUiModelState>
+    +addAnswerOption()
+    +updateAnswerOptions(TranslateAnswer)
+    +updateQuestionText(String, LanguageUtils)
+    +addTranslation()
+    +createNewQuestion(): Pair<Int, Boolean>
+    +selectQuestion()
+    +selectQuestion(Int, Boolean)
+    +toggleQuestionType()
+    +updateQuestionLanguage(LanguageUtils, LanguageUtils)
+  }
+
+  class CategoryStateManager {
+    -uiState: MutableStateFlow<QuizUiModelState>
+    +selectCategory(Triple<String,String,String>)
+    +toggleNewCategoryFields()
+  }
+
+  class UiElementsStateManager {
+    -uiState: MutableStateFlow<QuizUiModelState>
+    +setPhotoQuestion(BitmapDrawable, Int, Boolean)
+  }
+}
+
+package "Strategy Pattern" {
+  interface QuizRegimeStrategy {
+    +setupUiState(): QuizUiModelState
+    +loadData(PathStructure): QuizUiModelState
+    +fullscreen(Boolean): QuizUiModelState
+    +saveData(List<QuestionLocal>, Map<Pair<Int,Boolean>, BitmapDrawable>, List<Pair<String, BitmapDrawable>>, Drawable)
+  }
+
+  class CreateQuizRegimeStrategy implements QuizRegimeStrategy {
+    -structureUseCase: StructureUseCase
+    -questionUseCase: QuestionUseCase
+  }
+  class EditQuizRegimeStrategy implements QuizRegimeStrategy {
+    -structureUseCase: StructureUseCase
+    -questionUseCase: QuestionUseCase
+  }
+  class EditArchiveQuizRegimeStrategy implements QuizRegimeStrategy {
+    -structureUseCase: StructureUseCase
+    -questionUseCase: QuestionUseCase
+  }
+}
+
+package "UI State Models" {
+  class QuizUiModelState {
+    +quizNameUiState: TextUiState?
+    +quizImageUiState: ImageUiState?
+    +categorySpinnerUiState: SpinnerUiState?
+    +subCategorySpinnerUiState: SpinnerUiState?
+    +subsubCategorySpinnerUiState: SpinnerUiState?
+    +llCreateNewCategory: IsUiState?
+    +tvCategory: TextUiState?
+    +imvCategory: ImageUiState?
+    +tvSubCategory: TextUiState?
+    +imvSubCategory: ImageUiState?
+    +tvSubsubCategory: TextUiState?
+    +imvSubsubCategory: ImageUiState?
+    +questionImageUiState: ImageUiState?
+    +questionNumberSpinnerUiState: SpinnerUiState?
+    +rvQuestionTranslate: List<TranslateQuestion>?
+    +rvAnswerTranslate: List<TranslateAnswer>?
+    +typeQuestionCheckBoxState: CheckBoxUiState?
+    +addAnsworButtonUiState: TextUiState?
+    +addTranslateButtonUiState: TextUiState?
+    +saveQuizButtonUiState: TextUiState?
+    +questionList: MutableList<QuestionLocal>?
+    +questionDrawable: HashMap<Pair<Int,Boolean>, BitmapDrawable>
+  }
+
+  abstract class TextUiState {
+    Hidden
+    Visible(text, isEnabled, isVisible)
+  }
+
+  abstract class ImageUiState {
+    Hidden
+    Visible(imageBitmap, isEnabled)
+  }
+
+  abstract class SpinnerUiState {
+    Hidden
+    Visible(items, selectedIndex, isEnabled)
+  }
+
+  abstract class CheckBoxUiState {
+    Hidden
+    Visible(isChecked, isEnabled, text, isInit)
+  }
+
+  abstract class IsUiState {
+    Hidden
+    Visible
+  }
+}
+
+package "Adapter Layer" {
+  class AnswerListAdapter {
+    -items: List<TranslateAnswer>
+    -onAnswerOptionsChanged: (TranslateAnswer) -> Unit
+    +submitList(List<TranslateAnswer>)
+    +onCreateViewHolder(): AnswerViewHolder
+    +onBindViewHolder(AnswerViewHolder, Int)
+  }
+
+  class QuestionTranslationListAdapter {
+    -items: MutableList<TranslateQuestion>
+    -onQuestionTextChanged: (TranslateQuestion) -> Unit
+    -onLanguageChanged: (LanguageUtils, LanguageUtils) -> Unit
+    +submitList(List<TranslateQuestion>)
+    +onCreateViewHolder(): TranslationViewHolder
+    +onBindViewHolder(TranslationViewHolder, Int)
+  }
+}
+
+package "Data Models" {
+  class TranslateAnswer {
+    +listAnswer: MutableList<String>
+    +language: LanguageUtils
+  }
+
+  class TranslateQuestion {
+    +question: String
+    +language: LanguageUtils
+  }
+}
+
+package "Domain Layer" {
+  interface StructureUseCase
+  interface QuestionUseCase
+}
+
+' Relationships with correct callbacks
+CreateQuizActivity --> CreateQuizViewModel : observes uiState
+CreateQuizActivity --> AnswerListAdapter : creates with callback
+CreateQuizActivity --> QuestionTranslationListAdapter : creates with callbacks
+CreateQuizActivity --> ImageUploadType : uses
+
+' ViewModel callbacks to Activity
+CreateQuizActivity ..> CreateQuizViewModel : calls methods:\nselectCategory()\ntoggleNewCategoryFields()\naddAnswerOption()\nonAnswerOptionsChanged()\nonQuestionTextChanged()\naddTranslate()\ncreateNewQuestion()\nselectQuestion()\nupdateCheckBox()\nonQuestionLanguageChanged()\nsetPhotoQuestion()\nsaveDataForCurrentRegime()
+
+' Adapter callbacks to ViewModel via Activity
+AnswerListAdapter ..> CreateQuizViewModel : callback via Activity:\nonAnswerOptionsChanged()
+QuestionTranslationListAdapter ..> CreateQuizViewModel : callbacks via Activity:\nonQuestionTextChanged()\nonLanguageChanged()
+
+CreateQuizViewModel --> QuestionStateManager : delegates to
+CreateQuizViewModel --> CategoryStateManager : delegates to
+CreateQuizViewModel --> UiElementsStateManager : delegates to
+CreateQuizViewModel --> QuizRegimeStrategy : uses
+CreateQuizViewModel --> QuizUiModelState : emits
+CreateQuizViewModel --> StructureUseCase : injected
+CreateQuizViewModel --> QuestionUseCase : injected
+
+QuestionStateManager --> QuizUiModelState : updates via MutableStateFlow
+CategoryStateManager --> QuizUiModelState : updates via MutableStateFlow
+UiElementsStateManager --> QuizUiModelState : updates via MutableStateFlow
+
+QuizUiModelState --> TextUiState : contains
+QuizUiModelState --> ImageUiState : contains
+QuizUiModelState --> SpinnerUiState : contains
+QuizUiModelState --> CheckBoxUiState : contains
+QuizUiModelState --> IsUiState : contains
+QuizUiModelState --> TranslateQuestion : contains list
+QuizUiModelState --> TranslateAnswer : contains list
+
+AnswerListAdapter --> TranslateAnswer : works with
+QuestionTranslationListAdapter --> TranslateQuestion : works with
+
+CreateQuizRegimeStrategy --> StructureUseCase : uses
+CreateQuizRegimeStrategy --> QuestionUseCase : uses
+EditQuizRegimeStrategy --> StructureUseCase : uses
+EditQuizRegimeStrategy --> QuestionUseCase : uses
+EditArchiveQuizRegimeStrategy --> StructureUseCase : uses
+EditArchiveQuizRegimeStrategy --> QuestionUseCase : uses
+
+@enduml

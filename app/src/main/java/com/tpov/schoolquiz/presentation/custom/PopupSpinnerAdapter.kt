@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create
+package com.tpov.schoolquiz.presentation.custom
 
 import android.graphics.Color
 import android.view.LayoutInflater
@@ -32,9 +32,9 @@ class PopupSpinnerAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.textView.text = items[position]
         holder.textView.isSelected = (position == selectedPosition)
-        
+
         val isActionItem = position == actionItemPosition
-        
+
         // Style differently if it's an action item
         if (isActionItem) {
             holder.textView.setTextColor(Color.GREEN)

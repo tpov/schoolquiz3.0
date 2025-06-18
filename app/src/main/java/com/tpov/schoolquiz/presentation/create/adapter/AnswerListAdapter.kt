@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create
+package com.tpov.schoolquiz.presentation.create.adapter
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -40,7 +40,7 @@ class AnswerListAdapter(
         list?.forEachIndexed { index, item ->
             Log.d("awdawd", "submitList AnswerListAdapter item $index: answers=${item.listAnswer}, language=${item.language}")
         }
-        
+
         // Всегда создаем новый список и обновляем
         items = list?.toList() ?: emptyList()
         notifyDataSetChanged()

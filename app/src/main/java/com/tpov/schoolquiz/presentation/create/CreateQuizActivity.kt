@@ -26,11 +26,13 @@ import com.tpov.common.presentation.model.PathStructure
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
+import com.tpov.schoolquiz.presentation.create.adapter.AnswerListAdapter
+import com.tpov.schoolquiz.presentation.create.adapter.QuestionTranslationListAdapter
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
+import com.tpov.schoolquiz.presentation.create.model.IsUiState
 import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
 import com.tpov.schoolquiz.presentation.create.model.TextUiState
-import com.tpov.schoolquiz.presentation.create.model.isUiState
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -89,15 +91,15 @@ class CreateQuizActivity : AppCompatActivity() {
 
         setupAnswersRecyclerView()
         setupQuestionTranslationsRecyclerView()
-
         setupListeners()
-        observeViewModel()
+        observeUIState()
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun setupListeners() {
         binding.bSave.setOnClickListener {
-            val defaultImage = getDrawable(R.drawable.ic_upload) ?: throw IllegalStateException("Default image not found")
+            val defaultImage =
+                getDrawable(R.drawable.ic_upload) ?: throw IllegalStateException("Default image not found")
             viewModel.saveDataForCurrentRegime(
                 listOf(
                     binding.tvCategory.text.toString(),
@@ -118,7 +120,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
         binding.spCategory.setOnItemSelectedListener { selectedItem ->
             binding.tvCategory.setText(selectedItem)
-            viewModel.selectCategory(selectedItem)
+            viewModel.selectCategory(Triple(selectedItem, "", ""))
         }
 
         binding.spCategory.setOnActionItemClickListener {
@@ -127,7 +129,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
         binding.spSubCategory.setOnItemSelectedListener { selectedItem ->
             binding.tvSubCategory.setText(selectedItem)
-            viewModel.selectSubCategory(selectedItem)
+            viewModel.selectCategory(Triple("", selectedItem, ""))
         }
 
         binding.spSubCategory.setOnActionItemClickListener {
@@ -136,7 +138,7 @@ class CreateQuizActivity : AppCompatActivity() {
 
         binding.spSubsubCategory.setOnItemSelectedListener { selectedItem ->
             binding.tvSubsubCategory.setText(selectedItem)
-            viewModel.selectSubsubCategory(selectedItem)
+            viewModel.selectCategory(Triple("", "", selectedItem))
         }
 
         binding.spSubsubCategory.setOnActionItemClickListener {
@@ -166,7 +168,7 @@ class CreateQuizActivity : AppCompatActivity() {
         binding.spNumQuestion.setOnItemSelectedListener { selectedItem ->
             val numQuestion = selectedItem.takeWhile { it.isDigit() }.toIntOrNull() ?: 1
             val hardQuestion = selectedItem.contains('*')
-            viewModel.updateQuestionsState(numQuestion = numQuestion, hardQuestion = hardQuestion)
+            viewModel.selectQuestion(numQuestion, hardQuestion)
         }
 
         binding.spNumQuestion.setOnActionItemClickListener {
@@ -200,21 +202,373 @@ class CreateQuizActivity : AppCompatActivity() {
         // Add other listeners for text changes in EditTexts, image clicks, etc.
     }
 
+    /**
+     * РЕФАКТОРИНГ: observeUIState можно значительно упростить с generic UiState<T>
+     *
+     * БЫЛО:
+     * state.quizNameUiState?.let { uiState ->
+     *     when (uiState) {
+     *         is TextUiState.Hidden -> binding.tvQuizName.visibility = View.GONE
+     *         is TextUiState.Visible -> {
+     *             binding.tvQuizName.visibility = View.VISIBLE
+     *             binding.tvQuizName.isEnabled = uiState.isEnabled
+     *             uiState.text?.let { binding.tvQuizName.setText(it) }
+     *         }
+     *     }
+     * }
+     *
+     * СТАНЕТ:
+     * binding.tvQuizName.updateVisibility(state.quizName) { text ->
+     *     binding.tvQuizName.setText(text)
+     * }
+     *
+     * Extension функция:
+     * fun <T> View.updateVisibility(uiState: UiState<T>, onVisible: (T) -> Unit = {}) {
+     *     when (uiState) {
+     *         is UiState.Hidden -> visibility = View.GONE
+     *         is UiState.Visible -> {
+     *             visibility = View.VISIBLE
+     *             isEnabled = uiState.isEnabled
+     *             onVisible(uiState.data)
+     *         }
+     *     }
+     * }
+     */
+    private fun observeUIState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    // РЕФАКТОРИНГ: Все эти блоки можно заменить на 1-2 строки с UiState<T>
+
+                    state.quizNameUiState?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.tvQuizName.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.tvQuizName.visibility = View.VISIBLE
+                                binding.tvQuizName.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.tvQuizName.setText(it) }
+                            }
+                        }
+                    }
+                    // РЕФАКТОРИНГ: После -> binding.tvQuizName.updateVisibility(state.quizName) { setText(it) }
+
+                    // Quiz Image
+                    // РЕФАКТОРИНГ: ImageUiState -> UiState<BitmapDrawable>
+                    state.quizImageUiState?.let { uiState ->
+                        when (uiState) {
+                            is ImageUiState.Hidden -> binding.imvQuiz.visibility = View.GONE
+                            is ImageUiState.Visible -> {
+                                binding.imvQuiz.visibility = View.VISIBLE
+                                binding.imvQuiz.isEnabled = uiState.isEnabled
+                                // uiState.imageUri?.let { /* установка изображения */ }
+                            }
+                        }
+                    }
+
+                    // РЕФАКТОРИНГ: SpinnerUiState -> UiState<SpinnerData>
+                    // Category Spinner
+                    state.categorySpinnerUiState?.let { uiState ->
+                        when (uiState) {
+                            is SpinnerUiState.Hidden -> binding.spCategory.visibility = View.GONE
+                            is SpinnerUiState.Visible -> {
+                                binding.spCategory.visibility = View.VISIBLE
+                                binding.spCategory.isEnabled = uiState.isEnabled
+                                uiState.items?.let {
+                                    binding.spCategory.setItems(it)
+                                    binding.spCategory.setItemsWithAction(getString(R.string.add_category))
+                                }
+                                uiState.selectedIndex?.let { binding.spCategory.setSelection(it, false) }
+                            }
+                        }
+                    }
+
+                    // Sub Category Spinner
+                    state.subCategorySpinnerUiState?.let { uiState ->
+                        when (uiState) {
+                            is SpinnerUiState.Hidden -> binding.spSubCategory.visibility = View.GONE
+                            is SpinnerUiState.Visible -> {
+                                binding.spSubCategory.visibility = View.VISIBLE
+                                binding.spSubCategory.isEnabled = uiState.isEnabled
+                                uiState.items?.let {
+                                    binding.spSubCategory.setItems(it)
+                                    binding.spSubCategory.setItemsWithAction(getString(R.string.add_subcategory))
+                                }
+                                uiState.selectedIndex?.let { binding.spSubCategory.setSelection(it, false) }
+                            }
+                        }
+                    }
+
+                    // Sub-sub Category Spinner
+                    state.subsubCategorySpinnerUiState?.let { uiState ->
+                        when (uiState) {
+                            is SpinnerUiState.Hidden -> binding.spSubsubCategory.visibility = View.GONE
+                            is SpinnerUiState.Visible -> {
+                                binding.spSubsubCategory.visibility = View.VISIBLE
+                                binding.spSubsubCategory.isEnabled = uiState.isEnabled
+                                uiState.items?.let {
+                                    binding.spSubsubCategory.setItems(it)
+                                    binding.spSubsubCategory.setItemsWithAction(getString(R.string.add_subsubcategory))
+                                }
+                                uiState.selectedIndex?.let { binding.spSubsubCategory.setSelection(it, false) }
+                            }
+                        }
+                    }
+
+                    // РЕФАКТОРИНГ: IsUiState -> UiState<Unit> или Boolean
+                    // Create New Category Layout
+                    state.llCreateNewCategory?.let { uiState ->
+                        binding.llCreateNewCategory.visibility = when (uiState) {
+                            IsUiState.Hidden -> View.GONE
+                            IsUiState.Visible -> View.VISIBLE
+                        }
+                    }
+
+                    // Category Text
+                    state.tvCategory?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.tvCategory.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.tvCategory.visibility = View.VISIBLE
+                                binding.tvCategory.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.tvCategory.setText(it) }
+                            }
+                        }
+                    }
+
+                    // Category Image
+                    state.imvCategory?.let { uiState ->
+                        when (uiState) {
+                            is ImageUiState.Hidden -> binding.imvCategory.visibility = View.GONE
+                            is ImageUiState.Visible -> {
+                                binding.imvCategory.visibility = View.VISIBLE
+                                binding.imvCategory.isEnabled = uiState.isEnabled
+                                // uiState.imageUri?.let { /* установка изображения */ }
+                            }
+                        }
+                    }
+
+                    // Sub Category Text
+                    state.tvSubCategory?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.tvSubCategory.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.tvSubCategory.visibility = View.VISIBLE
+                                binding.tvSubCategory.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.tvSubCategory.setText(it) }
+                            }
+                        }
+                    }
+
+                    // Sub Category Image
+                    state.imvSubCategory?.let { uiState ->
+                        when (uiState) {
+                            is ImageUiState.Hidden -> binding.imvSubcategory.visibility = View.GONE
+                            is ImageUiState.Visible -> {
+                                binding.imvSubcategory.visibility = View.VISIBLE
+                                binding.imvSubcategory.isEnabled = uiState.isEnabled
+                                // uiState.imageUri?.let { /* установка изображения */ }
+                            }
+                        }
+                    }
+
+                    // Sub-sub Category Text
+                    state.tvSubsubCategory?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.tvSubsubCategory.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.tvSubsubCategory.visibility = View.VISIBLE
+                                binding.tvSubsubCategory.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.tvSubsubCategory.setText(it) }
+                            }
+                        }
+                    }
+
+                    // Sub-sub Category Image
+                    state.imvSubsubCategory?.let { uiState ->
+                        when (uiState) {
+                            is ImageUiState.Hidden -> binding.imvSubsubcategory.visibility = View.GONE
+                            is ImageUiState.Visible -> {
+                                binding.imvSubsubcategory.visibility = View.VISIBLE
+                                binding.imvSubsubcategory.isEnabled = uiState.isEnabled
+                                // uiState.imageUri?.let { /* установка изображения */ }
+                            }
+                        }
+                    }
+
+                    // Stroke Top
+                    state.stroceTop?.let { uiState ->
+                        binding.stroceTop.visibility = when (uiState) {
+                            IsUiState.Hidden -> View.GONE
+                            IsUiState.Visible -> View.VISIBLE
+                        }
+                    }
+
+                    // Question Image
+                    state.questionImageUiState?.let { uiState ->
+                        when (uiState) {
+                            is ImageUiState.Hidden -> binding.imvQuestion.visibility = View.GONE
+                            is ImageUiState.Visible -> {
+                                binding.imvQuestion.visibility = View.VISIBLE
+                                binding.imvQuestion.isEnabled = uiState.isEnabled
+                                // uiState.imageUri?.let { /* установка изображения */ }
+                            }
+                        }
+                    }
+
+                    // Fullscreen Button
+                    state.fullscreenButtonUiState?.let { uiState ->
+                        when (uiState) {
+                            is CheckBoxUiState.Hidden -> binding.imvFullscreen.visibility = View.GONE
+                            is CheckBoxUiState.Visible -> {
+                                binding.imvFullscreen.visibility = View.VISIBLE
+                                uiState.isEnabled?.let { binding.imvFullscreen.isEnabled = it }
+                                uiState.isChecked?.let { /* установка состояния кнопки */ }
+                            }
+                        }
+                    }
+
+                    // Fullscreen
+                    state.fullScreen?.let { uiState ->
+                        // Handle fullScreen visibility if needed
+                    }
+
+                    // Question Number Spinner
+                    state.questionNumberSpinnerUiState?.let { uiState ->
+                        when (uiState) {
+                            is SpinnerUiState.Hidden -> binding.spNumQuestion.visibility = View.GONE
+                            is SpinnerUiState.Visible -> {
+                                binding.spNumQuestion.visibility = View.VISIBLE
+                                binding.spNumQuestion.isEnabled = uiState.isEnabled
+                                uiState.items?.let {
+                                    binding.spNumQuestion.setItems(it)
+                                    binding.spNumQuestion.setItemsWithAction("Создать новый вопрос")
+                                }
+                                uiState.selectedIndex?.let { binding.spNumQuestion.setSelection(it, false) }
+                            }
+                        }
+                    }
+
+                    // Stroke Bottom
+                    state.stroceBottom?.let { uiState ->
+                        binding.stroceBottom.visibility = when (uiState) {
+                            IsUiState.Hidden -> View.GONE
+                            IsUiState.Visible -> View.VISIBLE
+                        }
+                    }
+
+                    // Type Question CheckBox
+                    state.typeQuestionCheckBoxState?.let { uiState ->
+                        when (uiState) {
+                            is CheckBoxUiState.Hidden -> binding.chbTypeQuestion.visibility = View.GONE
+                            is CheckBoxUiState.Visible -> {
+                                if (uiState.isInit) {
+                                    binding.chbTypeQuestion.visibility = View.VISIBLE
+                                    uiState.isChecked?.let { binding.chbTypeQuestion.isChecked = it }
+                                    uiState.isEnabled?.let { binding.chbTypeQuestion.isEnabled = it }
+                                    uiState.text?.let { binding.chbTypeQuestion.text = it }
+                                }
+                            }
+                        }
+                    }
+
+                    // Before Edit Translate Button
+                    state.bBeforeEditTranslate?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.bBeforeEditTranslate.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.bBeforeEditTranslate.visibility = View.VISIBLE
+                                binding.bBeforeEditTranslate.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.bBeforeEditTranslate.text = it }
+                            }
+                        }
+                    }
+
+                    // After Edit Translate Button
+                    state.bAfterEditTranslate?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.bAfterEditTranslate.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.bAfterEditTranslate.visibility = View.VISIBLE
+                                binding.bAfterEditTranslate.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.bAfterEditTranslate.text = it }
+                            }
+                        }
+                    }
+
+                    // Add Answer Button
+                    state.addAnswerButtonUiState?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.bAddAnswer.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.bAddAnswer.visibility = View.VISIBLE
+                                binding.bAddAnswer.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.bAddAnswer.text = it }
+                            }
+                        }
+                    }
+
+                    // Add Translate Button
+                    state.addTranslateButtonUiState?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.bAddTranslate.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.bAddTranslate.visibility = View.VISIBLE
+                                binding.bAddTranslate.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.bAddTranslate.text = it }
+                            }
+                        }
+                    }
+
+                    // Cancel Button
+                    state.cancelButtonUiState?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.bCencel.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.bCencel.visibility = View.VISIBLE
+                                binding.bCencel.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.bCencel.text = it }
+                            }
+                        }
+                    }
+
+                    // Save Quiz Button
+                    state.saveQuizButtonUiState?.let { uiState ->
+                        when (uiState) {
+                            is TextUiState.Hidden -> binding.bSave.visibility = View.GONE
+                            is TextUiState.Visible -> {
+                                binding.bSave.visibility = View.VISIBLE
+                                binding.bSave.isEnabled = uiState.isEnabled
+                                uiState.text?.let { binding.bSave.text = it }
+                            }
+                        }
+                    }
+
+                    // РЕФАКТОРИНГ: List<T>? -> UiState<List<T>>
+                    // Question Translations RecyclerView
+                    // БЫЛО: state.rvQuestionTranslate?.let { ... }
+                    // СТАНЕТ: state.questionTranslations.dataOrNull()?.let { adapter.submitList(it) }
+                    state.rvQuestionTranslate?.let { questionTranslateList ->
+                        (binding.rvTranslateQuestions.adapter as? QuestionTranslationListAdapter)?.submitList(
+                            questionTranslateList
+                        )
+                    }
+
+                    // Answer Translations RecyclerView
+                    state.rvAnswerTranslate?.let { answerTranslateList ->
+                        (binding.rvTranslateAnswers.adapter as? AnswerListAdapter)?.submitList(answerTranslateList)
+                    }
+                }
+            }
+        }
+    }
+
     private fun setupAnswersRecyclerView() {
         val answersAdapter = AnswerListAdapter { updatedAnswer ->
             viewModel.onAnswerOptionsChanged(updatedAnswer)
         }
 
-
-        lifecycleScope.launch {
-            binding.rvTranslateAnswers.layoutManager = LinearLayoutManager(this@CreateQuizActivity)
-            binding.rvTranslateAnswers.adapter = answersAdapter
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.answerListState.collect { answersList ->
-                    answersAdapter.submitList(answersList)
-                }
-            }
-        }
+        binding.rvTranslateAnswers.layoutManager = LinearLayoutManager(this@CreateQuizActivity)
+        binding.rvTranslateAnswers.adapter = answersAdapter
     }
 
     private fun setupQuestionTranslationsRecyclerView() {
@@ -229,303 +583,6 @@ class CreateQuizActivity : AppCompatActivity() {
 
         binding.rvTranslateQuestions.layoutManager = LinearLayoutManager(this@CreateQuizActivity)
         binding.rvTranslateQuestions.adapter = translationsAdapter
-
-        lifecycleScope.launch {
-
-            binding.rvTranslateQuestions.layoutManager = LinearLayoutManager(this@CreateQuizActivity)
-            binding.rvTranslateQuestions.adapter = translationsAdapter
-
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.currentQuestionTranslationsState.collect { translationsList ->
-                    translationsAdapter.submitList(translationsList)
-                }
-            }
-        }
-    }
-
-    private fun observeViewModel() {
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.quizNameUiState.collect { state ->
-                    when (state) {
-                        is TextUiState.Hidden -> binding.tvQuizName.visibility = View.GONE
-                        is TextUiState.Visible -> {
-                            binding.tvQuizName.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.tvQuizName.isEnabled = it }
-                            state.text?.let { binding.tvQuizName.setText(it) }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.quizImageUiState.collect { state ->
-                    when (state) {
-                        is ImageUiState.Hidden -> binding.imvQuiz.visibility = View.GONE
-                        is ImageUiState.Visible -> {
-                            binding.imvQuiz.visibility = View.VISIBLE
-                            state.imageUri?.let { /* установка изображения */ }
-                            state.isEnabled?.let { binding.imvQuiz.isEnabled = it }
-                        }
-                    }
-                }
-            }
-        }
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.showNewCategoryFields.collect { state ->
-                    when (state) {
-                        false -> binding.llCreateNewCategory.visibility = View.GONE
-                        true -> {
-                            binding.llCreateNewCategory.visibility = View.VISIBLE
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.categorySpinnerUiState.collect { state ->
-                    when (state) {
-                        is SpinnerUiState.Hidden -> binding.spCategory.visibility = View.GONE
-                        is SpinnerUiState.Visible -> {
-                            binding.spCategory.visibility = View.VISIBLE
-                            state.items?.let { binding.spCategory.setItems(it) }
-                            binding.spCategory.setItemsWithAction(getString(R.string.add_category))
-                            state.isEnabled?.let { binding.spCategory.isEnabled = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.subCategorySpinnerUiState.collect { state ->
-                    when (state) {
-                        is SpinnerUiState.Hidden -> binding.spSubCategory.visibility = View.GONE
-                        is SpinnerUiState.Visible -> {
-                            binding.spSubCategory.visibility = View.VISIBLE
-                            state.items?.let { binding.spSubCategory.setItems(it) }
-                            binding.spSubCategory.setItemsWithAction(getString(R.string.add_subcategory))
-                            state.isEnabled?.let { binding.spSubCategory.isEnabled = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.subsubCategorySpinnerUiState.collect { state ->
-                    when (state) {
-                        is SpinnerUiState.Hidden -> binding.spSubsubCategory.visibility = View.GONE
-                        is SpinnerUiState.Visible -> {
-                            binding.spSubsubCategory.visibility = View.VISIBLE
-                            state.items?.let { binding.spSubsubCategory.setItems(it) }
-                            binding.spSubsubCategory.setItemsWithAction(getString(R.string.add_subsubcategory))
-                            state.isEnabled?.let { binding.spSubsubCategory.isEnabled = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.questionImageUiState.collect { state ->
-                    when (state) {
-                        is ImageUiState.Hidden -> binding.imvQuestion.visibility = View.GONE
-                        is ImageUiState.Visible -> {
-                            binding.imvQuestion.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.imvQuestion.isEnabled = it }
-                            state.imageUri?.let { /* установка изображения */ }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Observe fullscreenButtonUiState (which is CheckBoxUiState)
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.fullscreenButtonUiState.collect { state ->
-                    // Handle CheckBoxUiState
-                    when (state) {
-                        is CheckBoxUiState.Hidden -> binding.imvFullscreen.visibility = View.GONE
-                        is CheckBoxUiState.Visible -> {
-                            binding.imvFullscreen.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.imvFullscreen.isEnabled = it }
-                            state.isChecked?.let { /* установка состояния кнопки */ }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.questionNumberSpinnerUiState.collect { state ->
-                    when (state) {
-                        is SpinnerUiState.Hidden -> binding.spNumQuestion.visibility = View.GONE
-                        is SpinnerUiState.Visible -> {
-                            binding.spNumQuestion.visibility = View.VISIBLE
-                            state.items?.let {
-                                binding.spNumQuestion.setItems(it)
-                                binding.spNumQuestion.setItemsWithAction("Создать новый вопрос")
-                            }
-                            state.selectedIndex?.let { binding.spNumQuestion.setSelection(state.selectedIndex, false) }
-                            state.isEnabled?.let { binding.spNumQuestion.isEnabled = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.addAnswerButtonUiState.collect { state ->
-                    when (state) {
-                        is TextUiState.Hidden -> binding.bAddAnswer.visibility = View.GONE
-                        is TextUiState.Visible -> {
-                            binding.bAddAnswer.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.bAddAnswer.isEnabled = it }
-                            state.text?.let { binding.bAddAnswer.text = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.saveQuizButtonUiState.collect { state ->
-                    when (state) {
-                        is TextUiState.Hidden -> binding.bSave.visibility = View.GONE
-                        is TextUiState.Visible -> {
-                            binding.bSave.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.bSave.isEnabled = it }
-                            state.text?.let { binding.bSave.text = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.addTranslateButtonUiState.collect { state ->
-                    when (state) {
-                        is TextUiState.Hidden -> binding.bAddTranslate.visibility = View.GONE
-                        is TextUiState.Visible -> {
-                            binding.bAddTranslate.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.bAddTranslate.isEnabled = it }
-                            state.text?.let { binding.bAddTranslate.text = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.beforeEditTranslateButtonUiState.collect { state ->
-                    when (state) {
-                        is TextUiState.Hidden -> binding.bBeforeEditTranslate.visibility = View.GONE
-                        is TextUiState.Visible -> {
-                            binding.bBeforeEditTranslate.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.bBeforeEditTranslate.isEnabled = it }
-                            state.text?.let { binding.bBeforeEditTranslate.text = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.afterEditTranslateButtonUiState.collect { state ->
-                    when (state) {
-                        is TextUiState.Hidden -> binding.bAfterEditTranslate.visibility = View.GONE
-                        is TextUiState.Visible -> {
-                            binding.bAfterEditTranslate.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.bAfterEditTranslate.isEnabled = it }
-                            state.text?.let { binding.bAfterEditTranslate.text = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.cancelButtonUiState.collect { state ->
-                    when (state) {
-                        is TextUiState.Hidden -> binding.bCencel.visibility = View.GONE
-                        is TextUiState.Visible -> {
-                            binding.bCencel.visibility = View.VISIBLE
-                            state.isEnabled?.let { binding.bCencel.isEnabled = it }
-                            state.text?.let { binding.bCencel.text = it }
-                        }
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.typeQuestionCheckBoxState.collect { state ->
-                    // Handle CheckBoxUiState
-                    when (state) {
-                        is CheckBoxUiState.Hidden -> binding.chbTypeQuestion.visibility = View.GONE
-                        is CheckBoxUiState.Visible -> {
-                            if (state.isInit) {
-                                binding.chbTypeQuestion.visibility = View.VISIBLE
-                                state.isChecked?.let { binding.chbTypeQuestion.isChecked = it }
-                                state.isEnabled?.let { binding.chbTypeQuestion.isEnabled = it }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Observe ContainerUiStates
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.llCreateNewCategoryUiState.collect { state ->
-                    binding.llCreateNewCategory.visibility = when (state) {
-                        isUiState.Hidden -> View.GONE
-                        isUiState.Visible -> View.VISIBLE
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.stroceTopUiState.collect { state ->
-                    binding.stroceTop.visibility = when (state) {
-                        isUiState.Hidden -> View.GONE
-                        isUiState.Visible -> View.VISIBLE
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch { // Use lifecycleScope
-            repeatOnLifecycle(Lifecycle.State.STARTED) { // Use repeatOnLifecycle
-                viewModel.stroceBottomUiState.collect { state ->
-                    binding.stroceBottom.visibility = when (state) {
-                        isUiState.Hidden -> View.GONE
-                        isUiState.Visible -> View.VISIBLE
-                    }
-                }
-            }
-        }
     }
 
     private fun openImagePicker(view: ImageUploadType) {
@@ -554,7 +611,8 @@ class CreateQuizActivity : AppCompatActivity() {
                 ImageUploadType.QUESTION -> {
                     Glide.with(this)
                         .load(imageUri)
-                        .listener(object : com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable> {
+                        .listener(object :
+                            com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable> {
 
                             override fun onLoadFailed(
                                 e: GlideException?,
@@ -651,6 +709,7 @@ class CreateQuizActivity : AppCompatActivity() {
                 drawable.draw(canvas)
                 BitmapDrawable(resources, bitmap)
             }
+
             else -> {
                 val bitmap = Bitmap.createBitmap(
                     drawable.intrinsicWidth,

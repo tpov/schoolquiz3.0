@@ -30,7 +30,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_upload" />
 
-    <com.tpov.schoolquiz.presentation.create.CustomSpinner
+    <com.tpov.schoolquiz.presentation.custom.CustomSpinner
         android:id="@+id/sp_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
-    <com.tpov.schoolquiz.presentation.create.CustomSpinner
+    <com.tpov.schoolquiz.presentation.custom.CustomSpinner
         android:id="@+id/sp_sub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -55,7 +55,7 @@
         app:layout_constraintStart_toEndOf="@+id/sp_category"
         app:layout_constraintTop_toBottomOf="@+id/tv_quiz_name" />
 
-    <com.tpov.schoolquiz.presentation.create.CustomSpinner
+    <com.tpov.schoolquiz.presentation.custom.CustomSpinner
         android:id="@+id/sp_subsub_category"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -165,7 +165,7 @@
         app:layout_constraintTop_toBottomOf="@+id/rv_translate_questions"
         app:srcCompat="@drawable/ic_fullscreen" />
 
-    <com.tpov.schoolquiz.presentation.create.CustomSpinner
+    <com.tpov.schoolquiz.presentation.custom.CustomSpinner
         android:id="@+id/sp_num_question"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

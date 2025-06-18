@@ -14,10 +14,10 @@ import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.NamesUtils
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
+import com.tpov.schoolquiz.presentation.create.model.IsUiState
 import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
 import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
 import com.tpov.schoolquiz.presentation.create.model.TextUiState
-import com.tpov.schoolquiz.presentation.create.model.isUiState
 
 
 class CreateQuizRegimeStrategy(
@@ -32,19 +32,18 @@ class CreateQuizRegimeStrategy(
         subCategorySpinnerUiState = SpinnerUiState.Visible(),
         subsubCategorySpinnerUiState = SpinnerUiState.Visible(),
 
-        llCreateNewCategory = isUiState.Hidden,
-        stroceTop = isUiState.Visible,
+        llCreateNewCategory = IsUiState.Hidden,
+        stroceTop = IsUiState.Visible,
         questionImageUiState = ImageUiState.Visible(),
         fullscreenButtonUiState = CheckBoxUiState.Visible(false),
         questionNumberSpinnerUiState = SpinnerUiState.Visible(),
-        stroceBottom = isUiState.Visible,
+        stroceBottom = IsUiState.Visible,
         bBeforeEditTranslate = TextUiState.Hidden,
         bAfterEditTranslate = TextUiState.Hidden,
         typeQuestionCheckBoxState = CheckBoxUiState.Visible(true),
         cancelButtonUiState = TextUiState.Visible(),
         addAnswerButtonUiState = TextUiState.Visible(),
         addTranslateButtonUiState = TextUiState.Visible(),
-        addGapButtonUiState = TextUiState.Visible(),
         saveQuizButtonUiState = TextUiState.Visible()
     )
 
@@ -70,7 +69,7 @@ class CreateQuizRegimeStrategy(
             subCategorySpinnerUiState = SpinnerUiState.Visible(subcategoryList, 0),
             subsubCategorySpinnerUiState = SpinnerUiState.Visible(subsubCategoryList, 0),
             questionList = listOf(
-                QuestionLocal().copy(numQuestion = 1, language = settingsConfig.languages.first(), nameAnswers = "|"))
+                QuestionLocal().copy(numQuestion = 1, language = settingsConfig.languages.first(), nameAnswers = "|")).toMutableList()
         )
     }
 
@@ -82,7 +81,7 @@ class CreateQuizRegimeStrategy(
 
     override suspend fun saveData(
         questionList: List<QuestionLocal>,
-        bitmapList: MutableMap<Pair<Int, Boolean>, BitmapDrawable>,
+        bitmapList: Map<Pair<Int, Boolean>, BitmapDrawable>,
         structureList: List<Pair<String, BitmapDrawable>>,
         defaultImage: Drawable
     ) {

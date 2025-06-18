@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create
+package com.tpov.schoolquiz.presentation.custom
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
