@@ -70,9 +70,12 @@ data class QuizUiModelState(
     val subCategoryList: List<String>? = null,
     val subsubCategoryList: List<String>? = null,
 
-    val questionList: MutableList<QuestionLocal>? = mutableListOf(),
-    val questionListBefore: MutableList<QuestionLocal>? = mutableListOf(),
+    val questionList: MutableList<InternalQuestion> = mutableListOf(), // Изменено на InternalQuestion
+    val questionListBefore: MutableList<InternalQuestion> = mutableListOf(), // Изменено на InternalQuestion
     val questionDrawable: HashMap<Pair<Int,Boolean>, BitmapDrawable> = hashMapOf(),
+
+    val pathStructure: com.tpov.common.presentation.model.PathStructure? = null, // Добавлено поле
+    val errorState: String? = null // Добавлено поле для отображения ошибок загрузки/сохранения
 )
 
 /**
@@ -92,8 +95,20 @@ sealed class TextUiState {
  */
 sealed class ImageUiState {
     data object Hidden : ImageUiState()
-    data class Visible(val imageBitmap: BitmapDrawable? = null, val isEnabled: Boolean = true) : ImageUiState()
+    // Изменено imageBitmap на imageUri
+    data class Visible(val imageUri: String? = null, val imageBitmap: BitmapDrawable? = null, val isEnabled: Boolean = true) : ImageUiState()
 }
+
+data class InternalQuestion(
+    val numQuestion: Int,
+    val hardQuestion: Boolean,
+    var type: com.tpov.common.data.model.QuestionType,
+    var question: String, // Текст вопроса на основном языке (или первом загруженном)
+    var image: String?, // URI или путь к картинке вопроса
+    var answers: MutableList<TranslateAnswer>, // Варианты ответов для основного языка
+    var translateQuestion: MutableList<TranslateQuestion>, // Переводы текста вопроса
+    var translateAnswers: MutableList<TranslateAnswer> // Переводы вариантов ответов (пока не используется полностью)
+)
 
 /**
  * РЕФАКТОРИНГ: УДАЛИТЬ - заменить на UiState<Unit> или Boolean

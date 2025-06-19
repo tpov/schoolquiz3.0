@@ -196,4 +196,40 @@ class MainViewModel @Inject constructor(
     fun resetTasks() {
         profileInteractor.updateLoadStatus()
     }
+
+    fun deleteQuiz(pathStructure: PathStructure) = viewModelScope.launch(Dispatchers.IO) {
+        // Сначала удаляем вопросы, связанные с этой структурой
+        questionUseCase.deleteQuestions(pathStructure)
+        // Затем удаляем саму структуру квеста
+        structureUseCase.deleteStructure(pathStructure)
+
+        // Обновляем список квестов в UI, перезагрузив их
+        // Нам нужен текущий EventQuiz, который используется для отображения списка.
+        // MainFragment передает его при инициализации, но ViewModel его не хранит.
+        // Мы можем либо передать EventQuiz в этот метод, либо предположить,
+        // что если мы удаляем из QUIZ_BY_USER, то и обновлять нужно его.
+        // _structureData.value содержит текущий список, но не сам EventQuiz.
+        // Самый простой способ - это если MainFragment сам вызовет initStructureData после удаления.
+        // Однако, чтобы ViewModel была более самодостаточной, можно попробовать получить event.
+        // Но это усложнит. Пока что, после удаления, MainFragment должен будет обновить список.
+        // Либо мы можем передать EventQuiz в deleteQuiz.
+
+        // Пока что сделаем так, что ViewModel удаляет данные, а Fragment отвечает за обновление UI.
+        // Чтобы инициировать обновление из ViewModel, можно использовать SharedFlow или LiveData.
+        // Например, создать MutableSharedFlow<Boolean> для сигнала об успешном удалении.
+
+        // Более простой подход для текущей задачи: просто перезагрузить данные для того же event,
+        // который был использован для их первоначальной загрузки.
+        // Мы знаем, что quizStructure.nameEvent должен быть равен текущему event'у.
+        val eventType = EventQuiz.fromInput(pathStructure.nameEvent)
+        if (eventType != null) {
+            initStructureData(eventType)
+        } else {
+            // Если по какой-то причине event не удалось определить,
+            // можно попробовать обновить для QUIZ_BY_USER по умолчанию,
+            // или обработать ошибку.
+            // Для "моих квестов" это всегда будет QUIZ_BY_USER.
+            initStructureData(EventQuiz.QUIZ_BY_USER)
+        }
+    }
 }

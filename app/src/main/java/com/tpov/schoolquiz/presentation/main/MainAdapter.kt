@@ -7,8 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.RatingBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -19,8 +21,11 @@ import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.schoolquiz.R
 import java.io.File
 
-class MainAdapter(private val items: List<StructureDataLocal?>?,
-                  private val listener: OnItemClickListener) : RecyclerView.Adapter<MainAdapter.MainViewHolder>() {
+class MainAdapter(
+    private val items: List<StructureDataLocal?>?,
+    private val clickListener: OnItemClickListener,
+    private val actionClickListener: OnQuizActionClickListener // Добавили нового слушателя
+) : RecyclerView.Adapter<MainAdapter.MainViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MainViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_main_fragment, parent, false)
@@ -28,9 +33,38 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
     }
 
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {
-        items?.get(position)?.let { holder.bind(it) }
+        val item = items?.get(position)
+        item?.let { holder.bind(it) }
+
         holder.itemView.setOnClickListener {
-            items?.get(position)?.nameItem?.let { it1 -> listener.onItemClick(it1) }
+            item?.nameItem?.let { name -> clickListener.onItemClick(name) } // Используем clickListener
+        }
+
+        holder.itemView.setOnLongClickListener {
+            item?.let { currentItem ->
+                val popupMenu = PopupMenu(holder.itemView.context, holder.itemView)
+                popupMenu.menuInflater.inflate(R.menu.quiz_context_menu, popupMenu.menu)
+
+                popupMenu.setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
+                        R.id.action_send_to_arena -> {
+                            actionClickListener.onSendToArena(currentItem) // Вызываем метод интерфейса
+                            true
+                        }
+                        R.id.action_delete_quiz -> {
+                            actionClickListener.onDeleteQuiz(currentItem) // Вызываем метод интерфейса
+                            true
+                        }
+                        R.id.action_edit_quiz -> {
+                            actionClickListener.onEditQuiz(currentItem) // Вызываем метод интерфейса
+                            true
+                        }
+                        else -> false
+                    }
+                }
+                popupMenu.show()
+            }
+            true // Возвращаем true, чтобы показать, что событие обработано
         }
     }
 
@@ -96,4 +130,10 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
 
 interface OnItemClickListener {
     fun onItemClick(category: String)
+}
+
+interface OnQuizActionClickListener {
+    fun onEditQuiz(quiz: StructureDataLocal)
+    fun onDeleteQuiz(quiz: StructureDataLocal)
+    fun onSendToArena(quiz: StructureDataLocal)
 }

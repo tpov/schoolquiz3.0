@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_send_to_arena"
+        android:title="Отправить на арену" />
+    <item
+        android:id="@+id/action_edit_quiz"
+        android:title="Редактировать" />
+    <item
+        android:id="@+id/action_delete_quiz"
+        android:title="Удалить" />
+</menu>
