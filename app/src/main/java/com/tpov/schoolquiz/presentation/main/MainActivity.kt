@@ -262,22 +262,23 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         })
 
         binding.navigationView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                MENU_HOME_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
-                MENU_MY_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_BY_USER))
-                MENU_DOWNLOADS -> switchFragment(DownloadFragment())
-                MENU_SETTING -> switchFragment(SettingsFragment())
-                MENU_PROFILE -> switchFragment(ProfileFragment())
-                MENU_CHAT -> switchFragment(ChatFragment())
-                MENU_LEADER -> switchFragment(LeadersFragment())
-                MENU_FRIEND -> switchFragment(FriendsFragment())
-                MENU_CONTACT -> switchFragment(ContactFragment())
-                MENU_EXIT -> logout()
-
+            val handled = when (menuItem.itemId) {
+                MENU_HOME_QUIZ -> { navigateTo(MainFragment.newInstance(EventQuiz.QUIZ_HOME)); true }
+                MENU_MY_QUIZ -> { navigateTo(MainFragment.newInstance(EventQuiz.QUIZ_BY_USER)); true }
+                MENU_DOWNLOADS -> { navigateTo(DownloadFragment()); true }
+                MENU_SETTING -> { navigateTo(SettingsFragment()); true }
+                MENU_PROFILE -> { navigateTo(ProfileFragment()); true }
+                MENU_CHAT -> { navigateTo(ChatFragment()); true }
+                MENU_LEADER -> { navigateTo(LeadersFragment()); true }
+                MENU_FRIEND -> { navigateTo(FriendsFragment()); true }
+                MENU_CONTACT -> { navigateTo(ContactFragment()); true }
+                MENU_EXIT -> { logout(); true }
                 else -> false
             }
 
-            setupMenu(menuItem.itemId)
+            if (handled) {
+                setupMenu(menuItem.itemId)
+            }
             binding.drawerLayout.closeDrawers()
             true
         }
@@ -298,36 +299,34 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     }
 
     private fun initBottomMenu() {
-        switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
+        navigateTo(MainFragment.newInstance(EventQuiz.QUIZ_HOME)) // Инициализация начального фрагмента
         binding.bNav.setOnNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
+            val handled = when (menuItem.itemId) {
                 R.id.menu_home -> {
                     setupMenu(MENU_HOME_QUIZ)
-                    switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
+                    navigateTo(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
+                    true
                 }
-
-                R.id.menu_adb -> switchFragment(ShopFragment())
-                R.id.menu_info -> startInfoFragment()
-                R.id.menu_network -> {
-
-                }
-
+                R.id.menu_adb -> { navigateTo(ShopFragment()); true }
+                R.id.menu_info -> { startInfoFragment(); true }
+                R.id.menu_network -> { /* TODO: Handle network click or remove if not used */ true }
                 else -> false
             }
-            true
+            handled
         }
     }
 
     private fun startInfoFragment() {
-
+        // TODO: Implement or remove if not used. Example: navigateTo(InfoFragment())
     }
 
-    private fun switchFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.title_fragment, fragment)
-            .addToBackStack(null)
-            .commit()
-    }
+    // Метод switchFragment больше не нужен, так как его заменил navigateTo
+    // private fun switchFragment(fragment: Fragment) {
+    // supportFragmentManager.beginTransaction()
+    // .replace(R.id.title_fragment, fragment)
+    // .addToBackStack(null)
+    // .commit()
+    // }
 
     private fun setupAnimations() {
         val viewsToAnimate = arrayOf(
@@ -355,14 +354,14 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         return super.onPrepareOptionsMenu(menu)
     }
 
-
-    fun replaceFragment(fragment: Fragment) {
-        val fragmentManager = supportFragmentManager
-        val transaction = fragmentManager.beginTransaction()
-        transaction.replace(R.id.title_fragment, fragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
-    }
+    // Метод replaceFragment больше не нужен, так как его функциональность покрывается navigateTo
+    // fun replaceFragment(fragment: Fragment) {
+    //     val fragmentManager = supportFragmentManager
+    //     val transaction = fragmentManager.beginTransaction()
+    //     transaction.replace(R.id.title_fragment, fragment)
+    //     transaction.addToBackStack(null)
+    //     transaction.commit()
+    // }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -398,6 +397,20 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
             life = if (hardQuestion) settingsConfig.goldLife else settingsConfig.life
         )
         startActivity(intent)
+    }
+
+    override fun navigateTo(fragment: Fragment, addToBackStack: Boolean, replace: Boolean) {
+        val transaction = supportFragmentManager.beginTransaction()
+        if (replace) {
+            transaction.replace(R.id.title_fragment, fragment)
+        } else {
+            transaction.add(R.id.title_fragment, fragment)
+        }
+
+        if (addToBackStack) {
+            transaction.addToBackStack(null)
+        }
+        transaction.commit()
     }
 }
 

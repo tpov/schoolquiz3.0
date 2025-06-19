@@ -158,7 +158,7 @@ class CreateQuizRegimeStrategy(
         }
 
         structureCategoryHome.printFullStructure("drl;gklpsdre 2")
-        structureUseCase.insertStructureData(structureCategoryHome, EventQuiz.QUIZ_BY_USER)
+        structureUseCase.insertStructureData(structureCategoryHome, EventQuiz.QUIZ_HOME)
     }
 
     private fun isDefaultImage(drawable: Drawable?, defaultImage: Drawable): Boolean {
