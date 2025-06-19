@@ -1,23 +1,21 @@
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    id("android-library-convention") // Applies com.android.library, org.jetbrains.kotlin.android, ksp
+    alias(libs.plugins.kotlin.kapt)
+    // detekt and ktlint are applied from the root project
 }
 
 android {
     namespace = "com.tpov.shop"
-    compileSdk = 34
+    // compileSdk, minSdk, defaultConfig.testInstrumentationRunner are set by convention.
+    // targetSdk is not set for libraries by convention.
+    // consumerProguardFiles("consumer-rules.pro") is set by convention.
 
-    defaultConfig {
-        minSdk = 26
-        targetSdk = 34
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
+    // If this module needs specific proguard rules for its release build (not for consumers)
+    // or needs to override isMinifyEnabled from the convention (which is false for libraries).
     buildTypes {
-        release {
-            isMinifyEnabled = true
+        getByName("release") {
+            isMinifyEnabled = true // Override convention plugin's default (false for libraries)
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -27,14 +25,19 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)    // Version standardized in TOML (1.7.0)
+    implementation(libs.google.material)
 
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.12.0")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("io.mockk:mockk:1.13.3")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    kapt("com.google.dagger:dagger-compiler:2.48.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    // Kapt dependencies
+    kapt(libs.dagger.compiler)      // Version standardized in TOML (2.49)
+    kapt(libs.androidx.room.compiler) // Assuming room might be used, or remove if not
+
+    // Test dependencies
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+
+    // AndroidTest dependencies
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
 }

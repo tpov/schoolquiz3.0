@@ -1,43 +1,39 @@
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("android-library-convention") // Applies com.android.library, org.jetbrains.kotlin.android, ksp
+    // No kapt needed based on original file
+    // detekt and ktlint are applied from the root project
 }
 
 android {
     namespace = "com.tpov.core"
-    compileSdk = 34
+    // compileSdk, minSdk (defaults to 26), defaultConfig.testInstrumentationRunner,
+    // consumerProguardFiles, compileOptions (Java 17), kotlinOptions (JVM 17) are set by convention.
 
-    defaultConfig {
-        minSdk = 28
+    // If minSdk 28 is strictly required for this module, uncomment and set it:
+    // defaultConfig {
+    //     minSdk = 28
+    // }
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    // buildTypes.release.isMinifyEnabled = false is set by convention.
+    // Proguard rules for library release are typically consumer-rules.pro.
+    // If this module specifically needs to bundle optimized rules:
+    // buildTypes {
+    //     getByName("release") {
+    //         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+    //     }
+    // }
 }
 
 dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)    // Version standardized in TOML (1.7.0)
+    implementation(libs.google.material)
 
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.12.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    // Test dependencies
+    testImplementation(libs.junit)
+
+    // AndroidTest dependencies
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
 }

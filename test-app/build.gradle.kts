@@ -1,29 +1,20 @@
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    id("java-library")
-    id("org.jetbrains.kotlin.jvm")
-    id("com.tpov.logger.gradle-plugin")
-    id("application")
+    id("jvm-application-convention") // Applies org.jetbrains.kotlin.jvm and application
+    alias(libs.plugins.tpov.logger)
+    // detekt and ktlint can be applied here or from root
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
+// java sourceCompatibility, targetCompatibility and kotlinOptions.jvmTarget are now set to 17 by convention.
 
 application {
-    mainClass.set("com.tpov.testapp.MainKt")
+    mainClass.set("com.tpov.testapp.MainKt") // Specific to this application
 }
 
-kotlin {
-    jvmToolchain(11)
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+// repositories block is removed, handled by settings.gradle.kts.
 
 dependencies {
+    // kotlin-stdlib is included by jvm-application-convention
+    implementation(libs.kotlin.stdlib) // Standardized version from TOML (replaces kotlin-stdlib-jdk8)
     implementation(project(":log-api"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0")
 } 

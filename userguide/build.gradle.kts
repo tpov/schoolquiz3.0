@@ -1,67 +1,60 @@
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
-    id("maven-publish")
+    id("android-library-publish-convention") // Applies com.android.library, org.jetbrains.kotlin.android, ksp, maven-publish
+    alias(libs.plugins.kotlin.kapt)
+    // detekt and ktlint are applied from the root project if configured there for allprojects/subprojects
 }
+
+// Configure publishing details for this specific library
+// This will be used by the 'android-library-publish-convention'
+group = "com.github.tpov"
+version = "1.0.1" // Or your desired version
 
 android {
     namespace = "com.tpov.userguide"
-    compileSdk = 34
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    // compileSdk, minSdk, compileOptions, kotlinOptions, testInstrumentationRunner are set by convention.
+    // targetSdk is not usually set in libraries.
+    // consumerProguardFiles is set by convention.
 
     defaultConfig {
-        minSdk = 26
-        targetSdk = 34
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
+        // minSdk is set by convention plugin.
+        // targetSdk is not set for libraries by convention plugin.
+        consumerProguardFiles("consumer-rules.pro") // Ensure this is still desired if convention sets it
     }
 
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-    }
+    // buildTypes.release.isMinifyEnabled = false is set by convention.
+    // Proguard files for library release are typically consumer-rules.pro.
+    // If this module specifically needs to bundle optimized rules, it can be added here.
+    // buildTypes {
+    //     getByName("release") {
+    //         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+    //     }
+    // }
 }
 
-// afterEvaluate {
-//     publishing {
-//         publications {
-//             create<MavenPublication>("release") {
-//                 from(components["release"])
-//                 groupId = "com.github.tpov"
-//                 artifactId = "userguide"
-//                 version = "1.0"
-//             }
-//         }
-//     }
-// }
-
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.12.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    implementation("com.airbnb.android:lottie:5.2.0")
-    implementation("androidx.media3:media3-exoplayer:1.4.0")
-    implementation("androidx.media3:media3-exoplayer-dash:1.4.0")
-    implementation("androidx.media3:media3-ui:1.4.0")
-    testImplementation("io.mockk:mockk:1.13.3")
-    kapt("com.google.dagger:dagger-compiler:2.49")
-    kapt("androidx.room:room-compiler:2.6.1")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat) // Version standardized in TOML
+    implementation(libs.google.material)
+    implementation(libs.airbnb.lottie)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.kotlin.stdlib) // Already included by convention, but explicit is fine
+
+    // Kapt dependencies
+    kapt(libs.dagger.compiler)
+    kapt(libs.androidx.room.compiler)
+
+    // Test dependencies
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit.jupiter.params)
+
+    // AndroidTest dependencies
+    androidTestImplementation(libs.androidx.test.ext.junit) // Standardized alias
+    androidTestImplementation(libs.androidx.test.espresso.core)
 }

@@ -1,41 +1,22 @@
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    id("java-library")
-    id("org.jetbrains.kotlin.jvm")
-    id("maven-publish")
+    id("jvm-library-publish-convention") // Applies jvm-library-convention (kotlin-jvm, java-library) and maven-publish
+    // detekt and ktlint can be applied here or from root
 }
 
-// These will be overridden by the publish script
-group = "com.tpov"
-version = "1.0.1"
+// Group and version are essential for publishing.
+// The convention plugin for jvm library publishing does not set these.
+group = "com.tpov.logger" // Standardized group for logger modules
+version = "1.0.1"       // Keep or update as needed
+// artifactId will default to project.name ("log-api") in the publication if not overridden
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
+// java sourceCompatibility, targetCompatibility and kotlinOptions.jvmTarget are now set to 17 by convention.
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-}
+// Explicit publishing block is removed, handled by jvm-library-publish-convention.
+// The convention creates a "release" publication from the "java" component.
 
-// Явная конфигурация для публикации
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            artifactId = "log-api"
-            from(components["java"])
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
+// apply(from = "../publish.gradle.kts") is removed.
 
-// Apply common publishing configuration
-apply(from = "../publish.gradle.kts")
+// repositories block is removed, handled by settings.gradle.kts.
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+// No dependencies in this API module.

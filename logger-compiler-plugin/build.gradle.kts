@@ -1,47 +1,26 @@
+@Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    id("java-library")
-    id("org.jetbrains.kotlin.jvm")
-    id("maven-publish")
+    id("jvm-library-publish-convention") // Applies jvm-library-convention (kotlin-jvm, java-library) and maven-publish
+    // detekt and ktlint can be applied here or from root
 }
 
+// Group and version are essential for publishing.
 group = "com.tpov.logger"
-version = "1.0.0"
+version = "1.0.0" // Keep or update as needed
+// artifactId will default to project.name ("logger-compiler-plugin") in the publication.
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-    }
-}
+// java sourceCompatibility, targetCompatibility and kotlinOptions.jvmTarget are now set to 17 by convention.
+// Kotlin compiler plugin specific configurations (like 'kotlin-dsl' for writing plugins, or specific compiler args)
+// would go into the jvm-library-convention or here if highly specific.
+// For a compiler plugin, ensuring it's packaged correctly for the Kotlin compiler is key.
+// This usually involves having the plugin entry point in META-INF/services.
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.24")
+    // kotlin-stdlib is included by jvm-library-convention
+    implementation(libs.kotlin.compiler.embeddable) // Uses version from TOML (kotlin = "1.9.22")
+    // Add other necessary dependencies for a compiler plugin, e.g., auto-service if used for service registration.
 }
 
-// Apply common publishing configuration
-apply(from = "../publish.gradle.kts")
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
-// Добавляем конфигурацию maven-publish
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            
-            groupId = "com.tpov.logger"
-            artifactId = "logger-compiler-plugin"
-            version = "1.0.0"
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
+// apply(from = "../publish.gradle.kts") is removed.
+// repositories block is removed, handled by settings.gradle.kts.
+// Explicit publishing block is removed, handled by jvm-library-publish-convention.
