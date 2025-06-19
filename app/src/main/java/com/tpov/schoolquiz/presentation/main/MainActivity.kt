@@ -68,17 +68,13 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
     private lateinit var binding: ActivityMainBinding
     lateinit var viewModel: MainViewModel
-    private val listLives by lazy {
-        listOf(binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5)
-    }
- private val listGoldLives by lazy {
-        listOf(binding.pbLifeGold1)
-    }
+    private lateinit var userProfileUiBinder: UserProfileUiBinder
 
-    private val boxDays by lazy{ listOf(
-    binding.boxDay1, binding.boxDay2, binding.boxDay3, binding.boxDay4, binding.boxDay5,
-    binding.boxDay6, binding.boxDay7, binding.boxDay8, binding.boxDay9, binding.boxDay10
-    )}
+    // Списки listLives, listGoldLives и boxDays больше не нужны здесь,
+    // так как они инкапсулированы в UserProfileUiBinder, который получает binding.
+    // private val listLives by lazy { ... }
+    // private val listGoldLives by lazy { ... }
+    // private val boxDays by lazy{ ... }
 
     @SuppressLint("SetTextI18n")
     @RequiresApi(Build.VERSION_CODES.O)
@@ -90,14 +86,36 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         Values.init(this, application)
 
         initViewModel()
+        setupUserProfileUiBinder()
         observeData()
-        setupDrawerLayout()
-        initBottomMenu()
-        setupMenu(MENU_HOME_QUIZ)
+
+        setupNavigation() // Объединенный вызов для настройки навигации
+        setupRemainingUiElements() // Группировка остальных UI инициализаций
+    }
+
+    private fun setupRemainingUiElements() {
         setupAnimations()
-        val view = findViewById<View?>(R.id.menu_network)
+        val view = findViewById<View?>(R.id.menu_network) // Возможно, это стоит перенести внутрь initUserguide, если view получается только для этого
         initUserguide(view)
         initSetOnClickListeners()
+    }
+
+    private fun setupNavigation() {
+        setupDrawerLayout()
+        initBottomMenu()
+        // setupMenu(MENU_HOME_QUIZ) // Этот вызов уже есть в initBottomMenu через navigateTo,
+                                 // и также при выборе из Drawer.
+                                 // Если нужен явный первоначальный setupMenu, его можно оставить,
+                                 // но он также вызывается в setupDrawerLayout при выборе элемента.
+                                 // Пока закомментируем, чтобы избежать дублирования начальной установки.
+                                 // Если окажется, что это нарушает логику первоначального отображения меню, раскомментируем.
+                                 // Важно: setupMenu(MENU_HOME_QUIZ) был вызван *после* initBottomMenu,
+                                 // что могло переопределять начальную установку из initBottomMenu.
+                                 // Порядок важен. initBottomMenu уже вызывает navigateTo(MainFragment.newInstance(EventQuiz.QUIZ_HOME)),
+                                 // что должно привести к отображению нужного фрагмента.
+                                 // А setupMenu(MENU_HOME_QUIZ) устанавливает currentMenuId и обновляет UI меню.
+                                 // Логично его вызвать один раз при инициализации.
+        setupMenu(MENU_HOME_QUIZ) // Восстанавливаем для первоначальной настройки состояния меню
     }
 
     private fun initSetOnClickListeners() {
@@ -119,122 +137,41 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         viewModel.initProfile()
     }
 
+    private fun setupUserProfileUiBinder() {
+        userProfileUiBinder = UserProfileUiBinder(
+            lifecycleOwner = this,
+            binding = binding,
+            viewModel = viewModel,
+            context = this,
+            livesStateFlow = viewModel.livesState,
+            addPointsStateFlow = viewModel.addPointsState,
+            premiumStateFlow = viewModel.premiumState,
+            nicknameStateFlow = viewModel.nicknameState,
+            daysInGameStateFlow = viewModel.daysInGameState,
+            taskStateFlow = viewModel.taskState
+        )
+    }
+
     private fun observeData() {
-        observeLife()
-        observeAddPoints()
-        observePremium()
-        observeNickname()
-        observeDayInGameAndBox()
-        observeTaskStatus()
+        userProfileUiBinder.startObserving()
+        // Старые вызовы observeLife(), observeAddPoints() и т.д. здесь больше не нужны
     }
 
-    private fun observeLife() = lifecycleScope.launch {
-        viewModel.livesState.collect { state ->
-            listLives.forEachIndexed { index, imageView ->
-                if (index < state.standardHearts) {
-                    imageView.visibility = View.VISIBLE
-                    imageView.setImageDrawable(
-                        viewModel.createHeartDrawable(
-                            lifePoints = state.standardLife,
-                            heartIndex = index,
-                            isGold = false
-                        )
-                    )
-                } else imageView.visibility = View.GONE
-            }
+    // Методы observeLife, observeAddPoints, observePremium, observeNickname, observeDayInGameAndBox, observeTaskStatus
+    // и showUserGuide удалены, так как их логика перенесена в UserProfileUiBinder.
+    // Метод showUserGuide теперь приватный в UserProfileUiBinder, если он нужен только там,
+    // или может быть общим методом Activity, если используется и в других местах.
+    // Для данного рефакторинга мы считаем, что он специфичен для логики UserProfileUiBinder.
 
-            listGoldLives[0].apply {
-                visibility = if (state.goldHearts > 0) View.VISIBLE else View.GONE
-                if (state.goldHearts > 0) {
-                    setImageDrawable(
-                        viewModel.createHeartDrawable(
-                            lifePoints = state.goldLife,
-                            heartIndex = 0,
-                            isGold = true
-                        )
-                    )
-                }
-            }
-
-            viewModel.updateProfile(
-                goldHearts = state.goldHearts,
-                countGoldLife = state.goldHearts,
-                goldLife = state.goldLife,
-                updateTime = state.updateTime,
-                standardLife = state.standardLife,
-                standardHearts = state.standardHearts
-            )
-        }
-    }
-
-    private fun observeAddPoints() = lifecycleScope.launch {
-        viewModel.addPointsState.collect { state ->
-            if (state.addGold > 0L) {
-                showUserGuide("Вам начислили: ${state.addGold} золота")
-                viewModel.updateProfile(
-                    gold = viewModel.profileState.value?.pointsGold?.toLong()?.plus(state.addGold),
-                    addGold = 0
-                )
-            }
-            if (state.addSkill > 0L) {
-                showUserGuide("Вам начислили: ${state.addSkill} опыта")
-                viewModel.updateProfile(
-                    skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill), addSkill = 0
-                )
-            }
-            if (state.addNolics > 0L) {
-                showUserGuide("Вам начислили: ${state.addNolics} ноликов")
-                viewModel.updateProfile(
-                    nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics), addNolics = 0
-                )
-            }
-            if (state.addTrophy.isNotEmpty()) {
-                showUserGuide("Вам начислили трофеи: ${state.addTrophy}")
-                viewModel.updateProfile(trophy = viewModel.profileState.value?.trophy + state.addTrophy, addTrophy = "")
-            }
-            if (state.addMassage.isNotEmpty()) {
-                showUserGuide("Вам пришло сообщение от разработчика: ${state.addMassage}")
-            }
-        }
-    }
-
-    private fun showUserGuide(text: String) {
+    private fun showUserGuide(text: String) { // Этот метод останется в MainActivity, если он используется где-то еще.
+                                            // Если нет, его можно удалить, т.к. UserProfileUiBinder имеет свою реализацию.
+                                            // Для чистоты, если он более не нужен здесь, удалим его.
+                                            // Однако, UserProfileUiBinder.showUserGuide может потребовать корректировки,
+                                            // если UserGuide ожидает Activity Context, а не Application Context.
+                                            // Пока оставим эту версию в MainActivity на случай внешних вызовов.
         UserGuide(this).guideBuilder()
             .setText(text)
             .build()
-    }
-
-    private fun observePremium() = lifecycleScope.launch {
-        viewModel.premiumState.collect {
-            binding.tvCountPremiun.text = it
-        }
-    }
-    private fun observeNickname() = lifecycleScope.launch {
-        viewModel.nicknameState.collect {
-            binding.tvName.text = it
-        }
-    }
-
-    private fun observeDayInGameAndBox() = lifecycleScope.launch {
-        viewModel.daysInGameState.collect {
-            boxDays.take(it.countDayBox.toInt()).forEach {
-                it.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.green))
-            }
-
-            binding.tvNumberBox.text = it.countBox.toString()
-            binding.fabBox.visibility = if (it.countBox > 0) View.VISIBLE else View.GONE
-        }
-    }
-
-    private fun observeTaskStatus() = lifecycleScope.launch {
-        viewModel.taskState.collect { state ->
-            binding.tvPbLoad.text = state.currentTaskName.ifEmpty { getString(R.string.loading_completed) }
-            binding.progressBar2.progress = (state.progressPercentage * 100).toInt()
-
-            val visibility = if (state.isRunning && state.tasks.isNotEmpty()) View.VISIBLE else View.GONE
-            binding.tvPbLoad.visibility = visibility
-            binding.progressBar2.visibility = visibility
-        }
     }
 
     override fun onDestroy() {
