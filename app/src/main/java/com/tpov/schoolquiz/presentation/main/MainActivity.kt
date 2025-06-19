@@ -307,23 +307,13 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == REQUEST_CODE_CONTACTS_PERMISSION) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                //clickNavMenuContact()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Contacts permission is required to use this app",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
+        // Логика для REQUEST_CODE_CONTACTS_PERMISSION удалена, так как она теперь обрабатывается в ContactFragment
+        // if (requestCode == REQUEST_CODE_CONTACTS_PERMISSION) { ... }
     }
 
     companion object {
-        const val REQUEST_CODE_STORAGE_PERMISSION = 1001
-        const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
+        const val REQUEST_CODE_STORAGE_PERMISSION = 1001 // Оставляем, если используется для других разрешений
+        // const val REQUEST_CODE_CONTACTS_PERMISSION = 1002; // Больше не нужна
     }
 
     override fun openQuestionActivity(pathStructure: PathStructure, hardQuestion: Boolean) {

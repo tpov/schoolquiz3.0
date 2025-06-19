@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -28,14 +29,24 @@ class ContactFragment : Fragment() {
         @JvmStatic
         fun newInstance() = ContactFragment()
 
-        val PERMISSION_REQUEST_CONTACTS = 1
-        val permissions = arrayOf(Manifest.permission.READ_CONTACTS)
+        // PERMISSION_REQUEST_CONTACTS и permissions больше не нужны здесь в companion object
+        // val PERMISSION_REQUEST_CONTACTS = 1
+        // val permissions = arrayOf(Manifest.permission.READ_CONTACTS)
     }
 
     @OptIn(InternalCoroutinesApi::class)
     private lateinit var viewModel: ProfileViewModel
     private lateinit var adapter: ContactAdapter
     private val contactList = mutableListOf<ContactItem>()
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                loadContacts()
+            } else {
+                Toast.makeText(requireContext(), "Permission to access contacts is denied", Toast.LENGTH_LONG).show()
+            }
+        }
 
     @OptIn(InternalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,12 +61,10 @@ class ContactFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_contact, container, false)
 
-        // Request permission if necessary
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS)
             != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(permissions, PERMISSION_REQUEST_CONTACTS)
+            requestPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
         } else {
-            // Load contacts if permission is already granted
             loadContacts()
         }
 
@@ -64,40 +73,48 @@ class ContactFragment : Fragment() {
 
     private fun loadContacts() {
         val contentResolver = requireContext().contentResolver
+        // Добавим проверку на null для cursor
         val cursor = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null)
 
-        if (cursor!!.count > 0) {
-            while (cursor.moveToNext()) {
-                contactList.add(
-                    ContactItem(
-                        getNameContact(cursor),
-                        getNumbersContact(cursor, contentResolver),
-                        getEmailContact(cursor),
-                        getPhotoContact()
+        cursor?.use { // Используем use для автоматического закрытия cursor
+            if (it.count > 0) {
+                while (it.moveToNext()) {
+                    contactList.add(
+                        ContactItem(
+                            getNameContact(it),
+                            getNumbersContact(it, contentResolver),
+                            getEmailContact(it),
+                        getPhotoContact(it)
+                        )
                     )
-                )
+                }
             }
+        } ?: run {
+            // Обработка случая, когда cursor равен null, если это необходимо
+            Toast.makeText(requireContext(), "Could not load contacts", Toast.LENGTH_SHORT).show()
         }
+
 
         initAdapter()
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == PERMISSION_REQUEST_CONTACTS) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Load contacts if permission is granted
-                loadContacts()
-            } else {
-                // Show an error message if permission is denied
-                Toast.makeText(requireContext(), "Permission to access contacts is denied", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
+    // onRequestPermissionsResult больше не нужен
+    // @Deprecated("Deprecated in Java")
+    // override fun onRequestPermissionsResult(
+    //     requestCode: Int,
+    //     permissions: Array<out String>,
+    //     grantResults: IntArray
+    // ) {
+    //     if (requestCode == PERMISSION_REQUEST_CONTACTS) {
+    //         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+    //             // Load contacts if permission is granted
+    //             loadContacts()
+    //         } else {
+    //             // Show an error message if permission is denied
+    //             Toast.makeText(requireContext(), "Permission to access contacts is denied", Toast.LENGTH_LONG).show()
+    //         }
+    //     }
+    // }
 
     private fun getNameContact(cursor: Cursor): String? {
 
@@ -123,11 +140,15 @@ class ContactFragment : Fragment() {
         }
     }
 
-    private fun getPhotoContact(): Bitmap? {
+    private fun getPhotoContact(cursor: Cursor): Bitmap? {
         return try {
+            val idColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts._ID)
+            if (idColumnIndex == -1) return null
+            val contactId = cursor.getLong(idColumnIndex)
+
             val contactUri = ContentUris.withAppendedId(
                 ContactsContract.Contacts.CONTENT_URI,
-                id.toLong()
+                contactId
             )
 
             val inputStream = context?.contentResolver?.openInputStream(contactUri)
