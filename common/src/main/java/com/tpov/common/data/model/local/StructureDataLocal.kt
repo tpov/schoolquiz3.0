@@ -5,7 +5,9 @@ import com.tpov.common.data.model.entity.StructureDataEntity
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.utils.DateUtil
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class StructureDataLocal(
     var children: MutableList<StructureDataLocal>? = null,
     var nameItem: String = "",

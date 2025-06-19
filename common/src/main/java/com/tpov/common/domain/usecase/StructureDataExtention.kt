@@ -43,9 +43,9 @@ object StructureDataExtention {
             this.structureCategoryDataListLocal =
                 structureUseCase.getStructureEventData(this.eventId)?.toMutableList() ?: mutableListOf()
 
-        } catch (e: Exception) {
-            exceptionHandler.exceptionInitStructureRemoteData(e.message ?: "")
-        }
+        } //catch (e: Exception) { // Commented out as per user request
+        //    exceptionHandler.exceptionInitStructureRemoteData(e.message ?: "")
+        //}
 
         return this
     }
@@ -91,9 +91,9 @@ object StructureDataExtention {
             )
 
             StructureDataLocal(children = structureCategoryDataListRemote).printFullStructure("syncStateLocalStructureData after")
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncLocalStructureData(e.message ?: "")
-        }
+        } //catch (e: Exception) { // Commented out as per user request
+        //    exceptionHandler.exceptionSyncLocalStructureData(e.message ?: "")
+        //}
         return this
     }
 
@@ -239,9 +239,9 @@ object StructureDataExtention {
                     }
                 ),
             )
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        }
+        } //catch (e: Exception) { // Commented out as per user request
+        //    exceptionHandler.exceptionSyncInfo(e.message ?: "")
+        //}
 
         return this
     }
@@ -653,9 +653,9 @@ object StructureDataExtention {
                     }
                 ),
             )
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        }
+        } //catch (e: Exception) { // Commented out as per user request
+        //    exceptionHandler.exceptionSyncInfo(e.message ?: "")
+        //}
 
         return this
     }
@@ -737,9 +737,9 @@ object StructureDataExtention {
                     }
                 ),
             )
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        }
+        } //catch (e: Exception) { // Commented out as per user request
+        //    exceptionHandler.exceptionSyncInfo(e.message ?: "")
+        //}
 
         return this
     }

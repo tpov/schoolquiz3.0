@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
     id("kotlin-parcelize")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22" // Use the appropriate Kotlin version
 }
 
 android {
@@ -73,4 +74,16 @@ dependencies {
     implementation ("com.google.auth:google-auth-library-oauth2-http:1.23.0")
     implementation ("org.robolectric:robolectric:4.10.3")
     testImplementation ("org.robolectric:robolectric:4.10.3")
+
+    // JUnit 5 Jupiter
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0") // For parameterized tests
+
+    // Mockito
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0") // For Mockito integration with JUnit 5
+
+    // Kotlinx Serialization for test comparisons
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // Or the version used in app module if different
 }
