@@ -22,6 +22,7 @@ import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.question.QuestionActivity
 import com.tpov.common.presentation.utils.TextAnimator
 import com.tpov.common.presentation.utils.Values
+import com.tpov.schoolquiz.presentation.GiftBoxDialogFragment
 import com.tpov.network.presentation.chat.ChatFragment
 import com.tpov.network.presentation.friend.FriendsFragment
 import com.tpov.network.presentation.leaders.LeadersFragment
@@ -71,14 +72,16 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     private val listLives by lazy {
         listOf(binding.pbLife1, binding.pbLife2, binding.pbLife3, binding.pbLife4, binding.pbLife5)
     }
- private val listGoldLives by lazy {
+    private val listGoldLives by lazy {
         listOf(binding.pbLifeGold1)
     }
 
-    private val boxDays by lazy{ listOf(
-    binding.boxDay1, binding.boxDay2, binding.boxDay3, binding.boxDay4, binding.boxDay5,
-    binding.boxDay6, binding.boxDay7, binding.boxDay8, binding.boxDay9, binding.boxDay10
-    )}
+    private val boxDays by lazy {
+        listOf(
+            binding.boxDay1, binding.boxDay2, binding.boxDay3, binding.boxDay4, binding.boxDay5,
+            binding.boxDay6, binding.boxDay7, binding.boxDay8, binding.boxDay9, binding.boxDay10
+        )
+    }
 
     @SuppressLint("SetTextI18n")
     @RequiresApi(Build.VERSION_CODES.O)
@@ -96,7 +99,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         setupMenu(MENU_HOME_QUIZ)
         setupAnimations()
         val view = findViewById<View?>(R.id.menu_network)
-        initUserguide(view)
+        //initUserguide(view)
         initSetOnClickListeners()
     }
 
@@ -169,6 +172,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
     private fun observeAddPoints() = lifecycleScope.launch {
         viewModel.addPointsState.collect { state ->
+
             if (state.addGold > 0L) {
                 showUserGuide("Вам начислили: ${state.addGold} золота")
                 viewModel.updateProfile(
@@ -176,25 +180,32 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                     addGold = 0
                 )
             }
+
             if (state.addSkill > 0L) {
                 showUserGuide("Вам начислили: ${state.addSkill} опыта")
                 viewModel.updateProfile(
-                    skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill), addSkill = 0
+                    skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill),
+                    addSkill = 0
                 )
             }
+
             if (state.addNolics > 0L) {
                 showUserGuide("Вам начислили: ${state.addNolics} ноликов")
                 viewModel.updateProfile(
-                    nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics), addNolics = 0
+                    nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics),
+                    addNolics = 0
                 )
             }
+
             if (state.addTrophy.isNotEmpty()) {
                 showUserGuide("Вам начислили трофеи: ${state.addTrophy}")
                 viewModel.updateProfile(trophy = viewModel.profileState.value?.trophy + state.addTrophy, addTrophy = "")
             }
+
             if (state.addMassage.isNotEmpty()) {
                 showUserGuide("Вам пришло сообщение от разработчика: ${state.addMassage}")
             }
+
         }
     }
 
@@ -209,6 +220,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
             binding.tvCountPremiun.text = it
         }
     }
+
     private fun observeNickname() = lifecycleScope.launch {
         viewModel.nicknameState.collect {
             binding.tvName.text = it
@@ -309,7 +321,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 R.id.menu_adb -> switchFragment(ShopFragment())
                 R.id.menu_info -> startInfoFragment()
                 R.id.menu_network -> {
-
+                    GiftBoxDialogFragment().show(supportFragmentManager, GiftBoxDialogFragment.TAG)
                 }
 
                 else -> false
@@ -350,18 +362,8 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         }
     }
 
-
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         return super.onPrepareOptionsMenu(menu)
-    }
-
-
-    fun replaceFragment(fragment: Fragment) {
-        val fragmentManager = supportFragmentManager
-        val transaction = fragmentManager.beginTransaction()
-        transaction.replace(R.id.title_fragment, fragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
     }
 
     override fun onRequestPermissionsResult(
@@ -373,8 +375,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
         if (requestCode == REQUEST_CODE_CONTACTS_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                //clickNavMenuContact()
+                switchFragment(ContactFragment())
             } else {
                 Toast.makeText(
                     this,
@@ -383,11 +384,6 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 ).show()
             }
         }
-    }
-
-    companion object {
-        const val REQUEST_CODE_STORAGE_PERMISSION = 1001
-        const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
     }
 
     override fun openQuestionActivity(pathStructure: PathStructure, hardQuestion: Boolean) {
@@ -399,5 +395,55 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
         )
         startActivity(intent)
     }
-}
 
+    /**
+     * Обрабатывает награду, полученную из GiftBoxDialogFragment
+     * @param type тип награды (addNolics, addGold, datePremium, logo, trophy)
+     * @param amount количество
+     * @param itemName опциональное название предмета (для logo)
+     */
+    fun processReward(type: String, amount: Long, itemName: String?) {
+        when (type) {
+            "addNolics" -> {
+                viewModel.updateProfile(
+                    nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(amount),
+                    addNolics = 0
+                )
+                showUserGuide("Вам начислено $amount ноликов!")
+            }
+            "addGold" -> {
+                viewModel.updateProfile(
+                    gold = viewModel.profileState.value?.pointsGold?.toLong()?.plus(amount),
+                    addGold = 0
+                )
+                showUserGuide("Вам начислено $amount золота!")
+            }
+            "datePremium" -> {
+                // Здесь нужно обновить срок действия премиум-аккаунта
+                val days = amount / 86400 // Конвертируем секунды в дни
+                viewModel.addPremiumDays(days.toInt())
+                showUserGuide("Вам начислено $days дней премиума!")
+            }
+            "logo" -> {
+                itemName?.let {
+                    // Добавляем логотип в профиль пользователя
+                    viewModel.addLogo(it)
+                    showUserGuide("Вы получили новый логотип: $it!")
+                }
+            }
+            "trophy" -> {
+                // Добавляем трофей в профиль пользователя
+                viewModel.updateProfile(
+                    trophy = "${viewModel.profileState.value?.trophy ?: ""},$amount",
+                    addTrophy = ""
+                )
+                showUserGuide("Вам начислено $amount трофеев!")
+            }
+        }
+    }
+
+    companion object {
+        const val REQUEST_CODE_STORAGE_PERMISSION = 1001
+        const val REQUEST_CODE_CONTACTS_PERMISSION = 1002
+    }
+}
