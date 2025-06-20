@@ -3,6 +3,7 @@ package com.tpov.shop.presentation
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -97,6 +98,7 @@ class ReferralAdapter(
                 allOpenBoxLabelTextView.setTextColor(Color.WHITE)
                 seasonBoxLabelTextView.setTextColor(Color.WHITE)
                 newBonusBoxLabelTextView.setTextColor(Color.WHITE)
+
 
                 itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_progress_fill)
                 val progressDrawable = itemBackgroundLayout.background as LayerDrawable
