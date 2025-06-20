@@ -12,4 +12,5 @@
     <string name="shop_fragment_referrals_title">Referrals</string>
     <string name="shop_fragment_referrals_button_open">Open</string>
     <string name="referral_reward_default_text">Invite 6 players and receive x50</string>
+    <string name="referral_reward_received_text">Reward received</string>
 </resources>

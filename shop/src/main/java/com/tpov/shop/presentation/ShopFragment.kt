@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.fragment.app.Fragment
-import com.tpov.shop.R
+import com.tpov.shop.R // Assumes R file generation if layouts are present
 
 class ShopFragment : Fragment() {
 
@@ -14,18 +14,16 @@ class ShopFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
+        // Assumes shop_fragment.xml layout exists
         return inflater.inflate(R.layout.shop_fragment, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Assumes b_referrals button exists in shop_fragment.xml
         val referralsButton = view.findViewById<Button>(R.id.b_referrals)
         referralsButton.setOnClickListener {
-            // Assuming R.id.title_fragment is accessible from the app module.
-            // If not, this would require a different way to specify the container,
-            // e.g., passing the container ID to ShopFragment or using an interface.
             val containerId = resources.getIdentifier("title_fragment", "id", requireActivity().packageName)
             if (containerId != 0) {
                 parentFragmentManager.beginTransaction()
@@ -33,14 +31,13 @@ class ShopFragment : Fragment() {
                     .addToBackStack(null)
                     .commit()
             } else {
-                // Fallback or error handling if the ID isn't found
-                // For now, let's try the old way if specific one not found, or log an error
-                // This indicates a potential issue with cross-module resource access or setup
+                // Fallback or error handling: replace with android.R.id.content if title_fragment is not found
+                // This might indicate an issue with layout access or naming.
                 parentFragmentManager.beginTransaction()
-                    .replace(android.R.id.content, ReferralFragment.newInstance()) // Default to android.R.id.content as a last resort
+                    .replace(android.R.id.content, ReferralFragment.newInstance())
                     .addToBackStack(null)
                     .commit()
-                // It would be better to log an error here or communicate this issue
+                // Consider logging an error here in a real application
             }
         }
     }

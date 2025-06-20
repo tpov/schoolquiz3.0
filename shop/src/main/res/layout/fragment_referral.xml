@@ -12,13 +12,14 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Content will be restored/added here based on plan -->
+        <!-- TextView for TPOV ID -->
         <TextView
             android:id="@+id/tv_tpov_id_label"
             style="@style/ShopTextViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Your TPOV ID:"
-            android:layout_marginBottom="4dp"/>
+            android:text="Your TPOV ID:" />
 
         <TextView
             android:id="@+id/tv_tpov_id"
@@ -27,48 +28,17 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginBottom="16dp"
             tools:text="abcdef123456"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-
-            <Button
-                android:id="@+id/btn_copy_referral_link"
-                style="@style/ShopButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Copy Link"/>
-
-            <Button
-                android:id="@+id/btn_share_referral_link"
-                style="@style/ShopButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="Share"/>
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tv_referral_info"
-            style="@style/ShopTextViewStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="You receive 1% of all opened boxes from all your invited friends."/>
-
-        <androidx.recyclerview.widget.RecyclerView
+        <!-- Buttons, Info Text, RecyclerView, Reward Status will be added -->
+        <!-- For now, a placeholder for where RecyclerView will go -->
+         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_referred_users"
             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             android:orientation="vertical"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             tools:listitem="@layout/item_referral_user"
             tools:itemCount="6"/>
@@ -88,14 +58,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Invite 6 players and receive x50"/> <!-- Updated default text -->
+                android:text="Invite 6 players and receive x50"/>
 
             <ImageView
                 android:id="@+id/iv_reward_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_box"
-                tools:src="@drawable/ic_box"/>
+                android:src="@drawable/ic_box"/> <!-- ic_box will be restored -->
         </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

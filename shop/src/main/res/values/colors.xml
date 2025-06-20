@@ -22,8 +22,5 @@
     <color name="contour_unable">#0C4678</color>
     <color name="back_item">#191919</color>
 
-    <color name="referral_item_bg_progress_0">#757575</color> <!-- Light gray for 0% progress when active -->
-    <color name="referral_item_bg_progress_100">#404040</color> <!-- Darker gray for 100% progress (target color) -->
-    <color name="referral_item_text_inactive">#A0A0A0</color> <!-- For text when item is inactive -->
-    <color name="back_main_green_progress">#4CAF50</color> <!-- Green for progress fill -->
+    <color name="referral_progress_fill_dark_green">#2E7D32</color> <!-- Dark green for progress fill -->
 </resources>

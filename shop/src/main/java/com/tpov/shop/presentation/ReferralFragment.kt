@@ -17,7 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.shop.R
-import com.tpov.shop.domain.ReferralUser
+import com.tpov.shop.domain.ReferralUser // Will be created in a later step
 import java.util.UUID
 
 class ReferralFragment : Fragment() {
@@ -29,31 +29,32 @@ class ReferralFragment : Fragment() {
     private lateinit var tvRewardText: TextView
     private lateinit var ivRewardIcon: ImageView
 
-    private lateinit var referralAdapter: ReferralAdapter
+    private lateinit var referralAdapter: ReferralAdapter // Will be created/updated
     private var userTpovId: String = ""
 
-    // Placeholder data
-    private val sampleReferralUsers = listOf(
-        ReferralUser(UUID.randomUUID().toString(), "Nickname1", 0, 0, 0, "tpov1"),
-        ReferralUser(UUID.randomUUID().toString(), "PlayerX", 10, 10, 1, "tpov2"),
-        ReferralUser(UUID.randomUUID().toString(), "TopRefer", 150, 100, 15, "tpov3"),
-        ReferralUser(UUID.randomUUID().toString(), "UserABC", 50, 50, 5, "tpov4"),
-        ReferralUser(UUID.randomUUID().toString(), "Newbie", 0, 0, 0, "tpov5"),
-        ReferralUser(UUID.randomUUID().toString(), "ProGamer", 200, 75, 20, "tpov6"),
-        ReferralUser(UUID.randomUUID().toString(), "CasualJoe", 25, 25, 2, "tpov7"),
-        ReferralUser(UUID.randomUUID().toString(), "LoyalFan", 900, 90, 90, "tpov8")
+    // Updated sample data
+    private var sampleReferralUsers: List<ReferralUser> = listOf(
+        ReferralUser(UUID.randomUUID().toString(), "UserAlpha", 150, 70, "tpov1"), // allOpenBox >= 100, bonus from season = 0
+        ReferralUser(UUID.randomUUID().toString(), "BetaMax", 75, 200, "tpov2"),   // allOpenBox < 100 (progress 75%), bonus from season = 2
+        ReferralUser(UUID.randomUUID().toString(), "GammaRay", 20, 50, "tpov3"),    // progress 20%, bonus from season = 0
+        ReferralUser(UUID.randomUUID().toString(), "DeltaForce", 100, 0, "tpov4"),   // progress 100%, bonus from season = 0
+        ReferralUser(UUID.randomUUID().toString(), "Epsilon", 5, 10, "tpov5"),     // progress 5%, bonus from season = 0
+        ReferralUser(UUID.randomUUID().toString(), "ZetaOne", 230, 350, "tpov6")    // progress 100% (from 230%100=30), bonus from season = 3
+        // Add more or fewer to test placeholder logic and reward text
+        // For example, to test < 6 users:
+        // ReferralUser(UUID.randomUUID().toString(), "UserSeven", 50, 50, "tpov7")
     )
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_referral, container, false)
+        val view = inflater.inflate(R.layout.fragment_referral, container, false) // Assumes fragment_referral.xml exists
         initializeViews(view)
-        updateUserPovId() // Get TPOV ID first
+        updateUserPovId() // Fetch TPOV ID
         setupRecyclerView()
         setupClickListeners()
-        loadReferralData() // Load initial data
+        loadReferralData()
         return view
     }
 
@@ -73,10 +74,16 @@ class ReferralFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        referralAdapter = ReferralAdapter(requireContext())
-        rvReferredUsers.apply {
-            adapter = referralAdapter
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        // Adapter and LayoutManager will be configured according to plan
+        // For now, ensure it doesn't crash if ReferralAdapter is not fully ready
+        if (::referralAdapter.isInitialized) {
+             rvReferredUsers.apply {
+                adapter = referralAdapter
+                layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            }
+        } else {
+            // Temporary setup if adapter isn't ready (will be replaced)
+            rvReferredUsers.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         }
     }
 
@@ -91,7 +98,6 @@ class ReferralFragment : Fragment() {
     }
 
     private fun generateReferralLink(tpovId: String): String {
-        // Replace with your actual referral link structure
         return "https://yourapp.example.com/referral?id=$tpovId"
     }
 
@@ -113,31 +119,24 @@ class ReferralFragment : Fragment() {
     }
 
     private fun loadReferralData() {
-        // TODO: Replace with actual data fetching logic
-        referralAdapter.submitList(sampleReferralUsers)
+        // This will be updated to use new sample data and adapter logic
+        if (::referralAdapter.isInitialized) {
+            referralAdapter.submitList(sampleReferralUsers)
+        }
         updateRewardStatus(sampleReferralUsers)
     }
 
     private fun updateRewardStatus(realUsers: List<ReferralUser>) {
-        // The condition is simply having 6 referred users.
-        // The adapter handles displaying placeholders if there are fewer than 6 real users.
-        // So, we check the count of actual referred users provided to the fragment.
+        // Condition: 6 actual referred users.
         if (realUsers.size >= 6) {
-            tvRewardText.text = "Reward received"
-            ivRewardIcon.setImageResource(R.drawable.ic_baseline_check_circle_24)
+            tvRewardText.text = getString(R.string.referral_reward_received_text) // New string for "Reward received"
+            ivRewardIcon.setImageResource(R.drawable.ic_baseline_check_circle_24) // Will be restored
         } else {
-            // Default text is now set in XML, but can be reaffirmed here if complex logic arises
             tvRewardText.text = getString(R.string.referral_reward_default_text)
-            ivRewardIcon.setImageResource(R.drawable.ic_box)
+            ivRewardIcon.setImageResource(R.drawable.ic_box) // Will be restored
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        // Any additional setup after view is created
-    }
-
-    // It's good practice to have a companion object for fragment instantiation if needed
     companion object {
         fun newInstance() = ReferralFragment()
     }

@@ -1,21 +1,20 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Background of the progress bar -->
+    <!-- Background track -->
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
-            <solid android:color="@color/back_item"/> <!-- e.g., #191919 -->
-            <stroke android:color="#444444" android:width="1dp"/> <!-- Neutral subtle border -->
-            <corners android:radius="@dimen/referral_item_corner_radius"/> <!-- 8dp -->
+            <solid android:color="#666666"/> <!-- Same as placeholder: Medium-light gray -->
+            <corners android:radius="@dimen/referral_item_corner_radius"/>
         </shape>
     </item>
 
-    <!-- Progress -->
+    <!-- Progress fill -->
     <item android:id="@android:id/progress">
         <clip
             android:clipOrientation="horizontal"
             android:gravity="left">
             <shape android:shape="rectangle">
-                <solid android:color="@color/back_main_green_progress"/> <!-- Define this color, e.g., a vibrant green -->
+                <solid android:color="@color/referral_progress_fill_dark_green"/> <!-- Dark green for fill -->
                 <corners android:radius="@dimen/referral_item_corner_radius"/>
             </shape>
         </clip>

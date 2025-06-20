@@ -4,23 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/referral_item_background_inactive"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:layout_marginBottom="4dp"
+    android:background="@drawable/referral_item_placeholder_background"
     android:gravity="center_vertical">
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginEnd="8dp">
 
         <TextView
             android:id="@+id/tv_nickname"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             tools:text="UserNickname123" />
 
@@ -30,16 +34,18 @@
             android:layout_height="wrap_content"
             android:text="Total Boxes:"
             android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp"/>
+            android:textSize="10sp"
+            android:layout_marginTop="2dp"
+            tools:ignore="SmallSp" />
 
         <TextView
             android:id="@+id/tv_all_open_box_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
-            android:textSize="12sp"
-            tools:text="1250" />
+            android:textSize="10sp"
+            tools:text="1250"
+            tools:ignore="SmallSp" />
 
     </LinearLayout>
 
@@ -47,25 +53,25 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="end"
-        android:layout_marginStart="8dp">
+        android:gravity="end">
 
         <TextView
             android:id="@+id/tv_season_box_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Season Progress:"
+            android:text="Season Boxes:"
             android:textColor="@android:color/white"
-            android:textSize="12sp"/>
+            android:textSize="10sp"
+            tools:ignore="SmallSp" />
 
         <TextView
             android:id="@+id/tv_season_box_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:textStyle="bold"
-            tools:text="75/100" />
+            tools:text="75" />
 
         <TextView
             android:id="@+id/tv_new_bonus_box_label"
@@ -74,7 +80,7 @@
             android:text="Your Bonus:"
             android:textColor="@android:color/white"
             android:textSize="10sp"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             tools:ignore="SmallSp" />
 
         <TextView
@@ -84,7 +90,7 @@
             android:textColor="@android:color/white"
             android:textSize="12sp"
             android:textStyle="bold"
-            tools:text="15" />
+            tools:text="0" />
     </LinearLayout>
 
 </LinearLayout>

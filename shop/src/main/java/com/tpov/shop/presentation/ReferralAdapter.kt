@@ -2,7 +2,7 @@ package com.tpov.shop.presentation
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +11,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.shop.R
-import com.tpov.shop.domain.ReferralUser
+import com.tpov.shop.domain.ReferralUser // Assumes this path is correct after domain class creation
 
 class ReferralAdapter(
     private val context: Context
@@ -20,7 +20,7 @@ class ReferralAdapter(
     private var displayItems: List<ReferralUser> = List(6) { ReferralUser.placeholder("initial_$it") }
 
     fun submitList(referralUsers: List<ReferralUser>) {
-        val sortedRealUsers = referralUsers.sortedByDescending { it.allOpenBox } // Or seasonBoxCount for sorting? User requested allOpenBox initially.
+        val sortedRealUsers = referralUsers.sortedByDescending { it.allOpenBox }
 
         val newDisplayItems = mutableListOf<ReferralUser>()
         for (i in 0 until 6) {
@@ -56,53 +56,49 @@ class ReferralAdapter(
         private val seasonBoxValueTextView: TextView = itemView.findViewById(R.id.tv_season_box_value)
         private val newBonusBoxValueTextView: TextView = itemView.findViewById(R.id.tv_new_bonus_box_value)
 
-        // Labels (can be hidden for placeholders if needed)
         private val allOpenBoxLabelTextView: TextView = itemView.findViewById(R.id.tv_all_open_box_label)
         private val seasonBoxLabelTextView: TextView = itemView.findViewById(R.id.tv_season_box_label)
         private val newBonusBoxLabelTextView: TextView = itemView.findViewById(R.id.tv_new_bonus_box_label)
 
-
         fun bind(user: ReferralUser, context: Context) {
+            val calculatedBonus = if (ReferralUser.isPlaceholder(user)) 0 else user.seasonBoxCount / 100
+
             if (ReferralUser.isPlaceholder(user)) {
                 nicknameTextView.text = user.nickname // "Empty Slot"
                 allOpenBoxValueTextView.text = "-"
-                seasonBoxValueTextView.text = "-/-"
+                seasonBoxValueTextView.text = "-"
                 newBonusBoxValueTextView.text = "-"
 
-                // Optionally hide labels or set them to a dimmer white if needed, for now, they stay.
-                // Ensure text color is white for placeholder text too, but it's less prominent.
-                nicknameTextView.setTextColor(Color.LTGRAY) // Slightly dimmer for "Empty Slot"
-                allOpenBoxValueTextView.setTextColor(Color.LTGRAY)
-                seasonBoxValueTextView.setTextColor(Color.LTGRAY)
-                newBonusBoxValueTextView.setTextColor(Color.LTGRAY)
+                val placeholderTextColor = Color.LTGRAY
+                nicknameTextView.setTextColor(placeholderTextColor)
+                allOpenBoxValueTextView.setTextColor(placeholderTextColor)
+                seasonBoxValueTextView.setTextColor(placeholderTextColor)
+                newBonusBoxValueTextView.setTextColor(placeholderTextColor)
+                allOpenBoxLabelTextView.setTextColor(placeholderTextColor)
+                seasonBoxLabelTextView.setTextColor(placeholderTextColor)
+                newBonusBoxLabelTextView.setTextColor(placeholderTextColor)
 
-                allOpenBoxLabelTextView.setTextColor(Color.LTGRAY)
-                seasonBoxLabelTextView.setTextColor(Color.LTGRAY)
-                newBonusBoxLabelTextView.setTextColor(Color.LTGRAY)
-
-
-                itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_background_inactive)
+                itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_placeholder_background)
             } else {
                 nicknameTextView.text = user.nickname
                 allOpenBoxValueTextView.text = user.allOpenBox.toString()
-                seasonBoxValueTextView.text = "${user.seasonBoxCount}/100" // Assuming seasonBoxCount is 0-100
-                newBonusBoxValueTextView.text = user.newBonusBox.toString()
+                seasonBoxValueTextView.text = user.seasonBoxCount.toString() // Display raw seasonBoxCount
+                newBonusBoxValueTextView.text = calculatedBonus.toString()
 
-                // Ensure all text is bright white for real users
-                nicknameTextView.setTextColor(Color.WHITE)
-                allOpenBoxValueTextView.setTextColor(Color.WHITE)
-                seasonBoxValueTextView.setTextColor(Color.WHITE)
-                newBonusBoxValueTextView.setTextColor(Color.WHITE)
+                val realUserTextColor = Color.WHITE
+                nicknameTextView.setTextColor(realUserTextColor)
+                allOpenBoxValueTextView.setTextColor(realUserTextColor)
+                seasonBoxValueTextView.setTextColor(realUserTextColor)
+                newBonusBoxValueTextView.setTextColor(realUserTextColor)
+                allOpenBoxLabelTextView.setTextColor(realUserTextColor)
+                seasonBoxLabelTextView.setTextColor(realUserTextColor)
+                newBonusBoxLabelTextView.setTextColor(realUserTextColor)
 
-                allOpenBoxLabelTextView.setTextColor(Color.WHITE)
-                seasonBoxLabelTextView.setTextColor(Color.WHITE)
-                newBonusBoxLabelTextView.setTextColor(Color.WHITE)
-
-                itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_progress_fill)
+                itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_progress_fill_inverted)
                 val progressDrawable = itemBackgroundLayout.background as LayerDrawable
                 val progressClipDrawable = progressDrawable.findDrawableByLayerId(android.R.id.progress) as android.graphics.drawable.ClipDrawable
 
-                val progressPercentage = user.seasonBoxCount.coerceIn(0, 100)
+                val progressPercentage = if (user.allOpenBox >= 100) 100 else user.allOpenBox % 100
                 progressClipDrawable.level = progressPercentage * 100 // Level is 0-10000
             }
         }
