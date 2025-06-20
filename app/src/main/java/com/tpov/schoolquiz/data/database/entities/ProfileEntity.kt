@@ -21,7 +21,7 @@ data class ProfileEntity(
     val trophy: String = "",
     val friends: String = "",
     val city: String = "",
-    val logo: Int = 0,
+    val logo: String = "",
     val commander: Int = 0,
 
     val timeInGamesInQuiz: Int = 0,

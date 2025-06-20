@@ -212,7 +212,7 @@ fun ProfileRemote.toProfileEntity(): ProfileEntity {
         trophy = this.points.trophy,
         friends = this.points.friends,
         city = this.basic.city,
-        logo = this.basic.logo.toInt(),
+        logo = this.basic.logo.toString(),
         commander = this.basic.comander.toInt(),
         timeInGamesInQuiz = this.timeInGames.timeInQuiz.toInt(),
         timeInGamesInChat = this.timeInGames.timeInChat.toInt(),
