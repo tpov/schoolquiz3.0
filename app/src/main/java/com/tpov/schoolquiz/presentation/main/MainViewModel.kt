@@ -196,4 +196,47 @@ class MainViewModel @Inject constructor(
     fun resetTasks() {
         profileInteractor.updateLoadStatus()
     }
+
+    /**
+     * Добавляет премиум дни к профилю пользователя
+     * @param days количество дней премиума для добавления
+     */
+    fun addPremiumDays(days: Int) = viewModelScope.launch(Dispatchers.Default) {
+        val currentProfile = _profileState.value ?: return@launch
+        val currentPremiumDays = currentProfile.datePremium.toIntOrNull() ?: 0
+        val newPremiumDays = currentPremiumDays + days
+
+        val updatedProfile = currentProfile.copy(
+            datePremium = newPremiumDays.toString()
+        )
+
+        // Обновляем профиль в базе данных
+        profileUseCase.updateProfile(updatedProfile)
+
+        // Обновляем локальное состояние
+        _profileState.value = updatedProfile
+        
+        // Обновляем состояние премиума в контроллере
+        profileInteractor.updatePremium()
+    }
+
+    /**
+     * Добавляет новый логотип в коллекцию пользователя
+     * @param logoName название логотипа для добавления
+     */
+    fun addLogo(logoName: String) = viewModelScope.launch(Dispatchers.Default) {
+        val currentProfile = _profileState.value ?: return@launch
+        val currentLogos = currentProfile.logo ?: ""
+        val updatedLogos = if (currentLogos == "") logoName else "$currentLogos,$logoName"
+
+        val updatedProfile = currentProfile.copy(
+            logo = updatedLogos
+        )
+
+        // Обновляем профиль в базе данных
+        profileUseCase.updateProfile(updatedProfile)
+
+        // Обновляем локальное состояние
+        _profileState.value = updatedProfile
+    }
 }

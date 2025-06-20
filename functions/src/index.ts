@@ -2,176 +2,177 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 admin.initializeApp();
 
-interface StructureEditData {
-  id?: number;
-  idEventFrom: number;
-  idCategoryFrom: number;
-  idSubCategoryFrom: number;
-  idSubsubCategoryFrom: number;
-  idQuizFrom: number;
-
-  idEventTo: number;
-  idCategoryTo: number;
-  idSubCategoryTo: number;
-  idSubsubCategoryTo: number;
-  idQuizTo: number;
-
-  nameEventTo: string;
-  nameCategoryTo: string;
-  nameSubCategoryTo: string;
-  nameSubsubCategoryTo: string;
-  nameQuizTo: string;
-
-  deleteOld: boolean;
-  clearData: boolean;
-}
-
+// Define FieldConfig interface that was missing
 interface FieldConfig {
-    defaultValue: string | number;
+    defaultValue: any;
     type: string;
 }
 
+interface StructureEditData {
+    id?: number;
+    idEventFrom: number;
+    idCategoryFrom: number;
+    idSubCategoryFrom: number;
+    idSubsubCategoryFrom: number;
+    idQuizFrom: number;
+
+    idEventTo: number;
+    idCategoryTo: number;
+    idSubCategoryTo: number;
+    idSubsubCategoryTo: number;
+    idQuizTo: number;
+
+    nameEventTo: string;
+    nameCategoryTo: string;
+    nameSubCategoryTo: string;
+    nameSubsubCategoryTo: string;
+    nameQuizTo: string;
+
+    deleteOld: boolean;
+    clearData: boolean;
+}
+
 export const editStructure = functions.https.onCall(async (data: StructureEditData, context) => {
-  // 1. Формируем from и to пути
-  const fromPath = buildPath(data.idEventFrom, data.idCategoryFrom, data.idSubCategoryFrom, data.idSubsubCategoryFrom, data.idQuizFrom);
-  let toPath = buildPath(
-    data.idEventTo,
-    data.idCategoryTo,
-    data.idSubCategoryTo,
-    data.idSubsubCategoryTo,
-    data.idQuizTo
-  );
+    // 1. Формируем from и to пути
+    const fromPath = buildPath(data.idEventFrom, data.idCategoryFrom, data.idSubCategoryFrom, data.idSubsubCategoryFrom, data.idQuizFrom);
+    let toPath = buildPath(
+        data.idEventTo,
+        data.idCategoryTo,
+        data.idSubCategoryTo,
+        data.idSubsubCategoryTo,
+        data.idQuizTo
+    );
 
-  // 2. Если в to есть 0 — ищем максимальный id и подставляем +1
-  const toIds = [data.idEventTo, data.idCategoryTo, data.idSubCategoryTo, data.idSubsubCategoryTo, data.idQuizTo];
-  for (let i = 0; i < toIds.length; i++) {
-    if (toIds[i] === 0) {
-      // Получаем parent path до этого уровня
-      const parentIds: [number, number, number, number, number] = [
-        ...toIds.slice(0, i),
-        ...Array(5 - i).fill(-1)
-      ] as [number, number, number, number, number];
-      const parentPath = buildPath(...parentIds);
-      // Получаем коллекцию на этом уровне
-      const snapshot = await admin.firestore().collection(parentPath).get();
-      let maxId = 0;
-      snapshot.forEach(doc => {
-        const id = parseInt(doc.id, 10);
-        if (!isNaN(id) && id > maxId) maxId = id;
-      });
-      toIds[i] = maxId + 1;
+    // 2. Если в to есть 0 — ищем максимальный id и подставляем +1
+    const toIds = [data.idEventTo, data.idCategoryTo, data.idSubCategoryTo, data.idSubsubCategoryTo, data.idQuizTo];
+    for (let i = 0; i < toIds.length; i++) {
+        if (toIds[i] === 0) {
+            // Получаем parent path до этого уровня
+            const parentIds: [number, number, number, number, number] = [
+                ...toIds.slice(0, i),
+                ...Array(5 - i).fill(-1)
+            ] as [number, number, number, number, number];
+            const parentPath = buildPath(...parentIds);
+            // Получаем коллекцию на этом уровне
+            const snapshot = await admin.firestore().collection(parentPath).get();
+            let maxId = 0;
+            snapshot.forEach(doc => {
+                const id = parseInt(doc.id, 10);
+                if (!isNaN(id) && id > maxId) maxId = id;
+            });
+            toIds[i] = maxId + 1;
+        }
     }
-  }
-  const toIdsTuple: [number, number, number, number, number] = toIds as [number, number, number, number, number];
-  toPath = buildPath(...toIdsTuple);
+    const toIdsTuple: [number, number, number, number, number] = toIds as [number, number, number, number, number];
+    toPath = buildPath(...toIdsTuple);
 
-  // 3. Копируем содержимое
-  await copyCollection(fromPath, toPath);
+    // 3. Копируем содержимое
+    await copyCollection(fromPath, toPath);
 
-  // 4. Если deleteOld — удаляем from
-  if (data.deleteOld) {
-    await deleteCollection(fromPath);
-  }
+    // 4. Если deleteOld — удаляем from
+    if (data.deleteOld) {
+        await deleteCollection(fromPath);
+    }
 
-  // 5. Если clearData — очищаем to
-  if (data.clearData) {
-    await clearDataInPath(toPath);
-  }
+    // 5. Если clearData — очищаем to
+    if (data.clearData) {
+        await clearDataInPath(toPath);
+    }
 
-  return { success: true, toPath };
+    return { success: true, toPath };
 });
 
 export const generateNewTpovId = functions.https.onCall(async (data, context) => {
-  console.log('Function generateNewTpovId started - attempting deploy trigger.'); // Log at the very beginning
+    console.log('Function generateNewTpovId started - attempting deploy trigger.'); // Log at the very beginning
 
-  // Возвращаем проверку аутентификации
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'The function must be called while authenticated.'
-    );
-  }
-
-  const authUid = context.auth?.uid || null; // Handle potentially undefined context.auth
-  console.log(`authUid determined: ${authUid}`); // Log authUid
-
-  console.log('Attempting to get Firestore instance.'); // Log before getting db instance
-  const db = admin.firestore();
-  console.log('Firestore instance obtained.'); // Log after getting db instance
-
-  console.log('Attempting to define lastIdRef.'); // Log before defining lastIdRef
-  const lastIdRef = db.collection('variable').doc('lastId'); // Define lastIdRef here
-  console.log('lastIdRef defined.'); // Log after defining lastIdRef
-
-  // Check if the lastId document exists and create it with tpovId = 0 if not
-  console.log('Attempting to check/create initial lastId document.'); // Log before check/create block
-  try {
-    const lastIdDocInitial = await lastIdRef.get();
-    if (!lastIdDocInitial.exists) {
-      await lastIdRef.set({ tpovId: 0 });
-      console.log('Created initial variable/lastId document.');
-    } else {
-      console.log('Initial variable/lastId document already exists.');
-    }
-  } catch (error) {
-    console.error('Error checking or creating initial lastId document:', error);
-    throw new functions.https.HttpsError('internal', 'Failed to initialize lastId document.', error);
-  }
-  console.log('Finished check/create initial lastId document.'); // Log after check/create block
-
-  console.log('Attempting to start Firestore transaction.');
-  return db.runTransaction(async (transaction) => {
-    console.log('Inside Firestore transaction block.'); // Log start of transaction within the block
-
-    const lastIdRef = db.collection('variable').doc('lastId'); // Redefine inside transaction for transaction context
-    const listTpovIdRef = db.collection('variable').doc('listTpovId');
-
-    console.log('Attempting to get documents within transaction.'); // Log before gets
-    const lastIdDoc = await transaction.get(lastIdRef);
-    const listTpovIdDoc = await transaction.get(listTpovIdRef);
-    console.log(`Finished getting documents within transaction. lastId exists: ${lastIdDoc.exists}, listTpovId exists: ${listTpovIdDoc.exists}.`); // Log after gets
-
-    let currentTpovId = 0;
-    if (lastIdDoc.exists) {
-      currentTpovId = lastIdDoc.data()?.tpovId || 0;
+    // Возвращаем проверку аутентификации
+    if (!context.auth) {
+        throw new functions.https.HttpsError(
+            'unauthenticated',
+            'The function must be called while authenticated.'
+        );
     }
 
-    const newTpovId = currentTpovId + 1;
-    console.log(`Current tpovId: ${currentTpovId}, New tpovId: ${newTpovId}`); // Log ID values
+    const authUid = context.auth?.uid || null; // Handle potentially undefined context.auth
+    console.log(`authUid determined: ${authUid}`); // Log authUid
 
-    // Update lastId
-    console.log('Attempting to set new tpovId in lastId document within transaction.'); // Log before set
-    transaction.set(lastIdRef, { tpovId: newTpovId });
-    console.log('Finished setting new tpovId in lastId document within transaction.'); // Log after set
+    console.log('Attempting to get Firestore instance.'); // Log before getting db instance
+    const db = admin.firestore();
+    console.log('Firestore instance obtained.'); // Log after getting db instance
 
-    // Create or update token list in variable/listTpovId
-    if (authUid) {
-      console.log(`Attempting to update token list for hash: ${authUid} within transaction.`); // Log before set token
+    console.log('Attempting to define lastIdRef.'); // Log before defining lastIdRef
+    const lastIdRef = db.collection('variable').doc('lastId'); // Define lastIdRef here
+    console.log('lastIdRef defined.'); // Log after defining lastIdRef
 
-      // Use data from the get call at the beginning of the transaction
-      const currentData = listTpovIdDoc.exists ? listTpovIdDoc.data() || {} : {};
-
-      // Update the document with new key-value pair
-      transaction.set(listTpovIdRef, {
-        ...currentData,
-        [authUid]: newTpovId
-      });
-
-      console.log(`Finished updating token list for hash: ${authUid} within transaction.`); // Log after set token
-    } else {
-      console.log('authUid is null, skipping token list update.'); // Log if skipping token creation
+    // Check if the lastId document exists and create it with tpovId = 0 if not
+    console.log('Attempting to check/create initial lastId document.'); // Log before check/create block
+    try {
+        const lastIdDocInitial = await lastIdRef.get();
+        if (!lastIdDocInitial.exists) {
+            await lastIdRef.set({ tpovId: 0 });
+            console.log('Created initial variable/lastId document.');
+        } else {
+            console.log('Initial variable/lastId document already exists.');
+        }
+    } catch (error) {
+        console.error('Error checking or creating initial lastId document:', error);
+        throw new functions.https.HttpsError('internal', 'Failed to initialize lastId document.', error);
     }
+    console.log('Finished check/create initial lastId document.'); // Log after check/create block
 
-    console.log('Transaction operations defined, returning from transaction block.');
-    return { tpovId: newTpovId, authUid: authUid };
-  }).then(result => {
-    console.log('Transaction promise resolved. Transaction success:', result); // More specific success log
-    return result;
-  }).catch(error => {
-    console.error('Transaction promise rejected. Transaction failed:', error); // More specific failure log
-    console.error('Transaction failed with error details:', error.code, error.details); // Added more specific error logging
-    throw new functions.https.HttpsError('internal', 'Failed to generate new tpovId.', error);
-  });
+    console.log('Attempting to start Firestore transaction.');
+    return db.runTransaction(async (transaction) => {
+        console.log('Inside Firestore transaction block.'); // Log start of transaction within the block
+
+        const lastIdRef = db.collection('variable').doc('lastId'); // Redefine inside transaction for transaction context
+        const listTpovIdRef = db.collection('variable').doc('listTpovId');
+
+        console.log('Attempting to get documents within transaction.'); // Log before gets
+        const lastIdDoc = await transaction.get(lastIdRef);
+        const listTpovIdDoc = await transaction.get(listTpovIdRef);
+        console.log(`Finished getting documents within transaction. lastId exists: ${lastIdDoc.exists}, listTpovId exists: ${listTpovIdDoc.exists}.`); // Log after gets
+
+        let currentTpovId = 0;
+        if (lastIdDoc.exists) {
+            currentTpovId = lastIdDoc.data()?.tpovId || 0;
+        }
+
+        const newTpovId = currentTpovId + 1;
+        console.log(`Current tpovId: ${currentTpovId}, New tpovId: ${newTpovId}`); // Log ID values
+
+        // Update lastId
+        console.log('Attempting to set new tpovId in lastId document within transaction.'); // Log before set
+        transaction.set(lastIdRef, { tpovId: newTpovId });
+        console.log('Finished setting new tpovId in lastId document within transaction.'); // Log after set
+
+        // Create or update token list in variable/listTpovId
+        if (authUid) {
+            console.log(`Attempting to update token list for hash: ${authUid} within transaction.`); // Log before set token
+
+            // Use data from the get call at the beginning of the transaction
+            const currentData = listTpovIdDoc.exists ? listTpovIdDoc.data() || {} : {};
+
+            // Update the document with new key-value pair
+            transaction.set(listTpovIdRef, {
+                ...currentData,
+                [authUid]: newTpovId
+            });
+
+            console.log(`Finished updating token list for hash: ${authUid} within transaction.`); // Log after set token
+        } else {
+            console.log('authUid is null, skipping token list update.'); // Log if skipping token creation
+        }
+
+        console.log('Transaction operations defined, returning from transaction block.');
+        return { tpovId: newTpovId, authUid: authUid };
+    }).then(result => {
+        console.log('Transaction promise resolved. Transaction success:', result); // More specific success log
+        return result;
+    }).catch(error => {
+        console.error('Transaction promise rejected. Transaction failed:', error); // More specific failure log
+        console.error('Transaction failed with error details:', error.code, error.details); // Added more specific error logging
+        throw new functions.https.HttpsError('internal', 'Failed to generate new tpovId.', error);
+    });
 });
 
 // Helper function to get nested object value
@@ -194,7 +195,7 @@ function setNestedValue(obj: any, path: string, value: any): void {
 async function getTpovIdFromUid(uid: string): Promise<number | null> {
     const db = admin.firestore();
     const listTpovIdDoc = await db.collection('variable').doc('listTpovId').get();
-    
+
     if (listTpovIdDoc.exists) {
         const data = listTpovIdDoc.data();
         return data?.[uid] || null;
@@ -205,7 +206,7 @@ async function getTpovIdFromUid(uid: string): Promise<number | null> {
 // Function to validate profile updates and report suspicious changes
 export const validateProfileUpdate = functions.https.onCall(async (data, context) => {
     console.log('validateProfileUpdate started with data:', JSON.stringify(data));
-    
+
     if (!context.auth) {
         console.log('Authentication failed - no auth context');
         throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
@@ -259,11 +260,11 @@ export const validateProfileUpdate = functions.https.onCall(async (data, context
 
     if (!currentProfile.exists) {
         console.log('Creating new profile for tpovId:', tpovId);
-        
+
         // Проверяем, что пользователь имеет право создавать профиль с этим tpovId
         const userTpovId = await getTpovIdFromUid(auth.uid);
         console.log('User tpovId from auth:', userTpovId);
-        
+
         if (!isServerUpdate && userTpovId !== tpovId) {
             console.log('Unauthorized profile creation attempt:', {
                 userTpovId,
@@ -295,12 +296,12 @@ export const validateProfileUpdate = functions.https.onCall(async (data, context
     } else {
         console.log('Updating existing profile');
         const currentData = currentProfile.data();
-        
+
         // Check for unauthorized modifications of important fields
         for (const [field, config] of Object.entries(importantFields)) {
             const oldValue = getNestedValue(currentData, field);
             const newValue = getNestedValue(profileData, field);
-            
+
             // Check for value type
             if (newValue !== undefined && typeof newValue !== config.type) {
                 console.log('Type mismatch detected:', {
@@ -318,7 +319,7 @@ export const validateProfileUpdate = functions.https.onCall(async (data, context
                 setNestedValue(dataToSave, field, oldValue);
                 continue;
             }
-            
+
             // Check for unauthorized changes to protected fields
             if (newValue !== undefined && newValue !== oldValue && !isServerUpdate) {
                 console.log('Unauthorized field modification detected:', {
@@ -341,28 +342,9 @@ export const validateProfileUpdate = functions.https.onCall(async (data, context
         for (const [field, config] of Object.entries(nullifyFieldsDefaults)) {
             const oldValue = getNestedValue(currentData, field);
             const newValue = getNestedValue(profileData, field);
-            
-            // Check for value type
-            if (newValue !== undefined && typeof newValue !== config.type) {
-                console.log('Type mismatch in addPoints:', {
-                    field,
-                    expectedType: config.type,
-                    actualType: typeof newValue,
-                    value: newValue
-                });
-                suspiciousChanges.push({
-                    field,
-                    oldValue,
-                    newValue,
-                    reason: `Type mismatch in addPoints: expected ${config.type}, got ${typeof newValue}`
-                });
-                setNestedValue(dataToSave, field, config.defaultValue);
-                continue;
-            }
-            
-            // Always nullify addPoints fields if they are present in the incoming data
+
+            // Only log if the attempted value is not already the default
             if (newValue !== undefined) {
-                // Only log if the attempted value is not already the default
                 if (newValue !== config.defaultValue) {
                     console.log('AddPoints field will be nullified:', {
                         field,
@@ -386,8 +368,8 @@ export const validateProfileUpdate = functions.https.onCall(async (data, context
         for (const field of pointsFields) {
             const oldValue = getNestedValue(currentData, field);
             const newValue = getNestedValue(profileData, field);
-            
-            // Only log if the attempted value is different from the old value and not a server update
+
+            // Only log if the value is different from the old value and not a server update
             if (newValue !== undefined && newValue !== oldValue && !isServerUpdate) {
                 console.log('Points field modification detected:', {
                     field,
@@ -529,28 +511,31 @@ export const validateProfileUpdate = functions.https.onCall(async (data, context
 
 // Вспомогательные функции
 function buildPath(idEvent: number, idCategory: number, idSubCategory: number, idSubsubCategory: number, idQuiz: number) {
-  let path = `structures/structureData/event/${idEvent}`;
-  if (idCategory !== -1) path += `/category/${idCategory}`;
-  if (idSubCategory !== -1) path += `/subCategory/${idSubCategory}`;
-  if (idSubsubCategory !== -1) path += `/subsubCategory/${idSubsubCategory}`;
-  if (idQuiz !== -1) path += `/quiz/${idQuiz}`;
-  return path;
+    let path = `structures/structureData/event/${idEvent}`;
+    if (idCategory !== -1) path += `/category/${idCategory}`;
+    if (idSubCategory !== -1) path += `/subCategory/${idSubCategory}`;
+    if (idSubsubCategory !== -1) path += `/subsubCategory/${idSubsubCategory}`;
+    if (idQuiz !== -1) path += `/quiz/${idQuiz}`;
+    return path;
 }
 
 async function copyCollection(fromPath: string, toPath: string) {
-  const snapshot = await admin.firestore().collection(fromPath).get();
-  for (const doc of snapshot.docs) {
-    await admin.firestore().doc(`${toPath}/${doc.id}`).set(doc.data());
-  }
+    const snapshot = await admin.firestore().collection(fromPath).get();
+    for (const doc of snapshot.docs) {
+        await admin.firestore().doc(`${toPath}/${doc.id}`).set(doc.data());
+    }
 }
 
 async function deleteCollection(path: string) {
-  const snapshot = await admin.firestore().collection(path).get();
-  for (const doc of snapshot.docs) {
-    await doc.ref.delete();
-  }
+    const snapshot = await admin.firestore().collection(path).get();
+    for (const doc of snapshot.docs) {
+        await doc.ref.delete();
+    }
 }
 
 async function clearDataInPath(path: string) {
 
 }
+
+// Export the getGiftBoxReward function from giftReward.ts
+export { getGiftBoxReward } from './giftReward';
