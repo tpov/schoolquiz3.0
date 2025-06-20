@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="gold">#FFD600</color>
-    <color name="green">#00803A</color>
-    <color name="red">#870000</color>
+    <color name="green">#3CAF50</color>
+    <color name="red">#F44336</color>
 
     <color name="contour">#0C7FCF</color>
+    <color name="line">#6A5E23</color>
     <color name="contour_unable">#0C4678</color>
     <color name="back_item">#191919</color>
 
@@ -17,16 +15,19 @@
     <color name="back_hard_question_center">#503C3C</color>
     <color name="back_arena_question_center">#3C3C50</color>
 
-    <color name="back_menu_top">#323232</color>
-    <color name="back_menu_bottom">#070E00</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gold">#FFD600</color>
+    <color name="back_main_green">#3CAF50</color>
+    <color name="back_main_red">#F44336</color>
 
-    <color name="default_nick_color1">#FFFFFF</color>
-    <color name="default_nick_color2">#9ACD32</color> <!--  (Желтая зелень)-->
-    <color name="default_nick_color3">#4682B4</color> <!--  (Стальной синий)-->
-    <color name="default_nick_color4">#20B2AA</color> <!--  (Светло-морской)-->
-    <color name="default_nick_color0">#B8860B</color> <!--  (Темно-золотой)-->
-    <color name="default_nick_color5">#FF6347</color> <!--  (Томатный)-->
-    <color name="default_nick_color6">#000000</color>
-    <color name="default_nick_color7">#FFD700</color> <!--  (Золотой)-->
-    <color name="default_nick_color8">#939E8D</color>
+    <color name="spinner_background">#1A237E</color>
+    <color name="spinner_dropdown_background">#424242</color>
+    <color name="spinner_selected_background">#303F9F</color>
+    <color name="spinner_selected_item">#4CAF50</color>
+
+    <color name="colorPrimary">#2196F3</color>
+    <color name="colorPrimaryDark">#1976D2</color>
+    <color name="colorAccent">#FF4081</color>
+
 </resources>

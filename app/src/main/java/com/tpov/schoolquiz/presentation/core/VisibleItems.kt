@@ -1,8 +1,13 @@
 package com.tpov.schoolquiz.presentation.core
 
+import com.tpov.common.COUNT_SKILL_BEGINNER
+import com.tpov.common.LVL_ADMIN_1_LVL
+import com.tpov.common.LVL_DEVELOPER_1_LVL
+import com.tpov.common.LVL_MODERATOR_1_LVL
+import com.tpov.common.LVL_TESTER_1_LVL
+import com.tpov.common.LVL_TRANSLATOR_1_LVL
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
-import com.tpov.schoolquiz.presentation.*
 
 object VisibleItems {
 
@@ -12,9 +17,21 @@ object VisibleItems {
         val items = mutableListOf(
             R.string.nav_chat to R.drawable.nav_chat
         )
-
+        items.add(
+                R.string.nav_profile to R.drawable.nav_profile
+                )
+        items.add(R.string.nav_players to R.drawable.nav_user)
+        items.add(R.string.nav_massages to R.drawable.nav_massage)
+        items.add(R.string.nav_chat to R.drawable.ic_profile)
+        items.add(R.string.nav_arena to R.drawable.ic_profile)
+        items.add(R.string.nav_leaders to R.drawable.ic_profile)
+        items.add(R.string.nav_tournament to R.drawable.ic_profile)
+        items.add(R.string.nav_archive to R.drawable.ic_profile)
+        items.add(R.string.nav_referral_program to R.drawable.ic_profile)
+        items.add(R.string.nav_friends to R.drawable.ic_profile)
+        items.add(R.string.nav_roles to R.drawable.ic_profile)
+        items.add(R.string.nav_logout to R.drawable.ic_profile)
         if (skill >= COUNT_SKILL_BEGINNER) {
-            items.add(R.string.nav_global to R.drawable.baseline_public_24)
         }
 
 
@@ -26,26 +43,14 @@ object VisibleItems {
             || qualification.tester >= LVL_TESTER_1_LVL
             || qualification.admin >= LVL_ADMIN_1_LVL
             || qualification.moderator >= LVL_MODERATOR_1_LVL
-            || qualification.developer >= LVL_DEVELOPER_1_LVL) {
-            items.add(
-                R.string.nav_profile to R.drawable.nav_profile
-            )
-            items.add(
-                R.string.nav_task to R.drawable.nav_task
-            )
+            || qualification.developer >= LVL_DEVELOPER_1_LVL
+        ) {
+
         }
 
         if (qualification.developer >= LVL_DEVELOPER_1_LVL) {
-            items.add(R.string.nav_leaders to R.drawable.nav_leader)
-            items.add(R.string.nav_players to R.drawable.nav_user)
-            items.add(R.string.nav_news to R.drawable.ic_new)
-            items.add(R.string.nav_massages to R.drawable.nav_massage)
-            items.add(R.string.nav_reports to R.drawable.nav_report)
-            items.add(R.string.nav_friends to R.drawable.ic_baseline_drive_folder_upload_24)
-            items.add(R.string.nav_contact to R.drawable.ic_contact)
         }
 
-        items.add(R.string.nav_exit to R.drawable.nav_exit)
         return items
 
     }
@@ -54,6 +59,11 @@ object VisibleItems {
         val items = mutableListOf(
             R.string.nav_home to R.drawable.ic_home
         )
+        items.add(R.string.nav_my_quests to R.drawable.ic_profile)
+        items.add(R.string.nav_downloads to R.drawable.ic_profile)
+        items.add(R.string.nav_settings to R.drawable.ic_profile)
+        items.add(R.string.nav_tasks to R.drawable.ic_profile)
+        items.add(R.string.nav_about to R.drawable.ic_profile)
 
         if (skill >= COUNT_SKILL_BEGINNER) {
             items.add(R.string.nav_my_quiz to R.drawable.nav_my_quiz)
@@ -61,10 +71,7 @@ object VisibleItems {
 
 
         if (qualification.developer >= LVL_DEVELOPER_1_LVL) {
-            items.add(R.string.nav_downloads to R.drawable.baseline_download_24)
-            items.add(R.string.nav_settings to R.drawable.ic_settings)
         }
-
 
         return items
     }

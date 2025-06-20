@@ -1,20 +1,14 @@
 package com.tpov.schoolquiz.presentation.main
 
-import android.content.Context
 import android.view.Menu
-import android.view.View
-import androidx.core.content.ContextCompat
-import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
-import com.tpov.schoolquiz.presentation.core.Logcat
-import com.tpov.schoolquiz.presentation.core.VisibleItems.getShowItemsMenuHome
-import com.tpov.schoolquiz.presentation.core.VisibleItems.getShowItemsMenuNetwork
-import kotlinx.coroutines.InternalCoroutinesApi
+import com.tpov.schoolquiz.presentation.model.Inset
+import com.tpov.schoolquiz.presentation.model.Role
 
 object SetItemMenu {
 
-    const val MENU_HOME = 0
+    const val MENU_HOME_QUIZ = 0
     const val MENU_MY_QUIZ = 1
     const val MENU_SETTING = 2
     const val MENU_DOWNLOADS = 3
@@ -31,75 +25,80 @@ object SetItemMenu {
     const val MENU_REPORT = 9
     const val MENU_CONTACT = 9
     const val MENU_EXIT = 10
+    const val MENU_CHAT_TOURNAMENT = 11
+    const val MENU_CHAT_BANNED = 12
 
-    fun setHomeMenu(
+    var currentMenuId = 0
+
+    fun setupDynamicMenu(
         binding: ActivityMainBinding,
-        fr2: Int,
-        context: Context,
-        skill: Int,
-        qualification: Qualification
-    ) {
-        log("fioesjoifjsei, $fr2")
+        qualification: Qualification,
+        currentSkill: Int,
+        inset: Inset
+    ): Boolean {
         val menu = binding.navigationView.menu
-        menu.clear() // Очистите текущее меню
+        menu.clear()
 
-        var menuItemsToAdd = getShowItemsMenuHome(qualification).toMutableList()
-            //menuItemsToAdd.removeAt(fr2)
-
-        for (item in menuItemsToAdd) {
-            val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)
-            menuItem.icon = ContextCompat.getDrawable(context, item.second)
+        val visibleItems = MenuList.allMenuItems.filter { menuItem ->
+            menuItem.inset == inset &&
+                    menuItem.id != currentMenuId &&
+                    menuItem.requiredRoles.all { (role, level) ->
+                        getRoleLevel(role, qualification, currentSkill) >= level
+                    }
         }
 
-        if (menuItemsToAdd.isEmpty()) {
-            binding.imbManu.visibility = View.GONE
-            binding.navigationView.visibility = View.GONE
-        } else {
-            binding.navigationView.visibility = View.VISIBLE
-            binding.imbManu.visibility = View.VISIBLE
+        binding.navigationView.post {
+            menu.clear()
+            visibleItems.forEach { menuItem ->
+                val item = menu.add(Menu.NONE, menuItem.id, Menu.NONE, menuItem.titleRes)
+                item.setIcon(menuItem.iconRes)
+            }
         }
 
-//        binding.navigationView.post {
-//            val recyclerView = binding.navigationView.getChildAt(0) as RecyclerView
-//            val position = 2
-//            val viewHolder = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
-//            //Userguide(context).addGuide(viewHolder!!, "EAH!", options = Options(countRepeat = 100))
-//        }
+        return true
     }
 
-    fun setNetworkMenu(
-        binding: ActivityMainBinding,
-        fr2: Int,
-        context: Context,
-        skill: Int,
-        qualification: Qualification
-    ) {
-        log("fun setNetworkMenu() remove menu: $fr2")
-        val menu = binding.navigationView.menu
-        menu.clear() // Очистите текущее меню
-
-        var menuItemsToAdd: MutableList<Pair<Int, Int>> =
-            if (FirebaseAuth.getInstance().currentUser?.uid == null) emptyList<Pair<Int, Int>>().toMutableList()
-            else getShowItemsMenuNetwork(qualification).toMutableList()
-
-        //if (FirebaseAuth.getInstance().currentUser?.uid != null) menuItemsToAdd.removeAt(fr2)
-
-        for (item in menuItemsToAdd) {
-            val menuItem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, item.first)
-            menuItem.icon = ContextCompat.getDrawable(context, item.second)
-        }
-
-        if (menuItemsToAdd.isEmpty()) {
-            binding.imbManu.visibility = View.GONE
-            binding.navigationView.visibility = View.GONE
-        } else {
-            binding.navigationView.visibility = View.VISIBLE
-            binding.imbManu.visibility = View.VISIBLE
+    private fun getRoleLevel(role: Role, qualification: Qualification, currentSkill: Int): Int {
+        return when (role) {
+            Role.USER -> currentSkill
+            Role.TESTER -> qualification.tester
+            Role.MODERATOR -> qualification.moderator
+            Role.SPONSOR -> qualification.sponsor
+            Role.TRANSLATOR -> qualification.translator
+            Role.ADMIN -> qualification.admin
+            Role.DEVELOPER -> qualification.developer
         }
     }
 
-    @OptIn(InternalCoroutinesApi::class)
-    fun log(massage: String) {
-        Logcat.log(massage, "SetItemMenu", Logcat.LOG_ACTIVITY)
+    fun selectivelyRemoveItemsFromMenu(menu: Menu, keepItems: Set<Int>) {
+        for (i in menu.size() - 1 downTo 0) {
+            val item = menu.getItem(i)
+            if (item.itemId !in keepItems) {
+                menu.removeItem(item.itemId)
+            }
+        }
+    }
+
+    fun removeUnwantedMenuItems(binding: ActivityMainBinding) {
+        val menu = binding.navigationView.menu
+
+        val keepItems = setOf(SetItemMenu.MENU_HOME_QUIZ, SetItemMenu.MENU_SETTING)
+
+        selectivelyRemoveItemsFromMenu(menu, keepItems)
+
+        binding.navigationView.invalidate()
+        binding.navigationView.requestLayout()
+    }
+
+    private fun Role.getLevel(qualification: Qualification): Int {
+        return when (this) {
+            Role.TESTER -> qualification.tester
+            Role.MODERATOR -> qualification.moderator
+            Role.SPONSOR -> qualification.sponsor
+            Role.TRANSLATOR -> qualification.translator
+            Role.ADMIN -> qualification.admin
+            Role.DEVELOPER -> qualification.developer
+            Role.USER -> TODO()
+        }
     }
 }

@@ -1,7 +1,7 @@
 <resources>
     <!-- Base application theme. -->
     <style name="Theme.GeoQuiz" parent="Theme.AppCompat.Light">
-
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <!-- Primary brand color. -->
         <!-- Secondary brand color. -->
         <item name="android:fontFamily">@font/cutive_mono</item>
@@ -47,6 +47,9 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <style name="Theme.GeoQuiz.NoActionBar.DarkStatusBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/back_main_top</item>
+    </style>
 
     <!-- Стиль текста в терминале -->
     <style name="TerminalText">

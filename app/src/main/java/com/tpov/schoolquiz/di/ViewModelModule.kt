@@ -1,55 +1,44 @@
 package com.tpov.schoolquiz.di
 
-import android.app.Application
-import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.tpov.schoolquiz.presentation.main.MainActivityViewModel
-import com.tpov.schoolquiz.presentation.network.AutorisationViewModel
-import com.tpov.schoolquiz.presentation.network.chat.ChatViewModel
-import com.tpov.schoolquiz.presentation.network.event.EventViewModel
-import com.tpov.schoolquiz.presentation.network.profile.ProfileViewModel
-import com.tpov.schoolquiz.presentation.question.QuestionViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.tpov.common.presentation.utils.ViewModelFactory
+import com.tpov.schoolquiz.presentation.create.CreateQuizViewModel
+import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.Binds
+import dagger.MapKey
 import dagger.Module
+import dagger.Provides
 import dagger.multibindings.IntoMap
-import kotlinx.coroutines.InternalCoroutinesApi
+import kotlin.reflect.KClass
 
 @Module
-interface ViewModelModule {
-    @Binds
-    fun bindContext(application: Application): Context
-    @InternalCoroutinesApi
-    @Binds
-    @IntoMap
-    @ViewModelKey(QuestionViewModel::class)
-    fun bindQuestionViewModel(viewModel: QuestionViewModel): ViewModel
+abstract class ViewModelModule {
 
-    @InternalCoroutinesApi
     @Binds
-    @IntoMap
-    @ViewModelKey(MainActivityViewModel::class)
-    fun bindMainViewModel(viewModel: MainActivityViewModel): ViewModel
+    abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory
 
+    @Binds
+    @IntoMap
+    @ViewModelKey(MainViewModel::class)
+    abstract fun bindMainViewModel(viewModel: MainViewModel): ViewModel
 
-    @InternalCoroutinesApi
     @Binds
     @IntoMap
-    @ViewModelKey(ProfileViewModel::class)
-    fun bindProfileViewModel(viewModel: ProfileViewModel): ViewModel
-    @InternalCoroutinesApi
-    @Binds
-    @IntoMap
-    @ViewModelKey(AutorisationViewModel::class)
-    fun bindAutorisationViewModel(viewModel: AutorisationViewModel): ViewModel
-    @InternalCoroutinesApi
-    @Binds
-    @IntoMap
-    @ViewModelKey(ChatViewModel::class)
-    fun bindChatViewModel(viewModel: ChatViewModel): ViewModel
-    @InternalCoroutinesApi
-    @Binds
-    @IntoMap
-    @ViewModelKey(EventViewModel::class)
-    fun bindEventViewModel(viewModel: EventViewModel): ViewModel
+    @ViewModelKey(CreateQuizViewModel::class)
+    abstract fun bindCreateQuizViewModel(viewModel: CreateQuizViewModel): ViewModel
 
+    companion object {
+        @Provides
+        fun provideSavedStateHandle(): SavedStateHandle {
+            return SavedStateHandle()
+        }
+    }
 }
+
+@MustBeDocumented
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MapKey
+annotation class ViewModelKey(val value: KClass<out ViewModel>)

@@ -1,22 +1,27 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        agp_version1 = '8.3.1'
-        agp_version = '7.4.2'
-        ksp_version = "1.5.31-1.0.0"
+        agp_version = '8.3.1'
+        ksp_version = "1.9.22-1.0.16"
+        kotlin_version = "1.9.22"
+        logger_plugin_version = "1.0.0"
     }
-    ext.kotlin_version = "1.9.20"
+
     repositories {
         gradlePluginPortal()
         google()
+        mavenLocal()
         mavenCentral()
         maven { url 'https://jitpack.io' }
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:$agp_version1"
+        classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$ksp_version"
+        classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.google.gms:google-services:4.4.1'
+        classpath 'com.google.gms:google-services:4.4.2'
+        classpath "com.tpov.logger:logger-gradle-plugin:$logger_plugin_version"
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.6"
+        classpath "org.jlleitschuh.gradle:ktlint-gradle:12.1.0"
     }
 }
 
@@ -25,8 +30,80 @@ allprojects {
         maven { url "https://plugins.gradle.org/m2/" }
         gradlePluginPortal()
         google()
+        mavenLocal()
         mavenCentral()
         maven { url 'https://jitpack.io' }
+    }
+}
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.library")) {
+            android {
+
+                compileSdk = 34
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+                kotlinOptions {
+                    jvmTarget = "17"
+                }
+                packagingOptions {
+                    exclude("META-INF/INDEX.LIST")
+                    exclude("META-INF/DEPENDENCIES")
+                }
+                defaultConfig {
+                    multiDexEnabled = true
+                }
+                buildFeatures {
+                    viewBinding = true
+                }
+            }
+
+            dependencies {
+                def lifecycle_version = "2.2.0"
+
+
+
+              //  implementation project(":log-api")
+                implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
+                implementation("androidx.core:core-ktx:1.13.1")
+                implementation("androidx.appcompat:appcompat:1.7.0")
+
+                implementation("androidx.lifecycle:lifecycle-extensions:$lifecycle_version")
+                implementation("androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version")
+
+                implementation("androidx.room:room-ktx:2.6.1")
+                implementation("androidx.room:room-runtime:2.6.1")
+                implementation("androidx.room:room-common:2.6.1")
+                implementation("androidx.room:room-testing:2.6.1")
+
+                implementation("com.google.dagger:dagger:2.49")
+                implementation("com.google.code.gson:gson:2.10.1")
+
+                implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
+                implementation("com.google.firebase:firebase-firestore")
+                implementation("com.google.firebase:firebase-auth-ktx")
+                implementation("com.google.firebase:firebase-database-ktx")
+                implementation("com.google.firebase:firebase-storage-ktx")
+
+                implementation("androidx.work:work-runtime-ktx:2.9.1")
+                implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
+
+                implementation("com.google.android.gms:play-services-base:18.5.0")
+                implementation("com.google.android.gms:play-services-basement:18.4.0")
+                implementation("com.google.firebase:firebase-functions:21.0.0")
+                implementation("com.squareup.okhttp3:okhttp:4.9.3")
+
+                testImplementation("junit:junit:4.13.2")
+                testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+                testImplementation("org.mockito:mockito-core:5.15.2")
+                testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+
+                implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
+            }
+        }
     }
 }
 

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/custom_cardview_background"
+    android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/imv_popup_1"
+            android:layout_margin="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:srcCompat="@drawable/ic_info_cyan" />
+
+        <TextView
+            android:id="@+id/tv_popup"
+            android:layout_width="200dp"
+            android:layout_marginLeft="8dp"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:text="Title" />
+
+
+        <LinearLayout
+            android:id="@+id/l_sp"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:foreground="@color/black"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical">
+
+        </LinearLayout>
+
+        <Spinner
+            android:id="@+id/sp_list_popup_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:backgroundTint="@color/black"
+            android:text="Detail" />
+
+        <LinearLayout
+            android:id="@+id/ll_b"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:foreground="@color/black"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical">
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/b_popup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:layout_gravity="center"
+            android:textColor="@color/contour"
+            tools:foreground="@null"
+            android:background="@null"
+            android:text="Ok" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:orientation="vertical">
+
+        </LinearLayout>
+
+</LinearLayout>

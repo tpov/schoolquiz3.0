@@ -1,20 +1,22 @@
 package com.tpov.schoolquiz.domain.repository
 
+import com.tpov.common.data.model.NewProfileIds
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
+import com.tpov.schoolquiz.data.fierbase.ProfileRemote
 import kotlinx.coroutines.flow.Flow
 
 interface RepositoryProfile {
-    fun getProfileFlow(tpovId: Int): Flow<ProfileEntity>
+    suspend fun getProfileFlow(): Flow<ProfileEntity?>?
 
-    fun getProfile(tpovId: Int): ProfileEntity
+    suspend fun fetchProfile(tpovId: Int): ProfileRemote?
 
-    fun getProfileList(): List<ProfileEntity>
+    suspend fun pushProfile(profileRemote: ProfileRemote)
 
-    fun insertProfile(profile: ProfileEntity)
+    suspend fun getProfile(): ProfileEntity?
 
-    fun updateProfile(profile: ProfileEntity)
+    suspend fun getNewTpovId(): NewProfileIds?
 
-    fun unloadProfile()
+    suspend fun insertProfile(profile: ProfileEntity)
 
-    fun downloadProfile()
+    suspend fun updateProfile(profile: ProfileEntity)
 }

@@ -3,87 +3,109 @@ package com.tpov.schoolquiz.presentation.splashscreen
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.Animation.AnimationListener
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
-import androidx.work.*
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.tpov.common.domain.usecase.SettingConfigObject
+import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivitySplashScreenBinding
+import com.tpov.schoolquiz.presentation.AppWorkerFactory
+import com.tpov.schoolquiz.presentation.SyncWorker
 import com.tpov.schoolquiz.presentation.main.MainActivity
+import com.tpov.setting.data.PreferencesManager
 import kotlinx.coroutines.InternalCoroutinesApi
+import javax.inject.Inject
 
 @SuppressLint("CustomSplashScreen")
 @InternalCoroutinesApi
 class SplashScreen : AppCompatActivity() {
 
+    @Inject
+    lateinit var daggerWorkerFactory: AppWorkerFactory
     private lateinit var binding: ActivitySplashScreenBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.AppTheme);
+        setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
         binding = ActivitySplashScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        visibleTPOV(false)
 
+        (application as MainApp).applicationComponent.inject(this)
+        startInitialSetupAndSyncAndObserve()
         createAnimation()
+
+        syncSettings()
+    }
+
+    private fun syncSettings() {
+        SettingConfigObject.updateSettings( PreferencesManager(this).getSettings() )
+    }
+
+    private fun View.setVisible(visible: Boolean) {
+        this.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     private fun visibleTPOV(visible: Boolean) = with(binding) {
-        Log.d("WorkManager", "Видимость ТПОВ.")
-        if (visible) {
-            tvT.visibility = View.VISIBLE
-            tvP.visibility = View.VISIBLE
-            tvO.visibility = View.VISIBLE
-            tvV.visibility = View.VISIBLE
-        } else {
-            tvT.visibility = View.GONE
-            tvP.visibility = View.GONE
-            tvO.visibility = View.GONE
-            tvV.visibility = View.GONE
-        }
+        tvT.setVisible(visible)
+        tvP.setVisible(visible)
+        tvO.setVisible(visible)
+        tvV.setVisible(visible)
     }
-
 
     private fun createAnimation() = with(binding) {
         visibleTPOV(true)
 
-        tvT.startAnimation(AnimationUtils.loadAnimation(this@SplashScreen, R.anim.anim_splash_t))
-        tvP.startAnimation(AnimationUtils.loadAnimation(this@SplashScreen, R.anim.anim_splash_p))
-        tvO.startAnimation(AnimationUtils.loadAnimation(this@SplashScreen, R.anim.anim_splash_o))
+        val animations = listOf(
+            tvT to R.anim.anim_splash_t,
+            tvP to R.anim.anim_splash_p,
+            tvO to R.anim.anim_splash_o,
+            tvV to R.anim.anim_splash_v
+        )
 
-        var anim3 = AnimationUtils.loadAnimation(this@SplashScreen, R.anim.anim_splash_v)
-        animationListener(anim3)
-        tvV.startAnimation(anim3)
+        animations.forEach { (view, animRes) ->
+            val animation = AnimationUtils.loadAnimation(this@SplashScreen, animRes)
+            if (view == tvV) {
+                animation.setAnimationListener(object : AnimationListener {
+                    override fun onAnimationStart(p0: Animation?) {
+                        visibleTPOV(true)
+                    }
+
+                    override fun onAnimationEnd(p0: Animation?) {
+                        visibleTPOV(false)
+                        startMainActivity()
+                    }
+
+                    override fun onAnimationRepeat(p0: Animation?) {}
+                })
+            }
+            view.startAnimation(animation)
+        }
     }
 
-    private fun animationListener(anim: Animation) {
+    private fun startInitialSetupAndSyncAndObserve() {
+        // Implementation of startInitialSetupAndSyncAndObserve function
+        val initialSyncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+            .build()
 
-        anim.setAnimationListener(object : AnimationListener {
-            override fun onAnimationStart(p0: Animation?) {
-                visibleTPOV(true)
+        val workManager = WorkManager.getInstance(this)
+        workManager.enqueue(initialSyncRequest)
+
+        workManager.getWorkInfoByIdLiveData(initialSyncRequest.id)
+            .observe(this) { workInfo ->
+                if (workInfo != null && workInfo.state.isFinished) {
+                    //startMainActivity()
+
+                }
             }
-
-            override fun onAnimationEnd(p0: Animation?) {
-                visibleTPOV(false)
-                startActivity()
-            }
-
-            override fun onAnimationRepeat(p0: Animation?) {
-
-            }
-        })
     }
 
-    private fun startActivity() {
-        var intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
+    private fun startMainActivity() {
+        startActivity(Intent(this, MainActivity::class.java))
         finish()
-    }
-
-    companion object {
-
     }
 }

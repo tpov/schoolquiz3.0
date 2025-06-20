@@ -1,301 +1,138 @@
 package com.tpov.schoolquiz.data
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.common.data.model.NewProfileIds
 import com.tpov.schoolquiz.data.database.ProfileDao
-import com.tpov.schoolquiz.data.database.QuizDao
 import com.tpov.schoolquiz.data.database.entities.ProfileEntity
-import com.tpov.schoolquiz.data.fierbase.Profile
-import com.tpov.schoolquiz.data.fierbase.toProfile
-import com.tpov.schoolquiz.data.fierbase.toProfileEntity
+import com.tpov.schoolquiz.data.fierbase.ProfileRemote
+import com.tpov.schoolquiz.data.fierbase.fromHashMap
+import com.tpov.schoolquiz.data.fierbase.toHashMap
 import com.tpov.schoolquiz.domain.repository.RepositoryProfile
-import com.tpov.schoolquiz.presentation.COUNT_LIFE_POINTS_IN_LIFE
-import com.tpov.schoolquiz.presentation.COUNT_MAX_LIFE
-import com.tpov.schoolquiz.presentation.COUNT_MAX_LIFE_GOLD
-import com.tpov.schoolquiz.presentation.DEFAULT_TPOVID
-import com.tpov.schoolquiz.presentation.core.*
-import com.tpov.schoolquiz.presentation.core.Values.context
-import com.tpov.schoolquiz.presentation.core.Values.synth
-import com.tpov.schoolquiz.presentation.core.Values.synthLiveData
-import com.tpov.shoppinglist.utils.TimeManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class RepositoryProfileImpl @Inject constructor(
     private val profileDao: ProfileDao,
-    private val quizDao: QuizDao
+    private val firestore: FirebaseFirestore,
+    private val firebaseFunctions: FirebaseFunctions
 ) : RepositoryProfile {
+    private val baseCollection = firestore.collection("profiles")
 
-    fun setTpovIdFB() {
+    override suspend fun getProfileFlow(): Flow<ProfileEntity?>? {
+        return profileDao.getProfileFlow()
+    }
 
-        log("fun setTpovIdFB()")
-        val database = FirebaseDatabase.getInstance()
-        val ref = database.getReference("players")
-        val uid = FirebaseAuth.getInstance().uid
-        log("setTpovIdFB() tpovId = ${SharedPreferencesManager.getTpovId()}")
+    override suspend fun fetchProfile(tpovId: Int): ProfileRemote? {
+        Log.d("FirebaseStorage", "fetchProfile $tpovId")
+        return try {
+            val task = baseCollection.document(tpovId.toString()).get().await()
 
-        ref.child("$PATH_LIST_TPOV_ID/$uid").setValue(SharedPreferencesManager.getTpovId().toString()).addOnSuccessListener {
-            log("setTpovIdFB() успех загрузки на сервер")
-            synthLiveData.value = ++synth
-        }.addOnFailureListener {
-            log("setTpovIdFB() ошибка: $it")
+            if (task.exists()) {
+                val profileData = task.data
+                fromHashMap(profileData!!)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.w("Firestore", "Error fetchProfile", e)
+            null
         }
     }
 
-    override fun getProfileFlow(tpovId: Int) = profileDao.getProfileFlow(tpovId)
+    override suspend fun pushProfile(profileRemote: ProfileRemote) {
+        Log.d("FirebaseStorage", "pushProfile")
+        try {
+            // Call the validateProfileUpdate function instead of directly updating
+            val result = firebaseFunctions
+                .getHttpsCallable("validateProfileUpdate")
+                .call(mapOf(
+                    "tpovId" to profileRemote.basic.tpovId,
+                    "profileData" to profileRemote.toHashMap(),
+                    "isServerUpdate" to false // По умолчанию считаем, что это клиентское обновление
+                ))
+                .await()
 
-    override fun getProfile(tpovId: Int) = profileDao.getProfile(tpovId)
+            val data = result.data as? Map<*, *>
+            if (data != null && data["success"] == true) {
+                val suspiciousChanges = data["suspiciousChanges"] as? List<*>
+                if (suspiciousChanges?.isNotEmpty() == true) {
+                    Log.w("Firestore", "Suspicious changes detected: $suspiciousChanges")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("Firestore", "Error pushProfile", e)
+        }
+    }
 
-    override fun getProfileList() = profileDao.getAllProfiles()
+    override suspend fun getProfile(): ProfileEntity? {
+        return profileDao.getProfile()
+    }
 
-    override fun insertProfile(profile: ProfileEntity) {
+    override suspend fun getNewTpovId(): NewProfileIds? {
+        Log.d("RepositoryProfileImpl", "Starting getNewTpovId")
+        // Добавляем анонимную аутентификацию перед вызовом функции
+        try {
+            Log.d("RepositoryProfileImpl", "Attempting anonymous authentication")
+            val authResult = FirebaseAuth.getInstance().signInAnonymously().await()
+            Log.d("RepositoryProfileImpl", "Anonymous authentication successful: ${authResult.user?.uid}")
+        } catch (e: Exception) {
+            Log.e("RepositoryProfileImpl", "Anonymous authentication failed", e)
+            return null // Возвращаем null при ошибке аутентификации
+        }
+
+        Log.d("RepositoryProfileImpl", "Calling Firebase Function to get new tpovId and unique hash from server")
+        return try {
+            // Вызываем вашу Firebase функцию generateNewTpovId
+            Log.d("RepositoryProfileImpl", "Getting HttpsCallable for generateNewTpovId")
+            val callable = firebaseFunctions.getHttpsCallable("generateNewTpovId")
+            Log.d("RepositoryProfileImpl", "Calling generateNewTpovId function")
+            val result = callable.call().await()
+            Log.d("RepositoryProfileImpl", "Function call completed, result: $result")
+
+            // Ожидаем, что функция возвращает Map с ключами "tpovId" (Int) и "authUid" (String)
+            val data = result.data as? Map<String, Any>
+            Log.d("RepositoryProfileImpl", "Parsed result data: $data")
+
+            if (data != null) {
+                val tpovIdAny = data["tpovId"]
+                val authUidAny = data["authUid"]
+                Log.d("RepositoryProfileImpl", "Raw values - tpovId: $tpovIdAny, authUid: $authUidAny")
+
+                // Пробуем привести любое число к Long для tpovId
+                val newTpovId: Long? = when (tpovIdAny) {
+                    is Number -> tpovIdAny.toLong()
+                    else -> null
+                }
+                // authUid ожидаем как String
+                val authUid = authUidAny as? String
+
+                if (newTpovId != null && authUid != null) {
+                    val newIdInt = newTpovId.toInt()
+                    Log.d("RepositoryProfileImpl", "Successfully parsed - new tpovId: $newIdInt, authUid: $authUid")
+                    return NewProfileIds(newIdInt, authUid)
+                } else {
+                    Log.e("RepositoryProfileImpl", "Failed to parse values - tpovId: $newTpovId, authUid: $authUid")
+                    return null
+                }
+            } else {
+                Log.e("RepositoryProfileImpl", "Firebase Function did not return a Map")
+                return null
+            }
+        } catch (e: Exception) {
+            Log.e("RepositoryProfileImpl", "Error calling Firebase Function generateNewTpovId", e)
+            return null // Возвращаем null при любой ошибке
+        }
+    }
+
+    override suspend fun insertProfile(profile: ProfileEntity) {
         profileDao.insertProfile(profile)
     }
 
-    override fun updateProfile(profile: ProfileEntity) {
+    override suspend fun updateProfile(profile: ProfileEntity) {
         profileDao.updateProfiles(profile)
     }
-
-    override fun unloadProfile() {
-        log("fun setProfile()")
-        val database = FirebaseDatabase.getInstance()
-        val profileRef = database.getReference(PATH_PROFILES)
-        val profilesRef = database.getReference(PATH_PLAYERS)
-        var idUsers = 0
-        var oldIdUser = 0
-
-        Values.loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_send_profile))
-        val tpovId = SharedPreferencesManager.getTpovId()
-        val profile = profileDao.getProfileByTpovId(tpovId)
-
-        log("setProfile() tpovId: $tpovId")
-        if (tpovId == DEFAULT_TPOVID) {
-
-            profilesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    log("setProfile() snapshot: ${snapshot.key}")
-                    idUsers =
-                        ((snapshot.value as Map<*, *>)[KEY_ID_USER] as Long).toInt() // Получение значения переменной allQuiz
-                    oldIdUser = tpovId
-                    idUsers++
-
-                    log("setProfile() idUsers + 1: $idUsers")
-                    profilesRef.updateChildren(
-                        hashMapOf<String, Any>(
-                            KEY_ID_USER to idUsers
-                        )
-                    )
-
-                    profileRef.child(idUsers.toString()).setValue(
-                        profile.copy(
-                            tpovId = idUsers,
-                            idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                            dateSynch = TimeManager.getCurrentTime()
-                        ).toProfile()
-
-                    ).addOnSuccessListener {
-
-                        CoroutineScope(Dispatchers.IO).launch {
-                            profileDao.updateProfiles(
-                                profile.copy(
-                                    tpovId = idUsers,
-                                    idFirebase = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                                    dateSynch = TimeManager.getCurrentTime()
-                                )
-                            )
-
-                            quizDao.getQuizList(oldIdUser).forEach {
-                                quizDao.updateQuiz(it.copy(tpovId = idUsers))
-                            }
-
-                            SharedPreferencesManager.setTpovId(idUsers)
-                            setTpovIdFB()
-
-                            log("setProfile() tpovId: $tpovId")
-
-                            Values.loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_send_profile_error))
-                        }
-                    }.addOnFailureListener {
-                        log("setProfile() error1: $it")
-                        Values.loadText.postValue("")
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    log("setProfile() error2: $error")
-                    Values.loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_send_profile_error))
-                }
-            })
-
-        } else {
-            log("setProfile() id != 0 просто сохраняем на сервер profile: $profile, tpovId: $tpovId")
-            profileRef.child("$tpovId").addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(profileSnapshot: DataSnapshot) {
-
-                    log(
-                        "setProfile() 255: ${
-                            profileSnapshot.child("addPoints").child("addNolics")
-                                .getValue(Int::class.java)
-                        }"
-                    )
-                    try {
-                        profileRef.child(tpovId.toString()).setValue(
-                            profile.copy(
-
-                                translater = profileSnapshot.child(KEY_QUALIFICATION)
-                                    .child("translater").getValue(Int::class.java),
-
-                                admin = profileSnapshot.child(KEY_QUALIFICATION).child(KEY_ADMIN)
-                                    .getValue(Int::class.java),
-
-                                developer = profileSnapshot.child(KEY_QUALIFICATION)
-                                    .child("developer").getValue(Int::class.java),
-
-                                moderator = profileSnapshot.child(KEY_QUALIFICATION)
-                                    .child("moderator").getValue(Int::class.java),
-
-                                sponsor = profileSnapshot.child(KEY_QUALIFICATION).child(KEY_SPONSOR)
-                                    .getValue(Int::class.java),
-
-                                tester = profileSnapshot.child(KEY_QUALIFICATION).child(KEY_TESTER)
-                                    .getValue(Int::class.java),
-
-                                addTrophy = try {
-                                    if (profile.addTrophy == "") profileSnapshot.child(
-                                        KEY_ADD_POINTS
-                                    )
-                                        .child(KEY_ADD_TROPHY).getValue(String::class.java) else ""
-                                } catch (e: Exception) {
-                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_TROPHY)
-                                        .getValue(String::class.java) ?: ""
-                                },
-
-                                addMassage = try {
-                                    if (profile.addMassage == "") profileSnapshot.child(
-                                        KEY_ADD_MASSAGE
-                                    )
-                                        .child(KEY_ADD_MASSAGE).getValue(String::class.java) else ""
-                                } catch (e: Exception) {
-                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_MASSAGE)
-                                        .getValue(String::class.java) ?: ""
-                                },
-
-                                addPointsNolics = try {
-                                    if (profile.addPointsNolics == 0) profileSnapshot.child(
-                                        KEY_ADD_POINTS
-                                    )
-                                        .child(KEY_ADD_NOLICS).getValue(Int::class.java) else 0
-                                } catch (e: Exception) {
-                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_NOLICS)
-                                        .getValue(Int::class.java) ?: 0
-                                },
-
-                                addPointsGold = try {
-                                    if (profile.addPointsGold == 0) profileSnapshot.child(
-                                        KEY_ADD_POINTS
-                                    )
-                                        .child(KEY_ADD_GOLD).getValue(Int::class.java) else 0
-                                } catch (e: Exception) {
-                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_GOLD)
-                                        .getValue(Int::class.java) ?: 0
-                                },
-
-                                addPointsSkill = try {
-                                    if (profile.addPointsSkill == 0) profileSnapshot.child(
-                                        KEY_ADD_POINTS
-                                    )
-                                        .child(KEY_ADD_SKILL).getValue(Int::class.java) else 0
-                                } catch (e: Exception) {
-                                    profileSnapshot.child(KEY_ADD_POINTS).child(KEY_ADD_SKILL)
-                                        .getValue(Int::class.java) ?: 0
-                                }
-                            ).toProfile()
-                        ).addOnSuccessListener {
-                            Values.loadText.value = ("")
-                            synthLiveData.value = ++synth
-                        }.addOnFailureListener {
-                            Values.loadText.value = (context.getString(com.tpov.schoolquiz.R.string.fb_load_text_get_profile_error))
-                            log("setProfile() $it")
-                            synthLiveData.value = ++synth
-                        }
-                    } catch (e: Exception) {
-                        Values.loadText.value = (context.getString(com.tpov.schoolquiz.R.string.fb_load_text_get_profile_error))
-                        synthLiveData.value = ++synth
-                    }
-
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-
-                    Values.loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_get_profile_error))
-                    log("setProfile() error24 $error")
-                }
-            })
-        }
-    }
-
-    override fun downloadProfile() {
-        log("fun getProfile()")
-        val profileRef = FirebaseDatabase.getInstance().getReference(PATH_PROFILES)
-
-        Values.loadText.postValue(context.getString(com.tpov.schoolquiz.R.string.fb_load_text_load_profile))
-        profileRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                log("getProfile() snapshot: ${snapshot.key}")
-                val tpovId = SharedPreferencesManager.getTpovId()
-                val profile = snapshot.child("$tpovId").getValue(Profile::class.java)
-
-                log("getProfile() tpovId: $tpovId")
-
-                if (profile != null) {
-                    log("getProfile() профиль не пустой")
-                    if (profileDao.getProfileByTpovId(tpovId) == null) {
-                        log("getProfile() профиль по tpovid пустой, создаем новый")
-                        profileDao.insertProfile(profile.toProfileEntity(
-                            COUNT_LIFE_POINTS_IN_LIFE * COUNT_MAX_LIFE_GOLD,
-                            COUNT_LIFE_POINTS_IN_LIFE * COUNT_MAX_LIFE
-                        ))
-                        synthLiveData.value = ++synth
-                    } else {
-                        log("getProfile() профиль по tpovid найден $profile")
-                        val updatedProfile = profileDao.getProfileByFirebaseId(
-                            FirebaseAuth.getInstance().currentUser?.uid ?: ""
-                        ).copy(
-                            addPointsGold = profile.addPoints.addGold,
-                            addPointsNolics = profile.addPoints.addNolics,
-                            addTrophy = profile.addPoints.addTrophy,
-                            addMassage = profile.addPoints.addMassage,
-                            addPointsSkill = profile.addPoints.addSkill,
-                            sponsor = profile.qualification.sponsor,
-                            tester = profile.qualification.tester,
-                            translater = profile.qualification.translater,
-                            moderator = profile.qualification.moderator,
-                            admin = profile.qualification.admin,
-                            developer = profile.qualification.developer,
-                            dateSynch = TimeManager.getCurrentTime()
-                        )
-                        log("getProfile ${profileDao.updateProfiles(updatedProfile)}")
-                        if (profileDao.updateProfiles(updatedProfile) > 0) synthLiveData.value = ++synth
-                    }
-                }
-
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                log("getProfile() ошибка: $error")
-            }
-        })
-    }
-
-    @OptIn(InternalCoroutinesApi::class)
-    fun log(m: String) {
-        Logcat.log(m, "RepositoryProfile", Logcat.LOG_FIREBASE)
-    }
-
 }
