@@ -30,18 +30,18 @@ class ReferralFragment : Fragment() {
     private lateinit var ivRewardIcon: ImageView
 
     private lateinit var referralAdapter: ReferralAdapter
-    private var userTpovId: String = "testPovId123" // Placeholder
+    private var userTpovId: String = ""
 
     // Placeholder data
     private val sampleReferralUsers = listOf(
-        ReferralUser(UUID.randomUUID().toString(), "User 1", 0, 0, "tpov1"),
-        ReferralUser(UUID.randomUUID().toString(), "User 2", 10, 1, "tpov2"),
-        ReferralUser(UUID.randomUUID().toString(), "User 3", 100, 10, "tpov3"),
-        ReferralUser(UUID.randomUUID().toString(), "User 4", 50, 5, "tpov4"),
-        ReferralUser(UUID.randomUUID().toString(), "User 5", 0, 0, "tpov5"),
-        ReferralUser(UUID.randomUUID().toString(), "User 6", 75, 7, "tpov6"),
-        ReferralUser(UUID.randomUUID().toString(), "User 7", 25, 2, "tpov7"),
-        ReferralUser(UUID.randomUUID().toString(), "User 8", 90, 9, "tpov8")
+        ReferralUser(UUID.randomUUID().toString(), "Nickname1", 0, 0, 0, "tpov1"),
+        ReferralUser(UUID.randomUUID().toString(), "PlayerX", 10, 10, 1, "tpov2"),
+        ReferralUser(UUID.randomUUID().toString(), "TopRefer", 150, 100, 15, "tpov3"),
+        ReferralUser(UUID.randomUUID().toString(), "UserABC", 50, 50, 5, "tpov4"),
+        ReferralUser(UUID.randomUUID().toString(), "Newbie", 0, 0, 0, "tpov5"),
+        ReferralUser(UUID.randomUUID().toString(), "ProGamer", 200, 75, 20, "tpov6"),
+        ReferralUser(UUID.randomUUID().toString(), "CasualJoe", 25, 25, 2, "tpov7"),
+        ReferralUser(UUID.randomUUID().toString(), "LoyalFan", 900, 90, 90, "tpov8")
     )
 
     override fun onCreateView(
@@ -50,10 +50,10 @@ class ReferralFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_referral, container, false)
         initializeViews(view)
+        updateUserPovId() // Get TPOV ID first
         setupRecyclerView()
         setupClickListeners()
         loadReferralData() // Load initial data
-        updateUserPovId()
         return view
     }
 
@@ -67,8 +67,8 @@ class ReferralFragment : Fragment() {
     }
 
     private fun updateUserPovId() {
-        // In a real app, this would be fetched from user data
-        userTpovId = "user" + UUID.randomUUID().toString().substring(0, 8)
+        // Fetch TPOV ID from SettingConfigObject in the common module
+        userTpovId = com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig.tpovId.toString()
         tvPovId.text = userTpovId
     }
 
@@ -118,16 +118,17 @@ class ReferralFragment : Fragment() {
         updateRewardStatus(sampleReferralUsers)
     }
 
-    private fun updateRewardStatus(users: List<ReferralUser>) {
-        val qualifiedRecruiters = users.count { it.allOpenBox > 0 }
-
-        if (qualifiedRecruiters >= 6) {
+    private fun updateRewardStatus(realUsers: List<ReferralUser>) {
+        // The condition is simply having 6 referred users.
+        // The adapter handles displaying placeholders if there are fewer than 6 real users.
+        // So, we check the count of actual referred users provided to the fragment.
+        if (realUsers.size >= 6) {
             tvRewardText.text = "Reward received"
-            ivRewardIcon.setImageResource(R.drawable.ic_baseline_check_circle_24) // Assuming you have a check icon
-            // You might want to change text color or style as well
+            ivRewardIcon.setImageResource(R.drawable.ic_baseline_check_circle_24)
         } else {
-            tvRewardText.text = "Reward for 6 recruiters x30" // Default text from layout
-            ivRewardIcon.setImageResource(R.drawable.ic_box) // Default icon (already set in XML but good to be explicit)
+            // Default text is now set in XML, but can be reaffirmed here if complex logic arises
+            tvRewardText.text = getString(R.string.referral_reward_default_text)
+            ivRewardIcon.setImageResource(R.drawable.ic_box)
         }
     }
 

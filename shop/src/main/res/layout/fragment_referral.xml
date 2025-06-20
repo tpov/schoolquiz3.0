@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#252525"
+    android:background="@drawable/back_main"
     tools:context=".presentation.ReferralFragment">
 
     <LinearLayout
@@ -66,8 +66,8 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_referred_users"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+             android:layout_height="wrap_content"
+             android:orientation="vertical"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             android:layout_marginBottom="16dp"
             tools:listitem="@layout/item_referral_user"
@@ -88,7 +88,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Reward for 6 recruiters x30"/>
+                android:text="Invite 6 players and receive x50"/> <!-- Updated default text -->
 
             <ImageView
                 android:id="@+id/iv_reward_icon"
