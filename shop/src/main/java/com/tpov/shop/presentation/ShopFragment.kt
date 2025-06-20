@@ -24,7 +24,7 @@ class ShopFragment : Fragment() {
         val referralsButton = view.findViewById<Button>(R.id.b_referrals)
         referralsButton.setOnClickListener {
             parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, ReferralFragment.newInstance()) // Assuming R.id.fragment_container is the host
+                .replace(android.R.id.content, ReferralFragment.newInstance()) // Using android.R.id.content as fallback
                 .addToBackStack(null)
                 .commit()
         }
