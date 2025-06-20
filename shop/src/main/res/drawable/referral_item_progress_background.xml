@@ -1,0 +1,19 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background (Inactive) -->
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <solid android:color="#404040"/> <!-- Light gray for inactive state -->
+            <corners android:radius="8dp"/>
+        </shape>
+    </item>
+
+    <!-- Progress (Active) -->
+    <item android:id="@android:id/progress">
+        <scale android:scaleWidth="100%">
+            <shape android:shape="rectangle">
+                <solid android:color="#606060"/> <!-- Darker gray for active state - base, will be themed -->
+                <corners android:radius="8dp"/>
+            </shape>
+        </scale>
+    </item>
+</layer-list>

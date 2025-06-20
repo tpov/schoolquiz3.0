@@ -1,0 +1,101 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#252525"
+    tools:context=".presentation.ReferralFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_tpov_id_label"
+            style="@style/ShopTextViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your TPOV ID:"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tv_tpov_id"
+            style="@style/ShopTextViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"
+            tools:text="abcdef123456"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btn_copy_referral_link"
+                style="@style/ShopButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Copy Link"/>
+
+            <Button
+                android:id="@+id/btn_share_referral_link"
+                style="@style/ShopButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Share"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_referral_info"
+            style="@style/ShopTextViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="You receive 1% of all opened boxes from all your invited friends."/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_referred_users"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:layout_marginBottom="16dp"
+            tools:listitem="@layout/item_referral_user"
+            tools:itemCount="6"/>
+
+        <LinearLayout
+            android:id="@+id/ll_reward_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/tv_reward_text"
+                style="@style/ShopTextViewStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Reward for 6 recruiters x30"/>
+
+            <ImageView
+                android:id="@+id/iv_reward_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_box"
+                tools:src="@drawable/ic_box"/>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

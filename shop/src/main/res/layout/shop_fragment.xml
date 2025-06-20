@@ -146,5 +146,32 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_referrals"
+            style="@style/ShopCardViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                style="@style/ShopLinearLayoutStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    style="@style/ShopImageViewStyle"
+                    android:src="@drawable/ic_baseline_people_24" /> <!-- Placeholder icon -->
+
+                <TextView
+                    style="@style/ShopTextViewStyle"
+                    android:text="@string/shop_fragment_referrals_title" />
+
+                <Button
+                    android:id="@+id/b_referrals"
+                    style="@style/ShopButtonStyle"
+                    android:text="@string/shop_fragment_referrals_button_open" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
     </LinearLayout>
 </ScrollView>
