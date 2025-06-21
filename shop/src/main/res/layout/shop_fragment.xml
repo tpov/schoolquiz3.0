@@ -2,19 +2,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_background">
+    android:background="@color/app_background_dark">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:paddingBottom="24dp">
+        
+        <!-- Buy Life Card -->
         <androidx.cardview.widget.CardView
             android:id="@+id/buy_life"
             style="@style/ShopCardViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <LinearLayout
                 style="@style/ShopLinearLayoutStyle"
@@ -22,10 +25,10 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:src="@drawable/baseline_favorite_24" />
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/baseline_favorite_24"
+                    app:tint="@color/shop_red_heart" />
 
                 <TextView
                     style="@style/ShopTextViewStyle"
@@ -33,20 +36,20 @@
 
                 <Button
                     android:id="@+id/b_buy_life"
+                    style="@style/ShopButtonPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/shop_fragment_button_buy"
-                    android:textAllCaps="false"
-                    android:backgroundTint="@color/app_accent" />
+                    android:text="@string/shop_fragment_button_buy" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Buy Gold Life Card with special background -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_buy_life_gold"
-            style="@style/SpecialCardStyle"
+            style="@style/ShopGoldCardStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <LinearLayout
                 style="@style/ShopLinearLayoutStyle"
@@ -54,33 +57,34 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:src="@drawable/baseline_favorite_24_gold"
-                    app:tint="@color/app_gold" />
+                    app:tint="@color/icon_tint_gold" />
 
                 <TextView
                     style="@style/ShopTextViewStyle"
-                    android:text="@string/shop_fragment_buy_life_gold_text" />
+                    android:text="@string/shop_fragment_buy_life_gold_text"
+                    android:textColor="@color/icon_tint_gold" />
 
                 <Button
                     android:id="@+id/b_buy_life_gold"
+                    style="@style/ShopButtonPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/shop_fragment_button_buy"
-                    android:textAllCaps="false"
-                    android:backgroundTint="@color/app_accent" />
+                    android:backgroundTint="@color/icon_tint_gold" />
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
 
+        <!-- Place for Quiz Card -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_place_for_quiz"
             style="@style/ShopCardViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <LinearLayout
                 style="@style/ShopLinearLayoutStyle"
@@ -88,8 +92,10 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-                    style="@style/ShopImageViewStyle"
-                    android:src="@drawable/ic_baseline_add_circle_24" />
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_baseline_add_circle_24"
+                    app:tint="@color/icon_tint_primary" />
 
                 <TextView
                     style="@style/ShopTextViewStyle"
@@ -97,20 +103,20 @@
 
                 <Button
                     android:id="@+id/b_place_for_quiz"
+                    style="@style/ShopButtonPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/shop_fragment_button_buy"
-                    android:textAllCaps="false"
-                    android:backgroundTint="@color/app_accent" />
+                    android:text="@string/shop_fragment_button_buy" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Donate Card with special background -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_donate"
-            style="@style/ShopCardViewStyle"
+            style="@style/ShopDonateCardStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <LinearLayout
                 style="@style/ShopLinearLayoutStyle"
@@ -118,8 +124,10 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-                    style="@style/ShopImageViewStyle"
-                    android:src="@drawable/ic_donate" />
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_donate"
+                    app:tint="@color/icon_tint_primary" />
 
                 <TextView
                     style="@style/ShopTextViewStyle"
@@ -127,20 +135,21 @@
 
                 <Button
                     android:id="@+id/b_donate"
+                    style="@style/ShopButtonGooglePlay"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/shop_fragment_donate"
-                    android:textAllCaps="false"
-                    android:backgroundTint="@color/app_accent" />
+                    android:text="GooglePlay" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Referrals Card -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_referrals"
             style="@style/ShopCardViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="@color/shop_card_elevated">
 
             <LinearLayout
                 style="@style/ShopLinearLayoutStyle"
@@ -148,8 +157,10 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-                    style="@style/ShopImageViewStyle"
-                    android:src="@drawable/ic_baseline_people_24" />
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_baseline_people_24"
+                    app:tint="@color/icon_tint_primary" />
 
                 <TextView
                     style="@style/ShopTextViewStyle"
@@ -157,20 +168,21 @@
 
                 <Button
                     android:id="@+id/b_referrals"
+                    style="@style/ShopButtonPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/shop_fragment_referrals_button_open"
-                    android:textAllCaps="false"
-                    android:backgroundTint="@color/app_accent" />
+                    android:backgroundTint="@color/shop_button_secondary" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Ad Box Card -->
         <androidx.cardview.widget.CardView
             android:id="@+id/adCard"
             style="@style/ShopCardViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="8dp">
 
             <LinearLayout
                 style="@style/ShopLinearLayoutStyle"
@@ -178,9 +190,10 @@
                 android:layout_height="wrap_content">
 
                 <ImageView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                    android:src="@drawable/ic_box" />
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_box"
+                    app:tint="@color/icon_tint_primary" />
 
                 <TextView
                     style="@style/ShopTextViewStyle"
@@ -188,11 +201,10 @@
 
                 <Button
                     android:id="@+id/btnBuyAd"
+                    style="@style/ShopButtonPrimary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/shop_fragment_get_box_for_ad_show"
-                    android:textAllCaps="false"
-                    android:backgroundTint="@color/app_accent" />
+                    android:text="@string/shop_fragment_get_box_for_ad_show" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>

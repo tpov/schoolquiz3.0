@@ -12,8 +12,8 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="8dp">
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp">
 
         <!-- Header with Back Button -->
         <LinearLayout
@@ -21,41 +21,41 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="24dp">
 
             <ImageButton
                 android:id="@+id/btn_back"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/ic_back_arrow"
                 android:background="@drawable/circle_button_background"
                 app:tint="@color/white"
-                android:padding="6dp"/>
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Referrals"
                 android:textColor="@color/white"
-                android:textSize="20sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:layout_marginStart="12dp"/>
+                android:layout_marginStart="16dp"/>
         </LinearLayout>
 
         <!-- User ID Section with Improved Styling -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="@color/referral_card_background"
-            app:cardElevation="4dp">
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/referral_card_elevated"
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -80,26 +80,27 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:textSize="16sp"
+                        android:fontFamily="monospace"
                         tools:text="tpovId: 177"/>
 
                     <ImageButton
                         android:id="@+id/imv_b_copy_referral_link"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:src="@drawable/ic_copy"
-                        app:tint="@color/white"
+                        app:tint="@color/app_accent"
                         android:background="@drawable/circle_button_background"
-                        android:padding="6dp"
-                        android:layout_marginEnd="8dp" />
+                        android:padding="8dp"
+                        android:layout_marginEnd="12dp" />
 
                     <ImageButton
                         android:id="@+id/imv_b_share_referral_link"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:src="@drawable/ic_share"
-                        app:tint="@color/white"
+                        app:tint="@color/app_accent"
                         android:background="@drawable/circle_button_background"
-                        android:padding="6dp" />
+                        android:padding="8dp" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -108,18 +109,19 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="@color/referral_card_background"
-            app:cardElevation="4dp">
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/shop_card_gold_bg"
+            app:cardElevation="0dp">
 
             <TextView
                 android:id="@+id/tv_referral_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:padding="20dp"
                 android:textColor="@color/referral_highlight_text"
-                android:textSize="15sp"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
                 android:text="You receive 1% of all opened boxes from all your invited friends."/>
         </androidx.cardview.widget.CardView>
 
@@ -128,16 +130,16 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="16dp"
             app:cardBackgroundColor="@color/referral_card_background"
-            app:cardElevation="4dp">
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -145,8 +147,8 @@
                     android:text="Your Referrals"
                     android:textColor="@color/white"
                     android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:padding="8dp"/>
+                    android:textSize="18sp"
+                    android:paddingBottom="12dp"/>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rv_referred_users"
@@ -164,10 +166,10 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="12dp"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
             app:cardBackgroundColor="@color/referral_reward_background"
-            app:cardElevation="4dp">
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:id="@+id/ll_reward_status"
@@ -175,7 +177,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="12dp">
+                android:padding="16dp">
 
                 <TextView
                     android:id="@+id/tv_reward_text"
@@ -183,16 +185,15 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textColor="@color/white"
-                    android:textSize="15sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
-                    android:ellipsize="end"
-                    android:maxLines="1"
+                    android:lineSpacingExtra="4dp"
                     android:text="Invite 6 players and receive x50"/>
 
                 <ImageView
                     android:id="@+id/iv_reward_icon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:src="@drawable/ic_box"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -201,9 +202,9 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="16dp"
             app:cardBackgroundColor="@color/referral_card_background"
-            app:cardElevation="4dp">
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:id="@+id/ll_getting_new_box"
@@ -211,7 +212,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="12dp">
+                android:padding="16dp">
 
                 <TextView
                     android:id="@+id/tv_getting_new_box_info"
@@ -219,21 +220,22 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textSize="15sp"
+                    android:lineSpacingExtra="4dp"
                     android:text="@string/referral_season_boxes_text"/>
 
                 <TextView
                     android:id="@+id/tv_getting_new_box_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
+                    android:textColor="@color/app_accent"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:background="@drawable/box_count_background"
-                    android:padding="8dp"
-                    android:minWidth="40dp"
+                    android:padding="12dp"
+                    android:minWidth="48dp"
                     android:gravity="center"
-                    android:text="0"/>
+                    android:text="2"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>
