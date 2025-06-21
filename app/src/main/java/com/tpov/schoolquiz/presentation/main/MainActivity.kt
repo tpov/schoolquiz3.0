@@ -33,7 +33,8 @@ import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.core.NotificationHelper
-import com.tpov.schoolquiz.presentation.create.CreateQuizActivity
+// import com.tpov.schoolquiz.presentation.create.CreateQuizActivity // Commented out or remove if not needed elsewhere
+import com.tpov.schoolquiz.presentation.create.SimpleCreateQuizActivity // Added import
 import com.tpov.schoolquiz.presentation.create.CreateQuizViewModel
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
@@ -105,10 +106,9 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
     private fun initSetOnClickListeners() {
         binding.fabAddItem.setOnClickListener {
-            val intent = CreateQuizActivity.newIntent(
-                context = this,
-                regime = CreateQuizViewModel.REGIME_CREATE_QUIZ
-            ).apply {
+            val intent = Intent(this, SimpleCreateQuizActivity::class.java).apply {
+                // Если SimpleCreateQuizActivity потребует какие-либо параметры, их нужно будет добавить сюда
+                // Например: putExtra("EXTRA_SOME_PARAM", "some_value")
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }

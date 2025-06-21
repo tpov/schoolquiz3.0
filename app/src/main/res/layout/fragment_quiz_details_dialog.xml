@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <EditText
+        android:id="@+id/editTextQuizName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Название квиза"
+        android:inputType="textCapWords"
+        android:layout_marginBottom="16dp"/>
+
+    <ImageView
+        android:id="@+id/imageViewQuizCover"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@drawable/ic_add_photo"
+        android:scaleType="centerCrop"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        tools:ignore="ContentDescription" />
+
+    <!-- Add other fields for quiz metadata if needed -->
+    <!-- For example, a Spinner for structure or difficulty -->
+
+</LinearLayout>
