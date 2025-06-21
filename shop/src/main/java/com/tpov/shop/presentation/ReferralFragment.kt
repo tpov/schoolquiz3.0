@@ -50,12 +50,17 @@ class ReferralFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_referral, container, false) // Assumes fragment_referral.xml exists
-        initializeViews(view)
-        updateUserPovId() // Fetch TPOV ID
+        initializeViews(view) // Initialize views that are part of the fragment's direct view structure
+        return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        // Operations that require the view to be fully created and accessible
+        updateUserPovId()
         setupRecyclerView()
         setupClickListeners()
         loadReferralData()
-        return view
     }
 
     private fun initializeViews(view: View) {
