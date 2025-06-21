@@ -48,7 +48,7 @@ import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_SETTING
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.currentMenuId
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.setupDynamicMenu
 import com.tpov.schoolquiz.presentation.model.Inset
-import com.tpov.schoolquiz.presentation.setting.SettingsFragment
+import com.tpov.setting.presentation.ModernSettingsFragment
 import com.tpov.shop.presentation.ShopFragment
 import com.tpov.userguide.presentation.UserGuide
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -266,7 +266,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 MENU_HOME_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
                 MENU_MY_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_BY_USER))
                 MENU_DOWNLOADS -> switchFragment(DownloadFragment())
-                MENU_SETTING -> switchFragment(SettingsFragment())
+                MENU_SETTING -> switchFragment(ModernSettingsFragment.newInstance())
                 MENU_PROFILE -> switchFragment(ProfileFragment())
                 MENU_CHAT -> switchFragment(ChatFragment())
                 MENU_LEADER -> switchFragment(LeadersFragment())
