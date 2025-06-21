@@ -10,8 +10,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import android.util.Log // Added for logging
 import com.tpov.shop.R
-import com.tpov.shop.domain.ReferralUser // Assumes this path is correct after domain class creation
+import com.tpov.shop.domain.ReferralUser
 
 class ReferralAdapter(
     private val context: Context
@@ -35,6 +36,7 @@ class ReferralAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReferralViewHolder {
+        Log.d("ReferralAdapter", "onCreateViewHolder called")
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_referral_user, parent, false)
         return ReferralViewHolder(view)
@@ -42,10 +44,12 @@ class ReferralAdapter(
 
     override fun onBindViewHolder(holder: ReferralViewHolder, position: Int) {
         val item = displayItems[position]
+        Log.d("ReferralAdapter", "onBindViewHolder called for position: $position, item ID: ${item.id}")
         holder.bind(item, context)
     }
 
     override fun getItemCount(): Int {
+        Log.d("ReferralAdapter", "getItemCount called, returning: ${displayItems.size}")
         return displayItems.size // Should always be 6
     }
 
@@ -61,6 +65,7 @@ class ReferralAdapter(
         private val newBonusBoxLabelTextView: TextView = itemView.findViewById(R.id.tv_new_bonus_box_label)
 
         fun bind(user: ReferralUser, context: Context) {
+            Log.d("ReferralViewHolder", "Binding item: ${user.nickname}, isPlaceholder: ${ReferralUser.isPlaceholder(user)}, allOpenBox: ${user.allOpenBox}, seasonBox: ${user.seasonBoxCount}")
             val calculatedBonus = if (ReferralUser.isPlaceholder(user)) 0 else user.seasonBoxCount / 100
 
             if (ReferralUser.isPlaceholder(user)) {
