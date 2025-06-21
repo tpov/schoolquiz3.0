@@ -8,8 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import android.util.Log // Added for logging
 import com.tpov.shop.R
@@ -62,10 +64,18 @@ class ReferralAdapter(
         private val allOpenBoxLabelTextView: TextView = itemView.findViewById(R.id.tv_all_open_box_label)
         private val newBonusBoxLabelTextView: TextView = itemView.findViewById(R.id.tv_new_bonus_box_label)
         private val userAvatarImageView: ImageView = itemView.findViewById(R.id.iv_user_avatar)
+        
+        // New progress UI elements
+        private val progressSection: LinearLayout = itemView.findViewById(R.id.ll_progress_section)
+        private val progressBar: ProgressBar = itemView.findViewById(R.id.progress_bar_boxes)
+        private val progressPercentText: TextView = itemView.findViewById(R.id.tv_progress_percent)
+        private val referralStatusText: TextView = itemView.findViewById(R.id.tv_referral_status)
+        private val referralActivatedText: TextView = itemView.findViewById(R.id.tv_referral_activated)
 
         fun bind(user: ReferralUser, context: Context) {
             Log.d("ReferralViewHolder", "Binding item: ${user.nickname}, isPlaceholder: ${ReferralUser.isPlaceholder(user)}, allOpenBox: ${user.allOpenBox}, seasonBox: ${user.seasonBoxCount}")
             val calculatedBonus = if (ReferralUser.isPlaceholder(user)) 0.0 else user.seasonBoxCount / 100.0
+            val isActivated = !ReferralUser.isPlaceholder(user) && user.allOpenBox >= 100
 
             if (ReferralUser.isPlaceholder(user)) {
                 nicknameTextView.text = user.nickname
@@ -80,7 +90,9 @@ class ReferralAdapter(
                 newBonusBoxLabelTextView.setTextColor(placeholderTextColor)
                 userAvatarImageView.alpha = 0.5f
 
-                itemView.setBackgroundResource(android.R.color.transparent)
+                // Hide the progress section for placeholders
+                progressSection.visibility = View.GONE
+
                 itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_placeholder_background)
             } else {
                 nicknameTextView.text = user.nickname
@@ -94,13 +106,40 @@ class ReferralAdapter(
                 newBonusBoxValueTextView.setTextColor(ContextCompat.getColor(context, R.color.bonus_text_color))
                 allOpenBoxLabelTextView.setTextColor(realUserTextColor)
                 newBonusBoxLabelTextView.setTextColor(realUserTextColor)
-
-                itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_progress_fill_inverted)
-                val progressDrawable = itemBackgroundLayout.background as LayerDrawable
-                val progressClipDrawable = progressDrawable.findDrawableByLayerId(android.R.id.progress) as android.graphics.drawable.ClipDrawable
-
+                
+                // Set progress bar and display activation status
+                progressSection.visibility = View.VISIBLE
+                
+                // Calculate progress percentage (max 100%)
                 val progressPercentage = if (user.allOpenBox >= 100) 100 else user.allOpenBox
-                progressClipDrawable.level = progressPercentage * 100 // Level is 0-10000
+                progressBar.progress = progressPercentage
+                progressPercentText.text = "$progressPercentage%"
+                
+                if (isActivated) {
+                    // User has reached 100 boxes - show activation message
+                    referralStatusText.visibility = View.GONE
+                    referralActivatedText.visibility = View.VISIBLE
+                    progressPercentText.visibility = View.GONE  // Hide percent when activated
+                    
+                    // Optionally highlight the background to indicate activation
+                    itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_progress_fill_inverted)
+                    // Set progress to max
+                    progressBar.progress = 100
+                } else {
+                    // User still needs more boxes
+                    referralStatusText.visibility = View.VISIBLE
+                    referralActivatedText.visibility = View.GONE
+                    progressPercentText.visibility = View.VISIBLE  // Show percent when not activated
+                    
+                    val boxesNeeded = 100 - user.allOpenBox
+                    referralStatusText.text = "$boxesNeeded boxes to activate"
+                    
+                    // Set the progress background
+                    itemBackgroundLayout.background = ContextCompat.getDrawable(context, R.drawable.referral_item_progress_fill_inverted)
+                    val progressDrawable = itemBackgroundLayout.background as LayerDrawable
+                    val progressClipDrawable = progressDrawable.findDrawableByLayerId(android.R.id.progress) as android.graphics.drawable.ClipDrawable
+                    progressClipDrawable.level = progressPercentage * 100 // Level is 0-10000
+                }
             }
         }
     }

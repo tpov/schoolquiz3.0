@@ -22,16 +22,16 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
-            
+
             <ImageButton
                 android:id="@+id/btn_back"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
                 android:background="@drawable/circle_button_background"
                 app:tint="@color/white"
-                android:padding="8dp"/>
-                
+                android:padding="6dp"/>
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -50,19 +50,19 @@
             app:cardCornerRadius="12dp"
             app:cardBackgroundColor="@color/referral_card_background"
             app:cardElevation="4dp">
-            
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp">
-                
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
-                    
+
                     <TextView
                         android:id="@+id/tv_tpov_id_label"
                         android:layout_width="wrap_content"
@@ -72,7 +72,7 @@
                         android:textSize="16sp"
                         android:layout_marginEnd="8dp"
                         android:text="Your referral link:" />
-                    
+
                     <TextView
                         android:id="@+id/tv_tpov_id"
                         android:textColor="@color/white_80"
@@ -81,25 +81,25 @@
                         android:layout_weight="1"
                         android:textSize="16sp"
                         tools:text="tpovId: 177"/>
-                    
+
                     <ImageButton
                         android:id="@+id/imv_b_copy_referral_link"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:src="@drawable/ic_copy"
                         app:tint="@color/white"
                         android:background="@drawable/circle_button_background"
-                        android:padding="8dp"
+                        android:padding="6dp"
                         android:layout_marginEnd="8dp" />
-                    
+
                     <ImageButton
                         android:id="@+id/imv_b_share_referral_link"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:src="@drawable/ic_share"
                         app:tint="@color/white"
                         android:background="@drawable/circle_button_background"
-                        android:padding="8dp" />
+                        android:padding="6dp" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -112,7 +112,7 @@
             app:cardCornerRadius="12dp"
             app:cardBackgroundColor="@color/referral_card_background"
             app:cardElevation="4dp">
-            
+
             <TextView
                 android:id="@+id/tv_referral_info"
                 android:layout_width="match_parent"
@@ -132,13 +132,13 @@
             app:cardCornerRadius="12dp"
             app:cardBackgroundColor="@color/referral_card_background"
             app:cardElevation="4dp">
-            
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:padding="8dp">
-                
+
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -147,7 +147,7 @@
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:padding="8dp"/>
-                    
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rv_referred_users"
                     android:layout_width="match_parent"
@@ -168,7 +168,7 @@
             app:cardCornerRadius="12dp"
             app:cardBackgroundColor="@color/referral_reward_background"
             app:cardElevation="4dp">
-            
+
             <LinearLayout
                 android:id="@+id/ll_reward_status"
                 android:layout_width="match_parent"
@@ -176,7 +176,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:padding="12dp">
-                
+
                 <TextView
                     android:id="@+id/tv_reward_text"
                     android:layout_width="0dp"
@@ -188,13 +188,12 @@
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:text="Invite 6 players and receive x50"/>
-                
+
                 <ImageView
                     android:id="@+id/iv_reward_icon"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/ic_box"/> 
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_box"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -205,7 +204,7 @@
             app:cardCornerRadius="12dp"
             app:cardBackgroundColor="@color/referral_card_background"
             app:cardElevation="4dp">
-            
+
             <LinearLayout
                 android:id="@+id/ll_getting_new_box"
                 android:layout_width="match_parent"
@@ -213,7 +212,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:padding="12dp">
-                
+
                 <TextView
                     android:id="@+id/tv_getting_new_box_info"
                     android:layout_width="0dp"
@@ -221,8 +220,8 @@
                     android:layout_weight="1"
                     android:textColor="@color/white"
                     android:textSize="14sp"
-                    android:text="В конце сезона ви получите коробок:"/>
-                
+                    android:text="@string/referral_season_boxes_text"/>
+
                 <TextView
                     android:id="@+id/tv_getting_new_box_count"
                     android:layout_width="wrap_content"
