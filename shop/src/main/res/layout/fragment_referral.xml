@@ -28,10 +28,42 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:textStyle="bold"
+            android:layout_marginBottom="16dp"
             tools:text="abcdef123456"/>
 
-        <!-- Buttons, Info Text, RecyclerView, Reward Status will be added -->
-        <!-- For now, a placeholder for where RecyclerView will go -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btn_copy_referral_link"
+                style="@style/ShopButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Copy Link"/>
+
+            <Button
+                android:id="@+id/btn_share_referral_link"
+                style="@style/ShopButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Share"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_referral_info"
+            style="@style/ShopTextViewStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="You receive 1% of all opened boxes from all your invited friends."/>
+
          <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_referred_users"
             android:layout_width="match_parent"
