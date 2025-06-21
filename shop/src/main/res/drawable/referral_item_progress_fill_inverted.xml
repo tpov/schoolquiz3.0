@@ -3,7 +3,7 @@
     <!-- Background track -->
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
-            <solid android:color="#666666"/> <!-- Same as placeholder: Medium-light gray -->
+            <solid android:color="@color/white_pb"/> <!-- Same as placeholder: Medium-light gray -->
             <corners android:radius="@dimen/referral_item_corner_radius"/>
         </shape>
     </item>
@@ -14,7 +14,7 @@
             android:clipOrientation="horizontal"
             android:gravity="left">
             <shape android:shape="rectangle">
-                <solid android:color="@color/referral_progress_fill_dark_green"/> <!-- Dark green for fill -->
+                <solid android:color="@color/back_item"/>
                 <corners android:radius="@dimen/referral_item_corner_radius"/>
             </shape>
         </clip>

@@ -36,4 +36,13 @@
         <item name="android:layout_gravity">center</item>
         <item name="android:background">#FFC107</item>
     </style>
+
+    <!-- CardView style that prevents white corners -->
+    <style name="TransparentCardView" parent="CardView">
+        <item name="cardBackgroundColor">@android:color/transparent</item>
+        <item name="cardCornerRadius">10dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="contentPadding">0dp</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
 </resources>

@@ -1,96 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/ll_item_background"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:minHeight="60dp"
     android:orientation="horizontal"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
-    android:layout_marginBottom="4dp"
-    android:background="@drawable/referral_item_placeholder_background"
+    android:padding="12dp"
+    android:background="@drawable/referral_item_progress_fill_inverted"
     android:gravity="center_vertical">
 
-    <LinearLayout
+    <!-- User Icon -->
+    <ImageView
+        android:id="@+id/iv_user_avatar"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="12dp"
+        android:src="@drawable/ic_person"
+        app:tint="@color/white"
+        android:background="@drawable/circle_avatar_background"
+        android:padding="6dp"/>
+
+    <!-- User Name -->
+    <TextView
+        android:id="@+id/tv_nickname"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginEnd="8dp">
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:ellipsize="end"
+        android:maxLines="1"
+        tools:text="ArtemON_GO" />
 
-        <TextView
-            android:id="@+id/tv_nickname"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            tools:text="UserNickname123" />
-
-        <TextView
-            android:id="@+id/tv_all_open_box_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Total Boxes:"
-            android:textColor="@android:color/white"
-            android:textSize="10sp"
-            android:layout_marginTop="2dp"
-            tools:ignore="SmallSp" />
-
-        <TextView
-            android:id="@+id/tv_all_open_box_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="10sp"
-            tools:text="1250"
-            tools:ignore="SmallSp" />
-
-    </LinearLayout>
-
+    <!-- Stats Container -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="end">
+        android:layout_marginStart="8dp">
 
-        <TextView
-            android:id="@+id/tv_season_box_label"
+        <!-- Open Boxes Stat -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Season Boxes:"
-            android:textColor="@android:color/white"
-            android:textSize="10sp"
-            tools:ignore="SmallSp" />
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical">
 
-        <TextView
-            android:id="@+id/tv_season_box_value"
+            <TextView
+                android:id="@+id/tv_all_open_box_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:layout_marginEnd="4dp"
+                android:text="Open boxes:"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tv_all_open_box_value"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="75" />
+        </LinearLayout>
+
+        <!-- Bonus Stat -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            tools:text="75" />
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical"
+            android:layout_marginTop="4dp">
 
-        <TextView
-            android:id="@+id/tv_new_bonus_box_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Your Bonus:"
-            android:textColor="@android:color/white"
-            android:textSize="10sp"
-            android:layout_marginTop="2dp"
-            tools:ignore="SmallSp" />
+            <TextView
+                android:id="@+id/tv_new_bonus_box_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:layout_marginEnd="4dp"
+                android:text="Your Bonus:"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/tv_new_bonus_box_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            tools:text="0" />
+            <TextView
+                android:id="@+id/tv_new_bonus_box_value"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textColor="@color/bonus_text_color"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="2.0" />
+        </LinearLayout>
     </LinearLayout>
-
 </LinearLayout>

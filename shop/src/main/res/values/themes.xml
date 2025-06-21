@@ -13,4 +13,21 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <!-- Base application theme -->
+    <style name="Theme.ShopModule" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/referral_background_dark</item>
+        <item name="colorPrimaryDark">@color/referral_background_dark</item>
+        <item name="colorAccent">@color/gold_box</item>
+        <item name="android:windowBackground">@color/referral_background_dark</item>
+    </style>
+    
+    <!-- Fullscreen theme for ReferralActivity -->
+    <style name="Theme.ShopModule.Fullscreen" parent="Theme.ShopModule">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
 </resources>

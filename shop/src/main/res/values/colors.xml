@@ -7,6 +7,19 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="white_pb">#181818</color>
+
+    <!-- New Referral Screen Colors -->
+    <color name="referral_background">#121212</color>
+    <color name="referral_background_dark">#0A0A0A</color>
+    <color name="referral_card_background">#232323</color>
+    <color name="referral_reward_background">#2E2816</color>
+    <color name="referral_highlight_text">#FF9270</color>
+    <color name="gold_box">#B2893B</color>
+    <color name="avatar_background">#484848</color>
+    <color name="white_80">#CCFFFFFF</color>
+    <color name="bonus_text_color">#57C957</color>
 
     <color name="back_menu_top">#242424</color>
     <color name="back_menu_bottom">#242424</color>

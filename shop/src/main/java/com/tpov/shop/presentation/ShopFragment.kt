@@ -24,21 +24,8 @@ class ShopFragment : Fragment() {
         // Assumes b_referrals button exists in shop_fragment.xml
         val referralsButton = view.findViewById<Button>(R.id.b_referrals)
         referralsButton.setOnClickListener {
-            val containerId = resources.getIdentifier("title_fragment", "id", requireActivity().packageName)
-            if (containerId != 0) {
-                parentFragmentManager.beginTransaction()
-                    .replace(containerId, ReferralFragment.newInstance())
-                    .addToBackStack(null)
-                    .commit()
-            } else {
-                // Fallback or error handling: replace with android.R.id.content if title_fragment is not found
-                // This might indicate an issue with layout access or naming.
-                parentFragmentManager.beginTransaction()
-                    .replace(android.R.id.content, ReferralFragment.newInstance())
-                    .addToBackStack(null)
-                    .commit()
-                // Consider logging an error here in a real application
-            }
+            // Launch ReferralActivity instead of replacing with fragment
+            startActivity(ReferralActivity.newIntent(requireContext()))
         }
     }
 }
