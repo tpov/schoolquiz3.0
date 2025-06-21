@@ -16,6 +16,7 @@
     <color name="referral_card_background">#232323</color>
     <color name="referral_reward_background">#2E2816</color>
     <color name="referral_highlight_text">#FF9270</color>
+    <color name="referral_activated_color">#4CAF50</color>
     <color name="gold_box">#B2893B</color>
     <color name="avatar_background">#484848</color>
     <color name="white_80">#CCFFFFFF</color>
