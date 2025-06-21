@@ -1,40 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="ShopCardViewStyle">
-        <item name="cardBackgroundColor">@color/back_item</item>
-        <item name="cardCornerRadius">8dp</item>
+    <!-- Base Styles for Cards -->
+    <style name="AppCardStyle">
+        <item name="cardBackgroundColor">@color/app_card_background</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="contentPadding">0dp</item>
     </style>
 
-    <!-- Для LinearLayout -->
-    <style name="ShopLinearLayoutStyle">
-        <item name="android:padding">11dp</item>
+    <!-- Shop Card Style -->
+    <style name="ShopCardViewStyle" parent="AppCardStyle">
+        <item name="cardBackgroundColor">@color/app_card_background</item>
+    </style>
+
+    <!-- Referral Card Style -->
+    <style name="ReferralCardStyle" parent="AppCardStyle">
+        <item name="cardBackgroundColor">@color/app_card_background</item>
+    </style>
+
+    <!-- Special Card Style (for rewards, etc) -->
+    <style name="SpecialCardStyle" parent="AppCardStyle">
+        <item name="cardBackgroundColor">@color/app_special_reward_background</item>
+    </style>
+
+    <!-- Base Layout Style -->
+    <style name="AppLayoutStyle">
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <!-- Linear Layout in Cards -->
+    <style name="ShopLinearLayoutStyle" parent="AppLayoutStyle">
         <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
     </style>
 
-    <!-- Для ImageView -->
-    <style name="ShopImageViewStyle">
+    <!-- Base Image Style -->
+    <style name="AppImageStyle">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:tint">@color/app_text_primary</item>
+    </style>
+
+    <!-- Shop Image Style -->
+    <style name="ShopImageViewStyle" parent="AppImageStyle">
         <item name="android:layout_width">60dp</item>
         <item name="android:layout_height">60dp</item>
     </style>
 
-    <!-- Для TextView -->
-    <style name="ShopTextViewStyle">
+    <!-- Base Text Style -->
+    <style name="AppTextStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/app_text_primary</item>
+    </style>
+
+    <!-- Shop Text Style -->
+    <style name="ShopTextViewStyle" parent="AppTextStyle">
         <item name="android:layout_weight">1</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:paddingStart">8dp</item>
         <item name="android:paddingEnd">16dp</item>
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <!-- Для Button -->
-    <style name="ShopButtonStyle">
+    <!-- Base Button Style -->
+    <style name="AppButtonStyle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_gravity">center</item>
-        <item name="android:background">#FFC107</item>
+        <item name="android:textColor">@color/app_button_text</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="backgroundTint">@color/app_accent</item>
+    </style>
+
+    <!-- Shop Button Style -->
+    <style name="ShopButtonStyle" parent="AppButtonStyle">
+        <item name="android:backgroundTint">@color/app_accent</item>
+    </style>
+
+    <!-- Circle Button Style -->
+    <style name="CircleButtonStyle">
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:background">@drawable/circle_button_background</item>
+        <item name="android:padding">6dp</item>
+        <item name="android:tint">@color/app_text_primary</item>
     </style>
 
     <!-- CardView style that prevents white corners -->

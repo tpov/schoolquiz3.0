@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base colors -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -10,31 +11,49 @@
     <color name="transparent">#00000000</color>
     <color name="white_pb">#181818</color>
 
-    <!-- New Referral Screen Colors -->
-    <color name="referral_background">#121212</color>
-    <color name="referral_background_dark">#0A0A0A</color>
-    <color name="referral_card_background">#232323</color>
-    <color name="referral_reward_background">#2E2816</color>
-    <color name="referral_highlight_text">#FF9270</color>
-    <color name="referral_activated_color">#4CAF50</color>
-    <color name="gold_box">#B2893B</color>
-    <color name="avatar_background">#484848</color>
+    <!-- App Theme Colors - based on screenshot -->
+    <color name="app_background">#1A1A1F</color>
+    <color name="app_background_dark">#121215</color>
+    <color name="app_card_background">#232329</color>
+    <color name="app_card_shadow">#14000000</color>
+    <color name="app_accent">#0288D1</color>
+    <color name="app_accent_dark">#0277BD</color>
+    <color name="app_button_text">#FFFFFF</color>
+    <color name="app_text_primary">#FFFFFF</color>
+    <color name="app_text_secondary">#B3FFFFFF</color>
+    <color name="app_highlight_text">#FFC107</color>
+    <color name="app_gold">#D4AF37</color>
+    <color name="app_special_reward_background">#3A3000</color>
+    <color name="app_progress_background">#333339</color>
+    <color name="app_error">#F44336</color>
+    <color name="app_success">#4CAF50</color>
+    
+    <!-- Shop Screen Colors -->
+    <color name="shop_background">@color/app_background</color>
+    <color name="shop_card_background">@color/app_card_background</color>
+    <color name="shop_button_yellow">@color/app_accent</color>
+    <color name="shop_red_heart">#FF0000</color>
+    <color name="shop_yellow_heart">#D4AF37</color>
+    <color name="shop_text_color">@color/app_text_primary</color>
+    <color name="contour_unable">@color/app_accent</color>
+    <color name="back_item">@color/app_card_background</color>
+    
+    <!-- Referral Screen Colors -->
+    <color name="referral_background">@color/app_background</color>
+    <color name="referral_background_dark">@color/app_background_dark</color>
+    <color name="referral_card_background">@color/app_card_background</color>
+    <color name="referral_card_shadow">@color/app_card_shadow</color>
+    <color name="referral_reward_background">@color/app_special_reward_background</color>
+    <color name="referral_highlight_text">@color/app_highlight_text</color>
+    <color name="referral_activated_color">@color/app_accent</color>
+    <color name="referral_progress_color">@color/app_accent</color>
+    <color name="referral_progress_bg">@color/app_progress_background</color>
+    <color name="gold_box">@color/app_gold</color>
+    <color name="avatar_background">#333339</color>
     <color name="white_80">#CCFFFFFF</color>
-    <color name="bonus_text_color">#57C957</color>
-
-    <color name="back_menu_top">#242424</color>
-    <color name="back_menu_bottom">#242424</color>
-
-    <color name="button_color_start">#5A5A7A</color>
-    <color name="button_color_end">#3A3A5A</color>
-    <color name="button_text_color">#FFFFFF</color>
-    <color name="dialog_background">#2C2C3C</color>
-    <color name="dialog_text_color">#E0E0E0</color>
-    <color name="shadow_color">#000000</color>
-
-    <color name="contour">#0C7FCF</color>
-    <color name="contour_unable">#0C4678</color>
-    <color name="back_item">#191919</color>
-
-    <color name="referral_progress_fill_dark_green">#2E7D32</color> <!-- Dark green for progress fill -->
+    <color name="bonus_text_color">@color/app_accent</color>
+    
+    <!-- Border colors -->
+    <color name="active_border">#444444</color>
+    <color name="inactive_border">#333333</color>
 </resources>

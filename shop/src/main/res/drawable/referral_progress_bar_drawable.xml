@@ -3,14 +3,14 @@
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
             <corners android:radius="2dp"/>
-            <solid android:color="#3A3A3A"/>
+            <solid android:color="@color/app_card_background"/>
         </shape>
     </item>
     <item android:id="@android:id/progress">
         <clip>
             <shape android:shape="rectangle">
                 <corners android:radius="2dp"/>
-                <solid android:color="@color/contour_unable"/>
+                <solid android:color="@color/app_accent"/>
             </shape>
         </clip>
     </item>

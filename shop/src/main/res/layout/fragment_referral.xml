@@ -27,7 +27,7 @@
                 android:id="@+id/btn_back"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:src="@drawable/ic_back_arrow"
                 android:background="@drawable/circle_button_background"
                 app:tint="@color/white"
                 android:padding="6dp"/>
