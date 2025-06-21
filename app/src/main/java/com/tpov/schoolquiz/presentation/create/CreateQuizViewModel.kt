@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.presentation.create
 
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -55,16 +56,32 @@ class CreateQuizViewModel @Inject constructor(
         val pathStructure = savedStateHandle.get<PathStructure?>("extra_path_structure")
 
         currentRegimeStrategy = when (currentRegime) {
-            REGIME_CREATE_QUIZ -> CreateQuizRegimeStrategy(structureUseCase, questionUseCase)
+            REGIME_CREATE_QUIZ -> {
+                CreateQuizRegimeStrategy(structureUseCase, questionUseCase, questionStateManager)
+            }
             REGIME_EDIT_QUIZ -> EditQuizRegimeStrategy(structureUseCase, questionUseCase)
             REGIME_EDIT_ARCHIVE_QUIZ -> EditArchiveQuizRegimeStrategy(structureUseCase, questionUseCase)
-            else -> CreateQuizRegimeStrategy(structureUseCase, questionUseCase)
+            else -> CreateQuizRegimeStrategy(structureUseCase, questionUseCase, questionStateManager)
         }
 
         _uiState.value = currentRegimeStrategy.setupUiState()
 
         viewModelScope.launch {
-            _uiState.value  = currentRegimeStrategy.loadData(pathStructure ?: PathStructure())
+            when (currentRegime) {
+                REGIME_CREATE_QUIZ -> {
+                    _uiState.value  = currentRegimeStrategy.loadData(pathStructure ?: PathStructure())
+                    createNewQuestion()
+                }
+                REGIME_EDIT_QUIZ -> {
+
+                }
+                REGIME_EDIT_ARCHIVE_QUIZ -> {
+
+                }
+                else -> {
+                }
+
+            }
         }
     }
 
@@ -95,6 +112,7 @@ class CreateQuizViewModel @Inject constructor(
     fun addTranslate() = questionStateManager.addTranslation()
     fun createNewQuestion() {
         val (newNumberQuestion, hardQuestion) = questionStateManager.createNewQuestion()
+        Log.d("awdawdasdf", "newNumberQuestion: $newNumberQuestion, hardQuestion: $hardQuestion")
         selectQuestion(newNumberQuestion, hardQuestion)
     }
 
@@ -108,8 +126,8 @@ class CreateQuizViewModel @Inject constructor(
 
     }
 
-    fun selectQuestion(newNumberQuestion: Int, hardQuestion: Boolean) {
-        questionStateManager.selectQuestion(newNumberQuestion, hardQuestion)
+    fun selectQuestion(questionNumber: Int? = null, isHard: Boolean? = null) {
+        questionStateManager.selectQuestion(questionNumber, isHard)
     }
 
     fun onQuestionTranslationsChanged(updatedTranslateQuestion: TranslateQuestion) {

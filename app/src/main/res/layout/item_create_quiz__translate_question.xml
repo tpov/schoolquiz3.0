@@ -1,137 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-    LAYOUT: Элемент списка для перевода вопроса
-    ИСПОЛЬЗУЕТСЯ В: QuestionTranslationListAdapter
-    ЦЕЛЬ: Позволяет редактировать текст вопроса и выбирать язык для каждого перевода
-
-    РЕФАКТОРИНГ ИДЕЯ:
-    - Добавить TextInputLayout для лучшего UX
-    - Использовать Constraint Layout вместо Linear Layout для лучшей производительности
-    - Добавить валидацию текста (минимальная длина, обязательное поле)
-    - Добавить индикатор загрузки при смене языка
--->
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp"
-    android:background="?android:attr/selectableItemBackground">
-    <!-- Добавил padding и background для лучшего UX -->
+    android:orientation="horizontal">
 
-    <!--
-        ПОЛЕ ВВОДА ВОПРОСА
-        - Основное поле для редактирования текста вопроса
-        - Поддерживает многострочный ввод (maxLines="3")
-        - Используется в QuestionTranslationListAdapter.TranslationViewHolder
-
-        РЕФАКТОРИНГ ПРЕДЛОЖЕНИЯ:
-        - Заменить на TextInputEditText с TextInputLayout
-        - Добавить hint с примером вопроса
-        - Добавить счетчик символов
-        - Добавить валидацию (не пустой, минимум 10 символов)
-    -->
     <EditText
         android:id="@+id/tv_question_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginEnd="8dp"
         android:maxLines="3"
-        android:minLines="2"
-        android:textColor="@color/white"
-        android:textColorHint="@android:color/darker_gray"
-        android:hint="Введите текст вопроса..."
-        android:inputType="textMultiLine|textCapSentences"
-        android:scrollbars="vertical"
-        android:background="@android:drawable/edit_text" />
-    <!-- Добавил margin, hint, inputType и background для лучшего UI -->
+        android:textColor="@color/white" />
 
-    <!--
-        ВЫБОР ЯЗЫКА ВОПРОСА
-        - CustomSpinner для выбора языка перевода
-        - Фиксированная ширина 100dp
-        - Использует LanguageUtils.entries для списка языков
-
-        ФУНКЦИОНАЛЬНОСТЬ:
-        - При изменении языка вызывается onLanguageChanged callback
-        - Поддерживает все языки из LanguageUtils (English, Russian, Ukrainian, etc.)
-
-        РЕФАКТОРИНГ ПРЕДЛОЖЕНИЯ:
-        - Добавить иконку флага страны рядом с названием языка
-        - Сделать адаптивную ширину вместо фиксированной
-        - Добавить поиск по языкам для больших списков
-        - Добавить группировку языков (Европейские, Азиатские, etc.)
-    -->
     <com.tpov.schoolquiz.presentation.custom.CustomSpinner
         android:id="@+id/sp_language_question"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
         android:textColor="@color/white"
-        android:textSize="12sp"
-        android:popupBackground="@color/spinner_dropdown_background"
-        android:dropDownWidth="120dp" />
-    <!-- Добавил gravity, textSize и dropDownWidth для лучшего отображения -->
+        android:popupBackground="@color/spinner_dropdown_background" />
 
 </LinearLayout>
-
-    <!--
-    АРХИТЕКТУРНЫЕ ЗАМЕТКИ:
-
-    ТЕКУЩЕЕ ИСПОЛЬЗОВАНИЕ:
-    - QuestionTranslationListAdapter создает этот view для каждого перевода
-    - TranslationяViewHolder биндит данные TranslateQuestion к этому layout
-    - При изменении текста вызывается onQuestionTextChanged callback
-    - При смене языка вызывается onLanguageChanged callback
-
-    ПОТОК ДАННЫХ:
-    1. Пользователь вводит текст → TextWatcher → onQuestionTextChanged → ViewModel
-    2. Пользователь меняет язык → OnItemSelectedListener → onLanguageChanged → ViewModel
-    3. ViewModel обновляет состояние → Activity observeUIState → Adapter submitList
-
-    ПРОБЛЕМЫ ТЕКУЩЕЙ РЕАЛИЗАЦИИ:
-    - Нет валидации ввода
-    - Фиксированные размеры не адаптивны
-    - Отсутствует обратная связь при ошибках
-    - Нет индикации обязательных полей
-
-    РЕФАКТОРИНГ ПЛАН:
-    1. Заменить LinearLayout на ConstraintLayout для лучшей производительности
-    2. Добавить TextInputLayout с валидацией и счетчиком символов
-    3. Улучшить CustomSpinner с иконками флагов и поиском
-    4. Добавить анимации при изменении состояния
-    5. Реализовать DataBinding для автоматического обновления UI
-    6. Добавить accessibility поддержку для людей с ограниченными возможностями
-
-    ПРИМЕРЫ УЛУЧШЕНИЙ:
-
-    TextInputLayout версия:
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        app:counterEnabled="true"
-        app:counterMaxLength="500"
-        app:errorEnabled="true">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/tv_question_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    ConstraintLayout версия:
-    <androidx.constraintlayout.widget.ConstraintLayout>
-
-        <EditText
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/sp_language_question"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <CustomSpinner
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toEndOf="@id/tv_question_text" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-    -->

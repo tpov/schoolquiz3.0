@@ -137,8 +137,8 @@ sealed class CheckBoxUiState {
 }
 
 fun SpinnerUiState.getNumQuestion(): Int = when (this) {
-    is SpinnerUiState.Hidden -> 0
-    is SpinnerUiState.Visible -> selectedIndex ?: 0
+    is SpinnerUiState.Hidden -> 1
+    is SpinnerUiState.Visible -> selectedIndex ?: 1
 }
 
 fun CheckBoxUiState.getType(): Boolean = when (this) {

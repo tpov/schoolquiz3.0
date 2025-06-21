@@ -166,7 +166,7 @@ class CreateQuizActivity : AppCompatActivity() {
         }
 
         binding.spNumQuestion.setOnItemSelectedListener { selectedItem ->
-            val numQuestion = selectedItem.takeWhile { it.isDigit() }.toIntOrNull() ?: 1
+            val numQuestion = (selectedItem.takeWhile { it.isDigit() }.toIntOrNull()?.minus(1))?: 1
             val hardQuestion = selectedItem.contains('*')
             viewModel.selectQuestion(numQuestion, hardQuestion)
         }

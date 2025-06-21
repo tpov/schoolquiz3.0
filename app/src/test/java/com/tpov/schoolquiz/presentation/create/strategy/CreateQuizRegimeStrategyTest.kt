@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.presentation.create.strategy
 
+import android.graphics.drawable.Drawable
 import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.usecase.QuestionUseCase
@@ -17,8 +18,6 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import android.content.Context
-import android.graphics.drawable.Drawable
 
 @RunWith(org.mockito.junit.MockitoJUnitRunner::class)
 class CreateQuizRegimeStrategyTest {

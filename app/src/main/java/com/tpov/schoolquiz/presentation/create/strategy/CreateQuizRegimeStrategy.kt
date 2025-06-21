@@ -8,10 +8,10 @@ import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.usecase.QuestionUseCase
-import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.NamesUtils
+import com.tpov.schoolquiz.presentation.create.manager.QuestionStateManager
 import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
 import com.tpov.schoolquiz.presentation.create.model.ImageUiState
 import com.tpov.schoolquiz.presentation.create.model.IsUiState
@@ -22,7 +22,8 @@ import com.tpov.schoolquiz.presentation.create.model.TextUiState
 
 class CreateQuizRegimeStrategy(
     val structureUseCase: StructureUseCase,
-    val questionUseCase: QuestionUseCase
+    val questionUseCase: QuestionUseCase,
+    val questionStateManager: QuestionStateManager
 ) : QuizRegimeStrategy {
 
     override fun setupUiState() = QuizUiModelState(
@@ -68,8 +69,7 @@ class CreateQuizRegimeStrategy(
             categorySpinnerUiState = SpinnerUiState.Visible(categoryList, 0),
             subCategorySpinnerUiState = SpinnerUiState.Visible(subcategoryList, 0),
             subsubCategorySpinnerUiState = SpinnerUiState.Visible(subsubCategoryList, 0),
-            questionList = listOf(
-                QuestionLocal().copy(numQuestion = 1, language = settingsConfig.languages.first(), nameAnswers = "|")).toMutableList()
+            questionList = mutableListOf()
         )
     }
 
