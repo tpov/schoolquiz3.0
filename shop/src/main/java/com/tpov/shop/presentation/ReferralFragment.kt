@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tpov.shop.R
 import com.tpov.shop.domain.ReferralUser // Will be created in a later step
 import java.util.UUID
+import android.util.Log // Added for logging
 
 class ReferralFragment : Fragment() {
 
@@ -79,16 +80,17 @@ class ReferralFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        // Adapter and LayoutManager will be configured according to plan
-        // For now, ensure it doesn't crash if ReferralAdapter is not fully ready
-        if (::referralAdapter.isInitialized) {
-             rvReferredUsers.apply {
+        referralAdapter = ReferralAdapter(requireContext()) // Instantiate the adapter
+        Log.d("ReferralFragment", "rvReferredUsers is null before setting adapter: ${!this::rvReferredUsers.isInitialized || rvReferredUsers == null}")
+        // Check if rvReferredUsers is initialized AND not null, which it should be if initializeViews worked.
+        if (this::rvReferredUsers.isInitialized && rvReferredUsers != null) {
+            rvReferredUsers.apply {
                 adapter = referralAdapter
+                Log.d("ReferralFragment", "Adapter set on rvReferredUsers")
                 layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             }
         } else {
-            // Temporary setup if adapter isn't ready (will be replaced)
-            rvReferredUsers.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            Log.e("ReferralFragment", "rvReferredUsers was NOT properly initialized before setting adapter!")
         }
     }
 
