@@ -27,4 +27,14 @@
         <item name="android:progressDrawable">@drawable/rating_full</item>
         <item name="android:indeterminateDrawable">@drawable/rating_full</item>
     </style>
+
+    <!-- Fullscreen dialog style for QuestionDialogFragment -->
+    <style name="FullScreenDialog" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>

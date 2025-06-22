@@ -1,7 +1,6 @@
 package com.tpov.schoolquiz.presentation.main
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -19,10 +18,9 @@ import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.common.presentation.model.PathStructure
-import com.tpov.common.presentation.question.QuestionActivity
+import com.tpov.common.presentation.question.QuestionDialogHelper
 import com.tpov.common.presentation.utils.TextAnimator
 import com.tpov.common.presentation.utils.Values
-import com.tpov.schoolquiz.presentation.GiftBoxDialogFragment
 import com.tpov.network.presentation.chat.ChatFragment
 import com.tpov.network.presentation.friend.FriendsFragment
 import com.tpov.network.presentation.leaders.LeadersFragment
@@ -32,9 +30,8 @@ import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
+import com.tpov.schoolquiz.presentation.GiftBoxDialogFragment
 import com.tpov.schoolquiz.presentation.core.NotificationHelper
-import com.tpov.schoolquiz.presentation.create.CreateQuizActivity
-import com.tpov.schoolquiz.presentation.create.CreateQuizViewModel
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CONTACT
@@ -105,14 +102,21 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
     private fun initSetOnClickListeners() {
         binding.fabAddItem.setOnClickListener {
-            val intent = CreateQuizActivity.newIntent(
-                context = this,
-                regime = CreateQuizViewModel.REGIME_CREATE_QUIZ
-            ).apply {
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            }
-            startActivity(intent)
+            // Открываем QuestionDialogFragment вместо CreateQuizActivity
+            val testPathStructure = PathStructure(
+                nameQuiz = "Тестовая викторина",
+                nameCategory = "Тестовая категория",
+                nameSubCategory = "Подкатегория",
+                nameSubsubCategory = "Подподкатегория",
+                nameEvent = "Тестовое событие"
+            )
+
+            QuestionDialogHelper.showQuestionDialog(
+                fragmentManager = supportFragmentManager,
+                pathStructure = testPathStructure,
+                hardQuestion = false,
+                life = settingsConfig.life
+            )
         }
     }
 
@@ -387,13 +391,12 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
     }
 
     override fun openQuestionActivity(pathStructure: PathStructure, hardQuestion: Boolean) {
-        val intent = QuestionActivity.newIntent(
-            context = this,
-            hardQuestion = hardQuestion,
+        QuestionDialogHelper.showQuestionDialog(
+            fragmentManager = supportFragmentManager,
             pathStructure = pathStructure,
+            hardQuestion = hardQuestion,
             life = if (hardQuestion) settingsConfig.goldLife else settingsConfig.life
         )
-        startActivity(intent)
     }
 
     /**
