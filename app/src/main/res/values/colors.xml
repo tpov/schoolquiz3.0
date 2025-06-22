@@ -30,4 +30,21 @@
     <color name="colorPrimaryDark">#1976D2</color>
     <color name="colorAccent">#FF4081</color>
 
+    <color name="app_background">#1A1A1F</color>
+    <color name="app_background_dark">#121212</color>
+    <color name="app_card_background">#1F1F1F</color>
+    <color name="app_card_elevated">#2A2A2A</color>
+    <color name="app_accent">#4285F4</color>
+    <color name="app_accent_secondary">#FF9800</color>
+    <color name="app_success">#00FF05</color>
+    <color name="app_text_primary">#FFFFFF</color>
+    <color name="app_text_secondary">#CCFFFFFF</color>
+    <color name="app_gold">#FFD600</color>
+    
+    <color name="button_fab_default">@color/app_card_elevated</color>
+    <color name="button_fab_primary">@color/app_accent</color>
+    <color name="button_fab_secondary">@color/app_accent_secondary</color>
+    
+    <color name="navigation_background">@color/app_card_background</color>
+
 </resources>

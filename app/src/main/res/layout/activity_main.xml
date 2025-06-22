@@ -4,7 +4,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
+    android:background="@color/app_background_dark"
     android:fitsSystemWindows="true">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -339,7 +339,7 @@
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:layout_marginBottom="75dp"
-                android:backgroundTint="#2A2A2A"
+                android:backgroundTint="@color/button_fab_default"
                 app:cardCornerRadius="28dp"
                 app:cardElevation="8dp">
 
@@ -381,7 +381,7 @@
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:layout_marginBottom="80dp"
-                android:backgroundTint="#4285F4"
+                android:backgroundTint="@color/button_fab_primary"
                 app:cardCornerRadius="28dp"
                 app:cardElevation="8dp">
 
@@ -409,7 +409,7 @@
                         android:gravity="center"
                         android:minWidth="20dp"
                         android:text=""
-                        android:textColor="#00FF05"
+                        android:textColor="@color/app_success"
                         android:textSize="10sp"
                         android:textStyle="bold" />
 
@@ -422,7 +422,7 @@
                 android:id="@+id/fab_search"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:backgroundTint="#FF9800"
+                android:backgroundTint="@color/button_fab_secondary"
                 app:cardCornerRadius="28dp"
                 android:layout_marginBottom="75dp"
                 app:cardElevation="8dp">
@@ -496,7 +496,7 @@
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:background="#1F1F1F"
+        android:background="@color/navigation_background"
         app:itemIconTint="@android:color/white"
         app:itemTextColor="@android:color/white" />
 

@@ -62,8 +62,7 @@
     <color name="shop_card_gold_bg">#2A2416</color>
     <color name="shop_card_donate_bg">#1F1A2A</color>
     <color name="shop_button_secondary">#424242</color>
-    <color name="referral_card_elevated">#2A2A30</color>
-    <color name="shop_card_elevated">#2A2A30</color>
+
     <color name="icon_tint_gold">#FFD700</color>
     <color name="icon_tint_primary">#B3FFFFFF</color>
 </resources>

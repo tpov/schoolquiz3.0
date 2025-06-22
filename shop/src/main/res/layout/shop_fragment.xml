@@ -148,8 +148,7 @@
             style="@style/ShopCardViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardBackgroundColor="@color/shop_card_elevated">
+            android:layout_marginBottom="12dp">
 
             <LinearLayout
                 style="@style/ShopLinearLayoutStyle"

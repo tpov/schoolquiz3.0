@@ -4,7 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_background_dark"
-    android:padding="12dp">
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp">
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -661,4 +663,4 @@
 
     </LinearLayout>
 
-</ScrollView> 
+</ScrollView>
