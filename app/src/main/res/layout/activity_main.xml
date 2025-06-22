@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/top_panel_background"
             android:elevation="4dp"
-            android:orientation="vertical"
+                android:orientation="vertical"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
             android:paddingBottom="12dp">
@@ -427,9 +427,9 @@
                 android:layout_marginBottom="75dp"
                 app:cardElevation="8dp">
 
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
                     android:padding="12dp"
                     android:src="@drawable/ic_search"
                     app:tint="@android:color/white" />

@@ -37,13 +37,13 @@ class SettingsActivity : AppCompatActivity() {
     private fun setupToolbar() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
-        
+
         supportActionBar?.apply {
             title = getString(R.string.settings_title)
             setDisplayHomeAsUpEnabled(true)
             elevation = 0f
         }
-        
+
         // Set status bar color to match modern theme
         window.statusBarColor = ContextCompat.getColor(this, R.color.app_background_dark)
     }
@@ -116,10 +116,10 @@ class SettingsActivity : AppCompatActivity() {
     }
     
     private fun openProfileSettings() {
-        // Launch ModernSettingsFragment with profile focus
+                    // Launch SettingsFragment with profile focus
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.settings_container, ModernSettingsFragment.newInstance())
+            .replace(R.id.settings_container, SettingsFragment.newInstance())
             .addToBackStack("profile")
             .commit()
         

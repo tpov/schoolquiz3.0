@@ -72,7 +72,7 @@ class ModernContainerActivity : AppCompatActivity() {
         btnPrimaryAction.setOnClickListener {
             // Handle save action
             val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-            if (fragment is ModernSettingsFragment) {
+            if (fragment is SettingsFragment) {
                 // Settings fragment will handle saving internally
             }
         }
@@ -97,11 +97,11 @@ class ModernContainerActivity : AppCompatActivity() {
     private fun loadFragment(savedInstanceState: Bundle?) {
         val fragmentType = intent.getStringExtra(EXTRA_FRAGMENT_TYPE)
         val fragment = when (fragmentType) {
-            FRAGMENT_SETTINGS -> ModernSettingsFragment.newInstance()
+            FRAGMENT_SETTINGS -> SettingsFragment.newInstance()
             // Add other fragments as needed
             // FRAGMENT_SHOP -> ShopFragment.newInstance()
             // FRAGMENT_REFERRAL -> ReferralFragment.newInstance()
-            else -> ModernSettingsFragment.newInstance() // Default to settings
+            else -> SettingsFragment.newInstance() // Default to settings
         }
         
         if (savedInstanceState == null) {

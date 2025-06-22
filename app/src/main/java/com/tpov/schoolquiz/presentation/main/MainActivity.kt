@@ -48,7 +48,10 @@ import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_SETTING
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.currentMenuId
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.setupDynamicMenu
 import com.tpov.schoolquiz.presentation.model.Inset
-import com.tpov.setting.presentation.ModernSettingsFragment
+import com.tpov.setting.presentation.SettingsFragment
+import com.tpov.setting.presentation.ProfileSyncInterface
+import com.tpov.setting.utils.SettingsToProfileConverter
+import com.tpov.common.data.model.SettingConfigModel
 import com.tpov.shop.presentation.ShopFragment
 import com.tpov.userguide.presentation.UserGuide
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -61,7 +64,7 @@ import javax.inject.Inject
  */
 
 @InternalCoroutinesApi
-class MainActivity : AppCompatActivity(), NavigationProvider {
+class MainActivity : AppCompatActivity(), NavigationProvider, ProfileSyncInterface {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
@@ -274,7 +277,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 MENU_HOME_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
                 MENU_MY_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_BY_USER))
                 MENU_DOWNLOADS -> switchFragment(DownloadFragment())
-                MENU_SETTING -> switchFragment(ModernSettingsFragment.newInstance())
+                MENU_SETTING -> switchFragment(SettingsFragment.newInstance(this))
                 MENU_PROFILE -> switchFragment(ProfileFragment())
                 MENU_CHAT -> switchFragment(ChatFragment())
                 MENU_LEADER -> switchFragment(LeadersFragment())
@@ -406,6 +409,23 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
             life = if (hardQuestion) settingsConfig.goldLife else settingsConfig.life
         )
         startActivity(intent)
+    }
+
+    override fun syncProfileWithSettings(settings: SettingConfigModel) {
+        val profileData = SettingsToProfileConverter.convertSettingsToProfileUpdate(settings)
+        
+        viewModel.updateProfileFromSettings(
+            name = profileData.name,
+            nickname = profileData.nickname,
+            birthday = profileData.birthday,
+            city = profileData.city,
+            logo = profileData.logo,
+            login = profileData.login,
+            languages = profileData.languages,
+            life = profileData.life,
+            goldLife = profileData.goldLife,
+            premium = profileData.premium
+        )
     }
 }
 
