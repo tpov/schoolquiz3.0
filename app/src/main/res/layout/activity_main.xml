@@ -145,7 +145,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="12dp"
                         android:text="User177"
-                        android:textColor="@android:color/white"
+                        android:textColor="@color/app_accent"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -183,12 +183,59 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:weightSum="4">
+                    <!-- Stars -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.9"
+                        android:orientation="horizontal"
+                        android:gravity="center">
 
-                    <!-- Hearts -->
+                        <TextView
+                            android:id="@+id/tv_stars"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textColor="@color/gold"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="4dp" />
+
+                        <ImageView
+                            android:id="@+id/imv_stars"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/star_full" />
+
+                    </LinearLayout>
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/tv_nolics"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="999 999"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="4dp" />
+
+                        <ImageView
+                            android:id="@+id/imv_nolics"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/baseline_monetization_on_24" />
+
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.2"
                         android:orientation="horizontal"
                         android:gravity="center">
 
@@ -235,37 +282,11 @@
 
                     </LinearLayout>
 
-                    <!-- Stars -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:gravity="center">
-
-                        <TextView
-                            android:id="@+id/tv_stars"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textColor="@color/gold"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:layout_marginEnd="4dp" />
-
-                        <ImageView
-                            android:id="@+id/imv_stars"
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:src="@drawable/star_full" />
-
-                    </LinearLayout>
-
                     <!-- Gold -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:layout_weight="0.9"
                         android:orientation="horizontal"
                         android:gravity="center">
 
@@ -286,33 +307,6 @@
                             android:src="@drawable/ic_gold" />
 
                     </LinearLayout>
-
-                    <!-- Nolics -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="horizontal"
-                        android:gravity="center">
-
-                        <TextView
-                            android:id="@+id/tv_nolics"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="999 999"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:layout_marginEnd="4dp" />
-
-                        <ImageView
-                            android:id="@+id/imv_nolics"
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:src="@drawable/baseline_monetization_on_24" />
-
-                    </LinearLayout>
-
                 </LinearLayout>
 
         </LinearLayout>

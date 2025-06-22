@@ -109,30 +109,31 @@
     <style name="ShopGoldCardStyle" parent="ShopCardViewStyle">
         <item name="cardBackgroundColor">@color/shop_card_gold_bg</item>
     </style>
-    
+
     <style name="ShopDonateCardStyle" parent="ShopCardViewStyle">
         <item name="cardBackgroundColor">@color/shop_card_donate_bg</item>
     </style>
-    
+
     <style name="ShopButtonPrimary" parent="AppButtonStyle">
         <item name="android:paddingHorizontal">20dp</item>
         <item name="android:paddingVertical">8dp</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/app_accent</item>
         <item name="cornerRadius">8dp</item>
     </style>
-    
+
     <style name="ShopButtonGooglePlay" parent="ShopButtonPrimary">
         <item name="backgroundTint">@color/shop_button_google_play</item>
     </style>
-    
+
     <style name="ReferralTitleStyle">
         <item name="android:textColor">@color/white</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:layout_marginBottom">4dp</item>
     </style>
-    
+
     <style name="ReferralSubtitleStyle">
         <item name="android:textColor">@color/app_text_secondary</item>
         <item name="android:textSize">14sp</item>

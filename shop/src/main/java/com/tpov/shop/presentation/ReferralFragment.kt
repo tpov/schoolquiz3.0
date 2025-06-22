@@ -15,8 +15,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import android.widget.LinearLayout
 import com.tpov.shop.R
 import com.tpov.shop.domain.ReferralUser
 import java.util.UUID
@@ -26,7 +25,7 @@ class ReferralFragment : Fragment() {
     private lateinit var tvPovId: TextView
     private lateinit var btnCopyLink: ImageButton
     private lateinit var btnShareLink: ImageButton
-    private lateinit var rvReferredUsers: RecyclerView
+    private lateinit var llReferredUsersContainer: LinearLayout
     private lateinit var tvRewardText: TextView
     private lateinit var ivRewardIcon: ImageView
     private lateinit var tvGettingGetNewBoxCount: TextView
@@ -59,7 +58,7 @@ class ReferralFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         updateUserInfo()
-        setupRecyclerView()
+        setupReferralsList()
         setupClickListeners()
         loadReferralData()
     }
@@ -68,7 +67,7 @@ class ReferralFragment : Fragment() {
         tvPovId = view.findViewById(R.id.tv_tpov_id)
         btnCopyLink = view.findViewById(R.id.imv_b_copy_referral_link)
         btnShareLink = view.findViewById(R.id.imv_b_share_referral_link)
-        rvReferredUsers = view.findViewById(R.id.rv_referred_users)
+        llReferredUsersContainer = view.findViewById(R.id.ll_referred_users_container)
         tvRewardText = view.findViewById(R.id.tv_reward_text)
         ivRewardIcon = view.findViewById(R.id.iv_reward_icon)
         tvGettingGetNewBoxCount = view.findViewById(R.id.tv_getting_new_box_count)
@@ -78,25 +77,49 @@ class ReferralFragment : Fragment() {
     private fun updateUserInfo() {
         // Fetch TPOV ID from SettingConfigObject in the common module
         userTpovId = com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig.tpovId.toString()
-        
+
         // Get username if available - could be from user settings or another source
         username = getUsernameFromSettings() ?: "User$userTpovId"
-        
+
         // Update UI
         tvPovId.text = "tpovId: $userTpovId"
     }
-    
+
     private fun getUsernameFromSettings(): String? {
         // Implementation depending on your app's architecture
         // For now, we'll use a placeholder
         return null
     }
 
-    private fun setupRecyclerView() {
+    private fun setupReferralsList() {
         referralAdapter = ReferralAdapter(requireContext())
-        rvReferredUsers.apply {
-            adapter = referralAdapter
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+    }
+
+    private fun populateReferralsList(referralUsers: List<ReferralUser>) {
+        // Clear existing views
+        llReferredUsersContainer.removeAllViews()
+
+        // Create list with placeholders to ensure minimum 6 items
+        val sortedRealUsers = referralUsers.sortedByDescending { it.allOpenBox }
+        val displayItems = mutableListOf<ReferralUser>()
+
+        for (i in 0 until maxOf(6, sortedRealUsers.size)) {
+            if (i < sortedRealUsers.size) {
+                displayItems.add(sortedRealUsers[i])
+            } else {
+                displayItems.add(ReferralUser.placeholder("Empty Slot"))
+            }
+        }
+
+        // Add each item as a view to the LinearLayout
+        displayItems.forEachIndexed { index, user ->
+            val itemView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.item_referral_user, llReferredUsersContainer, false)
+
+            val viewHolder = ReferralAdapter.ReferralViewHolder(itemView)
+            viewHolder.bind(user, requireContext())
+
+            llReferredUsersContainer.addView(itemView)
         }
     }
 
@@ -108,7 +131,7 @@ class ReferralFragment : Fragment() {
         btnShareLink.setOnClickListener {
             shareReferralLink(generateReferralLink(userTpovId))
         }
-        
+
         // Add back button click listener
         view?.findViewById<ImageButton>(R.id.btn_back)?.setOnClickListener {
             activity?.finish()
@@ -137,9 +160,7 @@ class ReferralFragment : Fragment() {
     }
 
     private fun loadReferralData() {
-        if (::referralAdapter.isInitialized) {
-            referralAdapter.submitList(sampleReferralUsers)
-        }
+        populateReferralsList(sampleReferralUsers)
         updateRewardStatus(sampleReferralUsers)
         val sum = sampleReferralUsers
             .map { it.seasonBoxCount / 100 }
@@ -152,9 +173,6 @@ class ReferralFragment : Fragment() {
         if (realUsers.filter { it.allOpenBox >= 100 }.size >= 6) {
             tvRewardText.text = getString(R.string.referral_reward_received_text)
             ivRewardIcon.setImageResource(R.drawable.ic_save)
-        } else {
-            tvRewardText.text = getString(R.string.referral_reward_default_text)
-            ivRewardIcon.setImageResource(R.drawable.ic_box)
         }
     }
 

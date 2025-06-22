@@ -15,16 +15,17 @@
     <color name="app_background">#121212</color>          <!-- Main background - darker -->
     <color name="app_background_dark">#000000</color>     <!-- Status bar - pure black -->
     <color name="app_toolbar_background">#1E1E1E</color>  <!-- Toolbar background - visible -->
-    <color name="app_card_background">#2C2C2C</color>     <!-- Card background - much lighter -->
+    <color name="app_card_background">#242429</color>     <!-- Card background - modern dark -->
     <color name="app_card_elevated">#383838</color>       <!-- Elevated cards - even lighter -->
     <color name="app_surface_light">#454545</color>       <!-- Light surface elements - visible -->
     <color name="app_card_shadow">#1A000000</color>       <!-- Updated shadow -->
-    
+
     <!-- Accent colors -->
     <color name="app_accent">#4285F4</color>
+    <color name="app_accent_back">#1A0288D1</color>
     <color name="app_accent_dark">#3367D6</color>
     <color name="app_button_text">#FFFFFF</color>
-    
+
     <!-- Improved text hierarchy -->
     <color name="app_text_primary">#FFFFFF</color>
     <color name="app_text_secondary">#B8B8B8</color>
@@ -35,7 +36,7 @@
     <color name="app_progress_background">#333339</color>
     <color name="app_error">#F44336</color>
     <color name="app_success">#4CAF50</color>
-    
+
     <!-- Shop Screen Colors with better layering -->
     <color name="shop_background">@color/app_background</color>
     <color name="shop_toolbar_background">@color/app_toolbar_background</color>
@@ -47,7 +48,7 @@
     <color name="shop_text_color">@color/app_text_primary</color>
     <color name="contour_unable">@color/app_accent</color>
     <color name="back_item">@color/app_card_background</color>
-    
+
     <!-- Referral Screen Colors -->
     <color name="referral_background">@color/app_background</color>
     <color name="referral_background_dark">@color/app_background_dark</color>
@@ -64,12 +65,12 @@
     <color name="avatar_background">#333339</color>
     <color name="white_80">#CCFFFFFF</color>
     <color name="bonus_text_color">@color/app_accent</color>
-    
+
     <!-- Enhanced border system -->
     <color name="active_border">#555555</color>
     <color name="inactive_border">#3A3A3A</color>
     <color name="border_subtle">#33FFFFFF</color>
-    
+
     <!-- Updated design colors - MORE VISIBLE -->
     <color name="shop_button_google_play">#4CAF50</color>  <!-- Bright green -->
     <color name="shop_card_gold_bg">#3A2F0A</color>        <!-- More golden -->
