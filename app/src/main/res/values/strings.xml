@@ -365,4 +365,9 @@ In general, the timer starts if you read an unanswered question.</string>
     <string name="cancel">Отмена</string>
     <string name="add">Добавить</string>
 
+    <string name="coins_added_gold">Вам начислили: %1$d золота</string>
+    <string name="coins_added_skill">Вам начислили: %1$d опыта</string>
+    <string name="coins_added_nolics">Вам начислили: %1$d ноликов</string>
+    <string name="coins_added_trophy">Вам начислили трофеи: %1$s</string>
+    <string name="message_from_developer">Вам пришло сообщение от разработчика: %1$s</string>
 </resources>
