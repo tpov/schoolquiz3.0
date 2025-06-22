@@ -3,7 +3,6 @@
     <color name="back_main_green">#3CAF50</color>
     <color name="back_main_red">#F44336</color>
 
-
     <color name="bright_green">#00FF00</color>
     <color name="yellow">#FFFF00</color>
     <color name="blue">#0000FF</color>
@@ -11,7 +10,6 @@
 
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="gold">#FFD600</color>
 
     <color name="contour">#0C7FCF</color>
     <color name="contour_unable">#0C4678</color>
@@ -53,8 +51,60 @@
     <!-- Icon colors -->
     <color name="icon_tint_gold">#FFD700</color>
     <color name="icon_tint_primary">#B3FFFFFF</color>
+    <color name="icon_tint_secondary">#808080</color>
     
     <!-- Border colors -->
     <color name="active_border">#444444</color>
     <color name="inactive_border">#333333</color>
+    
+    <!-- Modern Settings Colors -->
+    <color name="shop_card_default">#1F1F1F</color>
+    <color name="shop_card_configured">#2A2A2A</color>
+    
+    <!-- Accent colors for modern cards -->
+    <color name="accent_blue">#4285F4</color>
+    <color name="accent_orange">#FF9800</color>
+    <color name="accent_green">#4CAF50</color>
+    <color name="accent_purple">#9C27B0</color>
+    <color name="accent_cyan">#00BCD4</color>
+    <color name="accent_pink">#E91E63</color>
+
+    <!-- Main App Colors -->
+    <color name="colorPrimary">#4285F4</color>
+    <color name="colorSecondary">#00C853</color>
+    <color name="colorAccent">#FF9800</color>
+    
+    <!-- Background Colors -->
+    <color name="background_primary">#121212</color>
+    <color name="background_secondary">#1F1F1F</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#CCCCCC</color>
+    <color name="text_hint">#888888</color>
+    
+    <!-- Card Colors -->
+    <color name="card_background">#1F1F1F</color>
+    <color name="card_stroke">#333333</color>
+    
+    <!-- Button Colors -->
+    <color name="button_primary">#4285F4</color>
+    <color name="button_secondary">#2A2A2A</color>
+    <color name="button_text">#FFFFFF</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#00C853</color>
+    <color name="warning">#FF9800</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+    
+    <!-- Special Colors -->
+    <color name="gold">#FFD700</color>
+    <color name="premium">#9C27B0</color>
+    
+    <!-- Settings specific colors -->
+    <color name="settings_background">#121212</color>
+    <color name="settings_card_background">#1F1F1F</color>
+    <color name="settings_accent">#4285F4</color>
+    <color name="settings_text_primary">#FFFFFF</color>
 </resources>

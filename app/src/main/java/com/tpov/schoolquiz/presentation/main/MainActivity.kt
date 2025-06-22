@@ -217,8 +217,16 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
     private fun observeDayInGameAndBox() = lifecycleScope.launch {
         viewModel.daysInGameState.collect {
-            boxDays.take(it.countDayBox.toInt()).forEach {
-                it.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.green))
+            // Reset all days to inactive state
+            boxDays.forEach { dayView ->
+                dayView.setBackgroundResource(R.drawable.progress_bar_inactive)
+                dayView.alpha = 0.5f
+            }
+            
+            // Set active days to green
+            boxDays.take(it.countDayBox.toInt()).forEach { dayView ->
+                dayView.setBackgroundResource(R.drawable.progress_bar_active)
+                dayView.alpha = 1.0f
             }
 
             binding.tvNumberBox.text = it.countBox.toString()
