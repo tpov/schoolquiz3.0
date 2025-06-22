@@ -1,7 +1,7 @@
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm")
-    id("com.tpov.logger.gradle-plugin")
+    // id("com.tpov.logger.gradle-plugin") // Временно закомментировано для диагностики проблемы со сборкой
     id("application")
 }
 

@@ -4,7 +4,7 @@ plugins {
     id("kotlin-kapt")
     id("kotlin-parcelize")
     id("com.google.gms.google-services")
-    id("com.tpov.logger.gradle-plugin")
+    // id("com.tpov.logger.gradle-plugin") // Временно закомментировано для диагностики проблемы со сборкой
     id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
 }
