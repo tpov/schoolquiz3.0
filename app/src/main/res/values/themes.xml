@@ -29,7 +29,7 @@
 
     <style name="RatingBar" parent="Theme.AppCompat">
         <item name="android:colorControlActivated">@color/gold</item>
-        <item name="android:textColorSecondary">#000000</item>
+        <item name="colorControlNormal">@color/star_outline</item>
     </style>
     <style name="RatingBarFavorite" parent="Theme.AppCompat">
         <item name="android:colorControlActivated">#FF0000</item>

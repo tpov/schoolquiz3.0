@@ -39,11 +39,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|center_vertical"
-                android:background="#3C3C3C"
+                android:background="@android:color/transparent"
                 android:numStars="3"
                 android:layout_margin="8dp"
-                android:progressBackgroundTint="#AAAAAA"
-                android:progressBackgroundTintMode="multiply"
+                android:progressBackgroundTint="@color/star_outline"
                 android:stepSize="0.01"
                 android:theme="@style/RatingBar" />
 
