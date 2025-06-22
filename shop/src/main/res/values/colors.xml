@@ -11,16 +11,24 @@
     <color name="transparent">#00000000</color>
     <color name="white_pb">#181818</color>
 
-    <!-- App Theme Colors - based on screenshot -->
-    <color name="app_background">#1A1A1F</color>
-    <color name="app_background_dark">#121215</color>
-    <color name="app_card_background">#232329</color>
-    <color name="app_card_shadow">#14000000</color>
-    <color name="app_accent">#0288D1</color>
-    <color name="app_accent_dark">#0277BD</color>
+    <!-- Enhanced layered app theme colors - MORE VISIBLE -->
+    <color name="app_background">#121212</color>          <!-- Main background - darker -->
+    <color name="app_background_dark">#000000</color>     <!-- Status bar - pure black -->
+    <color name="app_toolbar_background">#1E1E1E</color>  <!-- Toolbar background - visible -->
+    <color name="app_card_background">#2C2C2C</color>     <!-- Card background - much lighter -->
+    <color name="app_card_elevated">#383838</color>       <!-- Elevated cards - even lighter -->
+    <color name="app_surface_light">#454545</color>       <!-- Light surface elements - visible -->
+    <color name="app_card_shadow">#1A000000</color>       <!-- Updated shadow -->
+    
+    <!-- Accent colors -->
+    <color name="app_accent">#4285F4</color>
+    <color name="app_accent_dark">#3367D6</color>
     <color name="app_button_text">#FFFFFF</color>
+    
+    <!-- Improved text hierarchy -->
     <color name="app_text_primary">#FFFFFF</color>
-    <color name="app_text_secondary">#B3FFFFFF</color>
+    <color name="app_text_secondary">#B8B8B8</color>
+    <color name="app_text_tertiary">#888888</color>
     <color name="app_highlight_text">#FFC107</color>
     <color name="app_gold">#D4AF37</color>
     <color name="app_special_reward_background">#3A3000</color>
@@ -28,9 +36,11 @@
     <color name="app_error">#F44336</color>
     <color name="app_success">#4CAF50</color>
     
-    <!-- Shop Screen Colors -->
+    <!-- Shop Screen Colors with better layering -->
     <color name="shop_background">@color/app_background</color>
+    <color name="shop_toolbar_background">@color/app_toolbar_background</color>
     <color name="shop_card_background">@color/app_card_background</color>
+    <color name="shop_card_elevated">@color/app_card_elevated</color>
     <color name="shop_button_yellow">@color/app_accent</color>
     <color name="shop_red_heart">#FF0000</color>
     <color name="shop_yellow_heart">#D4AF37</color>
@@ -41,7 +51,9 @@
     <!-- Referral Screen Colors -->
     <color name="referral_background">@color/app_background</color>
     <color name="referral_background_dark">@color/app_background_dark</color>
+    <color name="referral_toolbar_background">@color/app_toolbar_background</color>
     <color name="referral_card_background">@color/app_card_background</color>
+    <color name="referral_card_elevated">@color/app_card_elevated</color>
     <color name="referral_card_shadow">@color/app_card_shadow</color>
     <color name="referral_reward_background">@color/app_special_reward_background</color>
     <color name="referral_highlight_text">@color/app_highlight_text</color>
@@ -53,16 +65,18 @@
     <color name="white_80">#CCFFFFFF</color>
     <color name="bonus_text_color">@color/app_accent</color>
     
-    <!-- Border colors -->
-    <color name="active_border">#444444</color>
-    <color name="inactive_border">#333333</color>
+    <!-- Enhanced border system -->
+    <color name="active_border">#555555</color>
+    <color name="inactive_border">#3A3A3A</color>
+    <color name="border_subtle">#33FFFFFF</color>
     
-    <!-- New design colors -->
-    <color name="shop_button_google_play">#01875F</color>
-    <color name="shop_card_gold_bg">#2A2416</color>
-    <color name="shop_card_donate_bg">#1F1A2A</color>
-    <color name="shop_button_secondary">#424242</color>
+    <!-- Updated design colors - MORE VISIBLE -->
+    <color name="shop_button_google_play">#4CAF50</color>  <!-- Bright green -->
+    <color name="shop_card_gold_bg">#3A2F0A</color>        <!-- More golden -->
+    <color name="shop_card_donate_bg">#2A1B3D</color>      <!-- More purple -->
+    <color name="shop_button_secondary">#555555</color>    <!-- Lighter secondary -->
 
+    <!-- Icon colors -->
     <color name="icon_tint_gold">#FFD700</color>
     <color name="icon_tint_primary">#B3FFFFFF</color>
 </resources>

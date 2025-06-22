@@ -7,6 +7,8 @@
         <item name="cardCornerRadius">12dp</item>
         <item name="cardElevation">2dp</item>
         <item name="contentPadding">0dp</item>
+        <item name="strokeColor">@color/border_subtle</item>
+        <item name="strokeWidth">1dp</item>
     </style>
 
     <!-- Shop Card Style -->
@@ -70,13 +72,14 @@
     </style>
 
     <!-- Base Button Style -->
-    <style name="AppButtonStyle">
+    <style name="AppButtonStyle" parent="Widget.MaterialComponents.Button">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:textColor">@color/app_button_text</item>
         <item name="android:textAllCaps">false</item>
         <item name="backgroundTint">@color/app_accent</item>
+        <item name="cornerRadius">8dp</item>
     </style>
 
     <!-- Shop Button Style -->
