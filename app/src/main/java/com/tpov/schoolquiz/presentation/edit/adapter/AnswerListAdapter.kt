@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create.adapter
+package com.tpov.schoolquiz.presentation.edit.adapter
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,7 +11,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.presentation.create.model.TranslateAnswer
+import com.tpov.schoolquiz.presentation.edit.model.TranslateAnswer
 
 class AnswerListAdapter(
     private val onAnswerOptionsChanged: (updatedTranslateAnswer: TranslateAnswer) -> Unit

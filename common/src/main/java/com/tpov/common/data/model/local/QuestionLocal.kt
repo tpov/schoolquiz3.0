@@ -1,5 +1,6 @@
 package com.tpov.common.data.model.local
 
+import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.data.model.entity.QuestionEntity
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.LanguageUtils
@@ -30,5 +31,13 @@ data class QuestionLocal(
         pathStructure.nameQuiz,
         language = this.language.fullName,
         lvlTranslate
+    )
+
+    fun create(numQuestion: Int, hardQuestion: Boolean) = QuestionLocal(
+        numQuestion = numQuestion,
+        nameQuestion = "",
+        nameAnswers = SPLIT_BETWEEN_ANSWERS,
+        pathPictureQuestion = "",
+        hardQuestion = hardQuestion
     )
 }

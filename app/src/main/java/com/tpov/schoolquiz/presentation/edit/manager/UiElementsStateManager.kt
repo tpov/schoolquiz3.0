@@ -1,7 +1,7 @@
-package com.tpov.schoolquiz.presentation.create.manager
+package com.tpov.schoolquiz.presentation.edit.manager
 
 import android.graphics.drawable.BitmapDrawable
-import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
+import com.tpov.schoolquiz.presentation.edit.model.QuizUiModelState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 

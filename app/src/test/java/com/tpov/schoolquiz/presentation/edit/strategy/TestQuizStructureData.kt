@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create.strategy
+package com.tpov.schoolquiz.presentation.edit.strategy
 
 import com.tpov.common.data.model.local.StructureDataLocal
 

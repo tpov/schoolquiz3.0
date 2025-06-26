@@ -32,6 +32,7 @@ import com.tpov.schoolquiz.data.model.Qualification
 import com.tpov.schoolquiz.databinding.ActivityMainBinding
 import com.tpov.schoolquiz.presentation.GiftBoxDialogFragment
 import com.tpov.schoolquiz.presentation.core.NotificationHelper
+import com.tpov.schoolquiz.presentation.create.CreateQuizDialogFragment
 import com.tpov.schoolquiz.presentation.dowload.DownloadFragment
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CHAT
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_CONTACT
@@ -102,21 +103,8 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
     private fun initSetOnClickListeners() {
         binding.fabAddItem.setOnClickListener {
-            // Открываем QuestionDialogFragment вместо CreateQuizActivity
-            val testPathStructure = PathStructure(
-                nameQuiz = "Тестовая викторина",
-                nameCategory = "Тестовая категория",
-                nameSubCategory = "Подкатегория",
-                nameSubsubCategory = "Подподкатегория",
-                nameEvent = "Тестовое событие"
-            )
-
-            QuestionDialogHelper.showQuestionDialog(
-                fragmentManager = supportFragmentManager,
-                pathStructure = testPathStructure,
-                hardQuestion = false,
-                life = settingsConfig.life
-            )
+            // Открываем CreateQuizDialogFragment для создания новой викторины
+            CreateQuizDialogFragment.newInstance().show(supportFragmentManager, "CreateQuizDialog")
         }
     }
 

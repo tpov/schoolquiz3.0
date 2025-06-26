@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.tpov.common.presentation.utils.ViewModelFactory
 import com.tpov.schoolquiz.presentation.create.CreateQuizViewModel
+import com.tpov.schoolquiz.presentation.edit.EditQuizViewModel
 import com.tpov.schoolquiz.presentation.main.MainViewModel
 import dagger.Binds
 import dagger.MapKey
@@ -26,8 +27,13 @@ abstract class ViewModelModule {
 
     @Binds
     @IntoMap
+    @ViewModelKey(EditQuizViewModel::class)
+    abstract fun bindCreateQuizViewModel(viewModel: EditQuizViewModel): ViewModel
+
+    @Binds
+    @IntoMap
     @ViewModelKey(CreateQuizViewModel::class)
-    abstract fun bindCreateQuizViewModel(viewModel: CreateQuizViewModel): ViewModel
+    abstract fun bindCreateQuizViewModel2(viewModel: CreateQuizViewModel): ViewModel
 
     companion object {
         @Provides

@@ -252,7 +252,7 @@
             android:paddingTop="8dp"
             android:paddingRight="16dp"
             android:paddingBottom="16dp"
-            android:text="ERROR  ERROR ERROR ERROR ERROR ERRORERROR  ERROR ERROR ERROR "
+            android:hint="name question"
             android:textColor="@color/white"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -439,12 +439,12 @@
         android:gravity="center|bottom"
         android:orientation="vertical"
         android:paddingBottom="8dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/b_cheat"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <Button
+        <EditText
             android:id="@+id/button_1"
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -453,12 +453,11 @@
             android:layout_marginRight="8dp"
             android:background="@drawable/back_item_main"
             android:elevation="20dp"
-            android:text="@string/true_button"
+            android:gravity="center"
             android:textColor="@color/white"
             android:textSize="14sp" />
 
-
-        <Button
+        <EditText
             android:id="@+id/button_2"
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -469,12 +468,10 @@
             android:elevation="10dp"
             android:gravity="center"
             android:padding="16dp"
-            android:text="@string/false_button"
             android:textColor="@color/white"
             android:textSize="14sp" />
 
-
-        <Button
+        <EditText
             android:id="@+id/button_3"
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -485,12 +482,10 @@
             android:elevation="10dp"
             android:gravity="center"
             android:padding="16dp"
-            android:text="@string/false_button"
             android:textColor="@color/white"
             android:textSize="14sp"/>
 
-
-        <Button
+        <EditText
             android:id="@+id/button_4"
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -502,10 +497,22 @@
             android:elevation="10dp"
             android:gravity="center"
             android:padding="16dp"
-            android:text="@string/false_button"
             android:textColor="@color/white"
             android:textSize="14sp"/>
     </LinearLayout>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerQuestions"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/b_cheat"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvTimer" />
+
     <ImageButton
         android:id="@+id/b_cheat"
         android:layout_width="25dp"
@@ -530,7 +537,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
-

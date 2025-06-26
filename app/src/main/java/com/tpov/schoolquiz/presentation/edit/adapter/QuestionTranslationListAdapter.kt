@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create.adapter
+package com.tpov.schoolquiz.presentation.edit.adapter
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import com.tpov.schoolquiz.R
-import com.tpov.schoolquiz.presentation.create.model.TranslateQuestion
 import com.tpov.schoolquiz.presentation.custom.CustomSpinner
+import com.tpov.schoolquiz.presentation.edit.model.TranslateQuestion
 
 class QuestionTranslationListAdapter(
     private val onQuestionTextChanged: (updatedTranslateQuestion: TranslateQuestion) -> Unit,

@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create.strategy
+package com.tpov.schoolquiz.presentation.edit.strategy
 
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -11,13 +11,13 @@ import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.NamesUtils
-import com.tpov.schoolquiz.presentation.create.manager.QuestionStateManager
-import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
-import com.tpov.schoolquiz.presentation.create.model.ImageUiState
-import com.tpov.schoolquiz.presentation.create.model.IsUiState
-import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
-import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
-import com.tpov.schoolquiz.presentation.create.model.TextUiState
+import com.tpov.schoolquiz.presentation.edit.manager.QuestionStateManager
+import com.tpov.schoolquiz.presentation.edit.model.CheckBoxUiState
+import com.tpov.schoolquiz.presentation.edit.model.ImageUiState
+import com.tpov.schoolquiz.presentation.edit.model.IsUiState
+import com.tpov.schoolquiz.presentation.edit.model.QuizUiModelState
+import com.tpov.schoolquiz.presentation.edit.model.SpinnerUiState
+import com.tpov.schoolquiz.presentation.edit.model.TextUiState
 
 
 class CreateQuizRegimeStrategy(

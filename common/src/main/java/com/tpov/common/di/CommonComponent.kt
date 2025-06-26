@@ -11,7 +11,6 @@ import com.tpov.common.domain.repository.RepositoryQuestionDetail
 import com.tpov.common.domain.repository.RepositorySettingLocal
 import com.tpov.common.domain.repository.RepositorySettingServer
 import com.tpov.common.presentation.question.QuestionActivity
-import com.tpov.common.presentation.question.QuestionDialogFragment
 import com.tpov.common.presentation.question.TranslateDialog
 import com.tpov.common.presentation.quiz.QuizFragment
 import dagger.BindsInstance
@@ -31,8 +30,6 @@ interface CommonComponent {
     @OptIn(InternalCoroutinesApi::class)
     fun inject(mainFragment: QuizFragment)
     fun inject(translateDialog: TranslateDialog)
-    @OptIn(InternalCoroutinesApi::class)
-    fun inject(questionDialogFragment: QuestionDialogFragment)
 
     fun provideRepositoryException(): RepositoryException
     fun repositorySettingServer(): RepositorySettingServer

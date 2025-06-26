@@ -1,10 +1,10 @@
-package com.tpov.schoolquiz.presentation.create.strategy
+package com.tpov.schoolquiz.presentation.edit.strategy
 
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.presentation.model.PathStructure
-import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
+import com.tpov.schoolquiz.presentation.edit.model.QuizUiModelState
 
 interface QuizRegimeStrategy {
     fun setupUiState(): QuizUiModelState

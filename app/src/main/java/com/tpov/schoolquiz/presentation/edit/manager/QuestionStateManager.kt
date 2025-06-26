@@ -1,20 +1,19 @@
-package com.tpov.schoolquiz.presentation.create.manager
+package com.tpov.schoolquiz.presentation.edit.manager
 
-import android.util.Log
 import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.utils.QuestionUtils
 import com.tpov.common.presentation.utils.LanguageUtils
-import com.tpov.schoolquiz.presentation.create.CreateQuizViewModel.Companion.MAX_ANSWER_OPTIONS_LIMIT
-import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
-import com.tpov.schoolquiz.presentation.create.model.QuizUiModelState
-import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
-import com.tpov.schoolquiz.presentation.create.model.TextUiState
-import com.tpov.schoolquiz.presentation.create.model.TranslateAnswer
-import com.tpov.schoolquiz.presentation.create.model.TranslateQuestion
-import com.tpov.schoolquiz.presentation.create.model.getNumQuestion
-import com.tpov.schoolquiz.presentation.create.model.getType
+import com.tpov.schoolquiz.presentation.edit.EditQuizViewModel.Companion.MAX_ANSWER_OPTIONS_LIMIT
+import com.tpov.schoolquiz.presentation.edit.model.CheckBoxUiState
+import com.tpov.schoolquiz.presentation.edit.model.QuizUiModelState
+import com.tpov.schoolquiz.presentation.edit.model.SpinnerUiState
+import com.tpov.schoolquiz.presentation.edit.model.TextUiState
+import com.tpov.schoolquiz.presentation.edit.model.TranslateAnswer
+import com.tpov.schoolquiz.presentation.edit.model.TranslateQuestion
+import com.tpov.schoolquiz.presentation.edit.model.getNumQuestion
+import com.tpov.schoolquiz.presentation.edit.model.getType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 

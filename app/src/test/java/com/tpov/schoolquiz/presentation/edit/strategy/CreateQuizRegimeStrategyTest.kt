@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create.strategy
+package com.tpov.schoolquiz.presentation.edit.strategy
 
 import android.graphics.drawable.Drawable
 import com.tpov.common.data.model.local.StructureDataLocal

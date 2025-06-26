@@ -3,7 +3,9 @@ package com.tpov.schoolquiz.di
 import android.app.Application
 import com.tpov.common.di.CommonComponent
 import com.tpov.schoolquiz.presentation.AppWorkerFactory
-import com.tpov.schoolquiz.presentation.create.CreateQuizActivity
+import com.tpov.schoolquiz.presentation.create.CreateQuestionDialogFragment
+import com.tpov.schoolquiz.presentation.create.CreateQuizDialogFragment
+import com.tpov.schoolquiz.presentation.edit.EditQuizActivity
 import com.tpov.schoolquiz.presentation.main.MainActivity
 import com.tpov.schoolquiz.presentation.main.MainFragment
 import com.tpov.schoolquiz.presentation.splashscreen.SplashScreen
@@ -23,7 +25,9 @@ interface ApplicationComponent {
     fun inject(splashScreen: SplashScreen)
     fun inject(mainFragment: MainFragment)
     fun inject(mainActivity: MainActivity)
-    fun inject(createQuizActivity: CreateQuizActivity)
+    fun inject(editQuizActivity: EditQuizActivity)
+    fun inject(createQuizDialogFragment: CreateQuizDialogFragment)
+    fun inject(createQuestionDialogFragment: CreateQuestionDialogFragment)
     fun workerFactory(): AppWorkerFactory
 
     @Component.Factory

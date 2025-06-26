@@ -59,7 +59,6 @@ object StructureDataUtils {
                 }
             }
         }
-
         return nodeOld
     }
 

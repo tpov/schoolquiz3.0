@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/back_light_question">
+
+    <!-- Заголовок -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:text="Создание викторины"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Категории - activity_quiz_item 1 -->
+    <TextView
+        android:id="@+id/tvCategoryLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:text="Категории:"
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <include
+        android:id="@+id/categoryItem"
+        layout="@layout/activity_quiz_item"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tvCategoryLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Субкатегории - activity_quiz_item 2 -->
+    <TextView
+        android:id="@+id/tvSubCategoryLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="8dp"
+        android:text="Субкатегории:"
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/categoryItem"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <include
+        android:id="@+id/subCategoryItem"
+        layout="@layout/activity_quiz_item"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tvSubCategoryLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Субсубкатегории - activity_quiz_item 3 -->
+    <TextView
+        android:id="@+id/tvSubSubCategoryLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="8dp"
+        android:text="Субсубкатегории:"
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/subCategoryItem"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <include
+        android:id="@+id/subSubCategoryItem"
+        layout="@layout/activity_quiz_item"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tvSubSubCategoryLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Текущий квиз - activity_quiz_item 4 -->
+    <TextView
+        android:id="@+id/tvCurrentQuizLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="8dp"
+        android:text="Текущий квиз:"
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/subSubCategoryItem"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <include
+        android:id="@+id/currentQuizItem"
+        layout="@layout/activity_quiz_item"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="2dp"
+        app:layout_constraintTop_toBottomOf="@id/tvCurrentQuizLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- CustomSpinner для выбора квиза -->
+    <TextView
+        android:id="@+id/tvQuizLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="8dp"
+        android:text="Выбрать квиз:"
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/currentQuizItem"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.tpov.schoolquiz.presentation.custom.CustomSpinner
+        android:id="@+id/spinnerQuiz"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="2dp"
+        android:background="@drawable/back_item_main"
+        app:layout_constraintTop_toBottomOf="@id/tvQuizLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Кнопки действий -->
+    <LinearLayout
+        android:id="@+id/llButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:text="Отмена"
+            android:background="@drawable/back_item_main_false"
+            android:textColor="@color/white" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="Сохранить"
+            android:background="@drawable/back_item_main"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/b_hard_question"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Сложные вопросы"
+        app:layout_constraintBottom_toTopOf="@+id/llButtons"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+    <Button
+        android:id="@+id/b_light_question"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Легкие вопросы"
+        app:layout_constraintBottom_toTopOf="@+id/b_hard_question"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.tpov.schoolquiz.presentation.custom.CustomSpinner
+        android:id="@+id/sp_language_question"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/b_light_question"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

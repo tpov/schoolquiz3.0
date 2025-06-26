@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create
+package com.tpov.schoolquiz.presentation.edit
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -26,17 +26,17 @@ import com.tpov.common.presentation.model.PathStructure
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.ActivityCreateQuizBinding
-import com.tpov.schoolquiz.presentation.create.adapter.AnswerListAdapter
-import com.tpov.schoolquiz.presentation.create.adapter.QuestionTranslationListAdapter
-import com.tpov.schoolquiz.presentation.create.model.CheckBoxUiState
-import com.tpov.schoolquiz.presentation.create.model.ImageUiState
-import com.tpov.schoolquiz.presentation.create.model.IsUiState
-import com.tpov.schoolquiz.presentation.create.model.SpinnerUiState
-import com.tpov.schoolquiz.presentation.create.model.TextUiState
+import com.tpov.schoolquiz.presentation.edit.adapter.AnswerListAdapter
+import com.tpov.schoolquiz.presentation.edit.adapter.QuestionTranslationListAdapter
+import com.tpov.schoolquiz.presentation.edit.model.CheckBoxUiState
+import com.tpov.schoolquiz.presentation.edit.model.ImageUiState
+import com.tpov.schoolquiz.presentation.edit.model.IsUiState
+import com.tpov.schoolquiz.presentation.edit.model.SpinnerUiState
+import com.tpov.schoolquiz.presentation.edit.model.TextUiState
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class CreateQuizActivity : AppCompatActivity() {
+class EditQuizActivity : AppCompatActivity() {
 
     @Inject
     lateinit var structureUseCase: StructureUseCase
@@ -51,7 +51,7 @@ class CreateQuizActivity : AppCompatActivity() {
     private var currentRegime: Int = -1
     private var pathStructure: PathStructure? = null
 
-    private lateinit var viewModel: CreateQuizViewModel
+    private lateinit var viewModel: EditQuizViewModel
 
     private val PICK_IMAGE_REQUEST = 1001
     private var currentImageUploadType: ImageUploadType = ImageUploadType.QUIZ
@@ -65,7 +65,7 @@ class CreateQuizActivity : AppCompatActivity() {
         private const val EXTRA_PATH_STRUCTURE = "extra_path_structure"
 
         fun newIntent(context: Context, regime: Int, pathStructure: PathStructure? = null): Intent {
-            return Intent(context, CreateQuizActivity::class.java).apply {
+            return Intent(context, EditQuizActivity::class.java).apply {
                 putExtra(EXTRA_REGIME, regime)
                 putExtra(EXTRA_PATH_STRUCTURE, pathStructure)
             }
@@ -79,7 +79,7 @@ class CreateQuizActivity : AppCompatActivity() {
         binding = ActivityCreateQuizBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel = ViewModelProvider(this, viewModelFactory)[CreateQuizViewModel::class.java]
+        viewModel = ViewModelProvider(this, viewModelFactory)[EditQuizViewModel::class.java]
 
         currentRegime = intent.getIntExtra("extra_regime", -1)
         pathStructure = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -567,7 +567,7 @@ class CreateQuizActivity : AppCompatActivity() {
             viewModel.onAnswerOptionsChanged(updatedAnswer)
         }
 
-        binding.rvTranslateAnswers.layoutManager = LinearLayoutManager(this@CreateQuizActivity)
+        binding.rvTranslateAnswers.layoutManager = LinearLayoutManager(this@EditQuizActivity)
         binding.rvTranslateAnswers.adapter = answersAdapter
     }
 
@@ -581,7 +581,7 @@ class CreateQuizActivity : AppCompatActivity() {
             }
         )
 
-        binding.rvTranslateQuestions.layoutManager = LinearLayoutManager(this@CreateQuizActivity)
+        binding.rvTranslateQuestions.layoutManager = LinearLayoutManager(this@EditQuizActivity)
         binding.rvTranslateQuestions.adapter = translationsAdapter
     }
 

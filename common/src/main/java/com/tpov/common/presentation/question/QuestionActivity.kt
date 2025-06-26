@@ -15,6 +15,7 @@ import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.dynamicanimation.animation.DynamicAnimation
@@ -81,7 +82,7 @@ class QuestionActivity : AppCompatActivity() {
     private val insertedOrder = mutableListOf<Int>()
 
     private lateinit var buttons8: List<Button>
-    private lateinit var buttons4: List<Button>
+    private lateinit var buttons4: List<EditText>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         DaggerCommonComponent.factory()
@@ -420,7 +421,7 @@ class QuestionActivity : AppCompatActivity() {
 
         for (i in buttons4.indices) {
             if (i < indexedAnswers.size && i < maxAnswers) {
-                buttons4[i].text = indexedAnswers[i].value
+                buttons4[i].setText(indexedAnswers[i].value)
                 buttons4[i].visibility = View.VISIBLE
                 buttons4[i].tag = indexedAnswers[i].index + 1
             } else {

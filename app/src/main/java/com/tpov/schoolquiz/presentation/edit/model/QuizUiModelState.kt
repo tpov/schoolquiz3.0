@@ -1,4 +1,4 @@
-package com.tpov.schoolquiz.presentation.create.model
+package com.tpov.schoolquiz.presentation.edit.model
 
 import android.graphics.drawable.BitmapDrawable
 import com.tpov.common.data.model.local.QuestionLocal
