@@ -212,7 +212,7 @@ class QuestionViewModel @Inject constructor(
     }?.average()?.toInt() ?: 0
 
     fun setNewCurrentQuestion(current: Int) {
-        _currentQuestion.value = questionList.value?.get(current)
+        _currentQuestion.value = questionList.value?.get(current - 1)
     }
 
     fun saveResult() {

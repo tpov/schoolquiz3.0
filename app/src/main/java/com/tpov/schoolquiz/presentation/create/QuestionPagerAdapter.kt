@@ -30,6 +30,9 @@ class QuestionPagerAdapter(
     }
 
     override fun onBindViewHolder(holder: QuestionViewHolder, position: Int) {
+        if (position >= itemCount) {
+            return
+        }
         holder.bind(getItem(position), position)
     }
 

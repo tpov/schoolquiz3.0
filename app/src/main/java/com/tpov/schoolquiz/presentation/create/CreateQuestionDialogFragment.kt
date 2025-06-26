@@ -98,17 +98,25 @@ class CreateQuestionDialogFragment : DialogFragment() {
             },
             onQuestionTextChanged = { question, newText ->
                 // Обновляем текст вопроса в ViewModel
-                createQuizViewModel.updateQuestionText(question.numQuestion, newText)
+                createQuizViewModel.updateQuestionText(
+                    question.numQuestion,
+                    question.hardQuestion,
+                    question.language,
+                    newText
+                )
             },
             onAnswersChanged = { question, answers ->
-                // Обновляем ответы в ViewModel
                 val answersString = answers.joinToString(SPLIT_BETWEEN_ANSWERS)
-                createQuizViewModel.updateQuestionAnswers(question.numQuestion, answersString)
+                createQuizViewModel.updateQuestionAnswers(
+                    question.numQuestion,
+                    question.hardQuestion,
+                    question.language,
+                    answersString
+                )
             }
         )
         binding.viewPagerQuestions.adapter = questionPagerAdapter
 
-        // Добавляем callback для отслеживания изменений страниц
         binding.viewPagerQuestions.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
@@ -116,14 +124,7 @@ class CreateQuestionDialogFragment : DialogFragment() {
                 // Проверяем, дошел ли пользователь до последнего элемента
                 val currentList = createQuizViewModel.showQuestionList.value
                 if (position == currentList.size - 1 && currentList.isNotEmpty()) {
-                    // Проверяем, что последний вопрос не пустой (чтобы не создавать много пустых подряд)
-                    val lastQuestion = currentList.lastOrNull()
-                    val isLastQuestionEmpty = lastQuestion?.nameQuestion?.contains("Новый вопрос") == true
-
-                    if (!isLastQuestionEmpty) {
-                        // Пользователь на последнем непустом элементе, создаем новый пустой вопрос
-                        createQuizViewModel.createEmptyQuestion(hardQuiz)
-                    }
+                    createQuizViewModel.createEmptyQuestion(hardQuiz)
                 }
             }
         })
@@ -134,7 +135,7 @@ class CreateQuestionDialogFragment : DialogFragment() {
             // Когда изображение выбрано и сохранено
             currentSelectedQuestion?.let { question ->
                 // Обновляем вопрос с новым путем к изображению
-                createQuizViewModel.updateQuestionImage(question.numQuestion, imagePath)
+                createQuizViewModel.updateQuestionImage(question.numQuestion, question.hardQuestion, imagePath)
 
                 // Сжимаем изображение в фоновом потоке (опционально)
                 // compressImageAsync(imagePath)
@@ -177,7 +178,7 @@ class CreateQuestionDialogFragment : DialogFragment() {
             pathStructure = args.getParcelable(KEY_PATH_STRUCTURE) as? PathStructure
             hardQuiz = args.getBoolean(KEY_HARD_QUESTION, false)
 
-                createQuizViewModel.showAllQuestions(hardQuiz, pathStructure?: PathStructure())
+            createQuizViewModel.showQuestions(hardQuiz, pathStructure ?: PathStructure())
         }
     }
 
@@ -185,7 +186,6 @@ class CreateQuestionDialogFragment : DialogFragment() {
     companion object {
         const val KEY_PATH_STRUCTURE = "path_structure"
         const val KEY_HARD_QUESTION = "hard_question"
-        const val KEY_LIFE = "life"
 
         fun newInstance(
             hardQuestion: Boolean,

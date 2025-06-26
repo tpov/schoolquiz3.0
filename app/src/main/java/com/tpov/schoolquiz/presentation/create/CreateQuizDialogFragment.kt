@@ -82,17 +82,9 @@ class CreateQuizDialogFragment: DialogFragment() {
     }
 
     private fun setupCustomSpinner() {
-        // Добавляем тестовые данные для демонстрации
-        val testQuizzes = listOf(
-            "Линейные уравнения",
-            "Квадратные уравнения",
-            "Системы уравнений",
-            "Неравенства"
-        )
-        binding.spinnerQuiz.setItems(testQuizzes)
 
         binding.spinnerQuiz.setOnItemSelectedListener { selectedQuizName ->
-            createQuizViewModel.selectQuiz(selectedQuizName)
+
         }
     }
 

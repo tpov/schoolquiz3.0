@@ -6,15 +6,13 @@ import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.tpov.common.presentation.utils.NamesUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class ImagePickerHelper(
     private val fragment: Fragment,
@@ -50,12 +48,10 @@ class ImagePickerHelper(
                 val bitmap = BitmapFactory.decodeStream(stream)
                 stream.close()
 
-                // Создаем уникальное имя файла
-                val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                val fileName = "IMG_$timeStamp.jpg"
+                val fileName = "${NamesUtils().getPathPicture()}.jpg"
 
                 // Создаем директорию если её нет
-                val photoDir = File(context.filesDir, "questionPhoto")
+                val photoDir = File(context.filesDir, "")
                 if (!photoDir.exists()) {
                     photoDir.mkdirs()
                 }
@@ -81,7 +77,7 @@ class ImagePickerHelper(
     suspend fun resizeImage(imagePath: String, maxWidth: Int = 800, maxHeight: Int = 600): String = withContext(Dispatchers.IO) {
         try {
             val context = fragment.requireContext()
-            val originalFile = File(context.filesDir, "questionPhoto/$imagePath")
+            val originalFile = File(context.filesDir, "$imagePath")
 
             if (!originalFile.exists()) return@withContext imagePath
 
@@ -114,7 +110,7 @@ class ImagePickerHelper(
     fun deleteImage(imageName: String) {
         try {
             val context = fragment.requireContext()
-            val imageFile = File(context.filesDir, "questionPhoto/$imageName")
+            val imageFile = File(context.filesDir, "$imageName")
             if (imageFile.exists()) {
                 imageFile.delete()
             }
@@ -126,7 +122,7 @@ class ImagePickerHelper(
     fun getImageFile(imageName: String): File? {
         return try {
             val context = fragment.requireContext()
-            val imageFile = File(context.filesDir, "questionPhoto/$imageName")
+            val imageFile = File(context.filesDir, "$imageName")
             if (imageFile.exists()) imageFile else null
         } catch (e: Exception) {
             null
