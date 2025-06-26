@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qvestify Intro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #2c2c2c;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .intro-container {
+            text-align: center;
+            position: relative;
+        }
+
+        .logo-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .logo-q {
+            font-size: 120px;
+            font-weight: bold;
+            color: white;
+            opacity: 0;
+            transform: scale(0) rotate(-180deg);
+            animation: logoAppear 1.5s ease-out 0.5s forwards;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-dot {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            bottom: -5px;
+            right: 45%;
+            opacity: 0;
+            transform: scale(0);
+            animation: dotBounce 0.8s ease-out 2s forwards;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        .app-name {
+            font-size: 48px;
+            font-weight: 300;
+            color: white;
+            letter-spacing: 3px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: nameSlideIn 1s ease-out 2.5s forwards;
+        }
+
+        .tagline {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 15px;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 3.5s forwards;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            top: 0;
+            left: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 5s; }
+        .particle:nth-child(2) { left: 20%; animation-delay: 0.5s; animation-duration: 6s; }
+        .particle:nth-child(3) { left: 30%; animation-delay: 1s; animation-duration: 4s; }
+        .particle:nth-child(4) { left: 40%; animation-delay: 1.5s; animation-duration: 7s; }
+        .particle:nth-child(5) { left: 50%; animation-delay: 2s; animation-duration: 5s; }
+        .particle:nth-child(6) { left: 60%; animation-delay: 2.5s; animation-duration: 6s; }
+        .particle:nth-child(7) { left: 70%; animation-delay: 3s; animation-duration: 4s; }
+        .particle:nth-child(8) { left: 80%; animation-delay: 3.5s; animation-duration: 5s; }
+        .particle:nth-child(9) { left: 90%; animation-delay: 4s; animation-duration: 6s; }
+
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            opacity: 0;
+            animation: pulseRing 2s ease-out 1s forwards;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 40px auto 0;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 4s forwards;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0.7));
+            border-radius: 2px;
+            animation: loadingProgress 2s ease-out 4.5s forwards;
+        }
+
+        @keyframes logoAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+            70% {
+                transform: scale(1.1) rotate(10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        @keyframes dotBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0) translateY(-20px);
+            }
+            50% {
+                transform: scale(1.2) translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes nameSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateY(-100px) rotate(180deg);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes pulseRing {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(2);
+            }
+        }
+
+        @keyframes loadingProgress {
+            0% {
+                width: 0%;
+            }
+            100% {
+                width: 100%;
+            }
+        }
+
+        .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0;
+            animation: glow 3s ease-out 1s forwards;
+        }
+
+        @keyframes glow {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .logo-q {
+                font-size: 80px;
+            }
+            
+            .app-name {
+                font-size: 32px;
+                letter-spacing: 2px;
+            }
+            
+            .tagline {
+                font-size: 16px;
+            }
+            
+            .loading-bar {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="glow"></div>
+    <div class="pulse-ring"></div>
+
+    <div class="intro-container">
+        <div class="logo-container">
+            <div class="logo-q">Q</div>
+            <div class="logo-dot"></div>
+        </div>
+        
+        <div class="app-name">Qvestify</div>
+        <div class="tagline">Discover. Learn. Challenge.</div>
+        
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <script>
+        // Автоматический переход после завершения анимации
+        setTimeout(() => {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.5s ease-out';
+            
+            setTimeout(() => {
+                // Здесь можно добавить переход к основному экрану приложения
+                console.log('Переход к главному экрану приложения');
+                // Перезапускаем анимацию для демонстрации
+                location.reload();
+            }, 500);
+        }, 6500);
+
+        // Интерактивность - нажатие для пропуска
+        document.addEventListener('click', () => {
+            document.body.style.animation = 'fadeOut 0.3s ease-out forwards';
+        });
+
+        // Добавляем CSS для fadeOut
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html> 

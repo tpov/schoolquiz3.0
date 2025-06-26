@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Glow effect (shadow) -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#CCFFFFFF" />
+        </shape>
+    </item>
+    <!-- Main white circle -->
+    <item android:inset="4dp">
+        <shape android:shape="oval">
+            <solid android:color="@android:color/white" />
+        </shape>
+    </item>
+</layer-list> 

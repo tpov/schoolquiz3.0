@@ -4,64 +4,144 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
+    android:background="#2c2c2c"
+    android:layout_marginBottom="128dp"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     tools:context=".presentation.splashscreen.SplashScreen">
 
-    <TextView
-        android:id="@+id/tvT"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:fontFamily="@font/annie_use_your_telescope"
-        android:text="T"
-        android:textColor="#FFFFFF"
-        android:textSize="60sp"
-        android:visibility="visible"
+    <!-- Particles container -->
+    <FrameLayout
+        android:id="@+id/particlesContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/tvP"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:fontFamily="@font/annie_use_your_telescope"
-        android:gravity="center_horizontal"
-        android:text="P"
-        android:textColor="#FFFFFF"
-        android:textSize="60sp"
+    <!-- Glow effect -->
+    <View
+        android:id="@+id/glowView"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:background="@drawable/radial_glow"
+        android:alpha="0"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/tvO"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:fontFamily="@font/annie_use_your_telescope"
-        android:gravity="center_horizontal"
-        android:text="O"
-        android:textColor="#FFFFFF"
-        android:textSize="60sp"
+    <!-- Pulse ring -->
+    <View
+        android:id="@+id/pulseRing"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:background="@drawable/circle_outline"
+        android:alpha="0"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/tvV"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:fontFamily="@font/annie_use_your_telescope"
-        android:gravity="center_horizontal"
-        android:text="V"
-        android:textColor="#FFFFFF"
-        android:textSize="60sp"
-        android:textStyle="italic"
+    <!-- Logo container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/logoContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.4">
+
+        <!-- Logo Q -->
+        <TextView
+            android:id="@+id/logoQ"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Q"
+            android:textColor="@android:color/white"
+            android:textSize="120sp"
+            android:textStyle="bold"
+            android:alpha="0"
+            android:scaleX="0"
+            android:scaleY="0"
+            android:rotation="-180"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Logo dot -->
+        <View
+            android:id="@+id/logoDot"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:background="@drawable/white_circle"
+            android:alpha="0"
+            android:scaleX="0"
+            android:scaleY="0"
+            android:layout_marginBottom="-5dp"
+            app:layout_constraintBottom_toBottomOf="@id/logoQ"
+            app:layout_constraintEnd_toEndOf="@id/logoQ"
+            app:layout_constraintStart_toStartOf="@id/logoQ"
+            app:layout_constraintHorizontal_bias="0.45" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- App name -->
+    <TextView
+        android:id="@+id/appName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Qvestify"
+        android:textColor="@android:color/white"
+        android:textSize="48sp"
+        android:letterSpacing="0.06"
+        android:alpha="0"
+        android:translationY="30dp"
+        app:layout_constraintTop_toBottomOf="@id/logoContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="30dp" />
+
+    <!-- Tagline -->
+    <TextView
+        android:id="@+id/tagline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Discover. Learn. Challenge."
+        android:textColor="#CCFFFFFF"
+        android:textSize="18sp"
+        android:alpha="0"
+        app:layout_constraintTop_toBottomOf="@id/appName"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="15dp" />
+
+    <!-- Loading bar container -->
+    <LinearLayout
+        android:id="@+id/loadingContainer"
+        android:layout_width="200dp"
+        android:layout_height="4dp"
+        android:orientation="horizontal"
+        android:background="@drawable/loading_bar_background"
+        android:alpha="0"
+        app:layout_constraintTop_toBottomOf="@id/tagline"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp">
+
+        <!-- Loading progress -->
+        <View
+            android:id="@+id/loadingProgress"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/loading_bar_progress" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
