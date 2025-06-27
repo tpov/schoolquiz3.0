@@ -30,7 +30,7 @@
                 android:id="@+id/imv_category_title"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
-                android:scaleType="centerCrop"
+                android:scaleType="fitXY"
                 tools:srcCompat="@tools:sample/avatars" />
 
             <RatingBar

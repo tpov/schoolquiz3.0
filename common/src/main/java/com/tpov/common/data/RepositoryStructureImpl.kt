@@ -120,6 +120,8 @@ open class RepositoryStructureImpl @Inject constructor(
                 
                 if (result.isNotEmpty()) {
                     android.util.Log.d("StructureRepo", "✅ Found ${result.size} user quizzes")
+                    // Download pictures for user quizzes
+                    downloadAllStructurePictures(result)
                     result
                 } else {
                     android.util.Log.w("StructureRepo", "⚠️ No user quizzes found")
@@ -161,6 +163,12 @@ open class RepositoryStructureImpl @Inject constructor(
                     for (category in result) {
                         category.printFullStructure("${eventQuiz.name} - ${category.nameItem}")
                     }
+                    
+                    // Download all pictures for the structure
+                    android.util.Log.d("StructureRepo", "📸 Starting picture download for ${eventQuiz.name}")
+                    downloadAllStructurePictures(result)
+                    android.util.Log.d("StructureRepo", "📸 Picture download completed for ${eventQuiz.name}")
+                    
                     result
                 } else {
                     android.util.Log.w("StructureRepo", "⚠️ No data found for ${eventQuiz.name}")
@@ -170,6 +178,67 @@ open class RepositoryStructureImpl @Inject constructor(
         } catch (e: Exception) {
             android.util.Log.e("StructureRepo", "❌ Error in fetchStructureCategoryDataList for ${eventQuiz.name}: ${e.message}", e)
             emptyList() // Возвращаем пустой список вместо null
+        }
+    }
+
+    /**
+     * Recursively downloads all pictures from structure data
+     */
+    private suspend fun downloadAllStructurePictures(structureList: List<StructureDataLocal>) {
+        structureList.forEach { structure ->
+            downloadStructurePicturesRecursively(structure)
+        }
+    }
+
+    /**
+     * Recursively downloads pictures for a single structure and all its children
+     */
+    private suspend fun downloadStructurePicturesRecursively(structure: StructureDataLocal) {
+        // Download picture for current structure item if it exists
+        if (structure.picture.isNotBlank()) {
+            android.util.Log.d("StructureRepo", "📸 Downloading picture: ${structure.picture} for ${structure.nameItem}")
+            try {
+                downloadPictureFromStorage(structure.picture)
+                android.util.Log.d("StructureRepo", "✅ Successfully downloaded: ${structure.picture}")
+            } catch (e: Exception) {
+                android.util.Log.w("StructureRepo", "⚠️ Failed to download: ${structure.picture} - ${e.message}")
+            }
+        }
+        
+        // Recursively download pictures for children
+        structure.children?.forEach { child ->
+            downloadStructurePicturesRecursively(child)
+        }
+    }
+
+    /**
+     * Downloads a single picture from Firebase Storage to local files directory
+     */
+    private suspend fun downloadPictureFromStorage(pictureName: String): String? {
+        return try {
+            val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$pictureName")
+            val localFile = File(context.filesDir, pictureName)
+
+            // Create parent directories if they don't exist
+            localFile.parentFile?.let {
+                if (!it.exists()) {
+                    it.mkdirs()
+                }
+            }
+
+            // Skip download if file already exists
+            if (localFile.exists()) {
+                android.util.Log.d("StructureRepo", "📸 Picture already exists locally: $pictureName")
+                return localFile.absolutePath
+            }
+
+            // Download the file
+            storageRef.getFile(localFile).await()
+            android.util.Log.d("StructureRepo", "📸 Picture downloaded successfully: $pictureName")
+            localFile.absolutePath
+        } catch (e: Exception) {
+            android.util.Log.e("StructureRepo", "📸 Error downloading picture: $pictureName - ${e.message}")
+            null
         }
     }
 
