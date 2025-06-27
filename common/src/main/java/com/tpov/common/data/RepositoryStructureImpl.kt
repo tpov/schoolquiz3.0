@@ -105,23 +105,21 @@ open class RepositoryStructureImpl @Inject constructor(
 
     override suspend fun fetchStructureCategoryDataList(eventQuiz: EventQuiz): List<StructureDataLocal>? {
         android.util.Log.d("StructureRepo", "🔍 fetchStructureCategoryDataList started for: ${eventQuiz.name} (id: ${eventQuiz.id})")
-        
+
         return try {
             if (eventQuiz == EventQuiz.QUIZ_BY_USER) {
                 android.util.Log.d("StructureRepo", "📝 Fetching user-created quizzes from: quizzes/${settingsConfig.tpovId}")
                 // Для пользовательских викторин - получаем данные из структуры пользователя
                 val basePath = "quizzes/${settingsConfig.tpovId}"
-                
+
                 val result = firestore.collection(basePath)
                     .get()
                     .await()
                     .documents
                     .mapNotNull { it.toObject(StructureDataRemote::class.java)?.toStructureDataLocal() }
-                
+
                 if (result.isNotEmpty()) {
                     android.util.Log.d("StructureRepo", "✅ Found ${result.size} user quizzes")
-                    // Download pictures for user quizzes
-                    downloadAllStructurePictures(result)
                     result
                 } else {
                     android.util.Log.w("StructureRepo", "⚠️ No user quizzes found")
@@ -129,7 +127,7 @@ open class RepositoryStructureImpl @Inject constructor(
                 }
             } else {
                 android.util.Log.d("StructureRepo", "🏠 Fetching ${eventQuiz.name} categories from structures/structureData/${eventQuiz.name}/")
-                
+
                 // Читаем из правильного пути: structures/structureData/QUIZ_HOME/
                 val result = firestore.collection("structures")
                     .document("structureData")
@@ -141,7 +139,7 @@ open class RepositoryStructureImpl @Inject constructor(
                         try {
                             val structureRemote = document.toObject(StructureDataRemote::class.java)
                             val structureLocal = structureRemote?.toStructureDataLocal()
-                            
+
                             if (structureLocal != null) {
                                 android.util.Log.d("StructureRepo", "  📄 Found category: ${structureLocal.nameItem} with ${structureLocal.children?.size ?: 0} children")
                                 structureLocal
@@ -154,21 +152,13 @@ open class RepositoryStructureImpl @Inject constructor(
                             null
                         }
                     }
-                
-                android.util.Log.d("StructureRepo", "✅ ${eventQuiz.name} categories processed successfully")
-                android.util.Log.d("StructureRepo", "📊 Total found ${result.size} categories")
-                
+
                 // Выводим всю структуру
                 if (result.isNotEmpty()) {
                     for (category in result) {
                         category.printFullStructure("${eventQuiz.name} - ${category.nameItem}")
                     }
-                    
-                    // Download all pictures for the structure
-                    android.util.Log.d("StructureRepo", "📸 Starting picture download for ${eventQuiz.name}")
-                    downloadAllStructurePictures(result)
-                    android.util.Log.d("StructureRepo", "📸 Picture download completed for ${eventQuiz.name}")
-                    
+
                     result
                 } else {
                     android.util.Log.w("StructureRepo", "⚠️ No data found for ${eventQuiz.name}")
@@ -204,7 +194,7 @@ open class RepositoryStructureImpl @Inject constructor(
                 android.util.Log.w("StructureRepo", "⚠️ Failed to download: ${structure.picture} - ${e.message}")
             }
         }
-        
+
         // Recursively download pictures for children
         structure.children?.forEach { child ->
             downloadStructurePicturesRecursively(child)
@@ -289,16 +279,16 @@ open class RepositoryStructureImpl @Inject constructor(
     ) {
         android.util.Log.d("StructureRepo", "💾 saveStructureData called for event: $event")
         android.util.Log.d("StructureRepo", "📊 Categories to save: ${structureDataCategoryList.size}")
-        
+
         for (category in structureDataCategoryList) {
             android.util.Log.d("StructureRepo", "  📂 Category: ${category.nameItem} with ${category.children?.size ?: 0} children")
         }
-        
+
         val structureDataEntity = StructureDataLocal(
             nameItem = event,
             children = structureDataCategoryList.toMutableList()
         ).toStructureDataEntity()
-        
+
         if (structureDataEntity != null) {
             android.util.Log.d("StructureRepo", "✅ Saving to local DB: $event")
             structureDataDao.insertStructureData(structureDataEntity)
@@ -382,7 +372,7 @@ open class RepositoryStructureImpl @Inject constructor(
         pathSegments.add("infoList/tpovIdList/${settingsConfig.tpovId}")
 
         val fullPath = pathSegments.joinToString("/")
-        
+
         return try {
             val document = db.document(fullPath).get().await()
             if (document.exists()) {
@@ -463,9 +453,9 @@ open class RepositoryStructureImpl @Inject constructor(
     ): List<StructureDataLocal>? {
         android.util.Log.d("StructureRepo", "🔍 getStructureEventData called for event: $eevent")
         android.util.Log.d("StructureRepo", "📂 Path: ${path.toList()}")
-        
+
         val result = structureDataDao.getStructureDataByPath(eevent, path.toList())
-        
+
         if (result != null) {
             android.util.Log.d("StructureRepo", "✅ Found ${result.size} categories in local DB")
             for (category in result) {
@@ -474,7 +464,7 @@ open class RepositoryStructureImpl @Inject constructor(
         } else {
             android.util.Log.w("StructureRepo", "⚠️ No data found in local DB for event: $eevent")
         }
-        
+
         return result
     }
 }

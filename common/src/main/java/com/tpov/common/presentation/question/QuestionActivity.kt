@@ -126,7 +126,6 @@ class QuestionActivity : AppCompatActivity() {
         binding.bCheat.setOnClickListener {
 
         }
-
     }
 
     private fun hideSystemUI() {
@@ -163,7 +162,6 @@ class QuestionActivity : AppCompatActivity() {
             }
         }
     }
-
 
     private fun loadQuizData() {
         CoroutineScope(Dispatchers.IO).launch {
@@ -250,8 +248,6 @@ class QuestionActivity : AppCompatActivity() {
                                     binding.imvPhotoQuestion.visibility = View.VISIBLE
                                     Glide.with(this@QuestionActivity)
                                         .load(localFile)
-                                     //   .placeholder(R.drawable.loading_placeholder) // Добавьте placeholder
-                                    //    .error(R.drawable.error_image)
                                         .into(binding.imvPhotoQuestion)
                                 } else {
                                     binding.imvPhotoQuestion.visibility = View.GONE
@@ -373,11 +369,9 @@ class QuestionActivity : AppCompatActivity() {
                     view.invalidate()
                     true
                 }
-
                 else -> false
             }
         }
-
         setupUndoFunctionality()
     }
 
@@ -443,7 +437,6 @@ class QuestionActivity : AppCompatActivity() {
         viewModel.hardQuiz = intent.getBooleanExtra(KEY_HARD_QUESTION, false)
         languageUser = settingsConfig.languages
         viewModel.life = intent.getIntExtra(KEY_LIFE, 0)
-
     }
 
     private fun visibleCheatButton(it: Boolean) {

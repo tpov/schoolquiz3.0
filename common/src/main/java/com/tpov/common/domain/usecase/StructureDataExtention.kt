@@ -81,24 +81,28 @@ object StructureDataExtention {
                     android.util.Log.d("StructureSync", "🔄 Processing existing structure with children: ${structureNodeNew.nameItem}")
                     
                     if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
-                        android.util.Log.d("StructureSync", "📝 Updating structure: ${structureNodeNew.nameItem}")
+                        android.util.Log.d("StructureSync", "📝 ✅ UPDATING structure: ${structureNodeNew.nameItem}")
                         this.structureCategoryDataListLocal
                             .updateLocalInfoData(
                                 this.structureCategoryDataListRemote,
                                 currentPath
                             )
+                    } else {
+                        android.util.Log.d("StructureSync", "⏸️ ❌ SKIPPING update for structure: ${structureNodeNew.nameItem} (versions match or local is newer)")
                     }
                 },
                 onNoChildren = { structureNodeOld, structureNodeNew, currentPath ->
                     android.util.Log.d("StructureSync", "📄 Processing leaf structure: ${structureNodeNew.nameItem}")
                     
                     if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
-                        android.util.Log.d("StructureSync", "📝 Updating leaf structure: ${structureNodeNew.nameItem}")
+                        android.util.Log.d("StructureSync", "📝 ✅ UPDATING leaf structure: ${structureNodeNew.nameItem}")
                         this.structureCategoryDataListLocal
                             .updateLocalInfoData(
                                 this.structureCategoryDataListRemote,
                                 currentPath
                             )
+                    } else {
+                        android.util.Log.d("StructureSync", "⏸️ ❌ SKIPPING update for leaf structure: ${structureNodeNew.nameItem} (versions match or local is newer)")
                     }
                 }
             ),

@@ -35,7 +35,7 @@ class RepositoryQuestionDetailImpl @Inject constructor(
         val sanitizedSubCategory = sanitizePathComponent(path.nameSubCategory)
         val sanitizedSubsubCategory = sanitizePathComponent(path.nameSubsubCategory)
         val sanitizedQuiz = sanitizePathComponent(path.nameQuiz)
-        return "${sanitizedCategory}_${sanitizedSubCategory}_${sanitizedSubsubCategory}_${sanitizedQuiz}"
+        return "${sanitizedCategory}|${sanitizedSubCategory}|${sanitizedSubsubCategory}|${sanitizedQuiz}"
     }
 
     override suspend fun fetchQuestionDetails(path: PathStructure): List<QuestionDetailLocal> {

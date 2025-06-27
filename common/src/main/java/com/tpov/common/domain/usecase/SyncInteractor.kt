@@ -42,7 +42,7 @@ open class SyncInteractor @Inject constructor(
 
     suspend fun syncQuizes(eventQuiz: EventQuiz, exceptionInteractor: ExceptionInteractor): SyncStructureResult {
         android.util.Log.d("SyncInteractor", "🔄 syncQuizes started for: ${eventQuiz.name}")
-        
+
         val syncState = SyncState(eventQuiz)
         init(
             DomainExceptions(
@@ -51,25 +51,13 @@ open class SyncInteractor @Inject constructor(
                 exceptionInteractor
             )
         )
-        
+
         val finalState = syncState
             .initStateStructureData(structureUseCase)
-            .also { state ->
-                android.util.Log.d("SyncInteractor", "📡 After initStateStructureData: ${state.structureCategoryDataListRemote.size} remote categories")
-                for (category in state.structureCategoryDataListRemote) {
-                    android.util.Log.d("SyncInteractor", "  📂 Remote category: ${category.nameItem} with ${category.children?.size ?: 0} children")
-                }
-            }
             .syncChangeListQuestionsLocal()
             .syncChangeListQuestionsRemote()
             .syncInfoLocal()
             .updateLocalStructureData()
-            .also { state ->
-                android.util.Log.d("SyncInteractor", "🔄 After updateLocalStructureData: ${state.structureCategoryDataListLocal.size} processed categories")
-                for (category in state.structureCategoryDataListLocal) {
-                    android.util.Log.d("SyncInteractor", "  📂 Processed category: ${category.nameItem} with ${category.children?.size ?: 0} children")
-                }
-            }
             .syncInfoGlobal()
             .updateStructureInfoGlobal()
             .updateStructureInfoLocal(structureUseCase)
@@ -80,15 +68,10 @@ open class SyncInteractor @Inject constructor(
             .syncQuestionDetails(questionDetailUseCase)
             .updateRemoteQuestion(questionUseCase)
             .editStructureRemote(structureUseCase)
-            
-        android.util.Log.d("SyncInteractor", "💾 Before getResult - final categories: ${finalState.structureCategoryDataListLocal.size}")
-        for (category in finalState.structureCategoryDataListLocal) {
-            android.util.Log.d("SyncInteractor", "  📂 Final category: ${category.nameItem} with ${category.children?.size ?: 0} children")
-        }
-            
+
+
         return runBlocking {
             val result = finalState.getResult(structureUseCase)
-            android.util.Log.d("SyncInteractor", "✅ syncQuizes completed for: ${eventQuiz.name} with result: ${result::class.simpleName}")
             result
         }
     }

@@ -32,7 +32,19 @@ object StructureDataUtils {
     fun isUpdateStructure(
         structureDataOld: StructureDataLocal?,
         structureDataNew: StructureDataLocal
-    ) = structureDataOld?.version!! > structureDataNew.version
+    ): Boolean {
+        val localVersion = structureDataOld?.version ?: 0
+        val remoteVersion = structureDataNew.version
+        
+        val shouldUpdate = remoteVersion > localVersion
+        
+        android.util.Log.d("VersionCheck", "🔍 Checking versions for '${structureDataNew.nameItem}':")
+        android.util.Log.d("VersionCheck", "  📍 Local version: $localVersion")
+        android.util.Log.d("VersionCheck", "  🌐 Remote version: $remoteVersion")
+        android.util.Log.d("VersionCheck", "  🔄 Should update: $shouldUpdate")
+        
+        return shouldUpdate
+    }
 
 
     fun MutableList<StructureDataLocal>.updateLocalInfoData(

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Uploader</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .log { background: #f5f5f5; padding: 15px; height: 300px; overflow-y: auto; font-family: monospace; border: 1px solid #ddd; }
+        .categories { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 10px 0; }
+        .category-item { padding: 10px; text-align: center; border: 1px solid #ddd; cursor: pointer; border-radius: 4px; }
+        .category-item.selected { background: #e3f2fd; border-color: #2196f3; }
+        .languages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 10px 0; }
+        .language-item { padding: 10px; text-align: center; border: 1px solid #ddd; cursor: pointer; border-radius: 4px; }
+        .language-item.selected { background: #e8f5e8; border-color: #4caf50; }
+        .progress { background: #f0f0f0; height: 20px; border-radius: 10px; margin: 10px 0; }
+        .progress-bar { background: #4caf50; height: 100%; border-radius: 10px; transition: width 0.3s; text-align: center; line-height: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .stat-card { padding: 15px; text-align: center; background: #f8f9fa; border-radius: 8px; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #4285f4; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        .difficulty-info { background: #fff3cd; padding: 10px; border-radius: 4px; margin: 10px 0; border-left: 4px solid #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Quiz Structure & Questions Uploader</h1>
+    
+    <div class="section">
+        <h2>1. Initialize</h2>
+        <input type="file" id="jsonFile" accept=".json" onchange="loadFile(event)">
+        <div id="fileStatus">No file selected</div>
+        <button onclick="initFirebase()" id="initBtn">Initialize Firebase</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="section">
+        <h2>2. Select Event</h2>
+        <div class="categories">
+            <div class="category-item event-item" data-event="QUIZ_HOME">QUIZ_HOME</div>
+            <div class="category-item event-item" data-event="QUIZ_TOURNAMENT">QUIZ_TOURNAMENT</div>
+            <div class="category-item event-item" data-event="QUIZ_ARENA">QUIZ_ARENA</div>
+            <div class="category-item event-item" data-event="QUIZ_FOR_ADMIN">QUIZ_FOR_ADMIN</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>3. Select Languages</h2>
+        <div class="languages">
+            <div class="language-item" data-lang="ru" onclick="toggleLanguage(this)">🇷🇺 Русский</div>
+            <div class="language-item" data-lang="en" onclick="toggleLanguage(this)">🇺🇸 English</div>
+            <div class="language-item" data-lang="uk" onclick="toggleLanguage(this)">🇺🇦 Українська</div>
+            <div class="language-item" data-lang="es" onclick="toggleLanguage(this)">🇪🇸 Español</div>
+            <div class="language-item" data-lang="fr" onclick="toggleLanguage(this)">🇫🇷 Français</div>
+        </div>
+        <div id="selectedLanguages" class="info">No languages selected</div>
+    </div>
+
+    <div class="section">
+        <h2>4. Upload Structure</h2>
+        <button onclick="uploadStructure()" id="uploadBtn" disabled>Upload Structure</button>
+    </div>
+
+    <div class="section">
+        <h2>5. Generate Questions</h2>
+        <div class="difficulty-info">
+            <strong>📝 Question Types:</strong><br>
+            • <strong>Простые вопросы</strong> (hardQuestion: false) - базовые понятия<br>
+            • <strong>Сложные вопросы</strong> (hardQuestion: true) - анализ и применение
+        </div>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="questionsPerQuiz">10</div>
+                <div>Questions per Quiz</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalQuizzes">0</div>
+                <div>Total Quizzes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalQuestions">0</div>
+                <div>Total Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="uploadedQuestions">0</div>
+                <div>Uploaded</div>
+            </div>
+        </div>
+        <label>Questions per quiz type: </label>
+        <input type="number" id="questionsCount" value="10" min="1" max="50" onchange="updateStats()">
+        <button onclick="generateQuestions()" id="generateBtn" disabled>Generate & Upload Questions</button>
+    </div>
+
+    <div class="progress">
+        <div class="progress-bar" id="progressBar" style="width: 0%;">0%</div>
+    </div>
+
+    <div id="logs" class="log">
+        <div class="info">Logs will appear here...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const config = {
+            apiKey: "AIzaSyC10iksA0DO5OBc98KY_M1ECeNVHUIU2QQ",
+            authDomain: "school-quiz-89336951.firebaseapp.com",
+            projectId: "school-quiz-89336951",
+            storageBucket: "school-quiz-89336951.appspot.com",
+            messagingSenderId: "762375057396",
+            appId: "1:762375057396:android:104a8bd0846a921a2893a1"
+        };
+
+        let app, db, data = null, event = 'QUIZ_HOME', selectedLanguages = [];
+
+        function createId(isHard, lang, num) {
+            const difficulty = isHard ? 'hard' : 'simple';
+            return `${difficulty}_${lang}_question_${num.toString().padStart(3, '0')}`;
+        }
+
+        function sanitizeComponent(str) {
+            return str.replace(/\//g, '_').replace(/\\/g, '_');
+        }
+
+        function createPath(ev, cat, sub, subsub) {
+            const sanitizedCat = sanitizeComponent(cat);
+            const sanitizedSub = sanitizeComponent(sub);
+            const sanitizedSubsub = sanitizeComponent(subsub);
+            return `questions/${ev}/${sanitizedCat}|${sanitizedSub}|${sanitizedSubsub}/questions`;
+        }
+
+        function makeQuestion(num, isHard, lang, path) {
+            // Темы по категориям
+            const topicsByCategory = {
+                'Математика': {
+                    'ru': ['уравнение', 'функция', 'производная', 'интеграл', 'матрица', 'логарифм'],
+                    'en': ['equation', 'function', 'derivative', 'integral', 'matrix', 'logarithm'],
+                    'uk': ['рівняння', 'функція', 'похідна', 'інтеграл', 'матриця', 'логарифм'],
+                    'es': ['ecuación', 'función', 'derivada', 'integral', 'matriz', 'logaritmo'],
+                    'fr': ['équation', 'fonction', 'dérivée', 'intégrale', 'matrice', 'logarithme']
+                },
+                'Физика': {
+                    'ru': ['сила', 'энергия', 'импульс', 'волна', 'частота', 'скорость'],
+                    'en': ['force', 'energy', 'momentum', 'wave', 'frequency', 'velocity'],
+                    'uk': ['сила', 'енергія', 'імпульс', 'хвиля', 'частота', 'швидкість'],
+                    'es': ['fuerza', 'energía', 'momento', 'onda', 'frecuencia', 'velocidad'],
+                    'fr': ['force', 'énergie', 'élan', 'onde', 'fréquence', 'vitesse']
+                },
+                'Химия': {
+                    'ru': ['элемент', 'реакция', 'молекула', 'атом', 'кислота', 'соль'],
+                    'en': ['element', 'reaction', 'molecule', 'atom', 'acid', 'salt'],
+                    'uk': ['елемент', 'реакція', 'молекула', 'атом', 'кислота', 'сіль'],
+                    'es': ['elemento', 'reacción', 'molécula', 'átomo', 'ácido', 'sal'],
+                    'fr': ['élément', 'réaction', 'molécule', 'atome', 'acide', 'sel']
+                },
+                'История': {
+                    'ru': ['война', 'революция', 'империя', 'царь', 'битва', 'договор'],
+                    'en': ['war', 'revolution', 'empire', 'king', 'battle', 'treaty'],
+                    'uk': ['війна', 'революція', 'імперія', 'цар', 'битва', 'договір'],
+                    'es': ['guerra', 'revolución', 'imperio', 'rey', 'batalla', 'tratado'],
+                    'fr': ['guerre', 'révolution', 'empire', 'roi', 'bataille', 'traité']
+                }
+            };
+
+            // Определяем категорию и темы
+            const category = path.cat;
+            const topics = topicsByCategory[category]?.[lang] || topicsByCategory['Математика'][lang];
+            const topic = topics[Math.floor(Math.random() * topics.length)];
+
+            // Шаблоны вопросов по сложности и языку
+            const questionTemplates = {
+                simple: {
+                    'ru': `Что такое ${topic}?`,
+                    'en': `What is ${topic}?`,
+                    'uk': `Що таке ${topic}?`,
+                    'es': `¿Qué es ${topic}?`,
+                    'fr': `Qu'est-ce que ${topic}?`
+                },
+                hard: {
+                    'ru': `Проанализируйте применение ${topic} в контексте ${path.quiz}`,
+                    'en': `Analyze the application of ${topic} in the context of ${path.quiz}`,
+                    'uk': `Проаналізуйте застосування ${topic} в контексті ${path.quiz}`,
+                    'es': `Analiza la aplicación de ${topic} en el contexto de ${path.quiz}`,
+                    'fr': `Analysez l'application de ${topic} dans le contexte de ${path.quiz}`
+                }
+            };
+
+            // Правильные ответы по языкам
+            const correctAnswers = {
+                'ru': `Правильный ответ: ${topic}`,
+                'en': `Correct answer: ${topic}`,
+                'uk': `Правильна відповідь: ${topic}`,
+                'es': `Respuesta correcta: ${topic}`,
+                'fr': `Bonne réponse: ${topic}`
+            };
+
+            // Неправильные ответы по языкам
+            const wrongAnswers = {
+                'ru': ['Неверный вариант А', 'Неверный вариант Б', 'Неверный вариант В'],
+                'en': ['Wrong option A', 'Wrong option B', 'Wrong option C'],
+                'uk': ['Неправильний варіант А', 'Неправильний варіант Б', 'Неправильний варіант В'],
+                'es': ['Opción incorrecta A', 'Opción incorrecta B', 'Opción incorrecta C'],
+                'fr': ['Mauvaise option A', 'Mauvaise option B', 'Mauvaise option C']
+            };
+
+            const answers = [
+                correctAnswers[lang],
+                ...wrongAnswers[lang]
+            ];
+
+            // Перемешиваем ответы
+            for (let i = answers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [answers[i], answers[j]] = [answers[j], answers[i]];
+            }
+
+            const difficultyType = isHard ? 'hard' : 'simple';
+
+            return {
+                nameQuestion: questionTemplates[difficultyType][lang],
+                nameAnswers: answers.join('|'),
+                correctAnswer: answers.indexOf(correctAnswers[lang]),
+                language: lang,
+                hardQuestion: isHard,
+                typeQuestion: difficultyType,
+                category: path.cat,
+                subcategory: path.sub,
+                subsubcategory: path.subsub,
+                quiz: path.quiz,
+                timeCreate: new Date().toISOString(),
+                tpovIdCreator: 10001,
+                nameCreator: "Generator",
+                isActive: true,
+                version: 1
+            };
+        }
+
+        window.toggleLanguage = function(element) {
+            const lang = element.dataset.lang;
+            element.classList.toggle('selected');
+            
+            if (selectedLanguages.includes(lang)) {
+                selectedLanguages = selectedLanguages.filter(l => l !== lang);
+            } else {
+                selectedLanguages.push(lang);
+            }
+            
+            updateLanguageDisplay();
+            updateStats();
+            updateGenerateButton();
+        };
+
+        function updateLanguageDisplay() {
+            const display = document.getElementById('selectedLanguages');
+            if (selectedLanguages.length === 0) {
+                display.textContent = 'No languages selected';
+                display.className = 'warning';
+            } else {
+                display.textContent = `Selected: ${selectedLanguages.join(', ')}`;
+                display.className = 'success';
+            }
+        }
+
+        window.loadFile = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        data = JSON.parse(e.target.result);
+                        document.getElementById('fileStatus').innerHTML = `✅ ${file.name}`;
+                        log('File loaded', 'success');
+                        updateStats();
+                    } catch (error) {
+                        log('Error: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+
+        window.initFirebase = function() {
+            try {
+                app = initializeApp(config);
+                db = getFirestore(app);
+                log('Firebase ready', 'success');
+                
+                if (data) {
+                    document.getElementById('uploadBtn').disabled = false;
+                    // Проверяем языки перед разблокировкой
+                    updateGenerateButton();
+                }
+                document.getElementById('initBtn').disabled = true;
+            } catch (error) {
+                log('Firebase error: ' + error.message, 'error');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.event-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.event-item').forEach(el => el.classList.remove('selected'));
+                    this.classList.add('selected');
+                    event = this.dataset.event;
+                    log(`Selected: ${event}`, 'info');
+                });
+            });
+            document.querySelector('[data-event="QUIZ_HOME"]').classList.add('selected');
+        });
+
+        function countQuizzes(cats) {
+            let total = 0;
+            for (const catName in cats) {
+                const cat = cats[catName];
+                if (cat.children) {
+                    for (const sub of cat.children) {
+                        if (sub.children) {
+                            for (const subsub of sub.children) {
+                                if (subsub.children) {
+                                    total += subsub.children.length;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return total;
+        }
+
+        function updateGenerateButton() {
+            const generateBtn = document.getElementById('generateBtn');
+            if (generateBtn && data && db) {
+                generateBtn.disabled = selectedLanguages.length === 0;
+            }
+        }
+
+        window.updateStats = function() {
+            if (!data) return;
+            
+            const perQuiz = parseInt(document.getElementById('questionsCount').value) || 10;
+            const cats = data.structures.structureData;
+            const quizzes = countQuizzes(cats);
+            
+            const languages = selectedLanguages.length;
+            const difficulties = 2; // simple, hard
+            const total = quizzes * perQuiz * languages * difficulties;
+            
+            document.getElementById('questionsPerQuiz').textContent = `${perQuiz} × ${languages} langs × ${difficulties} types = ${perQuiz * languages * difficulties}`;
+            document.getElementById('totalQuizzes').textContent = quizzes;
+            document.getElementById('totalQuestions').textContent = total.toLocaleString();
+        };
+
+        window.uploadStructure = async function() {
+            if (!db || !data) {
+                log('Not ready', 'error');
+                return;
+            }
+
+            log(`Uploading structure for ${event}...`, 'info');
+            const cats = Object.keys(data.structures.structureData);
+            
+            let uploaded = 0;
+            for (const catName of cats) {
+                try {
+                    const catData = data.structures.structureData[catName];
+                    const docRef = doc(db, 'structures', 'structureData', event, catName);
+                    await setDoc(docRef, catData);
+                    uploaded++;
+                    progress(uploaded, cats.length);
+                    log(`✅ ${catName}`, 'success');
+                } catch (error) {
+                    log(`❌ ${catName}: ${error.message}`, 'error');
+                }
+            }
+            log('Structure upload done!', 'success');
+        };
+
+        window.generateQuestions = async function() {
+            if (!db || !data) {
+                log('Not ready', 'error');
+                return;
+            }
+
+            if (selectedLanguages.length === 0) {
+                log('Please select at least one language', 'error');
+                return;
+            }
+
+            const perQuiz = parseInt(document.getElementById('questionsCount').value) || 10;
+            const cats = data.structures.structureData;
+            
+            log('Generating questions...', 'info');
+            log(`Languages: ${selectedLanguages.join(', ')}`, 'info');
+            log(`Types: simple (hardQuestion: false) + hard (hardQuestion: true)`, 'info');
+            
+            let totalQ = 0;
+            let uploadedQ = 0;
+
+            const difficulties = [false, true]; // простые и сложные
+
+            // Count total questions
+            for (const catName in cats) {
+                const cat = cats[catName];
+                if (cat.children) {
+                    for (const sub of cat.children) {
+                        if (sub.children) {
+                            for (const subsub of sub.children) {
+                                if (subsub.children) {
+                                    // Для каждого квиза: количество вопросов × языки × типы (простые/сложные)
+                                    totalQ += subsub.children.length * perQuiz * selectedLanguages.length * difficulties.length;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            log(`Will create ${totalQ} questions (${selectedLanguages.length} languages × ${difficulties.length} types)`, 'info');
+            progress(0, totalQ);
+
+            // Generate for all combinations
+            for (const catName in cats) {
+                const cat = cats[catName];
+                if (!cat.children) continue;
+
+                for (const sub of cat.children) {
+                    if (!sub.children) continue;
+
+                    for (const subsub of sub.children) {
+                        if (!subsub.children) continue;
+
+                        for (const quiz of subsub.children) {
+                            const path = {
+                                cat: catName,
+                                sub: sub.nameItem,
+                                subsub: subsub.nameItem,
+                                quiz: quiz.nameItem
+                            };
+
+                            const collPath = createPath(event, path.cat, path.sub, path.subsub);
+
+                            // Генерируем для каждого языка
+                            for (const lang of selectedLanguages) {
+                                // Генерируем для каждого типа (простые/сложные)
+                                for (const isHard of difficulties) {
+                                    // Генерируем заданное количество вопросов
+                                    for (let i = 1; i <= perQuiz; i++) {
+                                        try {
+                                            const question = makeQuestion(i, isHard, lang, path);
+                                            const id = createId(isHard, lang, i);
+
+                                            const docRef = doc(db, collPath, id);
+                                            await setDoc(docRef, question);
+
+                                            uploadedQ++;
+                                            document.getElementById('uploadedQuestions').textContent = uploadedQ;
+                                            progress(uploadedQ, totalQ);
+
+                                            if (uploadedQ % 100 === 0) {
+                                                log(`${uploadedQ}/${totalQ} done (${Math.round(uploadedQ/totalQ*100)}%)`, 'success');
+                                            }
+
+                                        } catch (error) {
+                                            log(`Error ${lang}-${isHard ? 'hard' : 'simple'}-${i}: ${error.message}`, 'error');
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Логируем завершение квиза
+                            log(`✅ Quiz "${quiz.nameItem}" completed (${selectedLanguages.length * difficulties.length * perQuiz} questions)`, 'info');
+                        }
+                    }
+                }
+            }
+
+            log(`🎉 DONE! Created ${uploadedQ} questions`, 'success');
+            log(`📊 Per quiz: ${perQuiz} × ${selectedLanguages.length} langs × ${difficulties.length} types = ${perQuiz * selectedLanguages.length * difficulties.length}`, 'info');
+            log(`🔗 Path: questions/${event}/{cat}|{sub}|{subsub}/questions/{type}_{lang}_question_{num}`, 'info');
+            log(`🔑 IDs: simple_ru_question_001, hard_en_question_002, etc.`, 'info');
+        };
+
+        function progress(curr, total) {
+            const pct = total > 0 ? Math.round((curr / total) * 100) : 0;
+            const bar = document.getElementById('progressBar');
+            bar.style.width = pct + '%';
+            bar.textContent = `${curr}/${total} (${pct}%)`;
+        }
+
+        function log(msg, type = 'info') {
+            const logs = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = type;
+            entry.innerHTML = `[${time}] ${msg}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = '<div class="info">Logs cleared</div>';
+            progress(0, 1);
+            document.getElementById('uploadedQuestions').textContent = '0';
+        };
+    </script>
+</body>
+</html> 

@@ -103,7 +103,7 @@ class SyncWorker @AssistedInject constructor(
 
         for (event in EventQuiz.entries) {
             Log.d("SyncWorker", "📋 Processing event: ${event.name}")
-if (event != EventQuiz.QUIZ_HOME) return
+            if (event != EventQuiz.QUIZ_HOME) return
             var lockResult: LockServerResult
             while (true) {
                 lockResult = syncInteractor.lockStructureData(event)
@@ -112,15 +112,17 @@ if (event != EventQuiz.QUIZ_HOME) return
                         Log.d("SyncWorker", "🔒 Successfully locked ${event.name}")
                         break
                     }
+
                     is LockServerResult.AlreadyLocked -> {
                         Log.d("SyncWorker", "⏳ ${event.name} is locked, waiting...")
                         delay(1000)
                     }
+
                     is LockServerResult.Error -> {
                         Log.e("SyncWorker", "❌ Failed to lock ${event.name}")
                         return
+                    }
                 }
-            }
             }
 
             Log.d("SyncWorker", "🔄 Starting syncQuizes for ${event.name}")
@@ -129,11 +131,11 @@ if (event != EventQuiz.QUIZ_HOME) return
             when (result) {
                 is SyncStructureResult.Success -> {
                     Log.d("SyncWorker", "✅ Successfully synced ${event.name}")
-                try {
+                    try {
                         showNotification("Sync Complete", "Updated quizzes for ${event.name}.", context)
-                    val unlockResult = syncInteractor.unlockStructureData(event)
+                        val unlockResult = syncInteractor.unlockStructureData(event)
 
-                    if (unlockResult is LockServerResult.Error) {
+                        if (unlockResult is LockServerResult.Error) {
                             Log.e("SyncWorker", "❌ Failed to unlock ${event.name}, rolling back")
                             syncInteractor.rollbackStructureData(event)
                             return
@@ -146,6 +148,7 @@ if (event != EventQuiz.QUIZ_HOME) return
                         return
                     }
                 }
+
                 is SyncStructureResult.Error -> {
                     Log.e("SyncWorker", "❌ Sync failed for ${event.name}: ${result.error}")
                     syncInteractor.rollbackStructureData(event)
@@ -186,25 +189,26 @@ if (event != EventQuiz.QUIZ_HOME) return
         }
     }
 }
-    @AssistedFactory
-    interface Factory : ChildWorkerFactory {
-        override fun create(context: Context, workerParams: WorkerParameters): SyncWorker
-    }
 
-    class AppWorkerFactory @Inject constructor(
-        private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>
-    ) : WorkerFactory() {
+@AssistedFactory
+interface Factory : ChildWorkerFactory {
+    override fun create(context: Context, workerParams: WorkerParameters): SyncWorker
+}
 
-        override fun createWorker(
-            appContext: Context,
-            workerClassName: String,
-            workerParameters: WorkerParameters
-        ): ListenableWorker? {
-            val factoryProvider = workerFactories[Class.forName(workerClassName)] ?: return null
-            return factoryProvider.get().create(appContext, workerParameters)
-        }
-    }
+class AppWorkerFactory @Inject constructor(
+    private val workerFactories: Map<Class<out ListenableWorker>, @JvmSuppressWildcards Provider<ChildWorkerFactory>>
+) : WorkerFactory() {
 
-    interface ChildWorkerFactory {
-        fun create(context: Context, workerParams: WorkerParameters): SyncWorker
+    override fun createWorker(
+        appContext: Context,
+        workerClassName: String,
+        workerParameters: WorkerParameters
+    ): ListenableWorker? {
+        val factoryProvider = workerFactories[Class.forName(workerClassName)] ?: return null
+        return factoryProvider.get().create(appContext, workerParameters)
     }
+}
+
+interface ChildWorkerFactory {
+    fun create(context: Context, workerParams: WorkerParameters): SyncWorker
+}
