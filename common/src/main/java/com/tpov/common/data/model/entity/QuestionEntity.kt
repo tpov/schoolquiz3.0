@@ -22,6 +22,9 @@ data class QuestionEntity(
     @ColumnInfo(name = "nameQuestion")
     var nameQuestion: String = "",
 
+    @ColumnInfo(name = "infoQuestion")
+    var infoQuestion: String = "",
+
     @ColumnInfo(name = "pictureQuestion")
     var pathPictureQuestion: String? = "",
 
@@ -79,7 +82,7 @@ data class QuestionEntity(
     )
 
     fun toQuestionLocal() = QuestionLocal(
-        id, numQuestion, nameQuestion, pathPictureQuestion, nameAnswers, hardQuestion, PathStructure(
+        id, numQuestion, nameQuestion,infoQuestion, pathPictureQuestion, nameAnswers, hardQuestion, PathStructure(
             event, category, subCategory, subsubCategory, quiz),
             language = this.language.toLanguageUtils(),
             lvlTranslate

@@ -61,7 +61,7 @@ private const val REQUEST_CODE_CHEAT = 0
  * To save the session, many variables and encodings are used that are made from objects in one line,
  * this allows you to have the entire progress of the passage, save it and restore it.
  */
-@Logger
+
 @InternalCoroutinesApi
 class QuestionActivity : AppCompatActivity() {
 

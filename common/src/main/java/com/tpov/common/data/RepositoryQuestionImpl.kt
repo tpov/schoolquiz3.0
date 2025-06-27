@@ -41,6 +41,24 @@ class RepositoryQuestionImpl @Inject constructor(
     private val functions = Firebase.functions
     private val baseCollection = firestore.collection("questions")
 
+    /**
+     * Sanitizes path components to prevent Firestore path parsing issues.
+     * Replaces forward slashes with underscores to avoid creating invalid collection references.
+     */
+    private fun sanitizePathComponent(component: String): String {
+        return component.replace("/", "_")
+    }
+
+    /**
+     * Creates a sanitized collection name from path structure components.
+     */
+    private fun createSanitizedCollectionName(pathStructure: PathStructure): String {
+        val sanitizedCategory = sanitizePathComponent(pathStructure.nameCategory)
+        val sanitizedSubCategory = sanitizePathComponent(pathStructure.nameSubCategory)
+        val sanitizedSubsubCategory = sanitizePathComponent(pathStructure.nameSubsubCategory)
+        return "${sanitizedCategory}_${sanitizedSubCategory}_${sanitizedSubsubCategory}"
+    }
+
     override suspend fun getAllMustTrnslLangsPaidQuestions(): Set<LanguageUtils> {
         return try {
             val snapshot = firestore
@@ -76,9 +94,10 @@ class RepositoryQuestionImpl @Inject constructor(
 
     override suspend fun fetchQuestion(pathStructure: PathStructure, language: List<LanguageUtils>): List<QuestionLocal> {
 
+        val collectionName = createSanitizedCollectionName(pathStructure)
         val baseCollectionReference = baseCollection
             .document("question${pathStructure.nameEvent}")
-            .collection("${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_${pathStructure.nameSubsubCategory}")
+            .collection(collectionName)
 
         val questionLocal = mutableListOf<QuestionLocal>()
 
@@ -123,9 +142,10 @@ class RepositoryQuestionImpl @Inject constructor(
         )
         questionEntity.pathPictureQuestion?.let { uploadPhotoToServer(it) }
 
+        val collectionName = createSanitizedCollectionName(pathStructure)
         val docRef = baseCollection
             .document("question${pathStructure.nameEvent}")
-            .collection("${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_${pathStructure.nameSubsubCategory}")
+            .collection(collectionName)
             .document()
 
         Log.d("Translation", "docRef: ${docRef.path}")
@@ -178,11 +198,19 @@ class RepositoryQuestionImpl @Inject constructor(
     override suspend fun remoteLangsQuestions(questionLocal: QuestionLocal) =
         suspendCoroutine<List<LanguageUtils>> { continuation ->
             val questionEntity = questionLocal.toQuestionEntity()
+            val pathStructure = PathStructure(
+                questionEntity.event,
+                questionEntity.category,
+                questionEntity.subCategory,
+                questionEntity.subsubCategory,
+                questionEntity.quiz
+            )
+            val collectionName = createSanitizedCollectionName(pathStructure)
             val languages = mutableListOf<LanguageUtils>()
 
             baseCollection
                 .document("question${questionEntity.event}")
-                .collection("${questionEntity.category}_${questionEntity.subCategory}_${questionEntity.subsubCategory}")
+                .collection(collectionName)
                 .whereEqualTo("hardQuestion", questionEntity.hardQuestion)
                 .whereEqualTo("numQuestion", questionEntity.numQuestion)
                 .get()

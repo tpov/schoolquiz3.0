@@ -141,7 +141,7 @@ fun ProfileEntity.toProfile(): ProfileRemote {
             city = this.city ?: "",
             languages = this.languages ?: "",
             comander = this.commander.toLong(),
-            logo = this.logo.toLong(),
+            logo = this.logo.toLongOrNull() ?: 0L,
         ),
         points = Points(
             gold = this.pointsGold.toLong(),

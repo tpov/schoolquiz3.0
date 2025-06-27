@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@Logger
 @InternalCoroutinesApi
 class QuizActivityViewModel @Inject constructor(
     val structureUseCase: StructureUseCase
@@ -120,7 +119,7 @@ class QuizActivityViewModel @Inject constructor(
     private fun getEventHandler(event: String): suspend (PathStructure) -> List<StructureDataLocal> {
         return when (event) {
             EventQuiz.QUIZ_HOME.name -> ::handleHomeEvent
-            EventQuiz.QUIZ_TOURNIRE.name -> ::handleTournamentEvent
+            EventQuiz.QUIZ_TOURNAMENT.name -> ::handleTournamentEvent
             EventQuiz.QUIZ_ARENA.name -> ::handleArenaEvent
 //            EventQuiz.QUIZ_FOR_ADMIN.name  -> ::handleAdminEvent
 //            EventQuiz.QUIZ_FOR_MODERATOR.name  -> ::handleModeratorEvent

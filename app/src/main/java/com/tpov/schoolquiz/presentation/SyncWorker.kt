@@ -23,6 +23,7 @@ import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.SyncInteractor
 import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import com.tpov.schoolquiz.domain.ProfileUseCase
+import com.tpov.schoolquiz.presentation.contact.Event
 import com.tpov.schoolquiz.presentation.services.ProfileInteractor
 import com.tpov.setting.data.PreferencesManager
 import dagger.assisted.Assisted
@@ -53,19 +54,25 @@ class SyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.Default) {
         try {
+            Log.d("SyncWorker", "🚀 SyncWorker started")
 
             profileUseCase.syncProfile()
+            Log.d("SyncWorker", "✅ Profile sync completed")
+
             syncSettings()
+            Log.d("SyncWorker", "✅ Settings sync completed")
+
             syncQuizData()
+            Log.d("SyncWorker", "✅ Quiz data sync completed")
 
             val outputData = Data.Builder()
                 .putBoolean(KEY_SYNC_SUCCESS, true)
                 .build()
 
-            Log.d("SyncWorker", "Sync successful")
+            Log.d("SyncWorker", "✅ SyncWorker completed successfully")
             Result.success(outputData)
         } catch (e: Exception) {
-            Log.e("SyncData", "Error fetching or saving data: ${e.message}")
+            Log.e("SyncWorker", "❌ Error in SyncWorker: ${e.message}", e)
             Result.failure()
         }
     }
@@ -92,41 +99,62 @@ class SyncWorker @AssistedInject constructor(
     }
 
     private suspend fun syncQuizData() {
-        for (event in EventQuiz.entries) {
+        Log.d("SyncWorker", "🔄 Starting quiz data synchronization")
 
+        for (event in EventQuiz.entries) {
+            Log.d("SyncWorker", "📋 Processing event: ${event.name}")
+if (event != EventQuiz.QUIZ_HOME) return
             var lockResult: LockServerResult
             while (true) {
                 lockResult = syncInteractor.lockStructureData(event)
                 when (lockResult) {
-                    is LockServerResult.Success -> break
+                    is LockServerResult.Success -> {
+                        Log.d("SyncWorker", "🔒 Successfully locked ${event.name}")
+                        break
+                    }
                     is LockServerResult.AlreadyLocked -> {
+                        Log.d("SyncWorker", "⏳ ${event.name} is locked, waiting...")
                         delay(1000)
                     }
-
-                    is LockServerResult.Error -> return
+                    is LockServerResult.Error -> {
+                        Log.e("SyncWorker", "❌ Failed to lock ${event.name}")
+                        return
                 }
             }
+            }
 
+            Log.d("SyncWorker", "🔄 Starting syncQuizes for ${event.name}")
             val result = syncInteractor.syncQuizes(event, exceptionInteractor)
 
-            if (result is SyncStructureResult.Success) {
+            when (result) {
+                is SyncStructureResult.Success -> {
+                    Log.d("SyncWorker", "✅ Successfully synced ${event.name}")
                 try {
-                    showNotification("Sync Complete", "Updated quizzes.", context)
+                        showNotification("Sync Complete", "Updated quizzes for ${event.name}.", context)
                     val unlockResult = syncInteractor.unlockStructureData(event)
 
                     if (unlockResult is LockServerResult.Error) {
+                            Log.e("SyncWorker", "❌ Failed to unlock ${event.name}, rolling back")
+                            syncInteractor.rollbackStructureData(event)
+                            return
+                        } else {
+                            Log.d("SyncWorker", "🔓 Successfully unlocked ${event.name}")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("SyncWorker", "❌ Error in post-sync cleanup for ${event.name}: ${e.message}", e)
                         syncInteractor.rollbackStructureData(event)
                         return
                     }
-                } catch (e: Exception) {
+                }
+                is SyncStructureResult.Error -> {
+                    Log.e("SyncWorker", "❌ Sync failed for ${event.name}: ${result.error}")
                     syncInteractor.rollbackStructureData(event)
                     return
                 }
-            } else {
-                syncInteractor.rollbackStructureData(event)
-                return
             }
         }
+
+        Log.d("SyncWorker", "🎉 All quiz data synchronization completed successfully")
     }
 
     @SuppressLint("MissingPermission")

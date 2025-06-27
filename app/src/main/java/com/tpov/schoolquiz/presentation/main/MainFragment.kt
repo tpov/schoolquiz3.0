@@ -20,7 +20,6 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@Logger
 class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
 
     @Inject
@@ -59,7 +58,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnItemClickListener {
             }
         }
         initGetData()
-        viewModel.initStructureData(event ?: EventQuiz.QUIZ_BY_USER)
+        viewModel.initStructureData(event ?: EventQuiz.QUIZ_HOME)
     }
 
     @OptIn(InternalCoroutinesApi::class)

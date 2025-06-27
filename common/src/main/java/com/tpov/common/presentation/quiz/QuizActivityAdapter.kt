@@ -28,7 +28,6 @@ import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.io.File
 
-@Logger
 class QuizActivityAdapter @OptIn(InternalCoroutinesApi::class) constructor(
     private val listener: Listener,
     private val context: Context,

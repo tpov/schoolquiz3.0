@@ -1,0 +1,176 @@
+{
+  "structures": {
+    "structureData": {
+      "QUIZ_HOME": {
+        "SchoolQuiz": {
+            "children": [
+              {
+                "nameItem": "Математика",
+                "dataUpdate": "2024-01-15T10:30:00Z",
+                "dataCreate": "2024-01-01T09:00:00Z",
+                "version": 1,
+                "ratingGlobal": 85,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 12345,
+                "nameCreator": "Анна Петрова",
+                "tpovIdMaxStarsGlobal": 67890,
+                "picture": "math_category.jpg",
+                "languages": "ru",
+                "isShowArchive": true,
+                "isShow": true,
+                "children": [
+                  {
+                    "nameItem": "Алгебра 8 класс",
+                    "dataUpdate": "2024-01-10T14:20:00Z",
+                    "dataCreate": "2024-01-01T10:00:00Z",
+                    "version": 2,
+                    "ratingGlobal": 92,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 12345,
+                    "nameCreator": "Анна Петрова",
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "picture": "algebra_8.jpg",
+                    "languages": "ru",
+                    "isShowArchive": true,
+                    "isShow": true
+                  },
+                  {
+                    "nameItem": "Геометрия 8 класс",
+                    "dataUpdate": "2024-01-12T16:45:00Z",
+                    "dataCreate": "2024-01-02T11:30:00Z",
+                    "version": 1,
+                    "ratingGlobal": 78,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 54321,
+                    "nameCreator": "Михаил Иванов",
+                    "tpovIdMaxStarsGlobal": 67890,
+                    "picture": "geometry_8.jpg",
+                    "languages": "ru",
+                    "isShowArchive": true,
+                    "isShow": true
+                  }
+                ]
+              },
+              {
+                "nameItem": "Физика",
+                "dataUpdate": "2024-01-14T12:15:00Z",
+                "dataCreate": "2024-01-01T09:30:00Z",
+                "version": 1,
+                "ratingGlobal": 88,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 98765,
+                "nameCreator": "Сергей Сидоров",
+                "tpovIdMaxStarsGlobal": 11111,
+                "picture": "physics_category.jpg",
+                "languages": "ru",
+                "isShowArchive": true,
+                "isShow": true,
+                "children": [
+                  {
+                    "nameItem": "Механика",
+                    "dataUpdate": "2024-01-13T13:30:00Z",
+                    "dataCreate": "2024-01-03T08:45:00Z",
+                    "version": 3,
+                    "ratingGlobal": 95,
+                    "starsAverageGlobal": 5,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 98765,
+                    "nameCreator": "Сергей Сидоров",
+                    "tpovIdMaxStarsGlobal": 11111,
+                    "picture": "mechanics.jpg",
+                    "languages": "ru",
+                    "isShowArchive": true,
+                    "isShow": true
+                  },
+                  {
+                    "nameItem": "Электричество",
+                    "dataUpdate": "2024-01-11T15:20:00Z",
+                    "dataCreate": "2024-01-04T10:15:00Z",
+                    "version": 1,
+                    "ratingGlobal": 82,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 98765,
+                    "nameCreator": "Сергей Сидоров",
+                    "tpovIdMaxStarsGlobal": 22222,
+                    "picture": "electricity.jpg",
+                    "languages": "ru",
+                    "isShowArchive": true,
+                    "isShow": true
+                  }
+                ]
+              },
+              {
+                "nameItem": "История",
+                "dataUpdate": "2024-01-16T09:45:00Z",
+                "dataCreate": "2024-01-01T11:00:00Z",
+                "version": 2,
+                "ratingGlobal": 76,
+                "starsAverageGlobal": 4,
+                "starsMaxGlobal": 5,
+                "tpovIdCreator": 55555,
+                "nameCreator": "Елена Козлова",
+                "tpovIdMaxStarsGlobal": 33333,
+                "picture": "history_category.jpg",
+                "languages": "ru",
+                "isShowArchive": true,
+                "isShow": true,
+                "children": [
+                  {
+                    "nameItem": "История России",
+                    "dataUpdate": "2024-01-15T17:10:00Z",
+                    "dataCreate": "2024-01-05T12:20:00Z",
+                    "version": 1,
+                    "ratingGlobal": 89,
+                    "starsAverageGlobal": 4,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 55555,
+                    "nameCreator": "Елена Козлова",
+                    "tpovIdMaxStarsGlobal": 33333,
+                    "picture": "russian_history.jpg",
+                    "languages": "ru",
+                    "isShowArchive": true,
+                    "isShow": true
+                  },
+                  {
+                    "nameItem": "Всемирная история",
+                    "dataUpdate": "2024-01-14T11:25:00Z",
+                    "dataCreate": "2024-01-06T14:40:00Z",
+                    "version": 2,
+                    "ratingGlobal": 73,
+                    "starsAverageGlobal": 3,
+                    "starsMaxGlobal": 5,
+                    "tpovIdCreator": 55555,
+                    "nameCreator": "Елена Козлова",
+                    "tpovIdMaxStarsGlobal": 44444,
+                    "picture": "world_history.jpg",
+                    "languages": "ru",
+                    "isShowArchive": true,
+                    "isShow": true
+                  }
+                ]
+              }
+            ],
+            "nameItem": "SchoolQuiz",
+            "dataUpdate": "2024-01-16T18:30:00Z",
+            "dataCreate": "2024-01-01T08:00:00Z",
+            "version": 3,
+            "ratingGlobal": 84,
+            "starsAverageGlobal": 4,
+            "starsMaxGlobal": 5,
+            "tpovIdCreator": 10001,
+            "nameCreator": "Администратор",
+            "tpovIdMaxStarsGlobal": 67890,
+            "picture": "school_quiz_main.jpg",
+            "languages": "ru,en",
+            "isShowArchive": true,
+            "isShow": true
+        }
+      }
+    }
+  }
+} 

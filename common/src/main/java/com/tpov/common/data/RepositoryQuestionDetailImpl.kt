@@ -19,15 +19,32 @@ class RepositoryQuestionDetailImpl @Inject constructor(
 
     private val baseCollection = firestore.collection("questionsDetail")
 
+    /**
+     * Sanitizes path components to prevent Firestore path parsing issues.
+     * Replaces forward slashes with underscores to avoid creating invalid collection references.
+     */
+    private fun sanitizePathComponent(component: String): String {
+        return component.replace("/", "_")
+    }
+
+    /**
+     * Creates a sanitized collection name from path structure components.
+     */
+    private fun createSanitizedCollectionName(path: PathStructure): String {
+        val sanitizedCategory = sanitizePathComponent(path.nameCategory)
+        val sanitizedSubCategory = sanitizePathComponent(path.nameSubCategory)
+        val sanitizedSubsubCategory = sanitizePathComponent(path.nameSubsubCategory)
+        val sanitizedQuiz = sanitizePathComponent(path.nameQuiz)
+        return "${sanitizedCategory}_${sanitizedSubCategory}_${sanitizedSubsubCategory}_${sanitizedQuiz}"
+    }
+
     override suspend fun fetchQuestionDetails(path: PathStructure): List<QuestionDetailLocal> {
         Log.d("FirebaseStorage", "fetchQuestionDetails")
 
+        val collectionName = createSanitizedCollectionName(path)
         val collectionReference = baseCollection
             .document("questionDetail${path.nameEvent}")
-            .collection(
-                "${path.nameCategory}_${path.nameSubCategory}_" +
-                    "${path.nameSubsubCategory}_${path.nameQuiz}"
-            )
+            .collection(collectionName)
             .document("listTpovId")
             .collection(settingsConfig.tpovId.toString())
 
@@ -71,12 +88,10 @@ class RepositoryQuestionDetailImpl @Inject constructor(
 
     override suspend fun deleteRemoteQuestionDetailByPath(pathStructure: PathStructure) {
         try {
+            val collectionName = createSanitizedCollectionName(pathStructure)
             val collectionReference = baseCollection
                 .document("questionDetail${pathStructure.nameEvent}")
-                .collection(
-                    "${pathStructure.nameCategory}_${pathStructure.nameSubCategory}_" +
-                        "${pathStructure.nameSubsubCategory}_${pathStructure.nameQuiz}"
-                )
+                .collection(collectionName)
                 .document("listTpovId")
                 .collection(settingsConfig.tpovId.toString())
 

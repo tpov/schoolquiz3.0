@@ -1,5 +1,6 @@
 package com.tpov.common
 
+import android.util.Log
 import com.tpov.common.domain.repository.RepositoryException
 import javax.inject.Inject
 
@@ -8,81 +9,75 @@ class ExceptionInteractor @Inject constructor(
     private val repositoryException: RepositoryException
 ) {
     fun notFoundInputData() {
-
+        Log.w("ExceptionInteractor", "Input data not found")
     }
 
     fun notFoundQuizValue() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Quiz value not found")
     }
 
     fun errorGetNumQuestion() {
-        TODO("Not yet implemented")
+        Log.e("ExceptionInteractor", "Error getting question number")
     }
 
     fun notFoundNumberQuestionByTypeHardQuiz() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Number of questions not found by hard quiz type")
     }
 
     fun notFoundInitTypeHardQuestion() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Hard question type not initialized")
     }
 
     fun handleQuizNotFound() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Quiz not found")
     }
 
     fun handleInputDataNotFound() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Input data not found")
     }
 
     fun handleQuestionNotFound() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Question not found")
     }
 
     fun sendErrorToRemote() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Sending error to remote (not implemented)")
+        // TODO: Implement remote error reporting when needed
     }
 
     fun notFoundQuiz() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Quiz not found")
     }
 
     fun notFountQuestionByLanguageUser() {
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Question not found for user language")
     }
-
 
     fun initStructureDataLocal() {
-
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Failed to initialize local structure data")
     }
+    
     fun initStructureDataRemote() {
-
+        Log.w("ExceptionInteractor", "Failed to initialize remote structure data")
     }
 
     fun syncLocalStructureData() {
-
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Failed to sync local structure data")
     }
 
     fun syncRemoteStructureData() {
-
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Failed to sync remote structure data")
     }
 
     fun syncQuestionLocal() {
-
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Failed to sync local questions")
     }
 
     fun syncQuestionRemote() {
-
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Failed to sync remote questions")
     }
 
     fun syncInfo() {
-
-        TODO("Not yet implemented")
+        Log.w("ExceptionInteractor", "Failed to sync info")
     }
-
 }

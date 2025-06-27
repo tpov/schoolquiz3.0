@@ -1,9 +1,11 @@
 package com.tpov.common.data.model.remote
 
+import com.google.firebase.firestore.IgnoreExtraProperties
+import com.google.firebase.firestore.PropertyName
 import com.tpov.common.data.model.local.StructureDataLocal
 
+@IgnoreExtraProperties
 data class StructureDataRemote(
-    val id: Int? = null,
     val children: List<StructureDataRemote>? = null,
     val nameItem: String = "",
     val dataUpdate: String = "", // for syncs
@@ -17,29 +19,51 @@ data class StructureDataRemote(
     val tpovIdMaxStarsGlobal: Int = 0,
     val picture: String = "",
     var languages: String = "",
-    val isShowArchive: Boolean = true,
-    val isShow: Boolean = true
+    @PropertyName("isShowArchive")
+    val isShowArchive: Boolean? = null,
+    @PropertyName("isShow")
+    val isShow: Boolean? = null
 ) {
+    // No-argument constructor for Firebase
+    constructor() : this(
+        children = null,
+        nameItem = "",
+        dataUpdate = "",
+        dataCreate = "",
+        version = 0,
+        ratingGlobal = 0,
+        starsAverageGlobal = 0,
+        starsMaxGlobal = 0,
+        tpovIdCreator = 0,
+        nameCreator = "",
+        tpovIdMaxStarsGlobal = 0,
+        picture = "",
+        languages = "",
+        isShowArchive = null,
+        isShow = null
+    )
+
     fun toStructureDataLocal(): StructureDataLocal = StructureDataLocal(
-        children.orEmpty().map { it.toStructureDataLocal() }.toMutableList(),
-        nameItem,
-        dataUpdate,
-        "",
-        dataCreate,
-        version,
-        ratingGlobal,
-        -1,
-        -1,
-        starsMaxGlobal,
-        -1,
-        starsAverageGlobal,
-        -1,
-        -1,
-        tpovIdCreator,
-        nameCreator,
-        tpovIdMaxStarsGlobal,
-        languages,
-        picture,
-        isShowArchive
+        children = children?.map { it.toStructureDataLocal() }?.toMutableList(),
+        nameItem = nameItem,
+        dataUpdateGlobal = dataUpdate,
+        dataUpdateLocal = "",
+        dataCreate = dataCreate,
+        version = version,
+        ratingGlobal = ratingGlobal,
+        ratingLocal = -1,
+        starsMaxLocal = -1,
+        starsMaxGlobal = starsMaxGlobal,
+        starsAverageLocal = -1,
+        starsAverageGlobal = starsAverageGlobal,
+        numHQ = 0,
+        numQ = 0,
+        tpovIdCreator = tpovIdCreator,
+        nameCreator = nameCreator,
+        tpovIdMaxStarsGlobal = tpovIdMaxStarsGlobal,
+        languages = languages,
+        picture = picture,
+        isShowDownload = true,
+        isShowArchive = isShowArchive ?: true
     )
 }

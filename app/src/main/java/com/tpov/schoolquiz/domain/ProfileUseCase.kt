@@ -30,8 +30,7 @@ class ProfileUseCase @Inject constructor(private val repositoryProfile: Reposito
 
     suspend fun syncProfile() {
         val currentProfile = repositoryProfile.getProfile()
-        val isAuthenticated =
-            FirebaseAuth.getInstance().currentUser?.uid != null && repositoryProfile.getProfile()?.tpovId != null
+        val isAuthenticated = FirebaseAuth.getInstance().currentUser?.uid != null && repositoryProfile.getProfile()?.tpovId != null
         val isOffline = currentProfile?.status == ProfileStatus.OFFLINE.statusCode
 
         var newLocalProfile = when {

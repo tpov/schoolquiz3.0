@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Full Quiz Structure to Firestore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        .progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+            height: 20px;
+        }
+        .progress-bar {
+            background: #28a745;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+            font-size: 12px;
+        }
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .category-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .category-item.uploaded {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .category-item.selected {
+            background: #cce5ff;
+            border-color: #4285f4;
+            border-width: 2px;
+        }
+        .file-input {
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .file-input input[type="file"] {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Загрузка полной структуры квизов в Firestore</h1>
+        
+        <div>
+            <h3>События для загрузки (8 событий):</h3>
+            <div class="categories">
+                <div class="category-item event-item" data-event="QUIZ_HOME">QUIZ_HOME (8)</div>
+                <div class="category-item event-item" data-event="QUIZ_TOURNAMENT_LEADER">QUIZ_TOURNAMENT_LEADER (7)</div>
+                <div class="category-item event-item" data-event="QUIZ_TOURNAMENT">QUIZ_TOURNAMENT (6)</div>
+                <div class="category-item event-item" data-event="QUIZ_ARENA">QUIZ_ARENA (5)</div>
+                <div class="category-item event-item" data-event="QUIZ_FOR_ADMIN">QUIZ_FOR_ADMIN (4)</div>
+                <div class="category-item event-item" data-event="QUIZ_FOR_TRANSLATOR">QUIZ_FOR_TRANSLATOR (3)</div>
+                <div class="category-item event-item" data-event="QUIZ_FOR_TESTER">QUIZ_FOR_TESTER (2)</div>
+                <div class="category-item event-item" data-event="QUIZ_BY_USER">QUIZ_BY_USER (1)</div>
+            </div>
+        </div>
+
+        <div>
+            <h3>Категории для загрузки:</h3>
+            <div class="categories">
+                <div class="category-item" id="SchoolQuiz">SchoolQuiz</div>
+                <div class="category-item" id="Pools">Pools</div>
+                <div class="category-item" id="Tests">Tests</div>
+                <div class="category-item" id="CourseQuiz">CourseQuiz</div>
+                <div class="category-item" id="GameQuiz">GameQuiz</div>
+                <div class="category-item" id="OtherQuiz">OtherQuiz</div>
+            </div>
+        </div>
+
+        <div class="file-input">
+            <label for="jsonFile">📁 Выберите JSON файл со структурой:</label>
+            <input type="file" id="jsonFile" accept=".json" onchange="loadJsonFile(event)">
+            <div id="fileStatus">Файл не выбран</div>
+        </div>
+
+        <div>
+            <h3>Шаги для загрузки:</h3>
+            <ol>
+                <li>Выберите файл firebase_structure_full.json</li>
+                <li>Нажмите "Инициализировать Firebase"</li>
+                <li>Нажмите "Загрузить для всех событий"</li>
+                <li>Проверьте результат в логах ниже</li>
+            </ol>
+        </div>
+
+        <div>
+            <button onclick="initFirebase()" id="initBtn">Инициализировать Firebase</button>
+            <button onclick="uploadAllCategories()" id="uploadBtn" disabled>Загрузить для всех событий</button>
+            <button onclick="uploadForSelectedEvent()" id="uploadEventBtn" disabled>Загрузить для выбранного события</button>
+            <button onclick="clearLogs()" id="clearBtn">Очистить логи</button>
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <div id="logs" class="log">
+            <div class="info">📝 Логи загрузки будут отображаться здесь...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, setDoc, collection } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Конфигурация Firebase для проекта school-quiz-89336951
+        const firebaseConfig = {
+            apiKey: "AIzaSyC10iksA0DO5OBc98KY_M1ECeNVHUIU2QQ",
+            authDomain: "school-quiz-89336951.firebaseapp.com",
+            projectId: "school-quiz-89336951",
+            storageBucket: "school-quiz-89336951.appspot.com",
+            messagingSenderId: "762375057396",
+            appId: "1:762375057396:android:104a8bd0846a921a2893a1"
+        };
+
+        let app;
+        let db;
+        let structureData = null;
+        let selectedEvent = 'QUIZ_HOME';
+
+        window.loadJsonFile = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        structureData = JSON.parse(e.target.result);
+                        document.getElementById('fileStatus').innerHTML = `✅ Файл загружен: ${file.name}`;
+                        log(`📁 JSON файл загружен: ${file.name}`, 'success');
+                        
+                        // Проверяем структуру
+                        if (structureData.structures && structureData.structures.structureData) {
+                            const categories = Object.keys(structureData.structures.structureData);
+                            log(`📋 Найдено категорий: ${categories.join(', ')}`, 'info');
+                        }
+                    } catch (error) {
+                        document.getElementById('fileStatus').innerHTML = `❌ Ошибка в файле: ${error.message}`;
+                        log(`❌ Ошибка парсинга JSON: ${error.message}`, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+
+        window.initFirebase = function() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                log('✅ Firebase инициализирован успешно!', 'success');
+                
+                if (structureData) {
+                    document.getElementById('uploadBtn').disabled = false;
+                    document.getElementById('uploadEventBtn').disabled = false;
+                }
+                document.getElementById('initBtn').disabled = true;
+            } catch (error) {
+                log('❌ Ошибка инициализации Firebase: ' + error.message, 'error');
+            }
+        };
+
+        // Add event selection functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.event-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove selected class from all events
+                    document.querySelectorAll('.event-item').forEach(el => el.classList.remove('selected'));
+                    // Add selected class to clicked event
+                    this.classList.add('selected');
+                    selectedEvent = this.dataset.event;
+                    log(`📌 Выбрано событие: ${selectedEvent}`, 'info');
+                });
+            });
+            
+            // Select QUIZ_HOME by default
+            document.querySelector('[data-event="QUIZ_HOME"]').classList.add('selected');
+        });
+
+        window.uploadForSelectedEvent = async function() {
+            if (!db || !structureData) {
+                log('❌ Firebase не инициализирован или JSON файл не загружен!', 'error');
+                return;
+            }
+
+            log(`🚀 Начинаю загрузку категорий для события ${selectedEvent}...`, 'info');
+            
+            const categories = Object.keys(structureData.structures.structureData);
+            
+            log(`📊 Всего категорий для загрузки: ${categories.length}`, 'info');
+            updateProgress(0, categories.length);
+
+            let uploaded = 0;
+
+            for (const categoryName of categories) {
+                try {
+                    log(`📂 Обрабатываю категорию: ${categoryName}`, 'info');
+                    
+                    const categoryData = structureData.structures.structureData[categoryName];
+                    
+                    if (categoryData) {
+                        // Создаем полный StructureDataRemote объект для категории
+                        const structureDataRemote = {
+                            nameItem: categoryName,
+                            dataUpdate: categoryData.dataUpdate || "",
+                            dataCreate: categoryData.dataCreate || "",
+                            version: categoryData.version || 1,
+                            ratingGlobal: categoryData.ratingGlobal || 0,
+                            starsAverageGlobal: categoryData.starsAverageGlobal || 0,
+                            starsMaxGlobal: categoryData.starsMaxGlobal || 0,
+                            tpovIdCreator: categoryData.tpovIdCreator || 1,
+                            nameCreator: categoryData.nameCreator || "TPOV",
+                            tpovIdMaxStarsGlobal: categoryData.tpovIdMaxStarsGlobal || 0,
+                            picture: categoryData.picture || "",
+                            languages: categoryData.languages || "ru",
+                            isShowArchive: categoryData.isShowArchive !== undefined ? categoryData.isShowArchive : true,
+                            isShow: categoryData.isShow !== undefined ? categoryData.isShow : true,
+                            children: categoryData.children || []
+                        };
+                        
+                        log(`  📄 Создан объект StructureDataRemote для ${categoryName}:`, 'info');
+                        log(`    - nameItem: ${structureDataRemote.nameItem}`, 'info');
+                        log(`    - children: ${structureDataRemote.children.length} элементов`, 'info');
+                        log(`    - ratingGlobal: ${structureDataRemote.ratingGlobal}`, 'info');
+                        log(`    - version: ${structureDataRemote.version}`, 'info');
+                        
+                        // Сохраняем по пути structures/structureData/QUIZ_HOME/SchoolQuiz
+                        const docRef = doc(db, 'structures', 'structureData', selectedEvent, categoryName);
+                        
+                        log(`📤 Загружаю: structures/structureData/${selectedEvent}/${categoryName} с ${structureDataRemote.children.length} подкатегорий`, 'info');
+                        
+                        await setDoc(docRef, structureDataRemote);
+                        log(`✅ Загружено: ${categoryName} (${structureDataRemote.children.length} children)`, 'success');
+                        
+                        uploaded++;
+                        updateProgress(uploaded, categories.length);
+                    } else {
+                        log(`⚠️ Категория ${categoryName} пуста`, 'warning');
+                    }
+                    
+                } catch (error) {
+                    log(`❌ Ошибка при загрузке категории ${categoryName}: ${error.message}`, 'error');
+                }
+            }
+
+            log(`🎉 Загрузка завершена! Загружено ${uploaded}/${categories.length} категорий`, 'success');
+            log('📍 Новая структура в Firestore: structures/structureData/{EVENT}/{CATEGORY}', 'info');
+            log('🔍 Каждый документ = полный StructureDataRemote объект с children массивом', 'info');
+        };
+
+        window.uploadAllCategories = async function() {
+            if (!db || !structureData) {
+                log('❌ Firebase не инициализирован или JSON файл не загружен!', 'error');
+                return;
+            }
+
+            const events = [
+                'QUIZ_HOME', 'QUIZ_TOURNAMENT_LEADER', 'QUIZ_TOURNAMENT', 'QUIZ_ARENA',
+                'QUIZ_FOR_ADMIN', 'QUIZ_FOR_TRANSLATOR', 'QUIZ_FOR_TESTER'
+            ];
+            log('🚀 Начинаю загрузку всех категорий для всех 7 событий...', 'info');
+            
+            const categories = Object.keys(structureData.structures.structureData);
+            const totalOperations = events.length * categories.length;
+            
+            log(`📊 Всего операций: ${totalOperations} (${events.length} событий × ${categories.length} категорий)`, 'info');
+            updateProgress(0, totalOperations);
+
+            let totalUploaded = 0;
+
+            for (const eventName of events) {
+                log(`📋 Загружаю событие: ${eventName}`, 'warning');
+                
+                for (const categoryName of categories) {
+                    try {
+                        log(`📂 Обрабатываю ${eventName}/${categoryName}`, 'info');
+                        
+                        const categoryData = structureData.structures.structureData[categoryName];
+                        
+                        if (categoryData) {
+                            // Создаем полный StructureDataRemote объект для категории
+                            const structureDataRemote = {
+                                nameItem: categoryName,
+                                dataUpdate: categoryData.dataUpdate || "",
+                                dataCreate: categoryData.dataCreate || "",
+                                version: categoryData.version || 1,
+                                ratingGlobal: categoryData.ratingGlobal || 0,
+                                starsAverageGlobal: categoryData.starsAverageGlobal || 0,
+                                starsMaxGlobal: categoryData.starsMaxGlobal || 0,
+                                tpovIdCreator: categoryData.tpovIdCreator || 1,
+                                nameCreator: categoryData.nameCreator || "TPOV",
+                                tpovIdMaxStarsGlobal: categoryData.tpovIdMaxStarsGlobal || 0,
+                                picture: categoryData.picture || "",
+                                languages: categoryData.languages || "ru",
+                                isShowArchive: categoryData.isShowArchive !== undefined ? categoryData.isShowArchive : true,
+                                isShow: categoryData.isShow !== undefined ? categoryData.isShow : true,
+                                children: categoryData.children || []
+                            };
+                            
+                            log(`  📄 Создан объект StructureDataRemote для ${categoryName}:`, 'info');
+                            log(`    - nameItem: ${structureDataRemote.nameItem}`, 'info');
+                            log(`    - children: ${structureDataRemote.children.length} элементов`, 'info');
+                            log(`    - ratingGlobal: ${structureDataRemote.ratingGlobal}`, 'info');
+                            log(`    - version: ${structureDataRemote.version}`, 'info');
+                            
+                            // Сохраняем по пути structures/structureData/QUIZ_HOME/SchoolQuiz
+                            const docRef = doc(db, 'structures', 'structureData', eventName, categoryName);
+                            
+                            log(`📤 Загружаю: structures/structureData/${eventName}/${categoryName} с ${structureDataRemote.children.length} подкатегорий`, 'info');
+                            
+                            await setDoc(docRef, structureDataRemote);
+                            
+                            log(`✅ Загружено: ${categoryName} (${structureDataRemote.children.length} children)`, 'success');
+                            
+                            totalUploaded++;
+                            updateProgress(totalUploaded, totalOperations);
+                        } else {
+                            log(`⚠️ Категория ${categoryName} пуста`, 'warning');
+                        }
+                        
+                    } catch (error) {
+                        log(`❌ Ошибка загрузки ${eventName}/${categoryName}: ${error.message}`, 'error');
+                    }
+                }
+            }
+            
+            log(`🎉 Полная загрузка завершена! Загружено ${totalUploaded}/${totalOperations} категорий`, 'success');
+            log('📍 Новая структура в Firestore: structures/structureData/{EVENT}/{CATEGORY}', 'info');
+            log('🔍 Каждый документ = полный StructureDataRemote объект с children массивом', 'info');
+        };
+
+        function updateProgress(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = `${current}/${total} (${percentage}%)`;
+        }
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = '<div class="info">📝 Логи очищены...</div>';
+            // Сбрасываем прогресс
+            updateProgress(0, 1);
+            // Убираем отметки с категорий
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.classList.remove('uploaded');
+            });
+        };
+    </script>
+</body>
+</html> 

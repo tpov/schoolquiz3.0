@@ -34,17 +34,25 @@ object StructureDataExtention {
 
     suspend fun SyncState.initStateStructureData(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
-        try {
-            this.currentStage = SyncStage.STRUCTURE_FETCH
-            this.structureCategoryDataListRemote =
-                structureUseCase.fetchStructureCategoryDataList(this.eventId)
-                    ?.toMutableList() ?: exceptionHandler.exceptionInitStructureRemoteData()
+        this.currentStage = SyncStage.STRUCTURE_FETCH
+        
+        android.util.Log.d("StructureSync", "🔄 initStateStructureData started for: ${this.eventId.name}")
+        
+        this.structureCategoryDataListRemote =
+            structureUseCase.fetchStructureCategoryDataList(this.eventId)
+                ?.toMutableList() ?: exceptionHandler.exceptionInitStructureRemoteData()
 
-            this.structureCategoryDataListLocal =
-                structureUseCase.getStructureEventData(this.eventId)?.toMutableList() ?: mutableListOf()
+        android.util.Log.d("StructureSync", "📡 Remote data fetched: ${this.structureCategoryDataListRemote.size} categories")
+        for (category in this.structureCategoryDataListRemote) {
+            android.util.Log.d("StructureSync", "  📂 Remote: ${category.nameItem} with ${category.children?.size ?: 0} children")
+        }
 
-        } catch (e: Exception) {
-            exceptionHandler.exceptionInitStructureRemoteData(e.message ?: "")
+        this.structureCategoryDataListLocal =
+            structureUseCase.getStructureEventData(this.eventId)?.toMutableList() ?: mutableListOf()
+
+        android.util.Log.d("StructureSync", "💾 Local data fetched: ${this.structureCategoryDataListLocal.size} categories")
+        for (category in this.structureCategoryDataListLocal) {
+            android.util.Log.d("StructureSync", "  📂 Local: ${category.nameItem} with ${category.children?.size ?: 0} children")
         }
 
         return this
@@ -52,48 +60,53 @@ object StructureDataExtention {
 
     fun SyncState.updateLocalStructureData(): SyncState {
         if (exception != null) return this
-        try {
-            this.currentStage = SyncStage.STRUCTURE_LOCAL_SYNC
+        this.currentStage = SyncStage.STRUCTURE_LOCAL_SYNC
 
-            processStructureDataDifferences(
-                structureNodeListNew = this.structureCategoryDataListRemote,
-                structureNodeListOld = this.structureCategoryDataListLocal,
-                event = this.eventId,
-                callback = CallbackDifferences(
-                    onMissingOldStructure = { _, structureNodeNew, currentPath ->
-                        if (currentPath.nameSubCategory == "") currentPath.nameCategory = ""
-                        else if (currentPath.nameSubsubCategory == "") currentPath.nameSubCategory = ""
-                        else if (currentPath.nameQuiz == "") currentPath.nameSubsubCategory = ""
+        android.util.Log.d("StructureSync", "🔄 updateLocalStructureData started")
+        android.util.Log.d("StructureSync", "📡 Remote categories to process: ${this.structureCategoryDataListRemote.size}")
+        android.util.Log.d("StructureSync", "💾 Local categories before processing: ${this.structureCategoryDataListLocal.size}")
 
-                        this.structureCategoryDataListLocal.addNodeByPath(structureNodeNew, currentPath)
-
-                    },
-                    onHasChildren = { structureNodeOld, structureNodeNew, currentPath ->
-                        if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
-
-                            this.structureCategoryDataListLocal
-                                .updateLocalInfoData(
-                                    this.structureCategoryDataListRemote,
-                                    currentPath
-                                )
-                        }
-                    },
-                    onNoChildren = { structureNodeOld, structureNodeNew, currentPath ->
-                        if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
-                            this.structureCategoryDataListLocal
-                                .updateLocalInfoData(
-                                    this.structureCategoryDataListRemote,
-                                    currentPath
-                                )
-                        }
+        processStructureDataDifferences(
+            structureNodeListNew = this.structureCategoryDataListRemote,
+            structureNodeListOld = this.structureCategoryDataListLocal,
+            event = this.eventId,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, structureNodeNew, currentPath ->
+                    android.util.Log.d("StructureSync", "➕ Adding missing structure: ${structureNodeNew.nameItem} at path: $currentPath")
+                    
+                    this.structureCategoryDataListLocal.addNodeByPath(structureNodeNew, currentPath)
+                    android.util.Log.d("StructureSync", "✅ Added. Local categories now: ${this.structureCategoryDataListLocal.size}")
+                },
+                onHasChildren = { structureNodeOld, structureNodeNew, currentPath ->
+                    android.util.Log.d("StructureSync", "🔄 Processing existing structure with children: ${structureNodeNew.nameItem}")
+                    
+                    if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
+                        android.util.Log.d("StructureSync", "📝 Updating structure: ${structureNodeNew.nameItem}")
+                        this.structureCategoryDataListLocal
+                            .updateLocalInfoData(
+                                this.structureCategoryDataListRemote,
+                                currentPath
+                            )
                     }
-                )
-            )
-
-            StructureDataLocal(children = structureCategoryDataListRemote).printFullStructure("syncStateLocalStructureData after")
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncLocalStructureData(e.message ?: "")
-        }
+                },
+                onNoChildren = { structureNodeOld, structureNodeNew, currentPath ->
+                    android.util.Log.d("StructureSync", "📄 Processing leaf structure: ${structureNodeNew.nameItem}")
+                    
+                    if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
+                        android.util.Log.d("StructureSync", "📝 Updating leaf structure: ${structureNodeNew.nameItem}")
+                        this.structureCategoryDataListLocal
+                            .updateLocalInfoData(
+                                this.structureCategoryDataListRemote,
+                                currentPath
+                            )
+                    }
+                }
+            ),
+        )
+        
+        android.util.Log.d("StructureSync", "✅ updateLocalStructureData completed")
+        android.util.Log.d("StructureSync", "💾 Local categories after processing: ${this.structureCategoryDataListLocal.size}")
+        
         return this
     }
 
@@ -104,7 +117,6 @@ object StructureDataExtention {
      */
     fun SyncState.syncChangeListQuestionsLocal(): SyncState {
         if (exception != null) return this
-        // try {
         this.currentStage = SyncStage.QUESTION_CHANGE_LIST
         processStructureDataDifferences(
             this.structureCategoryDataListRemote,
@@ -153,10 +165,6 @@ object StructureDataExtention {
             ),
         )
 
-
-        //  } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncQuestionRemote(e.message ?: "")
-        //  }
         return this
     }
 
@@ -168,7 +176,6 @@ object StructureDataExtention {
      */
     fun SyncState.syncChangeListQuestionsRemote(): SyncState {
         if (exception != null) return this
-        // try {
         this.currentStage = SyncStage.QUESTION_CHANGE_LIST
         if (this.eventId == EventQuiz.QUIZ_BY_USER) {
             processStructureDataDifferences(
@@ -212,9 +219,6 @@ object StructureDataExtention {
                 ),
             )
         }
-        //  } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncQuestionRemote(e.message ?: "")
-        //  }
         return this
     }
 
@@ -223,26 +227,21 @@ object StructureDataExtention {
      */
     fun SyncState.syncInfoGlobal(): SyncState {
         if (exception != null) return this
-        try {
-            this.currentStage = SyncStage.INFO_UPDATE_REMOTE
-            processStructureDataDifferences(
-                this.structureCategoryDataListRemote,
-                this.structureCategoryDataListLocal,
-                this.eventId,
-                callback = CallbackDifferences(
-                    onMissingOldStructure = { _, _, _ -> },
-                    onHasChildren = { _, structureDataNew, currentPath ->
-                        this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
-                    },
-                    onNoChildren = { _, structureDataNew, currentPath ->
-                        this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
-                    }
-                ),
-            )
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        }
-
+        this.currentStage = SyncStage.INFO_UPDATE_REMOTE
+        processStructureDataDifferences(
+            this.structureCategoryDataListRemote,
+            this.structureCategoryDataListLocal,
+            this.eventId,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ -> },
+                onHasChildren = { _, structureDataNew, currentPath ->
+                    this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
+                },
+                onNoChildren = { _, structureDataNew, currentPath ->
+                    this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
+                }
+            ),
+        )
         return this
     }
 
@@ -251,37 +250,27 @@ object StructureDataExtention {
      */
     fun SyncState.updateLocalQuestion(questionUseCase: QuestionUseCase): SyncState {
         if (exception != null) return this
-        // try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
         runBlocking {
             this@updateLocalQuestion.changedListQuestionLocal.forEach { change ->
-                try {
-                    val remoteQuestions =
-                        questionUseCase.fetchQuestion(change.pathStructure, settingsConfig.languages)
-                    val pathLocal = findStructureDataOld(
-                        this@updateLocalQuestion.structureCategoryDataListLocal,
-                        this@updateLocalQuestion.structureCategoryDataListRemote,
-                        change.pathStructure
-                    ).pathOld
+                val remoteQuestions =
+                    questionUseCase.fetchQuestion(change.pathStructure, settingsConfig.languages)
+                val pathLocal = findStructureDataOld(
+                    this@updateLocalQuestion.structureCategoryDataListLocal,
+                    this@updateLocalQuestion.structureCategoryDataListRemote,
+                    change.pathStructure
+                ).pathOld
 
-                    if (!change.isCreate) questionUseCase.deleteQuestionByPath(pathLocal)
+                if (!change.isCreate) questionUseCase.deleteQuestionByPath(pathLocal)
 
-                    remoteQuestions.forEach {
-                        runBlocking {
-                            questionUseCase.insertQuestion(it.copy(pathStructure = pathLocal))
-                        }
+                remoteQuestions.forEach {
+                    runBlocking {
+                        questionUseCase.insertQuestion(it.copy(pathStructure = pathLocal))
                     }
-                } catch (e: Exception) {
-
                 }
 
             }
         }
-
-        // } catch (e: Exception) {
-        //   exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        // }
-
         return this
     }
 
@@ -290,31 +279,22 @@ object StructureDataExtention {
      */
     fun SyncState.updateRemoteQuestion(questionUseCase: QuestionUseCase): SyncState {
         if (exception != null) return this
-        // try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
         runBlocking {
             this@updateRemoteQuestion.changedListQuestionRemote.forEach { change ->
-                try {
-                    if (change.name == "-1") {
-                        questionUseCase.deleteQuestionByPath(change.pathStructure)
-                        if (!change.isCreate) questionUseCase.deleteQuestionByPath(change.pathStructure)
-                    } else {
-                        val localQuestions = questionUseCase.getQuestionByPath(change.pathStructure)
+                if (change.name == "-1") {
+                    questionUseCase.deleteQuestionByPath(change.pathStructure)
+                    if (!change.isCreate) questionUseCase.deleteQuestionByPath(change.pathStructure)
+                } else {
+                    val localQuestions = questionUseCase.getQuestionByPath(change.pathStructure)
 
-                        if (!change.isCreate) questionUseCase.deleteQuestionByPath(change.pathStructure)
+                    if (!change.isCreate) questionUseCase.deleteQuestionByPath(change.pathStructure)
 
-                        localQuestions.forEach { questionUseCase.pushQuestion(it) }
-                    }
-                } catch (e: Exception) {
-
+                    localQuestions.forEach { questionUseCase.pushQuestion(it) }
                 }
 
             }
         }
-
-        //  } catch (e: Exception) {
-        //      exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        // }
 
         return this
     }
@@ -322,7 +302,6 @@ object StructureDataExtention {
 
     fun SyncState.updateStructureLocalNumberQuestion(questionUseCase: QuestionUseCase): SyncState {
         if (exception != null) return this
-        //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
 
         processStructureDataDifferences(
@@ -345,34 +324,21 @@ object StructureDataExtention {
                 }
             ),
         )
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        //   }
 
         return this
     }
 
     fun SyncState.unlockServer(repositoryStructureImpl: RepositoryStructureImpl): SyncState {
         if (exception != null) return this
-        //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
-
-
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        //   }
 
         return this
     }
 
     fun SyncState.lockServer(repositoryStructureImpl: RepositoryStructureImpl): SyncState {
         if (exception != null) return this
-        //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
 
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        //   }
 
         return this
     }
@@ -383,7 +349,6 @@ object StructureDataExtention {
         questionDetailUseCase: QuestionDetailUseCase
     ): SyncState {
         if (exception != null) return this
-        //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
 
         val structureCategoryDataListLocalNew = this.structureCategoryDataListLocal.toMutableList()
@@ -418,10 +383,6 @@ object StructureDataExtention {
                 }
             ),
         )
-
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        //   }
         return this
     }
 
@@ -430,7 +391,6 @@ object StructureDataExtention {
      */
     fun SyncState.addEditIdsStructureRemote(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
-        //  try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
 
         processStructureDataDifferences(
@@ -487,16 +447,11 @@ object StructureDataExtention {
             ),
         )
 
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        //   }
         return this
     }
 
     fun SyncState.syncQuestionDetails(questionDetailUseCase: QuestionDetailUseCase): SyncState {
         if (exception != null) return this
-        //  try {
-
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
 
         processStructureDataDifferences(
@@ -525,33 +480,23 @@ object StructureDataExtention {
                 }
             ),
         )
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        //   }
-
         return this
     }
 
     fun SyncState.editStructureRemote(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
-        //  try {
-
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
         runBlocking {
             structureUseCase.getEditStructure().forEach {
                 structureUseCase.pushEditStructure(it)
             }
             structureUseCase.clearStructureEdit()
-            // } catch (e: Exception) {
-            //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-            //   }
         }
         return this
     }
 
     fun SyncState.updateStructureInfoGlobal(): SyncState {
         if (exception != null) return this
-        // try {
         this.currentStage = SyncStage.INFO_UPDATE_REMOTE
         processStructureDataDifferences(
             this.structureCategoryDataListRemote,
@@ -573,10 +518,6 @@ object StructureDataExtention {
                 }
             ),
         )
-        // } catch (e: Exception) {
-        //     exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        // }
-
         return this
     }
 
@@ -635,28 +576,23 @@ object StructureDataExtention {
 
     fun SyncState.pushInfoLocal(): SyncState {
         if (exception != null) return this
-        try {
-            this.currentStage = SyncStage.INFO_UPDATE_REMOTE
-            processStructureDataDifferences(
-                this.structureCategoryDataListRemote,
-                this.structureCategoryDataListLocal,
-                this.eventId,
-                callback = CallbackDifferences(
-                    onMissingOldStructure = { _, _, _ ->
+        this.currentStage = SyncStage.INFO_UPDATE_REMOTE
+        processStructureDataDifferences(
+            this.structureCategoryDataListRemote,
+            this.structureCategoryDataListLocal,
+            this.eventId,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ ->
 
-                    },
-                    onHasChildren = { _, structureDataNew, currentPath ->
-                        this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
-                    },
-                    onNoChildren = { _, structureDataNew, currentPath ->
-                        this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
-                    }
-                ),
-            )
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        }
-
+                },
+                onHasChildren = { _, structureDataNew, currentPath ->
+                    this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
+                },
+                onNoChildren = { _, structureDataNew, currentPath ->
+                    this.structureInfoGlobal.addInfoGlobal(currentPath, structureDataNew)
+                }
+            ),
+        )
         return this
     }
 
@@ -721,33 +657,36 @@ object StructureDataExtention {
 
     fun SyncState.syncInfoLocal(): SyncState {
         if (this.exception != null) return this
-        try {
-            this.currentStage = SyncStage.INFO_UPDATE_LOCAL
-            processStructureDataDifferences(
-                this.structureCategoryDataListLocal,
-                this.structureCategoryDataListRemote,
-                this.eventId,
-                callback = CallbackDifferences(
-                    onMissingOldStructure = { _, _, _ -> },
-                    onHasChildren = { _, structureDataNew, currentPath ->
-                        this.addInfoLocal(currentPath, structureDataNew)
-                    },
-                    onNoChildren = { _, structureDataNew, currentPath ->
-                        this.addInfoLocal(currentPath, structureDataNew)
-                    }
-                ),
-            )
-        } catch (e: Exception) {
-            exceptionHandler.exceptionSyncInfo(e.message ?: "")
-        }
-
+        this.currentStage = SyncStage.INFO_UPDATE_LOCAL
+        processStructureDataDifferences(
+            this.structureCategoryDataListLocal,
+            this.structureCategoryDataListRemote,
+            this.eventId,
+            callback = CallbackDifferences(
+                onMissingOldStructure = { _, _, _ -> },
+                onHasChildren = { _, structureDataNew, currentPath ->
+                    this.addInfoLocal(currentPath, structureDataNew)
+                },
+                onNoChildren = { _, structureDataNew, currentPath ->
+                    this.addInfoLocal(currentPath, structureDataNew)
+                }
+            ),
+        )
         return this
     }
 
-    fun SyncState.getResult(): SyncStructureResult {
+    suspend fun SyncState.getResult(structureUseCase: StructureUseCase): SyncStructureResult {
         return if (exception != null) {
             SyncStructureResult.Error(currentStage, exception!!)
         } else {
+            try {
+                android.util.Log.d("StructureSync", "💾 Saving ${structureCategoryDataListLocal.size} categories to local database for event: ${eventId.name}")
+                structureUseCase.updateStructureDataList(structureCategoryDataListLocal, eventId)
+                android.util.Log.d("StructureSync", "✅ Successfully saved structure data to local database")
+            } catch (e: Exception) {
+                android.util.Log.e("StructureSync", "❌ Error saving structure data to local database: ${e.message}", e)
+                return SyncStructureResult.Error(currentStage, e.message ?: "Unknown error")
+            }
             SyncStructureResult.Success(currentStage, this)
         }
     }

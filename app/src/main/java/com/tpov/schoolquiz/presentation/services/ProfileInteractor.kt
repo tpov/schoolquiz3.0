@@ -39,7 +39,7 @@ class ProfileInteractor @Inject constructor(
                 standardHearts = it.standardHearts,
                 goldLife = it.goldLife,
                 goldHearts = it.goldHearts,
-                lastUpdateTime = it.dateCloseApp.toLong()
+                lastUpdateTime = it.dateCloseApp.toLongOrNull() ?: 0L
             )
         } ?: run {
             delay(1000)

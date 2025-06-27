@@ -28,7 +28,6 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@Logger
 @InternalCoroutinesApi
 class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 

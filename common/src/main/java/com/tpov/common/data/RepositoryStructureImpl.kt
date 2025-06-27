@@ -103,53 +103,73 @@ open class RepositoryStructureImpl @Inject constructor(
         }
     }
 
-    override suspend fun fetchStructureCategoryDataList(event: String): List<StructureDataLocal>? {
-        if (event == EventQuiz.QUIZ_BY_USER.name) {
-            val basePath = "quizzes/${settingsConfig.tpovId}"
-
-            return try {
-                val categories = firestore.collection(basePath)
+    override suspend fun fetchStructureCategoryDataList(eventQuiz: EventQuiz): List<StructureDataLocal>? {
+        android.util.Log.d("StructureRepo", "🔍 fetchStructureCategoryDataList started for: ${eventQuiz.name} (id: ${eventQuiz.id})")
+        
+        return try {
+            if (eventQuiz == EventQuiz.QUIZ_BY_USER) {
+                android.util.Log.d("StructureRepo", "📝 Fetching user-created quizzes from: quizzes/${settingsConfig.tpovId}")
+                // Для пользовательских викторин - получаем данные из структуры пользователя
+                val basePath = "quizzes/${settingsConfig.tpovId}"
+                
+                val result = firestore.collection(basePath)
                     .get()
                     .await()
                     .documents
-                    .mapNotNull { it.id }
-
-                categories.flatMap { categoryId ->
-                    firestore.collection("$basePath/category$categoryId/structureData")
-                        .get()
-                        .await()
-                        .documents
-                        .mapNotNull { document ->
-                            document.toObject(StructureDataRemote::class.java)
-                                ?.toStructureDataLocal()
-                        }
+                    .mapNotNull { it.toObject(StructureDataRemote::class.java)?.toStructureDataLocal() }
+                
+                if (result.isNotEmpty()) {
+                    android.util.Log.d("StructureRepo", "✅ Found ${result.size} user quizzes")
+                    result
+                } else {
+                    android.util.Log.w("StructureRepo", "⚠️ No user quizzes found")
+                    emptyList()
                 }
-            } catch (e: Exception) {
-                emptyList()
-            }
-        } else {
-            val basePath = "structures/structureData/quiz$event"
-
-            return try {
-                val categories = firestore.collection(basePath)
+            } else {
+                android.util.Log.d("StructureRepo", "🏠 Fetching ${eventQuiz.name} categories from structures/structureData/${eventQuiz.name}/")
+                
+                // Читаем из правильного пути: structures/structureData/QUIZ_HOME/
+                val result = firestore.collection("structures")
+                    .document("structureData")
+                    .collection(eventQuiz.name)
                     .get()
                     .await()
                     .documents
-                    .mapNotNull { it.id }
-
-                categories.flatMap { categoryId ->
-                    firestore.collection("category$categoryId")
-                        .get()
-                        .await()
-                        .documents
-                        .mapNotNull { document ->
-                            document.toObject(StructureDataRemote::class.java)
-                                ?.toStructureDataLocal()
+                    .mapNotNull { document ->
+                        try {
+                            val structureRemote = document.toObject(StructureDataRemote::class.java)
+                            val structureLocal = structureRemote?.toStructureDataLocal()
+                            
+                            if (structureLocal != null) {
+                                android.util.Log.d("StructureRepo", "  📄 Found category: ${structureLocal.nameItem} with ${structureLocal.children?.size ?: 0} children")
+                                structureLocal
+                            } else {
+                                android.util.Log.w("StructureRepo", "  ⚠️ Failed to convert document ${document.id} to StructureDataLocal")
+                                null
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.w("StructureRepo", "  ⚠️ Failed to parse document ${document.id}: ${e.message}")
+                            null
                         }
+                    }
+                
+                android.util.Log.d("StructureRepo", "✅ ${eventQuiz.name} categories processed successfully")
+                android.util.Log.d("StructureRepo", "📊 Total found ${result.size} categories")
+                
+                // Выводим всю структуру
+                if (result.isNotEmpty()) {
+                    for (category in result) {
+                        category.printFullStructure("${eventQuiz.name} - ${category.nameItem}")
+                    }
+                    result
+                } else {
+                    android.util.Log.w("StructureRepo", "⚠️ No data found for ${eventQuiz.name}")
+                    emptyList() // Возвращаем пустой список вместо null
                 }
-            } catch (e: Exception) {
-                emptyList()
             }
+        } catch (e: Exception) {
+            android.util.Log.e("StructureRepo", "❌ Error in fetchStructureCategoryDataList for ${eventQuiz.name}: ${e.message}", e)
+            emptyList() // Возвращаем пустой список вместо null
         }
     }
 
@@ -198,12 +218,25 @@ open class RepositoryStructureImpl @Inject constructor(
         structureDataCategoryList: List<StructureDataLocal>,
         event: String
     ) {
-        structureDataDao.insertStructureData(
-            StructureDataLocal(
-                nameItem = event,
-                children = structureDataCategoryList.toMutableList()
-            ).toStructureDataEntity()!!
-        )
+        android.util.Log.d("StructureRepo", "💾 saveStructureData called for event: $event")
+        android.util.Log.d("StructureRepo", "📊 Categories to save: ${structureDataCategoryList.size}")
+        
+        for (category in structureDataCategoryList) {
+            android.util.Log.d("StructureRepo", "  📂 Category: ${category.nameItem} with ${category.children?.size ?: 0} children")
+        }
+        
+        val structureDataEntity = StructureDataLocal(
+            nameItem = event,
+            children = structureDataCategoryList.toMutableList()
+        ).toStructureDataEntity()
+        
+        if (structureDataEntity != null) {
+            android.util.Log.d("StructureRepo", "✅ Saving to local DB: $event")
+            structureDataDao.insertStructureData(structureDataEntity)
+            android.util.Log.d("StructureRepo", "✅ Successfully saved to local DB")
+        } else {
+            android.util.Log.e("StructureRepo", "❌ Failed to convert to StructureDataEntity")
+        }
     }
 
     override suspend fun insertEditStructure(structureEditData: StructureEditData) {
@@ -258,6 +291,14 @@ open class RepositoryStructureImpl @Inject constructor(
         TODO("Not yet implemented")
     }
 
+    /**
+     * Sanitizes path components to prevent Firestore path parsing issues.
+     * Replaces forward slashes with underscores to avoid creating invalid document references.
+     */
+    private fun sanitizePathComponent(component: String): String {
+        return component.replace("/", "_")
+    }
+
     override suspend fun fetchStructureInfo(path: PathStructure): StructureInfoEntity? {
         val db = FirebaseFirestore.getInstance()
 
@@ -265,23 +306,27 @@ open class RepositoryStructureImpl @Inject constructor(
         pathSegments.add("structures")
         pathSegments.add("structureInfo")
         pathSegments.add("quiz${path.nameEvent}")
-        if (path.nameCategory != "") pathSegments.add("category/${path.nameCategory}")
-        if (path.nameSubCategory != "") pathSegments.add("subCategory/${path.nameSubCategory}")
-        if (path.nameSubsubCategory != "") pathSegments.add("subsubCategory/${path.nameSubsubCategory}")
-        if (path.nameQuiz != "") pathSegments.add("quizzes/${path.nameQuiz}")
+        if (path.nameCategory != "") pathSegments.add("category/${sanitizePathComponent(path.nameCategory)}")
+        if (path.nameSubCategory != "") pathSegments.add("subCategory/${sanitizePathComponent(path.nameSubCategory)}")
+        if (path.nameSubsubCategory != "") pathSegments.add("subsubCategory/${sanitizePathComponent(path.nameSubsubCategory)}")
+        if (path.nameQuiz != "") pathSegments.add("quizzes/${sanitizePathComponent(path.nameQuiz)}")
         pathSegments.add("infoList/tpovIdList/${settingsConfig.tpovId}")
 
         val fullPath = pathSegments.joinToString("/")
-return null!!
-//        return try {
-//            val document = db.document(fullPath).get().await()
-//            if (document.exists()) {
-//                document.toObject(StructureInfoRemote::class.java)
-//            } else null
-//        } catch (e: Exception) {
-//            Log.e("Firestore", "Error fetching document: ${e.message}")
-//            null
-//        }
+        
+        return try {
+            val document = db.document(fullPath).get().await()
+            if (document.exists()) {
+                val structureInfoRemote = document.toObject(StructureInfoRemote::class.java)
+                structureInfoRemote?.toStructureInfoEntity(path)
+            } else {
+                Log.d("Firestore", "Document not found at path: $fullPath")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error fetching document: ${e.message}")
+            null
+        }
     }
 
 
@@ -347,9 +392,21 @@ return null!!
         eevent: String,
         vararg path: String
     ): List<StructureDataLocal>? {
-
-        Log.d("initStructureData", "getStructureData")
-        return structureDataDao.getStructureDataByPath(eevent, path.toList())
+        android.util.Log.d("StructureRepo", "🔍 getStructureEventData called for event: $eevent")
+        android.util.Log.d("StructureRepo", "📂 Path: ${path.toList()}")
+        
+        val result = structureDataDao.getStructureDataByPath(eevent, path.toList())
+        
+        if (result != null) {
+            android.util.Log.d("StructureRepo", "✅ Found ${result.size} categories in local DB")
+            for (category in result) {
+                android.util.Log.d("StructureRepo", "  📂 Local category: ${category.nameItem} with ${category.children?.size ?: 0} children")
+            }
+        } else {
+            android.util.Log.w("StructureRepo", "⚠️ No data found in local DB for event: $eevent")
+        }
+        
+        return result
     }
 }
 

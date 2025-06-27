@@ -22,7 +22,10 @@ import com.tpov.common.domain.usecase.StructureDataExtention.updateRemoteQuestio
 import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoGlobal
 import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfoLocal
 import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureLocalNumberQuestion
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 open class SyncInteractor @Inject constructor(
     private val settingServerDBUseCase: SettingServerDBUseCase,
@@ -38,6 +41,8 @@ open class SyncInteractor @Inject constructor(
     fun rollbackStructureData(event: EventQuiz) = settingLocalDBUseCase.rollbackStructureData(event)
 
     suspend fun syncQuizes(eventQuiz: EventQuiz, exceptionInteractor: ExceptionInteractor): SyncStructureResult {
+        android.util.Log.d("SyncInteractor", "🔄 syncQuizes started for: ${eventQuiz.name}")
+        
         val syncState = SyncState(eventQuiz)
         init(
             DomainExceptions(
@@ -46,13 +51,25 @@ open class SyncInteractor @Inject constructor(
                 exceptionInteractor
             )
         )
-
-        return syncState
+        
+        val finalState = syncState
             .initStateStructureData(structureUseCase)
+            .also { state ->
+                android.util.Log.d("SyncInteractor", "📡 After initStateStructureData: ${state.structureCategoryDataListRemote.size} remote categories")
+                for (category in state.structureCategoryDataListRemote) {
+                    android.util.Log.d("SyncInteractor", "  📂 Remote category: ${category.nameItem} with ${category.children?.size ?: 0} children")
+                }
+            }
             .syncChangeListQuestionsLocal()
             .syncChangeListQuestionsRemote()
             .syncInfoLocal()
             .updateLocalStructureData()
+            .also { state ->
+                android.util.Log.d("SyncInteractor", "🔄 After updateLocalStructureData: ${state.structureCategoryDataListLocal.size} processed categories")
+                for (category in state.structureCategoryDataListLocal) {
+                    android.util.Log.d("SyncInteractor", "  📂 Processed category: ${category.nameItem} with ${category.children?.size ?: 0} children")
+                }
+            }
             .syncInfoGlobal()
             .updateStructureInfoGlobal()
             .updateStructureInfoLocal(structureUseCase)
@@ -63,7 +80,17 @@ open class SyncInteractor @Inject constructor(
             .syncQuestionDetails(questionDetailUseCase)
             .updateRemoteQuestion(questionUseCase)
             .editStructureRemote(structureUseCase)
-            .getResult()
+            
+        android.util.Log.d("SyncInteractor", "💾 Before getResult - final categories: ${finalState.structureCategoryDataListLocal.size}")
+        for (category in finalState.structureCategoryDataListLocal) {
+            android.util.Log.d("SyncInteractor", "  📂 Final category: ${category.nameItem} with ${category.children?.size ?: 0} children")
+        }
+            
+        return runBlocking {
+            val result = finalState.getResult(structureUseCase)
+            android.util.Log.d("SyncInteractor", "✅ syncQuizes completed for: ${eventQuiz.name} with result: ${result::class.simpleName}")
+            result
+        }
     }
 }
 

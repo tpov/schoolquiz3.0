@@ -10,7 +10,7 @@ import javax.inject.Inject
 class StructureUseCase @Inject constructor(private val repositoryStructureImpl: RepositoryStructureImpl) {
 
     suspend fun fetchStructureCategoryDataList(event: EventQuiz) =
-        repositoryStructureImpl.fetchStructureCategoryDataList(event.name)
+        repositoryStructureImpl.fetchStructureCategoryDataList(event)
 
     suspend fun getStructureEventData(event: EventQuiz) = repositoryStructureImpl.getStructureEventData(event.name)
 
@@ -36,8 +36,9 @@ class StructureUseCase @Inject constructor(private val repositoryStructureImpl: 
     }
 
     suspend fun updateStructureDataList(structureDataLocal: List<StructureDataLocal>, event: EventQuiz) {
-        structureDataLocal.forEach {
-            repositoryStructureImpl.insertStructureData(it.toStructureDataEntity()!!, event.name)
-        }
+        android.util.Log.d("StructureUseCase", "💾 Saving structure data for ${event.name}: ${structureDataLocal.size} categories")
+        // Сохраняем всю структуру как единое дерево
+        repositoryStructureImpl.saveStructureData(structureDataLocal, event.name)
+        android.util.Log.d("StructureUseCase", "✅ Structure data saved successfully")
     }
 }

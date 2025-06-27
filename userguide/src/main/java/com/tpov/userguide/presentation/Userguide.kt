@@ -35,7 +35,7 @@ import java.util.Objects
  * @param context context to display the dialog box
  * @param theme Theme for dialog box
  */
-@Logger
+
 class UserGuide(
     private val context: Context,
     private val minGlobalKey: Int? = null,

@@ -10,6 +10,7 @@ data class QuestionLocal(
     var id: Int? = null,
     var numQuestion: Int = 0,
     var nameQuestion: String = "",
+    var infoquestion: String = "",
     var pathPictureQuestion: String? = "",
     var nameAnswers: String = "",
     var hardQuestion: Boolean = false,
@@ -20,7 +21,7 @@ data class QuestionLocal(
     fun toQuestionEntity() = QuestionEntity(
         id,
         numQuestion,
-        nameQuestion,
+        nameQuestion,infoquestion,
         pathPictureQuestion,
         nameAnswers,
         hardQuestion,

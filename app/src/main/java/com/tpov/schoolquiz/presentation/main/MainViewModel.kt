@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@Logger
 @OptIn(FlowPreview::class)
 class MainViewModel @Inject constructor(
     private val structureUseCase: StructureUseCase,
@@ -215,7 +214,7 @@ class MainViewModel @Inject constructor(
 
         // Обновляем локальное состояние
         _profileState.value = updatedProfile
-        
+
         // Обновляем состояние премиума в контроллере
         profileInteractor.updatePremium()
     }

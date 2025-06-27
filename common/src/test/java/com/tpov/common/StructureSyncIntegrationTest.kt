@@ -14,6 +14,7 @@ import com.tpov.common.data.model.entity.StructureInfoEntity
 import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureDataRemote
 import com.tpov.common.domain.model.ChangeVersionStructure
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.model.SyncState
 import com.tpov.common.domain.model.SyncStructureResult
 import com.tpov.common.domain.repository.RepositoryException
@@ -110,7 +111,7 @@ class StructureSyncTest {
         runBlocking {
             `when`(repositoryStructureImpl.getStructureEventData(1))
                 .thenReturn(inputDataLocal)
-            `when`(repositoryStructureImpl.fetchStructureCategoryDataList(1))
+            `when`(repositoryStructureImpl.fetchStructureCategoryDataList(EventQuiz.QUIZ_BY_USER))
                 .thenReturn(inputDataRemote)
 
             `when`(repositoryStructureImpl.fetchStructureInfo(anyOrNull())).thenAnswer { invocation ->

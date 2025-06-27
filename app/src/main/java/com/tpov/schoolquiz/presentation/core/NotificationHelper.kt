@@ -18,7 +18,7 @@ import com.tpov.schoolquiz.presentation.main.MainActivity
 import com.tpov.userguide.presentation.Options
 import com.tpov.userguide.presentation.UserGuide
 import kotlinx.coroutines.InternalCoroutinesApi
-@Logger
+
 class NotificationHelper(private val context: Context) {
     private val userguide: UserGuide = UserGuide(context, minGlobalKey = 3015, 2016)
     private var counterValue: Int = 0

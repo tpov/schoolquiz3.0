@@ -213,15 +213,56 @@ object StructureDataUtils {
         node: StructureDataLocal,
         path: PathStructure,
     ): MutableList<StructureDataLocal> {
-        this.find { it.nameItem == path.nameCategory }
-            ?.findChildren(path.nameSubCategory)
-            ?.findChildren(path.nameSubsubCategory)?.let { quiz ->
-                if (quiz.children == null) {
-                    quiz.children = mutableListOf()
-                }
-                quiz.children?.add(node)
+        android.util.Log.d("StructureUtils", "🔧 addNodeByPath called: adding '${node.nameItem}' at path: $path")
+        
+        when {
+            // Добавляем категорию верхнего уровня
+            path.nameSubCategory == "" -> {
+                android.util.Log.d("StructureUtils", "📂 Adding top-level category: ${node.nameItem}")
+                this.add(node)
             }
-
+            
+            // Добавляем подкатегорию
+            path.nameSubsubCategory == "" -> {
+                android.util.Log.d("StructureUtils", "📁 Adding subcategory: ${node.nameItem} to ${path.nameCategory}")
+                val category = this.find { it.nameItem == path.nameCategory }
+                if (category != null) {
+                    if (category.children == null) category.children = mutableListOf()
+                    category.children?.add(node)
+                } else {
+                    android.util.Log.w("StructureUtils", "⚠️ Category ${path.nameCategory} not found")
+                }
+            }
+            
+            // Добавляем под-подкатегорию
+            path.nameQuiz == "" -> {
+                android.util.Log.d("StructureUtils", "📄 Adding sub-subcategory: ${node.nameItem}")
+                val subCategory = this.find { it.nameItem == path.nameCategory }
+                    ?.findChildren(path.nameSubCategory)
+                if (subCategory != null) {
+                    if (subCategory.children == null) subCategory.children = mutableListOf()
+                    subCategory.children?.add(node)
+                } else {
+                    android.util.Log.w("StructureUtils", "⚠️ Subcategory not found")
+                }
+            }
+            
+            // Добавляем квиз
+            else -> {
+                android.util.Log.d("StructureUtils", "🎯 Adding quiz: ${node.nameItem}")
+                val subsubCategory = this.find { it.nameItem == path.nameCategory }
+                    ?.findChildren(path.nameSubCategory)
+                    ?.findChildren(path.nameSubsubCategory)
+                if (subsubCategory != null) {
+                    if (subsubCategory.children == null) subsubCategory.children = mutableListOf()
+                    subsubCategory.children?.add(node)
+                } else {
+                    android.util.Log.w("StructureUtils", "⚠️ Sub-subcategory not found")
+                }
+            }
+        }
+        
+        android.util.Log.d("StructureUtils", "✅ addNodeByPath completed. Current list size: ${this.size}")
         return this
     }
 

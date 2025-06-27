@@ -457,16 +457,26 @@ class SplashScreen : AppCompatActivity() {
 
     private fun startInitialSetupAndSyncAndObserve() {
         // Implementation of startInitialSetupAndSyncAndObserve function
+        android.util.Log.d("SplashScreen", "🚀 Starting SyncWorker from SplashScreen")
+        
         val initialSyncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
             .build()
 
         val workManager = WorkManager.getInstance(this)
         workManager.enqueue(initialSyncRequest)
+        
+        android.util.Log.d("SplashScreen", "📤 SyncWorker enqueued with ID: ${initialSyncRequest.id}")
 
         workManager.getWorkInfoByIdLiveData(initialSyncRequest.id)
             .observe(this) { workInfo ->
-                if (workInfo != null && workInfo.state.isFinished) {
-                    // Sync completed
+                if (workInfo != null) {
+                    android.util.Log.d("SplashScreen", "📊 SyncWorker state: ${workInfo.state}")
+                    if (workInfo.state.isFinished) {
+                        android.util.Log.d("SplashScreen", "✅ SyncWorker finished")
+                        // Sync completed
+                    }
+                } else {
+                    android.util.Log.w("SplashScreen", "⚠️ SyncWorker workInfo is null")
                 }
             }
     }

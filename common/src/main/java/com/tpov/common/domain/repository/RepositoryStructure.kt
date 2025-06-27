@@ -5,10 +5,11 @@ import com.tpov.common.data.model.entity.StructureInfoEntity
 import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.data.model.remote.StructureEditData
 import com.tpov.common.data.model.remote.StructureInfoRemote
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.presentation.model.PathStructure
 
 interface RepositoryStructure {
-    suspend fun fetchStructureCategoryDataList(event: String): List<StructureDataLocal>?
+    suspend fun fetchStructureCategoryDataList(eventQuiz: EventQuiz): List<StructureDataLocal>?
 
     suspend fun pushStructureData(structureDataLocal: StructureDataLocal, category: String)
 

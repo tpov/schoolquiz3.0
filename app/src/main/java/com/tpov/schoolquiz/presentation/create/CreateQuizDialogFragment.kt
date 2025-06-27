@@ -52,14 +52,11 @@ class CreateQuizDialogFragment: DialogFragment() {
         hideSystemUI()
         setupItemBindings()
         setupQuizItems()
-        setupCustomSpinner()
         setupButtons()
         observeViewModel()
     }
 
     private fun setupItemBindings() {
-        // Получаем binding для каждого включенного компонента
-        categoryItemBinding = ActivityQuizItemBinding.bind(binding.categoryItem.root)
         subCategoryItemBinding = ActivityQuizItemBinding.bind(binding.subCategoryItem.root)
         subSubCategoryItemBinding = ActivityQuizItemBinding.bind(binding.subSubCategoryItem.root)
         currentQuizItemBinding = ActivityQuizItemBinding.bind(binding.currentQuizItem.root)
@@ -79,13 +76,6 @@ class CreateQuizDialogFragment: DialogFragment() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             )
-    }
-
-    private fun setupCustomSpinner() {
-
-        binding.spinnerQuiz.setOnItemSelectedListener { selectedQuizName ->
-
-        }
     }
 
     private fun setupButtons() {

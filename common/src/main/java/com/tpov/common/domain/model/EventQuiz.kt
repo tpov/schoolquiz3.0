@@ -2,8 +2,8 @@ package com.tpov.common.domain.model
 
 enum class EventQuiz(val id: Int) {
     QUIZ_HOME(8),
-    QUIZ_TOURNIRE_LEADER(7),
-    QUIZ_TOURNIRE(6),
+    QUIZ_TOURNAMENT_LEADER(7),
+    QUIZ_TOURNAMENT(6),
     QUIZ_ARENA(5),
     QUIZ_FOR_ADMIN(4),
     QUIZ_FOR_TRANSLATOR(3),

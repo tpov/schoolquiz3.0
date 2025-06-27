@@ -1,6 +1,7 @@
 package com.tpov.common.data
 
 import android.content.Context
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.common.data.database.StructureDataDao
 import com.tpov.common.data.database.StructureEditDataDao
@@ -14,7 +15,8 @@ open class RepositoryExceptionImpl @Inject constructor(
     private val context: Context
 ) : RepositoryException {
     override fun sendErrorRemote() {
-        TODO("Not yet implemented")
+        Log.w("RepositoryExceptionImpl", "Sending error to remote (not implemented)")
+        // TODO: Implement remote error reporting when needed
     }
 
 }

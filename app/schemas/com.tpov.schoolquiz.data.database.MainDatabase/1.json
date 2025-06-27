@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1c2b9c90ca008261e991529868ffcd67",
+    "identityHash": "fbf373c84e5907a89c74565f8da57900",
     "entities": [
       {
         "tableName": "question_detail_entity",
@@ -80,7 +80,7 @@
       },
       {
         "tableName": "question_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `numQuestion` INTEGER NOT NULL, `nameQuestion` TEXT NOT NULL, `pictureQuestion` TEXT, `nameAnswers` TEXT NOT NULL, `hardQuestion` INTEGER NOT NULL, `event` TEXT NOT NULL, `category` TEXT NOT NULL, `subCategory` TEXT NOT NULL, `subsubCategory` TEXT NOT NULL, `quiz` TEXT NOT NULL, `language` TEXT NOT NULL, `lvlTranslate` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `numQuestion` INTEGER NOT NULL, `nameQuestion` TEXT NOT NULL, `infoQuestion` TEXT NOT NULL, `pictureQuestion` TEXT, `nameAnswers` TEXT NOT NULL, `hardQuestion` INTEGER NOT NULL, `event` TEXT NOT NULL, `category` TEXT NOT NULL, `subCategory` TEXT NOT NULL, `subsubCategory` TEXT NOT NULL, `quiz` TEXT NOT NULL, `language` TEXT NOT NULL, `lvlTranslate` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -97,6 +97,12 @@
           {
             "fieldPath": "nameQuestion",
             "columnName": "nameQuestion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "infoQuestion",
+            "columnName": "infoQuestion",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -494,7 +500,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1c2b9c90ca008261e991529868ffcd67')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fbf373c84e5907a89c74565f8da57900')"
     ]
   }
 }
