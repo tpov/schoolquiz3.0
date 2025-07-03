@@ -238,4 +238,78 @@ class MainViewModel @Inject constructor(
         // Обновляем локальное состояние
         _profileState.value = updatedProfile
     }
+
+    fun updateProfileFromSettings(
+        name: String? = null,
+        nickname: String? = null,
+        birthday: String? = null,
+        city: String? = null,
+        logo: Int? = null,
+        login: String? = null,
+        languages: String? = null,
+        life: Int? = null,
+        goldLife: Int? = null,
+        premium: Boolean? = null
+    ) = viewModelScope.launch(Dispatchers.Default) {
+        val currentProfile = _profileState.value ?: return@launch
+
+        val updatedProfile = currentProfile.copy(
+            name = name ?: currentProfile.name,
+            nickname = nickname ?: currentProfile.nickname,
+            birthday = birthday ?: currentProfile.birthday,
+            city = city ?: currentProfile.city,
+            logo = logo ?: currentProfile.logo,
+            login = login ?: currentProfile.login,
+            languages = languages ?: currentProfile.languages,
+            standardLife = life ?: currentProfile.standardLife,
+            goldLife = goldLife ?: currentProfile.goldLife
+        )
+
+        // Обновляем профиль в базе данных
+        profileUseCase.updateProfile(updatedProfile)
+
+        // Обновляем локальное состояние
+        _profileState.value = updatedProfile
+
+        // Обновляем контроллеры после изменения настроек
+        updateControllersAfterSettingsChange(nickname != null, life != null, premium != null)
+    }
+
+    private fun updateControllersAfterSettingsChange(
+        nicknameChanged: Boolean,
+        lifeChanged: Boolean,
+        premiumChanged: Boolean
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        // Обновляем никнейм если изменился
+        if (nicknameChanged) {
+            profileInteractor.updateNick()
+        }
+
+        // Обновляем жизни если изменились
+        if (lifeChanged) {
+            profileInteractor.updateShowLife()
+        }
+
+        // Обновляем премиум статус если изменился
+        if (premiumChanged) {
+            profileInteractor.updatePremium()
+        }
+
+        // Обновляем очки (может зависеть от других настроек)
+        profileInteractor.updatePoints()
+
+        // Обновляем добавочные очки
+        profileInteractor.updateAddPoints()
+    }
+
+    fun refreshAllControllers() = viewModelScope.launch(Dispatchers.IO) {
+        // Полное обновление всех контроллеров
+        profileInteractor.updateShowLife()
+        profileInteractor.updateNick()
+        profileInteractor.updateAddPoints()
+        profileInteractor.updatePoints()
+        profileInteractor.updatePremium()
+        profileInteractor.updateDaysInGameForBox()
+        profileInteractor.updateLoadStatus()
+    }
 }

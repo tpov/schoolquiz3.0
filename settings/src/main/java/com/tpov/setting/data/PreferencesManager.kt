@@ -41,7 +41,7 @@ class PreferencesManager(var context: Context) {
     fun getSettings(): SettingConfigModel {
         val defaultConfig = SettingConfigModel.defaultMiddle()
         return SettingConfigModel(
-            preferences.getInt(context.getString(R.string.tpovId), 0),
+            preferences.getInt("tpovId", defaultConfig.tpovId),
             preferences.getString(context.getString(R.string.key_login), defaultConfig.login) ?: defaultConfig.login,
             preferences.getString(context.getString(R.string.key_password), defaultConfig.password)
                 ?: defaultConfig.password,
@@ -62,18 +62,19 @@ class PreferencesManager(var context: Context) {
                 ?.split(",")
                 ?.map { it.trim().toLanguageUtils() }
                 ?: defaultConfig.languages,
-
-        preferences.getInt(
+            preferences.getInt(
                 context.getString(R.string.key_profile_sync_frequency),
                 defaultConfig.profileSyncFrequency
-            ) ?: defaultConfig.profileSyncFrequency,
-            preferences.getInt(context.getString(R.string.key_quests_sync_frequency), defaultConfig.questsSyncFrequency)
-                ?: defaultConfig.questsSyncFrequency,
+            ),
+            preferences.getInt(
+                context.getString(R.string.key_quests_sync_frequency), 
+                defaultConfig.questsSyncFrequency
+            ),
             preferences.getBoolean(context.getString(R.string.key_notifications), defaultConfig.notificationsEnabled),
             preferences.getInt(
                 context.getString(R.string.key_event_notifications_frequency),
                 defaultConfig.eventNotificationsFrequency
-            ) ?: defaultConfig.eventNotificationsFrequency,
+            ),
             preferences.getString(context.getString(R.string.key_lessons_alarm_time), defaultConfig.lessonsAlarmTime)
                 ?: defaultConfig.lessonsAlarmTime,
             preferences.getStringSet(context.getString(R.string.key_lessons_alarm_days), defaultConfig.lessonsAlarmDays)

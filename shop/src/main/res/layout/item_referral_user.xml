@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:orientation="vertical">
+
+    <!-- Progress Bar Section -->
+    <LinearLayout
+        android:id="@+id/ll_progress_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_progress_percent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white_80"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:text="75%"
+                tools:ignore="SmallSp"/>
+
+            <TextView
+                android:id="@+id/tv_referral_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="@color/app_text_secondary"
+                android:textSize="12sp"
+                android:text="25 boxes to activate"
+                android:layout_weight="1"
+                tools:ignore="SmallSp"/>
+
+            <TextView
+                android:id="@+id/tv_referral_activated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/app_accent"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:layout_marginStart="8dp"
+                android:text="ACTIVATED"
+                tools:ignore="SmallSp"/>
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_bar_boxes"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="4dp"
+            android:progressDrawable="@drawable/referral_progress_bar_drawable"
+            android:progress="75"
+            android:max="100"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_item_background"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="72dp"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="@drawable/referral_item_progress_fill_inverted"
+        android:gravity="center_vertical">
+
+        <!-- User Icon -->
+        <ImageView
+            android:id="@+id/iv_user_avatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/ic_person"
+            app:tint="@color/white"
+            android:background="@drawable/circle_avatar_background"
+            android:padding="8dp"/>
+
+        <!-- User Name -->
+        <TextView
+            android:id="@+id/tv_nickname"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"
+            tools:text="ArtemON_GO" />
+
+        <!-- Stats Container -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <!-- Open Boxes Stat -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end|center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_all_open_box_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:layout_marginEnd="8dp"
+                    android:text="Open boxes:"
+                    android:textColor="@color/app_text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tv_all_open_box_value"
+                    android:layout_width="wrap_content"
+                    android:minWidth="40dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="75" />
+            </LinearLayout>
+
+            <!-- Bonus Stat -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end|center_vertical"
+                android:layout_marginTop="6dp">
+
+                <TextView
+                    android:id="@+id/tv_new_bonus_box_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:layout_marginEnd="8dp"
+                    android:text="Your Bonus:"
+                    android:textColor="@color/app_text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tv_new_bonus_box_value"
+                    android:layout_width="wrap_content"
+                    android:minWidth="40dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:textColor="@color/accent_green"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="2.0" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

@@ -47,7 +47,10 @@ import com.tpov.schoolquiz.presentation.main.SetItemMenu.MENU_SETTING
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.currentMenuId
 import com.tpov.schoolquiz.presentation.main.SetItemMenu.setupDynamicMenu
 import com.tpov.schoolquiz.presentation.model.Inset
-import com.tpov.schoolquiz.presentation.setting.SettingsFragment
+import com.tpov.setting.presentation.SettingsFragment
+import com.tpov.setting.presentation.ProfileSyncInterface
+import com.tpov.setting.utils.SettingsToProfileConverter
+import com.tpov.common.data.model.SettingConfigModel
 import com.tpov.shop.presentation.ShopFragment
 import com.tpov.userguide.presentation.UserGuide
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -60,7 +63,7 @@ import javax.inject.Inject
  */
 
 @InternalCoroutinesApi
-class MainActivity : AppCompatActivity(), NavigationProvider {
+class MainActivity : AppCompatActivity(), NavigationProvider, ProfileSyncInterface {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
@@ -176,16 +179,14 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
             if (state.addSkill > 0L) {
                 showUserGuide("Вам начислили: ${state.addSkill} опыта")
                 viewModel.updateProfile(
-                    skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill),
-                    addSkill = 0
+                    skill = viewModel.profileState.value?.pointsSkill?.toLong()?.plus(state.addSkill), addSkill = 0
                 )
             }
 
             if (state.addNolics > 0L) {
                 showUserGuide("Вам начислили: ${state.addNolics} ноликов")
                 viewModel.updateProfile(
-                    nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics),
-                    addNolics = 0
+                    nolics = viewModel.profileState.value?.pointsNolics?.toLong()?.plus(state.addNolics), addNolics = 0
                 )
             }
 
@@ -221,8 +222,16 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
 
     private fun observeDayInGameAndBox() = lifecycleScope.launch {
         viewModel.daysInGameState.collect {
-            boxDays.take(it.countDayBox.toInt()).forEach {
-                it.setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.green))
+            // Reset all days to inactive state
+            boxDays.forEach { dayView ->
+                dayView.setBackgroundResource(R.drawable.progress_bar_inactive)
+                dayView.alpha = 0.5f
+            }
+
+            // Set active days to green
+            boxDays.take(it.countDayBox.toInt()).forEach { dayView ->
+                dayView.setBackgroundResource(R.drawable.progress_bar_active)
+                dayView.alpha = 1.0f
             }
 
             binding.tvNumberBox.text = it.countBox.toString()
@@ -270,7 +279,7 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
                 MENU_HOME_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_HOME))
                 MENU_MY_QUIZ -> switchFragment(MainFragment.newInstance(EventQuiz.QUIZ_BY_USER))
                 MENU_DOWNLOADS -> switchFragment(DownloadFragment())
-                MENU_SETTING -> switchFragment(SettingsFragment())
+                MENU_SETTING -> switchFragment(SettingsFragment.newInstance(this))
                 MENU_PROFILE -> switchFragment(ProfileFragment())
                 MENU_CHAT -> switchFragment(ChatFragment())
                 MENU_LEADER -> switchFragment(LeadersFragment())
@@ -432,6 +441,24 @@ class MainActivity : AppCompatActivity(), NavigationProvider {
             }
         }
     }
+
+    override fun syncProfileWithSettings(settings: SettingConfigModel) {
+        val profileData = SettingsToProfileConverter.convertSettingsToProfileUpdate(settings)
+
+        viewModel.updateProfileFromSettings(
+            name = profileData.name,
+            nickname = profileData.nickname,
+            birthday = profileData.birthday,
+            city = profileData.city,
+            logo = profileData.logo,
+            login = profileData.login,
+            languages = profileData.languages,
+            life = profileData.life,
+            goldLife = profileData.goldLife,
+            premium = profileData.premium
+        )
+    }
+}
 
     companion object {
         const val REQUEST_CODE_STORAGE_PERMISSION = 1001

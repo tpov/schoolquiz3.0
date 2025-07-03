@@ -7,10 +7,11 @@
     <color name="contour">#0C7FCF</color>
     <color name="line">#6A5E23</color>
     <color name="contour_unable">#0C4678</color>
-    <color name="back_item">#191919</color>
+    <color name="star_outline">#555555</color>
+    <color name="back_item">#242429</color>         <!-- Cards - modern dark -->
 
-    <color name="back_main_top">#232337</color>
-    <color name="back_main_center">#3C3C3C</color>
+    <color name="back_main_top">#000000</color>          <!-- Status bar - pure black -->
+    <color name="back_main_center">#121212</color>      <!-- Main background - darker -->
     <color name="back_light_question_center">#3C503C</color>
     <color name="back_hard_question_center">#503C3C</color>
     <color name="back_arena_question_center">#3C3C50</color>
@@ -29,5 +30,29 @@
     <color name="colorPrimary">#2196F3</color>
     <color name="colorPrimaryDark">#1976D2</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="app_background">#121212</color>          <!-- Main background - darker -->
+    <color name="app_background_dark">#0d1117</color>     <!-- Status bar - pure black -->
+    <color name="app_toolbar_background">#1E1E1E</color>  <!-- Toolbar background - visible -->
+    <color name="app_card_background">#242429</color>     <!-- Card background - modern dark -->
+    <color name="app_card_elevated">#383838</color>       <!-- Elevated cards - even lighter -->
+    <color name="app_surface_light">#454545</color>       <!-- Light surface elements - visible -->
+
+    <color name="app_accent">#4285F4</color>
+    <color name="app_accent_secondary">#FF9800</color>
+    <color name="app_success">#00FF05</color>
+
+    <color name="app_text_primary">#FFFFFF</color>
+    <color name="app_text_secondary">#B8B8B8</color>
+    <color name="app_text_tertiary">#888888</color>
+    <color name="app_gold">#FFD600</color>
+
+    <color name="button_fab_default">@color/app_card_elevated</color>
+    <color name="button_fab_primary">@color/app_accent</color>
+    <color name="button_fab_secondary">@color/app_accent_secondary</color>
+
+    <color name="navigation_background">@color/app_toolbar_background</color>
+    <color name="border_subtle">#33FFFFFF</color>
+    <color name="shadow_color">#1A000000</color>
 
 </resources>

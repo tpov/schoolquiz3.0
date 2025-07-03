@@ -1,5 +1,34 @@
-<resources>
-    <!-- Base application theme. -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    
+    <!-- Enhanced base application theme with layering -->
+    <style name="Theme.Settings" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/app_accent</item>
+        <item name="colorPrimaryVariant">@color/app_accent_dark</item>
+        <item name="colorOnPrimary">@color/app_text_primary</item>
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/app_highlight_text</item>
+        <item name="colorSecondaryVariant">@color/app_gold</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Enhanced status bar color -->
+        <item name="android:statusBarColor">@color/app_background_dark</item>
+        <!-- Enhanced background colors with layering -->
+        <item name="android:windowBackground">@color/app_background</item>
+        <item name="android:navigationBarColor">@color/app_background_dark</item>
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">@color/app_text_primary</item>
+        <item name="android:textColorSecondary">@color/app_text_secondary</item>
+        <!-- System UI -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- Preference theme -->
+    <style name="Theme.Settings.Preference" parent="Theme.Settings">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+
     <style name="Theme.Schoolquiz" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
         <item name="colorOnPrimary">@color/white</item>

@@ -1,11 +1,17 @@
 <resources>
     <string name="app_name">Shop</string>
-    <string name="shop_fragment_buy_one_place_text">Купить 1 место для создания викторины</string>
-    <string name="shop_fragment_button_buy">Купить</string>
-    <string name="shop_fragment_text_donate">Поддержите нас, сколько считаете нужным</string>
+    <string name="shop_fragment_buy_one_place_text">Buy 1 place to create a quiz</string>
+    <string name="shop_fragment_button_buy">Buy</string>
+    <string name="shop_fragment_text_donate">Support us with any amount you want</string>
     <string name="shop_fragment_donate">GooglePlay</string>
-    <string name="shop_fragment_get_box_for_ad_text">Получить коробку за 5 объявлений</string>
-    <string name="shop_fragment_get_box_for_ad_show">Показать</string>
-    <string name="shop_fragment_buy_life_text">Купить 1 жизнь</string>
-    <string name="shop_fragment_buy_life_gold_text">Купить 1 золотую жизнь</string>
+    <string name="shop_fragment_get_box_for_ad_text">Get a box for watching 5 ads</string>
+    <string name="shop_fragment_get_box_for_ad_show">Watch</string>
+    <string name="shop_fragment_buy_life_text">Buy 1 life</string>
+    <string name="shop_fragment_buy_life_gold_text">Buy 1 golden life</string>
+
+    <string name="shop_fragment_referrals_title">Referrals</string>
+    <string name="shop_fragment_referrals_button_open">Open</string>
+    <string name="referral_reward_default_text">Invite 6 players and receive x50</string>
+    <string name="referral_reward_received_text">Reward received</string>
+    <string name="referral_season_boxes_text">At the end of season you will receive boxes:</string>
 </resources>

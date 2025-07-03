@@ -201,11 +201,10 @@
                     android:layout_width="106dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center|center_vertical"
-                    android:background="#222222"
+                    android:background="@android:color/transparent"
                     android:numStars="3"
                     android:layout_marginRight="8dp"
-                    android:progressBackgroundTint="#AAAAAA"
-                    android:progressBackgroundTintMode="multiply"
+                    android:progressBackgroundTint="@color/star_outline"
                     android:stepSize="0.01"
                     android:theme="@style/RatingBar" />
 

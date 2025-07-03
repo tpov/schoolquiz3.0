@@ -80,5 +80,36 @@
     <string name="summary_lessons_frequency_time">Выберите время занятий</string>
     <string name="summary_lessons_frequency_days">Выберите дни недели для занятий</string>
     <string name="tpovId">tpovId</string>
+    
+    <!-- Modern Settings -->
+    <string name="settings_subtitle">Настройте приложение под себя</string>
+    
+    <!-- Profile Settings -->
+    <string name="settings_profile_title">Профиль</string>
+    <string name="settings_profile_description">Логин, имя, никнейм и личная информация</string>
+    
+    <!-- Security Settings -->
+    <string name="settings_security_title">Безопасность</string>
+    <string name="settings_security_description">Пароль и защита аккаунта</string>
+    
+    <!-- Notifications Settings -->
+    <string name="settings_notifications_title">Уведомления</string>
+    <string name="settings_notifications_description">Настройки уведомлений и напоминаний</string>
+    
+    <!-- Schedule Settings -->
+    <string name="settings_schedule_title">Расписание</string>
+    <string name="settings_schedule_description">Время занятий и частота изучения</string>
+    
+    <!-- About Settings -->
+    <string name="settings_about_title">О приложении</string>
+    <string name="settings_about_description">Информация о версии и разработчиках</string>
+    
+    <!-- Export Settings -->
+    <string name="settings_export_title">Экспорт данных</string>
+    <string name="settings_export_description">Синхронизация и резервное копирование</string>
+    
+    <!-- Sync Settings -->
+    <string name="settings_sync_title">Синхронизация</string>
+    <string name="settings_sync_description">Настройки синхронизации данных профиля и квестов</string>
 
 </resources>

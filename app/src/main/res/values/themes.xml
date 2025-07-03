@@ -6,7 +6,7 @@
         <!-- Secondary brand color. -->
         <item name="android:fontFamily">@font/cutive_mono</item>
         <item name="android:colorPrimary">@color/white</item>
-        <item name="android:colorPrimaryDark">@color/back_main_top</item> //Цвет статуса бара
+        <item name="android:colorPrimaryDark">@color/back_main_top</item> //Цвет статуса бара - теперь самый темный
         <item name="android:colorAccent">#FFFFFF</item>    //текст
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="colorControlNormal">#FFFFFF</item>
@@ -19,14 +19,17 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
+    
+    <!-- Enhanced Action Bar with layering -->
     <style name="MyActionBar" parent="@style/Widget.AppCompat.ActionBar">
         <item name="android:colorPrimaryDark">#FFFFFF</item>
         <item name="android:colorPrimary">#FFFFFF</item>
+        <item name="android:background">@color/app_toolbar_background</item>
     </style>
 
     <style name="RatingBar" parent="Theme.AppCompat">
         <item name="android:colorControlActivated">@color/gold</item>
-        <item name="android:textColorSecondary">#000000</item>
+        <item name="colorControlNormal">@color/star_outline</item>
     </style>
     <style name="RatingBarFavorite" parent="Theme.AppCompat">
         <item name="android:colorControlActivated">#FF0000</item>
@@ -37,9 +40,11 @@
         <item name="android:progressDrawable">@drawable/rating_full</item>
         <item name="android:indeterminateDrawable">@drawable/rating_full</item>
     </style>
+    
+    <!-- Enhanced App Theme with layered design -->
     <style name="AppTheme" parent="Theme.AppCompat">
         <item name="android:textColorSecondary">#FFFFFF</item>
-        <item name="colorControlNormal">@color/back_main_top</item>
+        <item name="colorControlNormal">@color/app_toolbar_background</item>
 
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
@@ -47,8 +52,10 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <!-- Enhanced theme with better status bar handling -->
     <style name="Theme.GeoQuiz.NoActionBar.DarkStatusBar" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/back_main_top</item>
+        <item name="android:statusBarColor">@color/app_background_dark</item>
+        <item name="android:windowBackground">@color/app_background</item>
     </style>
 
     <!-- Стиль текста в терминале -->
