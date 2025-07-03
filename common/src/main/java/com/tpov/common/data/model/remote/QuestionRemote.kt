@@ -9,32 +9,38 @@ data class QuestionRemote (
     val nameQuestion: String,
     val nameAnswers: String,
     val pathPictureQuestion: String?,
+    val infoQuestion: String,
     val lvlTranslate: Int,
     val numQuestion: Int,
     val hardQuestion: Boolean,
-    val language: String
+    val language: String,
+    val nameCategory: String,
+    val nameSubCategory: String,
+    val nameSubsubCategory: String,
+    val nameQuiz: String
 ) {
     fun toQuestionEntity(
-        pathStructure: PathStructure
+        event: PathStructure
     ): QuestionEntity {
         return QuestionEntity(
             id = null,
             numQuestion = numQuestion,
             nameQuestion = this.nameQuestion,
+            infoQuestion = this.infoQuestion,
             pathPictureQuestion = pathPictureQuestion,
             nameAnswers = nameAnswers,
             hardQuestion = hardQuestion,
-            event = pathStructure.nameEvent,
-            quiz = pathStructure.nameQuiz,
-            category = pathStructure.nameCategory,
-            subCategory = pathStructure.nameSubCategory,
-            subsubCategory = pathStructure.nameSubsubCategory,
+            eventName = event.nameEvent,
+            quizName = nameQuiz,
+            categoryName = nameCategory,
+            subCategoryName = nameSubCategory,
+            subsubCategoryName = nameSubsubCategory,
             language = language,
             lvlTranslate = lvlTranslate
         )
     }
 
     constructor() : this(
-        "", "", "",  0, 0 ,false, ""
+        "", "", "", "", 0, 0 ,false, "", "","","",""
     )
 }

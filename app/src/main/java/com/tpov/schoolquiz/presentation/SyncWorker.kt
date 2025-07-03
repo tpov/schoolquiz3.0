@@ -23,7 +23,6 @@ import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
 import com.tpov.common.domain.usecase.SyncInteractor
 import com.tpov.common.presentation.utils.LanguageUtils.Companion.toLanguageUtils
 import com.tpov.schoolquiz.domain.ProfileUseCase
-import com.tpov.schoolquiz.presentation.contact.Event
 import com.tpov.schoolquiz.presentation.services.ProfileInteractor
 import com.tpov.setting.data.PreferencesManager
 import dagger.assisted.Assisted
@@ -106,7 +105,7 @@ class SyncWorker @AssistedInject constructor(
             if (event != EventQuiz.QUIZ_HOME) return
             var lockResult: LockServerResult
             while (true) {
-                lockResult = syncInteractor.lockStructureData(event)
+                lockResult = syncInteractor.isLockServer(event)
                 when (lockResult) {
                     is LockServerResult.Success -> {
                         Log.d("SyncWorker", "🔒 Successfully locked ${event.name}")
@@ -133,7 +132,7 @@ class SyncWorker @AssistedInject constructor(
                     Log.d("SyncWorker", "✅ Successfully synced ${event.name}")
                     try {
                         showNotification("Sync Complete", "Updated quizzes for ${event.name}.", context)
-                        val unlockResult = syncInteractor.unlockStructureData(event)
+                        val unlockResult = syncInteractor.isLockServer(event)
 
                         if (unlockResult is LockServerResult.Error) {
                             Log.e("SyncWorker", "❌ Failed to unlock ${event.name}, rolling back")

@@ -34,7 +34,11 @@ data class StructureDataLocal(
     var isBought: Boolean = false,
     var isBoughtTime: String = "",
     var isDownload: Boolean = false,
-    var show: Boolean = true
+    var show: Boolean = true,
+    
+    // 🔍 Семантический поиск
+    var searchVector: List<Float>? = null,  // 512-мерный вектор для поиска
+    var vectorVersion: Int = 0              // Версия алгоритма построения вектора
 ) {
 
     fun create(
@@ -73,7 +77,9 @@ data class StructureDataLocal(
             isBought = false,
             isBoughtTime = "",
             isDownload = false,
-            show = true
+            show = true,
+            searchVector = null,
+            vectorVersion = 0
         )
     fun printFullStructure(s: String): StructureDataLocal {
 
@@ -126,7 +132,9 @@ data class StructureDataLocal(
             languages = languages,
             picture = picture,
             isShowDownload = isShowDownload,
-            isShowArchive = isShowArchive
+            isShowArchive = isShowArchive,
+            searchVector = searchVector,
+            vectorVersion = vectorVersion
         )
     }
 
@@ -143,7 +151,9 @@ data class StructureDataLocal(
             nameCreator = nameCreator,
             tpovIdMaxStarsGlobal = tpovIdMaxStarsGlobal,
             picture = picture,
-            languages = languages
+            languages = languages,
+            searchVector = searchVector,
+            vectorVersion = vectorVersion
         )
     }
 }

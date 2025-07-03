@@ -25,7 +25,6 @@ interface RepositoryStructure {
     suspend fun getEditStructure(): List<StructureEditData>
 
     fun deleteLocalPictureStructure(namePicture: String)
-    fun fetchPictureStructure(path: PathStructure)
     suspend fun fetchStructureInfo(path: PathStructure): StructureInfoEntity?
     suspend fun pushStructureInfoData(ratingData: StructureInfoRemote, path: PathStructure)
     suspend fun insertStructureData(structureDataEntity: StructureDataEntity, event: String)

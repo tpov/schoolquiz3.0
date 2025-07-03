@@ -21,35 +21,35 @@ interface QuestionDao {
 
     @Query("""
     SELECT * FROM question_entity
-    WHERE event = :event
-      AND category = :category
-      AND subCategory = :subCategory
-      AND subsubCategory = :subsubCategory
-      AND quiz = :quiz
+    WHERE eventName = :eventName
+      AND categoryName = :categoryName
+      AND subCategoryName = :subCategoryName
+      AND subsubCategoryName = :subsubCategoryName
+      AND quizName = :quizName
 """)
     fun getQuestionsByPath(
-        event: String,
-        category: String,
-        subCategory: String,
-        subsubCategory: String,
-        quiz: String
+        eventName: String,
+        categoryName: String,
+        subCategoryName: String,
+        subsubCategoryName: String,
+        quizName: String
     ): List<QuestionEntity>
-    @Query("DELETE FROM question_entity WHERE quiz IS :id")
+    @Query("DELETE FROM question_entity WHERE quizName IS :id")
     fun deleteQuestionByIdQuiz(id: Int)
 
     @Query("""
     DELETE FROM question_entity
-    WHERE event = :event
-      AND category = :category
-      AND subCategory = :subCategory
-      AND subsubCategory = :subsubCategory
-      AND quiz = :quiz
+    WHERE eventName = :eventName
+      AND categoryName = :categoryName
+      AND subCategoryName = :subCategoryName
+      AND subsubCategoryName = :subsubCategoryName
+      AND quizName = :quizName
 """)
-    fun deleteQuestion(event: String,
-                       category: String,
-                       subCategory: String,
-                       subsubCategory: String,
-                       quiz: String)
+    fun deleteQuestion(eventName: String,
+                       categoryName: String,
+                       subCategoryName: String,
+                       subsubCategoryName: String,
+                       quizName: String)
 
     @Update
     fun updateQuestion(questionEntity: QuestionEntity)

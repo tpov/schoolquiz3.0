@@ -34,4 +34,28 @@ class Converters {
             }
         }
     }
+    
+    // 🔍 Конвертеры для векторов семантического поиска
+    @TypeConverter
+    fun fromFloatList(value: List<Float>?): String? {
+        return if (value == null) {
+            null
+        } else {
+            value.joinToString(",")
+        }
+    }
+
+    @TypeConverter
+    fun toFloatList(value: String?): List<Float>? {
+        return if (value == null || value.isBlank()) {
+            null
+        } else {
+            try {
+                value.split(",").map { it.toFloat() }
+            } catch (e: NumberFormatException) {
+                android.util.Log.e("Converters", "Error parsing float list: $value", e)
+                null
+            }
+        }
+    }
 }

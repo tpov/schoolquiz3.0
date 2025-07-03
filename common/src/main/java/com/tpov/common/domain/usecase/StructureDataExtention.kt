@@ -35,9 +35,9 @@ object StructureDataExtention {
     suspend fun SyncState.initStateStructureData(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
         this.currentStage = SyncStage.STRUCTURE_FETCH
-        
+
         android.util.Log.d("StructureSync", "🔄 initStateStructureData started for: ${this.eventId.name}")
-        
+
         this.structureCategoryDataListRemote =
             structureUseCase.fetchStructureCategoryDataList(this.eventId)
                 ?.toMutableList() ?: exceptionHandler.exceptionInitStructureRemoteData()
@@ -58,13 +58,10 @@ object StructureDataExtention {
         return this
     }
 
-    fun SyncState.updateLocalStructureData(): SyncState {
+    fun SyncState.updateLocalStructureData(structureUseCase: StructureUseCase): SyncState {
         if (exception != null) return this
         this.currentStage = SyncStage.STRUCTURE_LOCAL_SYNC
 
-        android.util.Log.d("StructureSync", "🔄 updateLocalStructureData started")
-        android.util.Log.d("StructureSync", "📡 Remote categories to process: ${this.structureCategoryDataListRemote.size}")
-        android.util.Log.d("StructureSync", "💾 Local categories before processing: ${this.structureCategoryDataListLocal.size}")
 
         processStructureDataDifferences(
             structureNodeListNew = this.structureCategoryDataListRemote,
@@ -72,45 +69,73 @@ object StructureDataExtention {
             event = this.eventId,
             callback = CallbackDifferences(
                 onMissingOldStructure = { _, structureNodeNew, currentPath ->
-                    android.util.Log.d("StructureSync", "➕ Adding missing structure: ${structureNodeNew.nameItem} at path: $currentPath")
-                    
+
                     this.structureCategoryDataListLocal.addNodeByPath(structureNodeNew, currentPath)
-                    android.util.Log.d("StructureSync", "✅ Added. Local categories now: ${this.structureCategoryDataListLocal.size}")
+
+                    processStructureDataDifferences(
+                        structureNodeListNew = mutableListOf(structureNodeNew),
+                        structureNodeListOld =  mutableListOf(structureNodeNew),
+                        event = this.eventId,
+                        callback = CallbackDifferences(
+                            onMissingOldStructure = { _, structureNodeNew, currentPath ->
+
+                            },
+                            onHasChildren = { structureNodeOld, structureNodeNew, currentPath ->
+                                // Скачиваем фото для узла с детьми
+                                if (structureNodeNew.picture.isNotBlank()) {
+                                    android.util.Log.d("StructureSync", "📸 Downloading photo for parent: ${structureNodeNew.nameItem} - ${structureNodeNew.picture}")
+                                    runBlocking {
+                                        try {
+                                            structureUseCase.fetchPictureStructure(structureNodeNew.picture)
+                                            android.util.Log.d("StructureSync", "✅ Photo downloaded: ${structureNodeNew.picture}")
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("StructureSync", "❌ Failed to download photo: ${structureNodeNew.picture} - ${e.message}")
+                                        }
+                                    }
+                                }
+                            },
+                            onNoChildren = { structureNodeOld, structureNodeNew, currentPath ->
+                                // Скачиваем фото для листового узла
+                                if (structureNodeNew.picture.isNotBlank()) {
+                                    android.util.Log.d("StructureSync", "📸 Downloading photo for leaf: ${structureNodeNew.nameItem} - ${structureNodeNew.picture}")
+                                    runBlocking {
+                                        try {
+                                            structureUseCase.fetchPictureStructure(structureNodeNew.picture)
+                                            android.util.Log.d("StructureSync", "✅ Photo downloaded: ${structureNodeNew.picture}")
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("StructureSync", "❌ Failed to download photo: ${structureNodeNew.picture} - ${e.message}")
+                                        }
+                                    }
+                                }
+                            }
+                        ),
+                    )
+
                 },
                 onHasChildren = { structureNodeOld, structureNodeNew, currentPath ->
-                    android.util.Log.d("StructureSync", "🔄 Processing existing structure with children: ${structureNodeNew.nameItem}")
-                    
+
                     if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
-                        android.util.Log.d("StructureSync", "📝 ✅ UPDATING structure: ${structureNodeNew.nameItem}")
                         this.structureCategoryDataListLocal
                             .updateLocalInfoData(
                                 this.structureCategoryDataListRemote,
                                 currentPath
                             )
-                    } else {
-                        android.util.Log.d("StructureSync", "⏸️ ❌ SKIPPING update for structure: ${structureNodeNew.nameItem} (versions match or local is newer)")
                     }
                 },
                 onNoChildren = { structureNodeOld, structureNodeNew, currentPath ->
-                    android.util.Log.d("StructureSync", "📄 Processing leaf structure: ${structureNodeNew.nameItem}")
-                    
+
                     if (isUpdateStructure(structureNodeOld?.first(), structureNodeNew)) {
-                        android.util.Log.d("StructureSync", "📝 ✅ UPDATING leaf structure: ${structureNodeNew.nameItem}")
                         this.structureCategoryDataListLocal
                             .updateLocalInfoData(
                                 this.structureCategoryDataListRemote,
                                 currentPath
                             )
-                    } else {
-                        android.util.Log.d("StructureSync", "⏸️ ❌ SKIPPING update for leaf structure: ${structureNodeNew.nameItem} (versions match or local is newer)")
                     }
                 }
             ),
         )
-        
-        android.util.Log.d("StructureSync", "✅ updateLocalStructureData completed")
-        android.util.Log.d("StructureSync", "💾 Local categories after processing: ${this.structureCategoryDataListLocal.size}")
-        
+
+
         return this
     }
 

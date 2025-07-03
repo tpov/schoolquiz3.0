@@ -34,20 +34,20 @@ data class QuestionEntity(
     @ColumnInfo(name = "hardQuestion")
     var hardQuestion: Boolean = false,
 
-    @ColumnInfo(name = "event")
-    var event: String,
+    @ColumnInfo(name = "eventName")
+    var eventName: String,
 
-    @ColumnInfo(name = "category")
-    var category: String,
+    @ColumnInfo(name = "categoryName")
+    var categoryName: String,
 
-    @ColumnInfo(name = "subCategory")
-    var subCategory: String,
+    @ColumnInfo(name = "subCategoryName")
+    var subCategoryName: String,
 
-    @ColumnInfo(name = "subsubCategory")
-    var subsubCategory: String,
+    @ColumnInfo(name = "subsubCategoryName")
+    var subsubCategoryName: String,
 
-    @ColumnInfo(name = "quiz")
-    var quiz: String,
+    @ColumnInfo(name = "quizName")
+    var quizName: String,
 
     @ColumnInfo(name = "language")
     var language: String = "",
@@ -63,7 +63,12 @@ data class QuestionEntity(
         lvlTranslate = this.lvlTranslate,
         numQuestion = this.numQuestion,
         hardQuestion = this.hardQuestion,
-        language = this.language
+        language = this.language,
+        infoQuestion = this.infoQuestion,
+            nameCategory = this.categoryName,
+            nameSubCategory = this.subCategoryName,
+            nameSubsubCategory = this.subsubCategoryName,
+            nameQuiz = this.quizName
     )
 
     //    fun createEmptyQuestion() = QuestionEntity(
@@ -75,7 +80,7 @@ data class QuestionEntity(
         nameQuestion = "",
         nameAnswers = "",
         hardQuestion = false,
-        event = "", category = "", subCategory = "", subsubCategory = "", quiz = "",
+        eventName = "", categoryName = "", subCategoryName = "", subsubCategoryName = "", quizName = "",
         language = "",
         lvlTranslate = 0,
         pathPictureQuestion = ""
@@ -83,7 +88,7 @@ data class QuestionEntity(
 
     fun toQuestionLocal() = QuestionLocal(
         id, numQuestion, nameQuestion,infoQuestion, pathPictureQuestion, nameAnswers, hardQuestion, PathStructure(
-            event, category, subCategory, subsubCategory, quiz),
+            eventName, categoryName, subCategoryName, subsubCategoryName, quizName),
             language = this.language.toLanguageUtils(),
             lvlTranslate
         )

@@ -2,6 +2,9 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 admin.initializeApp();
 
+// Экспортируем функции построения векторов
+export { buildVectorsDaily, buildVectorsManual } from './buildVectors';
+
 // Define FieldConfig interface that was missing
 interface FieldConfig {
     defaultValue: any;

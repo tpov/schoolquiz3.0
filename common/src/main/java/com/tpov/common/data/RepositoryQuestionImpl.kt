@@ -375,11 +375,11 @@ class RepositoryQuestionImpl @Inject constructor(
         override suspend fun pushQuestion(questionLocal: QuestionLocal, isUpdate: Boolean) {
         val questionEntity = questionLocal.toQuestionEntity()
         val pathStructure = PathStructure(
-            questionEntity.event,
-            questionEntity.category,
-            questionEntity.subCategory,
-            questionEntity.subsubCategory,
-            questionEntity.quiz
+            questionEntity.eventName,
+            questionEntity.categoryName,
+            questionEntity.subCategoryName,
+            questionEntity.subsubCategoryName,
+            questionEntity.quizName
         )
 
         val collectionName = createSanitizedCollectionName(pathStructure)
@@ -465,17 +465,17 @@ class RepositoryQuestionImpl @Inject constructor(
         suspendCoroutine<List<LanguageUtils>> { continuation ->
             val questionEntity = questionLocal.toQuestionEntity()
             val pathStructure = PathStructure(
-                questionEntity.event,
-                questionEntity.category,
-                questionEntity.subCategory,
-                questionEntity.subsubCategory,
-                questionEntity.quiz
+                questionEntity.eventName,
+                questionEntity.categoryName,
+                questionEntity.subCategoryName,
+                questionEntity.subsubCategoryName,
+                questionEntity.quizName
             )
             val collectionName = createSanitizedCollectionName(pathStructure)
             val languages = mutableListOf<LanguageUtils>()
 
             baseCollection
-                .document("question${questionEntity.event}")
+                .document("question${questionEntity.eventName}")
                 .collection(collectionName)
                 .whereEqualTo("hardQuestion", questionEntity.hardQuestion)
                 .whereEqualTo("numQuestion", questionEntity.numQuestion)

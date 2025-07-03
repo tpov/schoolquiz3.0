@@ -22,7 +22,11 @@ data class StructureDataRemote(
     @PropertyName("isShowArchive")
     val isShowArchive: Boolean? = null,
     @PropertyName("isShow")
-    val isShow: Boolean? = null
+    val isShow: Boolean? = null,
+    
+    // 🔍 Семантический поиск
+    val searchVector: List<Float>? = null,  // 512-мерный вектор для поиска
+    val vectorVersion: Int = 0              // Версия алгоритма построения вектора
 ) {
     // No-argument constructor for Firebase
     constructor() : this(
@@ -40,7 +44,9 @@ data class StructureDataRemote(
         picture = "",
         languages = "",
         isShowArchive = null,
-        isShow = null
+        isShow = null,
+        searchVector = null,
+        vectorVersion = 0
     )
 
     fun toStructureDataLocal(): StructureDataLocal = StructureDataLocal(
@@ -64,6 +70,8 @@ data class StructureDataRemote(
         languages = languages,
         picture = picture,
         isShowDownload = true,
-        isShowArchive = isShowArchive ?: true
+        isShowArchive = isShowArchive ?: true,
+        searchVector = searchVector,
+        vectorVersion = vectorVersion
     )
 }

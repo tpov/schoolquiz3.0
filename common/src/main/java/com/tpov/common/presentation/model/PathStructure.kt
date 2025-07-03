@@ -10,4 +10,6 @@ data class PathStructure(
     var nameSubCategory: String = "",
     var nameSubsubCategory: String = "",
     var nameQuiz: String = "",
-) : Parcelable
+) : Parcelable {
+        fun toPath() = "$nameCategory>$nameSubCategory>$nameSubsubCategory>$nameQuiz"
+}

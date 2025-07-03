@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.presentation.main
 
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.LayoutInflater
@@ -46,23 +45,23 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
             ratingBar.rating = category.ratingLocal.toFloat() / category.starsMaxLocal
 
             category.picture?.let { picturePath ->
+                if (picturePath.isBlank()) {
+                    Log.w("MainAdapter", "⚠️ Picture path is blank for category: ${category.nameItem}")
+                    imageView.setImageResource(R.drawable.db_design3_main)
+                    return@let
+                }
+
+                Log.d("MainAdapter", "📸 Loading picture: '$picturePath' for category: ${category.nameItem}")
                 val file = File(imageView.context.applicationContext.filesDir, picturePath)
+                Log.d("MainAdapter", "📁 Full file path: ${file.absolutePath}")
 
                 if (file.exists()) {
-                    println("Файл существует: ${file.absolutePath}")
-                    println("Размер файла: ${file.length()} байт")
-
-                    // Декодируем изображение с использованием полного пути
-                    val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                    if (bitmap != null) {
-                        imageView.setImageBitmap(bitmap)
-                    } else {
-                        println("Не удалось декодировать изображение из файла")
-                        imageView.setImageResource(R.drawable.db_design3_main)
-                    }
+                    Log.d("MainAdapter", "✅ File exists: ${file.absolutePath} (${file.length()} bytes)")
 
                     Glide.with(imageView.context)
                         .load(file)
+                        .placeholder(R.drawable.db_design3_main)
+                        .error(R.drawable.db_design3_main)
                         .listener(object : RequestListener<Drawable> {
                             override fun onLoadFailed(
                                 e: GlideException?,
@@ -70,8 +69,8 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
                                 target: Target<Drawable>,
                                 isFirstResource: Boolean
                             ): Boolean {
-                                Log.e("Glide", "Ошибка загрузки изображения", e)
-                                return false
+                                Log.w("MainAdapter", "⚠️ Glide failed to load image: $picturePath")
+                                return false // Let Glide handle the error drawable
                             }
 
                             override fun onResourceReady(
@@ -81,12 +80,13 @@ class MainAdapter(private val items: List<StructureDataLocal?>?,
                                 dataSource: DataSource,
                                 isFirstResource: Boolean
                             ): Boolean {
+                                Log.d("MainAdapter", "✅ Image loaded successfully: $picturePath")
                                 return false
                             }
                         })
                         .into(imageView)
                 } else {
-                    println("Файл не существует: ${file.absolutePath}")
+                    Log.w("MainAdapter", "⚠️ File does not exist: ${file.absolutePath}")
                     imageView.setImageResource(R.drawable.db_design3_main)
                 }
             } ?: imageView.setImageResource(R.drawable.db_design3_main)

@@ -171,66 +171,8 @@ open class RepositoryStructureImpl @Inject constructor(
         }
     }
 
-    /**
-     * Recursively downloads all pictures from structure data
-     */
-    private suspend fun downloadAllStructurePictures(structureList: List<StructureDataLocal>) {
-        structureList.forEach { structure ->
-            downloadStructurePicturesRecursively(structure)
-        }
-    }
 
-    /**
-     * Recursively downloads pictures for a single structure and all its children
-     */
-    private suspend fun downloadStructurePicturesRecursively(structure: StructureDataLocal) {
-        // Download picture for current structure item if it exists
-        if (structure.picture.isNotBlank()) {
-            android.util.Log.d("StructureRepo", "📸 Downloading picture: ${structure.picture} for ${structure.nameItem}")
-            try {
-                downloadPictureFromStorage(structure.picture)
-                android.util.Log.d("StructureRepo", "✅ Successfully downloaded: ${structure.picture}")
-            } catch (e: Exception) {
-                android.util.Log.w("StructureRepo", "⚠️ Failed to download: ${structure.picture} - ${e.message}")
-            }
-        }
 
-        // Recursively download pictures for children
-        structure.children?.forEach { child ->
-            downloadStructurePicturesRecursively(child)
-        }
-    }
-
-    /**
-     * Downloads a single picture from Firebase Storage to local files directory
-     */
-    private suspend fun downloadPictureFromStorage(pictureName: String): String? {
-        return try {
-            val storageRef = FirebaseStorage.getInstance().reference.child("$storageFolder/$pictureName")
-            val localFile = File(context.filesDir, pictureName)
-
-            // Create parent directories if they don't exist
-            localFile.parentFile?.let {
-                if (!it.exists()) {
-                    it.mkdirs()
-                }
-            }
-
-            // Skip download if file already exists
-            if (localFile.exists()) {
-                android.util.Log.d("StructureRepo", "📸 Picture already exists locally: $pictureName")
-                return localFile.absolutePath
-            }
-
-            // Download the file
-            storageRef.getFile(localFile).await()
-            android.util.Log.d("StructureRepo", "📸 Picture downloaded successfully: $pictureName")
-            localFile.absolutePath
-        } catch (e: Exception) {
-            android.util.Log.e("StructureRepo", "📸 Error downloading picture: $pictureName - ${e.message}")
-            null
-        }
-    }
 
     override suspend fun fetchStructureInfoData(
         path: PathStructure
@@ -427,18 +369,16 @@ open class RepositoryStructureImpl @Inject constructor(
 
         storageRef.getFile(localFile)
             .addOnSuccessListener {
-                println("Фотография загружена успешно: $namePicture")
+                android.util.Log.d("RepositoryStructure", "✅ Photo downloaded successfully: $namePicture")
             }
             .addOnFailureListener { exception ->
-                println("Ошибка при загрузке фотографии: $namePicture")
-                exception.printStackTrace()
+                android.util.Log.w("RepositoryStructure", "⚠️ Failed to download photo: $namePicture - ${exception.message}")
+                // Не показываем stack trace для 404 ошибок - это нормально
+                if (exception.message?.contains("404") != true) {
+                    exception.printStackTrace()
+                }
             }
     }
-
-    override fun fetchPictureStructure(path: PathStructure) {
-        TODO("Not yet implemented")
-    }
-
 
     override fun clearStructureEdit() {
         // Clear StructureEditData from local database
@@ -448,13 +388,13 @@ open class RepositoryStructureImpl @Inject constructor(
     }
 
     override suspend fun getStructureEventData(
-        eevent: String,
+        event: String,
         vararg path: String
     ): List<StructureDataLocal>? {
-        android.util.Log.d("StructureRepo", "🔍 getStructureEventData called for event: $eevent")
+        android.util.Log.d("StructureRepo", "🔍 getStructureEventData called for event: $event")
         android.util.Log.d("StructureRepo", "📂 Path: ${path.toList()}")
 
-        val result = structureDataDao.getStructureDataByPath(eevent, path.toList())
+        val result = structureDataDao.getStructureDataByPath(event, path.toList())
 
         if (result != null) {
             android.util.Log.d("StructureRepo", "✅ Found ${result.size} categories in local DB")
@@ -462,7 +402,7 @@ open class RepositoryStructureImpl @Inject constructor(
                 android.util.Log.d("StructureRepo", "  📂 Local category: ${category.nameItem} with ${category.children?.size ?: 0} children")
             }
         } else {
-            android.util.Log.w("StructureRepo", "⚠️ No data found in local DB for event: $eevent")
+            android.util.Log.w("StructureRepo", "⚠️ No data found in local DB for event: $event")
         }
 
         return result

@@ -29,7 +29,11 @@ data class StructureDataEntity(
     var languages: String = "",
     val picture: String = "",
     val isShowDownload: Boolean = false,
-    val isShowArchive: Boolean = true
+    val isShowArchive: Boolean = true,
+    
+    // 🔍 Семантический поиск (хранится как строка для Room)
+    val searchVector: List<Float>? = null,  // Будет автоматически конвертироваться TypeConverter'ом
+    val vectorVersion: Int = 0
 ) {
     private fun toStructureDataLocal(): StructureDataLocal {
         val childesList = Converters().toChildesList(childesJson ?: "[]")
@@ -54,7 +58,9 @@ data class StructureDataEntity(
             languages = languages,
             picture = picture,
             isShowDownload = isShowDownload,
-            isShowArchive = isShowArchive
+            isShowArchive = isShowArchive,
+            searchVector = searchVector,
+            vectorVersion = vectorVersion
         )
     }
 

@@ -24,8 +24,6 @@ import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureInfo
 import com.tpov.common.domain.usecase.StructureDataExtention.updateStructureLocalNumberQuestion
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 
 open class SyncInteractor @Inject constructor(
     private val settingServerDBUseCase: SettingServerDBUseCase,
@@ -35,8 +33,6 @@ open class SyncInteractor @Inject constructor(
     private val questionDetailUseCase: QuestionDetailUseCase
 ) {
 
-    fun unlockStructureData(event: EventQuiz) = settingServerDBUseCase.unlockStructureData(event)
-    fun lockStructureData(event: EventQuiz) = settingServerDBUseCase.lockStructureData(event)
     fun isLockServer(event: EventQuiz) = settingServerDBUseCase.isLockServer(event)
     fun rollbackStructureData(event: EventQuiz) = settingLocalDBUseCase.rollbackStructureData(event)
 
@@ -57,7 +53,7 @@ open class SyncInteractor @Inject constructor(
             .syncChangeListQuestionsLocal()
             .syncChangeListQuestionsRemote()
             .syncInfoLocal()
-            .updateLocalStructureData()
+            .updateLocalStructureData(structureUseCase )
             .syncInfoGlobal()
             .updateStructureInfoGlobal()
             .updateStructureInfoLocal(structureUseCase)
