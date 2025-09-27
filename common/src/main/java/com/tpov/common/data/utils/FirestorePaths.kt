@@ -40,7 +40,7 @@ object FirestorePaths {
     const val ICONS_PROFILE = "profileIcons"
 
     // ==== Realtime Chat Paths ====
-    fun chatByDate() = "chat/$date"
+    fun chatByDate(date: String = DateUtil().getUnixDayString()) = "chat/$date"
     const val PLAYER_ONLINE_LIST = "playerOnlineList"
     const val TIME_FOR_MASSAGE = "timeForMassage"
     const val CHAT_VALUES = "values"

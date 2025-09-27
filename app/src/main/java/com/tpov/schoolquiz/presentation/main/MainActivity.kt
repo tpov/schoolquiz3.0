@@ -458,7 +458,6 @@ class MainActivity : AppCompatActivity(), NavigationProvider, ProfileSyncInterfa
             premium = profileData.premium
         )
     }
-}
 
     companion object {
         const val REQUEST_CODE_STORAGE_PERMISSION = 1001

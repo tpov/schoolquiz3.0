@@ -258,7 +258,7 @@ class MainViewModel @Inject constructor(
             nickname = nickname ?: currentProfile.nickname,
             birthday = birthday ?: currentProfile.birthday,
             city = city ?: currentProfile.city,
-            logo = logo ?: currentProfile.logo,
+            logo = logo?.toString() ?: currentProfile.logo,
             login = login ?: currentProfile.login,
             languages = languages ?: currentProfile.languages,
             standardLife = life ?: currentProfile.standardLife,

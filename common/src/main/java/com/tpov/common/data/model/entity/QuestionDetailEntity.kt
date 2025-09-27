@@ -41,7 +41,7 @@ data class QuestionDetailEntity(
     val synth: Boolean
 ) {
     fun toQuestionDetailRemote() = QuestionDetailRemote(
-        data, codeAnswer, hardQuiz
+        data, codeAnswer, hardQuiz, categoryName, subCategoryName, subsubCategoryName, quizName
     )
 
     fun toQuestionDetailLocal() = QuestionDetailLocal(
