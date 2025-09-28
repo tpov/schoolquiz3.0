@@ -8,13 +8,15 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.tpov.common.databinding.ActivityQuizItemBinding
+import com.tpov.common.domain.model.EventQuiz
+import com.tpov.common.presentation.model.PathStructure
 import com.tpov.schoolquiz.MainApp
 import com.tpov.schoolquiz.R
 import com.tpov.schoolquiz.databinding.FragmentDialogCreateQuizBinding
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class CreateQuizDialogFragment: DialogFragment() {
+class CreateQuizDialogFragment : DialogFragment() {
 
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
@@ -57,15 +59,52 @@ class CreateQuizDialogFragment: DialogFragment() {
     }
 
     private fun setupItemBindings() {
+        categoryItemBinding = ActivityQuizItemBinding.bind(binding.categoryItem.root)
         subCategoryItemBinding = ActivityQuizItemBinding.bind(binding.subCategoryItem.root)
         subSubCategoryItemBinding = ActivityQuizItemBinding.bind(binding.subSubCategoryItem.root)
         currentQuizItemBinding = ActivityQuizItemBinding.bind(binding.currentQuizItem.root)
     }
 
     private fun setupQuizItems() {
-        // Настройка элементов интерфейса для отображения категорий, субкатегорий и квизов
-        // TODO: Реализовать настройку RecyclerView или других компонентов для отображения списков
+        // Обработчики нажатий только на фото
+        categoryItemBinding.imageView.setOnClickListener {
+            // Выбор изображения для категории
+            openImagePicker { imagePath ->
+                categoryItemBinding.imageView.setImageResource(getImageResource(imagePath))
+            }
+        }
+        
+        subCategoryItemBinding.imageView.setOnClickListener {
+            // Выбор изображения для субкатегории
+            openImagePicker { imagePath ->
+                subCategoryItemBinding.imageView.setImageResource(getImageResource(imagePath))
+            }
+        }
+        
+        subSubCategoryItemBinding.imageView.setOnClickListener {
+            // Выбор изображения для субсубкатегории
+            openImagePicker { imagePath ->
+                subSubCategoryItemBinding.imageView.setImageResource(getImageResource(imagePath))
+            }
+        }
+        
+        currentQuizItemBinding.imageView.setOnClickListener {
+            // Выбор изображения для текущего квиза
+            openImagePicker { imagePath ->
+                currentQuizItemBinding.imageView.setImageResource(getImageResource(imagePath))
+            }
+        }
     }
+    
+    private fun openImagePicker(onImageSelected: (String) -> Unit) {
+        // TODO: Реализовать выбор изображения
+    }
+    
+    private fun getImageResource(imagePath: String): Int {
+        return resources.getIdentifier(imagePath, "drawable", requireContext().packageName)
+            ?: com.tpov.schoolquiz.R.drawable.ic_baseline_quiz
+    }
+
     private fun hideSystemUI() {
         dialog?.window?.decorView?.systemUiVisibility = (
             View.SYSTEM_UI_FLAG_IMMERSIVE
@@ -84,13 +123,27 @@ class CreateQuizDialogFragment: DialogFragment() {
         }
 
         binding.btnSave.setOnClickListener {
-            if (createQuizViewModel.isReadyToSave()) {
-                createQuizViewModel.saveQuiz()
-                // TODO: Показать сообщение об успешном сохранении
-                dismiss()
-            } else {
-                // TODO: Показать сообщение о том, что нужно выбрать все уровни
-            }
+            // Получаем изображения из 4 элементов
+            val categoryImage = getImageFromQuizItem(categoryItemBinding)
+            val subCategoryImage = getImageFromQuizItem(subCategoryItemBinding)
+            val subSubCategoryImage = getImageFromQuizItem(subSubCategoryItemBinding)
+            val currentQuizImage = getImageFromQuizItem(currentQuizItemBinding)
+
+            createQuizViewModel.saveQuiz(
+                PathStructure(
+                    EventQuiz.QUIZ_BY_USER.name,
+                    binding.tvCreateCategory.text.toString(),
+                    binding.tvCreateSubCategory.text.toString(),
+                    binding.tvCreateSubsubCategory.text.toString(),
+                    binding.tvCreateQuest.text.toString()
+                ),
+                createQuizViewModel.questionList,
+                categoryImage,
+                subCategoryImage,
+                subSubCategoryImage,
+                currentQuizImage
+            )
+            dismiss()
         }
 
         binding.bLightQuestion.setOnClickListener {
@@ -133,27 +186,53 @@ class CreateQuizDialogFragment: DialogFragment() {
         }
 
         lifecycleScope.launch {
-            // Обновляем выбранные элементы
             createQuizViewModel.selectedCategory.collect { category ->
-
+                category?.let {
+                    binding.tvCreateCategory.setText(it.nameItem)
+                    categoryItemBinding.imageView.setImageResource(
+                        it.picture?.let { path ->
+                            resources.getIdentifier(path, "drawable", requireContext().packageName)
+                        } ?: com.tpov.schoolquiz.R.drawable.ic_baseline_quiz
+                    )
+                    categoryItemBinding.mainTitleButton.text = it.nameItem
+                }
             }
         }
 
         lifecycleScope.launch {
             createQuizViewModel.selectedSubCategory.collect { subCategory ->
-
+                subCategory?.let {
+                    binding.tvCreateSubCategory.setText(it.nameItem)
+                    subCategoryItemBinding.imageView.setImageResource(
+                        it.picture?.let { path ->
+                            resources.getIdentifier(path, "drawable", requireContext().packageName)
+                        } ?: com.tpov.schoolquiz.R.drawable.ic_baseline_quiz
+                    )
+                    subCategoryItemBinding.mainTitleButton.text = it.nameItem
+                }
             }
         }
 
         lifecycleScope.launch {
             createQuizViewModel.selectedSubSubCategory.collect { subSubCategory ->
-
+                subSubCategory?.let {
+                    binding.tvCreateSubsubCategory.setText(it.nameItem)
+                    subSubCategoryItemBinding.imageView.setImageResource(
+                        it.picture?.let { path ->
+                            resources.getIdentifier(path, "drawable", requireContext().packageName)
+                        } ?: com.tpov.schoolquiz.R.drawable.ic_baseline_quiz
+                    )
+                    subSubCategoryItemBinding.mainTitleButton.text = it.nameItem
+                }
             }
         }
 
         lifecycleScope.launch {
             createQuizViewModel.selectedQuiz.collect { quiz ->
-
+                quiz?.let {
+                    binding.tvCreateQuest.setText(it)
+                    currentQuizItemBinding.mainTitleButton.text = it
+                }
             }
         }
     }
@@ -170,6 +249,23 @@ class CreateQuizDialogFragment: DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun getImageFromQuizItem(binding: ActivityQuizItemBinding): String {
+        // Получаем drawable resource из ImageView и возвращаем его путь/имя
+        val drawable = binding.imageView.drawable
+        return when {
+            drawable != null -> {
+                // Пытаемся получить имя ресурса
+                val resourceId = binding.imageView.tag as? Int ?: 0
+                if (resourceId != 0) {
+                    resources.getResourceEntryName(resourceId)
+                } else {
+                    "default_quiz_image"
+                }
+            }
+            else -> "default_quiz_image"
+        }
     }
 
     companion object {

@@ -1,10 +1,12 @@
 package com.tpov.schoolquiz.presentation.edit.strategy
 
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.schoolquiz.presentation.edit.manager.QuestionStateManager
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,14 +14,17 @@ import org.junit.runner.RunWith
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
 import org.mockito.Mock
+import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.robolectric.RobolectricTestRunner
+import org.junit.Before
 
-@RunWith(org.mockito.junit.MockitoJUnitRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class CreateQuizRegimeStrategyTest {
 
     @Mock
@@ -29,15 +34,23 @@ class CreateQuizRegimeStrategyTest {
     lateinit var questionUseCase: QuestionUseCase
 
     @Mock
-    lateinit var defaultImage: Drawable
+    lateinit var questionStateManager: QuestionStateManager
+
+    @Mock
+    lateinit var defaultImage: BitmapDrawable
 
     @Captor
     lateinit var structureDataCaptor: ArgumentCaptor<List<StructureDataLocal>>
 
+    @Before
+    fun setUp() {
+        MockitoAnnotations.openMocks(this)
+    }
+
     @Test
     fun testSaveData_sequentialCalls() = runBlocking {
         // Create instance of the strategy
-        val strategy = CreateQuizRegimeStrategy(structureUseCase, questionUseCase, context)
+        val strategy = CreateQuizRegimeStrategy(structureUseCase, questionUseCase, questionStateManager)
 
         // Initialize the user's structure data with inputStructureData for sequential tests.
         // We use a mutable list to simulate the state being updated by updateStructureData.
@@ -60,13 +73,18 @@ class CreateQuizRegimeStrategyTest {
         }
 
         // Perform the three sequential calls to saveData with the provided input data
-        strategy.saveData(emptyList(), inputData1)
+        // Convert structure data to List<Pair<String, BitmapDrawable>> format
+        val structurePairs1 = inputData1.map { it.nameItem to defaultImage }
+        val structurePairs2 = inputData2.map { it.nameItem to defaultImage }
+        val structurePairs3 = inputData3.map { it.nameItem to defaultImage }
+        
+        strategy.saveData(emptyList(), emptyMap(), structurePairs1, defaultImage)
         // After this call, saveData will have merged inputData1 into the structure and called updateStructureDataList
 
-        strategy.saveData(emptyList(), inputData2)
+        strategy.saveData(emptyList(), emptyMap(), structurePairs2, defaultImage)
         // After this call, saveData will have merged inputData2 into the structure and called updateStructureDataList
 
-        strategy.saveData(emptyList(), inputData3)
+        strategy.saveData(emptyList(), emptyMap(), structurePairs3, defaultImage)
         // After this call, saveData will have merged inputData3 into the structure and called updateStructureDataList
 
         // Now, initialStructures holds the state after all the merges simulated by calling saveData.

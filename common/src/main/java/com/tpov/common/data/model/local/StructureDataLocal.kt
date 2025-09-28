@@ -35,14 +35,13 @@ data class StructureDataLocal(
     var isBoughtTime: String = "",
     var isDownload: Boolean = false,
     var show: Boolean = true,
-    
+
     // 🔍 Семантический поиск
     var searchVector: List<Float>? = null,  // 512-мерный вектор для поиска
     var vectorVersion: Int = 0              // Версия алгоритма построения вектора
 ) {
 
     fun create(
-        id: Int?,
         nameCategory: String,
         numQuestion: Int,
         numHardQuestion: Int,

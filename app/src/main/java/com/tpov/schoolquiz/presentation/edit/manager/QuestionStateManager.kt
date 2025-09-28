@@ -3,7 +3,7 @@ package com.tpov.schoolquiz.presentation.edit.manager
 import com.tpov.common.SPLIT_BETWEEN_ANSWERS
 import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.domain.usecase.SettingConfigObject.settingsConfig
-import com.tpov.common.domain.utils.QuestionUtils
+import com.tpov.common.domain.utils.QuestionUtils.getNumsQuestion
 import com.tpov.common.presentation.utils.LanguageUtils
 import com.tpov.schoolquiz.presentation.edit.EditQuizViewModel.Companion.MAX_ANSWER_OPTIONS_LIMIT
 import com.tpov.schoolquiz.presentation.edit.model.CheckBoxUiState
@@ -134,7 +134,7 @@ class QuestionStateManager(private val uiState: MutableStateFlow<QuizUiModelStat
         uiState.update { state ->
             val hardQuestion = state.typeQuestionCheckBoxState?.getType() ?: false
             val language = settingsConfig.languages[0]
-            val newNumQuestionAllType = QuestionUtils.getNumsQuestion(state.questionList!!, language)
+            val newNumQuestionAllType = state.questionList!!.getNumsQuestion(language)
             val newNumQuestionThisType: Int = if (hardQuestion) newNumQuestionAllType.second + 1
             else newNumQuestionAllType.first + 1
 
@@ -147,7 +147,7 @@ class QuestionStateManager(private val uiState: MutableStateFlow<QuizUiModelStat
             )
 
             resultPair = Pair(newNumQuestionThisType, hardQuestion)
-            state.copy(questionList = state.questionList.apply { add(newQuestion) })
+            state.copy(questionList = state.questionList?.apply { add(newQuestion) })
         }
         return resultPair
     }

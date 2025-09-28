@@ -10,11 +10,13 @@ typealias numHardQuestion = Int
 
 object QuestionUtils {
 
-    fun getNumsQuestion(questions: List<QuestionLocal>,mainLanguage: LanguageUtils): Pair<numLightQuestion, numHardQuestion> {
-        val lightCount = questions.count { !it.hardQuestion && it.language == mainLanguage}
-        val hardCount = questions.count { it.hardQuestion && it.language == mainLanguage }
+    fun List<QuestionLocal>.getNumsQuestion(mainLanguage: LanguageUtils? = null): Pair<numLightQuestion, numHardQuestion> {
+        val lightCount = if (mainLanguage == null) count { !it.hardQuestion } else count { !it.hardQuestion && it.language == mainLanguage}
+        val hardCount = if (mainLanguage == null) count { it.hardQuestion } else count { it.hardQuestion && it.language == mainLanguage }
         return Pair(lightCount, hardCount)
     }
+
+    fun Pair<Int, Int>.sumPair() = this.first + this.second
 
     fun isDownloadQuestionForOptimization(currentPath: PathStructure, ratingGlobal: Int, size: Int): Boolean {
         return true

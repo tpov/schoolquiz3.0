@@ -4,42 +4,42 @@ import com.tpov.common.data.model.local.StructureDataLocal
 
 object StructureDataUtils {
     val structureData = StructureDataLocal(
-        id = 0,
+        nameItem = "root_0",
         children = mutableListOf(
             StructureDataLocal(
-                id = 1,
+                nameItem = "item_1",
                 children = mutableListOf(
-                    StructureDataLocal(id = 1),
-                    StructureDataLocal(id = 2),
-                    StructureDataLocal(id = 3)
+                    StructureDataLocal(nameItem = "item_1_1"),
+                    StructureDataLocal(nameItem = "item_1_2"),
+                    StructureDataLocal(nameItem = "item_1_3")
                 )
             ),
             StructureDataLocal(
-                id = 2,
+                nameItem = "item_2",
                 children = mutableListOf(
-                    StructureDataLocal(id = 2),
-                    StructureDataLocal(id = 3),
-                    StructureDataLocal(id = 4)
+                    StructureDataLocal(nameItem = "item_2_1"),
+                    StructureDataLocal(nameItem = "item_2_2"),
+                    StructureDataLocal(nameItem = "item_2_3")
                 )
             ),
             StructureDataLocal(
-                id = 4,
+                nameItem = "item_4",
                 children = mutableListOf(
-                    StructureDataLocal(id = 2),
-                    StructureDataLocal(id = 4),
-                    StructureDataLocal(id = 6)
+                    StructureDataLocal(nameItem = "item_4_1"),
+                    StructureDataLocal(nameItem = "item_4_2"),
+                    StructureDataLocal(nameItem = "item_4_3")
                 )
             ),
             StructureDataLocal(
-                id = 6,
+                nameItem = "item_6",
                 children = mutableListOf(
-                    StructureDataLocal(id = 3),
-                    StructureDataLocal(id = 4),
+                    StructureDataLocal(nameItem = "item_6_1"),
+                    StructureDataLocal(nameItem = "item_6_2"),
                     StructureDataLocal(
-                        id = 6,
+                        nameItem = "item_6_3",
                         children = mutableListOf(
-                            StructureDataLocal(id = 3),
-                            StructureDataLocal(id = 8)
+                            StructureDataLocal(nameItem = "item_6_3_1"),
+                            StructureDataLocal(nameItem = "item_6_3_2")
                         )
                     )
                 )
@@ -47,42 +47,42 @@ object StructureDataUtils {
         )
     )
     val structureDataNew = StructureDataLocal(
-        id = 0,
+        nameItem = "root_new",
         children = mutableListOf(
             StructureDataLocal(
-                id = 1,
+                nameItem = "new_item_1",
                 children = mutableListOf(
-                    StructureDataLocal(id = 1),
-                    StructureDataLocal(id = 2),
-                    StructureDataLocal(id = 3)
+                    StructureDataLocal(nameItem = "new_item_1_1"),
+                    StructureDataLocal(nameItem = "new_item_1_2"),
+                    StructureDataLocal(nameItem = "new_item_1_3")
                 )
             ),
             StructureDataLocal(
-                id = 2,
+                nameItem = "new_item_2",
                 children = mutableListOf(
-                    StructureDataLocal(id = 1),
-                    StructureDataLocal(id = 2),
-                    StructureDataLocal(id = 3)
+                    StructureDataLocal(nameItem = "new_item_2_1"),
+                    StructureDataLocal(nameItem = "new_item_2_2"),
+                    StructureDataLocal(nameItem = "new_item_2_3")
                 )
             ),
             StructureDataLocal(
-                id = 3,
+                nameItem = "new_item_3",
                 children = mutableListOf(
-                    StructureDataLocal(id = 1),
-                    StructureDataLocal(id = 2),
-                    StructureDataLocal(id = 3)
+                    StructureDataLocal(nameItem = "new_item_3_1"),
+                    StructureDataLocal(nameItem = "new_item_3_2"),
+                    StructureDataLocal(nameItem = "new_item_3_3")
                 )
             ),
             StructureDataLocal(
-                id = 4,
+                nameItem = "new_item_4",
                 children = mutableListOf(
-                    StructureDataLocal(id = 1),
-                    StructureDataLocal(id = 2),
+                    StructureDataLocal(nameItem = "new_item_4_1"),
+                    StructureDataLocal(nameItem = "new_item_4_2"),
                     StructureDataLocal(
-                        id = 3,
+                        nameItem = "new_item_4_3",
                         children = mutableListOf(
-                            StructureDataLocal(id = 1),
-                            StructureDataLocal(id = 2)
+                            StructureDataLocal(nameItem = "new_item_4_3_1"),
+                            StructureDataLocal(nameItem = "new_item_4_3_2")
                         )
                     )
                 )

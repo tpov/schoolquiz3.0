@@ -25,21 +25,21 @@ class UserGuideBuildTest {
             return Stream.of(
                 Arguments.of(
                     UserGuide(mockContext).guideBuilder()
-                        .setViews(listOf(mockView))
+                        .setViews(mockView)
                         .setText("Valid Text")
                         .setOptions(Options(isInfinityCount = true)),
                     true
                 ),
                 Arguments.of(
                     UserGuide(mockContext).guideBuilder()
-                        .setViews(emptyList())
+                        .setViews(null)
                         .setText("Valid Text")
                         .setOptions(Options(isInfinityCount = true)),
                     false
                 ),
                 Arguments.of(
                     UserGuide(mockContext).guideBuilder()
-                        .setViews(listOf(mockView))
+                        .setViews(mockView)
                         .setOptions(Options(isInfinityCount = true)),
                     false
                 )

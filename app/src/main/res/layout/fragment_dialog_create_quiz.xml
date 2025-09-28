@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/back_light_question">
+    android:background="@drawable/back_main">
 
     <LinearLayout
         android:id="@+id/ll_create_category"
@@ -22,7 +22,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content" />
 
-        <TextView
+        <EditText
             android:id="@+id/tv_create_category"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -31,12 +31,24 @@
 
     </LinearLayout>
 
+    <include
+        android:id="@+id/categoryItem"
+        layout="@layout/activity_quiz_item"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="2dp"
+        app:layout_constraintTop_toBottomOf="@id/ll_create_category"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <LinearLayout
         android:id="@+id/ll_create_sub_category"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/ll_create_category"
+        app:layout_constraintTop_toBottomOf="@id/categoryItem"
         android:layout_margin="16dp">
 
         <com.tpov.schoolquiz.presentation.custom.CustomSpinner
@@ -44,7 +56,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content" />
 
-        <TextView
+        <EditText
             android:id="@+id/tv_create_sub_category"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -77,7 +89,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content" />
 
-        <TextView
+        <EditText
             android:id="@+id/tv_create_subsub_category"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -110,7 +122,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content" />
 
-        <TextView
+        <EditText
             android:id="@+id/tv_create_quest"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -159,27 +171,41 @@
             android:layout_weight="1"
             android:layout_marginStart="4dp"
             android:text="Сохранить"
-            android:background="@drawable/back_item_main"
+            android:background="@drawable/back_item_main_true"
             android:textColor="@color/white" />
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/b_hard_question"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Сложные вопросы"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toTopOf="@+id/llButtons"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-    <Button
-        android:id="@+id/b_light_question"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Легкие вопросы"
-        app:layout_constraintBottom_toTopOf="@+id/b_hard_question"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Button
+            android:id="@+id/b_light_question"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_margin="8dp"
+            android:background="@drawable/back_item_main_true"
+            android:text="Легкие вопросы"
+            android:textColor="@color/white" />
+
+        <Button
+            android:id="@+id/b_hard_question"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_margin="8dp"
+            android:background="@drawable/back_item_main_false"
+            android:text="Сложные вопросы"
+            android:textColor="@color/white" />
+    </LinearLayout>
 
     <com.tpov.schoolquiz.presentation.custom.CustomSpinner
         android:id="@+id/sp_language_question"

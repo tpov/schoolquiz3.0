@@ -1,12 +1,19 @@
 package com.tpov.schoolquiz.presentation.create
 
+import android.text.Editable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.data.model.local.QuestionLocal
 import com.tpov.common.data.model.local.StructureDataLocal
+import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.usecase.QuestionUseCase
+import com.tpov.common.domain.usecase.StructureUseCase
+import com.tpov.common.domain.utils.QuestionUtils.filterByHardQuiz
+import com.tpov.common.domain.utils.QuestionUtils.getNumsQuestion
+import com.tpov.common.domain.utils.QuestionUtils.sumPair
 import com.tpov.common.presentation.model.PathStructure
 import com.tpov.common.presentation.utils.LanguageUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +22,8 @@ import javax.inject.Inject
 
 @javax.inject.Singleton
 class CreateQuizViewModel @Inject constructor(
-    val questionUseCase: QuestionUseCase
+    val questionUseCase: QuestionUseCase,
+    val structureUseCase: StructureUseCase
 ) : ViewModel() {
 
     var questionList: MutableList<QuestionLocal> = arrayListOf()
@@ -69,17 +77,47 @@ class CreateQuizViewModel @Inject constructor(
 
     // Проверка готовности к сохранению
     fun isReadyToSave(): Boolean {
-        return _selectedCategory.value != null &&
-            _selectedSubCategory.value != null &&
-            _selectedSubSubCategory.value != null &&
-            _selectedQuiz.value != null
+        return true // todo validate
     }
 
-    fun saveQuiz() {
+    fun saveQuiz(pathStructure: PathStructure, questionList: List<QuestionLocal>, categoryImage: String, subCategoryImage: String, subSubCategoryImage: String, currentQuizImage: String) = viewModelScope.launch(
+        Dispatchers.IO) {
         if (isReadyToSave()) {
-            // TODO: Implement save logic
-            // Здесь будет логика сохранения квиза с выбранной структурой
+            // Сохранение вопросов
+            questionList.forEach { question ->
+                question.pathStructure = pathStructure
+                questionUseCase.insertQuestion(question)
+            }
+
+            // Сохранение структуры
+            val category = StructureDataLocal().create(pathStructure.nameCategory, questionList.getNumsQuestion().sumPair(), 0, "", categoryImage)
+            val subCategory = StructureDataLocal().create(pathStructure.nameSubCategory, questionList.getNumsQuestion().sumPair(), 0, "", subCategoryImage)
+            val subSubCategory = StructureDataLocal().create(pathStructure.nameSubsubCategory, questionList.getNumsQuestion().sumPair(), 0, "", subSubCategoryImage)
+            val quiz = StructureDataLocal().create(pathStructure.nameQuiz, questionList.getNumsQuestion().sumPair(), 0, "", currentQuizImage)
+            
+            // Создаем root event структуру
+            val eventStructure = StructureDataLocal().create(
+                EventQuiz.QUIZ_BY_USER.name, 
+                questionList.getNumsQuestion().sumPair(), 
+                0, 
+                "", 
+                ""
+            ).copy(children = mutableListOf(category.copy(children = mutableListOf(subCategory.copy(children = mutableListOf(subSubCategory.copy(children = mutableListOf(quiz))))))))
+            
+            structureUseCase.insertStructureData(eventStructure, EventQuiz.QUIZ_BY_USER)
         }
+    }
+
+    fun selectSubCategory(subCategory: StructureDataLocal?) {
+        _selectedSubCategory.value = subCategory
+    }
+
+    fun selectSubSubCategory(subSubCategory: StructureDataLocal?) {
+        _selectedSubSubCategory.value = subSubCategory
+    }
+
+    fun selectQuiz(quizName: String?) {
+        _selectedQuiz.value = quizName
     }
 
 
