@@ -177,6 +177,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/ll_type_question"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -211,7 +212,7 @@
         android:id="@+id/sp_language_question"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/b_light_question"
+        app:layout_constraintBottom_toTopOf="@+id/ll_type_question"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
