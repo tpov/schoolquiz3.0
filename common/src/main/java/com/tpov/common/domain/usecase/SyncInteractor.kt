@@ -34,6 +34,8 @@ open class SyncInteractor @Inject constructor(
 ) {
 
     fun isLockServer(event: EventQuiz) = settingServerDBUseCase.isLockServer(event)
+    fun lockServer(event: EventQuiz) = settingServerDBUseCase.lockServer(event)
+    fun unlockServer(event: EventQuiz) = settingServerDBUseCase.unlockServer(event)
     fun rollbackStructureData(event: EventQuiz) = settingLocalDBUseCase.rollbackStructureData(event)
 
     suspend fun syncQuizes(eventQuiz: EventQuiz, exceptionInteractor: ExceptionInteractor): SyncStructureResult {

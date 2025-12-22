@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.presentation.create
 
-import android.text.Editable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tpov.common.data.model.local.QuestionLocal
@@ -8,7 +7,6 @@ import com.tpov.common.data.model.local.StructureDataLocal
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.domain.usecase.QuestionUseCase
 import com.tpov.common.domain.usecase.StructureUseCase
-import com.tpov.common.domain.utils.QuestionUtils.filterByHardQuiz
 import com.tpov.common.domain.utils.QuestionUtils.getNumsQuestion
 import com.tpov.common.domain.utils.QuestionUtils.sumPair
 import com.tpov.common.presentation.model.PathStructure
@@ -29,7 +27,7 @@ class CreateQuizViewModel @Inject constructor(
     var questionList: MutableList<QuestionLocal> = arrayListOf()
 
     // Отфильтрованный список для отображения в ViewPager
-    private val _showQuestionList = MutableStateFlow(mutableListOf<QuestionLocal>())
+    private val _showQuestionList = MutableStateFlow<List<QuestionLocal>>(emptyList())
     val showQuestionList: StateFlow<List<QuestionLocal>> = _showQuestionList.asStateFlow()
 
     // Данные структуры
@@ -69,9 +67,12 @@ class CreateQuizViewModel @Inject constructor(
                 questionList = questionUseCase.getQuestionByPath(pathStructure).toMutableList()
             }
         }
-        val filterQuestion = questionList.filter { it.hardQuestion == hardQuestion }.toMutableList()
-        if (filterQuestion.isEmpty()) createEmptyQuestion(hardQuestion)
-        _showQuestionList.value = filterQuestion
+        var filterQuestion = questionList.filter { it.hardQuestion == hardQuestion }.toMutableList()
+        if (filterQuestion.isEmpty()) {
+            createEmptyQuestionInternal(hardQuestion)
+            filterQuestion = questionList.filter { it.hardQuestion == hardQuestion }.toMutableList()
+        }
+        _showQuestionList.value = filterQuestion.toList()
     }
 
 
@@ -94,16 +95,16 @@ class CreateQuizViewModel @Inject constructor(
             val subCategory = StructureDataLocal().create(pathStructure.nameSubCategory, questionList.getNumsQuestion().sumPair(), 0, "", subCategoryImage)
             val subSubCategory = StructureDataLocal().create(pathStructure.nameSubsubCategory, questionList.getNumsQuestion().sumPair(), 0, "", subSubCategoryImage)
             val quiz = StructureDataLocal().create(pathStructure.nameQuiz, questionList.getNumsQuestion().sumPair(), 0, "", currentQuizImage)
-            
+
             // Создаем root event структуру
             val eventStructure = StructureDataLocal().create(
-                EventQuiz.QUIZ_BY_USER.name, 
-                questionList.getNumsQuestion().sumPair(), 
-                0, 
-                "", 
+                EventQuiz.QUIZ_BY_USER.name,
+                questionList.getNumsQuestion().sumPair(),
+                0,
+                "",
                 ""
             ).copy(children = mutableListOf(category.copy(children = mutableListOf(subCategory.copy(children = mutableListOf(subSubCategory.copy(children = mutableListOf(quiz))))))))
-            
+
             structureUseCase.insertStructureData(eventStructure, EventQuiz.QUIZ_BY_USER)
         }
     }
@@ -150,14 +151,18 @@ class CreateQuizViewModel @Inject constructor(
         }
     }
 
-    fun createEmptyQuestion(isHardQuestion: Boolean) {
-        val currentDisplayedList = questionList
-        val nextQuestionNumber = (currentDisplayedList.maxOfOrNull { it.numQuestion } ?: 0) + 1
+    private fun createEmptyQuestionInternal(isHardQuestion: Boolean) {
+        val filteredByType = questionList.filter { it.hardQuestion == isHardQuestion }
+        val nextQuestionNumber = (filteredByType.maxOfOrNull { it.numQuestion } ?: 0) + 1
 
-        val newQuestion = QuestionLocal().create(nextQuestionNumber, isHardQuestion)
+        val newQuestion = QuestionLocal().createEmpty(nextQuestionNumber, isHardQuestion)
         questionList.add(newQuestion)
+    }
 
-        showQuestions(isHardQuestion, PathStructure())
+    fun createEmptyQuestion(isHardQuestion: Boolean) {
+        createEmptyQuestionInternal(isHardQuestion)
+        val filterQuestion = questionList.filter { it.hardQuestion == isHardQuestion }.toMutableList()
+        _showQuestionList.value = filterQuestion.toList()
     }
 
 

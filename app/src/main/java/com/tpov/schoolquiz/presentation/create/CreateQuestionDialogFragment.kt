@@ -64,7 +64,6 @@ class CreateQuestionDialogFragment : DialogFragment() {
         setOnClickListener()
         setupDialog()
         setupViewPager()
-        hideSystemUI()
         loadArguments()
         addMultipleTestQuestions()
         observeViewModel()

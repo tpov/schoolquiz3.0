@@ -100,12 +100,19 @@ class SyncWorker @AssistedInject constructor(
     private suspend fun syncQuizData() {
         Log.d("SyncWorker", "🔄 Starting quiz data synchronization")
 
-        for (event in EventQuiz.entries) {
+        events@ for (event in EventQuiz.entries) {
+            // Пропускаем QUIZ_BY_USER - он не синхронизируется с сервером
+            if (event == EventQuiz.QUIZ_BY_USER) continue
+            
             Log.d("SyncWorker", "📋 Processing event: ${event.name}")
-            if (event != EventQuiz.QUIZ_HOME) return
+            
+            // Пытаемся заблокировать сервер для синхронизации
             var lockResult: LockServerResult
-            while (true) {
-                lockResult = syncInteractor.isLockServer(event)
+            var retryCount = 0
+            val maxRetries = 10
+            
+            while (retryCount < maxRetries) {
+                lockResult = syncInteractor.lockServer(event)
                 when (lockResult) {
                     is LockServerResult.Success -> {
                         Log.d("SyncWorker", "🔒 Successfully locked ${event.name}")
@@ -113,15 +120,21 @@ class SyncWorker @AssistedInject constructor(
                     }
 
                     is LockServerResult.AlreadyLocked -> {
-                        Log.d("SyncWorker", "⏳ ${event.name} is locked, waiting...")
-                        delay(1000)
+                        retryCount++
+                        Log.d("SyncWorker", "⏳ ${event.name} is locked, waiting... ($retryCount/$maxRetries)")
+                        delay(2000)
                     }
 
                     is LockServerResult.Error -> {
                         Log.e("SyncWorker", "❌ Failed to lock ${event.name}")
-                        return
+                        continue@events
                     }
                 }
+            }
+            
+            if (retryCount >= maxRetries) {
+                Log.w("SyncWorker", "⚠️ Timeout waiting for lock on ${event.name}, skipping")
+                continue
             }
 
             Log.d("SyncWorker", "🔄 Starting syncQuizes for ${event.name}")
@@ -132,26 +145,25 @@ class SyncWorker @AssistedInject constructor(
                     Log.d("SyncWorker", "✅ Successfully synced ${event.name}")
                     try {
                         showNotification("Sync Complete", "Updated quizzes for ${event.name}.", context)
-                        val unlockResult = syncInteractor.isLockServer(event)
+                        val unlockResult = syncInteractor.unlockServer(event)
 
                         if (unlockResult is LockServerResult.Error) {
                             Log.e("SyncWorker", "❌ Failed to unlock ${event.name}, rolling back")
                             syncInteractor.rollbackStructureData(event)
-                            return
                         } else {
                             Log.d("SyncWorker", "🔓 Successfully unlocked ${event.name}")
                         }
                     } catch (e: Exception) {
                         Log.e("SyncWorker", "❌ Error in post-sync cleanup for ${event.name}: ${e.message}", e)
+                        syncInteractor.unlockServer(event)
                         syncInteractor.rollbackStructureData(event)
-                        return
                     }
                 }
 
                 is SyncStructureResult.Error -> {
                     Log.e("SyncWorker", "❌ Sync failed for ${event.name}: ${result.error}")
+                    syncInteractor.unlockServer(event)
                     syncInteractor.rollbackStructureData(event)
-                    return
                 }
             }
         }

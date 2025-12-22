@@ -7,9 +7,18 @@ import javax.inject.Inject
 
 class SettingServerDBUseCase @Inject constructor(private val repositorySettingServer: RepositorySettingServer) {
 
-
     fun isLockServer(event: EventQuiz): LockServerResult {
         if (event == EventQuiz.QUIZ_BY_USER) return LockServerResult.Success
         return repositorySettingServer.isLockServer(event)
+    }
+
+    fun lockServer(event: EventQuiz): LockServerResult {
+        if (event == EventQuiz.QUIZ_BY_USER) return LockServerResult.Success
+        return repositorySettingServer.lockStructureData(event)
+    }
+
+    fun unlockServer(event: EventQuiz): LockServerResult {
+        if (event == EventQuiz.QUIZ_BY_USER) return LockServerResult.Success
+        return repositorySettingServer.unlockStructureData(event)
     }
 }

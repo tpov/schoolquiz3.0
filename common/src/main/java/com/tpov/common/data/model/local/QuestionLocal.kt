@@ -42,5 +42,11 @@ data class QuestionLocal(
         hardQuestion = hardQuestion
     )
 
-
+    fun createEmpty(numQuestion: Int, hardQuestion: Boolean) = QuestionLocal(
+        numQuestion = numQuestion,
+        nameQuestion = "",
+        nameAnswers = "$SPLIT_BETWEEN_ANSWERS$SPLIT_BETWEEN_ANSWERS$SPLIT_BETWEEN_ANSWERS",
+        pathPictureQuestion = "",
+        hardQuestion = hardQuestion
+    )
 }

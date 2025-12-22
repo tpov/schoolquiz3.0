@@ -22,7 +22,6 @@ import com.tpov.common.di.DaggerCommonComponent
 import com.tpov.common.domain.model.EventQuiz
 import com.tpov.common.presentation.NavigationProvider
 import com.tpov.common.presentation.model.PathStructure
-import com.tpov.log_api.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -54,12 +53,22 @@ class QuizFragment : Fragment(), QuizActivityAdapter.Listener {
 
     @SuppressLint("SetTextI18n")
     private fun initPath() {
-        binding.tvEventPath.text =
-            quizViewModel.pathStructure?.nameEvent!! +
-                    if (quizViewModel.nameCategory != "") " > " else ""
-        binding.tvCatPath.text = quizViewModel.nameCategory +
-                if (quizViewModel.nameSubCategory != "") " > " else ""
-        binding.tvSubcatPath.text = quizViewModel.nameSubCategory
+        val eventName = quizViewModel.getNamePathEvent(quizViewModel.pathStructure?.nameEvent ?: "")
+        val category = quizViewModel.pathStructure?.nameCategory ?: ""
+        val subCategory = quizViewModel.pathStructure?.nameSubCategory ?: ""
+        val subSubCategory = quizViewModel.pathStructure?.nameSubsubCategory ?: ""
+
+        // Формируем полный путь
+        val pathParts = mutableListOf<String>()
+        pathParts.add(eventName)
+        if (category.isNotEmpty()) pathParts.add(category)
+        if (subCategory.isNotEmpty()) pathParts.add(subCategory)
+        if (subSubCategory.isNotEmpty()) pathParts.add(subSubCategory)
+
+        val fullPath = pathParts.joinToString(" > ")
+        binding.tvEventPath.text = fullPath
+        binding.tvCatPath.text = ""
+        binding.tvSubcatPath.text = ""
     }
 
     override fun onAttach(context: Context) {

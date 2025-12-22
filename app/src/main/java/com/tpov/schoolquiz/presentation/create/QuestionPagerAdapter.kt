@@ -151,7 +151,9 @@ class QuestionPagerAdapter(
 
     private class QuestionDiffCallback : DiffUtil.ItemCallback<QuestionLocal>() {
         override fun areItemsTheSame(oldItem: QuestionLocal, newItem: QuestionLocal): Boolean {
-            return oldItem.numQuestion == newItem.numQuestion
+            return oldItem.numQuestion == newItem.numQuestion && 
+                   oldItem.hardQuestion == newItem.hardQuestion &&
+                   oldItem.language == newItem.language
         }
 
         override fun areContentsTheSame(oldItem: QuestionLocal, newItem: QuestionLocal): Boolean {

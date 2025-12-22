@@ -1,0 +1,38 @@
+# Optimized Gradle settings for 24-core CPU, 125GB RAM
+# JVM Memory - увеличиваем для вашей системы
+org.gradle.jvmargs=-Xmx16g -XX:MaxMetaspaceSize=2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Dfile.encoding=UTF-8
+
+# Parallelism - оптимально для 24 ядер
+org.gradle.parallel=true
+org.gradle.workers.max=16
+org.gradle.daemon=true
+
+# Caching - максимальное кеширование
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+org.gradle.configuration-cache.problems=warn
+org.gradle.vfs.watch=true
+android.buildCache.enabled=true
+
+# Android optimizations
+android.useAndroidX=true
+android.enableJetifier=false  # ВАЖНО: отключить если не используете старые библиотеки
+android.nonTransitiveRClass=true  # Ускоряет R8
+android.nonFinalResIds=false
+android.enableBuildConfigAsBytecode=true
+
+# Kotlin optimizations
+kapt.use.worker.api=true
+kapt.verbose=false  # Отключаем лишний вывод
+kapt.incremental.apt=true
+kotlin.code.style=official
+kotlin.compiler.execution.strategy=daemon
+kotlin.incremental=true
+kotlin.incremental.android=true
+kotlin.daemon.jvmargs=-Xmx4g
+
+# Use Android Studio's JDK
+org.gradle.java.home=/home/programs/android-studio/jbr
+
+# Logging
+org.gradle.logging.level=lifecycle  # Меньше логов = быстрее
