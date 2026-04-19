@@ -1,0 +1,113 @@
+package com.tpov.schoolquiz.shared.feature.app_shell.domain.model
+
+/**
+ * Sealed hierarchy for per-tab drawer sections.
+ * Each concrete type knows which Tab it belongs to via [tab]
+ * and declares its visibility requirements via [requiredRoles].
+ *
+ * Domain rule: Tab.SHOP has no DrawerSection — activeSection is always null for Shop.
+ *
+ * Domain rule (FR #20, Business Rule #16):
+ * A section is visible iff all entries in [requiredRoles] are satisfied:
+ *   requiredRoles.all { (role, minLevel) -> actualLevel(role, stats) >= minLevel }
+ * Empty map → always visible.
+ *
+ * Thresholds are sourced from the Section Visibility Rules table (State Matrix).
+ * Legacy origin: MenuList.kt + TitleUserValue.kt.
+ */
+sealed interface DrawerSection {
+    val tab: Tab
+    val requiredRoles: Map<Role, Int>
+
+    /**
+     * Sections for the LOCAL tab.
+     *
+     * Note: DesignCatalog is no longer a DrawerSection (removed per spec codex fix #3).
+     * It is now a [DrawerFooterAction.DesignCatalog] — a footer action, not a nav section.
+     * [LocalConfig.DesignCatalogRoot] remains as the target navigation config for OpenDesignCatalog.
+     */
+    sealed interface LocalSection : DrawerSection {
+        override val tab: Tab get() = Tab.LOCAL
+
+        // Row 1 — emptyMap (always visible)
+        data object MyQuests : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
+        // Row 2 — emptyMap (always visible)
+        data object MyCourses : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
+        // Row 3 — emptyMap (always visible)
+        data object Settings : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+    }
+
+    /**
+     * Sections for the INTERNET tab.
+     * Declaration order matches visibleSections output order (spec requirement).
+     */
+    sealed interface InternetSection : DrawerSection {
+        override val tab: Tab get() = Tab.INTERNET
+
+        // Row 5 — requires USER >= TEACHINGS.first (3000)
+        data object Arena : InternetSection {
+            override val requiredRoles: Map<Role, Int>
+                get() = mapOf(Role.USER to Title.TEACHINGS.first)
+        }
+
+        // Row 6 — requires USER >= TEACHINGS.first (3000)
+        data object Catalog : InternetSection {
+            override val requiredRoles: Map<Role, Int>
+                get() = mapOf(Role.USER to Title.TEACHINGS.first)
+        }
+
+        // Row 7 — emptyMap (always visible)
+        data object Qualifications : InternetSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
+        // Row 8 — emptyMap (always visible)
+        data object Profile : InternetSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
+        // Row 9 — requires USER >= PLAYER.first (10000)
+        data object Social : InternetSection {
+            override val requiredRoles: Map<Role, Int>
+                get() = mapOf(Role.USER to Title.PLAYER.first)
+        }
+
+        // Row 10 — requires USER >= TEACHINGS.first (3000)
+        data object Leaderboard : InternetSection {
+            override val requiredRoles: Map<Role, Int>
+                get() = mapOf(Role.USER to Title.TEACHINGS.first)
+        }
+    }
+
+    /**
+     * Sections for the EVENTS tab.
+     */
+    sealed interface EventsSection : DrawerSection {
+        override val tab: Tab get() = Tab.EVENTS
+
+        // Row 11 — requires TESTER AND MODERATOR AND ADMIN AND DEVELOPER all >= 100
+        data object ActiveEvents : EventsSection {
+            override val requiredRoles: Map<Role, Int>
+                get() = mapOf(
+                    Role.TESTER to 100,
+                    Role.MODERATOR to 100,
+                    Role.ADMIN to 100,
+                    Role.DEVELOPER to 100,
+                )
+        }
+
+        // Row 12 — requires USER >= PLAYER.first (10000)
+        data object Minigames : EventsSection {
+            override val requiredRoles: Map<Role, Int>
+                get() = mapOf(Role.USER to Title.PLAYER.first)
+        }
+    }
+}

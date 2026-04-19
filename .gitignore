@@ -317,6 +317,7 @@ hive-mind-prompt-*.txt
 /.claude/commands/hooks/session-end.md
 /.claude/commands/automation/session-memory.md
 /.claude/settings.json
+/.claude/settings.secrets.json
 /.claude/commands/hooks/setup.md
 /.claude/helpers/setup-mcp.sh
 /.claude/commands/automation/smart-agents.md

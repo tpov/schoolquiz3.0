@@ -1,0 +1,34 @@
+build:
+  maxIssues: 10
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+comments:
+  excludes: ['**/test/**', '**/androidTest/**']
+
+complexity:
+  LongMethod:
+    threshold: 100
+  LongParameterList:
+    threshold: 8
+  TooManyFunctions:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**']
+    thresholdInClasses: 25
+    thresholdInObjects: 25
+    thresholdInFiles: 30
+  CyclomaticComplexMethod:
+    threshold: 20
+
+naming:
+  PackageNaming:
+    active: false
+
+style:
+  MaxLineLength:
+    maxLineLength: 120
+  MagicNumber:
+    excludes: ['**/test/**', '**/androidTest/**']

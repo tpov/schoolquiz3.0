@@ -1,0 +1,36 @@
+package com.tpov.schoolquiz.android.feature.app_shell.presentation.di
+
+import com.arkivanov.decompose.ComponentContext
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import org.koin.dsl.module
+
+/**
+ * Koin module for presentation layer.
+ * ADR-0009 Rule 1: one module val.
+ * ADR-COMP-07: DefaultRootComponent as factory (Activity-scoped ComponentContext).
+ */
+val appShellPresentationModule =
+    module {
+        factory { (ctx: ComponentContext) ->
+            DefaultRootComponent(
+                componentContext = ctx,
+                initUseCase = get(),
+                navigateUseCase = get(),
+                observeUseCase = get(),
+                retapUseCase = get(),
+            )
+        }
+
+        // Navigator exposed via rootComponent.navigator — NOT a separate Koin binding.
+        // Reason: get<RootComponent>() without parametersOf(ctx) throws MissingPropertyException.
+        // See 06-api-contract.md:41.
+
+        factory { InitializeAppShellUseCase(get()) }
+        factory { NavigateUseCase() }
+        factory { OnTabRetapUseCase() }
+        factory { ObserveAppShellStateUseCase(get()) }
+    }
