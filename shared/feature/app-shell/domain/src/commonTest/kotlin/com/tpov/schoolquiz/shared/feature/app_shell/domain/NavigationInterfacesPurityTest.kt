@@ -40,6 +40,8 @@ class NavigationInterfacesPurityTest {
             override fun onDestination(destination: Destination) = Unit
             override fun onActiveTabRetap(tab: Tab): RetapOutcome = RetapOutcome.NO_OP
             override fun onDeepLink(deepLink: DeepLink) = Unit
+            override fun onVersionTap(nowMillis: Long) = Unit
+            override fun onSyncNow() = Unit
         }
         assertNotNull(rc)
         assertNotNull(rc.appShellState)

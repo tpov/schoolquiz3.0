@@ -5,6 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 class AndroidApplicationConventionPlugin : Plugin<Project> {
@@ -16,11 +17,11 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jlleitschuh.gradle.ktlint")
 
             extensions.configure<ApplicationExtension> {
-                compileSdk = 34
+                compileSdk = 35
 
                 defaultConfig {
                     minSdk = 26
-                    targetSdk = 34
+                    targetSdk = 35
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 }
 
@@ -45,8 +46,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             }
 
             tasks.withType(KotlinCompile::class.java).configureEach {
-                kotlinOptions {
-                    jvmTarget = "17"
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_17)
                 }
             }
 

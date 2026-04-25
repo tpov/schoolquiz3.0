@@ -87,8 +87,28 @@ shared/
     │   ├── domain/         # Домен приложения: старт, shell, orchestration
     │   └── data/           # Data-слой app-shell
     │
-    ├── quiz/
-    │   ├── domain/         # Единый модуль квизов: catalog -> quizzes -> questions + режим редактирования
+    ├── quiz/               # Legacy-каркас, планируется замена на quest/section/theme/lesson/question
+    │   ├── domain/
+    │   └── data/
+    │
+    ├── quest/              # Домен квеста (после home-and-my-quests): authorship, visibility, rating
+    │   ├── domain/
+    │   └── data/
+    │
+    ├── section/            # Раздел внутри квеста (home-and-my-quests)
+    │   ├── domain/
+    │   └── data/
+    │
+    ├── theme/              # Тема внутри раздела (home-and-my-quests)
+    │   ├── domain/
+    │   └── data/
+    │
+    ├── lesson/             # Урок внутри темы (home-and-my-quests)
+    │   ├── domain/
+    │   └── data/
+    │
+    ├── question/           # Вопрос внутри урока (home-and-my-quests)
+    │   ├── domain/
     │   └── data/
     │
     ├── local/
@@ -119,6 +139,8 @@ shared/
         └── data/
 ```
 
+**Примечание по иерархии контента:** начиная с фичи `home-and-my-quests` (2026-04-21), иерархия контента становится 6-уровневой: `Catalog (shared/core/catalog) → Quest (shared/feature/quest) → Section → Theme → Lesson → Question`. Каждый уровень кроме leaf (Question) имеет `version` + `contentsVersion` для cascading sync (см. ADR-0004 amendment + ADR-0005 amendment).
+
 ### Комментарий по `shared/`
 - Это **не UI**, а общая продуктовая логика, модели и data/domain-слой.
 - Почти все leaf-модули здесь оформлены как **KMP-модули**.
@@ -146,7 +168,10 @@ android/
     │   └── presentation/   # UI оболочки приложения
     │
     ├── quiz/
-    │   └── presentation/   # Единый Android UI-модуль квизов: catalog -> quizzes -> questions + режим редактирования
+    │   └── presentation/   # Legacy-каркас; MyQuestsScreen переезжает в quest/presentation
+    │
+    ├── quest/
+    │   └── presentation/   # UI модуль квестов: MyQuestsScreen (home-and-my-quests), CreateQuestScreen (future), QuestDetailsScreen (future)
     │
     ├── local/
     │   └── settings/presentation/

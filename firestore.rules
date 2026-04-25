@@ -4,25 +4,70 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
 
-      // Privilege fields are server-write only (Cloud Functions / Admin SDK).
-      // diff().affectedKeys() checks only fields being changed, so legitimate
+      // Privilege fields and qualifications map are server-write only (Cloud Functions / Admin SDK).
+      // Owner cannot write 'qualifications' (would allow self-escalation via qualifications.admin).
+      // diff().affectedKeys() checks only top-level keys being changed, so legitimate
       // owner updates (nickname, currentSkill, etc.) pass through.
       allow write: if request.auth != null
         && request.auth.uid == userId
         && (!request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['admin', 'developer', 'moderator', 'tester', 'sponsor', 'translater']));
+            .hasAny(['admin', 'developer', 'moderator', 'tester', 'sponsor', 'translater',
+                     'qualifications']));
     }
 
-    match /quizzes/{userId}/{rest=**} {
-      allow read: if request.auth != null;
+    match /catalogs/{catalogId} {
+      // Public read — catalogs are static categories shown to all users incl. guests.
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /quests/{questId} {
+      allow read: if request.auth != null
+        && (resource.data.authorUid == request.auth.uid
+            || resource.data.visibleOn.size() > 0);
+
+      // Author can create own quests; coarse field allowlist prevents arbitrary field injection.
+      // MVP: field list coarse check; strict value validation for rating/lastModifiedAt deferred.
+      // Post-MVP: Cloud Function validates rating bounds + server timestamps.
       allow create: if request.auth != null
-        && request.auth.uid == userId
-        && !('ratingGlobal' in request.resource.data)
-        && !('ratingLocal' in request.resource.data);
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+             'id', 'catalogId', 'authorUid', 'title', 'description',
+             'picturePath', 'visibleOn', 'archived',
+             'version', 'contentsVersion', 'lastModifiedAt',
+             'averageRating', 'averageRatingCount'
+           ])
+        && request.resource.data.version == 1
+        && request.resource.data.contentsVersion == 0
+        && !request.resource.data.keys().hasAny(['averageRating', 'averageRatingCount']);
+
+      // Author can update only user-owned fields; server-managed and immutable fields blocked.
       allow update: if request.auth != null
-        && request.auth.uid == userId
-        && (!request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['ratingGlobal', 'ratingLocal']));
+        && resource.data.authorUid == request.auth.uid
+        && request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['title', 'description', 'picturePath', 'visibleOn', 'archived', 'catalogId']);
+
+      // Delete is admin-only (quest CRUD MVP placeholder; full delete flow is future work).
+      allow delete: if isAdmin();
+    }
+
+    // Nested content — MVP security posture (Option C, see ADR in 03-decisions.md):
+    // Any authenticated user can read sections/themes/lessons/questions directly by document ID.
+    // Quest-level visibility enforcement (authorUid / visibleOn) is applied by the sync
+    // orchestrator client-side: only quests visible to the user are synced, and their
+    // descendants are fetched only as part of that quest's subtree cascade.
+    // Direct reads of nested content are not guarded at Firestore level to avoid
+    // expensive parent-lookup get() calls on every read. Accepted MVP trade-off;
+    // post-MVP: denormalize questAuthorUid + questIsPublic into nested documents (Option B).
+    match /sections/{sectionId}   { allow read: if request.auth != null; allow write: if isAdmin(); }
+    match /themes/{themeId}       { allow read: if request.auth != null; allow write: if isAdmin(); }
+    match /lessons/{lessonId}     { allow read: if request.auth != null; allow write: if isAdmin(); }
+    match /questions/{questionId} { allow read: if request.auth != null; allow write: if isAdmin(); }
+
+    function isAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.qualifications.admin >= 100;
     }
   }
 }

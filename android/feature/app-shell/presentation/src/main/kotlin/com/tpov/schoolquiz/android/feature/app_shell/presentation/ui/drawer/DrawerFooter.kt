@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.drawer
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -18,6 +20,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterAc
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 
 /**
@@ -33,9 +36,12 @@ fun DrawerFooter(
     navigator: Navigator,
     isDebugBuild: Boolean,
     versionName: String,
+    userStats: UserStats,
+    onVersionTap: () -> Unit,
+    onSyncNow: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val actions = visibleFooterActions(isDebugBuild)
+    val actions = visibleFooterActions(isDebugBuild, userStats)
     val showAboutDialog = remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
@@ -49,6 +55,7 @@ fun DrawerFooter(
                     when (action) {
                         DrawerFooterAction.DesignCatalog ->
                             navigator.goTo(Destination.OpenDesignCatalog)
+                        DrawerFooterAction.SyncNow -> onSyncNow()
                         DrawerFooterAction.About ->
                             showAboutDialog.value = true
                     }
@@ -59,7 +66,10 @@ fun DrawerFooter(
             text = "v$versionName",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier
+                .clickable(onClick = onVersionTap)
+                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 

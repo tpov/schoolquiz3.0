@@ -11,6 +11,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":shared:feature:app-shell:domain"))
             implementation(project(":shared:core:stats"))
+            implementation(project(":shared:core:persistence"))
+            implementation(project(":shared:core:sync"))
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
         }

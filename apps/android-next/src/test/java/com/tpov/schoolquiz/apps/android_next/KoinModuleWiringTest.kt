@@ -7,15 +7,21 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
+import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
+import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
 import com.tpov.schoolquiz.shared.core.stats.RawUserStats
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
+import com.tpov.schoolquiz.shared.feature.app_shell.data.AuthRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.app_shell.data.UserStatsRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import androidx.work.WorkManager
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
+import org.mockito.Mockito.mock
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
@@ -40,7 +46,9 @@ import org.koin.core.context.stopKoin
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 import org.koin.test.KoinTest
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -65,6 +73,21 @@ class KoinModuleWiringTest : KoinTest {
         }
     }
 
+    private val testDaoModule = module {
+        single<UserStatsDao> {
+            object : UserStatsDao {
+                override fun observeByUid(uid: String) = emptyFlow<UserStatsEntity?>()
+                override suspend fun findByUid(uid: String): UserStatsEntity? = null
+                override suspend fun upsert(entity: UserStatsEntity) {}
+                override suspend fun updateDeveloperLevel(uid: String, value: Int) {}
+            }
+        }
+    }
+
+    private val testWorkManagerModule = module {
+        single<WorkManager> { mock(WorkManager::class.java) }
+    }
+
     @Before
     fun setUp() {
         kotlinx.coroutines.Dispatchers.setMain(testDispatcher)
@@ -83,7 +106,7 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `D2 appShellDataModule resolves UserStatsRepository given UserStatsDataSource`() {
         startKoin {
-            modules(testDataSourceModule, appShellDataModule)
+            modules(testDataSourceModule, testDaoModule, appShellDataModule())
         }
 
         val repo = getKoin().get<UserStatsRepository>()
@@ -93,12 +116,43 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `D2 UserStatsRepository resolves as UserStatsRepositoryImpl`() {
         startKoin {
-            modules(testDataSourceModule, appShellDataModule)
+            modules(testDataSourceModule, testDaoModule, appShellDataModule())
         }
 
         val repo = getKoin().get<UserStatsRepository>()
         assertNotNull(repo)
         assertTrue(repo is UserStatsRepositoryImpl)
+    }
+
+    // -----------------------------------------------------------------------
+    // Phase-01 (home-and-my-quests Decision #42 + Codex Round 3 B3): AuthRepository
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `appShellDataModule resolves AuthRepository given currentUidFlow`() {
+        startKoin {
+            modules(testDataSourceModule, testDaoModule, appShellDataModule())
+        }
+
+        val repo = getKoin().get<AuthRepository>()
+        assertNotNull(repo)
+        assertTrue(repo is AuthRepositoryImpl)
+    }
+
+    @Test
+    fun `appShellDataModule binds AuthRepository as AuthRepositoryImpl with shared currentUidFlow`() = runTest {
+        val uidSource = MutableStateFlow<String?>("user-A")
+        startKoin {
+            modules(testDataSourceModule, testDaoModule, appShellDataModule { uidSource.asStateFlow() })
+        }
+
+        val auth = getKoin().get<AuthRepository>()
+        // currentUid() returns the real Firebase UID without LOCAL_UID substitution
+        assertEquals("user-A", auth.currentUid())
+
+        // observeUid() reflects the same source as UserStatsRepositoryImpl.currentUidFlow
+        uidSource.value = null
+        assertNull(auth.currentUid())
     }
 
     // -----------------------------------------------------------------------
@@ -115,7 +169,7 @@ class KoinModuleWiringTest : KoinTest {
         val testCtx = DefaultComponentContext(lifecycle)
 
         startKoin {
-            modules(testDataSourceModule, appShellDataModule, appShellPresentationModule)
+            modules(testDataSourceModule, testDaoModule, testWorkManagerModule, appShellDataModule(), appShellPresentationModule)
         }
 
         try {
@@ -141,6 +195,8 @@ class KoinModuleWiringTest : KoinTest {
         val fakeRepo = object : UserStatsRepository {
             override fun observeStats(): Flow<UserStats> = fakeStats.asStateFlow()
             override suspend fun currentStats(): UserStats = fakeStats.value
+            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+            override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
         }
         val lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -152,6 +208,8 @@ class KoinModuleWiringTest : KoinTest {
             navigateUseCase = NavigateUseCase(),
             observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
             retapUseCase = OnTabRetapUseCase(),
+            userStatsRepository = fakeRepo,
+            workManager = mock(WorkManager::class.java),
         )
 
         val events = mutableListOf<RootEvent>()
@@ -181,6 +239,8 @@ class KoinModuleWiringTest : KoinTest {
         val fakeRepo = object : UserStatsRepository {
             override fun observeStats(): Flow<UserStats> = fakeStats.asStateFlow()
             override suspend fun currentStats(): UserStats = fakeStats.value
+            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+            override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
         }
         val lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -192,6 +252,8 @@ class KoinModuleWiringTest : KoinTest {
             navigateUseCase = NavigateUseCase(),
             observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
             retapUseCase = OnTabRetapUseCase(),
+            userStatsRepository = fakeRepo,
+            workManager = mock(WorkManager::class.java),
         )
 
         component.onDeepLink(DeepLink("schoolquiz://test"))

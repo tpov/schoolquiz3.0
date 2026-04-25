@@ -48,7 +48,7 @@ class OnTabRetapUseCaseTest {
     fun `scenario 6 retap LOCAL with non-empty backStack returns POP_TO_ROOT`() {
         val stateWithStack = defaultState().copy(
             localState = defaultState().localState.copy(
-                stack = defaultState().localState.stack.push(LocalConfig.MyCoursesRoot),
+                stack = defaultState().localState.stack.push(LocalConfig.HomeQuestsRoot),
             ),
         )
         val (_, outcome) = useCase(stateWithStack, Tab.LOCAL)
@@ -59,7 +59,7 @@ class OnTabRetapUseCaseTest {
     fun `scenario 6 retap POP_TO_ROOT clears backStack`() {
         val stateWithStack = defaultState().copy(
             localState = defaultState().localState.copy(
-                stack = defaultState().localState.stack.push(LocalConfig.MyCoursesRoot),
+                stack = defaultState().localState.stack.push(LocalConfig.HomeQuestsRoot),
             ),
         )
         val (newState, _) = useCase(stateWithStack, Tab.LOCAL)
@@ -68,14 +68,14 @@ class OnTabRetapUseCaseTest {
 
     @Test
     fun `scenario 6 retap POP_TO_ROOT sets active to root config`() {
-        // Push MyCoursesRoot on top, so root (bottom) is MyQuestsRoot
+        // Push SettingsRoot on top, so root (bottom) is HomeQuestsRoot
         val stateWithStack = defaultState().copy(
             localState = defaultState().localState.copy(
-                stack = defaultState().localState.stack.push(LocalConfig.MyCoursesRoot),
+                stack = defaultState().localState.stack.push(LocalConfig.SettingsRoot),
             ),
         )
         val (newState, _) = useCase(stateWithStack, Tab.LOCAL)
-        assertEquals(LocalConfig.MyQuestsRoot, newState.localState.stack.active)
+        assertEquals(LocalConfig.HomeQuestsRoot, newState.localState.stack.active)
     }
 
     // -----------------------------------------------------------------------
@@ -84,9 +84,9 @@ class OnTabRetapUseCaseTest {
 
     @Test
     fun `journey 5 retap with deep stack clears to root`() {
-        // active=Detail2, backStack=[Root, Detail]
+        // active=Detail2, backStack=[HomeQuestsRoot, MyQuestsRoot]
         val detail2Stack = defaultState().localState.stack
-            .push(LocalConfig.MyCoursesRoot)
+            .push(LocalConfig.MyQuestsRoot)
             .push(LocalConfig.SettingsRoot)
         val stateWithDeepStack = defaultState().copy(
             localState = defaultState().localState.copy(stack = detail2Stack),
@@ -96,6 +96,6 @@ class OnTabRetapUseCaseTest {
 
         assertEquals(RetapOutcome.POP_TO_ROOT, outcome)
         assertTrue(newState.localState.stack.isAtRoot)
-        assertEquals(LocalConfig.MyQuestsRoot, newState.localState.stack.active)
+        assertEquals(LocalConfig.HomeQuestsRoot, newState.localState.stack.active)
     }
 }

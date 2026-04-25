@@ -32,4 +32,22 @@ sealed interface Destination {
      * Visible only in debug builds (controlled by [visibleFooterActions]).
      */
     data object OpenDesignCatalog : Destination
+
+    /**
+     * Open the create-quest screen (FAB on "Мои квесты").
+     *
+     * Result: pushes [LocalConfig.QuestCreateRoot] onto the LOCAL tab's stack,
+     * preserving [LocalConfig.MyQuestsRoot] in backStack so Back returns to "Мои квесты".
+     *
+     * Differs from [OpenDesignCatalog] (which replaces the entire LOCAL stack) — this is a
+     * push, not a replace. See spec: home-and-my-quests `0-spec.md` Decision #41 + #45.
+     *
+     * Re-tap guard (Decision #47): if `localState.stack.active == LocalConfig.QuestCreateRoot`
+     * already — no-op (avoids duplicate entries in backStack).
+     *
+     * Atomic constraint (Decision #48): adding this case forces an exhaustive when in
+     * [com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.navigate]. Both files
+     * are modified together.
+     */
+    data object OpenQuestCreate : Destination
 }

@@ -20,7 +20,7 @@ class DefaultLocalTabComponent(
         childStack(
             source = navigation,
             serializer = null,
-            initialConfiguration = LocalConfig.MyQuestsRoot,
+            initialConfiguration = LocalConfig.HomeQuestsRoot,
             handleBackButton = false,
             key = "LocalStack",
             childFactory = { config, _ -> LocalScreenComponent.Placeholder(config) },

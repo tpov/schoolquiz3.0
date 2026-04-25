@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.app_shell.domain.model
 
+import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
+
 /**
  * Sealed hierarchy for per-tab drawer sections.
  * Each concrete type knows which Tab it belongs to via [tab]
@@ -29,17 +31,17 @@ sealed interface DrawerSection {
     sealed interface LocalSection : DrawerSection {
         override val tab: Tab get() = Tab.LOCAL
 
-        // Row 1 — emptyMap (always visible)
+        // emptyMap (always visible) — visibleSections output order: HomeQuests, MyQuests, Settings
         data object MyQuests : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
-        // Row 2 — emptyMap (always visible)
-        data object MyCourses : LocalSection {
+        // emptyMap (always visible)
+        data object HomeQuests : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
-        // Row 3 — emptyMap (always visible)
+        // emptyMap (always visible)
         data object Settings : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
@@ -93,14 +95,14 @@ sealed interface DrawerSection {
     sealed interface EventsSection : DrawerSection {
         override val tab: Tab get() = Tab.EVENTS
 
-        // Row 11 — requires TESTER AND MODERATOR AND ADMIN AND DEVELOPER all >= 100
+        // Row 11 — requires TESTER AND MODERATOR AND ADMIN AND DEVELOPER all >= QualificationLevel.LEVEL_1.points
         data object ActiveEvents : EventsSection {
             override val requiredRoles: Map<Role, Int>
                 get() = mapOf(
-                    Role.TESTER to 100,
-                    Role.MODERATOR to 100,
-                    Role.ADMIN to 100,
-                    Role.DEVELOPER to 100,
+                    Role.TESTER to QualificationLevel.LEVEL_1.points,
+                    Role.MODERATOR to QualificationLevel.LEVEL_1.points,
+                    Role.ADMIN to QualificationLevel.LEVEL_1.points,
+                    Role.DEVELOPER to QualificationLevel.LEVEL_1.points,
                 )
         }
 

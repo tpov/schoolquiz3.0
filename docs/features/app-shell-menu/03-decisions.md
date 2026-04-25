@@ -204,12 +204,12 @@ Registry хранит hook per-tab (`MutableMap<Tab, ScrollToTopHook>`). Identit
 factory { (ctx: ComponentContext) ->
     DefaultRootComponent(
         componentContext = ctx,
-        initializeUseCase = get(),
+        initUseCase = get(),
         navigateUseCase = get(),
-        observeUseCase = get(),           // ADR-LEAD-02: stats через UC, не прямой repo
-        onTabRetapUseCase = get(),
-        // handleBackUseCase: NOT injected — back via NavigateUseCase(state, Destination.Back)
-        // userStatsRepository: NOT direct — delegated through observeUseCase
+        observeUseCase = get(),
+        retapUseCase = get(),
+        userStatsRepository = get(),
+        workManager = get(),
     )
 }
 ```
@@ -221,6 +221,37 @@ factory { (ctx: ComponentContext) ->
 |---------|---------------|
 | `single` с ComponentContext захватом на App lifecycle | ComponentContext с App lifecycle не имеет BackHandler — back не работает. Activity-scope ComponentContext в singleton = memory leak при смене конфигурации |
 | `viewModel { DefaultRootComponent(...) }` (Koin ViewModel scope) | Decompose использует собственный lifecycle management; `AndroidViewModel` не нужен и создаёт двойной lifecycle tracking |
+
+---
+
+## ADR-COMP-08b: app-shell/presentation → qualification/domain (one-directional, dev-mode)
+
+**Status**: ACCEPTED (phase-04, decision owner: backend-dev)
+
+**Context**:
+`DefaultRootComponent` импортирует `TapProgress`, `TapResult`, `ActivateDevModeUseCase` из `shared/feature/qualification/domain` для реализации version-tap dev mode активации. Этот cross-feature import одно-направленный, но не был задокументирован в ADR. `clean-architecture.md` требует ADR для cross-feature импортов вне cascade chain (ADR-HMQ-06 покрывает только `shared/core` cascade, не app-shell→qualification).
+
+**Decision**:
+Явно разрешён одно-направленный import `app-shell/presentation → qualification/domain`. Обратный импорт (`qualification → app-shell`) — blocker.
+
+**Rationale**:
+- `ActivateDevModeUseCase` использует callback-based DI (`readCurrentDeveloperLevel`, `onDevModeActivated`) — не содержит ссылок на app-shell типы
+- Связность строго одно-направленная (presentation → domain другой feature)
+- Dev mode активация — забота presentation layer; qualification owning the use case правильно с точки зрения domain responsibility
+- Нет циклической зависимости между features
+
+**Review check**:
+```bash
+grep -rE "^import .*\.feature\.app_shell\." shared/feature/qualification/ --include="*.kt"
+```
+Non-empty output = blocker.
+
+**Alternatives Considered**:
+
+| Вариант | Причина отказа |
+|---------|---------------|
+| Перенести `ActivateDevModeUseCase` в `shared/core` | Оверинжиниринг — use case используется только в одном месте; core предназначен для shared infrastructure |
+| Callback-only API без прямого импорта qualification types | Потребовало бы wrapper/adapter в app-shell domain — усложнение без пользы при строго одно-направленной связности |
 
 ---
 

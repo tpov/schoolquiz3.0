@@ -23,15 +23,15 @@ class NavStackTest {
     @Test
     fun `push increments backStack and sets new active`() {
         val stack: NavStack<LocalConfig> = NavStack(active = LocalConfig.MyQuestsRoot)
-        val pushed = stack.push(LocalConfig.MyCoursesRoot)
-        assertEquals(LocalConfig.MyCoursesRoot, pushed.active)
+        val pushed = stack.push(LocalConfig.HomeQuestsRoot)
+        assertEquals(LocalConfig.HomeQuestsRoot, pushed.active)
         assertEquals(listOf<LocalConfig>(LocalConfig.MyQuestsRoot), pushed.backStack)
     }
 
     @Test
     fun `push sets isAtRoot to false`() {
         val stack: NavStack<LocalConfig> = NavStack(active = LocalConfig.MyQuestsRoot)
-        val pushed = stack.push(LocalConfig.MyCoursesRoot)
+        val pushed = stack.push(LocalConfig.HomeQuestsRoot)
         assertFalse(pushed.isAtRoot)
     }
 
@@ -44,7 +44,7 @@ class NavStackTest {
     @Test
     fun `pop after push returns original root`() {
         val stack: NavStack<LocalConfig> = NavStack(active = LocalConfig.MyQuestsRoot)
-        val pushed = stack.push(LocalConfig.MyCoursesRoot)
+        val pushed = stack.push(LocalConfig.HomeQuestsRoot)
         val popped = pushed.pop()!!
         assertEquals(LocalConfig.MyQuestsRoot, popped.active)
         assertTrue(popped.backStack.isEmpty())
@@ -52,7 +52,7 @@ class NavStackTest {
 
     @Test
     fun `replaceWithRoot clears backStack`() {
-        val stack: NavStack<LocalConfig> = NavStack(active = LocalConfig.MyCoursesRoot)
+        val stack: NavStack<LocalConfig> = NavStack(active = LocalConfig.HomeQuestsRoot)
         val pushed = stack.push(LocalConfig.SettingsRoot)
         val replaced = pushed.replaceWithRoot(LocalConfig.MyQuestsRoot)
         assertEquals(LocalConfig.MyQuestsRoot, replaced.active)
@@ -62,19 +62,19 @@ class NavStackTest {
     @Test
     fun `multiple pushes build correct backStack order`() {
         val stack: NavStack<LocalConfig> = NavStack(active = LocalConfig.MyQuestsRoot)
-        val pushed = stack.push(LocalConfig.MyCoursesRoot).push(LocalConfig.SettingsRoot)
+        val pushed = stack.push(LocalConfig.HomeQuestsRoot).push(LocalConfig.SettingsRoot)
 
         assertEquals(LocalConfig.SettingsRoot, pushed.active)
-        assertEquals(listOf<LocalConfig>(LocalConfig.MyQuestsRoot, LocalConfig.MyCoursesRoot), pushed.backStack)
+        assertEquals(listOf<LocalConfig>(LocalConfig.MyQuestsRoot, LocalConfig.HomeQuestsRoot), pushed.backStack)
     }
 
     @Test
     fun `pop from depth-2 stack returns correct state`() {
         val stack: NavStack<LocalConfig> = NavStack(active = LocalConfig.MyQuestsRoot)
-        val deep = stack.push(LocalConfig.MyCoursesRoot).push(LocalConfig.SettingsRoot)
+        val deep = stack.push(LocalConfig.HomeQuestsRoot).push(LocalConfig.SettingsRoot)
 
         val popped = deep.pop()!!
-        assertEquals(LocalConfig.MyCoursesRoot, popped.active)
+        assertEquals(LocalConfig.HomeQuestsRoot, popped.active)
         assertEquals(listOf<LocalConfig>(LocalConfig.MyQuestsRoot), popped.backStack)
     }
 }

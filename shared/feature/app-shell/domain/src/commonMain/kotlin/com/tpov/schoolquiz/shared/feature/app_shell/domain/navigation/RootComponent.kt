@@ -24,4 +24,10 @@ interface RootComponent {
     fun onDestination(destination: Destination)
     fun onActiveTabRetap(tab: Tab): RetapOutcome
     fun onDeepLink(deepLink: DeepLink)
+
+    /** Called when user taps the version label. [nowMillis] is epoch milliseconds. */
+    fun onVersionTap(nowMillis: Long)
+
+    /** Called when user taps the SyncNow footer action. */
+    fun onSyncNow()
 }

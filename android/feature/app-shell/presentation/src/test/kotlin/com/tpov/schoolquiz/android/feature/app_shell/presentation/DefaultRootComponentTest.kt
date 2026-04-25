@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation
 
+import androidx.work.WorkManager
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
@@ -7,6 +8,10 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
+import org.mockito.Mockito.mock
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
@@ -85,12 +90,17 @@ class DefaultRootComponentTest {
 
     private fun buildComponent(
         fakeRepo: FakeUserStatsRepository = FakeUserStatsRepository(),
+        workManager: WorkManager = mock(WorkManager::class.java),
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
         navigateUseCase = NavigateUseCase(),
         observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
         retapUseCase = OnTabRetapUseCase(),
+        userStatsRepository = fakeRepo,
+        workManager = workManager,
+        myQuestsFactory = { _, _ -> StubMyQuestsComponent },
+        homeQuestsFactory = { _ -> StubHomeQuestsComponent },
     )
 
     // -----------------------------------------------------------------------
@@ -126,6 +136,8 @@ class DefaultRootComponentTest {
         val errorRepo = object : UserStatsRepository {
             override fun observeStats(): Flow<UserStats> = MutableStateFlow(UserStats.guest()).asStateFlow()
             override suspend fun currentStats(): UserStats = error("offline")
+            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+            override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
         }
         val component = DefaultRootComponent(
             componentContext = testCtx(),
@@ -133,6 +145,10 @@ class DefaultRootComponentTest {
             navigateUseCase = NavigateUseCase(),
             observeUseCase = ObserveAppShellStateUseCase(FakeUserStatsRepository()),
             retapUseCase = OnTabRetapUseCase(),
+            userStatsRepository = errorRepo,
+            workManager = mock(WorkManager::class.java),
+            myQuestsFactory = { _, _ -> StubMyQuestsComponent },
+            homeQuestsFactory = { _ -> StubHomeQuestsComponent },
         )
 
         val state = component.appShellState.first()
@@ -357,6 +373,8 @@ class DefaultRootComponentTest {
             private val _stats = MutableStateFlow(UserStats.guest())
             override fun observeStats(): Flow<UserStats> = _stats.asStateFlow()
             override suspend fun currentStats(): UserStats = initDeferred.await()
+            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+            override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
         }
         val component = DefaultRootComponent(
             componentContext = testCtx(),
@@ -364,6 +382,10 @@ class DefaultRootComponentTest {
             navigateUseCase = NavigateUseCase(),
             observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
             retapUseCase = OnTabRetapUseCase(),
+            userStatsRepository = fakeRepo,
+            workManager = mock(WorkManager::class.java),
+            myQuestsFactory = { _, _ -> StubMyQuestsComponent },
+            homeQuestsFactory = { _ -> StubHomeQuestsComponent },
         )
 
         // Navigate while initUseCase() is suspended at initDeferred.await()
@@ -379,14 +401,83 @@ class DefaultRootComponentTest {
         assertEquals(777, state.userStats.currentSkill)    // userStats merged
     }
 
-    // DEFERRED: back_with_non_empty_backStack_pops
-    // Reason: MVP domain transitions never create non-empty backStack.
-    // Destination.Push not implemented; tabs are single-screen roots.
-    // See docs/features/app-shell-menu/plan/phase-04/overview.md — Tests Required section.
-    @Ignore("Deferred: no push destinations in MVP — see overview.md")
+    // -----------------------------------------------------------------------
+    // OpenQuestCreate destination (phase-04 / AC#29 / scenarios 41a+41b guard)
+    // Spec: when_onDestination_OpenQuestCreate_then_no_crash
+    // GIVEN DefaultRootComponent in initial LOCAL state (HomeQuestsRoot)
+    // WHEN onDestination(OpenQuestCreate)
+    // THEN activeTab stays LOCAL; QuestCreateRoot becomes active; backStack.size == 1
+    // -----------------------------------------------------------------------
+
     @Test
-    @Suppress("EmptyFunctionBlock")
-    fun `back with non-empty backStack pops top entry`() {
+    fun `when onDestination OpenQuestCreate then QuestCreateRoot becomes active without crash`() = runTest(testDispatcher) {
+        val component = buildComponent()
+
+        component.onDestination(Destination.OpenQuestCreate)
+
+        val state = component.appShellState.first()
+        assertEquals(Tab.LOCAL, state.activeTab)
+        assertEquals(LocalConfig.QuestCreateRoot, state.localState.stack.active)
+        assertEquals(1, state.localState.stack.backStack.size)
+    }
+
+    // -----------------------------------------------------------------------
+    // OpenQuestCreate guard — Decision #47 (scenario 41b guard)
+    // Spec: when_onDestination_OpenQuestCreate_twice_then_guard_applied
+    // GIVEN component after first OpenQuestCreate (QuestCreateRoot active)
+    // WHEN onDestination(OpenQuestCreate) again
+    // THEN state unchanged — backStack still has exactly 1 entry (no duplicate)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `when onDestination OpenQuestCreate twice then guard applied no duplicate backStack entry`() = runTest(testDispatcher) {
+        val component = buildComponent()
+        component.onDestination(Destination.OpenQuestCreate)
+        val stateAfterFirst = component.appShellState.first()
+
+        component.onDestination(Destination.OpenQuestCreate)
+        val stateAfterSecond = component.appShellState.first()
+
+        assertEquals(stateAfterFirst, stateAfterSecond)
+        assertEquals(LocalConfig.QuestCreateRoot, stateAfterSecond.localState.stack.active)
+        assertEquals(1, stateAfterSecond.localState.stack.backStack.size)
+    }
+
+    // -----------------------------------------------------------------------
+    // Labels.kt exhaustive when — scenario 41e
+    // Spec: Labels_displayName_QuestCreateRoot_non_blank
+    // GIVEN LocalConfig.QuestCreateRoot
+    // WHEN displayName property accessed
+    // THEN returns non-blank string "Создание квеста"
+    // (compile-time: exhaustive `when` in Labels.kt ensures QuestCreateRoot is handled)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `Labels displayName QuestCreateRoot returns non-blank string`() {
+        val name = LocalConfig.QuestCreateRoot.displayName
+        assertTrue(name.isNotBlank())
+        assertEquals("Создание квеста", name)
+    }
+
+    // -----------------------------------------------------------------------
+    // Back FSM — step 2: non-empty backStack → pop (now testable via OpenQuestCreate)
+    // Spec: back_with_non_empty_backStack_pops (phase-04: backStack filled by OpenQuestCreate)
+    // GIVEN component after OpenQuestCreate (QuestCreateRoot active, backStack=[HomeQuestsRoot])
+    // WHEN onDestination(Back)
+    // THEN stack returns to HomeQuestsRoot and backStack is empty
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `back with non-empty backStack pops top entry`() = runTest(testDispatcher) {
+        val component = buildComponent()
+        component.onDestination(Destination.OpenQuestCreate)
+        assertEquals(LocalConfig.QuestCreateRoot, component.appShellState.first().localState.stack.active)
+
+        component.onDestination(Destination.Back)
+
+        val state = component.appShellState.first()
+        assertTrue(state.localState.stack.backStack.isEmpty())
+        assertTrue(state.localState.stack.active != LocalConfig.QuestCreateRoot)
     }
 
     // DEFERRED: retap_with_backStack_returns_POP_TO_ROOT
@@ -399,7 +490,7 @@ class DefaultRootComponentTest {
     fun `retap with non-empty backStack returns POP TO ROOT`() = runTest(testDispatcher) {
         // Pre-condition: push something to create a non-empty backStack.
         // When Destination.Push(config) is available:
-        //   component.onDestination(Destination.Push(LocalConfig.MyCoursesRoot))
+        //   component.onDestination(Destination.Push(LocalConfig.HomeQuestsRoot))
         val component = buildComponent()
 
         val outcome = component.onActiveTabRetap(Tab.LOCAL)
@@ -409,7 +500,7 @@ class DefaultRootComponentTest {
         // Decompose sync fix: onActiveTabRetap MUST call syncStack after retap so that
         // localTabComponent.childStack reflects the cleared backStack:
         assertEquals(
-            LocalConfig.MyQuestsRoot,
+            LocalConfig.HomeQuestsRoot,
             component.localTabComponent.childStack.value.active.configuration,
         )
         assertEquals(0, component.localTabComponent.childStack.value.backStack.size)

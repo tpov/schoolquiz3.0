@@ -36,15 +36,15 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given cold start when default state created then local activeSection is MyQuests`() {
+    fun `given cold start when default state created then local activeSection is HomeQuests`() {
         val state = AppShellState.default()
-        assertEquals(DrawerSection.LocalSection.MyQuests, state.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, state.localState.activeSection)
     }
 
     @Test
-    fun `given cold start when default state created then local stack active is MyQuestsRoot`() {
+    fun `given cold start when default state created then local stack active is HomeQuestsRoot`() {
         val state = AppShellState.default()
-        assertEquals(LocalConfig.MyQuestsRoot, state.localState.stack.active)
+        assertEquals(LocalConfig.HomeQuestsRoot, state.localState.stack.active)
     }
 
     @Test
@@ -104,9 +104,9 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given corrupted saved state when fallback called then local activeSection is MyQuests`() {
+    fun `given corrupted saved state when fallback called then local activeSection is HomeQuests`() {
         val state = fallbackState()
-        assertEquals(DrawerSection.LocalSection.MyQuests, state.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, state.localState.activeSection)
     }
 
     @Test
@@ -185,7 +185,7 @@ class AppShellStateTest {
     @Test
     fun `activeSection returns local section when activeTab is LOCAL`() {
         val state = AppShellState.default()
-        assertEquals(DrawerSection.LocalSection.MyQuests, state.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, state.activeSection)
     }
 
     // -----------------------------------------------------------------------

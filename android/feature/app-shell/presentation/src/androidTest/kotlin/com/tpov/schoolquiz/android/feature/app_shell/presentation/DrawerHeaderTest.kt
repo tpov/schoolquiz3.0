@@ -82,17 +82,4 @@ class DrawerHeaderTest {
         composeTestRule.onNodeWithText("Гость").assertIsDisplayed()
     }
 
-    // GIVEN DrawerHeader with streakDays = 5
-    // WHEN BrandProgressBar progress calculated (5/10 = 0.5f)
-    // THEN label "Серия: 5/10 дней" displayed — verifies correct fraction used
-    // Note: BrandProgressBar has no testTag; label text is the observable proxy for fraction correctness.
-    @Test
-    fun drawer_header_streak_bar_progress() {
-        composeTestRule.setContent {
-            SchoolQuizTheme {
-                DrawerHeader(userStats = UserStats.guest().copy(streakDays = 5))
-            }
-        }
-        composeTestRule.onNodeWithText("Серия: 5/10 дней").assertIsDisplayed()
-    }
 }

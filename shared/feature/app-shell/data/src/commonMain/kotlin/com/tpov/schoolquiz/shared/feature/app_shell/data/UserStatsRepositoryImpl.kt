@@ -1,52 +1,60 @@
 package com.tpov.schoolquiz.shared.feature.app_shell.data
 
-import com.tpov.schoolquiz.shared.core.stats.AuthUidChanged
-import com.tpov.schoolquiz.shared.core.stats.RawUserStats
+import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Qualification
+import com.tpov.schoolquiz.shared.core.sync.Syncable
+import com.tpov.schoolquiz.shared.feature.app_shell.data.mapper.toDomain
+import com.tpov.schoolquiz.shared.feature.app_shell.data.mapper.toEntity
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retryWhen
 
 class UserStatsRepositoryImpl(
-    private val dataSource: UserStatsDataSource,
-) : UserStatsRepository {
-    /**
-     * Cold flow of user stats updates from the underlying data source.
-     * Retries automatically on [AuthUidChanged] (auth user switched) and transient [IOException].
-     * Terminal failures propagate to the consumer; error handling is the caller's responsibility.
-     */
+    private val remoteDataSource: UserStatsDataSource,
+    private val userStatsDao: UserStatsDao,
+    private val currentUidFlow: () -> Flow<String?>,
+) : UserStatsRepository, Syncable {
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeStats(): Flow<UserStats> =
-        dataSource.observeRaw()
-            .map { raw -> raw.toDomain() }
-            .retryWhen { cause, _ -> cause is AuthUidChanged }
+        currentUidFlow().flatMapLatest { uid ->
+            if (uid == null) flowOf(UserStats.guest())
+            else userStatsDao.observeByUid(uid).map { it?.toDomain() ?: UserStats.guest() }
+        }
 
-    override suspend fun currentStats(): UserStats =
-        runCatching { dataSource.fetchRaw().toDomain() }
-            .getOrDefault(UserStats.guest())
+    override suspend fun currentStats(): UserStats {
+        val uid = currentUidFlow().first() ?: return UserStats.guest()
+        return userStatsDao.findByUid(uid)?.toDomain() ?: UserStats.guest()
+    }
+
+    override suspend fun setLocalDeveloperLevel(value: Int) {
+        require(value >= 0) { "developerLevel must be non-negative, was: $value" }
+        val uid = currentUidFlow().first() ?: return
+        if (userStatsDao.findByUid(uid) == null) return
+        userStatsDao.updateDeveloperLevel(uid, value)
+    }
+
+    override suspend fun refreshProfile(): Result<Unit> {
+        val uid = currentUidFlow().first() ?: return Result.failure(IllegalStateException("Not authenticated"))
+        return try {
+            val raw = remoteDataSource.fetchRaw()
+            userStatsDao.upsert(raw.toEntity(uid))
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sync(): Result<Unit> {
+        if (currentUidFlow().first() == null) return Result.success(Unit)
+        return refreshProfile()
+    }
 }
-
-private fun RawUserStats.toDomain(): UserStats =
-    UserStats(
-        nickname = nickname,
-        avatarUrl = avatarUrl,
-        hasPremium = hasPremium,
-        streakDays = streakDays,
-        stars = stars,
-        nolics = nolics,
-        standardHearts = standardHearts,
-        goldHearts = goldHearts,
-        gold = gold,
-        currentSkill = currentSkill,
-        qualification =
-            Qualification(
-                tester = testerLevel,
-                moderator = moderatorLevel,
-                sponsor = sponsorLevel,
-                translator = translatorLevel,
-                admin = adminLevel,
-                developer = developerLevel,
-            ),
-    )

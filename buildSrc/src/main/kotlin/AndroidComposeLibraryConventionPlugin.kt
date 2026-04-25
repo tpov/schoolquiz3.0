@@ -7,14 +7,12 @@ class AndroidComposeLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("schoolquiz.android.library")
+            // Kotlin 2.0+: compose compiler is bundled with the Kotlin compiler
+            pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
             extensions.configure<LibraryExtension> {
                 buildFeatures {
                     compose = true
-                }
-                composeOptions {
-                    // Kotlin 1.9.22 → Compose compiler 1.5.10 (fixed pair per compatibility table)
-                    kotlinCompilerExtensionVersion = "1.5.10"
                 }
             }
         }

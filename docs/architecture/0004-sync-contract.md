@@ -141,6 +141,51 @@ nextRetryAt: Instant
 - Формат `MutationOp.payload`: JSON (kotlinx-serialization) или Protobuf. JSON проще отлаживать, Protobuf компактнее.
 - Retention tombstones: точное число дней.
 
+## Amendment 2026-04-21 — Cascading sync для иерархических сущностей
+
+Добавлено фичей `home-and-my-quests` (см. `docs/features/home-and-my-quests/0-spec.md`).
+
+### Проблема
+
+Базовый `Syncable(id, version, updatedAt, deleted, createdBy)` описывает **плоские** сущности (Profile, Certificate, Qualification). Но для иерархических коллекций (`Catalog → Quest → Section → Theme → Lesson → Question`) клиенту дорого скачивать всё дерево при каждом sync если ничего не изменилось во вложенных.
+
+### Расширение: `contentsVersion`
+
+Сущности у которых есть дети добавляют **опциональное** поле `contentsVersion: Long` в собственную domain model (не в базовый `Syncable` — чтобы leaf-сущности как Profile не несли лишний overhead). Семантика:
+
+- `version` — инкрементируется при изменении полей **самой** сущности (title, picture, flags и т.д.)
+- `contentsVersion` — инкрементируется при **любом** изменении вложенных потомков (включая внуков, правнуков)
+
+**Propagation серверная**: когда админ изменяет `question/X`, сервер (Cloud Function trigger или admin-tool) инкрементирует `contentsVersion` у `lesson/parent`, затем `theme/grandparent`, `section/great-grandparent`, `quest/great-great-grandparent`, `catalog/great-great-great-grandparent`. Это позволяет клиенту делать early-exit на любом уровне.
+
+### Cascading sync алгоритм
+
+```
+syncLevel(collection, lastVersion, parentIdFilter?):
+  fetch collection WHERE parentId IN [parentIdFilter?] AND version > lastVersion
+  для каждого dto:
+    if dto.archived || dto.emptyVisibility: delete local by id
+    else: upsert by id if dto.version > local.version
+  для каждого dto с contentsVersion > local.contentsVersion:
+    syncLevel(childCollection, lastChildVersion, parentId=dto.id)
+```
+
+Клиент начинает с root `catalogs` без parentFilter, углубляется только где `contentsVersion` вырос.
+
+**Batch limit** для Firestore `in`-фильтра — 30 parent-id'ов за запрос. Клиент chunks при необходимости.
+
+### Ownership per feature
+
+Каждая иерархическая сущность (Catalog, Quest, Section, Theme, Lesson) добавляет `contentsVersion` в свою domain model самостоятельно — **не** поднимаем в базовый `Syncable`, чтобы leaf-entity (Profile, Certificate, Question) не несли ненужное поле. Реализуется через convention, не через interface.
+
+### Delta cursor field name: `lastModifiedAt: Long`
+
+Для delta-sync курсора (`where('lastModifiedAt', '>', cursor)`) в иерархических entities используется поле **`lastModifiedAt: Long`** (Unix millis). Это семантически эквивалентно `updatedAt: Instant` из основного текста ADR, но:
+- Имя `lastModifiedAt` более самоописательное для разработчиков и админов
+- Тип `Long` (Unix millis) проще в Room/SQLite и Firestore (native Long vs сериализация Instant)
+
+Для LWW conflict resolution (см. основной текст ADR про "Last-write-wins на основе серверного `updatedAt`") то же самое поле используется — просто один и тот же timestamp в двух ролях. Синоним `updatedAt`, но в коде пишется `lastModifiedAt`.
+
 ## Notes
 
 Контракты живут в `shared/core/sync/src/commonMain/kotlin/`. Реализации стратегий — в `shared/feature/*/data` (per-feature). Платформенная часть — `platform/firebase` (Firestore/FCM) и `platform/android-services` (WorkManager). Серверная — `server/functions`, `server/workers/sync`, `server/workers/rewards`.

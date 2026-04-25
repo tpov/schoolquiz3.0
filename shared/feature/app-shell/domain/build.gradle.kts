@@ -10,6 +10,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
+            implementation(project(":shared:core:foundation"))
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

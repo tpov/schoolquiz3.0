@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui
 
+import android.app.Activity
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,6 +16,9 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
@@ -27,6 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
@@ -42,10 +47,17 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.disp
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.icon
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
+import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
+import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RetapOutcome
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
@@ -86,6 +98,8 @@ fun AppShellScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
     val registry = remember { ScrollToTopRegistry() }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     // rememberUpdatedState ensures the collector always reads the current state, not the one
     // captured at LaunchedEffect launch time (stale-closure fix for LaunchedEffect(drawerState)).
@@ -110,6 +124,33 @@ fun AppShellScreen(
         if (state.isDrawerOpen) drawerState.open() else drawerState.close()
     }
 
+    // Event collector: object-key prevents duplicate collectors on recomposition.
+    LaunchedEffect(rootComponent) {
+        rootComponent.events.collect { event ->
+            when (event) {
+                RootEvent.DevModeActivated ->
+                    snackbarHostState.showSnackbar(
+                        message = "Режим разработчика включён",
+                        duration = SnackbarDuration.Long,
+                    )
+                RootEvent.DevModeAlreadyActive ->
+                    snackbarHostState.showSnackbar(
+                        message = "Уже в режиме разработчика",
+                        duration = SnackbarDuration.Short,
+                    )
+                RootEvent.SyncStarted ->
+                    snackbarHostState.showSnackbar(
+                        message = "Синхронизация запущена",
+                        duration = SnackbarDuration.Short,
+                    )
+                RootEvent.SystemBack -> (context as? Activity)?.moveTaskToBack(true)
+            }
+        }
+    }
+
+    val canSeeDesignCatalog = visibleFooterActions(isDebugBuild, state.userStats)
+        .contains(DrawerFooterAction.DesignCatalog)
+
     CompositionLocalProvider(LocalScrollToTopRegistry provides registry) {
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -122,6 +163,8 @@ fun AppShellScreen(
                     navigator = rootComponent.navigator,
                     isDebugBuild = isDebugBuild,
                     versionName = appVersionName,
+                    onVersionTap = { rootComponent.onVersionTap(System.currentTimeMillis()) },
+                    onSyncNow = { rootComponent.onSyncNow() },
                 )
             },
             modifier = modifier,
@@ -164,8 +207,9 @@ fun AppShellScreen(
                         }
                     }
                 },
+                snackbarHost = { SnackbarHost(snackbarHostState) },
             ) { paddingValues ->
-                AppShellContent(rootComponent, state.activeTab, paddingValues, isDebugBuild)
+                AppShellContent(rootComponent, state.activeTab, paddingValues, canSeeDesignCatalog)
             }
         }
     }
@@ -177,7 +221,7 @@ private fun AppShellContent(
     rootComponent: DefaultRootComponent,
     activeTab: Tab,
     paddingValues: PaddingValues,
-    isDebugBuild: Boolean,
+    canSeeDesignCatalog: Boolean,
 ) {
     Crossfade(
         targetState = activeTab,
@@ -190,7 +234,7 @@ private fun AppShellContent(
                     rootComponent.localTabComponent.childStack,
                     animation = stackAnimation(fade(tween(TAB_CROSSFADE_DURATION_MS))),
                 ) { child ->
-                    LocalTabContent(child.instance, paddingValues, isDebugBuild)
+                    LocalTabContent(rootComponent, child.instance, paddingValues, canSeeDesignCatalog)
                 }
             Tab.INTERNET ->
                 Children(
@@ -246,23 +290,52 @@ private fun RowScope.BrandNavBarItem(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun LocalTabContent(
+    rootComponent: DefaultRootComponent,
     screen: LocalScreenComponent,
     paddingValues: PaddingValues,
-    isDebugBuild: Boolean,
+    canSeeDesignCatalog: Boolean,
 ) {
     when (screen) {
         is LocalScreenComponent.Placeholder -> {
-            if (screen.config == LocalConfig.DesignCatalogRoot && isDebugBuild) {
-                DesignCatalogScreen(modifier = Modifier.padding(paddingValues))
-            } else {
-                // AC 8: DesignCatalogRoot shows "Недоступно" in release (not its displayName).
-                // TODO: move "Недоступно" to strings.xml (app_shell_unavailable).
-                val title =
-                    if (screen.config == LocalConfig.DesignCatalogRoot) "Недоступно" else screen.config.displayName
-                UnderConstructionScreen(title, modifier = Modifier.padding(paddingValues))
+            when (screen.config) {
+                is LocalConfig.DesignCatalogRoot ->
+                    if (canSeeDesignCatalog) {
+                        DesignCatalogScreen(modifier = Modifier.padding(paddingValues))
+                    } else {
+                        // AC 8: DesignCatalogRoot shows "Недоступно" in release.
+                        UnderConstructionScreen("Недоступно", modifier = Modifier.padding(paddingValues))
+                    }
+                is LocalConfig.MyQuestsRoot ->
+                    MyQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
+                is LocalConfig.HomeQuestsRoot ->
+                    HomeQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
+                is LocalConfig.QuestCreateRoot ->
+                    UnderConstructionScreen("Создание квеста в разработке", modifier = Modifier.padding(paddingValues))
+                is LocalConfig.SettingsRoot ->
+                    UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
+                is LocalConfig.EmptyRoot ->
+                    UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
             }
         }
     }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun MyQuestsContent(
+    rootComponent: DefaultRootComponent,
+    paddingValues: PaddingValues,
+) {
+    MyQuestsScreen(component = rootComponent.myQuestsComponent, modifier = Modifier.padding(paddingValues))
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun HomeQuestsContent(
+    rootComponent: DefaultRootComponent,
+    paddingValues: PaddingValues,
+) {
+    HomeQuestsScreen(component = rootComponent.homeQuestsComponent, modifier = Modifier.padding(paddingValues))
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

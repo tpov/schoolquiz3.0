@@ -21,12 +21,20 @@ sealed interface TabConfig
 
 sealed interface LocalConfig : TabConfig {
     data object MyQuestsRoot : LocalConfig
-    data object MyCoursesRoot : LocalConfig
+    data object HomeQuestsRoot : LocalConfig
     data object SettingsRoot : LocalConfig
     /** Always exists as type; rendered as UnderConstructionScreen("Недоступно") in release. */
     data object DesignCatalogRoot : LocalConfig
     /** Sentinel shown when no visible sections exist for this tab. */
     data object EmptyRoot : LocalConfig
+
+    /**
+     * Create-quest screen (FAB destination on "Мои квесты").
+     * Pushed onto LOCAL stack on top of [MyQuestsRoot].
+     * Phase-01 implementation: rendered as UnderConstructionScreen("Создание квеста в разработке").
+     * Spec: home-and-my-quests `0-spec.md` Decision #41.
+     */
+    data object QuestCreateRoot : LocalConfig
 }
 
 sealed interface InternetConfig : TabConfig {

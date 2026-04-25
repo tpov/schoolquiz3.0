@@ -39,10 +39,10 @@ class PrimaryUserJourneyTest {
 
         // activeTab = LOCAL
         assertEquals(Tab.LOCAL, state.activeTab)
-        // Local activeSection = MyQuests
-        assertEquals(DrawerSection.LocalSection.MyQuests, state.localState.activeSection)
-        // local childStack.active = MyQuestsRoot
-        assertEquals(LocalConfig.MyQuestsRoot, state.localState.stack.active)
+        // Local activeSection = HomeQuests (first in visibleSections after Phase 02 reorder)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, state.localState.activeSection)
+        // local childStack.active = HomeQuestsRoot
+        assertEquals(LocalConfig.HomeQuestsRoot, state.localState.stack.active)
         // backStack empty
         assertTrue(state.localState.stack.backStack.isEmpty())
         // drawer closed
@@ -129,7 +129,7 @@ class PrimaryUserJourneyTest {
                 activeSection = DrawerSection.LocalSection.MyQuests,
                 stack = NavStack(
                     active = LocalConfig.SettingsRoot, // simulating MyQuestsDetail2
-                    backStack = listOf(LocalConfig.MyQuestsRoot, LocalConfig.MyCoursesRoot),
+                    backStack = listOf(LocalConfig.MyQuestsRoot, LocalConfig.HomeQuestsRoot),
                 ),
             ),
         )
@@ -176,7 +176,7 @@ class PrimaryUserJourneyTest {
         val result = navigate(start, Destination.Back)
         assertEquals(Tab.LOCAL, result.newState.activeTab)
         // Local state restored
-        assertEquals(DrawerSection.LocalSection.MyQuests, result.newState.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, result.newState.localState.activeSection)
     }
 
     // -----------------------------------------------------------------------
@@ -188,8 +188,8 @@ class PrimaryUserJourneyTest {
         val state = fallbackState()
 
         assertEquals(Tab.LOCAL, state.activeTab)
-        assertEquals(DrawerSection.LocalSection.MyQuests, state.localState.activeSection)
-        assertEquals(LocalConfig.MyQuestsRoot, state.localState.stack.active)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, state.localState.activeSection)
+        assertEquals(LocalConfig.HomeQuestsRoot, state.localState.stack.active)
         assertTrue(state.localState.stack.backStack.isEmpty())
         assertFalse(state.isDrawerOpen)
 

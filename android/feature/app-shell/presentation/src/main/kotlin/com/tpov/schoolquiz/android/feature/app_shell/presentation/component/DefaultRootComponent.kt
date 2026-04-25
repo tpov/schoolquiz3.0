@@ -1,6 +1,11 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.component
 
 import android.util.Log
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigation
@@ -10,6 +15,10 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultInternetTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultLocalTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultShopTabComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
+import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
@@ -22,6 +31,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.RootComponent
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.NavStack
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.TransitionResult
@@ -29,6 +39,9 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapProgress
+import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapResult
+import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.use_case.ActivateDevModeUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,8 +72,18 @@ class DefaultRootComponent(
     private val navigateUseCase: NavigateUseCase,
     private val observeUseCase: ObserveAppShellStateUseCase,
     private val retapUseCase: OnTabRetapUseCase,
+    private val userStatsRepository: UserStatsRepository,
+    private val workManager: WorkManager,
+    myQuestsFactory: (ComponentContext, Navigator) -> MyQuestsComponent,
+    homeQuestsFactory: (ComponentContext) -> HomeQuestsComponent,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
+    private val _tapProgress = MutableStateFlow(TapProgress.initial)
+
+    private val activateDevModeUseCase = ActivateDevModeUseCase(
+        readCurrentDeveloperLevel = { _appShellState.value.userStats.qualification.developer },
+        onDevModeActivated = { userStatsRepository.setLocalDeveloperLevel(QualificationLevel.LEVEL_1.points) },
+    )
     override val appShellState: Flow<AppShellState> = _appShellState.asStateFlow()
 
     @Volatile private var initDone = false
@@ -101,6 +124,11 @@ class DefaultRootComponent(
      * Lifetime: tied to this component instance (Activity-scoped). Do not retain beyond Activity.
      */
     internal val navigator: Navigator = NavigatorImpl(this)
+
+    // Components are created once here — Decompose childContext keys are unique per parent context.
+    // This prevents the duplicate-key crash when Compose recomposes MyQuestsContent/HomeQuestsContent.
+    val myQuestsComponent: MyQuestsComponent = myQuestsFactory(childContext("MyQuestsContent"), navigator)
+    val homeQuestsComponent: HomeQuestsComponent = homeQuestsFactory(childContext("HomeQuestsContent"))
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
@@ -158,9 +186,9 @@ class DefaultRootComponent(
                         }
                     }
                     delay(1_000)
-                } catch (t: Throwable) {
-                    if (t is CancellationException) throw t
-                    Log.w(TAG, "observeStats error (${t::class.simpleName}) — retrying in 5s")
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Log.w(TAG, "observeStats error — retrying in 5s")
                     delay(5_000)
                 }
             }
@@ -188,12 +216,47 @@ class DefaultRootComponent(
         // Future: validate DeepLink.scheme and origin before processing (reject unknown schemes).
     }
 
+    override fun onVersionTap(nowMillis: Long) {
+        scope.launch {
+            // Single-threaded coroutine launch via Main.immediate (no parallel tap processing
+            // before first suspend point). FSM state transitions before ActivateDevModeUseCase's
+            // suspend — so a racing tap coroutine reads the updated progress, not the stale one.
+            val snapshot = _tapProgress.value
+            val handled: Unit = when (val result = activateDevModeUseCase(snapshot, nowMillis)) {
+                is TapResult.Activated -> {
+                    _tapProgress.value = result.newProgress
+                    sendEvent(RootEvent.DevModeActivated)
+                }
+                is TapResult.AlreadyDev -> {
+                    _tapProgress.value = result.newProgress
+                    sendEvent(RootEvent.DevModeAlreadyActive)
+                }
+                is TapResult.NoChange -> _tapProgress.value = result.newProgress
+                is TapResult.Reset -> _tapProgress.value = result.newProgress
+            }
+        }
+    }
+
+    override fun onSyncNow() {
+        val request = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+            .build()
+        workManager.enqueueUniqueWork(SyncWorker.WORK_NAME_MANUAL, ExistingWorkPolicy.REPLACE, request)
+        sendEvent(RootEvent.SyncStarted)
+    }
+
+    private fun sendEvent(event: RootEvent) {
+        if (_events.trySend(event).isFailure) {
+            Log.w(TAG, "Event dropped (channel full): $event")
+        }
+    }
+
     private fun applyResult(
         old: AppShellState,
         result: TransitionResult,
     ) {
         val new = result.newState
-        _appShellState.update { new }
+        _appShellState.update { new.copy(userStats = it.userStats) }
         syncStack(old.localState.stack, new.localState.stack, localNavigation)
         syncStack(old.internetState.stack, new.internetState.stack, internetNavigation)
         syncStack(old.eventsState.stack, new.eventsState.stack, eventsNavigation)

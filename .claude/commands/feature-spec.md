@@ -193,6 +193,24 @@ Leaf-узел закрыт, когда он помечен:
 
 Если один из путей действительно не применим — явно пометь `N/A` и объясни почему.
 
+### Шаг 3.6.5: Обязательный чеклист ситуаций
+
+Для любой фичи, которая хранит данные пользователя, делает сетевые запросы или реагирует на состояния — пройди вместе с пользователем чеклист ситуаций ниже. Для каждой: агент предлагает своим первым guess что должно произойти ("я угадал — при первом запуске, когда база пуста, фича создаёт новую строку — правильно?"), пользователь подтверждает, поправляет, или говорит "реши сам".
+
+**Обязательный минимум**:
+
+- **Первый запуск / fresh install** — база пуста, кэша нет, пользователь только что установил приложение. Что видит? Что запускается на старте (bootstrap sync, default state, empty placeholder)? Что создаётся при первом действии пользователя если он делает что-то до первой синхронизации с сервером?
+- **Смена пользователя (logout / login / account switch)** — что происходит с данными текущего пользователя при выходе? Что показывается после logout (guest state, login screen)? При входе под другим пользователем — откуда берутся его данные (re-fetch с сервера, re-subscribe на Flow, clear cache)?
+- **Нет интернета / offline** — что делает фича без сети? Очередь действий на отправку, fallback на локальный кэш, блокировка, показ ошибки, N/A (чисто локальная фича)?
+- **Параллельные действия / одновременные модификации** — что если то же действие одновременно из двух мест (несколько экранов, push-notification + UI, sync-worker + user action)? Последний победил / первый победил / merge / error / N/A?
+- **Background / process death** — если фича долгая (загрузка, воспроизведение, звонок, sync): что при сворачивании приложения? При убийстве процесса системой? При возврате в приложение?
+
+Каждая ситуация → **[USER DECIDED]** / **[DELEGATED: твоё решение + обоснование]** / **[N/A — обоснование]**. Не переходи к Шагу 3.7 пока все обязательные ситуации не закрыты.
+
+**Почему обязательно**: эти ситуации очевидны из кода (Room storage → fresh install scenario, auth state → logout scenario, network calls → offline), но пользователь редко упоминает их при первом описании фичи. Retrospective menu-refactor показала что ~70% integration bugs — это именно пропущенные scenarios на spec этапе (Bug #1 auth re-subscribe, Bug #2 fresh install — оба относились к ситуациям, про которые агент не спросил).
+
+**Результат**: каждая ситуация становится отдельной строкой в секции `Primary User Journeys` с явным статусом, либо `N/A` с обоснованием. Если в фиче несколько use case'ов хранят данные пользователя — чеклист проходится для каждого отдельно.
+
 ### Шаг 3.7: Feature Domain Contract (если фича содержит бизнес-логику)
 
 Если в фиче есть бизнес-правила, состояния, инварианты, guards, retry/recovery логика или иная нетривиальная доменная логика — **зафиксируй feature-local domain contract прямо в spec**.
@@ -430,39 +448,82 @@ Walking Skeleton (Cockburn, Hunt/Thomas) — **полный** production-quality
 
 Это **НЕ throw-away prototype**. Код остаётся в кодовой базе. Phase-01 в implement не переписывает его и не добавляет новые use cases или repository interfaces — только реализует существующие interfaces production adapter-ами (Room/Retrofit/Firebase) + DAO mappers + DI.
 
-### Делегирование
+### Делегирование — two-stage (domain + tests параллельно)
 
-Ты (spec-agent) — продуктовый. Ты **не пишешь** domain код сам. Ты **делегируешь** специализированному агенту `domain-designer` через Teams API:
+Ты (spec-agent) — продуктовый. Ты **не пишешь** domain код и тесты сам. Ты **делегируешь** двум специализированным агентам с разделёнными ролями:
+- `domain-designer` — production code (entities, state, pure logic, repository interfaces, use cases)
+- `test-dev` в Walking Skeleton mode — реализация `Domain Test Scenarios` из `0-spec.md` как реальных `@Test`
+
+Оба агента читают **одну и ту же спеку**. Если их интерпретации расходятся — тесты красные или не компилируются. Это дополнительная защита от misinterpretation на spec этапе: два независимых агента с разным фокусом ловят ошибку понимания быстрее, чем один агент который пишет и код и тесты.
+
+#### Stage 3.8a — Signatures first (domain-designer стартует первым)
+
+Сначала только domain-designer. Его задача на этом этапе — зафиксировать **имена классов, пакетов и публичные signatures**. Bodies пока пустые (`TODO()`).
 
 ```
 1. TeamCreate: "spec-<slug>"
 2. Agent(subagent_type: "domain-designer", team_name: "spec-<slug>", name: "domain-designer")
 3. SendMessage с kickoff:
-   "Сгенерируй Walking Skeleton для <slug>. Прочитай 0-spec.md секции Feature Domain Contract,
-    State Matrix, Primary User Journeys, Domain Test Scenarios. Следуй skill domain-modeling.
-    Отчёт пришли через SendMessage когда все тесты зелёные."
-4. Жди отчёта "DOMAIN SKELETON READY" от domain-designer
+   "Stage A: сгенерируй только signatures и package structure. Создай файлы в
+    model/, state/, logic/ (pure functions), repository/ (interfaces), use_case/ (classes).
+    Bodies оставь TODO() — имплементацию напишешь в Stage B. Прочитай 0-spec.md секции
+    Feature Domain Contract, State Matrix, Primary User Journeys, Domain Test Scenarios.
+    Следуй skill domain-modeling. Отчёт 'SIGNATURES READY' когда все публичные имена
+    зафиксированы в .kt файлах."
+4. Жди отчёта "SIGNATURES READY" от domain-designer
 ```
 
-Агент `domain-designer` сам применяет skill `domain-modeling` (best practices для Functional Core / Walking Skeleton / Specification by Example). См.:
-- `.claude/agents/domain-designer.md` — роль и scope
+#### Stage 3.8b — Bodies + Tests параллельно
+
+После `SIGNATURES READY` — lead спавнит второго агента `test-dev` в той же team и одновременно шлёт domain-designer запрос на написание bodies:
+
+```
+# Спавн tester-а
+5. Agent(subagent_type: "test-dev", team_name: "spec-<slug>", name: "skeleton-tester")
+6. SendMessage to "skeleton-tester":
+   "Walking Skeleton mode. Прочитай 0-spec.md (Domain Test Scenarios, Feature Domain Contract,
+    State Matrix, Primary User Journeys) + существующие domain файлы в <skeleton_path>
+    (signatures уже созданы domain-designer, bodies = TODO). Реализуй КАЖДЫЙ Domain Test
+    Scenario как @Test в commonTest/ (или jvmTest по project layout). Используй классы и
+    методы из domain как есть — НЕ меняй signatures, НЕ пиши production code.
+    Если сценарий невозможно реализовать из-за отсутствующей signature → SendMessage ERROR
+    lead-у. Отчёт 'TESTS IMPLEMENTED' когда все тесты написаны (они пока красные — bodies
+    ещё TODO, это ожидаемо)."
+
+# Параллельно — bodies в домене
+7. SendMessage to "domain-designer":
+   "Stage B: реализуй bodies всех функций и методов. TODO() замени на business logic по
+    спеке. Signatures уже зафиксированы в Stage A — НЕ переименовывай классы и методы,
+    НЕ меняй публичные сигнатуры. Отчёт 'BODIES READY' когда реализация готова."
+
+8. Жди отчётов 'TESTS IMPLEMENTED' и 'BODIES READY' от обоих агентов (порядок любой).
+```
+
+#### Финальная проверка
+
+Когда оба агента завершили — lead запускает gradle тесты (`./gradlew :shared:feature:<slug>:domain:jvmTest` или эквивалент из PROJECT-CONTEXT.md). Три исхода:
+
+1. **Все тесты зелёные** → domain и tests согласованы, оба агента поняли спеку одинаково. Продолжай в Phase 4 (Codex review).
+
+2. **Тесты красные** (compilation ok, assertions fail) → либо domain bodies неверны, либо тесты проверяют неверные значения. Lead читает failing тесты, смотрит какие сценарии не совпадают с bodies, разбирает кто из двух агентов неверно интерпретировал. Вариант A: domain-designer ошибся → SendMessage fix к нему. Вариант B: tester ошибся → SendMessage fix к нему. Вариант C: спека двусмысленна → `AskUserQuestion` пользователю, обнови `0-spec.md`, перезапусти обоих.
+
+3. **Тесты не компилируются** (signature mismatch) → test-dev использует имя метода/класса которого нет в domain, или типы не совпадают. Lead смотрит diff между ожиданием test-dev и реальным api-contract из domain. Обычно это сигнал что Stage A signatures недостаточно точно отразили Domain Test Scenarios — SendMessage fix к domain-designer на добавление нужной signature, и перезапуск Stage B.
+
+4. **Open Questions от любого агента** (противоречия в rules, ambiguity в scenarios) → `AskUserQuestion` пользователю, обнови `0-spec.md`, перезапусти соответствующий stage.
+
+5. **Превышение scope limits** → вернись в Phase 2.5 (Task Splitting), раздели фичу.
+
+Оба агента применяют skill `domain-modeling`. См.:
+- `.claude/agents/domain-designer.md` — роль domain-designer
+- `.claude/agents/test-dev.md` — роль test-dev (в Walking Skeleton mode: только test implementation, НЕ production code)
 - `.claude/skills/domain-modeling/SKILL.md` — подход, workflow
 - `.claude/skills/domain-modeling/references/kotlin-patterns.md` — Kotlin patterns
 - `.claude/skills/domain-modeling/references/test-patterns.md` — JUnit patterns
 - `.claude/skills/domain-modeling/references/anti-patterns.md` — что запрещено
 
-### Обработка отчёта
-
-Когда `domain-designer` возвращает отчёт:
-
-1. **Зелёные тесты + нет Open Questions** → продолжай в Phase 4 (Codex review)
-2. **Open Questions** (противоречия в rules, ambiguity в scenarios) → покажи пользователю через `AskUserQuestion`, получи решения, обнови `0-spec.md`, повторно запусти `domain-designer` через SendMessage "обновлённый spec, перегенерируй"
-3. **Красные тесты** → тоже показать пользователю (обычно это сигнал, что rules противоречивы)
-4. **Превышение scope limits** → вернись в Phase 2.5 (Task Splitting), раздели фичу
-
 ### Cleanup
 
-Team `spec-<slug>` удаляется через `TeamDelete` только после Phase 6 (Human Approval). До этого team остаётся — пользователь может попросить изменить skeleton.
+Team `spec-<slug>` удаляется через `TeamDelete` только после Phase 6 (Human Approval). До этого team остаётся — пользователь может попросить изменить skeleton, lead перезапускает соответствующий stage (только 3.8a если меняются сигнатуры, только 3.8b bodies если меняется бизнес-логика, или оба если переработка большая).
 
 ### Пример структуры результата (Variant Y)
 
@@ -494,7 +555,7 @@ shared/feature/<slug>/domain/src/commonTest/kotlin/<base_package>/domain/<slug>/
 
 После успешного отчёта domain-designer переходи к Phase 4.
 
-**Нумерация**: Phase 3.5 — Domain Contract Lock (финализация текстовой части). Phase 3.8 — Walking Skeleton (генерация кода). Между ними нет 3.6/3.7 потому что диалоговые подшаги State Matrix / Primary Journeys / Domain Contract внутри Phase 2 используют собственную нумерацию 3.5–3.7 (устоявшаяся в команде).
+**Нумерация**: Phase 3.5 — Domain Contract Lock (финализация текстовой части). Phase 3.8 — Walking Skeleton (генерация кода), разбита на Stage 3.8a (signatures via domain-designer) + Stage 3.8b (bodies parallel tests via domain-designer + test-dev). Между 3.5 и 3.8 нет 3.6/3.7 потому что диалоговые подшаги State Matrix / Primary Journeys / Domain Contract внутри Phase 2 используют собственную нумерацию 3.5–3.7 (устоявшаяся в команде).
 
 ## Phase 4: Cross-Model Review (Codex)
 

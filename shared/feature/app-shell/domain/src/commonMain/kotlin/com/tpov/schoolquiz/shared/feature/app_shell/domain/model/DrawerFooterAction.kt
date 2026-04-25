@@ -15,6 +15,9 @@ sealed interface DrawerFooterAction {
     /** Opens the internal design catalog. Visible in debug builds only. */
     data object DesignCatalog : DrawerFooterAction
 
+    /** Triggers an immediate profile sync. Visible in debug builds or for superqualified users. */
+    data object SyncNow : DrawerFooterAction
+
     /** Opens the About / credits screen. Always visible. */
     data object About : DrawerFooterAction
 }

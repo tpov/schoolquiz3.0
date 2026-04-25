@@ -26,9 +26,18 @@ import kotlin.test.assertTrue
  * Tests for AppShellTransitions pure functions.
  *
  * Coverage:
- * - Domain Test Scenarios 2-13, 15, 17-21
+ * - Domain Test Scenarios 2-13, 15, 17-21, 34, 41a-41e (incl. 41d-bis cross-tab guard)
  * - State Matrix: back-policy (rows 1-6), re-tap (rows 1-2), tab-switch (rows 1-2),
  *   drawer-section (rows 1-4)
+ * - Decisions #41 (OpenQuestCreate destination), #45 (push semantics), #47 (re-tap guard),
+ *   #48 (atomicity invariant via exhaustive when in navigate())
+ *
+ * Scenario numbering vs tests.md plan (traceability):
+ *   plan 41a (push QuestCreateRoot)  → test "scenario 41a" (~line 843)
+ *   plan 41b (re-tap guard)          → test "scenario 41d" (~line 889) + "scenario 41d-bis" (~line 906)
+ *   plan 41c (back restores)         → test "scenario 41b" (~line 858)
+ *   plan 41d (cross-tab switch+push) → test "scenario 41c" (~line 873)
+ *   plan 41e (Labels compile check)  → compile-time only, comment (~line 940); runtime → DefaultRootComponentTest
  *
  * (Scenario 1 = cold start → AppShellStateTest; Scenario 14 = UserStats.guest() → UserStatsTest;
  *  Scenario 16 = fallback → AppShellStateTest)
@@ -75,7 +84,7 @@ class AppShellTransitionsTest {
     fun `scenario 2 given LOCAL backStack empty when switchTab INTERNET then local TabState preserved`() {
         val state = defaultState()
         val result = navigate(state, Destination.SwitchTab(Tab.INTERNET))
-        assertEquals(DrawerSection.LocalSection.MyQuests, result.newState.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, result.newState.localState.activeSection)
     }
 
     // -----------------------------------------------------------------------
@@ -157,7 +166,7 @@ class AppShellTransitionsTest {
             localState = TabState(
                 activeSection = DrawerSection.LocalSection.MyQuests,
                 stack = NavStack(
-                    active = LocalConfig.MyCoursesRoot, // detail
+                    active = LocalConfig.HomeQuestsRoot, // detail
                     backStack = listOf(LocalConfig.MyQuestsRoot),
                 ),
             ),
@@ -172,7 +181,7 @@ class AppShellTransitionsTest {
             localState = TabState(
                 activeSection = DrawerSection.LocalSection.MyQuests,
                 stack = NavStack(
-                    active = LocalConfig.MyCoursesRoot,
+                    active = LocalConfig.HomeQuestsRoot,
                     backStack = listOf(LocalConfig.MyQuestsRoot),
                 ),
             ),
@@ -187,7 +196,7 @@ class AppShellTransitionsTest {
             localState = TabState(
                 activeSection = DrawerSection.LocalSection.MyQuests,
                 stack = NavStack(
-                    active = LocalConfig.MyCoursesRoot,
+                    active = LocalConfig.HomeQuestsRoot,
                     backStack = listOf(LocalConfig.MyQuestsRoot),
                 ),
             ),
@@ -404,7 +413,7 @@ class AppShellTransitionsTest {
     fun `scenario 17 given LOCAL isDrawerOpen false when openDrawer then activeSection unchanged`() {
         val state = defaultState()
         val result = navigate(state, Destination.OpenDrawer)
-        assertEquals(DrawerSection.LocalSection.MyQuests, result.newState.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, result.newState.localState.activeSection)
     }
 
     @Test
@@ -714,8 +723,8 @@ class AppShellTransitionsTest {
 
     @Test
     fun `section switch row 3 same tab same section drawer open - closes drawer only`() {
-        val state = defaultState().copy(isDrawerOpen = true) // LOCAL/MyQuests, drawer open
-        val result = navigate(state, Destination.SelectSection(DrawerSection.LocalSection.MyQuests))
+        val state = defaultState().copy(isDrawerOpen = true) // LOCAL/HomeQuests, drawer open
+        val result = navigate(state, Destination.SelectSection(DrawerSection.LocalSection.HomeQuests))
         assertFalse(result.newState.isDrawerOpen)
         // Stack unchanged
         assertEquals(defaultState().localState.stack, result.newState.localState.stack)
@@ -727,8 +736,8 @@ class AppShellTransitionsTest {
 
     @Test
     fun `section switch row 4 same tab same section drawer closed - no-op`() {
-        val state = defaultState() // LOCAL/MyQuests, drawer closed
-        val result = navigate(state, Destination.SelectSection(DrawerSection.LocalSection.MyQuests))
+        val state = defaultState() // LOCAL/HomeQuests, drawer closed
+        val result = navigate(state, Destination.SelectSection(DrawerSection.LocalSection.HomeQuests))
         assertEquals(state, result.newState)
         assertTrue(result.events.isEmpty())
     }
@@ -831,4 +840,114 @@ class AppShellTransitionsTest {
             result.newState.internetState.activeSection,
         )
     }
+
+    // -----------------------------------------------------------------------
+    // Domain Test Scenarios 41a-41e — OpenQuestCreate push semantics
+    // Spec: home-and-my-quests 0-spec.md Decisions #41, #45, #47, #48
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `scenario 41a given LOCAL MyQuestsRoot when openQuestCreate then stack active is QuestCreateRoot`() {
+        val state = defaultState().copy(
+            activeTab = Tab.LOCAL,
+            localState = TabState(
+                activeSection = DrawerSection.LocalSection.MyQuests,
+                stack = NavStack(active = LocalConfig.MyQuestsRoot),
+            ),
+        )
+        val result = navigate(state, Destination.OpenQuestCreate)
+
+        assertEquals(LocalConfig.QuestCreateRoot, result.newState.localState.stack.active)
+        assertEquals(listOf(LocalConfig.MyQuestsRoot), result.newState.localState.stack.backStack)
+    }
+
+    @Test
+    fun `scenario 41b given pushed QuestCreateRoot when back then returns to MyQuestsRoot`() {
+        val initial = defaultState().copy(
+            activeTab = Tab.LOCAL,
+            localState = TabState(
+                activeSection = DrawerSection.LocalSection.MyQuests,
+                stack = NavStack(active = LocalConfig.MyQuestsRoot),
+            ),
+        )
+        val pushed = navigate(initial, Destination.OpenQuestCreate).newState
+        val back = navigate(pushed, Destination.Back).newState
+
+        assertEquals(LocalConfig.MyQuestsRoot, back.localState.stack.active)
+        assertTrue(back.localState.stack.backStack.isEmpty())
+    }
+
+    @Test
+    fun `scenario 41c given EVENTS active when openQuestCreate then switches to LOCAL with QuestCreateRoot pushed`() {
+        val state = defaultState().copy(
+            activeTab = Tab.EVENTS,
+            localState = TabState(
+                activeSection = DrawerSection.LocalSection.HomeQuests,
+                stack = NavStack(active = LocalConfig.HomeQuestsRoot),
+            ),
+        )
+        val result = navigate(state, Destination.OpenQuestCreate).newState
+
+        assertEquals(Tab.LOCAL, result.activeTab)
+        assertEquals(LocalConfig.QuestCreateRoot, result.localState.stack.active)
+        assertEquals(listOf(LocalConfig.HomeQuestsRoot), result.localState.stack.backStack)
+    }
+
+    @Test
+    fun `scenario 41d re-tap guard given QuestCreateRoot active when openQuestCreate again then state unchanged`() {
+        val initial = defaultState().copy(
+            activeTab = Tab.LOCAL,
+            localState = TabState(
+                activeSection = DrawerSection.LocalSection.MyQuests,
+                stack = NavStack(active = LocalConfig.MyQuestsRoot),
+            ),
+        )
+        val pushed = navigate(initial, Destination.OpenQuestCreate).newState
+        val secondTap = navigate(pushed, Destination.OpenQuestCreate).newState
+
+        assertEquals(pushed, secondTap)
+        assertEquals(1, secondTap.localState.stack.backStack.size)
+    }
+
+    @Test
+    fun `scenario 41d-bis re-tap guard given EVENTS active and LOCAL stack tops QuestCreateRoot when openQuestCreate then state unchanged`() {
+        // Codex Round 5 NN1 fix: guard must check localState.stack.active independent of activeTab.
+        // If LOCAL stack already tops with QuestCreateRoot but user is on EVENTS,
+        // OpenQuestCreate must still no-op (no duplicate push).
+        val state = defaultState().copy(
+            activeTab = Tab.EVENTS,
+            localState = TabState(
+                activeSection = DrawerSection.LocalSection.MyQuests,
+                stack = NavStack(
+                    active = LocalConfig.QuestCreateRoot,
+                    backStack = listOf(LocalConfig.MyQuestsRoot),
+                ),
+            ),
+        )
+        val result = navigate(state, Destination.OpenQuestCreate).newState
+
+        assertEquals(state, result)
+        assertEquals(1, result.localState.stack.backStack.size)
+    }
+
+    @Test
+    fun `scenario 41e openQuestCreate closes drawer if open`() {
+        val state = defaultState().copy(
+            activeTab = Tab.LOCAL,
+            isDrawerOpen = true,
+            localState = TabState(
+                activeSection = DrawerSection.LocalSection.MyQuests,
+                stack = NavStack(active = LocalConfig.MyQuestsRoot),
+            ),
+        )
+        val result = navigate(state, Destination.OpenQuestCreate).newState
+
+        assertFalse(result.isDrawerOpen)
+        assertEquals(LocalConfig.QuestCreateRoot, result.localState.stack.active)
+    }
+
+    // Atomicity invariant (Decision #48): ensures `Destination.OpenQuestCreate` MUST be handled
+    // in the exhaustive `when` of `navigate()`. If not — compile error in this file via the
+    // call to `navigate(state, Destination.OpenQuestCreate)` above. No runtime test needed:
+    // the constraint is enforced by Kotlin compiler exhaustiveness check.
 }

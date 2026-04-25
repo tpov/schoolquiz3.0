@@ -37,13 +37,13 @@ class InitializeAppShellUseCaseTest {
     }
 
     @Test
-    fun `initialize with guest stats produces MyQuests as local active section`() = runTest {
+    fun `initialize with guest stats produces HomeQuests as local active section`() = runTest {
         val fake = FakeUserStatsRepository(UserStats.guest())
         val useCase = InitializeAppShellUseCase(fake)
 
         val state = useCase()
 
-        assertEquals(DrawerSection.LocalSection.MyQuests, state.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, state.localState.activeSection)
     }
 
     @Test
@@ -95,9 +95,9 @@ class InitializeAppShellUseCaseTest {
 
         val state = useCase()
 
-        // Scenario 1: activeTab=LOCAL, localSection=MyQuests, stack root, drawer closed
+        // Scenario 1: activeTab=LOCAL, localSection=HomeQuests, stack root, drawer closed
         assertEquals(Tab.LOCAL, state.activeTab)
-        assertEquals(DrawerSection.LocalSection.MyQuests, state.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, state.localState.activeSection)
         assertFalse(state.isDrawerOpen)
         assertEquals(emptyList(), state.localState.stack.backStack)
     }

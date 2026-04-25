@@ -24,20 +24,28 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScr
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.UnderConstructionScreen
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
+import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
+import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import androidx.work.WorkManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -118,6 +126,8 @@ class AppShellScreenTest {
             private val _stats = MutableStateFlow(UserStats.guest())
             override fun observeStats(): Flow<UserStats> = _stats.asStateFlow()
             override suspend fun currentStats(): UserStats = _stats.value
+            override suspend fun setLocalDeveloperLevel(value: Int) = Unit
+            override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
         }
         val component = DefaultRootComponent(
             componentContext = componentCtx,
@@ -125,6 +135,21 @@ class AppShellScreenTest {
             navigateUseCase = NavigateUseCase(),
             observeUseCase = ObserveAppShellStateUseCase(repo),
             retapUseCase = OnTabRetapUseCase(),
+            userStatsRepository = repo,
+            workManager = mock(WorkManager::class.java),
+            myQuestsFactory = { _, _ ->
+                object : MyQuestsComponent {
+                    override val state: StateFlow<MyQuestsUiState> = MutableStateFlow(MyQuestsUiState())
+                    override fun onCatalogSelected(id: CatalogId?) = Unit
+                    override fun onCreateQuestClick() = Unit
+                }
+            },
+            homeQuestsFactory = { _ ->
+                object : HomeQuestsComponent {
+                    override val state: StateFlow<HomeQuestsUiState> = MutableStateFlow(HomeQuestsUiState())
+                    override fun onCatalogClick(id: CatalogId) = Unit
+                }
+            },
         )
 
         composeTestRule.setContent {

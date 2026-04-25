@@ -8,9 +8,10 @@ import org.koin.dsl.module
 
 val firebaseModule =
     module {
+        single<FirebaseFirestore> { FirebaseFirestore.getInstance() }
         single<UserStatsDataSource> {
             FirebaseUserStatsDataSource(
-                firestore = FirebaseFirestore.getInstance(),
+                firestore = get(),
                 auth = FirebaseAuth.getInstance(),
             )
         }

@@ -16,6 +16,18 @@ class FakeUserStatsRepository(
 
     override suspend fun currentStats(): UserStats = _stats.value
 
+    var setLocalDeveloperLevelCalls: Int = 0
+    var lastSetDeveloperLevel: Int? = null
+
+    override suspend fun setLocalDeveloperLevel(value: Int) {
+        setLocalDeveloperLevelCalls++
+        lastSetDeveloperLevel = value
+    }
+
+    var refreshResult: Result<Unit> = Result.success(Unit)
+
+    override suspend fun refreshProfile(): Result<Unit> = refreshResult
+
     fun emit(stats: UserStats) {
         _stats.value = stats
     }

@@ -8,8 +8,14 @@ android {
 
 dependencies {
     implementation(project(":shared:feature:app-shell:domain"))
+    implementation(project(":android:feature:quest:presentation"))
+    implementation(project(":shared:core:foundation"))
+    implementation(project(":shared:core:catalog:domain"))
+    implementation(project(":shared:feature:qualification:domain"))
+    implementation(project(":platform:android-services"))
     implementation(project(":android:core:navigation"))
     implementation(project(":android:core:designsystem"))
+    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)
@@ -27,5 +33,6 @@ dependencies {
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.kotlin.test.junit)
+    androidTestImplementation(libs.mockito.android)
     debugImplementation(libs.compose.ui.test.manifest)
 }

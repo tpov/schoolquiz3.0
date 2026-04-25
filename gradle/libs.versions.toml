@@ -1,8 +1,8 @@
 [versions]
 # Build tooling
 agp = "8.11.0"
-kotlin = "1.9.22"
-ksp = "1.9.22-1.0.16"
+kotlin = "2.3.10"
+ksp = "2.3.7"
 detekt = "1.23.6"
 ktlint = "12.1.0"
 logger-plugin = "1.0.0"
@@ -13,8 +13,8 @@ min-sdk = "26"
 target-sdk = "34"
 
 # Kotlin libs
-kotlinx-coroutines = "1.7.3"
-kotlinx-serialization = "1.6.3"
+kotlinx-coroutines = "1.10.2"
+kotlinx-serialization = "1.7.3"
 kotlinx-datetime = "0.5.0"
 
 # AndroidX
@@ -31,8 +31,6 @@ androidx-fragment = "1.8.3"
 
 # Compose
 compose-bom = "2024.09.02"
-compose-compiler = "1.5.10"
-
 # Navigation / DI / architecture (KMP)
 decompose = "3.1.0"
 essenty = "2.1.0"
@@ -41,6 +39,9 @@ koin-compose = "3.5.6"
 
 # Animations
 lottie-compose = "6.4.1"
+
+# Image loading
+coil3 = "3.4.0"
 
 # Firebase
 firebase-bom = "33.2.0"
@@ -63,6 +64,7 @@ androidx-test-espresso = "3.6.1"
 androidx-test-runner = "1.6.2"
 mockito-core = "5.15.2"
 mockito-kotlin = "5.4.0"
+mockk = "1.13.10"
 turbine = "1.1.0"
 
 [libraries]
@@ -112,6 +114,7 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 # Navigation — Decompose (KMP-ready, см. ADR-0008)
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-extensions-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
+decompose-testutils = { module = "com.arkivanov.decompose:extensions-compose-testutils", version.ref = "decompose" }
 essenty-lifecycle = { module = "com.arkivanov.essenty:lifecycle", version.ref = "essenty" }
 essenty-state-keeper = { module = "com.arkivanov.essenty:state-keeper", version.ref = "essenty" }
 
@@ -126,6 +129,11 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 
 # Animations
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie-compose" }
+
+# Image loading (Coil 3)
+coil3-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil3" }
+coil3-core = { group = "io.coil-kt.coil3", name = "coil", version.ref = "coil3" }
+coil3-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil3" }
 
 # Firebase
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
@@ -155,12 +163,15 @@ androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "a
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
+mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockito-core" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 # Gradle plugins (used by convention plugins in buildSrc)
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-compose-gradle-plugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 
@@ -193,6 +204,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

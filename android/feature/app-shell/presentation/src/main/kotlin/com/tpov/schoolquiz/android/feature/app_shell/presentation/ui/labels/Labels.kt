@@ -6,9 +6,12 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.SportsEsports
@@ -49,7 +52,7 @@ val DrawerSection.displayName: String
     get() =
         when (this) {
             DrawerSection.LocalSection.MyQuests -> "Мои квесты"
-            DrawerSection.LocalSection.MyCourses -> "Мои курсы"
+            DrawerSection.LocalSection.HomeQuests -> "Домашние квесты"
             DrawerSection.LocalSection.Settings -> "Настройки"
             DrawerSection.InternetSection.Arena -> "Арена"
             DrawerSection.InternetSection.Catalog -> "Каталог"
@@ -65,7 +68,7 @@ val DrawerSection.icon: ImageVector
     get() =
         when (this) {
             DrawerSection.LocalSection.MyQuests -> Icons.Default.Book
-            DrawerSection.LocalSection.MyCourses -> Icons.Default.Book
+            DrawerSection.LocalSection.HomeQuests -> Icons.Default.Home
             DrawerSection.LocalSection.Settings -> Icons.Default.Settings
             DrawerSection.InternetSection.Arena -> Icons.Default.Stadium
             DrawerSection.InternetSection.Catalog -> Icons.Default.Book
@@ -85,10 +88,11 @@ val TabConfig.displayName: String
             is LocalConfig ->
                 when (this) {
                     LocalConfig.MyQuestsRoot -> "Мои квесты"
-                    LocalConfig.MyCoursesRoot -> "Мои курсы"
+                    LocalConfig.HomeQuestsRoot -> "Домашние квесты"
                     LocalConfig.SettingsRoot -> "Настройки"
                     LocalConfig.DesignCatalogRoot -> "Design Catalog"
                     LocalConfig.EmptyRoot -> "Локальная"
+                    LocalConfig.QuestCreateRoot -> "Создание квеста"
                 }
             is InternetConfig ->
                 when (this) {
@@ -115,5 +119,14 @@ val DrawerFooterAction.displayName: String
     get() =
         when (this) {
             DrawerFooterAction.DesignCatalog -> "Design Catalog"
+            DrawerFooterAction.SyncNow -> "Синхронизация"
             DrawerFooterAction.About -> "О приложении"
+        }
+
+val DrawerFooterAction.icon: ImageVector
+    get() =
+        when (this) {
+            DrawerFooterAction.DesignCatalog -> Icons.Default.Palette
+            DrawerFooterAction.SyncNow -> Icons.Default.Refresh
+            DrawerFooterAction.About -> Icons.Default.Info
         }

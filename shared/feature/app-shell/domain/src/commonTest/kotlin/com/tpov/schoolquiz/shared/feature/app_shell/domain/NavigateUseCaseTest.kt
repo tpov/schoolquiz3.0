@@ -59,7 +59,7 @@ class NavigateUseCaseTest {
     fun `scenario 2 local state preserved after switching to INTERNET`() {
         val state = defaultState()
         val result = useCase(state, Destination.SwitchTab(Tab.INTERNET))
-        assertEquals(DrawerSection.LocalSection.MyQuests, result.newState.localState.activeSection)
+        assertEquals(DrawerSection.LocalSection.HomeQuests, result.newState.localState.activeSection)
     }
 
     // -----------------------------------------------------------------------

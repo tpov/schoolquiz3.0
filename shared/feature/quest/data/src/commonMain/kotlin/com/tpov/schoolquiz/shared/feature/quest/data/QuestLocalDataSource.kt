@@ -1,0 +1,31 @@
+package com.tpov.schoolquiz.shared.feature.quest.data
+
+import com.tpov.schoolquiz.shared.core.persistence.QuestDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestEntity
+import kotlinx.coroutines.flow.Flow
+
+interface QuestLocalDataSource {
+    fun observeMyQuests(authorUid: String, catalogId: String?): Flow<List<QuestEntity>>
+    fun observeByShelf(shelf: String): Flow<List<QuestEntity>>
+    suspend fun upsertByIdIfNewerVersion(entity: QuestEntity)
+    suspend fun deleteById(id: String)
+    suspend fun findById(id: String): QuestEntity?
+}
+
+class QuestLocalDataSourceImpl(
+    private val dao: QuestDao,
+) : QuestLocalDataSource {
+    override fun observeMyQuests(authorUid: String, catalogId: String?): Flow<List<QuestEntity>> =
+        if (catalogId == null) dao.observeMyQuests(authorUid)
+        else dao.observeMyQuestsInCatalog(authorUid, catalogId)
+
+    override fun observeByShelf(shelf: String): Flow<List<QuestEntity>> =
+        dao.observeByShelf(shelf)
+
+    override suspend fun upsertByIdIfNewerVersion(entity: QuestEntity) =
+        dao.upsertByIdIfNewerVersion(entity)
+
+    override suspend fun deleteById(id: String) = dao.deleteById(id)
+
+    override suspend fun findById(id: String): QuestEntity? = dao.findById(id)
+}

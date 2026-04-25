@@ -24,6 +24,8 @@ fun DrawerContent(
     navigator: Navigator,
     isDebugBuild: Boolean,
     versionName: String,
+    onVersionTap: () -> Unit,
+    onSyncNow: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ModalDrawerSheet(modifier = modifier) {
@@ -46,6 +48,9 @@ fun DrawerContent(
             navigator = navigator,
             isDebugBuild = isDebugBuild,
             versionName = versionName,
+            userStats = userStats,
+            onVersionTap = onVersionTap,
+            onSyncNow = onSyncNow,
         )
     }
 }

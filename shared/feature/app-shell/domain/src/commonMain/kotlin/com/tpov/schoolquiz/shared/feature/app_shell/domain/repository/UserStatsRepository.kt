@@ -28,4 +28,16 @@ interface UserStatsRepository {
      * Returns [UserStats.guest()] if no authenticated user is available.
      */
     suspend fun currentStats(): UserStats
+
+    /**
+     * Writes the developer qualification level locally (dev mode only).
+     * ADR-HLA-02: this is the only permitted client write path for the developer field.
+     */
+    suspend fun setLocalDeveloperLevel(value: Int)
+
+    /**
+     * Triggers a full profile refresh from the remote source (Firestore).
+     * Called by SyncWorker. Returns [Result.failure] on network or parsing error.
+     */
+    suspend fun refreshProfile(): Result<Unit>
 }

@@ -28,7 +28,7 @@ fun rootStackForSection(section: DrawerSection): NavStack<*> = when (section) {
 fun rootLocalStackForSection(section: DrawerSection.LocalSection): NavStack<LocalConfig> =
     when (section) {
         DrawerSection.LocalSection.MyQuests -> NavStack(LocalConfig.MyQuestsRoot)
-        DrawerSection.LocalSection.MyCourses -> NavStack(LocalConfig.MyCoursesRoot)
+        DrawerSection.LocalSection.HomeQuests -> NavStack(LocalConfig.HomeQuestsRoot)
         DrawerSection.LocalSection.Settings -> NavStack(LocalConfig.SettingsRoot)
     }
 
@@ -74,6 +74,7 @@ fun navigate(state: AppShellState, destination: Destination): TransitionResult =
         Destination.OpenDrawer -> onOpenDrawer(state)
         Destination.CloseDrawer -> TransitionResult(state.copy(isDrawerOpen = false))
         Destination.OpenDesignCatalog -> onOpenDesignCatalog(state)
+        Destination.OpenQuestCreate -> onOpenQuestCreate(state)
     }
 
 // ---------------------------------------------------------------------------
@@ -316,6 +317,46 @@ fun onOpenDesignCatalog(state: AppShellState): TransitionResult =
             isDrawerOpen = false,
         ),
     )
+
+// ---------------------------------------------------------------------------
+// onOpenQuestCreate — FAB destination (push QuestCreateRoot onto LOCAL stack)
+// ---------------------------------------------------------------------------
+
+/**
+ * Pushes [LocalConfig.QuestCreateRoot] onto the LOCAL tab's stack on top of current active.
+ *
+ * Differs from [onOpenDesignCatalog] (replaces entire stack) — this is a push, preserving
+ * the existing active config in backStack so Back returns to the previous screen
+ * (typically [LocalConfig.MyQuestsRoot]).
+ *
+ * **Re-tap guard (Decision #47)**: if `state.localState.stack.active == LocalConfig.QuestCreateRoot`
+ * — no-op (state unchanged). Prevents stacking duplicate QuestCreateRoot entries when
+ * the user taps the FAB while already on the create screen.
+ *
+ * **Cross-tab behavior**: if `activeTab != Tab.LOCAL`, switches to LOCAL first,
+ * then pushes `QuestCreateRoot` onto whatever was the LOCAL active (preserving current
+ * `localState` content in backStack). Spec: home-and-my-quests `0-spec.md` scenario 41c.
+ *
+ * Spec: home-and-my-quests `0-spec.md` Decisions #41, #45, #47, #48 + scenarios 41a-41e.
+ */
+fun onOpenQuestCreate(state: AppShellState): TransitionResult {
+    // Re-tap guard (Decision #47): already on QuestCreateRoot → no-op.
+    // Check only localState.stack.active — independent of activeTab. If LOCAL stack already
+    // tops with QuestCreateRoot but user is on EVENTS, switching back to LOCAL via this
+    // destination should still no-op (no duplicate push).
+    if (state.localState.stack.active == LocalConfig.QuestCreateRoot) {
+        return TransitionResult(state)
+    }
+
+    val pushedStack = state.localState.stack.push(LocalConfig.QuestCreateRoot)
+    return TransitionResult(
+        state.copy(
+            activeTab = Tab.LOCAL,
+            localState = state.localState.copy(stack = pushedStack),
+            isDrawerOpen = false,
+        ),
+    )
+}
 
 // ---------------------------------------------------------------------------
 // onDeepLink — stub architectural hook (MVP: no registered patterns)

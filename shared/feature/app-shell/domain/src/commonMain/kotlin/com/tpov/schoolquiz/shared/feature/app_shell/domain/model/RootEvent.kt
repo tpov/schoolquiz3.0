@@ -15,4 +15,13 @@ sealed interface RootEvent {
      * backStack empty + activeTab == LOCAL + drawer closed.
      */
     data object SystemBack : RootEvent
+
+    /** Developer mode was successfully activated via version tap sequence. */
+    data object DevModeActivated : RootEvent
+
+    /** Version tap sequence received but developer mode was already active. */
+    data object DevModeAlreadyActive : RootEvent
+
+    /** A profile sync operation has been initiated via onSyncNow(). */
+    data object SyncStarted : RootEvent
 }

@@ -4,7 +4,9 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.actualLevel
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.emptyRootFor
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.isVisible
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.rootOf
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleSections
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
@@ -189,13 +191,13 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 22 visibleSections LOCAL guest returns MyQuests MyCourses Settings`() {
+    fun `scenario 22 visibleSections LOCAL guest returns HomeQuests MyQuests Settings`() {
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
         // DesignCatalog removed from LocalSection (now DrawerFooterAction) — 3 sections remain
         assertEquals(
             listOf(
+                DrawerSection.LocalSection.HomeQuests,
                 DrawerSection.LocalSection.MyQuests,
-                DrawerSection.LocalSection.MyCourses,
                 DrawerSection.LocalSection.Settings,
             ),
             sections,
@@ -297,7 +299,7 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 28 visibleSections EVENTS with tester moderator admin developer at 100 returns ActiveEvents`() {
+    fun `scenario 28 visibleSections EVENTS with developer at 100 superqual returns ActiveEvents and Minigames`() {
         val stats = UserStats.guest().copy(
             qualification = Qualification(
                 tester = 100,
@@ -307,11 +309,19 @@ class VisibilityTest {
                 admin = 100,
                 developer = 100,
             ),
-            // currentSkill = 0 → Minigames (needs 10000) stays hidden
+            // developer=100 → superqualification bypass; both ActiveEvents and Minigames visible
         )
         val sections = visibleSections(Tab.EVENTS, stats)
-        assertEquals(listOf(DrawerSection.EventsSection.ActiveEvents), sections)
+        // Superqualification OR-bypass: developer >= LEVEL_1.points overrides ALL requiredRoles
+        assertEquals(
+            listOf(
+                DrawerSection.EventsSection.ActiveEvents,
+                DrawerSection.EventsSection.Minigames,
+            ),
+            sections,
+        )
     }
+
 
     // -----------------------------------------------------------------------
     // Section Visibility Rules — verify all 12 requiredRoles mappings
@@ -323,8 +333,8 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules row 2 LOCAL MyCourses has empty requiredRoles`() {
-        assertTrue(DrawerSection.LocalSection.MyCourses.requiredRoles.isEmpty())
+    fun `visibility rules row 2 LOCAL HomeQuests has empty requiredRoles`() {
+        assertTrue(DrawerSection.LocalSection.HomeQuests.requiredRoles.isEmpty())
     }
 
     @Test
@@ -333,12 +343,12 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules LOCAL has exactly 3 sections MyQuests MyCourses Settings`() {
+    fun `visibility rules LOCAL has exactly 3 sections HomeQuests MyQuests Settings`() {
         // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction)
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
         assertEquals(3, sections.size)
+        assertTrue(sections.contains(DrawerSection.LocalSection.HomeQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.MyQuests))
-        assertTrue(sections.contains(DrawerSection.LocalSection.MyCourses))
         assertTrue(sections.contains(DrawerSection.LocalSection.Settings))
     }
 
@@ -429,7 +439,7 @@ class VisibilityTest {
     @Test
     fun `scenario 44 rootOf maps each DrawerSection to correct TabConfig member`() {
         assertEquals(LocalConfig.MyQuestsRoot, rootOf(DrawerSection.LocalSection.MyQuests))
-        assertEquals(LocalConfig.MyCoursesRoot, rootOf(DrawerSection.LocalSection.MyCourses))
+        assertEquals(LocalConfig.HomeQuestsRoot, rootOf(DrawerSection.LocalSection.HomeQuests))
         assertEquals(LocalConfig.SettingsRoot, rootOf(DrawerSection.LocalSection.Settings))
         assertEquals(InternetConfig.ArenaRoot, rootOf(DrawerSection.InternetSection.Arena))
         assertEquals(InternetConfig.CatalogRoot, rootOf(DrawerSection.InternetSection.Catalog))
@@ -451,5 +461,160 @@ class VisibilityTest {
         assertEquals(InternetConfig.EmptyRoot, emptyRootFor(Tab.INTERNET))
         assertEquals(EventsConfig.EmptyRoot, emptyRootFor(Tab.EVENTS))
         assertEquals(ShopConfig.ShopRoot, emptyRootFor(Tab.SHOP)) // Shop special: no empty state
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-17 — superqualification bypass: developer=100 → visible regardless of requiredRoles
+    // ActiveEvents requires {T=100, M=100, A=100, D=100}; only D is satisfied → bypass
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-17 isVisible ActiveEvents developer 100 superqualification bypass returns true`() {
+        val stats = UserStats.guest().copy(
+            qualification = Qualification.zero().copy(developer = 100),
+        )
+        assertTrue(isVisible(DrawerSection.EventsSection.ActiveEvents, stats))
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-18 — all 4 roles satisfied explicitly (no superqual shortcut)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-18 isVisible ActiveEvents all 4 roles at 100 returns true`() {
+        val stats = UserStats.guest().copy(
+            qualification = Qualification(
+                tester = 100,
+                moderator = 100,
+                sponsor = 0,
+                translator = 0,
+                admin = 100,
+                developer = 100,
+            ),
+        )
+        assertTrue(isVisible(DrawerSection.EventsSection.ActiveEvents, stats))
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-19 — partial fail: developer=0, moderator=0 → no bypass, not all met → false
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-19 isVisible ActiveEvents developer 0 moderator 0 partial fail returns false`() {
+        val stats = UserStats.guest().copy(
+            qualification = Qualification(
+                tester = 100,
+                moderator = 0,
+                sponsor = 0,
+                translator = 0,
+                admin = 100,
+                developer = 0,
+            ),
+        )
+        assertFalse(isVisible(DrawerSection.EventsSection.ActiveEvents, stats))
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-20 — superqual bypasses section that has NO DEVELOPER in requiredRoles
+    // Arena requires only Role.USER >= 3000; developer not in requiredRoles.
+    // With developer=100 and currentSkill=0 (USER requirement not met), bypass applies → true
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-20 isVisible Arena developer 100 superqual bypasses section without D requirement`() {
+        val stats = UserStats.guest().copy(
+            qualification = Qualification.zero().copy(developer = 100),
+            currentSkill = 0,
+        )
+        assertTrue(isVisible(DrawerSection.InternetSection.Arena, stats))
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-21 — no superqual, single role satisfied normally → true
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-21 isVisible Arena developer 0 currentSkill 3000 single role satisfied returns true`() {
+        val stats = UserStats.guest().copy(
+            currentSkill = 3_000,
+        )
+        assertTrue(isVisible(DrawerSection.InternetSection.Arena, stats))
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-22 — no superqual, single role NOT met → false
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-22 isVisible Arena developer 0 currentSkill 2999 single role not met returns false`() {
+        val stats = UserStats.guest().copy(
+            currentSkill = 2_999,
+        )
+        assertFalse(isVisible(DrawerSection.InternetSection.Arena, stats))
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-23 — empty requiredRoles always returns true (aligns with scenario 35)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-23 isVisible empty requiredRoles developer 0 always returns true`() {
+        assertTrue(isVisible(DrawerSection.LocalSection.MyQuests, UserStats.guest()))
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-24 — debug build + developer=0 → [DesignCatalog, SyncNow, About] (debug bypass)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-24 visibleFooterActions debug build developer 0 returns DesignCatalog SyncNow About`() {
+        val stats = UserStats.guest()
+        val actions = visibleFooterActions(isDebugBuild = true, stats = stats)
+        assertEquals(3, actions.size)
+        assertEquals(DrawerFooterAction.DesignCatalog, actions[0])
+        assertEquals(DrawerFooterAction.SyncNow, actions[1])
+        assertEquals(DrawerFooterAction.About, actions[2])
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-25 — release build + developer=0 → [About] only (no dev tools leaked)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-25 visibleFooterActions release build developer 0 returns About only`() {
+        val stats = UserStats.guest()
+        val actions = visibleFooterActions(isDebugBuild = false, stats = stats)
+        assertEquals(1, actions.size)
+        assertEquals(DrawerFooterAction.About, actions[0])
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-26 — release build + developer=100 → [DesignCatalog, SyncNow, About]
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-26 visibleFooterActions release build developer 100 returns DesignCatalog SyncNow About`() {
+        val stats = UserStats.guest().copy(
+            qualification = Qualification.zero().copy(developer = 100),
+        )
+        val actions = visibleFooterActions(isDebugBuild = false, stats = stats)
+        assertEquals(3, actions.size)
+        assertEquals(DrawerFooterAction.DesignCatalog, actions[0])
+        assertEquals(DrawerFooterAction.SyncNow, actions[1])
+        assertEquals(DrawerFooterAction.About, actions[2])
+    }
+
+    // -----------------------------------------------------------------------
+    // DM-27 — release build + developer=99 → [About] only (below threshold boundary)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `DM-27 visibleFooterActions release build developer 99 below threshold returns About only`() {
+        val stats = UserStats.guest().copy(
+            qualification = Qualification.zero().copy(developer = 99),
+        )
+        val actions = visibleFooterActions(isDebugBuild = false, stats = stats)
+        assertEquals(1, actions.size)
+        assertEquals(DrawerFooterAction.About, actions[0])
     }
 }

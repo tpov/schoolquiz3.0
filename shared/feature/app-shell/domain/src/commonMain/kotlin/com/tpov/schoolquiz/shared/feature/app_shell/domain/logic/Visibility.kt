@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.app_shell.domain.logic
 
+import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
@@ -46,17 +47,23 @@ fun actualLevel(role: Role, stats: UserStats): Int = when (role) {
  *
  * Business Rule #16: isVisible = requiredRoles.all { (role, minLevel) -> actualLevel(role, stats) >= minLevel }
  * Domain Test Scenario 35: empty requiredRoles → all() on empty collection = true → always visible.
+ *
+ * Superqualification OR-bypass (ADR-HLA-02, Problem 2 fix):
+ * If developer >= QualificationLevel.LEVEL_1.points → always visible regardless of requiredRoles.
  */
-fun isVisible(section: DrawerSection, stats: UserStats): Boolean =
-    section.requiredRoles.all { (role, minLevel) ->
+fun isVisible(section: DrawerSection, stats: UserStats): Boolean {
+    if (stats.qualification.developer >= QualificationLevel.LEVEL_1.points) return true
+    return section.requiredRoles.all { (role, minLevel) ->
         actualLevel(role, stats) >= minLevel
     }
+}
 
 /**
  * Returns the ordered list of visible [DrawerSection]s for [tab] given [stats].
  *
- * Output order preserves the declaration order within each sealed interface,
- * consistent with the Section Visibility Rules table order.
+ * Output order follows the Section Visibility Rules table order.
+ * LOCAL: [HomeQuests, MyQuests, Settings] (Phase 02 spec reorder; differs from declaration order).
+ * INTERNET/EVENTS: declaration order of the sealed interface.
  *
  * Business Rule #17: only visible sections are returned; callers render exactly this list.
  * Business Rule #18: bottom-tabs themselves are NOT filtered here — call site decides tab visibility.
@@ -66,8 +73,8 @@ fun isVisible(section: DrawerSection, stats: UserStats): Boolean =
  */
 fun visibleSections(tab: Tab, stats: UserStats): List<DrawerSection> = when (tab) {
     Tab.LOCAL -> listOf(
+        DrawerSection.LocalSection.HomeQuests,
         DrawerSection.LocalSection.MyQuests,
-        DrawerSection.LocalSection.MyCourses,
         DrawerSection.LocalSection.Settings,
     ).filter { isVisible(it, stats) }
 
@@ -105,7 +112,7 @@ fun defaultSection(tab: Tab, stats: UserStats): DrawerSection? =
  */
 fun rootOf(section: DrawerSection): TabConfig = when (section) {
     DrawerSection.LocalSection.MyQuests -> LocalConfig.MyQuestsRoot
-    DrawerSection.LocalSection.MyCourses -> LocalConfig.MyCoursesRoot
+    DrawerSection.LocalSection.HomeQuests -> LocalConfig.HomeQuestsRoot
     DrawerSection.LocalSection.Settings -> LocalConfig.SettingsRoot
     DrawerSection.InternetSection.Arena -> InternetConfig.ArenaRoot
     DrawerSection.InternetSection.Catalog -> InternetConfig.CatalogRoot
@@ -133,12 +140,19 @@ fun emptyRootFor(tab: Tab): TabConfig = when (tab) {
 }
 
 /**
- * Returns the list of [DrawerFooterAction]s visible for the current build type.
+ * Returns the list of [DrawerFooterAction]s visible for the current build type and user stats.
  *
- * Domain Test Scenarios 42-43:
- * - Debug build: [DesignCatalog, About]
- * - Release build: [About]
+ * Domain Test Scenarios DM-24..DM-27 (Footer Action Visibility Matrix):
+ * - isDebugBuild=true → [DesignCatalog, SyncNow, About]
+ * - isDebugBuild=false, developer >= LEVEL_1.points → [DesignCatalog, SyncNow, About]
+ * - isDebugBuild=false, developer=0 → [About]
+ * Order: DesignCatalog → SyncNow → About (stable per spec).
  */
-fun visibleFooterActions(isDebugBuild: Boolean): List<DrawerFooterAction> =
-    if (isDebugBuild) listOf(DrawerFooterAction.DesignCatalog, DrawerFooterAction.About)
-    else listOf(DrawerFooterAction.About)
+fun visibleFooterActions(isDebugBuild: Boolean, stats: UserStats): List<DrawerFooterAction> {
+    val devToolsVisible = isDebugBuild || stats.qualification.developer >= QualificationLevel.LEVEL_1.points
+    return if (devToolsVisible) {
+        listOf(DrawerFooterAction.DesignCatalog, DrawerFooterAction.SyncNow, DrawerFooterAction.About)
+    } else {
+        listOf(DrawerFooterAction.About)
+    }
+}

@@ -61,6 +61,7 @@ class FirebaseUserStatsDataSource(
         val snapshot = firestore.collection("users").document(uid).get().await()
         return snapshot.toRawUserStats() ?: RawUserStats()
     }
+
 }
 
 private fun DocumentSnapshot.toRawUserStats(): RawUserStats? {

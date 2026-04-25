@@ -1,0 +1,28 @@
+Справедливый вопрос. Я даю конкретный role file каждому агенту (plan/phase-NN/backend.md, frontend.md, tests.md), и в первом prompt явно пишу "Прочитай ТОЛЬКО: <путь>".
+
+Но происходит три типа scope creep — не потому что агенты "читают не то", а потому что:
+
+1. Atomic compile requirement (нормальная цепочка)
+
+Phase 02 rename MyCourses → HomeQuests в domain. Если frontend-dev поменяет только Labels.kt, а backend-dev ещё не переименовал DrawerSection.MyCourses — assembleDebug падает с compile error "unresolved reference". Rename должен быть атомарным — все references одновременно. Поэтому frontend-dev-p02 сделал обе роли.
+
+То же самое в Phase 03: backend-dev-p03 добавил новые RootEvent.SyncStarted и DrawerFooterAction.SyncNow — но MainActivity.kt и DrawerFooter.kt имеют when над этими sealed — компилятор требует exhaustive branches. Backend-dev-p03 добавил TODO("Phase 07") stubs в presentation, чтобы build green.
+
+2. План vs реальность расходится
+
+Phase 02 overview.md указал android/feature/app-shell/presentation/src/main/.../ui/AppShellTransitions.kt:31. Этого файла не существует — реальный файл в shared/feature/app-shell/domain/logic/AppShellTransitions.kt. Агент поменял реальный — не проигнорировал план ради развлечения, просто docs устарели.
+
+3. Planner gap
+
+Phase 01 plan не включил PersistenceModule (Koin DI для AppDatabase + DAO). Phase 05 неожиданно понадобился — CatalogDataModule.single<CatalogLocalDataSource> { CatalogLocalDataSourceImpl(get()) } требует CatalogDao binding. Backend-dev-p05 создал в persistence/androidMain/di/. Completeness-reviewer flagged как "planning gap Phase 01, not architectural mismatch".
+
+Как я это контролирую:
+
+- Reviewers (особенно completeness и architect) ловят любой deviation и требуют обоснования
+- Агенты репортят scope overlap в RESULT сообщении как Open Question, я вижу и эскалирую тебе если architectural
+- Architectural mismatch (смена паттерна, удаление функционала) — STOP и тебе вопрос. Это происходило 1 раз (prefix guard conflict)
+- Pragmatic compile-fix overlaps reviewers принимают
+
+100% изоляции по role files достичь невозможно — Kotlin modules compile-coupled. Если бы я требовал strict изоляцию, каждая фаза падала бы на build gate, и мне пришлось бы вручную координировать "сначала измени domain, потом presentation, потом test". Это anti-pattern Claude Code pipeline.
+
+В целом за 6 фаз deviations были все оправданные — ни одного "агент сделал что хочет". План у нас высокого качества, но не идеально отражает compile dependencies — это нормально для plan→code phase.

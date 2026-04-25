@@ -195,6 +195,72 @@ sealed interface CompletionEffect {
 | `QUIZ_HOME` | `PublicationShelf = HOME` |
 | (не было явно) | `PublicationShelf = ARCHIVE_COURSES` для курсов |
 
+## Amendment 2026-04-21 — PublicationShelf как Set (visibleOn)
+
+Добавлено фичей `home-and-my-quests` (см. `docs/features/home-and-my-quests/0-spec.md`).
+
+### Изменение
+
+Первая версия этого ADR (выше) описывала `Quest.shelf: PublicationShelf?` — квест может находиться **только на одной полке** одновременно. Переходы между полками последовательные (ARENA → TOURNAMENT → HOME).
+
+Практика показала, что:
+1. Квесты-курсы (COURSE) должны быть видны одновременно в нескольких каталогах UX (например "Мои курсы" + "Домашние курсы" + "Архив", когда юзер и автор и зритель).
+2. Админ хочет показывать квест и на `HOME` и в `ARENA` одновременно для promotion campaigns.
+3. Тестерский режим — один квест виден и в `TOURNAMENT` (для отборочного) и в `ARENA` (для обратной совместимости с ранее опубликованным).
+
+Жёсткий single-shelf enum не поддерживает эти сценарии.
+
+### Новая модель
+
+```kotlin
+// Вместо shelf: PublicationShelf?
+data class Quest(
+    // ...
+    val visibleOn: Set<String>,  // подмножество из {"home", "arena", "tournament", "tournamentFinal", "archive"}
+    // Пустой Set (emptySet()) → квест нигде не виден → локальный delete.
+)
+```
+
+В Firestore хранится как `Array<String>` для `array-contains-any` filter:
+```json
+quests/q1 {
+  "visibleOn": ["home", "arena"]
+}
+```
+
+### Перенос инвариантов
+
+| Инвариант (old) | Новая формулировка |
+|-----------------|---------------------|
+| `QuestPhase ≠ PUBLISHED ⇒ shelf = null` | `QuestPhase ≠ PUBLISHED ⇒ visibleOn.isEmpty()` |
+| `QuestPhase = PUBLISHED ⇒ shelf ≠ null` | `QuestPhase = PUBLISHED ⇒ visibleOn.isNotEmpty()` |
+| `QuestType = COURSE ⇒ shelves ⊆ {ARCHIVE_COURSES}` | `QuestType = COURSE ⇒ visibleOn ⊆ {"home", "archive"}` (курсы видны в "Домашние" + "Архив", не в "Арене"/"Турнире") |
+| `QuestType = REGULAR ⇒ shelves ⊆ {ARENA, TOURNAMENT, TOURNAMENT_LEADER, HOME}` | `QuestType = REGULAR ⇒ visibleOn ⊆ {"home", "arena", "tournament", "tournamentFinal", "archive"}` |
+
+### Миграция с enum
+
+Server-side: admin tooling преобразует existing `shelf: String` в `visibleOn: Array<String>` (один элемент). Клиент читает новое поле. Deprecated `shelf` можно удалить после migration.
+
+Pre-production на момент изменения — нет существующих документов, migration = zero-cost.
+
+### Server rules автопромо
+
+Автоматические переходы (ARENA → TOURNAMENT → HOME) теперь — **добавления** в `visibleOn`, не перемещения:
+
+- "Топ-3 из ARENA" → `visibleOn.add("tournament")` (остаётся и в `arena`)
+- "Победитель tournament" → `visibleOn.add("tournamentFinal")` (остаётся в `arena` и `tournament`)
+- "Финал HOME" → `visibleOn.add("home")` (остаётся во всех предыдущих)
+- Снять с публикации → `visibleOn.remove("X")`. Если empty — квест локально удаляется у клиентов (tombstone semantics per ADR-0004).
+
+Это реалистичнее: "победитель" остаётся в арене для reference/archive.
+
+### Impact на клиент
+
+- Запрос для "Домашние квесты": `quests.where('visibleOn', 'array-contains', 'home')`.
+- Запрос для "Арена": `quests.where('visibleOn', 'array-contains', 'arena')`.
+- Sync клиента: `quests.where('visibleOn', 'array-contains-any', availableShelves)` — один запрос для всех доступных юзеру полок (до 10 значений).
+- Локальный UI filter: `quest.visibleOn.contains("home")` — плоский set check.
+
 ## Notes
 
-Модели живут в `shared/feature/quiz/domain/src/commonMain/kotlin/`. Серверная логика промо — в `server/workers/review-collisions` и отдельном worker'е автопромо (будет добавлен). Sync с клиентом — см. ADR-0004 (ещё не написан).
+Модели живут в `shared/feature/quest/domain/src/commonMain/kotlin/` (новый модуль после `home-and-my-quests` фичи; старый `shared/feature/quiz/domain/` был каркасом без реальной реализации). Серверная логика промо — в `server/workers/review-collisions` и отдельном worker'е автопромо (будет добавлен). Sync с клиентом — см. ADR-0004 + amendment там же.

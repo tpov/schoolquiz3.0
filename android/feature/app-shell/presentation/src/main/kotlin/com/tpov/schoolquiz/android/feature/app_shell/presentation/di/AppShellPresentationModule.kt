@@ -1,11 +1,16 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.di
 
+import androidx.work.WorkManager
 import com.arkivanov.decompose.ComponentContext
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 
 /**
@@ -16,12 +21,21 @@ import org.koin.dsl.module
 val appShellPresentationModule =
     module {
         factory { (ctx: ComponentContext) ->
+            val koin = getKoin()
             DefaultRootComponent(
                 componentContext = ctx,
                 initUseCase = get(),
                 navigateUseCase = get(),
                 observeUseCase = get(),
                 retapUseCase = get(),
+                userStatsRepository = get(),
+                workManager = get(),
+                myQuestsFactory = { compCtx, nav ->
+                    koin.get(MyQuestsComponent::class, parameters = { parametersOf(compCtx, nav) })
+                },
+                homeQuestsFactory = { compCtx ->
+                    koin.get(HomeQuestsComponent::class, parameters = { parametersOf(compCtx) })
+                },
             )
         }
 

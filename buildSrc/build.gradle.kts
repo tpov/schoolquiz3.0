@@ -11,7 +11,7 @@ repositories {
 dependencies {
     implementation(libs.android.gradle.plugin)
     implementation(libs.kotlin.gradle.plugin)
-    implementation(libs.ksp.gradle.plugin)
+    implementation(libs.kotlin.compose.gradle.plugin)
     implementation(libs.detekt.gradle.plugin)
     implementation("org.jlleitschuh.gradle.ktlint:org.jlleitschuh.gradle.ktlint.gradle.plugin:12.1.0")
 }
