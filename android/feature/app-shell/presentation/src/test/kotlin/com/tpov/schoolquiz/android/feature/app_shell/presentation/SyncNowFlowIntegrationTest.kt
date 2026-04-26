@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserS
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeWorkManager
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
@@ -82,8 +83,9 @@ class SyncNowFlowIntegrationTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
         workManager = fakeWorkManager.workManager,
-        myQuestsFactory = { _, _ -> StubMyQuestsComponent },
-        homeQuestsFactory = { _ -> StubHomeQuestsComponent },
+        myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
+        homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+        quizzesFactory = { _ -> StubQuizzesComponent },
     )
 
     // -----------------------------------------------------------------------

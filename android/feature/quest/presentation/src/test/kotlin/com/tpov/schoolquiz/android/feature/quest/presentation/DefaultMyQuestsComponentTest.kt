@@ -5,6 +5,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
@@ -13,6 +14,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepo
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
@@ -72,12 +74,14 @@ class DefaultMyQuestsComponentTest {
         questRepo: FakeQuestRepository = FakeQuestRepository(),
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
         navigator: FakeNavigator = FakeNavigator(),
+        onQuestDrillDown: (QuestDisplayItem) -> Unit = { },
     ) = DefaultMyQuestsComponent(
         componentContext = testCtx(),
         authRepo = authRepo,
         observeMyQuests = ObserveMyQuestsUseCase(questRepo),
         observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
         navigator = navigator,
+        onQuestDrillDown = onQuestDrillDown,
         mainContext = testDispatcher,
     )
 
@@ -255,5 +259,58 @@ class DefaultMyQuestsComponentTest {
         val catalogs = component.state.value.catalogs
         assertEquals(1, catalogs.size, "archived catalogs must not appear in state")
         assertEquals(CatalogId("cat1"), catalogs.first().id)
+    }
+
+    // ── MC-U-01 — onQuestClick invokes onQuestDrillDown lambda with quest ──────
+    // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md MC-U-01
+    // GIVEN onQuestDrillDown lambda recorder; quest = QuestDisplayItem(id="q-1", catalogId="cat-1")
+    // WHEN component.onQuestClick(quest)
+    // THEN capturedQuest == quest
+
+    @Test
+    fun `when onQuestClick called then onQuestDrillDown lambda invoked with quest`() = runTest {
+        var capturedQuest: QuestDisplayItem? = null
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            onQuestDrillDown = { quest -> capturedQuest = quest },
+        )
+        val quest = QuestDisplayItem(
+            id = QuestId("q-1"),
+            catalogId = CatalogId("cat-1"),
+            title = "Quest A",
+            pictureUrl = null,
+            averageRating = null,
+        )
+
+        component.onQuestClick(quest)
+
+        assertEquals(quest, capturedQuest, "lambda must receive the exact quest instance")
+    }
+
+    // ── MC-U-02 — lambda receives entire QuestDisplayItem including catalogId ──
+    // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md MC-U-02
+    // GIVEN quest with catalogId = CatalogId("cat-2")
+    // WHEN component.onQuestClick(quest)
+    // THEN capturedQuest?.catalogId == CatalogId("cat-2")
+
+    @Test
+    fun `when onQuestClick called then catalogId is preserved in captured quest`() = runTest {
+        var capturedQuest: QuestDisplayItem? = null
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            onQuestDrillDown = { quest -> capturedQuest = quest },
+        )
+        val quest = QuestDisplayItem(
+            id = QuestId("q-2"),
+            catalogId = CatalogId("cat-2"),
+            title = "Quest B",
+            pictureUrl = null,
+            averageRating = null,
+        )
+
+        component.onQuestClick(quest)
+
+        assertEquals(CatalogId("cat-2"), capturedQuest?.catalogId,
+            "lambda must preserve catalogId for breadcrumb resolution in DefaultRootComponent")
     }
 }

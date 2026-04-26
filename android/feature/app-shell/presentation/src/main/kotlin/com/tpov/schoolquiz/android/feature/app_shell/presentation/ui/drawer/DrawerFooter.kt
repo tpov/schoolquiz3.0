@@ -39,6 +39,7 @@ fun DrawerFooter(
     userStats: UserStats,
     onVersionTap: () -> Unit,
     onSyncNow: () -> Unit,
+    onDismissQuizzes: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val actions = visibleFooterActions(isDebugBuild, userStats)
@@ -53,8 +54,10 @@ fun DrawerFooter(
                 badge = null,
                 onClick = {
                     when (action) {
-                        DrawerFooterAction.DesignCatalog ->
+                        DrawerFooterAction.DesignCatalog -> {
+                            onDismissQuizzes()
                             navigator.goTo(Destination.OpenDesignCatalog)
+                        }
                         DrawerFooterAction.SyncNow -> onSyncNow()
                         DrawerFooterAction.About ->
                             showAboutDialog.value = true

@@ -33,14 +33,14 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 @Preview(showBackground = true)
 @Composable
 private fun CatalogGridPreview() {
-    CatalogGrid(items = emptyList(), onCatalogClick = {})
+    CatalogGrid(items = emptyList(), onCatalogClick = { _, _ -> })
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun CatalogGrid(
     items: List<CatalogDisplayItem>,
-    onCatalogClick: (CatalogId) -> Unit,
+    onCatalogClick: (CatalogId, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -49,10 +49,10 @@ fun CatalogGrid(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(items) { item ->
+        items(items, key = { it.id.value }) { item ->
             CatalogGridItem(
                 item = item,
-                onClick = { onCatalogClick(item.id) },
+                onClick = { onCatalogClick(item.id, item.name) },
             )
         }
     }

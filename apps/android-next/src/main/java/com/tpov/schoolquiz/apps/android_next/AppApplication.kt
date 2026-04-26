@@ -13,6 +13,7 @@ import androidx.work.WorkerFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
 import com.tpov.schoolquiz.platform.firebase.di.firebaseCatalogModule
@@ -95,6 +96,7 @@ class AppApplication : Application(), Configuration.Provider {
                 appShellDataModule { sharedAuthUidFlow },
                 appShellPresentationModule,
                 questPresentationModule,
+                quizzesPresentationModule,
                 catalogDataModule,
                 catalogDomainModule,
                 questDataModule,

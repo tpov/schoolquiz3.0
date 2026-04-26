@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.model.toDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.mapper.toDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -44,6 +45,7 @@ class DefaultMyQuestsComponent(
     private val observeMyQuests: ObserveMyQuestsUseCase,
     private val observeCatalogs: ObserveCatalogsUseCase,
     private val navigator: Navigator,
+    private val onQuestDrillDown: (QuestDisplayItem) -> Unit = {},
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
 ) : MyQuestsComponent, ComponentContext by componentContext {
 
@@ -106,6 +108,10 @@ class DefaultMyQuestsComponent(
     // Future create-quest feature MUST re-validate auth before allowing quest submission.
     override fun onCreateQuestClick() {
         navigator.goTo(Destination.OpenQuestCreate)
+    }
+
+    override fun onQuestClick(quest: QuestDisplayItem) {
+        onQuestDrillDown(quest)
     }
 
     private class SelectedCatalogHolder : InstanceKeeper.Instance {

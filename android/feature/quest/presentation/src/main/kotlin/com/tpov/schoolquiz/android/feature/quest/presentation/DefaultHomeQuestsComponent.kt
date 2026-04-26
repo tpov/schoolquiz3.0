@@ -27,6 +27,7 @@ import kotlin.coroutines.CoroutineContext
 class DefaultHomeQuestsComponent(
     componentContext: ComponentContext,
     private val observeCatalogs: ObserveCatalogsUseCase,
+    private val onCatalogDrillDown: (CatalogId, String) -> Unit,
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
 ) : HomeQuestsComponent, ComponentContext by componentContext {
 
@@ -47,7 +48,8 @@ class DefaultHomeQuestsComponent(
         lifecycle.doOnDestroy { componentJob.cancel() }
     }
 
-    override fun onCatalogClick(id: CatalogId) {
-        // TODO: future catalog detail navigation
+    override fun onCatalogClick(id: CatalogId, name: String) {
+        val catalogName = name.takeIf { it.isNotBlank() } ?: "Каталог"
+        onCatalogDrillDown(id, catalogName)
     }
 }

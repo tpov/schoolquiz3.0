@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface QuestLocalDataSource {
     fun observeMyQuests(authorUid: String, catalogId: String?): Flow<List<QuestEntity>>
     fun observeByShelf(shelf: String): Flow<List<QuestEntity>>
+    fun observeByCatalog(catalogId: String, shelf: String): Flow<List<QuestEntity>>
     suspend fun upsertByIdIfNewerVersion(entity: QuestEntity)
     suspend fun deleteById(id: String)
     suspend fun findById(id: String): QuestEntity?
@@ -21,6 +22,9 @@ class QuestLocalDataSourceImpl(
 
     override fun observeByShelf(shelf: String): Flow<List<QuestEntity>> =
         dao.observeByShelf(shelf)
+
+    override fun observeByCatalog(catalogId: String, shelf: String): Flow<List<QuestEntity>> =
+        dao.observeByCatalog(catalogId, shelf)
 
     override suspend fun upsertByIdIfNewerVersion(entity: QuestEntity) =
         dao.upsertByIdIfNewerVersion(entity)

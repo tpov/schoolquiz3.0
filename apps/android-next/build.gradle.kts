@@ -23,6 +23,7 @@ dependencies {
     implementation(project(":shared:feature:app-shell:data"))
     implementation(project(":android:feature:app-shell:presentation"))
     implementation(project(":android:feature:quest:presentation"))
+    implementation(project(":android:feature:quizzes-screen:presentation"))
     implementation(project(":android:core:navigation"))
     implementation(project(":android:core:designsystem"))
     implementation(project(":platform:firebase"))

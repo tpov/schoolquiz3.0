@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.Defa
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
 import org.mockito.Mockito.mock
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
@@ -99,8 +100,9 @@ class DefaultRootComponentTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
         workManager = workManager,
-        myQuestsFactory = { _, _ -> StubMyQuestsComponent },
-        homeQuestsFactory = { _ -> StubHomeQuestsComponent },
+        myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
+        homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+        quizzesFactory = { _ -> StubQuizzesComponent },
     )
 
     // -----------------------------------------------------------------------
@@ -147,8 +149,9 @@ class DefaultRootComponentTest {
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = errorRepo,
             workManager = mock(WorkManager::class.java),
-            myQuestsFactory = { _, _ -> StubMyQuestsComponent },
-            homeQuestsFactory = { _ -> StubHomeQuestsComponent },
+            myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
+            homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+            quizzesFactory = { _ -> StubQuizzesComponent },
         )
 
         val state = component.appShellState.first()
@@ -384,8 +387,9 @@ class DefaultRootComponentTest {
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = fakeRepo,
             workManager = mock(WorkManager::class.java),
-            myQuestsFactory = { _, _ -> StubMyQuestsComponent },
-            homeQuestsFactory = { _ -> StubHomeQuestsComponent },
+            myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
+            homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+            quizzesFactory = { _ -> StubQuizzesComponent },
         )
 
         // Navigate while initUseCase() is suspended at initDeferred.await()

@@ -33,6 +33,15 @@ interface QuestDao {
     """)
     fun observeByShelf(shelf: String): Flow<List<QuestEntity>>
 
+    @Query("""
+        SELECT * FROM quests
+        WHERE catalogId = :catalogId
+        AND (CHAR(31) || visibleOn || CHAR(31)) LIKE ('%' || CHAR(31) || :shelf || CHAR(31) || '%')
+        AND archived = 0
+        ORDER BY lastModifiedAt DESC
+    """)
+    fun observeByCatalog(catalogId: String, shelf: String): Flow<List<QuestEntity>>
+
     @Query("SELECT * FROM quests WHERE id = :id")
     suspend fun findById(id: String): QuestEntity?
 

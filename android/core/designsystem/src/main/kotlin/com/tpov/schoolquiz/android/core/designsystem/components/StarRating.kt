@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 
 private const val STAR_COUNT = 3
-private const val STAR_SIZE_DP = 18
 
 /**
  * Pure logic: whether star at [index] is fully filled for [rating].
@@ -89,6 +88,7 @@ internal fun PartialStarIcon(fraction: Float, tint: Color, size: Dp) {
 fun StarRating(
     rating: Float?,
     modifier: Modifier = Modifier,
+    size: Dp = 18.dp,
 ) {
     val primary = MaterialTheme.colorScheme.primary
     Row(modifier = modifier) {
@@ -98,18 +98,18 @@ fun StarRating(
                     imageVector = Icons.Filled.Star,
                     contentDescription = null,
                     tint = primary,
-                    modifier = Modifier.size(STAR_SIZE_DP.dp),
+                    modifier = Modifier.size(size),
                 )
                 starIsPartial(index, rating) -> PartialStarIcon(
                     fraction = starPartialFraction(index, rating),
                     tint = primary,
-                    size = STAR_SIZE_DP.dp,
+                    size = size,
                 )
                 else -> Icon(
                     imageVector = Icons.Outlined.StarOutline,
                     contentDescription = null,
                     tint = primary,
-                    modifier = Modifier.size(STAR_SIZE_DP.dp),
+                    modifier = Modifier.size(size),
                 )
             }
         }

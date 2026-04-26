@@ -3,8 +3,10 @@ package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui
 import android.app.Activity
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -51,6 +53,9 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponen
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
@@ -153,6 +158,7 @@ fun AppShellScreen(
 
     CompositionLocalProvider(LocalScrollToTopRegistry provides registry) {
         ModalNavigationDrawer(
+            modifier = modifier,
             drawerState = drawerState,
             gesturesEnabled = !state.isShopActive,
             drawerContent = {
@@ -165,9 +171,9 @@ fun AppShellScreen(
                     versionName = appVersionName,
                     onVersionTap = { rootComponent.onVersionTap(System.currentTimeMillis()) },
                     onSyncNow = { rootComponent.onSyncNow() },
+                    onDismissQuizzes = { rootComponent.quizzesComponent.dismissQuizzes() },
                 )
             },
-            modifier = modifier,
         ) {
             Scaffold(
                 topBar = {
@@ -200,6 +206,7 @@ fun AppShellScreen(
                                             }
                                         }
                                     } else {
+                                        rootComponent.quizzesComponent.dismissQuizzes()
                                         rootComponent.navigator.goTo(Destination.SwitchTab(tab))
                                     }
                                 },
@@ -209,7 +216,15 @@ fun AppShellScreen(
                 },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
             ) { paddingValues ->
-                AppShellContent(rootComponent, state.activeTab, paddingValues, canSeeDesignCatalog)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AppShellContent(rootComponent, state.activeTab, paddingValues, canSeeDesignCatalog)
+                    val quizzesStack by rootComponent.quizzesComponent.childStack.subscribeAsState()
+                    if (quizzesStack.active.instance !is QuizzesChild.Idle) {
+                        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                            QuizzesScreen(rootComponent.quizzesComponent)
+                        }
+                    }
+                }
             }
         }
     }

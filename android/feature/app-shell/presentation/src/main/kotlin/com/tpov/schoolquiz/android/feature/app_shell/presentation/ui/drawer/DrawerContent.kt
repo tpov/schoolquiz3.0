@@ -26,6 +26,7 @@ fun DrawerContent(
     versionName: String,
     onVersionTap: () -> Unit,
     onSyncNow: () -> Unit,
+    onDismissQuizzes: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     ModalDrawerSheet(modifier = modifier) {
@@ -40,6 +41,7 @@ fun DrawerContent(
                 userStats = userStats,
                 activeSection = activeSection,
                 navigator = navigator,
+                onDismissQuizzes = onDismissQuizzes,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -51,6 +53,7 @@ fun DrawerContent(
             userStats = userStats,
             onVersionTap = onVersionTap,
             onSyncNow = onSyncNow,
+            onDismissQuizzes = onDismissQuizzes,
         )
     }
 }

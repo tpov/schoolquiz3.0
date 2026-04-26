@@ -19,6 +19,9 @@ interface MyQuestsComponent {
 
     /** Navigate to create-quest screen (Destination.OpenQuestCreate). */
     fun onCreateQuestClick()
+
+    /** Drill-down from MyQuests into SectionList for the tapped quest. */
+    fun onQuestClick(quest: QuestDisplayItem)
 }
 
 /**

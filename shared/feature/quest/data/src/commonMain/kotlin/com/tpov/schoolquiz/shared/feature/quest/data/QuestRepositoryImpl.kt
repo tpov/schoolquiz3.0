@@ -27,6 +27,9 @@ class QuestRepositoryImpl(
     override fun observeByShelf(shelf: String): Flow<List<Quest>> =
         local.observeByShelf(shelf).map { list -> list.map { it.toDomain() } }
 
+    override fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> =
+        local.observeByCatalog(catalogId.value, shelf).map { list -> list.map { it.toDomain() } }
+
     override suspend fun getById(id: QuestId): Quest? =
         local.findById(id.value)?.toDomain()
 

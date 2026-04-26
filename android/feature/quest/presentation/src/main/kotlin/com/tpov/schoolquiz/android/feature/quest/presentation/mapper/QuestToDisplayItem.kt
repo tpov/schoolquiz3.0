@@ -13,6 +13,7 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
  */
 fun Quest.toDisplayItem(): QuestDisplayItem = QuestDisplayItem(
     id = id,
+    catalogId = catalogId,
     title = title,
     pictureUrl = pictureUrl,
     averageRating = averageRating,

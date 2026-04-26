@@ -23,6 +23,7 @@ fun DrawerSectionList(
     userStats: UserStats,
     activeSection: DrawerSection?,
     navigator: Navigator,
+    onDismissQuizzes: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val sections = visibleSections(tab, userStats)
@@ -34,6 +35,7 @@ fun DrawerSectionList(
                 selected = section == activeSection,
                 badge = null,
                 onClick = {
+                    onDismissQuizzes()
                     navigator.goTo(Destination.SelectSection(section))
                 },
             )

@@ -84,7 +84,7 @@ fun MyQuestsScreen(
                     items(state.quests) { quest ->
                         QuestCard(
                             item = quest,
-                            onClick = { /* TODO: open quest detail */ },
+                            onClick = { component.onQuestClick(quest) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 4.dp),

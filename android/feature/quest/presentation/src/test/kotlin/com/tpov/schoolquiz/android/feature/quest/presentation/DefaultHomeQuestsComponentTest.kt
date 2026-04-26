@@ -61,9 +61,11 @@ class DefaultHomeQuestsComponentTest {
 
     private fun buildComponent(
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
+        onCatalogDrillDown: (CatalogId, String) -> Unit = { _, _ -> },
     ) = DefaultHomeQuestsComponent(
         componentContext = testCtx(),
         observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+        onCatalogDrillDown = onCatalogDrillDown,
         mainContext = testDispatcher,
     )
 
@@ -126,5 +128,70 @@ class DefaultHomeQuestsComponentTest {
         val state = component.state.value
         assertTrue(state.catalogs.isEmpty(), "empty store → empty catalog list")
         assertFalse(state.isLoading, "must not be stuck in loading state on empty data")
+    }
+
+    // ── HC-U-01 — onCatalogClick invokes onCatalogDrillDown lambda ─────────────
+    // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md HC-U-01
+    // GIVEN onCatalogClick(CatalogId("cat-1"), "Mathematics")
+    // THEN lambda invoked with (CatalogId("cat-1"), "Mathematics")
+
+    @Test
+    fun `when onCatalogClick called then onCatalogDrillDown lambda invoked with correct catalogId and catalogName`() = runTest {
+        var capturedId: CatalogId? = null
+        var capturedName: String? = null
+
+        val component = buildComponent(
+            onCatalogDrillDown = { id, name ->
+                capturedId = id
+                capturedName = name
+            },
+        )
+
+        component.onCatalogClick(CatalogId("cat-1"), "Mathematics")
+
+        assertEquals(CatalogId("cat-1"), capturedId, "lambda must receive the clicked catalog id")
+        assertEquals("Mathematics", capturedName, "lambda must receive the name passed from UI")
+    }
+
+    // ── HC-U-02 — blank name → catalogName fallback "Каталог" ─────────────────
+    // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md HC-U-02
+    // GIVEN onCatalogClick with blank name
+    // THEN lambda invoked; capturedName == "Каталог" (non-blank fallback prevents empty breadcrumb)
+
+    @Test
+    fun `when onCatalogClick called with blank name then catalogName is fallback`() = runTest {
+        var capturedId: CatalogId? = null
+        var capturedName: String? = null
+
+        val component = buildComponent(
+            onCatalogDrillDown = { id, name ->
+                capturedId = id
+                capturedName = name
+            },
+        )
+
+        component.onCatalogClick(CatalogId("cat-1"), "")
+
+        assertEquals(CatalogId("cat-1"), capturedId, "lambda must receive the clicked id even if name is blank")
+        assertEquals("Каталог", capturedName, "fallback name must be non-blank to prevent empty breadcrumb segment")
+    }
+
+    // ── HC-U-03 — lambda is only side-effect, no double invocation ────────────
+    // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md HC-U-03
+    // GIVEN component
+    // WHEN onCatalogClick called once
+    // THEN lambda invoked exactly once
+
+    @Test
+    fun `when onCatalogClick called once then lambda invoked exactly once`() = runTest {
+        var invocationCount = 0
+
+        val component = buildComponent(
+            onCatalogDrillDown = { _, _ -> invocationCount++ },
+        )
+
+        component.onCatalogClick(CatalogId("cat-1"), "Mathematics")
+
+        assertEquals(1, invocationCount, "onCatalogDrillDown must be invoked exactly once per click")
     }
 }

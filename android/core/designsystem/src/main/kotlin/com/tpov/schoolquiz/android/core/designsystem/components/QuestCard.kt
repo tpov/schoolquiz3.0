@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.core.designsystem.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,15 +14,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 
 /**
@@ -42,15 +46,27 @@ fun QuestCard(
     item: QuestDisplayItem,
     onClick: (QuestId) -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: ((QuestId) -> Unit)? = null,
 ) {
+    val clickModifier = if (onLongClick != null) {
+        Modifier.combinedClickable(
+            onClick = { onClick(item.id) },
+            onLongClick = { onLongClick(item.id) },
+            onLongClickLabel = stringResource(com.tpov.schoolquiz.android.core.designsystem.R.string.long_press_action),
+        )
+    } else {
+        Modifier.clickable { onClick(item.id) }
+    }
     Card(
         shape = RoundedCornerShape(16.dp),
-        modifier = modifier
-            .clickable { onClick(item.id) },
+        modifier = modifier.then(clickModifier),
     ) {
         Column {
-            val safeUrl = item.pictureUrl?.takeIf {
-                it.startsWith("https://") && it.contains("firebasestorage.googleapis.com")
+            val safeUrl = remember(item.pictureUrl) {
+                item.pictureUrl?.let { url ->
+                    val uri = android.net.Uri.parse(url)
+                    url.takeIf { uri.scheme == "https" && uri.host == "firebasestorage.googleapis.com" }
+                }
             }
             if (safeUrl != null) {
                 AsyncImage(
@@ -93,6 +109,7 @@ private fun QuestCardEmptyPreview() {
         QuestCard(
             item = QuestDisplayItem(
                 id = QuestId("preview-id"),
+                catalogId = CatalogId("preview-cat"),
                 title = "Квест без рейтинга",
                 pictureUrl = null,
                 averageRating = null,
@@ -110,6 +127,7 @@ private fun QuestCardRatedPreview() {
         QuestCard(
             item = QuestDisplayItem(
                 id = QuestId("preview-id-2"),
+                catalogId = CatalogId("preview-cat"),
                 title = "Квест с рейтингом 2.7",
                 pictureUrl = null,
                 averageRating = 2.7f,
@@ -128,6 +146,7 @@ private fun QuestCardUnratedPreview() {
         QuestCard(
             item = QuestDisplayItem(
                 id = QuestId("preview-id-3"),
+                catalogId = CatalogId("preview-cat"),
                 title = "Нет оценок",
                 pictureUrl = null,
                 averageRating = null,
@@ -146,6 +165,7 @@ private fun QuestCardLongTitlePreview() {
         QuestCard(
             item = QuestDisplayItem(
                 id = QuestId("preview-id-4"),
+                catalogId = CatalogId("preview-cat"),
                 title = "Очень длинное название квеста которое не влезает в одну строку и обрезается многоточием",
                 pictureUrl = null,
                 averageRating = 1.5f,

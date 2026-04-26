@@ -1,0 +1,1 @@
+Architect findings: не выявлено нарушений по заданным architecture / ADR grep-checks.

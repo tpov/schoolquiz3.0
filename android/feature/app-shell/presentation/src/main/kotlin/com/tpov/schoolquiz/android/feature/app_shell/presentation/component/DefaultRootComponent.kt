@@ -10,14 +10,18 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.essenty.backhandler.BackCallback
+import com.arkivanov.essenty.backhandler.BackHandler
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultEventsTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultInternetTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultLocalTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultShopTabComponent
+import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
@@ -74,8 +78,9 @@ class DefaultRootComponent(
     private val retapUseCase: OnTabRetapUseCase,
     private val userStatsRepository: UserStatsRepository,
     private val workManager: WorkManager,
-    myQuestsFactory: (ComponentContext, Navigator) -> MyQuestsComponent,
-    homeQuestsFactory: (ComponentContext) -> HomeQuestsComponent,
+    myQuestsFactory: (ComponentContext, Navigator, (QuestDisplayItem) -> Unit) -> MyQuestsComponent,
+    homeQuestsFactory: (ComponentContext, (CatalogId, String) -> Unit) -> HomeQuestsComponent,
+    quizzesFactory: (ComponentContext) -> QuizzesComponent,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
     private val _tapProgress = MutableStateFlow(TapProgress.initial)
@@ -125,10 +130,28 @@ class DefaultRootComponent(
      */
     internal val navigator: Navigator = NavigatorImpl(this)
 
-    // Components are created once here — Decompose childContext keys are unique per parent context.
-    // This prevents the duplicate-key crash when Compose recomposes MyQuestsContent/HomeQuestsContent.
-    val myQuestsComponent: MyQuestsComponent = myQuestsFactory(childContext("MyQuestsContent"), navigator)
-    val homeQuestsComponent: HomeQuestsComponent = homeQuestsFactory(childContext("HomeQuestsContent"))
+    // quizzesComponent MUST be created first — homeQuestsComponent and myQuestsComponent lambdas
+    // capture it by reference. Decompose childContext keys are unique per parent context (duplicate-key
+    // crash prevention on Compose recomposition).
+    //
+    // QuizzesComponent uses root's backHandler directly (not wrapped via childContext) so its
+    // BackCallback(priority=100) is visible at the root BackHandler level per ADR-QS-12.
+    // Decompose 3.x childContext wraps backHandler in DefaultChildBackHandler, which would expose
+    // only a priority-0 bridge callback at root level, breaking back priority ordering.
+    val quizzesComponent: QuizzesComponent = quizzesFactory(quizzesComponentContext())
+    val homeQuestsComponent: HomeQuestsComponent = homeQuestsFactory(
+        childContext("HomeQuestsContent"),
+        { catId: CatalogId, name: String -> quizzesComponent.openQuestList(catId, name) },
+    )
+    val myQuestsComponent: MyQuestsComponent = myQuestsFactory(
+        childContext("MyQuestsContent"),
+        navigator,
+        { quest: QuestDisplayItem ->
+            val catalogName = homeQuestsComponent.state.value.catalogs
+                .find { it.id == quest.catalogId }?.name ?: "Без каталога"
+            quizzesComponent.openSectionList(quest.id, listOf(catalogName, quest.title))
+        },
+    )
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
@@ -277,6 +300,17 @@ class DefaultRootComponent(
         if (old == new) return
         val all = new.backStack + new.active
         nav.navigate(transformer = { all }, onComplete = { _, _ -> })
+    }
+
+    // Returns a ComponentContext that uses the root's BackHandler directly, bypassing Decompose's
+    // DefaultChildBackHandler wrapper introduced by childContext. stateKeeper/instanceKeeper are
+    // still namespaced via childContext so state isolation is preserved.
+    private fun quizzesComponentContext(): ComponentContext {
+        val child = childContext("QuizzesContent")
+        val rootBackHandler: BackHandler = backHandler
+        return object : ComponentContext by child {
+            override val backHandler: BackHandler get() = rootBackHandler
+        }
     }
 
     private companion object {

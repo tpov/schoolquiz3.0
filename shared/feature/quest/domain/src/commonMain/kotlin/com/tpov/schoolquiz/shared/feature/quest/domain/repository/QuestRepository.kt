@@ -39,6 +39,22 @@ interface QuestRepository {
     fun observeMyQuests(authorUid: String, catalogId: CatalogId? = null): Flow<List<Quest>>
 
     /**
+     * Observes public quests belonging to [catalogId] that are visible on [shelf].
+     *
+     * Filter: `catalogId == catalogId AND visibleOn contains shelf AND archived == false`.
+     * Sort: `lastModifiedAt DESC` (Quest has no order field — User Decision Q1).
+     *
+     * DAO pattern: delimiter-wrapped LIKE — `(CHAR(31) || visibleOn || CHAR(31)) LIKE
+     * ('%' || CHAR(31) || :shelf || CHAR(31) || '%')` — prevents "home" matching "homeExtra".
+     * `archived = 0` filter is applied in the DAO query, not in this layer.
+     *
+     * Emits empty list when no matching quests exist. Re-emits on Room writes.
+     *
+     * Spec: docs/features/quizzes-screen/plan/phase-01/backend.md, AC#1-4.
+     */
+    fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>>
+
+    /**
      * Observes quests where [visibleOn] contains [shelf].
      *
      * NOT used by the "Home Quests" screen in this feature — Home shows catalogs

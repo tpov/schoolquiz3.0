@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quest.presentation.mapper
 
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -92,5 +93,16 @@ class QuestToDisplayItemTest {
 
         assertEquals(0.0f, item.averageRating, "0.0f rating must be distinct from null (no-ratings)")
         assertEquals(3, item.averageRatingCount)
+    }
+
+    // ── round-trip preserves catalogId (06-api-contract.md:81) ──────────────
+
+    @Test
+    fun `when quest has catalogId then display item preserves catalogId`() {
+        val quest = buildQuest(catalogId = "cat-1")
+
+        val item = quest.toDisplayItem()
+
+        assertEquals(CatalogId("cat-1"), item.catalogId)
     }
 }

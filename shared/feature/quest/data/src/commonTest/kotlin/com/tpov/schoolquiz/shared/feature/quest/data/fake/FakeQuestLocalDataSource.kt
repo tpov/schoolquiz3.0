@@ -30,6 +30,15 @@ class FakeQuestLocalDataSource : QuestLocalDataSource {
     override fun observeByShelf(shelf: String): Flow<List<QuestEntity>> =
         _flow.map { list -> list.filter { shelf in it.visibleOn } }
 
+    override fun observeByCatalog(catalogId: String, shelf: String): Flow<List<QuestEntity>> =
+        _flow.map { list ->
+            list.filter { entity ->
+                entity.catalogId == catalogId &&
+                    shelf in entity.visibleOn &&
+                    !entity.archived
+            }
+        }
+
     override suspend fun upsertByIdIfNewerVersion(entity: QuestEntity) {
         upsertCallsFor[entity.id] = (upsertCallsFor[entity.id] ?: 0) + 1
         val current = store[entity.id]

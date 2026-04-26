@@ -24,11 +24,19 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScr
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.UnderConstructionScreen
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
+import com.arkivanov.decompose.Child
+import com.arkivanov.decompose.router.stack.ChildStack
+import com.arkivanov.decompose.value.MutableValue
+import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
@@ -137,17 +145,31 @@ class AppShellScreenTest {
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = repo,
             workManager = mock(WorkManager::class.java),
-            myQuestsFactory = { _, _ ->
+            myQuestsFactory = { _, _, _ ->
                 object : MyQuestsComponent {
                     override val state: StateFlow<MyQuestsUiState> = MutableStateFlow(MyQuestsUiState())
                     override fun onCatalogSelected(id: CatalogId?) = Unit
                     override fun onCreateQuestClick() = Unit
+                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
                 }
             },
-            homeQuestsFactory = { _ ->
+            homeQuestsFactory = { _, _ ->
                 object : HomeQuestsComponent {
                     override val state: StateFlow<HomeQuestsUiState> = MutableStateFlow(HomeQuestsUiState())
-                    override fun onCatalogClick(id: CatalogId) = Unit
+                    override fun onCatalogClick(id: CatalogId, name: String) = Unit
+                }
+            },
+            quizzesFactory = { _ ->
+                object : QuizzesComponent {
+                    private val idleStack = ChildStack(
+                        active = Child.Created(QuizzesConfig.Idle, QuizzesChild.Idle),
+                        backStack = emptyList(),
+                    )
+                    override val childStack = MutableValue(idleStack)
+                    override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
+                    override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
+                    override fun dismissQuizzes() = Unit
+                    override fun popToLevel(uiLevel: Int) = Unit
                 }
             },
         )

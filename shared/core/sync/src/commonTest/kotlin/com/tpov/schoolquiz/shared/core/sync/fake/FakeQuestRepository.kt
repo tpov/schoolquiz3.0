@@ -43,6 +43,17 @@ class FakeQuestRepository : QuestRepository {
     override fun observeByShelf(shelf: String): Flow<List<Quest>> =
         cache.map { it.values.filter { q -> shelf in q.visibleOn }.sortedBy { it.id.value } }
 
+    override fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> =
+        cache.map { map ->
+            map.values
+                .filter { quest ->
+                    quest.catalogId == catalogId &&
+                        shelf in quest.visibleOn &&
+                        !quest.archived
+                }
+                .sortedByDescending { it.lastModifiedAt }
+        }
+
     override suspend fun getById(id: QuestId): Quest? = cache.value[id]
 
     override suspend fun refreshFromRemote(
