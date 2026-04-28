@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.android.core.designsystem
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 
 // ---- Brand palette (ADR-0010) ----
@@ -33,3 +34,21 @@ val OnBackground = Color(0xFFE0E0E0)
 
 /** Outline / stroke color — 1dp borders per ADR-0010 flat design */
 val OutlineColor = Color(0xFF2C2C2C)
+
+/** Dim blue contour from legacy palette (`contour_unable #0C4678`). Used for muted card borders. */
+val LegacyContour = Color(0xFF0C4678)
+
+// ---- Difficulty glow accents (Phase-11) ----
+// errorContainer (#7D0000 ish) was too muted; vivid tones chosen for edge-glow visibility on dark bg.
+
+/** EASY mode edge-glow accent — vivid green */
+val GlowEasy = Color(0xFF4CAF50)
+
+/** HARD mode edge-glow accent — vivid red */
+val GlowHard = Color(0xFFE53935)
+
+/** Extension: access EASY glow via MaterialTheme.colorScheme.glowEasy */
+val ColorScheme.glowEasy: Color get() = GlowEasy
+
+/** Extension: access HARD glow via MaterialTheme.colorScheme.glowHard */
+val ColorScheme.glowHard: Color get() = GlowHard
