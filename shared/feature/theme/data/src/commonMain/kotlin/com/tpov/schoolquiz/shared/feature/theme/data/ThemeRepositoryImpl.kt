@@ -36,9 +36,7 @@ class ThemeRepositoryImpl(
                     if (dto.version > localVersion) local.deleteById(dto.id)
                 } else {
                     local.upsertByIdIfNewerVersion(dto.toEntity())
-                    if (localEntity == null || dto.contentsVersion > localEntity.contentsVersion) {
-                        changedIds.add(ThemeId(dto.id))
-                    }
+                    changedIds.add(ThemeId(dto.id))
                 }
             }
             Result.success(changedIds)

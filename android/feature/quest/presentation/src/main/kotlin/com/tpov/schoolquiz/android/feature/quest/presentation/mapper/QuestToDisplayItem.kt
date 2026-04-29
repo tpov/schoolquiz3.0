@@ -11,11 +11,12 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
  *
  * Spec: docs/features/home-and-my-quests/06-api-contract.md §7 Extension functions
  */
-fun Quest.toDisplayItem(): QuestDisplayItem = QuestDisplayItem(
-    id = id,
-    catalogId = catalogId,
-    title = title,
-    pictureUrl = pictureUrl,
-    averageRating = averageRating,
-    averageRatingCount = averageRatingCount,
-)
+fun Quest.toDisplayItem(): QuestDisplayItem =
+    QuestDisplayItem(
+        id = id,
+        catalogId = catalogId,
+        title = title,
+        pictureUrl = pictureUrl,
+        averageRating = averageRating,
+        averageRatingCount = averageRatingCount,
+    )

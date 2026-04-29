@@ -3,6 +3,9 @@ package com.tpov.schoolquiz.android.core.designsystem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
 
 // ADR-0010: #000000 background, #4285F4 primary, #FFD700 secondary, #7D4FAB tertiary.
 private val DarkColorScheme =
@@ -25,12 +28,20 @@ private val DarkColorScheme =
 @Composable
 fun SchoolQuizTheme(
     darkTheme: Boolean = true,
+    designStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.MainLegacy,
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = DarkColorScheme,
-        shapes = SchoolQuizShapes,
-        typography = SchoolQuizTypography,
-        content = content,
-    )
+    CompositionLocalProvider(LocalSchoolQuizDesignStyle provides designStyle) {
+        MaterialTheme(
+            colorScheme = DarkColorScheme,
+            shapes = SchoolQuizShapes,
+            typography = SchoolQuizTypography,
+            content = content,
+        )
+    }
 }
+
+val LocalSchoolQuizDesignStyle = staticCompositionLocalOf { SchoolQuizDesignStyle.MainLegacy }
+
+@Composable
+fun currentSchoolQuizDesignStyle(): SchoolQuizDesignStyle = LocalSchoolQuizDesignStyle.current

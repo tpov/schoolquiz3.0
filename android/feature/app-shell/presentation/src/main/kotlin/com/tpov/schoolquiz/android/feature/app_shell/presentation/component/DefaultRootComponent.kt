@@ -12,11 +12,11 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.essenty.backhandler.BackCallback
 import com.arkivanov.essenty.backhandler.BackHandler
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultEventsTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultInternetTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultLocalTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultShopTabComponent
-import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
  * every Activity destroy (including rotation). Each new component starts with a clean scope,
  * preventing orphaned coroutines from accumulating across configuration changes.
  */
+@Suppress("LongParameterList", "TooGenericExceptionCaught")
 class DefaultRootComponent(
     componentContext: ComponentContext,
     private val initUseCase: InitializeAppShellUseCase,
@@ -83,12 +84,13 @@ class DefaultRootComponent(
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
-    private val _tapProgress = MutableStateFlow(TapProgress.initial)
+    private val tapProgressState = MutableStateFlow(TapProgress.initial)
 
-    private val activateDevModeUseCase = ActivateDevModeUseCase(
-        readCurrentDeveloperLevel = { _appShellState.value.userStats.qualification.developer },
-        onDevModeActivated = { userStatsRepository.setLocalDeveloperLevel(QualificationLevel.LEVEL_1.points) },
-    )
+    private val activateDevModeUseCase =
+        ActivateDevModeUseCase(
+            readCurrentDeveloperLevel = { _appShellState.value.userStats.qualification.developer },
+            onDevModeActivated = { userStatsRepository.setLocalDeveloperLevel(QualificationLevel.LEVEL_1.points) },
+        )
     override val appShellState: Flow<AppShellState> = _appShellState.asStateFlow()
 
     @Volatile private var initDone = false
@@ -139,19 +141,22 @@ class DefaultRootComponent(
     // Decompose 3.x childContext wraps backHandler in DefaultChildBackHandler, which would expose
     // only a priority-0 bridge callback at root level, breaking back priority ordering.
     val quizzesComponent: QuizzesComponent = quizzesFactory(quizzesComponentContext())
-    val homeQuestsComponent: HomeQuestsComponent = homeQuestsFactory(
-        childContext("HomeQuestsContent"),
-        { catId: CatalogId, name: String -> quizzesComponent.openQuestList(catId, name) },
-    )
-    val myQuestsComponent: MyQuestsComponent = myQuestsFactory(
-        childContext("MyQuestsContent"),
-        navigator,
-        { quest: QuestDisplayItem ->
-            val catalogName = homeQuestsComponent.state.value.catalogs
-                .find { it.id == quest.catalogId }?.name ?: "Без каталога"
-            quizzesComponent.openSectionList(quest.id, listOf(catalogName, quest.title))
-        },
-    )
+    val homeQuestsComponent: HomeQuestsComponent =
+        homeQuestsFactory(
+            childContext("HomeQuestsContent"),
+            { catId: CatalogId, name: String -> quizzesComponent.openQuestList(catId, name) },
+        )
+    val myQuestsComponent: MyQuestsComponent =
+        myQuestsFactory(
+            childContext("MyQuestsContent"),
+            navigator,
+            { quest: QuestDisplayItem ->
+                val catalogName =
+                    homeQuestsComponent.state.value.catalogs
+                        .find { it.id == quest.catalogId }?.name ?: "Без каталога"
+                quizzesComponent.openSectionList(quest.id, listOf(catalogName, quest.title))
+            },
+        )
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
@@ -208,11 +213,12 @@ class DefaultRootComponent(
                             _appShellState.update { it.copy(userStats = newState.userStats) }
                         }
                     }
-                    delay(1_000)
+                    delay(OBSERVER_RECONNECT_DELAY_MILLIS)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    Log.w(TAG, "observeStats error — retrying in 5s")
-                    delay(5_000)
+                    Log.w(TAG, "observeStats error — retrying in 5s", e)
+                    delay(OBSERVER_RETRY_DELAY_MILLIS)
                 }
             }
         }
@@ -244,26 +250,27 @@ class DefaultRootComponent(
             // Single-threaded coroutine launch via Main.immediate (no parallel tap processing
             // before first suspend point). FSM state transitions before ActivateDevModeUseCase's
             // suspend — so a racing tap coroutine reads the updated progress, not the stale one.
-            val snapshot = _tapProgress.value
-            val handled: Unit = when (val result = activateDevModeUseCase(snapshot, nowMillis)) {
+            val snapshot = tapProgressState.value
+            when (val result = activateDevModeUseCase(snapshot, nowMillis)) {
                 is TapResult.Activated -> {
-                    _tapProgress.value = result.newProgress
+                    tapProgressState.value = result.newProgress
                     sendEvent(RootEvent.DevModeActivated)
                 }
                 is TapResult.AlreadyDev -> {
-                    _tapProgress.value = result.newProgress
+                    tapProgressState.value = result.newProgress
                     sendEvent(RootEvent.DevModeAlreadyActive)
                 }
-                is TapResult.NoChange -> _tapProgress.value = result.newProgress
-                is TapResult.Reset -> _tapProgress.value = result.newProgress
+                is TapResult.NoChange -> tapProgressState.value = result.newProgress
+                is TapResult.Reset -> tapProgressState.value = result.newProgress
             }
         }
     }
 
     override fun onSyncNow() {
-        val request = OneTimeWorkRequestBuilder<SyncWorker>()
-            .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
-            .build()
+        val request =
+            OneTimeWorkRequestBuilder<SyncWorker>()
+                .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
+                .build()
         workManager.enqueueUniqueWork(SyncWorker.WORK_NAME_MANUAL, ExistingWorkPolicy.REPLACE, request)
         sendEvent(RootEvent.SyncStarted)
     }
@@ -315,5 +322,7 @@ class DefaultRootComponent(
 
     private companion object {
         private const val TAG = "DefaultRootComponent"
+        private const val OBSERVER_RECONNECT_DELAY_MILLIS = 1_000L
+        private const val OBSERVER_RETRY_DELAY_MILLIS = 5_000L
     }
 }

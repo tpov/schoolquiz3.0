@@ -9,7 +9,6 @@ import com.tpov.schoolquiz.shared.core.sync.Syncable
 class SyncWorkerFactory(
     private val syncables: List<Syncable>,
 ) : WorkerFactory() {
-
     override fun createWorker(
         appContext: Context,
         workerClassName: String,
@@ -17,5 +16,7 @@ class SyncWorkerFactory(
     ): ListenableWorker? =
         if (workerClassName == SyncWorker::class.java.name) {
             SyncWorker(appContext, workerParameters, syncables)
-        } else null
+        } else {
+            null
+        }
 }

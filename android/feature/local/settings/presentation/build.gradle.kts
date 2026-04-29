@@ -1,5 +1,5 @@
 plugins {
-    id("schoolquiz.android.library")
+    id("schoolquiz.android.compose.library")
 }
 
 android {
@@ -7,6 +7,10 @@ android {
 }
 
 dependencies {
+    implementation(project(":android:core:designsystem"))
+    implementation(platform(libs.compose.bom))
+    implementation(libs.bundles.compose.ui)
     implementation(libs.bundles.androidx.ui.base)
     implementation(libs.bundles.androidx.lifecycle)
+    debugImplementation(libs.compose.ui.tooling)
 }

@@ -212,14 +212,14 @@ class CatalogRepositoryImplTest {
         assertNotNull(fakeLocal.findById("c-new"))
     }
 
-    // Matrix 1.5: dto.version == local.version → upsert called but entity not overwritten (DAO-level guard)
+    // Matrix 1.5: dto.version == local.version and timestamp unchanged with equal payload → not overwritten.
     @Test
-    fun `when dto version equal then upsert called but entity not overwritten`() = runTest {
+    fun `when dto version timestamp and payload equal then upsert called but entity not overwritten`() = runTest {
         fakeLocal.seed(
-            listOf(CatalogEntity(id = "c1", name = "Original", picturePath = null, pictureUrl = null, version = 5L)),
+            listOf(CatalogEntity(id = "c1", name = "Original", picturePath = null, pictureUrl = null, version = 5L, lastModifiedAt = 100L)),
         )
         fakeRemote.result = Result.success(
-            listOf(CatalogDto(id = "c1", name = "Updated", picturePath = null, version = 5L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
+            listOf(CatalogDto(id = "c1", name = "Original", picturePath = null, version = 5L, contentsVersion = 0L, lastModifiedAt = 100L, archived = false)),
         )
 
         repository.refreshFromRemote()
@@ -227,6 +227,138 @@ class CatalogRepositoryImplTest {
         // RepositoryImpl calls upsert, but version guard in fake/DAO prevents overwrite
         assertEquals(1, fakeLocal.upsertCallsFor["c1"] ?: 0)
         assertEquals("Original", fakeLocal.findById("c1")?.name)
+    }
+
+    @Test
+    fun `when dto version equal but timestamp newer then icon names are persisted`() = runTest {
+        fakeLocal.seed(
+            listOf(CatalogEntity(id = "c1", name = "Original", picturePath = null, pictureUrl = null, version = 5L, lastModifiedAt = 100L)),
+        )
+        fakeRemote.result = Result.success(
+            listOf(
+                CatalogDto(
+                    id = "c1",
+                    name = "Updated",
+                    picturePath = null,
+                    version = 5L,
+                    contentsVersion = 0L,
+                    lastModifiedAt = 200L,
+                    archived = false,
+                    iconNames = listOf("School", "Calculate"),
+                ),
+            ),
+        )
+
+        repository.refreshFromRemote()
+
+        val catalog = repository.getById(CatalogId("c1"))
+        assertEquals(listOf("School", "Calculate"), catalog?.iconNames)
+    }
+
+    @Test
+    fun `when local catalog missed icon names then same version remote backfills them`() = runTest {
+        fakeLocal.seed(
+            listOf(
+                CatalogEntity(
+                    id = "c1",
+                    name = "Original",
+                    picturePath = null,
+                    pictureUrl = null,
+                    version = 5L,
+                    lastModifiedAt = 100L,
+                    iconNames = emptyList(),
+                ),
+            ),
+        )
+        fakeRemote.result = Result.success(
+            listOf(
+                CatalogDto(
+                    id = "c1",
+                    name = "Original",
+                    picturePath = null,
+                    version = 5L,
+                    contentsVersion = 0L,
+                    lastModifiedAt = 100L,
+                    archived = false,
+                    iconNames = listOf("School", "Calculate"),
+                ),
+            ),
+        )
+
+        repository.refreshFromRemote()
+
+        val catalog = repository.getById(CatalogId("c1"))
+        assertEquals(listOf("School", "Calculate"), catalog?.iconNames)
+    }
+
+    @Test
+    fun `when local catalog missed picture url then same version remote backfills it`() = runTest {
+        fakeLocal.seed(
+            listOf(
+                CatalogEntity(
+                    id = "c1",
+                    name = "Original",
+                    picturePath = "catalog-pictures/c1.jpg",
+                    pictureUrl = null,
+                    version = 5L,
+                    lastModifiedAt = 100L,
+                ),
+            ),
+        )
+        fakeRemote.result = Result.success(
+            listOf(
+                CatalogDto(
+                    id = "c1",
+                    name = "Original",
+                    picturePath = "catalog-pictures/c1.jpg",
+                    version = 5L,
+                    contentsVersion = 0L,
+                    lastModifiedAt = 100L,
+                    archived = false,
+                ),
+            ),
+        )
+
+        repository.refreshFromRemote()
+
+        val catalog = repository.getById(CatalogId("c1"))
+        assertEquals("https://fake.example.com/catalog-pictures/c1.jpg", catalog?.pictureUrl)
+    }
+
+    @Test
+    fun `when storage url resolution fails then existing picture url is retained`() = runTest {
+        fakeLocal.seed(
+            listOf(
+                CatalogEntity(
+                    id = "c1",
+                    name = "Original",
+                    picturePath = "catalog-pictures/c1.jpg",
+                    pictureUrl = "https://cached.example.com/c1.jpg",
+                    version = 5L,
+                    lastModifiedAt = 100L,
+                ),
+            ),
+        )
+        fakeUrlResolver.shouldThrow = true
+        fakeRemote.result = Result.success(
+            listOf(
+                CatalogDto(
+                    id = "c1",
+                    name = "Original",
+                    picturePath = "catalog-pictures/c1.jpg",
+                    version = 5L,
+                    contentsVersion = 0L,
+                    lastModifiedAt = 100L,
+                    archived = false,
+                    iconNames = listOf("School"),
+                ),
+            ),
+        )
+
+        repository.refreshFromRemote()
+
+        val catalog = repository.getById(CatalogId("c1"))
+        assertEquals("https://cached.example.com/c1.jpg", catalog?.pictureUrl)
     }
 
     // P4/AC#41-42: cursor is NOT advanced by repository (B2 fix) — orchestrator responsibility

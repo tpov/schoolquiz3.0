@@ -11,9 +11,7 @@ class SyncWorker(
     workerParams: WorkerParameters,
     private val syncables: List<Syncable>,
 ) : CoroutineWorker(appContext, workerParams) {
-
-    override suspend fun doWork(): Result =
-        if (performSync(syncables)) Result.success() else Result.retry()
+    override suspend fun doWork(): Result = if (performSync(syncables)) Result.success() else Result.retry()
 
     companion object {
         const val WORK_NAME_PERIODIC = "periodic_sync"

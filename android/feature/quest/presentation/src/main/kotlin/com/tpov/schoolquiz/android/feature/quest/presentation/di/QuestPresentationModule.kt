@@ -10,22 +10,24 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import org.koin.dsl.module
 
-val questPresentationModule = module {
-    factory<MyQuestsComponent> { (ctx: ComponentContext, nav: Navigator, onQuestDrillDown: (QuestDisplayItem) -> Unit) ->
-        DefaultMyQuestsComponent(
-            componentContext = ctx,
-            authRepo = get(),
-            observeMyQuests = get(),
-            observeCatalogs = get(),
-            navigator = nav,
-            onQuestDrillDown = onQuestDrillDown,
-        )
+val questPresentationModule =
+    module {
+        factory<MyQuestsComponent> {
+                (ctx: ComponentContext, nav: Navigator, onQuestDrillDown: (QuestDisplayItem) -> Unit) ->
+            DefaultMyQuestsComponent(
+                componentContext = ctx,
+                authRepo = get(),
+                observeMyQuests = get(),
+                observeCatalogs = get(),
+                navigator = nav,
+                onQuestDrillDown = onQuestDrillDown,
+            )
+        }
+        factory<HomeQuestsComponent> { (ctx: ComponentContext, onCatalogDrillDown: (CatalogId, String) -> Unit) ->
+            DefaultHomeQuestsComponent(
+                componentContext = ctx,
+                observeCatalogs = get(),
+                onCatalogDrillDown = onCatalogDrillDown,
+            )
+        }
     }
-    factory<HomeQuestsComponent> { (ctx: ComponentContext, onCatalogDrillDown: (CatalogId, String) -> Unit) ->
-        DefaultHomeQuestsComponent(
-            componentContext = ctx,
-            observeCatalogs = get(),
-            onCatalogDrillDown = onCatalogDrillDown,
-        )
-    }
-}

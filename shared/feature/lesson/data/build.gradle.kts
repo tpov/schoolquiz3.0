@@ -1,5 +1,6 @@
 plugins {
     id("schoolquiz.kmp.library")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -14,7 +15,9 @@ kotlin {
             implementation(project(":shared:feature:theme:domain"))
             implementation(project(":shared:core:persistence"))
             implementation(project(":shared:core:sync"))
+            implementation(project(":shared:core:leaderboard"))
             implementation(libs.koin.core)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

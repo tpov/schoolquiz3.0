@@ -14,5 +14,8 @@ kotlin {
                 implementation(libs.kotlinx.serialization.json)
             }
         }
+        androidMain.dependencies {
+            implementation(libs.koin.core)
+        }
     }
 }

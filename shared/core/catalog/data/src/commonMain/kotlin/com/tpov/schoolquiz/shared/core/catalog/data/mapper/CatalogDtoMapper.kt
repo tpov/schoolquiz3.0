@@ -12,4 +12,6 @@ fun CatalogDto.toEntity(): CatalogEntity = CatalogEntity(
     contentsVersion = contentsVersion,
     lastModifiedAt = lastModifiedAt,
     archived = archived,
+    iconCategoryKey = iconCategoryKey,
+    iconNames = iconNames,
 )

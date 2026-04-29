@@ -8,18 +8,18 @@
 
 ## 1. Domain layer purity
 
-- **Invariant**: Файлы в `app/src/main/kotlin/<base_package>/domain/**/` не содержат Android framework типов (Context, Uri, Bundle, Intent, View, Activity, Fragment), SDK типов (LiveKit, Firebase, Retrofit, Room, Moshi), DI аннотаций (@Inject, @Provides, @Module) ни как полей, ни как параметров функций, ни как generic параметров, ни как return types.
-- **Constraint**: Исключение — `android.os.Parcelable` в domain models если явно требуется для navigation.
+- **Invariant**: Файлы domain-слоя в `shared/**/domain/src/commonMain/**` не содержат Android framework типов (Context, Uri, Bundle, Intent, View, Activity, Fragment), SDK типов (Firebase, Retrofit, Room, OkHttp, Moshi), DI аннотаций (@Inject, @Provides, @Module) ни как полей, ни как параметров функций, ни как generic параметров, ни как return types.
+- **Constraint**: В KMP domain нет исключения для `Parcelable`; navigation/platform mapping живёт вне domain.
 - **Owner**: `architect-reviewer` (grep check), `domain-designer` (generation), `backend-dev` (implementation).
 - **Rule source**: `.claude/rules/domain-models.md`
 - **Added**: 2026-04-16, pipeline-retrospective 2026-04-16 (Bug #8).
 
-## 2. Activity/Fragment calls only ViewModel
+## 2. Presentation does not bypass domain
 
-- **Invariant**: Activity и Fragment не вызывают Repository, Provider, Manager, Service, Store, UseCase, DAO или API напрямую. Только через ViewModel (или navigation/system платформенные компоненты).
-- **Constraint**: Нет DI инъекции Repository/UseCase в Activity/Fragment как `@Inject lateinit var`.
+- **Invariant**: Android presentation (`android/**/presentation`) не вызывает DAO, Entity, RemoteDataSource, Firebase/Room adapters или data-layer mappers напрямую. Decompose `Component` работает через use cases или domain repository interfaces; Compose `Screen` получает state/callbacks от component и не резолвит Koin напрямую.
+- **Constraint**: AndroidX `ViewModel` не является каноничным state holder для новых экранов; использовать Decompose `Component`, если фаза/ADR явно не требует другого.
 - **Owner**: `architect-reviewer` (grep check), `frontend-dev` (implementation).
-- **Rule source**: `.claude/rules/use-cases.md`
+- **Rule source**: `.claude/rules/clean-architecture.md`, `.claude/rules/navigation.md`
 - **Added**: 2026-04-16, pipeline-retrospective 2026-04-16 (Bug #9).
 
 ## 3. No bidirectional coupling between feature modules
@@ -32,23 +32,23 @@
 
 ## 4. onDestroy is not for business cleanup
 
-- **Invariant**: Activity `onDestroy()` не содержит kill-like actions (`endCall`, `stopService`, `ACTION_END_*`, `disconnect`, `cancelJob`) без проверки `if (isFinishing && !isChangingConfigurations)`. Business operations, которые должны жить в background, принадлежат Foreground Service, не Activity.
-- **Constraint**: Если нужно завершать operation "когда user действительно ушёл" — использовать `ViewModel.onCleared()`, который вызывается только при реальном destruction (не на config change).
+- **Invariant**: Activity `onDestroy()` не содержит kill-like actions (`endCall`, `stopService`, `ACTION_END_*`, `disconnect`, `cancelJob`) без проверки `if (isFinishing && !isChangingConfigurations)`. В Decompose components `doOnDestroy` подходит для отмены component scope/listeners, но не для бизнес-операций, которые должны жить дольше UI.
+- **Constraint**: Если нужно завершать operation "когда user действительно ушёл" — явно моделировать это в navigation/component lifecycle или platform service, а не полагаться на Android `onDestroy()`.
 - **Owner**: `architect-reviewer` (grep check), `frontend-dev`.
 - **Rule source**: `.claude/rules/lifecycle.md`
 - **Added**: 2026-04-16, pipeline-retrospective 2026-04-16 (Bug #11).
 
-## 5. DI exclusive binding
+## 5. Koin binding uniqueness
 
-- **Invariant**: Для одного класса — либо `@Inject constructor`, либо `@Provides`/`@Binds` в module. Не оба одновременно. Иначе возможен molчаливое duplicate singleton.
-- **Constraint**: Если класс имеет `@Inject constructor` — используй `@Binds` для interface → impl связи. Если класс требует специфичной construction логики (`@Provides`) — убери `@Inject constructor`.
+- **Invariant**: Для одного exposed типа в Koin graph должен быть один production binding, если duplicate не задокументирован как named/qualified binding. Composition root — `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/AppApplication.kt`.
+- **Constraint**: Project does NOT use Hilt/Dagger. Hilt/Dagger exclusive binding rule не применяется; для Koin проверять duplicate `single`/`factory`, missing module registration и неверные `parametersOf`.
 - **Owner**: `architect-reviewer` (grep check), `backend-dev`.
 - **Rule source**: `.claude/rules/di-patterns.md`
 - **Added**: 2026-04-16, pipeline-retrospective 2026-04-16 (Bug #12).
 
 ## 6. Walking Skeleton ownership
 
-- **Invariant**: Если `docs/features/<slug>/0-spec.md` содержит `Feature Domain Contract` ≠ N/A — на spec-этапе сгенерирован domain код в `app/src/main/kotlin/<base_package>/domain/<feature_slug>/` + JVM тесты в `app/src/test/kotlin/<base_package>/domain/<feature_slug>/`. Domain код **не переписывается** в downstream фазах — только оборачивается infrastructure в phase-01.
+- **Invariant**: Если `docs/features/<slug>/0-spec.md` содержит `Feature Domain Contract` ≠ N/A — на spec-этапе сгенерирован domain код в проектном layout из `.claude/PROJECT-CONTEXT.md`; для KMP feature это `shared/feature/<slug>/domain/src/commonMain/` + `src/commonTest/`. Domain код **не переписывается** в downstream фазах — только оборачивается infrastructure в phase-01.
 - **Constraint**: Renaming классов в design phase допустимо. Изменение business rules в domain после spec approval — architectural mismatch, эскалация пользователю.
 - **Owner**: `domain-designer` (generation), `backend-dev` (integration), `architect-reviewer` (check).
 - **Rule source**: `.claude/skills/domain-modeling/SKILL.md`

@@ -17,6 +17,8 @@ data class CatalogEntity(
     val contentsVersion: Long = 0L,
     val lastModifiedAt: Long = 0L,
     val archived: Boolean = false,
+    val iconCategoryKey: String? = null,
+    val iconNames: List<String> = emptyList(),
 ) {
     init {
         require(pictureUrl == null || pictureUrl.startsWith("https://")) {

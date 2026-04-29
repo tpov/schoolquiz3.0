@@ -59,55 +59,60 @@ fun QuestListScreen(
             modifier = Modifier.fillMaxWidth(),
         )
         when (val state = uiState) {
-            is QuestListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            is QuestListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = "Нет квестов",
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            is QuestListUiState.Loaded -> LazyColumn(state = lazyListState) {
-                itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
-                    Box {
-                        HierarchyItemCard(
-                            title = quest.title,
-                            orderLabel = "${index + 1}.",
-                            rating = quest.averageRating,
-                            ratingCount = quest.averageRatingCount,
-                            onClick = { component.onQuestClick(quest) },
-                            onLongClick = { expandedQuestId = quest.id },
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
-                        DropdownMenu(
-                            expanded = expandedQuestId == quest.id,
-                            onDismissRequest = { expandedQuestId = null },
-                            modifier = Modifier.testTag("quest_menu"),
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Поделиться") },
-                                onClick = {
-                                    expandedQuestId = null
-                                    val appName = context.applicationInfo
-                                        .loadLabel(context.packageManager).toString()
-                                    val shareText = "Квест «${quest.title}» — $appName"
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, shareText)
-                                    }
-                                    try {
-                                        context.startActivity(Intent.createChooser(intent, null))
-                                    } catch (e: ActivityNotFoundException) {
-                                        Log.w(TAG, "Share unavailable", e)
-                                    }
-                                },
+            is QuestListUiState.Loading ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+            is QuestListUiState.Empty ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = "Нет квестов",
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+            is QuestListUiState.Loaded ->
+                LazyColumn(state = lazyListState) {
+                    itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
+                        Box {
+                            HierarchyItemCard(
+                                title = quest.title,
+                                orderLabel = "${index + 1}.",
+                                rating = quest.averageRating,
+                                ratingCount = quest.averageRatingCount,
+                                onClick = { component.onQuestClick(quest) },
+                                onLongClick = { expandedQuestId = quest.id },
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             )
+                            DropdownMenu(
+                                expanded = expandedQuestId == quest.id,
+                                onDismissRequest = { expandedQuestId = null },
+                                modifier = Modifier.testTag("quest_menu"),
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Поделиться") },
+                                    onClick = {
+                                        expandedQuestId = null
+                                        val appName =
+                                            context.applicationInfo
+                                                .loadLabel(context.packageManager).toString()
+                                        val shareText = "Квест «${quest.title}» — $appName"
+                                        val intent =
+                                            Intent(Intent.ACTION_SEND).apply {
+                                                type = "text/plain"
+                                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                            }
+                                        try {
+                                            context.startActivity(Intent.createChooser(intent, null))
+                                        } catch (e: ActivityNotFoundException) {
+                                            Log.w(TAG, "Share unavailable", e)
+                                        }
+                                    },
+                                )
+                            }
                         }
                     }
                 }
-            }
         }
     }
 }
@@ -118,12 +123,15 @@ fun QuestListScreen(
 private fun QuestListScreenLoadingPreview() {
     SchoolQuizTheme {
         QuestListScreen(
-            component = object : QuestListComponent {
-                override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Loading)
-                override val titles = listOf("Математика")
-                override fun onQuestClick(quest: QuestDisplayItem) = Unit
-                override fun onShareClick(quest: QuestDisplayItem) = Unit
-            },
+            component =
+                object : QuestListComponent {
+                    override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Loading)
+                    override val titles = listOf("Математика")
+
+                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
+
+                    override fun onShareClick(quest: QuestDisplayItem) = Unit
+                },
             onSegmentClick = {},
         )
     }
@@ -135,12 +143,15 @@ private fun QuestListScreenLoadingPreview() {
 private fun QuestListScreenEmptyPreview() {
     SchoolQuizTheme {
         QuestListScreen(
-            component = object : QuestListComponent {
-                override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Empty)
-                override val titles = listOf("Математика")
-                override fun onQuestClick(quest: QuestDisplayItem) = Unit
-                override fun onShareClick(quest: QuestDisplayItem) = Unit
-            },
+            component =
+                object : QuestListComponent {
+                    override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Empty)
+                    override val titles = listOf("Математика")
+
+                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
+
+                    override fun onShareClick(quest: QuestDisplayItem) = Unit
+                },
             onSegmentClick = {},
         )
     }
@@ -153,20 +164,25 @@ private fun QuestListScreenLoadedPreview() {
     val catalogId = CatalogId("cat-1")
     SchoolQuizTheme {
         QuestListScreen(
-            component = object : QuestListComponent {
-                override val uiState: Value<QuestListUiState> = MutableValue(
-                    QuestListUiState.Loaded(
-                        quests = listOf(
-                            QuestDisplayItem(QuestId("1"), catalogId, "Алгебра — основы", null, 2.5f, 42),
-                            QuestDisplayItem(QuestId("2"), catalogId, "Геометрия", null, null, 0),
-                            QuestDisplayItem(QuestId("3"), catalogId, "Тригонометрия", null, 3.0f, 7),
-                        ),
-                    ),
-                )
-                override val titles = listOf("Математика")
-                override fun onQuestClick(quest: QuestDisplayItem) = Unit
-                override fun onShareClick(quest: QuestDisplayItem) = Unit
-            },
+            component =
+                object : QuestListComponent {
+                    override val uiState: Value<QuestListUiState> =
+                        MutableValue(
+                            QuestListUiState.Loaded(
+                                quests =
+                                    listOf(
+                                        QuestDisplayItem(QuestId("1"), catalogId, "Алгебра — основы", null, 2.5f, 42),
+                                        QuestDisplayItem(QuestId("2"), catalogId, "Геометрия", null, null, 0),
+                                        QuestDisplayItem(QuestId("3"), catalogId, "Тригонометрия", null, 3.0f, 7),
+                                    ),
+                            ),
+                        )
+                    override val titles = listOf("Математика")
+
+                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
+
+                    override fun onShareClick(quest: QuestDisplayItem) = Unit
+                },
             onSegmentClick = {},
         )
     }

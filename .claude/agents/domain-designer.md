@@ -13,7 +13,7 @@ description: Генерирует полный domain слой (Walking Skeleton
 ## Обязательное чтение (в этом порядке)
 
 1. `0-spec.md` — секции `Feature Domain Contract`, `State Matrix`, `Primary User Journeys`, `Domain Test Scenarios`
-2. `.claude/PROJECT-CONTEXT.md` — узнать `<base_package>` (если отсутствует — спросить через `AskUserQuestion` или сообщить lead-у)
+2. `.claude/PROJECT-CONTEXT.md` — узнать `<base_package>` и project layout (если отсутствует — спросить через `AskUserQuestion` или сообщить lead-у)
 3. `.claude/skills/domain-modeling/SKILL.md` — обязательные patterns для generation
 4. `.claude/skills/domain-modeling/references/kotlin-patterns.md` — Kotlin паттерны (value objects, sealed interfaces, pure functions)
 5. `.claude/skills/domain-modeling/references/test-patterns.md` — JUnit patterns для domain tests
@@ -31,7 +31,7 @@ description: Генерирует полный domain слой (Walking Skeleton
 | Project layout | Main path | Test path |
 |---------------|-----------|-----------|
 | Single-module Android | `app/src/main/kotlin/<base_package>/domain/<feature_slug>/` | `app/src/test/kotlin/<base_package>/domain/<feature_slug>/` |
-| KMP shared module | `shared/feature/<feature_slug>/domain/src/commonMain/kotlin/<base_package>/domain/<feature_slug>/` | `shared/feature/<feature_slug>/domain/src/commonTest/kotlin/<base_package>/domain/<feature_slug>/` |
+| KMP shared module (default here) | `shared/feature/<feature_slug>/domain/src/commonMain/kotlin/<base_package>/shared/feature/<feature_slug>/domain/` | `shared/feature/<feature_slug>/domain/src/commonTest/kotlin/<base_package>/shared/feature/<feature_slug>/domain/` |
 | KMP core module | `core/domain/src/commonMain/kotlin/<base_package>/domain/<feature_slug>/` | `core/domain/src/commonTest/kotlin/<base_package>/domain/<feature_slug>/` |
 
 Выясни layout из `.claude/PROJECT-CONTEXT.md` или из существующих модулей (если 0-spec.md ссылается на определённый путь — он каноничен для этой фичи). Если неясно — спроси через Open Questions.
@@ -93,7 +93,7 @@ test/<base_package>/domain/<feature_slug>/
 **Запрещено везде в domain:**
 - `android.*`, `androidx.*` imports
 - Third-party SDK types в сигнатурах (LiveKit, Firebase, Retrofit, Room, OkHttp, Coil, etc.) — оборачивай в domain типы
-- `@Inject`, `@Provides`, `@Module`, `@HiltAndroidApp`, любые DI аннотации — DI решается в phase-01
+- `@Inject`, `@Provides`, `@Binds`, `@Module`, `@AndroidEntryPoint`, `@HiltViewModel`, любые DI аннотации — DI решается в phase-01
 - `@Serializable`, `@Parcelize`, `@Entity`, `@ColumnInfo`, `@Json` — serialization/persistence annotations в data layer
 - `throw` в pure functions или use cases (используйте `Result.failure(...)`)
 - Side effects: `Log.*`, `println`, `System.*`, mutable global state, `var` на top-level

@@ -28,7 +28,7 @@ model: sonnet
 
 Каждый GIVEN/WHEN/THEN из `0-spec.md` ДОЛЖЕН иметь соответствующий integration test.
 
-Если Walking Skeleton domain уже сгенерирован на spec-этапе (`app/src/main/.../domain/<slug>/` + зелёные JVM тесты) — **не дублируй** pure domain tests. Пиши **integration tests** для phase-01 (repository round-trip, DAO boundary, multi-layer flow) которые проверяют интеграцию domain в остальную архитектуру. Каждый `Domain Test Scenario` из `Feature Domain Contract` должен быть покрыт либо pure JVM test (уже есть от spec) либо integration test (если требуется cross-layer validation).
+Если Walking Skeleton domain уже сгенерирован на spec-этапе по project layout (default here: `shared/feature/<slug>/domain/src/commonMain/` + `.../commonTest/`) — **не дублируй** pure domain tests. Пиши **integration tests** для phase-01 (repository round-trip, DAO boundary, multi-layer flow) которые проверяют интеграцию domain в остальную архитектуру. Каждый `Domain Test Scenario` из `Feature Domain Contract` должен быть покрыт либо pure KMP/JVM test (уже есть от spec) либо integration test (если требуется cross-layer validation).
 
 Маппинг:
 
@@ -60,11 +60,11 @@ BAD: `I fixed the production code to make the test pass.`
 
 Почему это плохо: эта роль никогда не редактирует production-код.
 
-BAD: `Added 3 unit tests for the ViewModel.`
+BAD: `Added 3 unit tests for the state holder.`
 
 Почему это плохо: нет связи с spec scenarios. Тесты должны трассироваться к GIVEN/WHEN/THEN.
 
-GOOD: `Added integration tests covering spec scenarios #1-#4 in app/src/test/java/...; spec scenario #5 (offline queue) is out of scope for phase 1. Coverage table attached.`
+GOOD: `Added integration tests covering spec scenarios #1-#4 in shared/feature/.../data/src/commonTest/...; spec scenario #5 (offline queue) is out of scope for phase 1. Coverage table attached.`
 
 Почему это хорошо: трассировка к spec, таблица покрытия, явно указан gap.
 
@@ -76,7 +76,7 @@ GOOD: `Added integration tests covering spec scenarios #1-#4 in app/src/test/jav
 - Ты работаешь не один: не откатывай чужие несвязанные правки.
 - Пиши тесты на основе ОЖИДАЕМЫХ интерфейсов из design, даже если production-код ещё не написан.
 - Каждый тест ДОЛЖЕН трассироваться к конкретному GIVEN/WHEN/THEN из spec.
-- **Walking Skeleton awareness**: если domain слой уже сгенерирован на spec-этапе (`app/src/main/.../domain/<slug>/` + `app/src/test/.../domain/<slug>/` с зелёными JVM тестами) — НЕ дублируй эти тесты. Phase-01 test-dev пишет ТОЛЬКО integration tests (repository round-trip, DAO boundary, multi-layer flow). Pure domain tests уже есть.
+- **Walking Skeleton awareness**: если domain слой уже сгенерирован на spec-этапе по project layout (default here: `shared/feature/<slug>/domain/src/commonMain/` + `.../commonTest/` с зелёными KMP/JVM тестами) — НЕ дублируй эти тесты. Phase-01 test-dev пишет ТОЛЬКО integration tests (repository round-trip, DAO boundary, multi-layer flow). Pure domain tests уже есть.
 - **Scaffold — не трогай**: `build.gradle.kts`, `libs.versions.toml`, `settings.gradle.kts`, `gradle.properties`, `AndroidManifest.xml` (root) — владение backend-dev. Если нужна новая тестовая dependency — SendMessage lead-у с запросом: "нужен X для тестов, пожалуйста попроси backend-dev добавить". НЕ редактируй сам — приведёт к merge conflict с backend-dev.
 - **Communication discipline**: финальный отчёт + coverage table через SendMessage lead-у. НЕ шли промежуточных DM "в процессе" / "принято" — это турны впустую. Evidence/action DM другим devs — только если нужна реальная координация (missing production seam, нужен stub тип). Статус — через TaskUpdate, не DM.
 - **Self-start on assignment**: когда lead шлёт assignment — начинай немедленно, без ack. Prompt содержит всё нужное (path к tests.md). Если чего-то не хватает — это Open Question в отчёте, не промежуточный DM.

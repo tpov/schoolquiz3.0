@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.lesson.domain.model
 
+import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 
 /**
@@ -43,6 +44,9 @@ data class Lesson(
      * Default `false` for backward compatibility.
      */
     val archived: Boolean = false,
+    val averageRating: Float? = null,
+    val ratingCount: Int = 0,
+    val top3: List<TopParticipant> = emptyList(),
 ) {
     init {
         require(title.isNotBlank()) { "Lesson.title must not be blank" }
@@ -50,5 +54,6 @@ data class Lesson(
         require(version >= 1) { "Lesson.version must be >= 1, got $version" }
         require(contentsVersion >= 0) { "Lesson.contentsVersion must be >= 0, got $contentsVersion" }
         require(lastModifiedAt >= 0) { "Lesson.lastModifiedAt must be >= 0, got $lastModifiedAt" }
+        require(top3.size <= 3) { "Lesson.top3.size must be <= 3, got ${top3.size}" }
     }
 }

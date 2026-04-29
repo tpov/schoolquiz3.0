@@ -3,24 +3,29 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonListComponent
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
 
 class FakeLessonListComponent(
-    initialState: HierarchyListUiState,
+    initialState: LessonListUiState,
     override val titles: List<String> = emptyList(),
 ) : LessonListComponent {
 
     private val _uiState = MutableValue(initialState)
-    override val uiState: Value<HierarchyListUiState> get() = _uiState
+    override val uiState: Value<LessonListUiState> get() = _uiState
 
-    var onLessonClickCalled: HierarchyItemUi? = null
+    var onLessonClickCalled: LessonItemUi? = null
+    var onHardCheckToggledCalled: String? = null
 
-    fun setState(state: HierarchyListUiState) {
+    fun setState(state: LessonListUiState) {
         _uiState.value = state
     }
 
-    override fun onLessonClick(lesson: HierarchyItemUi) {
+    override fun onLessonClick(lesson: LessonItemUi) {
         onLessonClickCalled = lesson
+    }
+
+    override fun onHardCheckToggled(lessonId: String) {
+        onHardCheckToggledCalled = lessonId
     }
 }

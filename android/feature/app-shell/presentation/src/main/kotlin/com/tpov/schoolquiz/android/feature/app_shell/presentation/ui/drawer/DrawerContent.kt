@@ -15,7 +15,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
  *
  * SHOP tab: DrawerSectionList skipped per spec FR #3.
  */
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 fun DrawerContent(
     userStats: UserStats,

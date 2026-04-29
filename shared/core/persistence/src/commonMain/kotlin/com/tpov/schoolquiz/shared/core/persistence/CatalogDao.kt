@@ -22,7 +22,7 @@ interface CatalogDao {
     @Transaction
     suspend fun upsertByIdIfNewerVersion(entity: CatalogEntity) {
         val existing = findById(entity.id)
-        if (existing == null || existing.version < entity.version) {
+        if (existing == null || existing.shouldBeReplacedBy(entity)) {
             insertOrReplace(entity)
         }
     }
@@ -41,4 +41,9 @@ interface CatalogDao {
         deleteAll()
         insertAll(entities)
     }
+
+    private fun CatalogEntity.shouldBeReplacedBy(incoming: CatalogEntity): Boolean =
+        version < incoming.version ||
+            (version == incoming.version && lastModifiedAt < incoming.lastModifiedAt) ||
+            (version == incoming.version && lastModifiedAt == incoming.lastModifiedAt && this != incoming)
 }

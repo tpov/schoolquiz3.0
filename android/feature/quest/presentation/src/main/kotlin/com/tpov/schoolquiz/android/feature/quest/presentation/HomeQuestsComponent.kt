@@ -13,7 +13,10 @@ import kotlinx.coroutines.flow.StateFlow
 interface HomeQuestsComponent {
     val state: StateFlow<HomeQuestsUiState>
 
-    fun onCatalogClick(id: CatalogId, name: String)
+    fun onCatalogClick(
+        id: CatalogId,
+        name: String,
+    )
 }
 
 /**

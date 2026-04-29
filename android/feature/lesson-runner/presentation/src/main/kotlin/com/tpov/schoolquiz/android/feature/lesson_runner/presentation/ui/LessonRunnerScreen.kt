@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,6 +37,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
@@ -75,6 +77,7 @@ fun rememberFlagSecure(enabled: Boolean) {
 fun LessonRunnerScreen(
     component: LessonRunnerRootComponent,
     onNavigateBack: () -> Unit,
+    floatingIcons: List<ImageVector>,
     modifier: Modifier = Modifier,
 ) {
     val state by component.uiState.collectAsState()
@@ -133,6 +136,10 @@ fun LessonRunnerScreen(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             accentColor = backgroundAccent,
         ) {
+            FloatingIconsLayer(
+                modifier = Modifier.fillMaxSize(),
+                icons = floatingIcons,
+            )
             RunnerStateContent(state = state, component = component)
         }
     }
@@ -190,6 +197,8 @@ private fun QuestionStateContent(
 ) {
     var feedback by remember(state.indexInPool) { mutableStateOf<AnswerFeedback?>(null) }
     var canSkipFeedback by remember(state.indexInPool) { mutableStateOf(false) }
+    val infoText = state.questionUiState.info
+    var showInfoDialog by remember(state.indexInPool, infoText) { mutableStateOf(false) }
 
     fun submitFeedbackNow() {
         val answer = feedback?.answer ?: return
@@ -198,9 +207,9 @@ private fun QuestionStateContent(
         component.onAnswer(answer)
     }
 
-    LaunchedEffect(feedback) {
+    LaunchedEffect(feedback, showInfoDialog) {
         canSkipFeedback = false
-        if (feedback == null) {
+        if (feedback == null || showInfoDialog) {
             return@LaunchedEffect
         }
         delay(ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS)
@@ -260,7 +269,22 @@ private fun QuestionStateContent(
                             ),
                 )
             }
+            if (feedback != null && infoText != null) {
+                QuestionInfoButton(
+                    onClick = { showInfoDialog = true },
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 18.dp, end = 20.dp),
+                )
+            }
         }
+    }
+    if (showInfoDialog && infoText != null) {
+        QuestionInfoDialog(
+            info = infoText,
+            onDismiss = { showInfoDialog = false },
+        )
     }
     if (state.isPaused) {
         BlockingResumeDialog(
@@ -618,6 +642,7 @@ private fun LessonRunnerScreenEasyPreview() {
         LessonRunnerScreen(
             component = PreviewLessonRunnerComponent(previewQuestionState(isHard = false)),
             onNavigateBack = {},
+            floatingIcons = emptyList(),
         )
     }
 }
@@ -630,6 +655,7 @@ private fun LessonRunnerScreenHardPreview() {
         LessonRunnerScreen(
             component = PreviewLessonRunnerComponent(previewQuestionState(isHard = true)),
             onNavigateBack = {},
+            floatingIcons = emptyList(),
         )
     }
 }
@@ -642,6 +668,7 @@ private fun LessonRunnerScreenLoadingPreview() {
         LessonRunnerScreen(
             component = PreviewLessonRunnerComponent(RunnerUiState.Loading),
             onNavigateBack = {},
+            floatingIcons = emptyList(),
         )
     }
 }
@@ -657,6 +684,7 @@ private fun LessonRunnerScreenInitFailedPreview() {
                     RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.AuthRequired),
                 ),
             onNavigateBack = {},
+            floatingIcons = emptyList(),
         )
     }
 }

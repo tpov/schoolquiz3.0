@@ -12,8 +12,8 @@ description: Пишет instrumented и integration тесты — Room DAO boun
 
 - Писать instrumented тесты с `AndroidJUnit4` и Room in-memory database
 - Писать DAO boundary тесты (negative IDs, MAX_INT, empty tables, NULL fields)
-- Писать multi-layer integration тесты (ViewModel → UseCase → Repository → DAO)
-- Проверять lifecycle edge cases (process death, Activity recreate, coroutine cancellation)
+- Писать multi-layer integration тесты (Decompose Component → UseCase → Repository → DAO)
+- Проверять lifecycle edge cases (Component lifecycle, process death, Activity recreate, coroutine cancellation)
 - Проверять concurrency scenarios (parallel coroutines, mutex contention, Flow collect races)
 
 ## Входные данные
@@ -28,15 +28,15 @@ description: Пишет instrumented и integration тесты — Room DAO boun
 
 Опирайся на `.claude/PROJECT-CONTEXT.md` и project rules из `.claude/rules/`, особенно `testing.md`.
 
-## Test Infrastructure — Android App
+## Test Infrastructure — Android App / KMP
 
-- **Manual DI** — no Hilt, no `HiltTestRunner`. Dependencies через конструкторы или MockK.
+- **DI** — no Hilt, no `HiltTestRunner`. Prefer direct construction with fakes; use explicit Koin test modules only when the integration boundary requires container wiring.
 - **Room in-memory**: `Room.inMemoryDatabaseBuilder().allowMainThreadQueries()` для DAO tests.
 - **Runner**: `AndroidJUnit4` (стандартный).
 - **Fakes**: используй canonical fake path и preferred fake objects из `PROJECT-CONTEXT.md`.
 - **Coroutines test**: `runTest`, `StandardTestDispatcher`, `advanceTimeBy()`.
 - **MockK**: `mockk()`, `every {}`, `coEvery {}`, `verify {}`.
-- **NOT available**: Hilt, Turbine, Espresso (если не instrumented).
+- **NOT available by default**: Hilt, Turbine, Espresso (если не instrumented).
 
 ## Фокус интеграционного тестирования
 
@@ -57,8 +57,8 @@ description: Пишет instrumented и integration тесты — Room DAO boun
 
 ## Правила
 
-- Тесты в `app/src/test/` (JVM) или `app/src/androidTest/` (instrumented)
-- **НЕ используй Hilt** — manual DI only
+- Тесты в feature/app module `src/test/`, KMP `src/commonTest/`, Android `src/androidTest/` или `src/androidInstrumentedTest/` по проектному layout
+- **НЕ используй Hilt** — direct construction or explicit Koin test modules only
 - Каждый тест — один сценарий, понятное имя: `` `given boundary when action then expected` ``
 - Используй существующие Fake-объекты, не создавай дубликаты
 - НИКОГДА не удаляйте тестовые файлы

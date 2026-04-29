@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.platform.firebase.section.FirebaseSectionRemoteDataSo
 import com.tpov.schoolquiz.shared.feature.section.data.SectionRemoteDataSource
 import org.koin.dsl.module
 
-val firebaseSectionModule = module {
-    single<SectionRemoteDataSource> { FirebaseSectionRemoteDataSource(get()) }
-}
+val firebaseSectionModule =
+    module {
+        single<SectionRemoteDataSource> { FirebaseSectionRemoteDataSource(get()) }
+    }

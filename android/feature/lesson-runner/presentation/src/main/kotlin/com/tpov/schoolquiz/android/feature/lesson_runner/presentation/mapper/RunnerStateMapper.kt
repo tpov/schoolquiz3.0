@@ -50,6 +50,7 @@ fun QuestionContent.toQuestionUiState(
             QuestionUiState.SingleChoice(
                 questionText = text,
                 hasImage = imageUrl != null,
+                info = info?.trim()?.takeIf { it.isNotEmpty() },
                 imageUrl = imageUrl?.takeIf { it.startsWith("https://") },
                 options =
                     options
@@ -66,6 +67,7 @@ fun QuestionContent.toQuestionUiState(
             QuestionUiState.MultipleChoice(
                 questionText = text,
                 hasImage = imageUrl != null,
+                info = info?.trim()?.takeIf { it.isNotEmpty() },
                 imageUrl = imageUrl?.takeIf { it.startsWith("https://") },
                 options =
                     options
@@ -92,6 +94,7 @@ fun QuestionContent.toQuestionUiState(
             QuestionUiState.Ordering(
                 questionText = text,
                 hasImage = imageUrl != null,
+                info = info?.trim()?.takeIf { it.isNotEmpty() },
                 imageUrl = imageUrl?.takeIf { it.startsWith("https://") },
                 items = orderedItems,
                 correctOrderIds = items.map { it.id.raw },
@@ -112,6 +115,7 @@ fun QuestionContent.toQuestionUiState(
             QuestionUiState.FillBlank(
                 questionText = text,
                 hasImage = imageUrl != null,
+                info = info?.trim()?.takeIf { it.isNotEmpty() },
                 imageUrl = imageUrl?.takeIf { it.startsWith("https://") },
                 templateParts = parseTemplateParts(text, blanks),
                 filledValues = filledValues,

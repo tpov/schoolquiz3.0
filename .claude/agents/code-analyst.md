@@ -123,7 +123,7 @@ EntryPoint.kt:line → MethodA() → MethodB() → ... → SuspectPoint.kt:line
 # Run related tests
 ./gradlew test --tests "*ClassName*" --no-configuration-cache 2>&1 | tail -30
 # If hypothesis touches app packaging/build config/resources, validate canonical app build
-./scripts/qa --primary-only --skip-test 2>&1 | tail -40
+./gradlew :apps:android-next:assembleDebug --no-configuration-cache 2>&1 | tail -40
 ```
 
 ## Формат вывода

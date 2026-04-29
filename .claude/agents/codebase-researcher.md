@@ -20,7 +20,7 @@ tools: Read, Grep, Glob, Bash
 ## Impact Scan (обязательный шаг)
 
 Для каждого entity/table/DAO, который фича планирует ИЗМЕНИТЬ (новые поля, новые диапазоны значений, новые статусы):
-- Пройди по ВСЕМ существующим consumers: DAO queries, mappers, repositories, ViewModels
+- Пройди по ВСЕМ существующим consumers: DAO queries, mappers, repositories, Decompose Components
 - Для каждого consumer опиши: какие предположения он делает о данных (e.g. `id > 0`, `status in ('sent','delivered','read')`, `field NOT NULL`)
 - Если новое значение нарушает предположение — пометь как **IMPACT**: `file:line — assumes X, but change introduces Y`
 - Формат вывода: отдельная секция `### Impact Scan` с таблицей `| Consumer | Assumption | Impact | Severity |`
@@ -41,7 +41,7 @@ tools: Read, Grep, Glob, Bash
 
 ## Обнаружение entry points (обязательный шаг)
 
-Для каждого компонента, который фича планирует МОДИФИЦИРОВАТЬ (Activity, ViewModel, Service, BroadcastReceiver, Manager):
+Для каждого компонента, который фича планирует МОДИФИЦИРОВАТЬ (Decompose Component, Activity, Service, BroadcastReceiver, Manager):
 - Перечисли ВСЕ entry points: Intent actions, public methods вызываемые извне, callbacks, restore/return paths, deep links, notification taps
 - Для каждого entry point: кто вызывает (caller chain) и какой state ожидается на входе
 - Если компонент достижим из >1 пути — все пути ОБЯЗАНЫ быть в findings

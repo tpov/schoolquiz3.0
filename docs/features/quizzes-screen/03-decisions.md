@@ -491,3 +491,178 @@ init {
 - Альтернатива — `RootComponentSurface` interface в `app-shell/presentation` — overly engineered для single-caller composable.
 
 **Consequences**: `AppShellScreen` не тестируется с fake `RootComponent` в unit-тестах; все тесты AppShell — instrumented или snapshot через `DefaultRootComponent` напрямую. Это принятый tradeoff.
+
+---
+
+## ADR-QS-15 — quizzes-screen/presentation → lesson-runner/presentation: childFactory consumer side
+
+**Status**: **SUPERSEDED by ADR-LR-16 + ADR-LR-17 (2026-04-27)**  
+**Date**: 2026-04-27 (superseded note)  
+
+> ⚠️ Initial design assumed factory + interface live in `android/core/navigation/`. Cycle analysis (ADR-LR-16 в `docs/features/lesson-runner/03-decisions.md`) установил что это создаёт circular Gradle dependency: `core/navigation → lesson-runner/presentation` (для `RunnerUiState`/`RunnerEvent`) + `lesson-runner/presentation → core/navigation` (для interface implementation). Корректное решение: factory + `LessonRunnerRootComponent` interface живут в `lesson-runner/presentation`. `quizzes-screen/presentation → lesson-runner/presentation` — одностороннее направление, разрешённое ADR-LR-17 (Compose composition exception). Текст ниже сохранён для исторической трассировки. Любые planner/dev refs должны идти на ADR-QS-17 + ADR-LR-16.
+
+**Original Status**: Accepted (replaced).  
+**Context**: `DefaultQuizzesComponent.childFactory` обрабатывает `QuizzesConfig.LessonRunner` (новый variant, ADR-LR-07). Для инстанциирования дочернего компонента нужно либо напрямую создать `DefaultLessonRunnerRootComponent` (cross-feature import presentation→presentation), либо получить его через фабрику из DI.
+
+Existing precedent: `DefaultQuizzesComponent.childFactory` создаёт `DefaultQuestListComponent`, `DefaultSectionListComponent`, `DefaultThemeListComponent`, `DefaultLessonListComponent` — все принадлежат **тому же** `quizzes-screen/presentation` модулю, нет cross-feature imports.
+
+`clean-architecture.md` запрещает прямой import `android/feature/A/presentation → android/feature/B/presentation`. Нужно решение для consumer side.
+
+**Decision**: Вариант A (обновлён per consensus) — `LessonRunnerComponentFactory` функциональный интерфейс в **`android/core/navigation/`**, реализуется снаружи (в Koin composition root) конкретным лямбдой создающим `DefaultLessonRunnerRootComponent`. `LessonRunnerRootComponent` interface — там же. `quizzes-screen/presentation` импортирует из `android/core/navigation` (не cross-feature).
+
+```kotlin
+// в android/core/navigation/ — оба контракта
+fun interface LessonRunnerComponentFactory {
+    fun create(
+        componentContext: ComponentContext,
+        config: QuizzesConfig.LessonRunner,
+    ): LessonRunnerRootComponent
+}
+
+// в apps/android-next (composition root) — конкретная фабрика
+val quizzesScreenModule = module {
+    factory<QuizzesComponent> { (ctx: ComponentContext) ->
+        DefaultQuizzesComponent(
+            componentContext = ctx,
+            // ...
+            lessonRunnerFactory = { context, cfg ->
+                DefaultLessonRunnerRootComponent(
+                    componentContext = context,
+                    config = cfg,
+                    lessonRepository = get(),
+                    lessonAttemptRepository = get(),
+                    // ...
+                )
+            },
+        )
+    }
+}
+```
+
+`LessonRunnerRootComponent` interface (return type) живёт в `android/core/navigation/` — уже существующий core модуль. Это исключает прямой import `quizzes-screen/presentation → lesson-runner/presentation`. Canonical signature — architect-component зона (`06-api-contract.md §LR-9`).
+
+**Alternatives Considered**:
+- **(B) Прямой import `DefaultLessonRunnerRootComponent`** — отклонён: нарушает `clean-architecture.md` правило `android/feature/A/presentation → android/feature/B/presentation: NO`.
+- **(C) Перенести всю навигацию в `apps/android-next`** — отклонён: расплывание navigation logic в composition root; существующий паттерн квизового экрана — локальная childFactory в DefaultQuizzesComponent.
+
+**Consequences**:
+- `quizzes-screen/presentation` не импортирует `lesson-runner/presentation` — граница соблюдена.
+- Composition root (`apps/android-next`) знает оба presentation модуля — единственное место с cross-feature coupling.
+- `LessonRunnerComponentFactory` — fun interface в `quizzes-screen/presentation`, инстанциируется только в Koin модуле.
+- Scope: Koin `factory` для компонента (не `single` — ComponentContext lifecycle-bound).
+
+---
+
+## ADR-QS-16 — quizzes-screen/presentation → lesson-runner:domain: LessonAttemptRepository import
+
+**Status**: Accepted  
+**Date**: 2026-04-26  
+**Context**: `DefaultLessonListComponent` должен показывать `bestStars` и вычислять `hardUnlocked` для каждого урока в списке. Данные приходят из `LessonAttemptRepository.observeByLessonId(lessonId)` — репозиторий принадлежит `lesson-runner:domain`. Без этого импорта Lesson list не может отобразить прогресс пользователя.
+
+`clean-architecture.md` требует ADR для cross-feature imports `shared/feature/A → shared/feature/B`.
+
+Existing precedent: `quizzes-screen/presentation` уже импортирует `quest:domain`, `section:domain`, `theme:domain`, `lesson:domain` — все через `shared/feature/<slug>/domain`. Добавление `lesson-runner:domain` — тот же паттерн.
+
+**Decision**: Вариант A — прямой import `shared/feature/lesson-runner/domain` в `quizzes-screen/presentation`.
+
+Направление зависимости: `quizzes-screen/presentation → lesson-runner:domain` (одностороннее). `lesson-runner:domain` не импортирует `quizzes-screen/presentation` — bidirectional coupling отсутствует.
+
+```kotlin
+// DefaultLessonListComponent.kt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
+
+class DefaultLessonListComponent(
+    // ...
+    private val lessonAttemptRepository: LessonAttemptRepository,  // NEW
+    private val authRepository: AuthRepository,                      // NEW
+) : ComponentContext by componentContext, LessonListComponent
+```
+
+**Scope ограничен**: только `LessonAttemptRepository` (interface). Никаких imports из `lesson-runner:data` или `lesson-runner/presentation`.
+
+**Alternatives Considered**:
+- **(B) Вынести LessonAttemptRepository в `shared/core/`** — отклонён: репозиторий специфичен для lesson-runner domain (знает об `Attempt`, `Stars`, `Difficulty`) — это не generic core contract. Переезд в core потянет за собой `Attempt`, `Stars`, `Difficulty` — core разбухает product-level domain concepts.
+- **(C) Вычислять bestStars через Lesson.top3** — отклонён: `top3` — агрегированные данные сервера (Cloud Function), недоступны offline-first; `bestStars` — локальный прогресс пользователя из Room, должен работать без сети.
+
+**Consequences**:
+- `shared/feature/lesson-runner/domain` добавляется в `build.gradle.kts` зависимости `android/feature/quizzes-screen/presentation` — scaffold change для `backend-dev`.
+- `DefaultQuizzesComponent` получает `lessonAttemptRepository` и `authRepository` → передаёт в `DefaultLessonListComponent` через childFactory.
+- Validation: `rg "^import .*lesson_runner" android/feature/quizzes-screen/presentation/src/main -g "*.kt"` должен находить только `domain` imports, никаких `data` или `presentation`.
+- Invariant 3 (no bidirectional coupling): `rg "^import .*quizzes_screen" shared/feature/lesson-runner -g "*.kt"` должен быть пустым (note: filesystem path uses hyphen, Kotlin package uses underscore).
+
+---
+
+## ADR-QS-17 — Compose composition exception для ChildStack cross-feature rendering
+
+**Status**: Accepted (user-approved 2026-04-27)
+
+### Context
+
+`QuizzesScreen.kt` содержит exhaustive `when(active)` ChildStack dispatch block. При добавлении `QuizzesChild.LessonRunner` (ADR-LR-07) нужно вызвать `LessonRunnerScreen(child.component)` — `@Composable` функция из `android/feature/lesson-runner/presentation`. Это создаёт прямой import `android/feature/quizzes-screen/presentation → android/feature/lesson-runner/presentation`.
+
+`clean-architecture.md:55` запрещает: `android/feature/A/presentation → android/feature/B/presentation` direct import: **NO**.
+
+Правило написано без учёта Decompose ChildStack UI rendering pattern, в котором parent screen хостирует child `@Composable` функции разных feature modules. Запрет нуждается в явном ADR-исключении для этого паттерна.
+
+**Precedent в проекте (verified grep):**
+`android/feature/app-shell/presentation/src/main/.../ui/AppShellScreen.kt:53-56` уже содержит:
+```
+import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
+import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
+```
+Это три cross-feature presentation imports в production code — установленный проектный паттерн до lesson-runner.
+
+### Decision
+
+Разрешить **односторонний** import `android/feature/quizzes-screen/presentation → android/feature/lesson-runner/presentation` **исключительно** для `@Composable` rendering target (`LessonRunnerScreen` composable function).
+
+Импортируемый артефакт: только `@Composable fun LessonRunnerScreen(component: LessonRunnerRootComponent)` (или аналогичная top-level screen composable из lesson-runner/presentation).
+
+Обратное направление `android/feature/lesson-runner/presentation → android/feature/quizzes-screen/presentation` остаётся заблокировано — является blocker invariant независимо от механизма.
+
+### Constraints
+
+- Импортируется **только** `@Composable` screen function — NOT component classes, NOT use cases, NOT repositories, NOT internal state types, NOT sealed interfaces internal to lesson-runner.
+- Verifiable через grep:
+  ```bash
+  rg "^import com\.tpov\.schoolquiz\.android\.feature\.lesson_runner\.presentation" \
+    android/feature/quizzes-screen/presentation/src/main -g "*.kt"
+  ```
+  Допустимые совпадения: только строки содержащие `LessonRunnerScreen` (или аналогичную screen composable). Любые другие типы из `lesson-runner/presentation` = blocker.
+- Reverse blocker:
+  ```bash
+  rg "^import com\.tpov\.schoolquiz\.android\.feature\.quizzes_screen\.presentation" \
+    android/feature/lesson-runner/presentation/src/main -g "*.kt"
+  ```
+  Должно быть пусто всегда — нарушение = blocker независимо от типа импортируемого символа.
+
+### Alternatives Considered
+
+- **(A) Slot pattern** — `LessonRunnerNavigationSlot` @Composable extension в `android/core/navigation/`; quizzes-screen вызывает slot; каждая feature регистрирует свой slot в одном центральном registry. Отклонён: обёрточный overhead, slot registration complexity, все фичи должны регистрировать slotы где-то централизованно без compile-time гарантии.
+- **(B) Централизовать lesson-runner в app-shell вместо quizzes-screen** — нарушает navigation hierarchy: lesson runner живёт внутри quiz drill-down (Quest → Section → Theme → Lesson → Runner), а не как top-level destination. AppShell не является правильным хостом для gameplay screen.
+- **(C) ADR exception (CHOSEN)** — minimal change, follows Decompose convention, backed by existing project precedent (AppShellScreen imports 3 sibling features).
+
+### Rationale
+
+Decompose ChildStack pattern (Decompose 3.1.0 docs) требует чтобы parent screen знал @Composable функции child screens. Запрет в `clean-architecture.md` написан до full Decompose adoption и был ориентирован на предотвращение bidirectional coupling и business logic leakage — не Compose function composition. Existing `AppShellScreen.kt:53-56` является de-facto прецедентом этого исключения в проекте.
+
+### Risk if wrong (6 months out)
+
+Очень низкий: паттерн широко установлен в Decompose ecosystem и уже существует в проекте. Если `LessonRunnerScreen` переименуется или переедет — compile error при сборке, не runtime. Если bidirectional coupling проникнет — grep check в architect-reviewer выявит немедленно.
+
+### Architect-reviewer checklist addition (Phase-06)
+
+Добавить в architect-reviewer review check для Phase-06:
+```bash
+# ADR-QS-17: только LessonRunnerScreen import из lesson-runner/presentation
+rg "^import com\.tpov\.schoolquiz\.android\.feature\.lesson_runner\.presentation" \
+  android/feature/quizzes-screen/presentation/src/main -g "*.kt"
+# Expected: только строки с LessonRunnerScreen
+
+# ADR-QS-17 reverse blocker
+rg "^import com\.tpov\.schoolquiz\.android\.feature\.quizzes_screen\.presentation" \
+  android/feature/lesson-runner/presentation/src/main -g "*.kt"
+# Expected: empty
+```

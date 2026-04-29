@@ -7,5 +7,6 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.H
 interface ThemeListComponent {
     val uiState: Value<HierarchyListUiState>
     val titles: List<String>
+
     fun onThemeClick(theme: HierarchyItemUi)
 }

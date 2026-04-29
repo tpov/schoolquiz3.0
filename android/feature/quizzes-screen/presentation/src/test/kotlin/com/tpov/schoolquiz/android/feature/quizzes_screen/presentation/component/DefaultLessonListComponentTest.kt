@@ -6,10 +6,13 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
@@ -22,14 +25,12 @@ import org.junit.After
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 /**
  * JVM unit tests for [DefaultLessonListComponent].
  *
  * Spec: docs/features/quizzes-screen/04-testing.md §6
- * Phase: 04 (TDD)
+ * Phase: 06 (updated)
  *
  * Coverage: LL-U-01..04
  */
@@ -40,6 +41,8 @@ class DefaultLessonListComponentTest {
     private val dispatcher = StandardTestDispatcher(testScheduler)
     private lateinit var lifecycle: LifecycleRegistry
     private val fakeRepo = FakeLessonRepository()
+    private val fakeAttemptRepo = FakeLessonAttemptRepository()
+    private val fakeAuthRepo = FakeAuthRepository(initialUid = "user-1")
     private val fakeNavigation = FakeStackNavigation()
 
     @After
@@ -63,6 +66,8 @@ class DefaultLessonListComponentTest {
             componentContext = ctx,
             navigation = fakeNavigation,
             lessonRepository = fakeRepo,
+            attemptRepository = fakeAttemptRepo,
+            authRepository = fakeAuthRepo,
             config = QuizzesConfig.LessonList(themeId = themeId, titles = titles),
             coroutineContext = dispatcher,
         )
@@ -86,7 +91,9 @@ class DefaultLessonListComponentTest {
     private fun lessonItemFixture(
         id: String = "l-1",
         title: String = "Lesson A",
-    ) = HierarchyItemUi(id = id, title = title)
+        hardUnlocked: Boolean = false,
+        isHardChecked: Boolean = false,
+    ) = LessonItemUi(id = id, title = title, hardUnlocked = hardUnlocked, isHardChecked = isHardChecked)
 
     // ── LL-U-01 ──────────────────────────────────────────────────────────────
 
@@ -96,7 +103,7 @@ class DefaultLessonListComponentTest {
     @Test
     fun `initial state is Loading`() = runTest(testScheduler) {
         val component = buildComponent()
-        assertIs<HierarchyListUiState.Loading>(component.uiState.value)
+        assertIs<LessonListUiState.Loading>(component.uiState.value)
     }
 
     // ── LL-U-02 ──────────────────────────────────────────────────────────────
@@ -110,7 +117,7 @@ class DefaultLessonListComponentTest {
         val component = buildComponent(themeId = "t-1")
         fakeRepo.emit(listOf(lessonFixture(id = "l-1", themeId = "t-1")))
         advanceUntilIdle()
-        assertIs<HierarchyListUiState.Loaded>(component.uiState.value)
+        assertIs<LessonListUiState.Loaded>(component.uiState.value)
     }
 
     // ── LL-U-03 ──────────────────────────────────────────────────────────────
@@ -123,43 +130,40 @@ class DefaultLessonListComponentTest {
         val component = buildComponent()
         fakeRepo.emit(emptyList())
         advanceUntilIdle()
-        assertIs<HierarchyListUiState.Empty>(component.uiState.value)
+        assertIs<LessonListUiState.Empty>(component.uiState.value)
     }
 
     // ── LL-U-04 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: LL-U-04 — onLessonClick pushes LessonPlaceholder with correct lessonId, lessonTitle,
-     * and titles list. lessonTitle is a separate field (not just titles.last()).
-     * SER-06 depends on this field existing independently.
+     * Spec: LL-U-04 — onLessonClick with hardUnlocked=false pushes LessonRunner with EASY mode.
+     * titles appended with lesson title.
      */
     @Test
-    fun `onLessonClick pushes LessonPlaceholder with correct lessonId and lessonTitle`() = runTest(testScheduler) {
+    fun `onLessonClick pushes LessonRunner with EASY mode when hardUnlocked is false`() = runTest(testScheduler) {
         val component = buildComponent(themeId = "t-1", titles = listOf("Math", "Quest 1", "Section A", "Theme A"))
-        val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A")
+        val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = false, isHardChecked = false)
 
         component.onLessonClick(lessonItem)
 
         val pushed = fakeNavigation.pushedConfigs.last()
-        assertIs<QuizzesConfig.LessonPlaceholder>(pushed)
+        assertIs<QuizzesConfig.LessonRunner>(pushed)
         assertEquals("l-1", pushed.lessonId)
-        assertEquals("Lesson A", pushed.lessonTitle, "lessonTitle must be set as a separate field")
-        assertTrue("Lesson A" in pushed.titles, "titles must include lesson.title")
+        assertEquals(Difficulty.EASY, pushed.mode, "mode must be EASY when hardUnlocked=false")
+        assertEquals(true, "Lesson A" in pushed.titles, "titles must include lesson title")
     }
 
     /**
-     * Spec: LL-U-04 edge case — lessonTitle is distinct from titles.last() (both happen to be equal,
-     * but lessonTitle must not be derived from titles.last() — it's independently set).
+     * Spec: LL-U-04 edge case — onLessonClick with hardUnlocked=true + isHardChecked=true pushes HARD mode.
      */
     @Test
-    fun `onLessonClick lessonTitle is set independently from titles`() = runTest(testScheduler) {
+    fun `onLessonClick pushes LessonRunner with HARD mode when hardUnlocked and isHardChecked`() = runTest(testScheduler) {
         val component = buildComponent(titles = listOf("Math", "Quest 1", "Section A", "Theme A"))
-        val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A")
+        val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = true, isHardChecked = true)
 
         component.onLessonClick(lessonItem)
 
-        val pushed = fakeNavigation.pushedConfigs.last() as QuizzesConfig.LessonPlaceholder
-        assertNotNull(pushed.lessonTitle, "lessonTitle must not be null — it is a dedicated field")
-        assertEquals(pushed.lessonTitle, pushed.titles.last(), "lessonTitle matches titles.last()")
+        val pushed = fakeNavigation.pushedConfigs.last() as QuizzesConfig.LessonRunner
+        assertEquals(Difficulty.HARD, pushed.mode, "mode must be HARD when hardUnlocked=true and isHardChecked=true")
     }
 }

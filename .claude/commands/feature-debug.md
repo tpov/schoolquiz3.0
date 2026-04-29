@@ -92,7 +92,7 @@ Package: значение debug_package_name из PROJECT-CONTEXT.md
 | `di` | ClassNotFound, duplicate binding, @Inject не работает |
 | `concurrency` | Race condition, deadlock, coroutine cancellation, Flow collection issue |
 | `rate-limit` / `network` | 429, timeout, retry loop, backoff issues |
-| `ui` | Неверный рендер, missing update, jank, stale state в ViewModel |
+| `ui` | Неверный рендер, missing update, jank, stale state в Component |
 | `logic` | Wrong result, no crash, domain rule нарушен |
 | `data` | Room migration, DAO query mismatch, persistence corruption |
 | `realtime` | WebSocket disconnect, event replay, presence desync |

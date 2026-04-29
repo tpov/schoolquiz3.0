@@ -27,7 +27,6 @@ class DefaultThemeListComponent(
     private val navigation: StackNavigation<QuizzesConfig>,
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, ThemeListComponent {
-
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + coroutineContext)
 
@@ -41,8 +40,11 @@ class DefaultThemeListComponent(
         scope.launch {
             themeRepository.observeBySection(sectionId)
                 .map { themes ->
-                    if (themes.isEmpty()) HierarchyListUiState.Empty("Нет тем")
-                    else HierarchyListUiState.Loaded(themes.map { it.toDrillItem() })
+                    if (themes.isEmpty()) {
+                        HierarchyListUiState.Empty("Нет тем")
+                    } else {
+                        HierarchyListUiState.Loaded(themes.map { it.toDrillItem() })
+                    }
                 }
                 .catch { /* log */ }
                 .collect { _uiState.value = it }
@@ -55,7 +57,7 @@ class DefaultThemeListComponent(
             QuizzesConfig.LessonList(
                 themeId = theme.id,
                 titles = titles + listOf(theme.title),
-            )
+            ),
         )
     }
 }

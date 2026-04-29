@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.section.data.dto.SectionDto
 import com.tpov.schoolquiz.shared.feature.section.data.fake.FakeSectionLocalDataSource
 import com.tpov.schoolquiz.shared.feature.section.data.fake.FakeSectionRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -38,8 +39,12 @@ class SectionRepositoryImplTest {
         archived: Boolean = false,
     ) = SectionDto(id, questId, title, order, version, contentsVersion, lastModifiedAt, archived)
 
-    private fun makeEntity(id: String, version: Long = 1L, title: String = "Section") =
-        SectionEntity(id, "q1", title, 0, version, 0L, 0L, false)
+    private fun makeEntity(
+        id: String,
+        version: Long = 1L,
+        title: String = "Section",
+        contentsVersion: Long = 0L,
+    ) = SectionEntity(id, "q1", title, 0, version, contentsVersion, 0L, false)
 
     // Matrix 2.2: section absent locally + not archived → inserted
     @Test
@@ -77,6 +82,16 @@ class SectionRepositoryImplTest {
 
         assertEquals(1, fakeLocal.upsertCallsFor["s1"] ?: 0)
         assertEquals("Original", fakeLocal.findById("s1")?.title)
+    }
+
+    @Test
+    fun `when remote section returned with same contents version then id still cascades`() = runTest {
+        fakeLocal.seed(listOf(makeEntity("s1", version = 5L, contentsVersion = 10L)))
+        fakeRemote.result = listOf(makeDto("s1", version = 5L, contentsVersion = 10L))
+
+        val result = repository.refreshByParents(questIds, 0L)
+
+        assertEquals(setOf(SectionId("s1")), result.getOrThrow())
     }
 
     // refreshByParents succeeds → Result.success

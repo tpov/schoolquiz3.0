@@ -69,4 +69,37 @@ class CatalogMapperTest {
 
         assertNull(entity.picturePath)
     }
+
+    @Test
+    fun `when dto has icon names then toEntity preserves icon names`() {
+        val dto = CatalogDto(
+            id = "games",
+            name = "Games",
+            picturePath = null,
+            version = 1L,
+            contentsVersion = 0L,
+            lastModifiedAt = 0L,
+            archived = false,
+            iconNames = listOf("VideogameAsset", "Casino"),
+        )
+
+        val entity = dto.toEntity()
+
+        assertEquals(listOf("VideogameAsset", "Casino"), entity.iconNames)
+    }
+
+    @Test
+    fun `when entity has icon names then toDomain preserves icon names`() {
+        val entity = CatalogEntity(
+            id = "games",
+            name = "Games",
+            picturePath = null,
+            pictureUrl = null,
+            iconNames = listOf("VideogameAsset", "Casino"),
+        )
+
+        val domain = entity.toDomain()
+
+        assertEquals(listOf("VideogameAsset", "Casino"), domain.iconNames)
+    }
 }

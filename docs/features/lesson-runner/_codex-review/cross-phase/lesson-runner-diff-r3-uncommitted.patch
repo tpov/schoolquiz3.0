@@ -1,0 +1,1603 @@
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultLessonListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultLessonListComponent.kt
+index e3eeeaa7..7c917040 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultLessonListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultLessonListComponent.kt
+@@ -7,56 +7,114 @@ import com.arkivanov.decompose.value.MutableValue
+ import com.arkivanov.decompose.value.Value
+ import com.arkivanov.essenty.lifecycle.doOnDestroy
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper.toDrillItem
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
++import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
++import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
++import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
++import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
++import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
++import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
++import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
++import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptStats
+ import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
+ import kotlinx.coroutines.CoroutineDispatcher
+ import kotlinx.coroutines.CoroutineScope
+ import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.ExperimentalCoroutinesApi
+ import kotlinx.coroutines.SupervisorJob
++import kotlinx.coroutines.flow.MutableStateFlow
+ import kotlinx.coroutines.flow.catch
+-import kotlinx.coroutines.flow.map
++import kotlinx.coroutines.flow.combine
++import kotlinx.coroutines.flow.flatMapLatest
++import kotlinx.coroutines.flow.flowOf
++import kotlinx.coroutines.flow.update
+ import kotlinx.coroutines.launch
+ 
++@OptIn(ExperimentalCoroutinesApi::class)
+ class DefaultLessonListComponent(
+     componentContext: ComponentContext,
+     config: QuizzesConfig.LessonList,
+     private val lessonRepository: LessonRepository,
++    private val attemptRepository: LessonAttemptRepository,
++    private val authRepository: AuthRepository,
+     private val navigation: StackNavigation<QuizzesConfig>,
+     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+ ) : ComponentContext by componentContext, LessonListComponent {
+-
+     private val componentJob = SupervisorJob()
+     private val scope = CoroutineScope(componentJob + coroutineContext)
+ 
+     private val themeId = ThemeId(config.themeId)
+     override val titles: List<String> = config.titles
+ 
+-    private val _uiState = MutableValue<HierarchyListUiState>(HierarchyListUiState.Loading)
+-    override val uiState: Value<HierarchyListUiState> = _uiState
++    private val _uiState = MutableValue<LessonListUiState>(LessonListUiState.Loading)
++    override val uiState: Value<LessonListUiState> = _uiState
++
++    private val hardCheckedSet: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+ 
+     init {
+         scope.launch {
+-            lessonRepository.observeByTheme(themeId)
+-                .map { lessons ->
+-                    if (lessons.isEmpty()) HierarchyListUiState.Empty("Нет уроков")
+-                    else HierarchyListUiState.Loaded(lessons.map { it.toDrillItem() })
+-                }
++            combine(
++                lessonRepository.observeByTheme(themeId),
++                authRepository.observeUid().flatMapLatest { uid ->
++                    if (uid == null) {
++                        flowOf(emptyMap())
++                    } else {
++                        attemptRepository.observeAllStatsByUser(uid)
++                    }
++                },
++                hardCheckedSet,
++            ) { lessons, stats, checkedSet ->
++                mapToUi(lessons, stats, checkedSet)
++            }
+                 .catch { /* log */ }
+                 .collect { _uiState.value = it }
+         }
+-        lifecycle.doOnDestroy { componentJob.cancel() }
++        lifecycle.doOnDestroy {
++            componentJob.cancel()
++            hardCheckedSet.value = emptySet()
++        }
+     }
+ 
+-    override fun onLessonClick(lesson: HierarchyItemUi) {
++    override fun onLessonClick(lesson: LessonItemUi) {
++        val mode = if (lesson.hardUnlocked && lesson.isHardChecked) Difficulty.HARD else Difficulty.EASY
++        // AC-49: each new visit defaults to unchecked — clear before pushing runner.
++        hardCheckedSet.update { it - lesson.id }
+         navigation.pushNew(
+-            QuizzesConfig.LessonPlaceholder(
++            QuizzesConfig.LessonRunner(
+                 lessonId = lesson.id,
+-                lessonTitle = lesson.title,
+-                titles = titles + listOf(lesson.title),
+-            )
++                mode = mode,
++                titles = titles + lesson.title,
++            ),
+         )
+     }
++
++    override fun onHardCheckToggled(lessonId: String) {
++        val item = (_uiState.value as? LessonListUiState.Loaded)?.items?.find { it.id == lessonId }
++        if (item?.hardUnlocked == true) {
++            hardCheckedSet.update { current ->
++                if (lessonId in current) current - lessonId else current + lessonId
++            }
++        }
++    }
++
++    private fun mapToUi(
++        lessons: List<Lesson>,
++        stats: Map<LessonId, LessonAttemptStats>,
++        checkedSet: Set<String>,
++    ): LessonListUiState {
++        if (lessons.isEmpty()) return LessonListUiState.Empty("Нет уроков")
++        val items =
++            lessons.map { lesson ->
++                val lessonStats = stats[lesson.id]
++                LessonItemUi(
++                    id = lesson.id.value,
++                    title = lesson.title,
++                    orderLabel = "${lesson.order + 1}.",
++                    bestStarsRawTenths = lessonStats?.bestStarsRawTenths ?: 0,
++                    hardUnlocked = lessonStats?.hardUnlocked ?: false,
++                    isHardChecked = lesson.id.value in checkedSet,
++                )
++            }
++        return LessonListUiState.Loaded(items)
++    }
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultLessonPlaceholderComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultLessonPlaceholderComponent.kt
+deleted file mode 100644
+index 3e8954f0..00000000
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultLessonPlaceholderComponent.kt
++++ /dev/null
+@@ -1,16 +0,0 @@
+-package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
+-
+-import com.arkivanov.decompose.ComponentContext
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonPlaceholderUiState
+-
+-class DefaultLessonPlaceholderComponent(
+-    componentContext: ComponentContext,
+-    config: QuizzesConfig.LessonPlaceholder,
+-) : ComponentContext by componentContext, LessonPlaceholderComponent {
+-
+-    override val uiState = LessonPlaceholderUiState(
+-        lessonTitle = config.lessonTitle,
+-        titles = config.titles,
+-    )
+-}
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuestListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuestListComponent.kt
+index 4fd4ee3d..796d04fd 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuestListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuestListComponent.kt
+@@ -27,7 +27,6 @@ class DefaultQuestListComponent(
+     private val navigation: StackNavigation<QuizzesConfig>,
+     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+ ) : ComponentContext by componentContext, QuestListComponent {
+-
+     private val componentJob = SupervisorJob()
+     private val scope = CoroutineScope(componentJob + coroutineContext)
+ 
+@@ -41,8 +40,11 @@ class DefaultQuestListComponent(
+         scope.launch {
+             questRepository.observeByCatalog(catalogId, "home")
+                 .map { quests ->
+-                    if (quests.isEmpty()) QuestListUiState.Empty
+-                    else QuestListUiState.Loaded(quests.map { it.toQuestDisplayItem() })
++                    if (quests.isEmpty()) {
++                        QuestListUiState.Empty
++                    } else {
++                        QuestListUiState.Loaded(quests.map { it.toQuestDisplayItem() })
++                    }
+                 }
+                 .catch { /* log */ }
+                 .collect { _uiState.value = it }
+@@ -55,7 +57,7 @@ class DefaultQuestListComponent(
+             QuizzesConfig.SectionList(
+                 questId = quest.id.value,
+                 titles = titles + listOf(quest.title),
+-            )
++            ),
+         )
+     }
+ 
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt
+index c0729516..27a04e65 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultQuizzesComponent.kt
+@@ -10,11 +10,14 @@ import com.arkivanov.decompose.router.stack.popToFirst
+ import com.arkivanov.decompose.router.stack.pushNew
+ import com.arkivanov.decompose.value.Value
+ import com.arkivanov.essenty.backhandler.BackCallback
+-import com.arkivanov.essenty.lifecycle.doOnDestroy
+ import com.arkivanov.essenty.statekeeper.SerializableContainer
++import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
+ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
++import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
++import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
++import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
+ import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+ import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+ import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
+@@ -29,9 +32,11 @@ class DefaultQuizzesComponent(
+     private val sectionRepository: SectionRepository,
+     private val themeRepository: ThemeRepository,
+     private val lessonRepository: LessonRepository,
++    private val lessonAttemptRepository: LessonAttemptRepository,
++    private val authRepository: AuthRepository,
++    private val lessonRunnerFactory: LessonRunnerComponentFactory,
+     private val mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+ ) : ComponentContext by componentContext, QuizzesComponent {
+-
+     private val navigation = StackNavigation<QuizzesConfig>()
+ 
+     // saveStack/restoreStack overload: runCatching wraps SerializationException on corrupted
+@@ -51,15 +56,25 @@ class DefaultQuizzesComponent(
+                 runCatching {
+                     container.consume(ListSerializer(QuizzesConfig.serializer()))
+                 }.getOrNull()
++                    // AC 36: process kill = attempt lost. Pop runner back to LessonList on restart.
++                    ?.filterNot { it is QuizzesConfig.LessonRunner }
++                    ?.takeIf { it.isNotEmpty() }
+             },
+             handleBackButton = false,
+             childFactory = ::createChild,
+         )
+ 
+     // priority = 100: PRIORITY_OVERLAY absent in Essenty 2.1.0 (ADR-QS-12, Pattern Invariant 5)
+-    private val backCallback = BackCallback(priority = 100, isEnabled = false) {
+-        navigation.pop()
+-    }
++    // AC-3/AC-34: Back from active LessonRunner must route through runner's exit/abort flow.
++    private val backCallback =
++        BackCallback(priority = 100, isEnabled = false) {
++            val activeChild = childStack.value.active.instance
++            if (activeChild is QuizzesChild.LessonRunner) {
++                activeChild.component.onCrossButtonTap()
++            } else {
++                navigation.pop()
++            }
++        }
+ 
+     init {
+         backHandler.register(backCallback)
+@@ -68,25 +83,32 @@ class DefaultQuizzesComponent(
+         }
+     }
+ 
+-    override fun openQuestList(catalogId: CatalogId, catalogName: String) {
++    override fun openQuestList(
++        catalogId: CatalogId,
++        catalogName: String,
++    ) {
+         navigation.pushNew(QuizzesConfig.QuestList(catalogId.value, listOf("Каталоги", catalogName)))
+     }
+ 
+-    override fun openSectionList(questId: QuestId, titles: List<String>) {
++    override fun openSectionList(
++        questId: QuestId,
++        titles: List<String>,
++    ) {
+         navigation.pushNew(QuizzesConfig.SectionList(questId.value, titles))
+     }
+ 
+     override fun popToLevel(uiLevel: Int) {
+         if (uiLevel < 0) return
+         val active = childStack.value.active
+-        val titlesSize = when (val cfg = active.configuration) {
+-            is QuizzesConfig.Idle -> 0
+-            is QuizzesConfig.QuestList -> cfg.titles.size
+-            is QuizzesConfig.SectionList -> cfg.titles.size
+-            is QuizzesConfig.ThemeList -> cfg.titles.size
+-            is QuizzesConfig.LessonList -> cfg.titles.size
+-            is QuizzesConfig.LessonPlaceholder -> cfg.titles.size
+-        }
++        val titlesSize =
++            when (val cfg = active.configuration) {
++                is QuizzesConfig.Idle -> 0
++                is QuizzesConfig.QuestList -> cfg.titles.size
++                is QuizzesConfig.SectionList -> cfg.titles.size
++                is QuizzesConfig.ThemeList -> cfg.titles.size
++                is QuizzesConfig.LessonList -> cfg.titles.size
++                is QuizzesConfig.LessonRunner -> cfg.titles.size
++            }
+         // In MyQuests entry path, SectionList is pushed directly (no QuestList in stack).
+         // titles may contain virtual "decoration" segments that have no stack entry.
+         // virtualCount = how many leading titles have no corresponding stack entry.
+@@ -100,31 +122,48 @@ class DefaultQuizzesComponent(
+         }
+     }
+ 
++    override fun popCurrentChild() {
++        navigation.pop()
++    }
++
+     override fun dismissQuizzes() {
+         navigation.popToFirst()
+     }
+ 
+-    private fun createChild(config: QuizzesConfig, ctx: ComponentContext): QuizzesChild =
++    private fun createChild(
++        config: QuizzesConfig,
++        ctx: ComponentContext,
++    ): QuizzesChild =
+         when (config) {
+             is QuizzesConfig.Idle ->
+                 QuizzesChild.Idle
+             is QuizzesConfig.QuestList ->
+                 QuizzesChild.QuestList(
+-                    DefaultQuestListComponent(ctx, config, questRepository, navigation, mainContext)
++                    DefaultQuestListComponent(ctx, config, questRepository, navigation, mainContext),
+                 )
+             is QuizzesConfig.SectionList ->
+                 QuizzesChild.SectionList(
+-                    DefaultSectionListComponent(ctx, config, sectionRepository, navigation, mainContext)
++                    DefaultSectionListComponent(ctx, config, sectionRepository, navigation, mainContext),
+                 )
+             is QuizzesConfig.ThemeList ->
+                 QuizzesChild.ThemeList(
+-                    DefaultThemeListComponent(ctx, config, themeRepository, navigation, mainContext)
++                    DefaultThemeListComponent(ctx, config, themeRepository, navigation, mainContext),
+                 )
+             is QuizzesConfig.LessonList ->
+                 QuizzesChild.LessonList(
+-                    DefaultLessonListComponent(ctx, config, lessonRepository, navigation, mainContext)
++                    DefaultLessonListComponent(
++                        ctx,
++                        config,
++                        lessonRepository,
++                        lessonAttemptRepository,
++                        authRepository,
++                        navigation,
++                        mainContext,
++                    ),
++                )
++            is QuizzesConfig.LessonRunner ->
++                QuizzesChild.LessonRunner(
++                    lessonRunnerFactory.create(ctx, LessonId(config.lessonId), config.mode),
+                 )
+-            is QuizzesConfig.LessonPlaceholder ->
+-                QuizzesChild.LessonPlaceholder(DefaultLessonPlaceholderComponent(ctx, config))
+         }
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultSectionListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultSectionListComponent.kt
+index 8330111b..9f2d35a1 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultSectionListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultSectionListComponent.kt
+@@ -27,7 +27,6 @@ class DefaultSectionListComponent(
+     private val navigation: StackNavigation<QuizzesConfig>,
+     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+ ) : ComponentContext by componentContext, SectionListComponent {
+-
+     private val componentJob = SupervisorJob()
+     private val scope = CoroutineScope(componentJob + coroutineContext)
+ 
+@@ -41,8 +40,11 @@ class DefaultSectionListComponent(
+         scope.launch {
+             sectionRepository.observeByQuest(questId)
+                 .map { sections ->
+-                    if (sections.isEmpty()) HierarchyListUiState.Empty("Нет секций")
+-                    else HierarchyListUiState.Loaded(sections.map { it.toDrillItem() })
++                    if (sections.isEmpty()) {
++                        HierarchyListUiState.Empty("Нет секций")
++                    } else {
++                        HierarchyListUiState.Loaded(sections.map { it.toDrillItem() })
++                    }
+                 }
+                 .catch { /* log */ }
+                 .collect { _uiState.value = it }
+@@ -55,7 +57,7 @@ class DefaultSectionListComponent(
+             QuizzesConfig.ThemeList(
+                 sectionId = section.id,
+                 titles = titles + listOf(section.title),
+-            )
++            ),
+         )
+     }
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultThemeListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultThemeListComponent.kt
+index 8d4fadda..1feb8a3a 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultThemeListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/DefaultThemeListComponent.kt
+@@ -27,7 +27,6 @@ class DefaultThemeListComponent(
+     private val navigation: StackNavigation<QuizzesConfig>,
+     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
+ ) : ComponentContext by componentContext, ThemeListComponent {
+-
+     private val componentJob = SupervisorJob()
+     private val scope = CoroutineScope(componentJob + coroutineContext)
+ 
+@@ -41,8 +40,11 @@ class DefaultThemeListComponent(
+         scope.launch {
+             themeRepository.observeBySection(sectionId)
+                 .map { themes ->
+-                    if (themes.isEmpty()) HierarchyListUiState.Empty("Нет тем")
+-                    else HierarchyListUiState.Loaded(themes.map { it.toDrillItem() })
++                    if (themes.isEmpty()) {
++                        HierarchyListUiState.Empty("Нет тем")
++                    } else {
++                        HierarchyListUiState.Loaded(themes.map { it.toDrillItem() })
++                    }
+                 }
+                 .catch { /* log */ }
+                 .collect { _uiState.value = it }
+@@ -55,7 +57,7 @@ class DefaultThemeListComponent(
+             QuizzesConfig.LessonList(
+                 themeId = theme.id,
+                 titles = titles + listOf(theme.title),
+-            )
++            ),
+         )
+     }
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/LessonListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/LessonListComponent.kt
+index 216e695e..919ed08c 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/LessonListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/LessonListComponent.kt
+@@ -1,11 +1,14 @@
+ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
+ 
+ import com.arkivanov.decompose.value.Value
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
++import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
++import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
+ 
+ interface LessonListComponent {
+-    val uiState: Value<HierarchyListUiState>
++    val uiState: Value<LessonListUiState>
+     val titles: List<String>
+-    fun onLessonClick(lesson: HierarchyItemUi)
++
++    fun onLessonClick(lesson: LessonItemUi)
++
++    fun onHardCheckToggled(lessonId: String)
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/LessonPlaceholderComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/LessonPlaceholderComponent.kt
+deleted file mode 100644
+index 42be86dd..00000000
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/LessonPlaceholderComponent.kt
++++ /dev/null
+@@ -1,7 +0,0 @@
+-package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
+-
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonPlaceholderUiState
+-
+-interface LessonPlaceholderComponent {
+-    val uiState: LessonPlaceholderUiState
+-}
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuestListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuestListComponent.kt
+index 70c67095..d414cf87 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuestListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuestListComponent.kt
+@@ -7,6 +7,8 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.Q
+ interface QuestListComponent {
+     val uiState: Value<QuestListUiState>
+     val titles: List<String>
++
+     fun onQuestClick(quest: QuestDisplayItem)
++
+     fun onShareClick(quest: QuestDisplayItem)
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt
+index 8b6a56dc..63631730 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesChild.kt
+@@ -1,10 +1,17 @@
+ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
+ 
++import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
++
+ sealed interface QuizzesChild {
+     data object Idle : QuizzesChild
++
+     data class QuestList(val component: QuestListComponent) : QuizzesChild
++
+     data class SectionList(val component: SectionListComponent) : QuizzesChild
++
+     data class ThemeList(val component: ThemeListComponent) : QuizzesChild
++
+     data class LessonList(val component: LessonListComponent) : QuizzesChild
+-    data class LessonPlaceholder(val component: LessonPlaceholderComponent) : QuizzesChild
++
++    data class LessonRunner(val component: LessonRunnerRootComponent) : QuizzesChild
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesComponent.kt
+index 88e536bb..31f663d1 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/QuizzesComponent.kt
+@@ -14,4 +14,6 @@ interface QuizzesComponent : QuizzesNavigator {
+      * Internally calls navigation.popTo(uiLevel + 1) — offset +1 for Idle anchor at stack[0].
+      */
+     fun popToLevel(uiLevel: Int)
++
++    fun popCurrentChild()
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/SectionListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/SectionListComponent.kt
+index a5d43330..87dfe730 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/SectionListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/SectionListComponent.kt
+@@ -7,5 +7,6 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.H
+ interface SectionListComponent {
+     val uiState: Value<HierarchyListUiState>
+     val titles: List<String>
++
+     fun onSectionClick(section: HierarchyItemUi)
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ThemeListComponent.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ThemeListComponent.kt
+index 74f56255..a439117b 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ThemeListComponent.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/component/ThemeListComponent.kt
+@@ -7,5 +7,6 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.H
+ interface ThemeListComponent {
+     val uiState: Value<HierarchyListUiState>
+     val titles: List<String>
++
+     fun onThemeClick(theme: HierarchyItemUi)
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt
+index 733ca31d..cdd6594c 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/config/QuizzesConfig.kt
+@@ -1,10 +1,10 @@
+ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config
+ 
++import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+ import kotlinx.serialization.Serializable
+ 
+ @Serializable
+ sealed class QuizzesConfig {
+-
+     @Serializable
+     data object Idle : QuizzesConfig()
+ 
+@@ -33,9 +33,9 @@ sealed class QuizzesConfig {
+     ) : QuizzesConfig()
+ 
+     @Serializable
+-    data class LessonPlaceholder(
++    data class LessonRunner(
+         val lessonId: String,
+-        val lessonTitle: String,
++        val mode: Difficulty,
+         val titles: List<String>,
+     ) : QuizzesConfig()
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt
+index 16c17165..96936dd2 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/di/QuizzesPresentationModule.kt
+@@ -1,18 +1,23 @@
+ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di
+ 
+ import com.arkivanov.decompose.ComponentContext
++import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+ import org.koin.dsl.module
+ 
+-val quizzesPresentationModule = module {
+-    factory<QuizzesComponent> { (ctx: ComponentContext) ->
+-        DefaultQuizzesComponent(
+-            componentContext = ctx,
+-            questRepository = get(),
+-            sectionRepository = get(),
+-            themeRepository = get(),
+-            lessonRepository = get(),
+-        )
++val quizzesPresentationModule =
++    module {
++        factory<QuizzesComponent> { (ctx: ComponentContext) ->
++            DefaultQuizzesComponent(
++                componentContext = ctx,
++                questRepository = get(),
++                sectionRepository = get(),
++                themeRepository = get(),
++                lessonRepository = get(),
++                lessonAttemptRepository = get(),
++                authRepository = get(),
++                lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
++            )
++        }
+     }
+-}
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/LessonDrillMapper.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/LessonDrillMapper.kt
+index 629b1ef0..c17a5cc0 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/LessonDrillMapper.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/LessonDrillMapper.kt
+@@ -3,9 +3,10 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
+ 
+-fun Lesson.toDrillItem(): HierarchyItemUi = HierarchyItemUi(
+-    id = id.value,
+-    title = title,
+-    orderLabel = "${order + 1}.",
+-    subtitleCount = null,
+-)
++fun Lesson.toDrillItem(): HierarchyItemUi =
++    HierarchyItemUi(
++        id = id.value,
++        title = title,
++        orderLabel = "${order + 1}.",
++        subtitleCount = null,
++    )
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/QuestToDisplayItemMapper.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/QuestToDisplayItemMapper.kt
+index 1a59d9ca..bde9ae47 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/QuestToDisplayItemMapper.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/QuestToDisplayItemMapper.kt
+@@ -3,11 +3,12 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper
+ import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+ import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
+ 
+-fun Quest.toQuestDisplayItem(): QuestDisplayItem = QuestDisplayItem(
+-    id = id,
+-    catalogId = catalogId,
+-    title = title,
+-    pictureUrl = pictureUrl,
+-    averageRating = averageRating,
+-    averageRatingCount = averageRatingCount,
+-)
++fun Quest.toQuestDisplayItem(): QuestDisplayItem =
++    QuestDisplayItem(
++        id = id,
++        catalogId = catalogId,
++        title = title,
++        pictureUrl = pictureUrl,
++        averageRating = averageRating,
++        averageRatingCount = averageRatingCount,
++    )
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/SectionDrillMapper.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/SectionDrillMapper.kt
+index ce80ac45..577e4462 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/SectionDrillMapper.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/SectionDrillMapper.kt
+@@ -3,9 +3,10 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+ import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
+ 
+-fun Section.toDrillItem(): HierarchyItemUi = HierarchyItemUi(
+-    id = id.value,
+-    title = title,
+-    orderLabel = "${order + 1}.",
+-    subtitleCount = null,
+-)
++fun Section.toDrillItem(): HierarchyItemUi =
++    HierarchyItemUi(
++        id = id.value,
++        title = title,
++        orderLabel = "${order + 1}.",
++        subtitleCount = null,
++    )
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/ThemeDrillMapper.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/ThemeDrillMapper.kt
+index bb756207..d5e4cd00 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/ThemeDrillMapper.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/mapper/ThemeDrillMapper.kt
+@@ -3,9 +3,10 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+ import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
+ 
+-fun Theme.toDrillItem(): HierarchyItemUi = HierarchyItemUi(
+-    id = id.value,
+-    title = title,
+-    orderLabel = "${order + 1}.",
+-    subtitleCount = null,
+-)
++fun Theme.toDrillItem(): HierarchyItemUi =
++    HierarchyItemUi(
++        id = id.value,
++        title = title,
++        orderLabel = "${order + 1}.",
++        subtitleCount = null,
++    )
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/navigation/QuizzesNavigator.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/navigation/QuizzesNavigator.kt
+index 1e031ca0..bb1c0276 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/navigation/QuizzesNavigator.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/navigation/QuizzesNavigator.kt
+@@ -4,7 +4,15 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+ import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+ 
+ interface QuizzesNavigator {
+-    fun openQuestList(catalogId: CatalogId, catalogName: String)
+-    fun openSectionList(questId: QuestId, titles: List<String>)
++    fun openQuestList(
++        catalogId: CatalogId,
++        catalogName: String,
++    )
++
++    fun openSectionList(
++        questId: QuestId,
++        titles: List<String>,
++    )
++
+     fun dismissQuizzes()
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/LessonListScreen.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/LessonListScreen.kt
+index b0025b5c..05dbda77 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/LessonListScreen.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/LessonListScreen.kt
+@@ -21,10 +21,9 @@ import com.arkivanov.decompose.value.MutableValue
+ import com.arkivanov.decompose.value.Value
+ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+ import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
+-import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonListComponent
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
++import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
++import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
+ 
+ @Suppress("FunctionNaming", "ktlint:standard:function-naming")
+ @Composable
+@@ -38,27 +37,29 @@ fun LessonListScreen(
+     Column(modifier = Modifier.fillMaxSize()) {
+         BreadcrumbBar(titles = component.titles, onSegmentClick = onSegmentClick)
+         when (val state = uiState) {
+-            is HierarchyListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+-            }
+-            is HierarchyListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
+-                Text(
+-                    text = state.levelLabel,
+-                    modifier = Modifier.align(Alignment.Center),
+-                    style = MaterialTheme.typography.titleMedium,
+-                )
+-            }
+-            is HierarchyListUiState.Loaded -> LazyColumn(state = lazyListState) {
+-                items(state.items, key = { it.id }) { item ->
+-                    HierarchyItemCard(
+-                        title = item.title,
+-                        orderLabel = item.orderLabel,
+-                        subtitleCount = item.subtitleCount,
+-                        onClick = { component.onLessonClick(item) },
+-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
++            is LessonListUiState.Loading ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
++                }
++            is LessonListUiState.Empty ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    Text(
++                        text = state.levelLabel,
++                        modifier = Modifier.align(Alignment.Center),
++                        style = MaterialTheme.typography.titleMedium,
+                     )
+                 }
+-            }
++            is LessonListUiState.Loaded ->
++                LazyColumn(state = lazyListState) {
++                    items(state.items, key = { it.id }) { item ->
++                        LessonItemCard(
++                            item = item,
++                            onClick = { component.onLessonClick(item) },
++                            onHardCheckChanged = { component.onHardCheckToggled(item.id) },
++                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
++                        )
++                    }
++                }
+         }
+     }
+ }
+@@ -69,11 +70,15 @@ fun LessonListScreen(
+ private fun LessonListScreenLoadingPreview() {
+     SchoolQuizTheme {
+         LessonListScreen(
+-            component = object : LessonListComponent {
+-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
+-                override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
+-                override fun onLessonClick(lesson: HierarchyItemUi) = Unit
+-            },
++            component =
++                object : LessonListComponent {
++                    override val uiState: Value<LessonListUiState> = MutableValue(LessonListUiState.Loading)
++                    override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
++
++                    override fun onLessonClick(lesson: LessonItemUi) = Unit
++
++                    override fun onHardCheckToggled(lessonId: String) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+@@ -85,18 +90,35 @@ private fun LessonListScreenLoadingPreview() {
+ private fun LessonListScreenLoadedPreview() {
+     SchoolQuizTheme {
+         LessonListScreen(
+-            component = object : LessonListComponent {
+-                override val uiState: Value<HierarchyListUiState> = MutableValue(
+-                    HierarchyListUiState.Loaded(
+-                        listOf(
+-                            HierarchyItemUi(id = "l1", title = "Урок 1 — Введение", orderLabel = "1."),
+-                            HierarchyItemUi(id = "l2", title = "Урок 2 — Практика", orderLabel = "2."),
+-                        ),
+-                    ),
+-                )
+-                override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
+-                override fun onLessonClick(lesson: HierarchyItemUi) = Unit
+-            },
++            component =
++                object : LessonListComponent {
++                    override val uiState: Value<LessonListUiState> =
++                        MutableValue(
++                            LessonListUiState.Loaded(
++                                listOf(
++                                    LessonItemUi(
++                                        id = "l1",
++                                        title = "Урок 1 — Введение",
++                                        orderLabel = "1.",
++                                        bestStarsRawTenths = 20,
++                                    ),
++                                    LessonItemUi(
++                                        id = "l2",
++                                        title = "Урок 2 — Практика",
++                                        orderLabel = "2.",
++                                        bestStarsRawTenths = 0,
++                                        hardUnlocked = true,
++                                        isHardChecked = false,
++                                    ),
++                                ),
++                            ),
++                        )
++                    override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
++
++                    override fun onLessonClick(lesson: LessonItemUi) = Unit
++
++                    override fun onHardCheckToggled(lessonId: String) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/LessonPlaceholderScreen.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/LessonPlaceholderScreen.kt
+deleted file mode 100644
+index 3e747d21..00000000
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/LessonPlaceholderScreen.kt
++++ /dev/null
+@@ -1,68 +0,0 @@
+-package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
+-
+-import androidx.compose.foundation.layout.Box
+-import androidx.compose.foundation.layout.Column
+-import androidx.compose.foundation.layout.fillMaxSize
+-import androidx.compose.foundation.layout.padding
+-import androidx.compose.material3.MaterialTheme
+-import androidx.compose.material3.Text
+-import androidx.compose.runtime.Composable
+-import androidx.compose.ui.Alignment
+-import androidx.compose.ui.Modifier
+-import androidx.compose.ui.text.style.TextAlign
+-import androidx.compose.ui.tooling.preview.Preview
+-import androidx.compose.ui.unit.dp
+-import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+-import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonPlaceholderComponent
+-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonPlaceholderUiState
+-
+-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+-@Composable
+-fun LessonPlaceholderScreen(
+-    component: LessonPlaceholderComponent,
+-    onSegmentClick: (Int) -> Unit,
+-) {
+-    val uiState = component.uiState
+-
+-    Column(modifier = Modifier.fillMaxSize()) {
+-        BreadcrumbBar(titles = uiState.titles, onSegmentClick = onSegmentClick)
+-        Box(
+-            modifier = Modifier
+-                .fillMaxSize()
+-                .padding(16.dp),
+-            contentAlignment = Alignment.Center,
+-        ) {
+-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+-                Text(
+-                    text = uiState.lessonTitle,
+-                    style = MaterialTheme.typography.headlineLarge,
+-                    textAlign = TextAlign.Center,
+-                )
+-                Text(
+-                    text = "Прохождение урока будет добавлено позже",
+-                    style = MaterialTheme.typography.bodyLarge,
+-                    textAlign = TextAlign.Center,
+-                    modifier = Modifier.padding(top = 8.dp),
+-                )
+-            }
+-        }
+-    }
+-}
+-
+-@Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
+-@Preview(showBackground = true)
+-@Composable
+-private fun LessonPlaceholderScreenPreview() {
+-    SchoolQuizTheme {
+-        LessonPlaceholderScreen(
+-            component = object : LessonPlaceholderComponent {
+-                override val uiState = LessonPlaceholderUiState(
+-                    lessonTitle = "Урок: Дроби",
+-                    titles = listOf("Математика", "Квест 1", "Секция 2", "Тема 3", "Урок: Дроби"),
+-                )
+-            },
+-            onSegmentClick = {},
+-        )
+-    }
+-}
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuestListScreen.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuestListScreen.kt
+index 5cfe69ac..b907921e 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuestListScreen.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuestListScreen.kt
+@@ -59,55 +59,60 @@ fun QuestListScreen(
+             modifier = Modifier.fillMaxWidth(),
+         )
+         when (val state = uiState) {
+-            is QuestListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+-            }
+-            is QuestListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
+-                Text(
+-                    text = "Нет квестов",
+-                    modifier = Modifier.align(Alignment.Center),
+-                    style = MaterialTheme.typography.titleMedium,
+-                )
+-            }
+-            is QuestListUiState.Loaded -> LazyColumn(state = lazyListState) {
+-                itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
+-                    Box {
+-                        HierarchyItemCard(
+-                            title = quest.title,
+-                            orderLabel = "${index + 1}.",
+-                            rating = quest.averageRating,
+-                            ratingCount = quest.averageRatingCount,
+-                            onClick = { component.onQuestClick(quest) },
+-                            onLongClick = { expandedQuestId = quest.id },
+-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+-                        )
+-                        DropdownMenu(
+-                            expanded = expandedQuestId == quest.id,
+-                            onDismissRequest = { expandedQuestId = null },
+-                            modifier = Modifier.testTag("quest_menu"),
+-                        ) {
+-                            DropdownMenuItem(
+-                                text = { Text("Поделиться") },
+-                                onClick = {
+-                                    expandedQuestId = null
+-                                    val appName = context.applicationInfo
+-                                        .loadLabel(context.packageManager).toString()
+-                                    val shareText = "Квест «${quest.title}» — $appName"
+-                                    val intent = Intent(Intent.ACTION_SEND).apply {
+-                                        type = "text/plain"
+-                                        putExtra(Intent.EXTRA_TEXT, shareText)
+-                                    }
+-                                    try {
+-                                        context.startActivity(Intent.createChooser(intent, null))
+-                                    } catch (e: ActivityNotFoundException) {
+-                                        Log.w(TAG, "Share unavailable", e)
+-                                    }
+-                                },
++            is QuestListUiState.Loading ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
++                }
++            is QuestListUiState.Empty ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    Text(
++                        text = "Нет квестов",
++                        modifier = Modifier.align(Alignment.Center),
++                        style = MaterialTheme.typography.titleMedium,
++                    )
++                }
++            is QuestListUiState.Loaded ->
++                LazyColumn(state = lazyListState) {
++                    itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
++                        Box {
++                            HierarchyItemCard(
++                                title = quest.title,
++                                orderLabel = "${index + 1}.",
++                                rating = quest.averageRating,
++                                ratingCount = quest.averageRatingCount,
++                                onClick = { component.onQuestClick(quest) },
++                                onLongClick = { expandedQuestId = quest.id },
++                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                             )
++                            DropdownMenu(
++                                expanded = expandedQuestId == quest.id,
++                                onDismissRequest = { expandedQuestId = null },
++                                modifier = Modifier.testTag("quest_menu"),
++                            ) {
++                                DropdownMenuItem(
++                                    text = { Text("Поделиться") },
++                                    onClick = {
++                                        expandedQuestId = null
++                                        val appName =
++                                            context.applicationInfo
++                                                .loadLabel(context.packageManager).toString()
++                                        val shareText = "Квест «${quest.title}» — $appName"
++                                        val intent =
++                                            Intent(Intent.ACTION_SEND).apply {
++                                                type = "text/plain"
++                                                putExtra(Intent.EXTRA_TEXT, shareText)
++                                            }
++                                        try {
++                                            context.startActivity(Intent.createChooser(intent, null))
++                                        } catch (e: ActivityNotFoundException) {
++                                            Log.w(TAG, "Share unavailable", e)
++                                        }
++                                    },
++                                )
++                            }
+                         }
+                     }
+                 }
+-            }
+         }
+     }
+ }
+@@ -118,12 +123,15 @@ fun QuestListScreen(
+ private fun QuestListScreenLoadingPreview() {
+     SchoolQuizTheme {
+         QuestListScreen(
+-            component = object : QuestListComponent {
+-                override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Loading)
+-                override val titles = listOf("Математика")
+-                override fun onQuestClick(quest: QuestDisplayItem) = Unit
+-                override fun onShareClick(quest: QuestDisplayItem) = Unit
+-            },
++            component =
++                object : QuestListComponent {
++                    override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Loading)
++                    override val titles = listOf("Математика")
++
++                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
++
++                    override fun onShareClick(quest: QuestDisplayItem) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+@@ -135,12 +143,15 @@ private fun QuestListScreenLoadingPreview() {
+ private fun QuestListScreenEmptyPreview() {
+     SchoolQuizTheme {
+         QuestListScreen(
+-            component = object : QuestListComponent {
+-                override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Empty)
+-                override val titles = listOf("Математика")
+-                override fun onQuestClick(quest: QuestDisplayItem) = Unit
+-                override fun onShareClick(quest: QuestDisplayItem) = Unit
+-            },
++            component =
++                object : QuestListComponent {
++                    override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Empty)
++                    override val titles = listOf("Математика")
++
++                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
++
++                    override fun onShareClick(quest: QuestDisplayItem) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+@@ -153,20 +164,25 @@ private fun QuestListScreenLoadedPreview() {
+     val catalogId = CatalogId("cat-1")
+     SchoolQuizTheme {
+         QuestListScreen(
+-            component = object : QuestListComponent {
+-                override val uiState: Value<QuestListUiState> = MutableValue(
+-                    QuestListUiState.Loaded(
+-                        quests = listOf(
+-                            QuestDisplayItem(QuestId("1"), catalogId, "Алгебра — основы", null, 2.5f, 42),
+-                            QuestDisplayItem(QuestId("2"), catalogId, "Геометрия", null, null, 0),
+-                            QuestDisplayItem(QuestId("3"), catalogId, "Тригонометрия", null, 3.0f, 7),
+-                        ),
+-                    ),
+-                )
+-                override val titles = listOf("Математика")
+-                override fun onQuestClick(quest: QuestDisplayItem) = Unit
+-                override fun onShareClick(quest: QuestDisplayItem) = Unit
+-            },
++            component =
++                object : QuestListComponent {
++                    override val uiState: Value<QuestListUiState> =
++                        MutableValue(
++                            QuestListUiState.Loaded(
++                                quests =
++                                    listOf(
++                                        QuestDisplayItem(QuestId("1"), catalogId, "Алгебра — основы", null, 2.5f, 42),
++                                        QuestDisplayItem(QuestId("2"), catalogId, "Геометрия", null, null, 0),
++                                        QuestDisplayItem(QuestId("3"), catalogId, "Тригонометрия", null, 3.0f, 7),
++                                    ),
++                            ),
++                        )
++                    override val titles = listOf("Математика")
++
++                    override fun onQuestClick(quest: QuestDisplayItem) = Unit
++
++                    override fun onShareClick(quest: QuestDisplayItem) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt
+index b9c07a48..8a4d1827 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/QuizzesScreen.kt
+@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
+ import androidx.compose.ui.tooling.preview.Preview
+ import com.arkivanov.decompose.extensions.compose.subscribeAsState
+ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
++import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+ 
+@@ -22,14 +23,15 @@ fun QuizzesScreen(component: QuizzesComponent) {
+     val stack by component.childStack.subscribeAsState()
+ 
+     Box(
+-        modifier = Modifier
+-            .fillMaxSize()
+-            .background(MaterialTheme.colorScheme.background)
+-            .clickable(
+-                enabled = false,
+-                indication = null,
+-                interactionSource = remember { MutableInteractionSource() },
+-            ) {},
++        modifier =
++            Modifier
++                .fillMaxSize()
++                .background(MaterialTheme.colorScheme.background)
++                .clickable(
++                    enabled = false,
++                    indication = null,
++                    interactionSource = remember { MutableInteractionSource() },
++                ) {},
+     ) {
+         when (val active = stack.active.instance) {
+             is QuizzesChild.Idle -> Unit
+@@ -37,7 +39,12 @@ fun QuizzesScreen(component: QuizzesComponent) {
+             is QuizzesChild.SectionList -> SectionListScreen(active.component, onSegmentClick = component::popToLevel)
+             is QuizzesChild.ThemeList -> ThemeListScreen(active.component, onSegmentClick = component::popToLevel)
+             is QuizzesChild.LessonList -> LessonListScreen(active.component, onSegmentClick = component::popToLevel)
+-            is QuizzesChild.LessonPlaceholder -> LessonPlaceholderScreen(active.component, onSegmentClick = component::popToLevel)
++            is QuizzesChild.LessonRunner ->
++                LessonRunnerScreen(
++                    component = active.component,
++                    onNavigateBack = { component.popCurrentChild() },
++                    onSegmentClick = component::popToLevel,
++                )
+         }
+     }
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/SectionListScreen.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/SectionListScreen.kt
+index 4f430881..92bf444b 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/SectionListScreen.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/SectionListScreen.kt
+@@ -38,27 +38,30 @@ fun SectionListScreen(
+     Column(modifier = Modifier.fillMaxSize()) {
+         BreadcrumbBar(titles = component.titles, onSegmentClick = onSegmentClick)
+         when (val state = uiState) {
+-            is HierarchyListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+-            }
+-            is HierarchyListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
+-                Text(
+-                    text = state.levelLabel,
+-                    modifier = Modifier.align(Alignment.Center),
+-                    style = MaterialTheme.typography.titleMedium,
+-                )
+-            }
+-            is HierarchyListUiState.Loaded -> LazyColumn(state = lazyListState) {
+-                items(state.items, key = { it.id }) { item ->
+-                    HierarchyItemCard(
+-                        title = item.title,
+-                        orderLabel = item.orderLabel,
+-                        subtitleCount = item.subtitleCount,
+-                        onClick = { component.onSectionClick(item) },
+-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
++            is HierarchyListUiState.Loading ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
++                }
++            is HierarchyListUiState.Empty ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    Text(
++                        text = state.levelLabel,
++                        modifier = Modifier.align(Alignment.Center),
++                        style = MaterialTheme.typography.titleMedium,
+                     )
+                 }
+-            }
++            is HierarchyListUiState.Loaded ->
++                LazyColumn(state = lazyListState) {
++                    items(state.items, key = { it.id }) { item ->
++                        HierarchyItemCard(
++                            title = item.title,
++                            orderLabel = item.orderLabel,
++                            subtitleCount = item.subtitleCount,
++                            onClick = { component.onSectionClick(item) },
++                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
++                        )
++                    }
++                }
+         }
+     }
+ }
+@@ -69,11 +72,13 @@ fun SectionListScreen(
+ private fun SectionListScreenLoadingPreview() {
+     SchoolQuizTheme {
+         SectionListScreen(
+-            component = object : SectionListComponent {
+-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
+-                override val titles = listOf("Математика", "Квест 1")
+-                override fun onSectionClick(section: HierarchyItemUi) = Unit
+-            },
++            component =
++                object : SectionListComponent {
++                    override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
++                    override val titles = listOf("Математика", "Квест 1")
++
++                    override fun onSectionClick(section: HierarchyItemUi) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+@@ -85,18 +90,26 @@ private fun SectionListScreenLoadingPreview() {
+ private fun SectionListScreenLoadedPreview() {
+     SchoolQuizTheme {
+         SectionListScreen(
+-            component = object : SectionListComponent {
+-                override val uiState: Value<HierarchyListUiState> = MutableValue(
+-                    HierarchyListUiState.Loaded(
+-                        listOf(
+-                            HierarchyItemUi(id = "1", title = "Секция 1 — Введение", orderLabel = "1."),
+-                            HierarchyItemUi(id = "2", title = "Секция 2 — Основы", orderLabel = "2.", subtitleCount = "5 тем"),
+-                        ),
+-                    ),
+-                )
+-                override val titles = listOf("Математика", "Квест 1")
+-                override fun onSectionClick(section: HierarchyItemUi) = Unit
+-            },
++            component =
++                object : SectionListComponent {
++                    override val uiState: Value<HierarchyListUiState> =
++                        MutableValue(
++                            HierarchyListUiState.Loaded(
++                                listOf(
++                                    HierarchyItemUi(id = "1", title = "Секция 1 — Введение", orderLabel = "1."),
++                                    HierarchyItemUi(
++                                        id = "2",
++                                        title = "Секция 2 — Основы",
++                                        orderLabel = "2.",
++                                        subtitleCount = "5 тем",
++                                    ),
++                                ),
++                            ),
++                        )
++                    override val titles = listOf("Математика", "Квест 1")
++
++                    override fun onSectionClick(section: HierarchyItemUi) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ThemeListScreen.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ThemeListScreen.kt
+index a4f19d53..87372d2b 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ThemeListScreen.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/screen/ThemeListScreen.kt
+@@ -38,27 +38,30 @@ fun ThemeListScreen(
+     Column(modifier = Modifier.fillMaxSize()) {
+         BreadcrumbBar(titles = component.titles, onSegmentClick = onSegmentClick)
+         when (val state = uiState) {
+-            is HierarchyListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
+-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+-            }
+-            is HierarchyListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
+-                Text(
+-                    text = state.levelLabel,
+-                    modifier = Modifier.align(Alignment.Center),
+-                    style = MaterialTheme.typography.titleMedium,
+-                )
+-            }
+-            is HierarchyListUiState.Loaded -> LazyColumn(state = lazyListState) {
+-                items(state.items, key = { it.id }) { item ->
+-                    HierarchyItemCard(
+-                        title = item.title,
+-                        orderLabel = item.orderLabel,
+-                        subtitleCount = item.subtitleCount,
+-                        onClick = { component.onThemeClick(item) },
+-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
++            is HierarchyListUiState.Loading ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
++                }
++            is HierarchyListUiState.Empty ->
++                Box(modifier = Modifier.fillMaxSize()) {
++                    Text(
++                        text = state.levelLabel,
++                        modifier = Modifier.align(Alignment.Center),
++                        style = MaterialTheme.typography.titleMedium,
+                     )
+                 }
+-            }
++            is HierarchyListUiState.Loaded ->
++                LazyColumn(state = lazyListState) {
++                    items(state.items, key = { it.id }) { item ->
++                        HierarchyItemCard(
++                            title = item.title,
++                            orderLabel = item.orderLabel,
++                            subtitleCount = item.subtitleCount,
++                            onClick = { component.onThemeClick(item) },
++                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
++                        )
++                    }
++                }
+         }
+     }
+ }
+@@ -69,11 +72,13 @@ fun ThemeListScreen(
+ private fun ThemeListScreenLoadingPreview() {
+     SchoolQuizTheme {
+         ThemeListScreen(
+-            component = object : ThemeListComponent {
+-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
+-                override val titles = listOf("Математика", "Квест 1", "Секция 1")
+-                override fun onThemeClick(theme: HierarchyItemUi) = Unit
+-            },
++            component =
++                object : ThemeListComponent {
++                    override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
++                    override val titles = listOf("Математика", "Квест 1", "Секция 1")
++
++                    override fun onThemeClick(theme: HierarchyItemUi) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+@@ -85,11 +90,14 @@ private fun ThemeListScreenLoadingPreview() {
+ private fun ThemeListScreenEmptyPreview() {
+     SchoolQuizTheme {
+         ThemeListScreen(
+-            component = object : ThemeListComponent {
+-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Empty("Нет тем"))
+-                override val titles = listOf("Математика", "Квест 1", "Секция 1")
+-                override fun onThemeClick(theme: HierarchyItemUi) = Unit
+-            },
++            component =
++                object : ThemeListComponent {
++                    override val uiState: Value<HierarchyListUiState> =
++                        MutableValue(HierarchyListUiState.Empty("Нет тем"))
++                    override val titles = listOf("Математика", "Квест 1", "Секция 1")
++
++                    override fun onThemeClick(theme: HierarchyItemUi) = Unit
++                },
+             onSegmentClick = {},
+         )
+     }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/HierarchyListUiState.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/HierarchyListUiState.kt
+index d5c5d9d8..a8a6b28c 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/HierarchyListUiState.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/HierarchyListUiState.kt
+@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate
+ 
+ sealed interface HierarchyListUiState {
+     data object Loading : HierarchyListUiState
++
+     data class Empty(val levelLabel: String) : HierarchyListUiState
++
+     data class Loaded(val items: List<HierarchyItemUi>) : HierarchyListUiState
+ }
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/LessonPlaceholderUiState.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/LessonPlaceholderUiState.kt
+deleted file mode 100644
+index 381b5fe7..00000000
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/LessonPlaceholderUiState.kt
++++ /dev/null
+@@ -1,6 +0,0 @@
+-package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate
+-
+-data class LessonPlaceholderUiState(
+-    val lessonTitle: String,
+-    val titles: List<String>,
+-)
+diff --git a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/QuestListUiState.kt b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/QuestListUiState.kt
+index d8d16523..23bf77a5 100644
+--- a/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/QuestListUiState.kt
++++ b/android/feature/quizzes-screen/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/quizzes_screen/presentation/uistate/QuestListUiState.kt
+@@ -4,6 +4,8 @@ import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+ 
+ sealed interface QuestListUiState {
+     data object Loading : QuestListUiState
++
+     data object Empty : QuestListUiState
++
+     data class Loaded(val quests: List<QuestDisplayItem>) : QuestListUiState
+ }
+diff --git a/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/AppApplication.kt b/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/AppApplication.kt
+index 111e4e9a..ec5c2541 100644
+--- a/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/AppApplication.kt
++++ b/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/AppApplication.kt
+@@ -12,6 +12,7 @@ import androidx.work.WorkManager
+ import androidx.work.WorkerFactory
+ import com.google.firebase.auth.FirebaseAuth
+ import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
++import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
+ import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
+ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
+ import com.tpov.schoolquiz.apps.android_next.di.syncModule
+@@ -19,21 +20,24 @@ import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
+ import com.tpov.schoolquiz.platform.firebase.di.firebaseCatalogModule
+ import com.tpov.schoolquiz.platform.firebase.di.firebaseLessonModule
+ import com.tpov.schoolquiz.platform.firebase.di.firebaseModule
+-import com.tpov.schoolquiz.platform.firebase.di.firebaseQuestionModule
+ import com.tpov.schoolquiz.platform.firebase.di.firebaseQuestModule
++import com.tpov.schoolquiz.platform.firebase.di.firebaseQuestionModule
+ import com.tpov.schoolquiz.platform.firebase.di.firebaseSectionModule
+ import com.tpov.schoolquiz.platform.firebase.di.firebaseThemeModule
+ import com.tpov.schoolquiz.platform.firebase.initializeFirebaseSecurity
+ import com.tpov.schoolquiz.shared.core.catalog.data.di.catalogDataModule
+ import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
+ import com.tpov.schoolquiz.shared.core.persistence.di.persistenceModule
++import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
+ import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
+ import com.tpov.schoolquiz.shared.feature.lesson.data.di.lessonDataModule
+ import com.tpov.schoolquiz.shared.feature.lesson.domain.di.lessonDomainModule
+-import com.tpov.schoolquiz.shared.feature.question.data.di.questionDataModule
+-import com.tpov.schoolquiz.shared.feature.question.domain.di.questionDomainModule
++import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDataModule
++import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDomainKoinAdapter
+ import com.tpov.schoolquiz.shared.feature.quest.data.di.questDataModule
+ import com.tpov.schoolquiz.shared.feature.quest.domain.di.questDomainModule
++import com.tpov.schoolquiz.shared.feature.question.data.di.questionDataModule
++import com.tpov.schoolquiz.shared.feature.question.domain.di.questionDomainModule
+ import com.tpov.schoolquiz.shared.feature.section.data.di.sectionDataModule
+ import com.tpov.schoolquiz.shared.feature.section.domain.di.sectionDomainModule
+ import com.tpov.schoolquiz.shared.feature.theme.data.di.themeDataModule
+@@ -50,7 +54,6 @@ import org.koin.core.context.GlobalContext
+ import org.koin.core.context.startKoin
+ 
+ class AppApplication : Application(), Configuration.Provider {
+-
+     /**
+      * Application-scoped CoroutineScope for shared hot Flows (auth UID, etc.).
+      * Survives the entire process lifetime. Dispatchers.Default — non-blocking work
+@@ -60,28 +63,38 @@ class AppApplication : Application(), Configuration.Provider {
+     private val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+ 
+     override val workManagerConfiguration: Configuration
+-        get() = Configuration.Builder()
+-            .setWorkerFactory(GlobalContext.get().get<WorkerFactory>())
+-            .build()
++        get() =
++            Configuration.Builder()
++                .setWorkerFactory(GlobalContext.get().get<WorkerFactory>())
++                .build()
+ 
+     override fun onCreate() {
+         super.onCreate()
+         initializeFirebaseSecurity(this)
+         val auth = FirebaseAuth.getInstance()
+-        // Cold callbackFlow: each collect would register a new AuthStateListener.
+-        val coldAuthUidFlow = callbackFlow<String?> {
+-            val listener = FirebaseAuth.AuthStateListener { a -> trySend(a.currentUser?.uid) }
+-            auth.addAuthStateListener(listener)
+-            awaitClose { auth.removeAuthStateListener(listener) }
++        // Ensure every user has a Firebase identity (anonymous) before any feature
++        // tries to read authRepository.observeUid(). Without this, a fresh-install
++        // user would see "Требуется авторизация" on lesson tap (AC spec assumes
++        // authenticated user; no explicit login screen exists in this app version).
++        if (auth.currentUser == null) {
++            auth.signInAnonymously()
+         }
++        // Cold callbackFlow: each collect would register a new AuthStateListener.
++        val coldAuthUidFlow =
++            callbackFlow<String?> {
++                val listener = FirebaseAuth.AuthStateListener { a -> trySend(a.currentUser?.uid) }
++                auth.addAuthStateListener(listener)
++                awaitClose { auth.removeAuthStateListener(listener) }
++            }
+         // Codex Round 4 N2 fix: shareIn(WhileSubscribed) → single AuthStateListener
+         // shared across all consumers (UserStatsRepositoryImpl + AuthRepositoryImpl + future
+         // MyQuestsViewModel). Replay 1 ensures late subscribers get the current UID immediately.
+-        val sharedAuthUidFlow = coldAuthUidFlow.shareIn(
+-            scope = appScope,
+-            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L),
+-            replay = 1,
+-        )
++        val sharedAuthUidFlow =
++            coldAuthUidFlow.shareIn(
++                scope = appScope,
++                started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000L),
++                replay = 1,
++            )
+         startKoin {
+             androidContext(this@AppApplication)
+             modules(
+@@ -109,6 +122,10 @@ class AppApplication : Application(), Configuration.Provider {
+                 lessonDomainModule,
+                 questionDataModule,
+                 questionDomainModule,
++                questionSchemaModule,
++                lessonRunnerDataModule,
++                lessonRunnerDomainKoinAdapter,
++                lessonRunnerPresentationModule,
+                 syncModule,
+             )
+         }
+@@ -123,9 +140,9 @@ class AppApplication : Application(), Configuration.Provider {
+                 .setConstraints(
+                     Constraints.Builder()
+                         .setRequiredNetworkType(NetworkType.CONNECTED)
+-                        .build()
++                        .build(),
+                 )
+-                .build()
++                .build(),
+         )
+         // Bootstrap one-shot sync: runs ONCE after install (first-ever launch).
+         // Subsequent sync is handled by periodic WorkManager schedule + manual Sync Now.
+@@ -138,9 +155,9 @@ class AppApplication : Application(), Configuration.Provider {
+                     .setConstraints(
+                         Constraints.Builder()
+                             .setRequiredNetworkType(NetworkType.CONNECTED)
+-                            .build()
++                            .build(),
+                     )
+-                    .build()
++                    .build(),
+             )
+             prefs.edit().putBoolean("bootstrap_done", true).apply()
+         }
+diff --git a/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/di/SyncModule.kt b/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/di/SyncModule.kt
+index 1c501c49..cca85d88 100644
+--- a/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/di/SyncModule.kt
++++ b/apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/di/SyncModule.kt
+@@ -6,8 +6,8 @@ import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
+ import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
+ import com.tpov.schoolquiz.shared.core.sync.CascadingSyncOrchestrator
+ import com.tpov.schoolquiz.shared.core.sync.InMemorySyncStateRepository
+-import com.tpov.schoolquiz.shared.core.sync.Syncable
+ import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
++import com.tpov.schoolquiz.shared.core.sync.Syncable
+ import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+ import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
+ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+@@ -18,27 +18,28 @@ import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepositor
+ import org.koin.android.ext.koin.androidContext
+ import org.koin.dsl.module
+ 
+-val syncModule = module {
+-    single<SyncStateRepository> { InMemorySyncStateRepository() }
+-    single<WorkManager> { WorkManager.getInstance(androidContext()) }
+-    single<CascadingSyncOrchestrator> {
+-        CascadingSyncOrchestrator(
+-            catalogRepo = get<CatalogRepository>(),
+-            questRepo = get<QuestRepository>(),
+-            sectionRepo = get<SectionRepository>(),
+-            themeRepo = get<ThemeRepository>(),
+-            lessonRepo = get<LessonRepository>(),
+-            questionRepo = get<QuestionRepository>(),
+-            syncStateRepo = get<SyncStateRepository>(),
+-            authRepo = get<AuthRepository>(),
+-            userStatsRepo = get<UserStatsRepository>(),
+-        )
+-    }
+-    single<List<Syncable>> {
+-        listOf(
+-            get<UserStatsRepository>() as Syncable,
+-            get<CascadingSyncOrchestrator>(),
+-        )
++val syncModule =
++    module {
++        single<SyncStateRepository> { InMemorySyncStateRepository() }
++        single<WorkManager> { WorkManager.getInstance(androidContext()) }
++        single<CascadingSyncOrchestrator> {
++            CascadingSyncOrchestrator(
++                catalogRepo = get<CatalogRepository>(),
++                questRepo = get<QuestRepository>(),
++                sectionRepo = get<SectionRepository>(),
++                themeRepo = get<ThemeRepository>(),
++                lessonRepo = get<LessonRepository>(),
++                questionRepo = get<QuestionRepository>(),
++                syncStateRepo = get<SyncStateRepository>(),
++                authRepo = get<AuthRepository>(),
++                userStatsRepo = get<UserStatsRepository>(),
++            )
++        }
++        single<List<Syncable>> {
++            listOf(
++                get<UserStatsRepository>() as Syncable,
++                get<CascadingSyncOrchestrator>(),
++            )
++        }
++        single<WorkerFactory> { SyncWorkerFactory(get()) }
+     }
+-    single<WorkerFactory> { SyncWorkerFactory(get()) }
+-}

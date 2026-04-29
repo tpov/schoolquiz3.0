@@ -7,6 +7,8 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.Q
 interface QuestListComponent {
     val uiState: Value<QuestListUiState>
     val titles: List<String>
+
     fun onQuestClick(quest: QuestDisplayItem)
+
     fun onShareClick(quest: QuestDisplayItem)
 }

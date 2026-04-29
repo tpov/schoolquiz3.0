@@ -71,9 +71,7 @@ class QuestRepositoryImpl(
                     if (dto.version > localVersion) local.deleteById(dto.id)
                 } else {
                     local.upsertByIdIfNewerVersion(entity)
-                    if (localEntity == null || dto.contentsVersion > localEntity.contentsVersion) {
-                        changedIds.add(QuestId(dto.id))
-                    }
+                    changedIds.add(QuestId(dto.id))
                 }
             }
             Result.success(changedIds)

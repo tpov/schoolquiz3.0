@@ -20,7 +20,7 @@ Spec (+ Domain Walking Skeleton) → Research → Design → Plan → Implement 
 Spec — первый шаг. Он задаёт направление для всего pipeline:
 - Research получает из spec **search criteria** (что именно искать в коде)
 - Design получает из spec **requirements и acceptance criteria** (что реализовать)
-- Если фича содержит `Feature Domain Contract` — spec также генерирует **Walking Skeleton** domain слоя в `app/src/main/.../domain/<slug>/` + JVM тесты. Domain становится исполняемой частью spec. Phase-01 в implement интегрирует его (repository impls, DI), НЕ переписывает.
+- Если фича содержит `Feature Domain Contract` — spec также генерирует **Walking Skeleton** domain слоя по project layout из `.claude/PROJECT-CONTEXT.md` (default here: `shared/feature/<slug>/domain/src/commonMain/` + `.../commonTest/`). Domain становится исполняемой частью spec. Phase-01 в implement интегрирует его (repository impls, DI), НЕ переписывает.
 - Без spec — research ищет вслепую, design принимает решения за пользователя
 
 ## Что прочитать
@@ -427,7 +427,7 @@ commit: $(git rev-parse --short HEAD)
 - feature domain contract
 - domain test scenarios для `phase-01`
 
-Ничего не генерируй в `core/`. Production domain code создаётся только в Phase 3.8 (Walking Skeleton) — строго в `app/src/main/.../domain/<slug>/`, не в других слоях.
+Ничего не генерируй в `core/`, если `.claude/PROJECT-CONTEXT.md` или spec явно не указывает core-module как целевой layout. Production domain code создаётся только в Phase 3.8 (Walking Skeleton) — строго в project-layout domain path (default here: `shared/feature/<slug>/domain/src/commonMain/`), не в data/presentation/platform слоях.
 
 | Condition | Action |
 |-----------|--------|

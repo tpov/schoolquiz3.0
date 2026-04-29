@@ -1,6 +1,7 @@
 plugins {
     id("schoolquiz.kmp.library")
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -19,6 +20,9 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.sqlite.bundled)
+            implementation(project(":shared:core:question-schema"))
+            implementation(project(":shared:core:leaderboard"))
+            implementation(libs.kotlinx.serialization.json)
         }
         androidMain.dependencies {
             implementation(libs.koin.android)

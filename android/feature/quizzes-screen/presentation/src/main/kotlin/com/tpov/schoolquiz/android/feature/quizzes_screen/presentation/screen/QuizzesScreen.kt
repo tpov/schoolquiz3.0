@@ -11,8 +11,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.collectAsState
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 
@@ -21,23 +24,37 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 fun QuizzesScreen(component: QuizzesComponent) {
     val stack by component.childStack.subscribeAsState()
 
+    val active = stack.active.instance
+    val iconSet by component.currentCatalogIcons.collectAsState()
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .clickable(
-                enabled = false,
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-            ) {},
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .clickable(
+                    enabled = false,
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) {},
     ) {
-        when (val active = stack.active.instance) {
+        if (active !is QuizzesChild.Idle && active !is QuizzesChild.LessonRunner) {
+            FloatingIconsLayer(
+                modifier = Modifier.fillMaxSize(),
+                icons = iconSet,
+            )
+        }
+        when (active) {
             is QuizzesChild.Idle -> Unit
             is QuizzesChild.QuestList -> QuestListScreen(active.component, onSegmentClick = component::popToLevel)
             is QuizzesChild.SectionList -> SectionListScreen(active.component, onSegmentClick = component::popToLevel)
             is QuizzesChild.ThemeList -> ThemeListScreen(active.component, onSegmentClick = component::popToLevel)
             is QuizzesChild.LessonList -> LessonListScreen(active.component, onSegmentClick = component::popToLevel)
-            is QuizzesChild.LessonPlaceholder -> LessonPlaceholderScreen(active.component, onSegmentClick = component::popToLevel)
+            is QuizzesChild.LessonRunner ->
+                LessonRunnerScreen(
+                    component = active.component,
+                    onNavigateBack = { component.popCurrentChild() },
+                    floatingIcons = iconSet,
+                )
         }
     }
 }

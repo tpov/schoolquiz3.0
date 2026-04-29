@@ -38,27 +38,30 @@ fun SectionListScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(titles = component.titles, onSegmentClick = onSegmentClick)
         when (val state = uiState) {
-            is HierarchyListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            is HierarchyListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = state.levelLabel,
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            is HierarchyListUiState.Loaded -> LazyColumn(state = lazyListState) {
-                items(state.items, key = { it.id }) { item ->
-                    HierarchyItemCard(
-                        title = item.title,
-                        orderLabel = item.orderLabel,
-                        subtitleCount = item.subtitleCount,
-                        onClick = { component.onSectionClick(item) },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            is HierarchyListUiState.Loading ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+            is HierarchyListUiState.Empty ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = state.levelLabel,
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
-            }
+            is HierarchyListUiState.Loaded ->
+                LazyColumn(state = lazyListState) {
+                    items(state.items, key = { it.id }) { item ->
+                        HierarchyItemCard(
+                            title = item.title,
+                            orderLabel = item.orderLabel,
+                            subtitleCount = item.subtitleCount,
+                            onClick = { component.onSectionClick(item) },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                }
         }
     }
 }
@@ -69,11 +72,13 @@ fun SectionListScreen(
 private fun SectionListScreenLoadingPreview() {
     SchoolQuizTheme {
         SectionListScreen(
-            component = object : SectionListComponent {
-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
-                override val titles = listOf("Математика", "Квест 1")
-                override fun onSectionClick(section: HierarchyItemUi) = Unit
-            },
+            component =
+                object : SectionListComponent {
+                    override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
+                    override val titles = listOf("Математика", "Квест 1")
+
+                    override fun onSectionClick(section: HierarchyItemUi) = Unit
+                },
             onSegmentClick = {},
         )
     }
@@ -85,18 +90,26 @@ private fun SectionListScreenLoadingPreview() {
 private fun SectionListScreenLoadedPreview() {
     SchoolQuizTheme {
         SectionListScreen(
-            component = object : SectionListComponent {
-                override val uiState: Value<HierarchyListUiState> = MutableValue(
-                    HierarchyListUiState.Loaded(
-                        listOf(
-                            HierarchyItemUi(id = "1", title = "Секция 1 — Введение", orderLabel = "1."),
-                            HierarchyItemUi(id = "2", title = "Секция 2 — Основы", orderLabel = "2.", subtitleCount = "5 тем"),
-                        ),
-                    ),
-                )
-                override val titles = listOf("Математика", "Квест 1")
-                override fun onSectionClick(section: HierarchyItemUi) = Unit
-            },
+            component =
+                object : SectionListComponent {
+                    override val uiState: Value<HierarchyListUiState> =
+                        MutableValue(
+                            HierarchyListUiState.Loaded(
+                                listOf(
+                                    HierarchyItemUi(id = "1", title = "Секция 1 — Введение", orderLabel = "1."),
+                                    HierarchyItemUi(
+                                        id = "2",
+                                        title = "Секция 2 — Основы",
+                                        orderLabel = "2.",
+                                        subtitleCount = "5 тем",
+                                    ),
+                                ),
+                            ),
+                        )
+                    override val titles = listOf("Математика", "Квест 1")
+
+                    override fun onSectionClick(section: HierarchyItemUi) = Unit
+                },
             onSegmentClick = {},
         )
     }

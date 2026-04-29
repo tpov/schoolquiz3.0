@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength")
+
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.component
 
 import com.arkivanov.decompose.Child
@@ -29,15 +31,21 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
@@ -139,6 +147,10 @@ class QuizzesRootIntegrationTest {
 
         private val _childStack: MutableValue<ChildStack<QuizzesConfig, QuizzesChild>> = MutableValue(idleStack())
         override val childStack: Value<ChildStack<QuizzesConfig, QuizzesChild>> get() = _childStack
+        override val currentCatalogName: kotlinx.coroutines.flow.StateFlow<String?> =
+            kotlinx.coroutines.flow.MutableStateFlow(null)
+        override val currentCatalogIcons: kotlinx.coroutines.flow.StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
+            kotlinx.coroutines.flow.MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
 
         override fun openQuestList(catalogId: CatalogId, catalogName: String) {
             openQuestListArgs = OpenQuestListArgs(catalogId, catalogName)
@@ -155,6 +167,7 @@ class QuizzesRootIntegrationTest {
         }
 
         override fun popToLevel(uiLevel: Int) = Unit
+        override fun popCurrentChild() = Unit
 
         private fun idleStack() = ChildStack(
             active = Child.Created(configuration = QuizzesConfig.Idle, instance = QuizzesChild.Idle),
@@ -250,6 +263,21 @@ class QuizzesRootIntegrationTest {
                     override suspend fun refreshByParents(themeIds: Set<ThemeId>, cursor: Long): Result<Set<LessonId>> = Result.success(emptySet())
                     override suspend fun getLocalContentsVersion(id: LessonId): Long? = null
                 },
+                lessonAttemptRepository = object : LessonAttemptRepository {
+                    override suspend fun save(attempt: Attempt): Result<Unit> = Result.success(Unit)
+                    override fun observeByLesson(userId: String, lessonId: LessonId): Flow<List<Attempt>> = flowOf(emptyList())
+                    override fun observeAllByUser(userId: String): Flow<List<Attempt>> = flowOf(emptyList())
+                },
+                authRepository = object : AuthRepository {
+                    override suspend fun currentUid(): String? = null
+                    override fun observeUid(): Flow<String?> = flowOf(null)
+                },
+                catalogRepository = object : CatalogRepository {
+                    override fun observeAll(): Flow<List<Catalog>> = flowOf(emptyList())
+                    override suspend fun refreshFromRemote(): Result<Set<CatalogId>> = Result.success(emptySet())
+                    override suspend fun getById(id: CatalogId): Catalog? = null
+                },
+                lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
                 mainContext = testDispatcher,
             )
         },

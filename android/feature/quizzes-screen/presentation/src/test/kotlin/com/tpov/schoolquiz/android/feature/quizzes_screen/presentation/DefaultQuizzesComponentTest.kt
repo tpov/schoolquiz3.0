@@ -12,10 +12,14 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeBackDispatcher
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +74,10 @@ class DefaultQuizzesComponentTest {
             sectionRepository = FakeSectionRepository(),
             themeRepository = FakeThemeRepository(),
             lessonRepository = FakeLessonRepository(),
+            lessonAttemptRepository = FakeLessonAttemptRepository(),
+            authRepository = FakeAuthRepository(),
+            catalogRepository = StubCatalogRepository(),
+            lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
             mainContext = Dispatchers.Unconfined,
         )
     }

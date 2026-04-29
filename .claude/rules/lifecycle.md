@@ -33,7 +33,7 @@ override fun onDestroy() {
 | UI-only ресурсы (Views, animations, adapters) | `onDestroy` | Привязаны к Activity instance |
 | Observers, listeners на Activity/Fragment | `onDestroy` (или `onDestroyView` для Fragment) | Memory leak prevention |
 | Ресурсы foreground-only (camera preview, sensor, screen brightness) | `onStop` | User не смотрит на UI — они не нужны |
-| Business operations (call, upload, playback) — если они foreground-only | `onStop` (опционально через ViewModel) | — |
+| Business operations (call, upload, playback) — если они foreground-only | `onStop` или Component event по явному spec | — |
 | Business operations — если они должны жить в background | **НЕ в Activity вообще** | Живут в Foreground Service |
 | Persistence (save draft, sync state) | `onPause` | Гарантированно вызывается перед background |
 
@@ -43,38 +43,37 @@ override fun onDestroy() {
 
 1. Операция живёт в **Foreground Service** с ongoing notification — система не убивает такой процесс
 2. Service запускается через `startForeground()` в момент старта operation (не в Activity `onCreate`)
-3. Activity **только подписывается** на service state (через binder / ViewModel / Repository / Flow)
+3. Activity/Component **только подписывается** на service state (через binder / Component / Repository / Flow)
 4. `onDestroy()` Activity **НЕ завершает service** — service сам решает когда завершиться (когда operation logically done)
 
 ### 4. `isFinishing` vs `isChangingConfigurations`
 
-Если business cleanup из `onDestroy` всё же нужен (не получается перенести в ViewModel.onCleared) — защити его проверкой:
+Если business cleanup из `onDestroy` всё же нужен — защити его проверкой:
 
 ```kotlin
 override fun onDestroy() {
     super.onDestroy()
     if (isFinishing && !isChangingConfigurations) {
         // User реально ушёл, не configuration change
-        viewModel.onActivityFinished()
+        component.onActivityFinished()
     }
     // Иначе (config change или background) — ничего business не делаем
 }
 ```
 
-### 5. `ViewModel.onCleared()` — правильное "user really left"
+### 5. Decompose lifecycle
 
-`onCleared()` вызывается когда ViewModelStore очищается — то есть user реально завершил screen, НЕ на config change.
+В текущем проекте feature presentation держится в Decompose `Component`. `doOnDestroy` подходит для отмены component scope, отписки от listeners и release UI-adjacent ресурсов. Не помещай туда business actions, которые должны пережить закрытие UI или configuration change.
 
 ```kotlin
-class VoipCallViewModel(
-    private val endCallUseCase: EndCallUseCase,
-) : ViewModel() {
-
-    override fun onCleared() {
-        super.onCleared()
-        // User реально ушёл (не config change).
-        // Но если звонок должен жить в background Foreground Service — НЕ завершать отсюда.
-        // Решение зависит от spec Primary User Journey.
+class DefaultExampleComponent(
+    componentContext: ComponentContext,
+) : ComponentContext by componentContext {
+    init {
+        lifecycle.doOnDestroy {
+            // cancel component-only jobs/listeners
+            // Do not stop background business operations here unless spec says so.
+        }
     }
 }
 ```
@@ -98,33 +97,27 @@ class VoipActiveCallActivity : AppCompatActivity() {
 **Почему баг**: user нажал Home → Android держит процесс живым с Foreground Service (звонок должен продолжаться) → НО Activity всё равно в какой-то момент получит `onDestroy()` → звонок убивается, хотя user его не завершал.
 
 ```kotlin
-// ✅ Activity делегирует ViewModel, ViewModel различает finishing vs background
+// ✅ Activity делегирует Component, Component различает finishing vs background
 class VoipActiveCallActivity : AppCompatActivity() {
 
-    private val viewModel: VoipCallViewModel by viewModels { factory }
+    private val component: VoipCallComponent = createComponent()
 
     override fun onDestroy() {
         super.onDestroy()
-        viewModel.onActivityDestroyed(
+        component.onActivityDestroyed(
             isFinishing = isFinishing,
             isChangingConfigurations = isChangingConfigurations
         )
     }
 }
 
-class VoipCallViewModel(
+class VoipCallComponent(
     private val endCallUseCase: EndCallUseCase,
-) : ViewModel() {
+) {
 
     fun onActivityDestroyed(isFinishing: Boolean, isChangingConfigurations: Boolean) {
         // НЕ завершаем звонок здесь — он живёт в Foreground Service.
         // Service сам решит (по business logic из spec) когда завершиться.
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        // User реально ушёл — если spec говорит "звонок привязан к screen", завершить.
-        // Если spec говорит "звонок живёт в background" — НЕ завершать.
     }
 }
 ```
@@ -143,9 +136,9 @@ grep -rn -B 3 -A 10 "ACTION_END\|ACTION_STOP\|ACTION_KILL" \
     grep -B 10 "onDestroy"
 ```
 
-Если найден kill-like action в `onDestroy` без `if (isFinishing && !isChangingConfigurations)` wrap — blocker; перенести cleanup в `ViewModel.onCleared()` или в Foreground Service lifecycle.
+Если найден kill-like action в `onDestroy` без `if (isFinishing && !isChangingConfigurations)` wrap — blocker; перенести cleanup в Decompose/component event, use case, или Foreground Service lifecycle в зависимости от spec.
 
 ## Связанные правила
 
-- `.claude/rules/use-cases.md` — Activity не вызывает UseCase напрямую, только через ViewModel
+- `.claude/rules/use-cases.md` — Compose Screen не вызывает UseCase напрямую, а идёт через Component
 - `.claude/rules/clean-architecture.md` — layer boundaries

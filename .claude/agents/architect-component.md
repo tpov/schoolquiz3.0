@@ -38,7 +38,7 @@ description: Проектирует component-level архитектуру фи�
 
 - Проектируйте от реальных паттернов кодовой базы из research
 - Используйте Mermaid для диаграмм
-- DI wiring — строго по PROJECT-CONTEXT.md (Hilt, существующие scopes)
+- DI wiring — строго по PROJECT-CONTEXT.md (Koin modules/factories/scopes)
 - Каждый ADR ОБЯЗАН содержать секцию "Alternatives Considered" с минимум 1 отвергнутым вариантом и причиной отказа
 - Когда decision ссылается на существующую функцию — проверьте сигнатуру в 1-research.md. Если отсутствует — пометьте: "REQUIRES: verify signature before implementation"
 - Если architect-high-level предлагает границу, которая ломает DI или lifecycle — оспаривайте

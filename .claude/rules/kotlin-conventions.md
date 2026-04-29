@@ -1,4 +1,4 @@
-# Kotlin Conventions — Android
+# Kotlin Conventions — KMP/Android
 
 ## Type choices
 
@@ -35,11 +35,11 @@
 - Use structured concurrency: `coroutineScope`, `supervisorScope`.
 - Catch `CancellationException` explicitly before generic `Exception`.
 - Prefer `withContext(Dispatchers.IO)` over creating new scopes for IO work.
-- Expose `Flow<T>` from repositories, collect in ViewModel lifecycle scope.
+- Expose `Flow<T>` from repositories; collect in Decompose Component scope or a lifecycle-aware Android scope.
 
 ## Avoid
 
-- No JSON parsing in Fragment, ViewModel, or Activity.
+- No JSON parsing in Compose Screen, Decompose Component, Fragment, ViewModel, or Activity.
 - No side effects hidden behind extensions that look like pure transforms.
 - No `GlobalScope` — use lifecycle-aware scopes.
 - No blocking calls on Main thread.

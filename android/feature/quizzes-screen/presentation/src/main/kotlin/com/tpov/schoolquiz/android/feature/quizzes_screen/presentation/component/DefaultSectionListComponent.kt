@@ -27,7 +27,6 @@ class DefaultSectionListComponent(
     private val navigation: StackNavigation<QuizzesConfig>,
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, SectionListComponent {
-
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + coroutineContext)
 
@@ -41,8 +40,11 @@ class DefaultSectionListComponent(
         scope.launch {
             sectionRepository.observeByQuest(questId)
                 .map { sections ->
-                    if (sections.isEmpty()) HierarchyListUiState.Empty("Нет секций")
-                    else HierarchyListUiState.Loaded(sections.map { it.toDrillItem() })
+                    if (sections.isEmpty()) {
+                        HierarchyListUiState.Empty("Нет секций")
+                    } else {
+                        HierarchyListUiState.Loaded(sections.map { it.toDrillItem() })
+                    }
                 }
                 .catch { /* log */ }
                 .collect { _uiState.value = it }
@@ -55,7 +57,7 @@ class DefaultSectionListComponent(
             QuizzesConfig.ThemeList(
                 sectionId = section.id,
                 titles = titles + listOf(section.title),
-            )
+            ),
         )
     }
 }

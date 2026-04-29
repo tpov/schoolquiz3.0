@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson.data.dto
 
+import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
+
 data class LessonDto(
     val id: String,
     val themeId: String,
@@ -9,4 +11,7 @@ data class LessonDto(
     val contentsVersion: Long,
     val lastModifiedAt: Long,
     val archived: Boolean,
+    val averageRating: Float? = null,
+    val ratingCount: Int? = null,
+    val top3: List<TopParticipant>? = null,
 )

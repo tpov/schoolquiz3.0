@@ -13,11 +13,13 @@ import androidx.room.TypeConverters
         ThemeEntity::class,
         LessonEntity::class,
         QuestionEntity::class,
+        LessonAttemptEntity::class,
+        LessonRatingSubmittedLocalEntity::class,
     ],
-    version = 3,
+    version = 6,
     exportSchema = true,
 )
-@TypeConverters(StringSetConverter::class)
+@TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userStatsDao(): UserStatsDao
     abstract fun catalogDao(): CatalogDao
@@ -26,4 +28,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun themeDao(): ThemeDao
     abstract fun lessonDao(): LessonDao
     abstract fun questionDao(): QuestionDao
+    abstract fun lessonAttemptDao(): LessonAttemptDao
+    abstract fun lessonRatingLocalDao(): LessonRatingLocalDao
 }

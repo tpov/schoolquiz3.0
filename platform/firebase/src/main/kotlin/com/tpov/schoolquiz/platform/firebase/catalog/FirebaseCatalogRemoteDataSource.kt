@@ -9,7 +9,6 @@ import kotlinx.coroutines.tasks.await
 class FirebaseCatalogRemoteDataSource(
     private val firestore: FirebaseFirestore,
 ) : CatalogRemoteDataSource {
-
     override suspend fun fetchChangedSince(cursor: Long): List<CatalogDto> {
         val ts = cursor.toTimestamp()
         return firestore.collection("catalogs")
@@ -21,5 +20,4 @@ class FirebaseCatalogRemoteDataSource(
     }
 }
 
-internal fun Long.toTimestamp(): Timestamp =
-    Timestamp(this / 1000L, ((this % 1000L) * 1_000_000L).toInt())
+internal fun Long.toTimestamp(): Timestamp = Timestamp(this / 1000L, ((this % 1000L) * 1_000_000L).toInt())

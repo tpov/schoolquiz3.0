@@ -30,25 +30,28 @@ class DefaultHomeQuestsComponent(
     private val onCatalogDrillDown: (CatalogId, String) -> Unit,
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
 ) : HomeQuestsComponent, ComponentContext by componentContext {
-
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + mainContext)
 
-    override val state = observeCatalogs()
-        .map { catalogs ->
-            HomeQuestsUiState(catalogs = catalogs.map { it.toDisplayItem() })
-        }
-        .stateIn(
-            scope = scope,
-            started = SharingStarted.Eagerly,
-            initialValue = HomeQuestsUiState(),
-        )
+    override val state =
+        observeCatalogs()
+            .map { catalogs ->
+                HomeQuestsUiState(catalogs = catalogs.map { it.toDisplayItem() })
+            }
+            .stateIn(
+                scope = scope,
+                started = SharingStarted.Eagerly,
+                initialValue = HomeQuestsUiState(),
+            )
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
     }
 
-    override fun onCatalogClick(id: CatalogId, name: String) {
+    override fun onCatalogClick(
+        id: CatalogId,
+        name: String,
+    ) {
         val catalogName = name.takeIf { it.isNotBlank() } ?: "Каталог"
         onCatalogDrillDown(id, catalogName)
     }

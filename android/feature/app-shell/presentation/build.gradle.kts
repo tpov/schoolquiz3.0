@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":shared:feature:app-shell:domain"))
+    implementation(project(":android:feature:local:settings:presentation"))
     implementation(project(":android:feature:quest:presentation"))
     implementation(project(":android:feature:quizzes-screen:presentation"))
     implementation(project(":shared:feature:quest:domain"))
@@ -33,6 +34,9 @@ dependencies {
     testImplementation(project(":shared:feature:section:domain"))
     testImplementation(project(":shared:feature:theme:domain"))
     testImplementation(project(":shared:feature:lesson:domain"))
+    testImplementation(project(":shared:core:question-schema"))
+    testImplementation(project(":shared:feature:lesson-runner:domain"))
+    testImplementation(project(":android:feature:lesson-runner:presentation"))
     testImplementation(project(":android:feature:quest:test-fixtures"))
 
     androidTestImplementation(project(":android:feature:quizzes-screen:presentation"))

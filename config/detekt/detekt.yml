@@ -7,16 +7,18 @@ config:
   warningsAsErrors: false
 
 comments:
-  excludes: ['**/test/**', '**/androidTest/**']
+  excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']
 
 complexity:
   LongMethod:
     threshold: 100
   LongParameterList:
-    threshold: 8
+    functionThreshold: 8
+    constructorThreshold: 8
+    excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']
   TooManyFunctions:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']
     thresholdInClasses: 25
     thresholdInObjects: 25
     thresholdInFiles: 30
@@ -31,4 +33,4 @@ style:
   MaxLineLength:
     maxLineLength: 120
   MagicNumber:
-    excludes: ['**/test/**', '**/androidTest/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/androidInstrumentedTest/**']

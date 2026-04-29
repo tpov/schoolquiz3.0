@@ -9,7 +9,6 @@ import kotlinx.coroutines.tasks.await
 class FirebaseQuestRemoteDataSource(
     private val firestore: FirebaseFirestore,
 ) : QuestRemoteDataSource {
-
     override suspend fun fetchOwnChanged(
         authorUid: String,
         catalogIds: Set<String>,

@@ -1,9 +1,11 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 
 @Entity(
     tableName = "lessons",
@@ -29,4 +31,7 @@ data class LessonEntity(
     val contentsVersion: Long,
     val lastModifiedAt: Long,
     val archived: Boolean,
+    @ColumnInfo(name = "average_rating") val averageRating: Float? = null,
+    @ColumnInfo(name = "rating_count") val ratingCount: Int = 0,
+    @ColumnInfo(name = "top3") val top3: List<TopParticipant> = emptyList(),
 )

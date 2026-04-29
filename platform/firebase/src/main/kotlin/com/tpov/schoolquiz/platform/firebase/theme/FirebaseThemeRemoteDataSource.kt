@@ -9,8 +9,10 @@ import kotlinx.coroutines.tasks.await
 class FirebaseThemeRemoteDataSource(
     private val firestore: FirebaseFirestore,
 ) : ThemeRemoteDataSource {
-
-    override suspend fun fetchChangedByParents(sectionIds: Set<String>, cursor: Long): List<ThemeDto> {
+    override suspend fun fetchChangedByParents(
+        sectionIds: Set<String>,
+        cursor: Long,
+    ): List<ThemeDto> {
         if (sectionIds.isEmpty()) return emptyList()
         val ts = cursor.toTimestamp()
         return firestore.collection("themes")

@@ -1,10 +1,10 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config
 
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class QuizzesConfig {
-
     @Serializable
     data object Idle : QuizzesConfig()
 
@@ -33,9 +33,9 @@ sealed class QuizzesConfig {
     ) : QuizzesConfig()
 
     @Serializable
-    data class LessonPlaceholder(
+    data class LessonRunner(
         val lessonId: String,
-        val lessonTitle: String,
+        val mode: Difficulty,
         val titles: List<String>,
     ) : QuizzesConfig()
 }

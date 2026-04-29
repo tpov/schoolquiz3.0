@@ -13,5 +13,8 @@ object LessonDtoMapper {
         contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
+        averageRating = averageRating,
+        ratingCount = ratingCount ?: 0,
+        top3 = top3 ?: emptyList(),
     )
 }

@@ -21,10 +21,9 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
-import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonListComponent
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
-import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -38,27 +37,29 @@ fun LessonListScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(titles = component.titles, onSegmentClick = onSegmentClick)
         when (val state = uiState) {
-            is HierarchyListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            is HierarchyListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = state.levelLabel,
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            is HierarchyListUiState.Loaded -> LazyColumn(state = lazyListState) {
-                items(state.items, key = { it.id }) { item ->
-                    HierarchyItemCard(
-                        title = item.title,
-                        orderLabel = item.orderLabel,
-                        subtitleCount = item.subtitleCount,
-                        onClick = { component.onLessonClick(item) },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            is LessonListUiState.Loading ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+            is LessonListUiState.Empty ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = state.levelLabel,
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
-            }
+            is LessonListUiState.Loaded ->
+                LazyColumn(state = lazyListState) {
+                    items(state.items, key = { it.id }) { item ->
+                        LessonItemCard(
+                            item = item,
+                            onClick = { component.onLessonClick(item) },
+                            onHardCheckChanged = { component.onHardCheckToggled(item.id) },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                }
         }
     }
 }
@@ -69,11 +70,15 @@ fun LessonListScreen(
 private fun LessonListScreenLoadingPreview() {
     SchoolQuizTheme {
         LessonListScreen(
-            component = object : LessonListComponent {
-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
-                override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
-                override fun onLessonClick(lesson: HierarchyItemUi) = Unit
-            },
+            component =
+                object : LessonListComponent {
+                    override val uiState: Value<LessonListUiState> = MutableValue(LessonListUiState.Loading)
+                    override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
+
+                    override fun onLessonClick(lesson: LessonItemUi) = Unit
+
+                    override fun onHardCheckToggled(lessonId: String) = Unit
+                },
             onSegmentClick = {},
         )
     }
@@ -85,18 +90,35 @@ private fun LessonListScreenLoadingPreview() {
 private fun LessonListScreenLoadedPreview() {
     SchoolQuizTheme {
         LessonListScreen(
-            component = object : LessonListComponent {
-                override val uiState: Value<HierarchyListUiState> = MutableValue(
-                    HierarchyListUiState.Loaded(
-                        listOf(
-                            HierarchyItemUi(id = "l1", title = "Урок 1 — Введение", orderLabel = "1."),
-                            HierarchyItemUi(id = "l2", title = "Урок 2 — Практика", orderLabel = "2."),
-                        ),
-                    ),
-                )
-                override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
-                override fun onLessonClick(lesson: HierarchyItemUi) = Unit
-            },
+            component =
+                object : LessonListComponent {
+                    override val uiState: Value<LessonListUiState> =
+                        MutableValue(
+                            LessonListUiState.Loaded(
+                                listOf(
+                                    LessonItemUi(
+                                        id = "l1",
+                                        title = "Урок 1 — Введение",
+                                        orderLabel = "1.",
+                                        bestStarsRawTenths = 20,
+                                    ),
+                                    LessonItemUi(
+                                        id = "l2",
+                                        title = "Урок 2 — Практика",
+                                        orderLabel = "2.",
+                                        bestStarsRawTenths = 0,
+                                        hardUnlocked = true,
+                                        isHardChecked = false,
+                                    ),
+                                ),
+                            ),
+                        )
+                    override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
+
+                    override fun onLessonClick(lesson: LessonItemUi) = Unit
+
+                    override fun onHardCheckToggled(lessonId: String) = Unit
+                },
             onSegmentClick = {},
         )
     }

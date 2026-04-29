@@ -7,17 +7,20 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
  * Presentation model for a catalog entry displayed in UI grids and spinners.
  *
  * [pictureUrl] is a pre-resolved HTTPS URL (null if no picture or not yet resolved).
- * Domain [Catalog.picturePath] is a relative Storage path — URL resolution happens in data layer.
+ * [picturePath] is kept for bundled offline thumbnails when remote URL resolution is unavailable.
  * ADR-L3-03: presentation model lives in android:core:designsystem, not in domain.
  */
 data class CatalogDisplayItem(
     val id: CatalogId,
     val name: String,
     val pictureUrl: String?,
+    val picturePath: String? = null,
 )
 
-fun Catalog.toDisplayItem(): CatalogDisplayItem = CatalogDisplayItem(
-    id = id,
-    name = name,
-    pictureUrl = pictureUrl,
-)
+fun Catalog.toDisplayItem(): CatalogDisplayItem =
+    CatalogDisplayItem(
+        id = id,
+        name = name,
+        pictureUrl = pictureUrl,
+        picturePath = picturePath,
+    )

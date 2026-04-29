@@ -211,7 +211,7 @@ SDK/библиотеки из спеки: <список из 0-spec.md>
 |-----------|--------|
 | Spec упоминает external SDK (VideoSDK, Location, Camera, etc.) | Запустить web-researcher |
 | Spec использует platform API (Notification, Foreground Service, PiP) | Запустить web-researcher |
-| Spec — полностью internal (Room, ViewModel, internal logic) | Пропустить web-researcher |
+| Spec — полностью internal (Room, Decompose Component, internal logic) | Пропустить web-researcher |
 
 Web-researcher findings включаются в synthesis (Шаг 2) и используются для верификации в grounding (Шаг 3).
 

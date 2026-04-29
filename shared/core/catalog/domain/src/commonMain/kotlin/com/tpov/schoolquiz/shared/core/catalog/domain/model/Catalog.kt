@@ -53,6 +53,19 @@ data class Catalog(
      * Spec: docs/features/home-and-my-quests/0-spec.md — FR#5, Business Rule #3.
      */
     val archived: Boolean = false,
+    /**
+     * Optional typed category key (e.g. "school", "music", "sport"). Set in admin/Firestore;
+     * deterministically maps the catalog to a themed floating-icons set in presentation.
+     * Null for legacy entries — UI falls back to fuzzy keyword matching by name.
+     */
+    val iconCategoryKey: String? = null,
+    /**
+     * Optional explicit list of Material Icon names (e.g. ["VideogameAsset", "Casino"])
+     * that drives the floating-icons background. When non-empty, takes priority over
+     * [iconCategoryKey] / name-based fuzzy matching. Names that are not present in the
+     * client's whitelist registry are silently skipped at resolve time.
+     */
+    val iconNames: List<String> = emptyList(),
 ) {
     init {
         require(name.isNotBlank()) { "Catalog.name must not be blank" }

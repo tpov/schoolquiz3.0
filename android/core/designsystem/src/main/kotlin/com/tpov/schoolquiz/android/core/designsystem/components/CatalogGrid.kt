@@ -16,11 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.tpov.schoolquiz.android.core.designsystem.R
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 
@@ -28,9 +32,10 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
  * 2-column grid of catalog items with AsyncImage thumbnails.
  *
  * Spec AC #15: LazyVerticalGrid(Fixed(2)). Coil 3 AsyncImage for HTTPS URLs.
- * ADR-HLA-07: no custom Fetcher needed — pictureUrl is pre-resolved HTTPS URL.
+ * Offline catalogs fall back to bundled thumbnails by Storage picturePath.
  */
 @Preview(showBackground = true)
+@Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
 @Composable
 private fun CatalogGridPreview() {
     CatalogGrid(items = emptyList(), onCatalogClick = { _, _ -> })
@@ -67,20 +72,26 @@ fun CatalogGridItem(
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        modifier = modifier
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .clickable(onClick = onClick),
     ) {
         Column {
-            // Defence-in-depth: only load HTTPS URLs (pre-resolved by data layer per ADR-HLA-07).
-            // Non-HTTPS or null → AsyncImage shows error/placeholder; no cleartext request sent.
+            val context = LocalContext.current
             val safeUrl = item.pictureUrl?.takeIf { it.startsWith("https://") }
+            val imageData = safeUrl ?: item.picturePath.toCatalogPictureResId()
             AsyncImage(
-                model = safeUrl,
+                model =
+                    ImageRequest.Builder(context)
+                        .data(imageData)
+                        .crossfade(true)
+                        .build(),
                 contentDescription = item.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
             )
             Text(
                 text = item.name,
@@ -92,3 +103,13 @@ fun CatalogGridItem(
         }
     }
 }
+
+private fun String?.toCatalogPictureResId(): Int? =
+    when (this) {
+        "catalog-pictures/courses.jpg" -> R.drawable.catalog_courses
+        "catalog-pictures/games.jpg" -> R.drawable.catalog_games
+        "catalog-pictures/quests.jpg" -> R.drawable.catalog_quests
+        "catalog-pictures/school.jpg" -> R.drawable.catalog_school
+        "catalog-pictures/surveys.jpg" -> R.drawable.catalog_surveys
+        else -> null
+    }

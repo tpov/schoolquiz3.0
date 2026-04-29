@@ -11,9 +11,14 @@
 
 ## Build / Validation
 
-- Canonical app build: `./gradlew assemble --no-configuration-cache`
-- Canonical tests: `./gradlew allTests --no-configuration-cache`
-- Instrumented tests: `./gradlew connectedAndroidTest` (требуется подключённое устройство)
+- Canonical local quality gate: `./gradlew ciCheck --no-configuration-cache`
+- Canonical app build: `./gradlew :apps:android-next:assembleDebug --no-configuration-cache`
+- Android/JVM unit tests: `./gradlew test --no-configuration-cache`
+- KMP JVM tests: `./gradlew allTests --no-configuration-cache`
+- Static analysis / formatting: `./gradlew detekt ktlintCheck --no-configuration-cache`
+- Instrumented test APK build: `./gradlew assembleDebugAndroidTest --no-configuration-cache`
+- Instrumented tests on connected device: `./gradlew connectedAndroidTest` (требуется подключённое устройство)
+- `./scripts/qa` is not a canonical command in this repository unless a phase explicitly creates it.
 
 ## DI
 
@@ -27,12 +32,15 @@
 - Layers: `domain` (Kotlin pure), `data` (Room + Firebase adapters), `presentation` (Decompose Components), `ui` (Compose).
 - Structure: `shared/{core,feature}/*/{domain,data}`, `platform/firebase`, `platform/android-services`, `android/{core,feature}/*/presentation`, `apps/android-next`.
 - Decompose Components — `ADR-CMP-51` pattern (see `docs/features/home-and-my-quests/03-decisions.md`).
+- New Android presentation state holders are Decompose `Component`s, not AndroidX `ViewModel`s, unless a phase/ADR explicitly says otherwise.
+- Compose screens are view functions: they consume state and emit callbacks; they should not resolve Koin dependencies directly.
 
 ## Testing
 
 - JVM tests: JUnit 4 + MockK + coroutines-test.
 - Convention: **fakes** for repositories/DAOs (see `.claude/rules/testing.md`). No Turbine.
-- Test locations: `*/src/{test,jvmTest,commonTest,androidTest}/`.
+- Test locations: `*/src/{test,jvmTest,commonTest,androidTest,androidInstrumentedTest}/`.
+- Use `allTests` for KMP JVM tests and `test` for Android/app JVM unit tests; neither command alone is the full local gate.
 
 ## Known Debts (post-feature follow-ups)
 

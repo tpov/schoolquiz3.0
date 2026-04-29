@@ -59,81 +59,84 @@ tools: Read, Grep, Glob, Bash
 
 Для каждого review — запустите все greps ниже. Не полагайтесь на "посмотрел глазами". Детерминированная проверка ловит паттерны, которые пропускает визуальный review.
 
-Paths подставьте исходя из PROJECT-CONTEXT.md (`<domain_path>` = `app/src/main/kotlin/<pkg>/domain/`, `<ui_path>` = аналогично для Activities/Fragments, `<module>` = корень модуля для DI scan).
+Paths берите из `.claude/PROJECT-CONTEXT.md`. Для текущего проекта:
+- domain: `shared/**/domain/src/commonMain`
+- Android presentation: `android/**/presentation/src/main`
+- app composition root: `apps/android-next/src/main`
 
 ### 1. Domain purity (см. `.claude/rules/domain-models.md`)
 
 ```bash
-# Android imports в domain (кроме Parcelable / annotation)
-grep -rE "^import (android|androidx)\." <domain_path>/ | grep -vE "androidx\.annotation|android\.os\.Parcelable"
+# Android imports в KMP domain
+rg -n "^import (android|androidx)\." shared -g "**/domain/src/commonMain/**/*.kt"
 
 # SDK types в domain
-grep -rE "^import (io\.livekit|com\.google\.firebase|retrofit2|okhttp3|androidx\.room|com\.squareup\.moshi|kotlinx\.serialization)" <domain_path>/
+rg -n "^import (com\.google\.firebase|retrofit2|okhttp3|androidx\.room|com\.squareup\.moshi|kotlinx\.serialization)" shared -g "**/domain/src/commonMain/**/*.kt"
 
 # Context/Uri/Bundle/View как параметры/поля в domain
-grep -rE "\b(Context|Uri|Bundle|Intent|View|Activity|Fragment)\s*[:,)]" <domain_path>/ --include="*.kt"
+rg -n "\b(Context|Uri|Bundle|Intent|View|Activity|Fragment)\s*[:,)]" shared -g "**/domain/src/commonMain/**/*.kt"
 
-# DI аннотации в domain
-grep -rE "@(Inject|Provides|Module|Singleton|HiltAndroidApp)" <domain_path>/ --include="*.kt"
+# DI annotations в domain
+rg -n "@(Inject|Provides|Binds|Module|Singleton|HiltAndroidApp|AndroidEntryPoint|HiltViewModel)" shared -g "**/domain/src/commonMain/**/*.kt"
 ```
 
-Любой non-empty output → blocker.
+Matches in changed files → blocker. Existing untouched matches → report as existing debt.
 
-### 2. Activity/Fragment discipline (см. `.claude/rules/use-cases.md`)
+### 2. Presentation boundary (см. `.claude/rules/clean-architecture.md`, `.claude/rules/navigation.md`)
 
 ```bash
-# Activity/Fragment вызывает Provider/Store/Manager/Service методы
-grep -rnE "(provider|store|manager|service)\.(start|end|update|send|cancel|kill|dispose|disconnect|hang|answer)" \
-    <ui_path>/ --include="*Activity.kt" --include="*Fragment.kt"
+# Presentation imports data/persistence internals directly
+rg -n "^import .*\.(Dao|Entity|DataSource|Mapper|Firebase|Room)" android -g "**/presentation/src/main/**/*.kt"
 
-# Activity/Fragment использует Repository как поле
-grep -rnE "(private\s+)?(val|var)\s+\w*[Rr]epository\b" \
-    <ui_path>/ --include="*Activity.kt" --include="*Fragment.kt"
+# Compose screens resolve Koin directly
+rg -n "getKoin\(|koinInject\(|inject<" android -g "**/presentation/src/main/**/ui/**/*.kt"
 
-# Activity/Fragment инжектит UseCase напрямую
-grep -rnE "@Inject\s+(lateinit\s+)?var\s+\w*UseCase" \
-    <ui_path>/ --include="*Activity.kt" --include="*Fragment.kt"
+# New AndroidX ViewModel usage in presentation
+rg -n "androidx\.lifecycle\.(ViewModel|viewModelScope)|: ViewModel\(" android -g "**/presentation/src/main/**/*.kt"
 ```
 
-Matches → blocker, перенести вызовы в ViewModel.
+Matches in changed files → finding; ViewModel/Koin-in-screen usage requires explicit phase/ADR.
 
 ### 3. Cross-module boundaries (см. `.claude/rules/clean-architecture.md`)
 
 ```bash
-# feature-A импортирует feature-B напрямую — подставить реальные имена feature-пакетов
-# Для каждой пары фич (A, B) которые не должны быть directly coupled:
-grep -rE "^import .*\.feature\.<other_feature>\." <current_feature>/
+# Core imports feature code (should be empty)
+rg -n "^import .*\.shared\.feature\." shared/core android/core platform -g "*.kt"
+
+# Android feature presentation imports another Android feature presentation
+rg -n "^import .*\.android\.feature\..*\.presentation" android/feature -g "*.kt"
+
+# Feature-to-feature imports in shared layer; require ADR if present in changed files
+rg -n "^import .*\.shared\.feature\." shared/feature -g "*.kt"
 ```
 
-Bidirectional feature coupling = всегда blocker. Direct import между feature-модулями (без core interface или reflection) = blocker, если не задокументировано в `03-decisions.md` как by-design.
+Bidirectional feature coupling = blocker. Direct feature import in changed files requires ADR/design citation.
 
 ### 4. Android lifecycle safety (см. `.claude/rules/lifecycle.md`)
 
 ```bash
 # Business actions в onDestroy без isFinishing check
-grep -rn -A 15 "override fun onDestroy" <ui_path>/ --include="*Activity.kt" --include="*Fragment.kt" | \
-    grep -E "(endCall|stopService|sendBroadcast|cancelJob|disconnect|ACTION_END|ACTION_STOP|ACTION_KILL)"
+rg -n -A 15 "override fun onDestroy" apps android platform -g "*Activity.kt" -g "*Fragment.kt" | \
+    rg "(endCall|stopService|sendBroadcast|cancelJob|disconnect|ACTION_END|ACTION_STOP|ACTION_KILL)"
 
 # Kill-intent в onDestroy
-grep -rn -B 3 -A 10 "ACTION_END\|ACTION_STOP\|ACTION_KILL" \
-    <ui_path>/ --include="*Activity.kt" --include="*Fragment.kt" | \
-    grep -B 10 "onDestroy"
+rg -n -B 3 -A 10 "ACTION_END|ACTION_STOP|ACTION_KILL" apps android platform -g "*Activity.kt" -g "*Fragment.kt" | \
+    rg -B 10 "onDestroy"
 ```
 
 Kill-like action в `onDestroy` без `if (isFinishing && !isChangingConfigurations)` wrap → blocker.
 
-### 5. DI exclusive binding (см. `.claude/rules/di-patterns.md`)
+### 5. Koin binding sanity (см. `.claude/rules/di-patterns.md`)
 
 ```bash
-# Классы с @Inject constructor
-grep -rnE "class\s+(\w+).*@Inject\s+constructor" <module>/ --include="*.kt"
+# Production Koin bindings touched by this phase
+rg -n "(single|factory)<|module \{" apps android shared platform -g "*.kt"
 
-# Для каждого ClassName из вывода выше — cross-check что нет @Provides/@Binds возвращающего этот тип.
-# Подставь реальное имя класса вместо ClassName:
-grep -rnE "@(Provides|Binds).*\bClassName\b|\:\s*\bClassName\b\s*\{|\)\s*:\s*\bClassName\b" <module>/ --include="*.kt"
+# Hilt/Dagger annotations should not appear in production changes
+rg -n "@(Inject|Provides|Binds|Module|HiltAndroidApp|AndroidEntryPoint|HiltViewModel)" apps android shared platform -g "*.kt"
 ```
 
-Класс в обоих списках → blocker, duplicate binding.
+Duplicate Koin binding for the same exposed type, missing module registration, or new Hilt/Dagger annotation → blocker unless explicitly documented.
 
 ### 6. Reporting checklist completeness
 

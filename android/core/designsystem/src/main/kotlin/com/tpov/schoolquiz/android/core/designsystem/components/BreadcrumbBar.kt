@@ -41,9 +41,10 @@ fun BreadcrumbBar(
     val scrollState = rememberScrollState()
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .horizontalScroll(scrollState)
-            .padding(horizontal = 4.dp, vertical = 2.dp),
+        modifier =
+            modifier
+                .horizontalScroll(scrollState)
+                .padding(horizontal = 4.dp, vertical = 2.dp),
     ) {
         titles.forEachIndexed { index, title ->
             val isLast = index == titles.lastIndex
@@ -60,14 +61,16 @@ fun BreadcrumbBar(
                 text = title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = if (isLast) FontWeight.Bold else FontWeight.Normal,
-                ),
-                color = if (isLast) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.primary
-                },
+                style =
+                    MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = if (isLast) FontWeight.Bold else FontWeight.Normal,
+                    ),
+                color =
+                    if (isLast) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
                 modifier = if (isLast) Modifier else Modifier.clickable { onSegmentClick(index) },
             )
         }
@@ -104,11 +107,12 @@ private fun BreadcrumbBarSingleSegmentPreview() {
 private fun BreadcrumbBarLongTitlesPreview() {
     SchoolQuizTheme {
         BreadcrumbBar(
-            titles = listOf(
-                "Очень длинный раздел с большим количеством символов",
-                "Тоже длинная тема",
-                "Финальный урок",
-            ),
+            titles =
+                listOf(
+                    "Очень длинный раздел с большим количеством символов",
+                    "Тоже длинная тема",
+                    "Финальный урок",
+                ),
             onSegmentClick = {},
         )
     }

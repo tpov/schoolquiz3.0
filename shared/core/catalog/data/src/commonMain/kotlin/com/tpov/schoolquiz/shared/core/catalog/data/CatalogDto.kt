@@ -8,4 +8,6 @@ data class CatalogDto(
     val contentsVersion: Long,
     val lastModifiedAt: Long,
     val archived: Boolean,
+    val iconCategoryKey: String? = null,
+    val iconNames: List<String> = emptyList(),
 )

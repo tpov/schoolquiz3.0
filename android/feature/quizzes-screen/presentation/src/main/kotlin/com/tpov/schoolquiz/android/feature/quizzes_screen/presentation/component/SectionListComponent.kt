@@ -7,5 +7,6 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.H
 interface SectionListComponent {
     val uiState: Value<HierarchyListUiState>
     val titles: List<String>
+
     fun onSectionClick(section: HierarchyItemUi)
 }

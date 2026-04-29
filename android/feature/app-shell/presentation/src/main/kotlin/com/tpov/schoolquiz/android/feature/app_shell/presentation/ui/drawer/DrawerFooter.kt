@@ -30,7 +30,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
  * H3 fix: About tap shows local AlertDialog — does NOT change domain state (spec 0-spec.md:426-430).
  * H8 fix: versionName passed as param from app layer, not BuildConfig.VERSION_NAME.
  */
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 fun DrawerFooter(
     navigator: Navigator,
@@ -69,10 +69,11 @@ fun DrawerFooter(
             text = "v$versionName",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            modifier = Modifier
-                .clickable(onClick = onVersionTap)
-                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .clickable(onClick = onVersionTap)
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 

@@ -39,7 +39,7 @@ argument-hint: "<feature-slug>"
 - **Adapter-first**: Adapter → UseCase → Controller → UI
 - **Vertical slice**: (UseCase + Adapter) per endpoint → UI
 
-**Walking Skeleton integration**: если `0-spec.md` содержит `Feature Domain Contract` ≠ N/A — domain слой уже сгенерирован на spec-этапе в `app/src/main/.../domain/<slug>/` + `app/src/test/.../domain/<slug>/` с зелёными JVM тестами.
+**Walking Skeleton integration**: если `0-spec.md` содержит `Feature Domain Contract` ≠ N/A — domain слой уже сгенерирован на spec-этапе по project layout из `.claude/PROJECT-CONTEXT.md`. Для этого репозитория default: `shared/feature/<slug>/domain/src/commonMain/` + `.../commonTest/` с зелёными KMP/JVM тестами.
 
 Phase-01 в этом случае = **integration phase**, НЕ create-from-scratch:
 - backend-dev добавляет repository implementations, DAO-domain mappers, DI bindings, UseCase orchestration классы (если нужна координация multiple repos)
@@ -69,7 +69,7 @@ Feature: <slug>
 - frontend.md создаётся ТОЛЬКО если фаза затрагивает UI/presentation
 
 Если в spec есть `Feature Domain Contract` ≠ N/A, planner ОБЯЗАН:
-- phase-01 = **integrate existing domain** из `app/src/main/.../domain/<slug>/`, НЕ create-from-scratch
+- phase-01 = **integrate existing domain** из project-layout domain path (default here: `shared/feature/<slug>/domain/src/commonMain/`), НЕ create-from-scratch
 - в `phase-01/backend.md` явно указать: "Domain классы из spec phase — NOT modify. Only wrap in repository/adapter/DI."
 - в `phase-01/backend.md` перечислить конкретные интеграционные артефакты: repository impls, mappers, DI bindings, UseCase orchestration классы
 - в `phase-01/tests.md` перечислить integration tests (не unit tests для pure domain — они уже зелёные)
@@ -133,8 +133,8 @@ phases_ref: [phase-01] or none
 ### Validation
 | # | Command | Expected |
 |---|---------|----------|
-| 1 | `./gradlew test --no-configuration-cache` | passes |
-| 2 | `./scripts/qa --primary-only --skip-test` | canonical app build passes |
+| 1 | `./gradlew ciCheck --no-configuration-cache` | canonical local gate passes |
+| 2 | phase-specific command from `overview.md` if needed | device/backend smoke passes |
 ```
 
 ### Traceability Gate Rule

@@ -25,7 +25,7 @@ class FakeCatalogLocalDataSource : CatalogLocalDataSource {
     override suspend fun upsertByIdIfNewerVersion(entity: CatalogEntity) {
         upsertCallsFor[entity.id] = (upsertCallsFor[entity.id] ?: 0) + 1
         val current = _entities.value.find { it.id == entity.id }
-        if (current == null || current.version < entity.version) {
+        if (current == null || current.shouldBeReplacedBy(entity)) {
             _entities.value = _entities.value.filter { it.id != entity.id } + entity
         }
     }
@@ -42,4 +42,9 @@ class FakeCatalogLocalDataSource : CatalogLocalDataSource {
     fun seed(entities: List<CatalogEntity>) {
         _entities.value = entities
     }
+
+    private fun CatalogEntity.shouldBeReplacedBy(incoming: CatalogEntity): Boolean =
+        version < incoming.version ||
+            (version == incoming.version && lastModifiedAt < incoming.lastModifiedAt) ||
+            (version == incoming.version && lastModifiedAt == incoming.lastModifiedAt && this != incoming)
 }

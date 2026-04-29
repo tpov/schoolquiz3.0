@@ -158,3 +158,23 @@ Runtime-слой различает эти два режима по полю `Qu
 ## Notes
 
 Модели живут в `shared/core/question-schema/src/commonMain/kotlin/`. Плагин сериализации подключён в `build.gradle.kts` этого модуля.
+
+---
+
+## Amendments
+
+### Amendment A (2026-04-26, lesson-runner spec)
+
+> Прохождение EASY **НЕ прерывается** на ошибке или таймауте — продолжается до конца pool. Звёзды считаются по итоговому `percentScore` через integer formula `rawTenths = (percentScore * 20 + 50) / 100` для EASY (см. lesson-runner `0-spec.md` Business Rule 12). Прерывание упомянутое в первоначальном тексте `## Правила геймплея` (строки 122-125: «Ошибка или просрочка таймера на EASY → прохождение заканчивается на EASY, максимум 2★») — **отменено**.
+
+### Amendment B (2026-04-26, lesson-runner spec)
+
+> На EASY и HARD — после ответа **сразу переход к следующему вопросу**, без раскрытия правильного ответа. Обучающий feedback (строка 128: «Можно раскрывать правильный ответ после ответа на вопрос» для EASY) — **отменён**, вынесен в отдельную фичу (out of scope).
+
+### Amendment C (2026-04-26, lesson-runner spec)
+
+> `timeLimitSec` в Question schema **может остаться в payload** для backward compatibility (legacy data), но **runtime игнорирует его** в пользу формулы `seconds = max(5, round(charsCount × k))` где `charsCount = chars(text) + sum(chars(option/item/candidate)) + (if hasImage then 100 else 0)`. EASY k≈0.18, HARD k≈0.12 (1.5× жёстче). Точные коэффициенты — runtime config в `shared/feature/lesson-runner/domain/.../model/TimerCoefficients.kt`. Следствие: `timeLimitSec` поле в schema не удаляется, но инварианты на него не применяются runtime.
+
+### Amendment D (2026-04-26, lesson-runner spec)
+
+> Reference на `shared/feature/quiz/domain` в `## Правила геймплея` (строка 118: «Правила геймплея (живут в `shared/feature/quiz/domain`, НЕ в схеме)») **заменяется** на `shared/feature/lesson-runner/domain` — фактический module для runtime gameplay rules в текущем codebase. `shared/feature/quiz/domain` не существует.

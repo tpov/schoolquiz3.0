@@ -1,8 +1,8 @@
-# Domain Models — Android
+# Domain Models — KMP
 
 ## Principles
 
-- Domain models are pure Kotlin — no Room, Retrofit, Android annotations, or serialization annotations.
+- Domain models are pure Kotlin common code — no Room, Retrofit, Android annotations, platform SDK types, or serialization annotations.
 - Immutable `data class` with `val` fields.
 - Closed state sets via `enum class` or `sealed interface`.
 - Add field to domain only if concept is needed by multiple layers.
@@ -31,7 +31,7 @@ Entity (Room) <-> mapper (extension function) <-> Domain Model <-> DTO (Network)
   - `android.content.Context`, `android.content.Intent`, `android.net.Uri`, `android.os.Bundle`
   - `android.view.View`, `android.widget.*`, любой UI тип
   - `androidx.*` (Lifecycle, ViewModel, LiveData, WorkManager)
-  - Исключение: `android.os.Parcelable` если явно требуется для navigation (только в `domain/models`, не в use cases)
+  - Исключений для Parcelable в KMP domain нет; navigation/platform mapping живёт вне domain.
 - **No third-party SDK types в domain signatures** (включая параметры, поля, return types):
   - `io.livekit.*`, `com.google.firebase.*`, `retrofit2.*`, `okhttp3.*`
   - `androidx.room.*`, `com.squareup.moshi.*`, `kotlinx.serialization.*`
@@ -44,16 +44,16 @@ Entity (Room) <-> mapper (extension function) <-> Domain Model <-> DTO (Network)
 
 ```bash
 # Нарушение: Android imports в domain (кроме Parcelable)
-grep -rE "^import (android|androidx)\." <domain_path>/ | grep -vE "androidx\.annotation|android\.os\.Parcelable"
+rg -n "^import (android|androidx)\\." <domain_path>/
 
 # Нарушение: SDK types в domain
-grep -rE "^import (io\.livekit|com\.google\.firebase|retrofit2|okhttp3|androidx\.room|com\.squareup\.moshi|kotlinx\.serialization)" <domain_path>/
+rg -n "^import (io\\.livekit|com\\.google\\.firebase|retrofit2|okhttp3|androidx\\.room|com\\.squareup\\.moshi|kotlinx\\.serialization)" <domain_path>/
 
 # Нарушение: Context/Uri/Bundle/View как параметр функции или поле class
-grep -rE "\b(Context|Uri|Bundle|Intent|View|Activity|Fragment)\s*[:,)]" <domain_path>/ --include="*.kt"
+rg -n "\\b(Context|Uri|Bundle|Intent|View|Activity|Fragment)\\s*[:,)]" <domain_path>/ -g "*.kt"
 
 # Нарушение: DI аннотации в domain
-grep -rE "@(Inject|Provides|Module|Singleton|HiltAndroidApp)" <domain_path>/ --include="*.kt"
+rg -n "@(Inject|Provides|Binds|Module|Singleton|HiltAndroidApp|AndroidEntryPoint|HiltViewModel)" <domain_path>/ -g "*.kt"
 ```
 
 Любой non-empty output = blocker для architect-reviewer.

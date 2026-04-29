@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.data.dto.ThemeDto
 import com.tpov.schoolquiz.shared.feature.theme.data.fake.FakeThemeLocalDataSource
 import com.tpov.schoolquiz.shared.feature.theme.data.fake.FakeThemeRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,8 +38,12 @@ class ThemeRepositoryImplTest {
         archived: Boolean = false,
     ) = ThemeDto(id, sectionId, title, order, version, contentsVersion, lastModifiedAt, archived)
 
-    private fun makeEntity(id: String, version: Long = 1L, title: String = "Theme") =
-        ThemeEntity(id, "sec1", title, 0, version, 0L, 0L, false)
+    private fun makeEntity(
+        id: String,
+        version: Long = 1L,
+        title: String = "Theme",
+        contentsVersion: Long = 0L,
+    ) = ThemeEntity(id, "sec1", title, 0, version, contentsVersion, 0L, false)
 
     // Matrix 2 row: theme absent + not archived → inserted
     @Test
@@ -74,6 +79,16 @@ class ThemeRepositoryImplTest {
 
         assertEquals(1, fakeLocal.upsertCallsFor["t1"] ?: 0)
         assertEquals("Original", fakeLocal.findById("t1")?.title)
+    }
+
+    @Test
+    fun `when remote theme returned with same contents version then id still cascades`() = runTest {
+        fakeLocal.seed(listOf(makeEntity("t1", version = 5L, contentsVersion = 10L)))
+        fakeRemote.result = listOf(makeDto("t1", version = 5L, contentsVersion = 10L))
+
+        val result = repository.refreshByParents(sectionIds, 0L)
+
+        assertEquals(setOf(ThemeId("t1")), result.getOrThrow())
     }
 
     // refreshByParents succeeds → Result.success

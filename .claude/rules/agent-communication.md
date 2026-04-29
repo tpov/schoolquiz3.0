@@ -76,7 +76,7 @@ Lead видит progress в TaskList без твоих DM.
 
 ## Walking Skeleton awareness
 
-Если `app/src/main/kotlin/<base_package>/domain/<feature_slug>/` уже содержит файлы (сгенерированы на spec-этапе через `domain-designer`):
+Если domain layout фичи из `.claude/PROJECT-CONTEXT.md` уже содержит файлы (для текущего KMP проекта обычно `shared/feature/<feature_slug>/domain/src/commonMain/`, сгенерировано на spec-этапе через `domain-designer`):
 - Backend-dev: обёрточный integration work, не rewrite domain
 - Test-dev: integration tests, не дубликат pure domain tests
 - Frontend-dev: работает с готовыми domain types

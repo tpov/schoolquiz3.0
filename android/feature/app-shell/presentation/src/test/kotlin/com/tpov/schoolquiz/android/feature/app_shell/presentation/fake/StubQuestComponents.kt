@@ -36,9 +36,13 @@ object StubQuizzesComponent : QuizzesComponent {
     )
     override val childStack: Value<ChildStack<QuizzesConfig, QuizzesChild>> =
         MutableValue(idleStack)
+    override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
+    override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
+        MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
 
     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
     override fun dismissQuizzes() = Unit
     override fun popToLevel(uiLevel: Int) = Unit
+    override fun popCurrentChild() = Unit
 }

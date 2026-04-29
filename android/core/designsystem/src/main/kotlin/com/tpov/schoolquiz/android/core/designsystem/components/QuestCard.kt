@@ -48,44 +48,51 @@ fun QuestCard(
     modifier: Modifier = Modifier,
     onLongClick: ((QuestId) -> Unit)? = null,
 ) {
-    val clickModifier = if (onLongClick != null) {
-        Modifier.combinedClickable(
-            onClick = { onClick(item.id) },
-            onLongClick = { onLongClick(item.id) },
-            onLongClickLabel = stringResource(com.tpov.schoolquiz.android.core.designsystem.R.string.long_press_action),
-        )
-    } else {
-        Modifier.clickable { onClick(item.id) }
-    }
+    val clickModifier =
+        if (onLongClick != null) {
+            Modifier.combinedClickable(
+                onClick = { onClick(item.id) },
+                onLongClick = { onLongClick(item.id) },
+                onLongClickLabel =
+                    stringResource(
+                        com.tpov.schoolquiz.android.core.designsystem.R.string.long_press_action,
+                    ),
+            )
+        } else {
+            Modifier.clickable { onClick(item.id) }
+        }
     Card(
         shape = RoundedCornerShape(16.dp),
         modifier = modifier.then(clickModifier),
     ) {
         Column {
-            val safeUrl = remember(item.pictureUrl) {
-                item.pictureUrl?.let { url ->
-                    val uri = android.net.Uri.parse(url)
-                    url.takeIf { uri.scheme == "https" && uri.host == "firebasestorage.googleapis.com" }
+            val safeUrl =
+                remember(item.pictureUrl) {
+                    item.pictureUrl?.let { url ->
+                        val uri = android.net.Uri.parse(url)
+                        url.takeIf { uri.scheme == "https" && uri.host == "firebasestorage.googleapis.com" }
+                    }
                 }
-            }
             if (safeUrl != null) {
                 AsyncImage(
                     model = safeUrl,
                     contentDescription = item.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f),
                 )
             } else {
                 Icon(
                     imageVector = Icons.Default.QuestionMark,
                     contentDescription = item.title,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .align(Alignment.CenterHorizontally),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .align(Alignment.CenterHorizontally),
                 )
             }
             Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
@@ -107,13 +114,14 @@ fun QuestCard(
 private fun QuestCardEmptyPreview() {
     SchoolQuizTheme {
         QuestCard(
-            item = QuestDisplayItem(
-                id = QuestId("preview-id"),
-                catalogId = CatalogId("preview-cat"),
-                title = "Квест без рейтинга",
-                pictureUrl = null,
-                averageRating = null,
-            ),
+            item =
+                QuestDisplayItem(
+                    id = QuestId("preview-id"),
+                    catalogId = CatalogId("preview-cat"),
+                    title = "Квест без рейтинга",
+                    pictureUrl = null,
+                    averageRating = null,
+                ),
             onClick = {},
         )
     }
@@ -125,14 +133,15 @@ private fun QuestCardEmptyPreview() {
 private fun QuestCardRatedPreview() {
     SchoolQuizTheme {
         QuestCard(
-            item = QuestDisplayItem(
-                id = QuestId("preview-id-2"),
-                catalogId = CatalogId("preview-cat"),
-                title = "Квест с рейтингом 2.7",
-                pictureUrl = null,
-                averageRating = 2.7f,
-                averageRatingCount = 15,
-            ),
+            item =
+                QuestDisplayItem(
+                    id = QuestId("preview-id-2"),
+                    catalogId = CatalogId("preview-cat"),
+                    title = "Квест с рейтингом 2.7",
+                    pictureUrl = null,
+                    averageRating = 2.7f,
+                    averageRatingCount = 15,
+                ),
             onClick = {},
         )
     }
@@ -144,14 +153,15 @@ private fun QuestCardRatedPreview() {
 private fun QuestCardUnratedPreview() {
     SchoolQuizTheme {
         QuestCard(
-            item = QuestDisplayItem(
-                id = QuestId("preview-id-3"),
-                catalogId = CatalogId("preview-cat"),
-                title = "Нет оценок",
-                pictureUrl = null,
-                averageRating = null,
-                averageRatingCount = 0,
-            ),
+            item =
+                QuestDisplayItem(
+                    id = QuestId("preview-id-3"),
+                    catalogId = CatalogId("preview-cat"),
+                    title = "Нет оценок",
+                    pictureUrl = null,
+                    averageRating = null,
+                    averageRatingCount = 0,
+                ),
             onClick = {},
         )
     }
@@ -163,14 +173,15 @@ private fun QuestCardUnratedPreview() {
 private fun QuestCardLongTitlePreview() {
     SchoolQuizTheme {
         QuestCard(
-            item = QuestDisplayItem(
-                id = QuestId("preview-id-4"),
-                catalogId = CatalogId("preview-cat"),
-                title = "Очень длинное название квеста которое не влезает в одну строку и обрезается многоточием",
-                pictureUrl = null,
-                averageRating = 1.5f,
-                averageRatingCount = 3,
-            ),
+            item =
+                QuestDisplayItem(
+                    id = QuestId("preview-id-4"),
+                    catalogId = CatalogId("preview-cat"),
+                    title = "Очень длинное название квеста которое не влезает в одну строку и обрезается многоточием",
+                    pictureUrl = null,
+                    averageRating = 1.5f,
+                    averageRatingCount = 3,
+                ),
             onClick = {},
         )
     }

@@ -16,7 +16,6 @@ class CatalogRepositoryImpl(
     private val storageUrlResolver: StorageUrlResolver,
     private val syncStateRepo: SyncStateRepository,
 ) : CatalogRepository {
-
     override fun observeAll(): Flow<List<Catalog>> =
         local.observeAll().map { list ->
             list.map { it.toDomain() }.sortedBy { it.id.value }
@@ -29,6 +28,7 @@ class CatalogRepositoryImpl(
             val changedIds = mutableSetOf<CatalogId>()
             for (dto in dtos) {
                 val baseEntity = dto.toEntity()
+                val existing = local.findById(dto.id)
                 val path = baseEntity.picturePath
                 val resolvedUrl = when {
                     path == null -> null
@@ -37,9 +37,13 @@ class CatalogRepositoryImpl(
                         .onFailure { if (it is CancellationException) throw it }
                         .getOrNull()
                 }
-                val entity = baseEntity.copy(pictureUrl = resolvedUrl)
+                val retainedUrl =
+                    existing?.pictureUrl?.takeIf {
+                        existing.picturePath == path && resolvedUrl == null
+                    }
+                val entity = baseEntity.copy(pictureUrl = resolvedUrl ?: retainedUrl)
                 if (dto.archived) {
-                    val localVersion = local.findById(dto.id)?.version ?: 0L
+                    val localVersion = existing?.version ?: 0L
                     if (dto.version > localVersion) local.deleteById(dto.id)
                 } else {
                     local.upsertByIdIfNewerVersion(entity)

@@ -51,9 +51,10 @@ fun MyQuestsScreen(
                 items = state.catalogs,
                 selectedId = state.selectedCatalogId,
                 onSelectionChanged = component::onCatalogSelected,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             )
 
             if (state.isLoading) {
@@ -62,9 +63,10 @@ fun MyQuestsScreen(
                 }
             } else if (state.quests.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 80.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 80.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -85,9 +87,10 @@ fun MyQuestsScreen(
                         QuestCard(
                             item = quest,
                             onClick = { component.onQuestClick(quest) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                     }
                 }
@@ -96,9 +99,10 @@ fun MyQuestsScreen(
 
         FloatingActionButton(
             onClick = component::onCreateQuestClick,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
         ) {
             Icon(Icons.Default.Add, contentDescription = "Создать квест")
         }

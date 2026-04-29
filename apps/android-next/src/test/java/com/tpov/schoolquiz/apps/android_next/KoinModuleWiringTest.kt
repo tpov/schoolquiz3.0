@@ -42,9 +42,33 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
+import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
+import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
+import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
+import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
+import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDataModule
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDomainKoinAdapter
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.AttemptIdProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.RandomSeedProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.RatingIdProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonRatingRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.SubmitLessonRatingUseCase
+import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.di.questDomainModule
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -59,6 +83,7 @@ import androidx.work.WorkManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -177,6 +202,16 @@ class KoinModuleWiringTest : KoinTest {
                 ): Result<Set<LessonId>> = Result.success(emptySet())
                 override suspend fun getLocalContentsVersion(id: LessonId): Long? = null
             }
+        }
+        single<LessonAttemptRepository> {
+            object : LessonAttemptRepository {
+                override suspend fun save(attempt: Attempt): Result<Unit> = Result.success(Unit)
+                override fun observeByLesson(userId: String, lessonId: LessonId): Flow<List<Attempt>> = flowOf(emptyList())
+                override fun observeAllByUser(userId: String): Flow<List<Attempt>> = flowOf(emptyList())
+            }
+        }
+        single<LessonRunnerComponentFactory> {
+            LessonRunnerComponentFactory { _, _, _ -> error("Not wired in KoinModuleWiringTest") }
         }
     }
 
@@ -317,7 +352,7 @@ class KoinModuleWiringTest : KoinTest {
             homeQuestsFactory = { _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
-                    override fun onCatalogClick(id: CatalogId) = Unit
+                    override fun onCatalogClick(id: CatalogId, name: String) = Unit
                 }
             },
             myQuestsFactory = { _, _, _ ->
@@ -337,10 +372,14 @@ class KoinModuleWiringTest : KoinTest {
                                 backStack = emptyList(),
                             )
                         )
+                    override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
+                    override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
+                        MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit
+                    override fun popCurrentChild() = Unit
                 }
             },
         )
@@ -390,7 +429,7 @@ class KoinModuleWiringTest : KoinTest {
             homeQuestsFactory = { _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
-                    override fun onCatalogClick(id: CatalogId) = Unit
+                    override fun onCatalogClick(id: CatalogId, name: String) = Unit
                 }
             },
             myQuestsFactory = { _, _, _ ->
@@ -410,10 +449,14 @@ class KoinModuleWiringTest : KoinTest {
                                 backStack = emptyList(),
                             )
                         )
+                    override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
+                    override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
+                        MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit
+                    override fun popCurrentChild() = Unit
                 }
             },
         )
@@ -422,5 +465,173 @@ class KoinModuleWiringTest : KoinTest {
 
         lifecycle.stop()
         lifecycle.destroy()
+    }
+
+    // ── Phase-07: IT-09 — Koin module wiring tests ───────────────────────────
+
+    private val testLessonAttemptDaoStub = module {
+        single<LessonAttemptDao> { mock(LessonAttemptDao::class.java) }
+    }
+
+    private val testLessonRatingLocalDaoStub = module {
+        single<LessonRatingLocalDao> { mock(LessonRatingLocalDao::class.java) }
+    }
+
+    private val testRunnerRepositoryStubs = module {
+        single<QuestionRepository> { mock(QuestionRepository::class.java) }
+        single<LessonRepository> { mock(LessonRepository::class.java) }
+        single<AuthRepository> { mock(AuthRepository::class.java) }
+    }
+
+    // ── IT-09a ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09a: GIVEN lessonRunnerDataModule WHEN get<LessonAttemptRepository>()
+     * THEN resolves without NoBeanDefinitionFoundException.
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09a
+     */
+    @Test
+    fun `it09a lessonAttemptRepository resolves from lessonRunnerDataModule`() {
+        startKoin {
+            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, lessonRunnerDataModule)
+        }
+        assertNotNull(getKoin().get<LessonAttemptRepository>())
+    }
+
+    // ── IT-09b ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09b: GIVEN lessonRunnerDataModule WHEN get<LessonRatingRepository>()
+     * THEN resolves without exception.
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09b
+     */
+    @Test
+    fun `it09b lessonRatingRepository resolves from lessonRunnerDataModule`() {
+        startKoin {
+            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, lessonRunnerDataModule)
+        }
+        assertNotNull(getKoin().get<LessonRatingRepository>())
+    }
+
+    // ── IT-09c ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09c: GIVEN lessonRunnerDataModule WHEN get<AttemptIdProvider> / RandomSeedProvider / RatingIdProvider
+     * THEN each resolves to correct default impl.
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09c
+     */
+    @Test
+    fun `it09c providers AttemptIdProvider RandomSeedProvider RatingIdProvider resolve`() {
+        startKoin { modules(lessonRunnerDataModule) }
+        assertNotNull(getKoin().get<AttemptIdProvider>())
+        assertNotNull(getKoin().get<RandomSeedProvider>())
+        assertNotNull(getKoin().get<RatingIdProvider>())
+    }
+
+    // ── IT-09d ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09d: GIVEN lessonRunnerDomainKoinAdapter WHEN get<CompleteAttemptUseCase> / AbortAttemptUseCase / SubmitLessonRatingUseCase
+     * THEN each resolves without exception.
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09d
+     */
+    @Test
+    fun `it09d useCases CompleteAttemptUseCase AbortAttemptUseCase SubmitLessonRatingUseCase resolve`() {
+        startKoin {
+            modules(
+                testLessonAttemptDaoStub,
+                testLessonRatingLocalDaoStub,
+                testRunnerRepositoryStubs,
+                lessonRunnerDataModule,
+                lessonRunnerDomainKoinAdapter,
+                questionSchemaModule,
+            )
+        }
+        assertNotNull(getKoin().get<CompleteAttemptUseCase>())
+        assertNotNull(getKoin().get<AbortAttemptUseCase>())
+        assertNotNull(getKoin().get<SubmitLessonRatingUseCase>())
+    }
+
+    // ── IT-09e ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09e: GIVEN lessonRunnerPresentationModule + deps WHEN get<LessonRunnerRootComponent>(parametersOf(ctx, LessonId("l1"), EASY))
+     * THEN resolves to DefaultLessonRunnerRootComponent without exception.
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09e
+     */
+    @Test
+    fun `it09e lessonRunnerRootComponent resolves with parametersOf ctx lessonId mode`() {
+        val lifecycle = LifecycleRegistry()
+        lifecycle.resume()
+        val ctx = DefaultComponentContext(lifecycle)
+
+        startKoin {
+            modules(
+                testLessonAttemptDaoStub,
+                testLessonRatingLocalDaoStub,
+                testRunnerRepositoryStubs,
+                lessonRunnerDataModule,
+                lessonRunnerDomainKoinAdapter,
+                lessonRunnerPresentationModule,
+                questionSchemaModule,
+            )
+        }
+
+        try {
+            val component = getKoin().get<LessonRunnerRootComponent> {
+                parametersOf(ctx, LessonId("l1"), Difficulty.EASY)
+            }
+            assertNotNull(component)
+            assertTrue(component is DefaultLessonRunnerRootComponent)
+        } finally {
+            lifecycle.stop()
+            lifecycle.destroy()
+        }
+    }
+
+    // ── IT-09f ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09f: GIVEN questionSchemaModule WHEN get<QuestionContentParser>()
+     * THEN resolves to KotlinxSerializationQuestionContentParser.
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09f
+     */
+    @Test
+    fun `it09f questionContentParser resolves to KotlinxSerializationQuestionContentParser`() {
+        startKoin { modules(questionSchemaModule) }
+        val parser = getKoin().get<QuestionContentParser>()
+        assertNotNull(parser)
+        assertTrue(parser is KotlinxSerializationQuestionContentParser)
+    }
+
+    // ── IT-09g ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09g: TypeConverter classes instantiate without exception (JVM structural check).
+     * persistenceModule uses androidContext() — AppDatabase cannot be built in JVM tests.
+     * DifficultyConverter removed per ADR-LR-18; mapper handles Difficulty↔Int.
+     * TopParticipantListConverter and StringSetConverter registered in persistenceModule.
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09g
+     */
+    @Test
+    fun `it09g appDatabase typeConverters TopParticipantListConverter StringSetConverter are instantiatable`() {
+        val topParticipantListConverter = TopParticipantListConverter()
+        val stringSetConverter = StringSetConverter()
+        assertNotNull(topParticipantListConverter)
+        assertNotNull(stringSetConverter)
+    }
+
+    // ── IT-09h ────────────────────────────────────────────────────────────────
+
+    /**
+     * IT-09h: GIVEN lessonRunnerPresentationModule WHEN get<LessonRunnerComponentFactory>()
+     * THEN resolves without NoBeanDefinitionFoundException (single binding from presentation module).
+     * Spec: docs/features/lesson-runner/plan/phase-07/tests.md §IT-09h
+     */
+    @Test
+    fun `it09h lessonRunnerComponentFactory resolves as single binding`() {
+        startKoin { modules(lessonRunnerPresentationModule) }
+        val factory = getKoin().get<LessonRunnerComponentFactory>()
+        assertNotNull(factory)
     }
 }

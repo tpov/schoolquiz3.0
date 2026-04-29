@@ -36,9 +36,7 @@ class SectionRepositoryImpl(
                     if (dto.version > localVersion) local.deleteById(dto.id)
                 } else {
                     local.upsertByIdIfNewerVersion(dto.toEntity())
-                    if (localEntity == null || dto.contentsVersion > localEntity.contentsVersion) {
-                        changedIds.add(SectionId(dto.id))
-                    }
+                    changedIds.add(SectionId(dto.id))
                 }
             }
             Result.success(changedIds)

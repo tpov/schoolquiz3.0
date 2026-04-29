@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength")
+
 package com.tpov.schoolquiz.android.feature.quest.presentation
 
 import com.arkivanov.decompose.DefaultComponentContext

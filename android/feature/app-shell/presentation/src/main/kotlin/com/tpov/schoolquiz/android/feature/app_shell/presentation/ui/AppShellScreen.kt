@@ -38,7 +38,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.catalog.DesignCatalogScreen
+import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.InternetScreenComponent
@@ -49,13 +51,11 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.disp
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.icon
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
-import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
-import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.DesignSettingsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
-import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
@@ -87,6 +87,7 @@ private const val TAB_CROSSFADE_DURATION_MS = 300
     "FunctionNaming",
     "ktlint:standard:function-naming",
     "LongMethod",
+    "CyclomaticComplexMethod",
     "UnusedParameter",
 )
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,6 +96,8 @@ fun AppShellScreen(
     rootComponent: DefaultRootComponent,
     appVersionName: String,
     isDebugBuild: Boolean = false,
+    selectedDesignStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.MainLegacy,
+    onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by rootComponent.appShellState.collectAsStateWithLifecycle(
@@ -109,6 +112,8 @@ fun AppShellScreen(
     // rememberUpdatedState ensures the collector always reads the current state, not the one
     // captured at LaunchedEffect launch time (stale-closure fix for LaunchedEffect(drawerState)).
     val currentState by rememberUpdatedState(state)
+    val quizzesStack by rootComponent.quizzesComponent.childStack.subscribeAsState()
+    val isRunnerActive = quizzesStack.active.instance is QuizzesChild.LessonRunner
 
     // Drawer sync: UI drawer state → domain (journeys 5, 7, 8).
     // onOpenDrawer/onCloseDrawer are idempotent (AppShellTransitions): repeated calls produce equal
@@ -153,14 +158,15 @@ fun AppShellScreen(
         }
     }
 
-    val canSeeDesignCatalog = visibleFooterActions(isDebugBuild, state.userStats)
-        .contains(DrawerFooterAction.DesignCatalog)
+    val canSeeDesignCatalog =
+        visibleFooterActions(isDebugBuild, state.userStats)
+            .contains(DrawerFooterAction.DesignCatalog)
 
     CompositionLocalProvider(LocalScrollToTopRegistry provides registry) {
         ModalNavigationDrawer(
             modifier = modifier,
             drawerState = drawerState,
-            gesturesEnabled = !state.isShopActive,
+            gesturesEnabled = !state.isShopActive && !isRunnerActive,
             drawerContent = {
                 DrawerContent(
                     userStats = state.userStats,
@@ -177,50 +183,66 @@ fun AppShellScreen(
         ) {
             Scaffold(
                 topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(state.activeSection?.displayName ?: state.activeTab.displayName)
-                        },
-                        navigationIcon = {
-                            if (!state.isShopActive) {
-                                IconButton(onClick = { rootComponent.navigator.goTo(Destination.OpenDrawer) }) {
-                                    Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                    if (!isRunnerActive) {
+                        TopAppBar(
+                            title = {
+                                Text(state.activeSection?.displayName ?: state.activeTab.displayName)
+                            },
+                            navigationIcon = {
+                                if (!state.isShopActive) {
+                                    IconButton(onClick = { rootComponent.navigator.goTo(Destination.OpenDrawer) }) {
+                                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                                    }
                                 }
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 },
                 bottomBar = {
-                    NavigationBar {
-                        Tab.entries.forEach { tab ->
-                            BrandNavBarItem(
-                                tab = tab,
-                                selected = state.activeTab == tab,
-                                badge = null,
-                                onClick = {
-                                    if (tab == state.activeTab) {
-                                        val outcome = rootComponent.onActiveTabRetap(tab)
-                                        if (outcome == RetapOutcome.NO_OP) {
-                                            coroutineScope.launch {
-                                                registry.current(tab)?.scrollToTop()
+                    if (!isRunnerActive) {
+                        NavigationBar {
+                            Tab.entries.forEach { tab ->
+                                BrandNavBarItem(
+                                    tab = tab,
+                                    selected = state.activeTab == tab,
+                                    badge = null,
+                                    onClick = {
+                                        if (tab == state.activeTab) {
+                                            val outcome = rootComponent.onActiveTabRetap(tab)
+                                            if (outcome == RetapOutcome.NO_OP) {
+                                                coroutineScope.launch {
+                                                    registry.current(tab)?.scrollToTop()
+                                                }
                                             }
+                                        } else {
+                                            rootComponent.quizzesComponent.dismissQuizzes()
+                                            rootComponent.navigator.goTo(Destination.SwitchTab(tab))
                                         }
-                                    } else {
-                                        rootComponent.quizzesComponent.dismissQuizzes()
-                                        rootComponent.navigator.goTo(Destination.SwitchTab(tab))
-                                    }
-                                },
-                            )
+                                    },
+                                )
+                            }
                         }
                     }
                 },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
             ) { paddingValues ->
                 Box(modifier = Modifier.fillMaxSize()) {
-                    AppShellContent(rootComponent, state.activeTab, paddingValues, canSeeDesignCatalog)
-                    val quizzesStack by rootComponent.quizzesComponent.childStack.subscribeAsState()
+                    AppShellContent(
+                        rootComponent = rootComponent,
+                        activeTab = state.activeTab,
+                        paddingValues = paddingValues,
+                        canSeeDesignCatalog = canSeeDesignCatalog,
+                        selectedDesignStyle = selectedDesignStyle,
+                        onDesignStyleSelected = onDesignStyleSelected,
+                    )
                     if (quizzesStack.active.instance !is QuizzesChild.Idle) {
-                        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                        val overlayModifier =
+                            if (isRunnerActive) {
+                                Modifier.fillMaxSize()
+                            } else {
+                                Modifier.fillMaxSize().padding(paddingValues)
+                            }
+                        Box(modifier = overlayModifier) {
                             QuizzesScreen(rootComponent.quizzesComponent)
                         }
                     }
@@ -237,6 +259,8 @@ private fun AppShellContent(
     activeTab: Tab,
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
+    selectedDesignStyle: SchoolQuizDesignStyle,
+    onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
     Crossfade(
         targetState = activeTab,
@@ -249,7 +273,14 @@ private fun AppShellContent(
                     rootComponent.localTabComponent.childStack,
                     animation = stackAnimation(fade(tween(TAB_CROSSFADE_DURATION_MS))),
                 ) { child ->
-                    LocalTabContent(rootComponent, child.instance, paddingValues, canSeeDesignCatalog)
+                    LocalTabContent(
+                        rootComponent = rootComponent,
+                        screen = child.instance,
+                        paddingValues = paddingValues,
+                        canSeeDesignCatalog = canSeeDesignCatalog,
+                        selectedDesignStyle = selectedDesignStyle,
+                        onDesignStyleSelected = onDesignStyleSelected,
+                    )
                 }
             Tab.INTERNET ->
                 Children(
@@ -309,6 +340,8 @@ private fun LocalTabContent(
     screen: LocalScreenComponent,
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
+    selectedDesignStyle: SchoolQuizDesignStyle,
+    onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
     when (screen) {
         is LocalScreenComponent.Placeholder -> {
@@ -327,7 +360,11 @@ private fun LocalTabContent(
                 is LocalConfig.QuestCreateRoot ->
                     UnderConstructionScreen("Создание квеста в разработке", modifier = Modifier.padding(paddingValues))
                 is LocalConfig.SettingsRoot ->
-                    UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
+                    DesignSettingsScreen(
+                        selectedStyle = selectedDesignStyle,
+                        onStyleSelected = onDesignStyleSelected,
+                        modifier = Modifier.padding(paddingValues),
+                    )
                 is LocalConfig.EmptyRoot ->
                     UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
             }

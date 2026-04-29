@@ -48,9 +48,9 @@ TeamCreate: `"feature-<slug>-impl"`
 Подними teammates по необходимости фичи:
 
 **Devs:**
-- `frontend-dev` — :app presentation (Fragments, ViewModels, adapters, navigation)
-- `backend-dev` — feature-local `domain/*` + shared/core/data при необходимости (models, use cases, pipelines, Room, DAOs, mappers)
-- `firebase-dev` — :app firebase (auth, sync, cloud functions) — только если фича затрагивает
+- `frontend-dev` — Android presentation (Decompose Components, Compose screens, navigation wiring)
+- `backend-dev` — KMP domain/data, shared/core/data, Room/DAO/mappers/Koin scaffold при необходимости
+- `firebase-dev` — `platform/firebase`, Firestore rules/scripts/cloud functions — только если фича затрагивает
 - `test-dev` — JVM unit тесты по всем модулям (TDD-style, параллельно с dev)
 - `integration-tester` — instrumented/integration тесты для lifecycle, multi-layer, Room DAO (conditional)
 
@@ -133,8 +133,8 @@ Onboarding prompt для idle reviewer (короткий):
 ### Integration Tester Activation
 
 Подними `integration-tester` если фича затрагивает ЛЮБОЕ из:
-- Lifecycle-зависимую логику (Activity/Fragment states, process death)
-- Multi-layer flow (ViewModel → UseCase → Repository → DAO)
+- Lifecycle-зависимую логику (Component lifecycle, Activity process death, restore)
+- Multi-layer flow (Component → UseCase → Repository → DAO)
 - Room DAO queries с boundary values
 - WebSocket/realtime event chains
 - Concurrency (mutex, parallel coroutines, Flow collect)
@@ -158,16 +158,16 @@ Unit tests written by test-dev: <list>
 
 Location зависит от project layout:
 - Single-module Android: `app/src/main/kotlin/.../domain/<slug>/` + `app/src/test/kotlin/.../domain/<slug>/`
-- KMP shared: `shared/feature/<slug>/domain/src/commonMain/` + `.../commonTest/`
+- KMP shared (default here): `shared/feature/<slug>/domain/src/commonMain/` + `.../commonTest/`
 
 Phase-01 = **adapter-only integration phase**, НЕ create-from-scratch:
 - **backend-dev adapter-only scope**: production-реализации repository interfaces из `domain/<slug>/repository/` (Room/Retrofit/Firebase-backed) в `data/`; DAO ↔ Domain mappers; DI bindings связывающие production repositories с domain interfaces. **НЕ переписывает domain. НЕ добавляет новые use cases или repository interfaces — они уже есть и покрыты тестами через fakes.**
 - **test-dev**: integration tests (repository round-trip с реальной БД/сетью, DAO boundary tests). JVM тесты pure core + use case тесты через fakes уже зелёные — их НЕ дублирует.
-- **frontend-dev**: работает с готовыми use cases через ViewModel (constructor inject use case classes). Не знает о repository interfaces напрямую.
+- **frontend-dev**: работает с готовыми use cases через Decompose Component constructor/Koin factory. Compose screens получают state/callbacks и не знают о repositories/use cases напрямую.
 
 Перед стартом phase-01 lead проверяет:
 1. Existence: domain-директория содержит файлы (подпакеты `model/`, `state/`, `logic/`, `repository/`, `use_case/`)
-2. Green tests: `./gradlew test --tests "*<slug>*" --no-configuration-cache` проходит (pure core + use cases через fakes)
+2. Green tests: relevant project-layout task проходит (для KMP feature domain обычно `./gradlew :shared:feature:<slug>:domain:jvmTest --no-configuration-cache`; для Android-only fallback — `./gradlew test --tests "*<slug>*" --no-configuration-cache`)
 3. Если нет — это ошибка spec pipeline. STOP, сообщи пользователю: spec должен был сгенерировать полный skeleton.
 
 Если backend-dev в ходе реализации находит architectural mismatch (repository interface signature невозможно реализовать production adapter-ом; use case signature не подходит под реальную UI-интеграцию) — **это architectural mismatch**. Lead останавливается и эскалирует пользователю. Backend-dev НЕ переписывает domain, НЕ добавляет новые interfaces/use cases молча.
@@ -194,8 +194,7 @@ Phase-01 = **adapter-only integration phase**, НЕ create-from-scratch:
 
 **Шаг 2 — Build Gate (ты сам запускаешь):**
 ```bash
-./gradlew test --no-configuration-cache
-./gradlew assembleDebug --no-configuration-cache
+./gradlew ciCheck --no-configuration-cache
 # + фаза-specific команды из plan/phase-NN/overview.md секция Validation
 ```
 Test Deletion Gate: `git diff --name-status HEAD -- '*/test/**'` — удалённые тесты должны быть в overview.md "Deleted Files".
@@ -280,17 +279,16 @@ Reviewer присылает EVIDENCE → исправляешь → SendMessage 
 **ВАЖНО:** test-dev работает параллельно с dev(s), а не после. Если `tests.md` отсутствует а фаза меняет production code — ошибка плана; сообщи пользователю.
 
 Для `phase-01` с integration scope (Walking Skeleton domain уже сгенерирован на spec) это означает:
-- backend-dev сначала реализует feature-local `domain/*`, а не UI/adapters
-- test-dev пишет JVM тесты по `Feature Domain Contract`, `Domain Test Scenarios`, `Primary User Journeys` и `State Matrix`
-- если domain tests не зелёные — не переходи к следующей фазе
+- backend-dev реализует production adapters/data/Koin wiring вокруг уже готовых domain interfaces
+- test-dev пишет integration/adapter tests и не дублирует pure domain JVM tests из spec
+- если domain tests уже не зелёные на старте — STOP: spec pipeline не завершил Walking Skeleton
 
 ### 2.2 Build Gate (coder сам запускает, broadcast reviewers при PASS)
 
 Build gate — **ответственность coder-а** (backend-dev / frontend-dev), не lead-а. У coder-ов есть Bash tool, они сами запускают:
 
 ```bash
-./gradlew test --no-configuration-cache
-./scripts/qa --primary-only --skip-test
+./gradlew ciCheck --no-configuration-cache
 ```
 
 Если фаза добавляла/меняла `androidTest` или поднимался `integration-tester` — coder дополнительно:
@@ -333,7 +331,7 @@ Coder (backend-dev / frontend-dev) сам пишет SendMessage каждому 
 
 Feature: <slug>, Phase: <N>
 Changed files: <list>
-Build status: PASSED (./gradlew test + assembleDebug green, Test Deletion Gate OK)
+Build status: PASSED (`./gradlew ciCheck --no-configuration-cache` green, Test Deletion Gate OK)
 Your task ID: <task_id>
 Coder contact: <my name, backend-dev / frontend-dev>
 Test author contact: test-dev
@@ -442,8 +440,7 @@ Grading: A = 0 findings, B = only medium, C = 1-2 high, D = 3+ high, F = any blo
 ## Шаг 4: Smoke Test
 
 ```bash
-./gradlew test --no-configuration-cache
-./scripts/qa --primary-only --skip-test
+./gradlew ciCheck --no-configuration-cache
 ```
 
 Если в финальном diff есть `androidTest` изменения — дополнительно:
@@ -452,10 +449,10 @@ Grading: A = 0 findings, B = only medium, C = 1-2 high, D = 3+ high, F = any blo
 ./gradlew assembleDebugAndroidTest --no-configuration-cache
 ```
 
-Если feature требует device/backend smoke — после зелёных JVM tests и app build запускай:
+Если feature требует device/backend smoke — после зелёного `ciCheck` запускай documented command из `plan/phase-NN/overview.md` или `.claude/PROJECT-CONTEXT.md`. Не используй несуществующие scripts как proof.
 
 ```bash
-./scripts/qa --profile <name> --device <serial>
+<documented device/backend smoke command>
 ```
 
 Если падает → исправить → повторить. НЕ продолжать при failing tests.

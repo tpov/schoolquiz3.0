@@ -1,8 +1,11 @@
 ---
 paths:
-  - "app/src/main/java/**/data/db/**/*.kt"
-  - "app/src/main/java/**/data/repository/**/*.kt"
-  - "app/src/androidTest/**/*.kt"
+  - "shared/core/persistence/src/commonMain/**/*.kt"
+  - "shared/**/data/src/commonMain/**/*.kt"
+  - "shared/**/data/src/androidMain/**/*.kt"
+  - "shared/**/src/androidTest/**/*.kt"
+  - "shared/**/src/androidInstrumentedTest/**/*.kt"
+  - "android/**/src/androidTest/**/*.kt"
 ---
 
 # Room Database — Android

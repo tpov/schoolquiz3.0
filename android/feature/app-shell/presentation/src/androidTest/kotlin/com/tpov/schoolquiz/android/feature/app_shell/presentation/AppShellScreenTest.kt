@@ -166,10 +166,15 @@ class AppShellScreenTest {
                         backStack = emptyList(),
                     )
                     override val childStack = MutableValue(idleStack)
+                    override val currentCatalogName: kotlinx.coroutines.flow.StateFlow<String?> =
+                        kotlinx.coroutines.flow.MutableStateFlow(null)
+                    override val currentCatalogIcons: kotlinx.coroutines.flow.StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
+                        kotlinx.coroutines.flow.MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit
+                    override fun popCurrentChild() = Unit
                 }
             },
         )

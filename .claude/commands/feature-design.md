@@ -90,7 +90,7 @@ Feature: <slug>
 | Condition | Action |
 |-----------|--------|
 | Фича использует external SDK или platform API | Запустить web-researcher |
-| Фича полностью internal (Room, ViewModel, internal logic) | Пропустить |
+| Фича полностью internal (Room, Decompose Component, internal logic) | Пропустить |
 
 ```
 Feature: <slug>

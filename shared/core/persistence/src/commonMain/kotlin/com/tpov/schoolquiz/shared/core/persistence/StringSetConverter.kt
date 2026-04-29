@@ -17,4 +17,16 @@ class StringSetConverter {
     @TypeConverter
     fun toSet(value: String?): Set<String>? =
         value?.split("\u001F")?.filter { it.isNotEmpty() && '\u001F' !in it }?.toSet()
+
+    @TypeConverter
+    fun fromList(value: List<String>): String {
+        require(value.none { '\u001F' in it }) {
+            "List elements must not contain the unit separator (U+001F)"
+        }
+        return value.joinToString(separator = "\u001F")
+    }
+
+    @TypeConverter
+    fun toList(value: String?): List<String> =
+        value?.split("\u001F")?.filter { it.isNotEmpty() && '\u001F' !in it } ?: emptyList()
 }

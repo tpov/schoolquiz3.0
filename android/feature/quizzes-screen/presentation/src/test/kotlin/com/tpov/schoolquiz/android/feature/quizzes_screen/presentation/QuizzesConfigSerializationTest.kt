@@ -108,23 +108,47 @@ class QuizzesConfigSerializationTest {
         assertEquals(original, decoded)
     }
 
-    // ── SER-06 — QuizzesConfig.LessonPlaceholder ─────────────────────────────
+    // ── SER-06 — QuizzesConfig.LessonRunner ──────────────────────────────────
 
     /**
-     * Spec: SER-06 — LessonPlaceholder preserves lessonTitle as a separate field
-     * (not just last element of titles). Verifies the field is not accidentally merged.
+     * Spec: SER-06 — LessonRunner preserves lessonId, mode, and titles.
+     * mode: Difficulty is @Serializable (Phase-01). lessonId is raw String (not LessonId).
+     * Also covers: Ser-02 (tests.md §Ser-02) — LessonRunner EASY mode round-trip.
      */
     @Test
-    fun `QuizzesConfig LessonPlaceholder round-trip preserves lessonTitle`() {
-        val original = QuizzesConfig.LessonPlaceholder(
+    fun `QuizzesConfig LessonRunner round-trip preserves lessonId and mode`() {
+        val original = QuizzesConfig.LessonRunner(
             lessonId = "l-1",
-            lessonTitle = "Урок 1",
+            mode = com.tpov.schoolquiz.shared.core.question_schema.Difficulty.EASY,
             titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1", "Урок 1"),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
-        assertIs<QuizzesConfig.LessonPlaceholder>(decoded)
-        assertEquals("Урок 1", (decoded as QuizzesConfig.LessonPlaceholder).lessonTitle)
+        val runner = assertIs<QuizzesConfig.LessonRunner>(decoded)
+        assertEquals("l-1", runner.lessonId)
+        assertEquals(com.tpov.schoolquiz.shared.core.question_schema.Difficulty.EASY, runner.mode)
+    }
+
+    // ── Ser-01 (Phase-06) — LessonRunner HARD round-trip ────────────────────────
+
+    /**
+     * Phase-06 Ser-01: LessonRunner(mode=HARD) preserves mode after round-trip.
+     * Spec: docs/features/lesson-runner/plan/phase-06/tests.md §Ser-01
+     */
+    @Test
+    fun `QuizzesConfig LessonRunner HARD mode round-trip`() {
+        val original = QuizzesConfig.LessonRunner(
+            lessonId = "l1",
+            mode = com.tpov.schoolquiz.shared.core.question_schema.Difficulty.HARD,
+            titles = listOf("Cat", "Quest", "Lesson"),
+        )
+        val decoded = roundTrip(original)
+        assertEquals(original, decoded)
+        val runner = assertIs<QuizzesConfig.LessonRunner>(decoded)
+        assertEquals(
+            com.tpov.schoolquiz.shared.core.question_schema.Difficulty.HARD,
+            runner.mode,
+        )
     }
 
     // ── SER-07 — Stack round-trip ─────────────────────────────────────────────

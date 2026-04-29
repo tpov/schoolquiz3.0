@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state
 sealed interface QuestionUiState {
     val questionText: String
     val hasImage: Boolean
+    val info: String?
 
     data class SingleChoice(
         override val questionText: String,
@@ -11,6 +12,7 @@ sealed interface QuestionUiState {
         val options: List<OptionUi>,
         val selectedOptionId: String?,
         val correctOptionId: String? = null,
+        override val info: String? = null,
     ) : QuestionUiState
 
     data class MultipleChoice(
@@ -20,6 +22,7 @@ sealed interface QuestionUiState {
         val options: List<OptionUi>,
         val selectedIds: Set<String>,
         val correctIds: Set<String> = emptySet(),
+        override val info: String? = null,
     ) : QuestionUiState
 
     data class Ordering(
@@ -28,6 +31,7 @@ sealed interface QuestionUiState {
         val imageUrl: String?,
         val items: List<OptionUi>,
         val correctOrderIds: List<String> = emptyList(),
+        override val info: String? = null,
     ) : QuestionUiState
 
     data class FillBlank(
@@ -38,6 +42,7 @@ sealed interface QuestionUiState {
         val filledValues: Map<Int, String>,
         val candidates: List<OptionUi> = emptyList(),
         val correctCandidateIdsByBlankIndex: Map<Int, String> = emptyMap(),
+        override val info: String? = null,
     ) : QuestionUiState
 }
 

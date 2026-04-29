@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthReposi
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,6 +40,7 @@ import kotlin.coroutines.CoroutineContext
  * Spec: docs/features/home-and-my-quests/06-api-contract.md §6.1 DefaultMyQuestsComponent
  * ADR-CMP-51: Decompose Component pattern + instanceKeeper retention.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class DefaultMyQuestsComponent(
     componentContext: ComponentContext,
     private val authRepo: AuthRepository,
@@ -48,7 +50,6 @@ class DefaultMyQuestsComponent(
     private val onQuestDrillDown: (QuestDisplayItem) -> Unit = {},
     mainContext: CoroutineContext = Dispatchers.Main.immediate,
 ) : MyQuestsComponent, ComponentContext by componentContext {
-
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + mainContext)
 
@@ -60,40 +61,42 @@ class DefaultMyQuestsComponent(
 
     private val uidFlow = authRepo.observeUid()
 
-    private val questsFlow = uidFlow.flatMapLatest { uid ->
-        if (uid == null) {
-            selectedCatalog.value = null
-            flowOf(emptyList())
-        } else {
-            selectedCatalog.flatMapLatest { catalogId ->
-                observeMyQuests(uid, catalogId)
+    private val questsFlow =
+        uidFlow.flatMapLatest { uid ->
+            if (uid == null) {
+                selectedCatalog.value = null
+                flowOf(emptyList())
+            } else {
+                selectedCatalog.flatMapLatest { catalogId ->
+                    observeMyQuests(uid, catalogId)
+                }
             }
         }
-    }
 
     private val isGuestFlow = uidFlow.map { it == null }
 
     // Catalogs are public data; no uid gating required.
     private val catalogsFlow = observeCatalogs()
 
-    override val state = combine(
-        questsFlow,
-        catalogsFlow,
-        selectedCatalog,
-        isGuestFlow,
-    ) { quests, catalogs, selectedId, isGuest ->
-        MyQuestsUiState(
-            quests = quests.map { it.toDisplayItem() },
-            catalogs = catalogs.map { it.toDisplayItem() },
-            selectedCatalogId = selectedId,
-            isGuest = isGuest,
-            isLoading = false,
+    override val state =
+        combine(
+            questsFlow,
+            catalogsFlow,
+            selectedCatalog,
+            isGuestFlow,
+        ) { quests, catalogs, selectedId, isGuest ->
+            MyQuestsUiState(
+                quests = quests.map { it.toDisplayItem() },
+                catalogs = catalogs.map { it.toDisplayItem() },
+                selectedCatalogId = selectedId,
+                isGuest = isGuest,
+                isLoading = false,
+            )
+        }.stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = MyQuestsUiState(),
         )
-    }.stateIn(
-        scope = scope,
-        started = SharingStarted.Eagerly,
-        initialValue = MyQuestsUiState(),
-    )
 
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
@@ -116,6 +119,7 @@ class DefaultMyQuestsComponent(
 
     private class SelectedCatalogHolder : InstanceKeeper.Instance {
         val flow = MutableStateFlow<CatalogId?>(null)
+
         override fun onDestroy() = Unit
     }
 }

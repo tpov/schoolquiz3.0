@@ -19,6 +19,13 @@ class FakeCatalogDao : CatalogDao {
         _flow.value = _flow.value.filter { it.id != entity.id } + entity
     }
 
+    override suspend fun upsertByIdIfNewerVersion(entity: CatalogEntity) {
+        val current = _flow.value.find { it.id == entity.id }
+        if (current == null || current.shouldBeReplacedBy(entity)) {
+            insertOrReplace(entity)
+        }
+    }
+
     override suspend fun deleteById(id: String) {
         _flow.value = _flow.value.filter { it.id != id }
     }
@@ -39,4 +46,9 @@ class FakeCatalogDao : CatalogDao {
     fun emit(entities: List<CatalogEntity>) {
         _flow.value = entities
     }
+
+    private fun CatalogEntity.shouldBeReplacedBy(incoming: CatalogEntity): Boolean =
+        version < incoming.version ||
+            (version == incoming.version && lastModifiedAt < incoming.lastModifiedAt) ||
+            (version == incoming.version && lastModifiedAt == incoming.lastModifiedAt && this != incoming)
 }

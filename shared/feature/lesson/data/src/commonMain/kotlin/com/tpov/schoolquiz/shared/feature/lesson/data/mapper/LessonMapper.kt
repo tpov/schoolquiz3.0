@@ -15,5 +15,8 @@ object LessonMapper {
         contentsVersion = contentsVersion,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
+        averageRating = averageRating,
+        ratingCount = ratingCount,
+        top3 = top3,
     )
 }

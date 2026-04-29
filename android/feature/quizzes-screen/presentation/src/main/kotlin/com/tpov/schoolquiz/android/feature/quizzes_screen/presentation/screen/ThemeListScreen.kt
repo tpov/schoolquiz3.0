@@ -38,27 +38,30 @@ fun ThemeListScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(titles = component.titles, onSegmentClick = onSegmentClick)
         when (val state = uiState) {
-            is HierarchyListUiState.Loading -> Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            is HierarchyListUiState.Empty -> Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = state.levelLabel,
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            is HierarchyListUiState.Loaded -> LazyColumn(state = lazyListState) {
-                items(state.items, key = { it.id }) { item ->
-                    HierarchyItemCard(
-                        title = item.title,
-                        orderLabel = item.orderLabel,
-                        subtitleCount = item.subtitleCount,
-                        onClick = { component.onThemeClick(item) },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            is HierarchyListUiState.Loading ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+            is HierarchyListUiState.Empty ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = state.levelLabel,
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
-            }
+            is HierarchyListUiState.Loaded ->
+                LazyColumn(state = lazyListState) {
+                    items(state.items, key = { it.id }) { item ->
+                        HierarchyItemCard(
+                            title = item.title,
+                            orderLabel = item.orderLabel,
+                            subtitleCount = item.subtitleCount,
+                            onClick = { component.onThemeClick(item) },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                }
         }
     }
 }
@@ -69,11 +72,13 @@ fun ThemeListScreen(
 private fun ThemeListScreenLoadingPreview() {
     SchoolQuizTheme {
         ThemeListScreen(
-            component = object : ThemeListComponent {
-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
-                override val titles = listOf("Математика", "Квест 1", "Секция 1")
-                override fun onThemeClick(theme: HierarchyItemUi) = Unit
-            },
+            component =
+                object : ThemeListComponent {
+                    override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
+                    override val titles = listOf("Математика", "Квест 1", "Секция 1")
+
+                    override fun onThemeClick(theme: HierarchyItemUi) = Unit
+                },
             onSegmentClick = {},
         )
     }
@@ -85,11 +90,14 @@ private fun ThemeListScreenLoadingPreview() {
 private fun ThemeListScreenEmptyPreview() {
     SchoolQuizTheme {
         ThemeListScreen(
-            component = object : ThemeListComponent {
-                override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Empty("Нет тем"))
-                override val titles = listOf("Математика", "Квест 1", "Секция 1")
-                override fun onThemeClick(theme: HierarchyItemUi) = Unit
-            },
+            component =
+                object : ThemeListComponent {
+                    override val uiState: Value<HierarchyListUiState> =
+                        MutableValue(HierarchyListUiState.Empty("Нет тем"))
+                    override val titles = listOf("Математика", "Квест 1", "Секция 1")
+
+                    override fun onThemeClick(theme: HierarchyItemUi) = Unit
+                },
             onSegmentClick = {},
         )
     }

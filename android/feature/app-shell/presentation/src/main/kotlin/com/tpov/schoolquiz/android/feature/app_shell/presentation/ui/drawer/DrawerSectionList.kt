@@ -16,7 +16,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
  * Renders only sections returned by visibleSections(tab, stats) — hidden sections NOT rendered.
  * AC 20: uses BrandDrawerItem wrapper with badge: BadgeContent? param.
  */
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 fun DrawerSectionList(
     tab: Tab,

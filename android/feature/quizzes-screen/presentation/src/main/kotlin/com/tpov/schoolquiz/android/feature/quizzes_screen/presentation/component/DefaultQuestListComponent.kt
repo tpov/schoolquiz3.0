@@ -27,7 +27,6 @@ class DefaultQuestListComponent(
     private val navigation: StackNavigation<QuizzesConfig>,
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, QuestListComponent {
-
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + coroutineContext)
 
@@ -41,8 +40,11 @@ class DefaultQuestListComponent(
         scope.launch {
             questRepository.observeByCatalog(catalogId, "home")
                 .map { quests ->
-                    if (quests.isEmpty()) QuestListUiState.Empty
-                    else QuestListUiState.Loaded(quests.map { it.toQuestDisplayItem() })
+                    if (quests.isEmpty()) {
+                        QuestListUiState.Empty
+                    } else {
+                        QuestListUiState.Loaded(quests.map { it.toQuestDisplayItem() })
+                    }
                 }
                 .catch { /* log */ }
                 .collect { _uiState.value = it }
@@ -55,7 +57,7 @@ class DefaultQuestListComponent(
             QuizzesConfig.SectionList(
                 questId = quest.id.value,
                 titles = titles + listOf(quest.title),
-            )
+            ),
         )
     }
 

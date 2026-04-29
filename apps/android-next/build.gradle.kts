@@ -42,6 +42,9 @@ dependencies {
     implementation(project(":shared:feature:lesson:domain"))
     implementation(project(":shared:feature:question:data"))
     implementation(project(":shared:feature:question:domain"))
+    implementation(project(":shared:core:question-schema"))
+    implementation(project(":shared:feature:lesson-runner:data"))
+    implementation(project(":android:feature:lesson-runner:presentation"))
     implementation(project(":platform:android-services"))
     implementation(libs.androidx.work.runtime.ktx)
     implementation(project(":shared:core:sync"))
@@ -74,5 +77,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockito.core)
     testImplementation(project(":shared:core:stats"))
+    testImplementation(project(":shared:core:question-schema"))
+    testImplementation(project(":shared:feature:lesson-runner:domain"))
+    testImplementation(project(":android:feature:lesson-runner:presentation"))
     androidTestImplementation(libs.bundles.testing.instrumented)
 }

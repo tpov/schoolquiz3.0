@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.platform.firebase.lesson.FirebaseLessonRemoteDataSour
 import com.tpov.schoolquiz.shared.feature.lesson.data.LessonRemoteDataSource
 import org.koin.dsl.module
 
-val firebaseLessonModule = module {
-    single<LessonRemoteDataSource> { FirebaseLessonRemoteDataSource(get()) }
-}
+val firebaseLessonModule =
+    module {
+        single<LessonRemoteDataSource> { FirebaseLessonRemoteDataSource(get()) }
+    }

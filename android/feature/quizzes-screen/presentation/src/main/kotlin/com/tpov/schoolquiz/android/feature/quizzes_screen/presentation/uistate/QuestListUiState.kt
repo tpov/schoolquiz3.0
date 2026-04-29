@@ -4,6 +4,8 @@ import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 
 sealed interface QuestListUiState {
     data object Loading : QuestListUiState
+
     data object Empty : QuestListUiState
+
     data class Loaded(val quests: List<QuestDisplayItem>) : QuestListUiState
 }

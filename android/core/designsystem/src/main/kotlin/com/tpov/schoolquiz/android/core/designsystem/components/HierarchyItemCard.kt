@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,22 +42,29 @@ fun HierarchyItemCard(
     onLongClickLabel: String? = null,
     modifier: Modifier = Modifier,
 ) {
-    val clickModifier = if (onLongClick != null) {
-        Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = onLongClickLabel)
-    } else {
-        Modifier.clickable(onClick = onClick)
-    }
+    val clickModifier =
+        if (onLongClick != null) {
+            Modifier.combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onLongClickLabel = onLongClickLabel,
+            )
+        } else {
+            Modifier.clickable(onClick = onClick)
+        }
 
     BrandCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(clickModifier),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(clickModifier),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .height(64.dp)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .height(64.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             if (orderLabel != null) {
                 Text(
@@ -80,16 +86,18 @@ fun HierarchyItemCard(
                     text = subtitleCount,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .wrapContentHeight(),
+                    modifier =
+                        Modifier
+                            .padding(start = 8.dp)
+                            .wrapContentHeight(),
                 )
             }
             StarRating(
                 rating = rating,
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .semantics { contentDescription = "rating" },
+                modifier =
+                    Modifier
+                        .padding(start = 8.dp)
+                        .semantics { contentDescription = "rating" },
                 size = 28.dp,
             )
             if (rating != null) {

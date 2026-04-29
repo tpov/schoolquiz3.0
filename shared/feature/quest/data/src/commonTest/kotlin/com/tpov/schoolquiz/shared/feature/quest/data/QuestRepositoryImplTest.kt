@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.core.persistence.QuestEntity
 import com.tpov.schoolquiz.shared.feature.quest.data.dto.QuestDto
 import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeQuestLocalDataSource
 import com.tpov.schoolquiz.shared.feature.quest.data.fake.FakeQuestRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -153,6 +154,20 @@ class QuestRepositoryImplTest {
         // OPEN QUESTION: tests.md expects result.getOrNull() contains QuestId("q1")
         // but QuestRepository.refreshFromRemote returns Result<Unit>.
         // Pending domain interface update per backend.md spec §6g.
+    }
+
+    @Test
+    fun `when remote quest returned with same contents version then id still cascades`() = runTest {
+        val local = FakeQuestLocalDataSource()
+        local.seed(listOf(makeEntity("q1", version = 5L, contentsVersion = 10L)))
+        val fakeRemote = FakeQuestRemoteDataSource(
+            publicResults = listOf(makeDto("q1", version = 5L, contentsVersion = 10L)),
+        )
+        val repo = makeRepository(local = local, remote = fakeRemote)
+
+        val result = repo.refreshFromRemote("uid-a", availableShelves, catalogIds, 0L)
+
+        assertEquals(setOf(QuestId("q1")), result.getOrThrow())
     }
 
     // Remote throws → Result.failure

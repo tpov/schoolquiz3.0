@@ -13,6 +13,8 @@ fun CatalogEntity.toDomain(): Catalog = Catalog(
     contentsVersion = contentsVersion,
     lastModifiedAt = lastModifiedAt,
     archived = archived,
+    iconCategoryKey = iconCategoryKey,
+    iconNames = iconNames,
 )
 
 fun Catalog.toEntity(): CatalogEntity = CatalogEntity(
@@ -24,4 +26,6 @@ fun Catalog.toEntity(): CatalogEntity = CatalogEntity(
     contentsVersion = contentsVersion,
     lastModifiedAt = lastModifiedAt,
     archived = archived,
+    iconCategoryKey = iconCategoryKey,
+    iconNames = iconNames,
 )
