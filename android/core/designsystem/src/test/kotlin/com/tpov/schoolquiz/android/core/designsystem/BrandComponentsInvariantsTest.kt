@@ -31,7 +31,8 @@ class BrandComponentsInvariantsTest {
 
         assertFalse(
             violations.isNotEmpty(),
-            "Hardcoded Color literals found in components: $violations — use MaterialTheme.colorScheme.* (spec Pattern Invariant #1)"
+            "Hardcoded Color literals found in components: $violations — " +
+                "use MaterialTheme.colorScheme.* (spec Pattern Invariant #1)",
         )
     }
 
@@ -44,7 +45,8 @@ class BrandComponentsInvariantsTest {
 
         assertTrue(
             progressBarFile.readText().contains("coerceIn"),
-            "BrandProgressBar.kt must use coerceIn for progress clamping — prevents rendering artifacts at progress > 1f or < 0f"
+            "BrandProgressBar.kt must use coerceIn for progress clamping — " +
+                "prevents rendering artifacts at progress > 1f or < 0f",
         )
     }
 
@@ -56,13 +58,15 @@ class BrandComponentsInvariantsTest {
 
         val missingPreview = componentsSourceRoot.walkTopDown()
             .filter { it.extension == "kt" }
+            .filter { "@Composable" in it.readText() }
             .filter { "@Preview" !in it.readText() }
             .map { it.name }
             .toList()
 
         assertFalse(
             missingPreview.isNotEmpty(),
-            "Missing @Preview in: $missingPreview — all public composables must have @Preview per spec Pattern Invariant #3"
+            "Missing @Preview in: $missingPreview — " +
+                "all public composables must have @Preview per spec Pattern Invariant #3",
         )
     }
 }

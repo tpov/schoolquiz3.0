@@ -3,12 +3,14 @@ package com.tpov.schoolquiz.apps.android_next.di
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
+import com.tpov.schoolquiz.platform.android_services.sync.WorkManagerSyncScheduler
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
-import com.tpov.schoolquiz.shared.core.sync.CascadingSyncOrchestrator
-import com.tpov.schoolquiz.shared.core.sync.InMemorySyncStateRepository
+import com.tpov.schoolquiz.shared.core.persistence.RoomSyncStateRepository
+import com.tpov.schoolquiz.shared.core.persistence.SyncStateDao
+import com.tpov.schoolquiz.shared.core.sync.CatalogSyncListOrchestrator
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
@@ -20,10 +22,11 @@ import org.koin.dsl.module
 
 val syncModule =
     module {
-        single<SyncStateRepository> { InMemorySyncStateRepository() }
+        single<SyncStateRepository> { RoomSyncStateRepository(get<SyncStateDao>()) }
         single<WorkManager> { WorkManager.getInstance(androidContext()) }
-        single<CascadingSyncOrchestrator> {
-            CascadingSyncOrchestrator(
+        single<SyncScheduler> { WorkManagerSyncScheduler(get<WorkManager>()) }
+        single<CatalogSyncListOrchestrator> {
+            CatalogSyncListOrchestrator(
                 catalogRepo = get<CatalogRepository>(),
                 questRepo = get<QuestRepository>(),
                 sectionRepo = get<SectionRepository>(),
@@ -31,14 +34,13 @@ val syncModule =
                 lessonRepo = get<LessonRepository>(),
                 questionRepo = get<QuestionRepository>(),
                 syncStateRepo = get<SyncStateRepository>(),
-                authRepo = get<AuthRepository>(),
-                userStatsRepo = get<UserStatsRepository>(),
+                syncChangeRemote = get(),
             )
         }
         single<List<Syncable>> {
             listOf(
                 get<UserStatsRepository>() as Syncable,
-                get<CascadingSyncOrchestrator>(),
+                get<CatalogSyncListOrchestrator>(),
             )
         }
         single<WorkerFactory> { SyncWorkerFactory(get()) }

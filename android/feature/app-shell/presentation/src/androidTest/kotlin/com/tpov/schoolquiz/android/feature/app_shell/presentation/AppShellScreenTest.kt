@@ -36,6 +36,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
@@ -43,7 +44,6 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
-import androidx.work.WorkManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +53,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -144,7 +143,9 @@ class AppShellScreenTest {
             observeUseCase = ObserveAppShellStateUseCase(repo),
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = repo,
-            workManager = mock(WorkManager::class.java),
+            syncScheduler = object : SyncScheduler {
+                override fun enqueueManualSync() = Unit
+            },
             myQuestsFactory = { _, _, _ ->
                 object : MyQuestsComponent {
                     override val state: StateFlow<MyQuestsUiState> = MutableStateFlow(MyQuestsUiState())

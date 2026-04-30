@@ -22,6 +22,8 @@ class FakeCatalogRepository : CatalogRepository {
     private val cache = MutableStateFlow<Map<CatalogId, Catalog>>(emptyMap())
 
     var refreshCalls = 0
+    var refreshByIdsCallCount = 0
+    var lastRefreshByIds: Set<CatalogId> = emptySet()
     var nextChangedIds: Set<CatalogId> = emptySet()
     var nextLocalCvMap: Map<CatalogId, Long> = emptyMap()
     private var nextRefreshFailure: Throwable? = null
@@ -51,6 +53,12 @@ class FakeCatalogRepository : CatalogRepository {
         return Result.success(nextChangedIds)
     }
 
+    override suspend fun refreshByIds(ids: Set<CatalogId>): Result<Unit> {
+        refreshByIdsCallCount++
+        lastRefreshByIds = ids
+        return Result.success(Unit)
+    }
+
     override suspend fun getById(id: CatalogId): Catalog? = cache.value[id]
 
     fun seedWithLocalCv(catalogId: String, localCv: Long) {
@@ -67,6 +75,8 @@ class FakeCatalogRepository : CatalogRepository {
 
     fun resetAll() {
         refreshCalls = 0
+        refreshByIdsCallCount = 0
+        lastRefreshByIds = emptySet()
         nextChangedIds = emptySet()
         nextLocalCvMap = emptyMap()
         nextRefreshFailure = null

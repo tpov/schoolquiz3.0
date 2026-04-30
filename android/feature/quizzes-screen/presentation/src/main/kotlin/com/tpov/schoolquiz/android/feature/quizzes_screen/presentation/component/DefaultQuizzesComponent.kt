@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
@@ -10,10 +11,9 @@ import com.arkivanov.decompose.router.stack.popToFirst
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.backhandler.BackCallback
-import androidx.compose.ui.graphics.vector.ImageVector
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.statekeeper.SerializableContainer
 import com.tpov.schoolquiz.android.core.designsystem.components.resolveIcons
-import kotlinx.coroutines.flow.collectLatest
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -34,10 +34,11 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.ListSerializer
-import com.arkivanov.essenty.lifecycle.doOnDestroy
 
+@Suppress("LongParameterList")
 class DefaultQuizzesComponent(
     componentContext: ComponentContext,
     private val questRepository: QuestRepository,
@@ -147,14 +148,15 @@ class DefaultQuizzesComponent(
         }
     }
 
-    private fun catalogNameFromConfig(config: QuizzesConfig): String? = when (config) {
-        is QuizzesConfig.QuestList -> config.titles.getOrNull(1)
-        is QuizzesConfig.SectionList -> config.titles.getOrNull(1)
-        is QuizzesConfig.ThemeList -> config.titles.getOrNull(1)
-        is QuizzesConfig.LessonList -> config.titles.getOrNull(1)
-        is QuizzesConfig.LessonRunner -> config.titles.getOrNull(1)
-        QuizzesConfig.Idle -> null
-    }
+    private fun catalogNameFromConfig(config: QuizzesConfig): String? =
+        when (config) {
+            is QuizzesConfig.QuestList -> config.titles.getOrNull(1)
+            is QuizzesConfig.SectionList -> config.titles.getOrNull(1)
+            is QuizzesConfig.ThemeList -> config.titles.getOrNull(1)
+            is QuizzesConfig.LessonList -> config.titles.getOrNull(1)
+            is QuizzesConfig.LessonRunner -> config.titles.getOrNull(1)
+            QuizzesConfig.Idle -> null
+        }
 
     override fun openQuestList(
         catalogId: CatalogId,

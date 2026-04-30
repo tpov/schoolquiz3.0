@@ -43,7 +43,7 @@ internal fun runnerCenterGlowColor(
 ): Color = schoolQuizDesignCenterGlowColor(isHard = isHard, accentColor = accentColor)
 
 @Composable
-internal fun RunnerLegacyBackground(
+internal fun RunnerDesignBackground(
     isHard: Boolean,
     modifier: Modifier = Modifier,
     accentColor: Color? = null,
@@ -58,7 +58,7 @@ internal fun RunnerLegacyBackground(
 }
 
 @Composable
-internal fun RunnerLegacyCard(
+internal fun RunnerDesignCard(
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary,
     containerColor: Color = MaterialTheme.colorScheme.surface,
@@ -79,7 +79,7 @@ internal fun RunnerLegacyCard(
 }
 
 @Composable
-internal fun RunnerLegacyChip(
+internal fun RunnerDesignChip(
     text: String,
     color: Color,
     modifier: Modifier = Modifier,

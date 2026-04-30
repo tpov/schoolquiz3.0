@@ -38,7 +38,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import com.tpov.schoolquiz.android.core.designsystem.LegacyContour
 import com.tpov.schoolquiz.android.core.designsystem.glowEasy
 import kotlinx.coroutines.delay
 
@@ -105,10 +104,10 @@ internal fun QuestionFrame(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (!questionText.isNullOrBlank()) {
-                RunnerLegacyCard(
+                RunnerDesignCard(
                     modifier = Modifier.fillMaxWidth(),
                     elevated = true,
-                    borderColor = LegacyContour,
+                    borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f),
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -125,10 +124,10 @@ internal fun QuestionFrame(
                     }
                 }
             } else if (imageUrl != null) {
-                RunnerLegacyCard(
+                RunnerDesignCard(
                     modifier = Modifier.fillMaxWidth(),
                     elevated = true,
-                    borderColor = LegacyContour,
+                    borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f),
                 ) {
                     QuestionImage(
                         url = imageUrl,

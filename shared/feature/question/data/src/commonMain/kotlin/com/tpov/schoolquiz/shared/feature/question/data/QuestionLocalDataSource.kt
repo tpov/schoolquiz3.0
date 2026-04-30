@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface QuestionLocalDataSource {
     fun observeByLesson(lessonId: String): Flow<List<QuestionEntity>>
     suspend fun upsertByIdIfNewerVersion(entity: QuestionEntity)
+    suspend fun upsertFromSyncList(entity: QuestionEntity) = upsertByIdIfNewerVersion(entity)
     suspend fun deleteById(id: String)
     suspend fun findById(id: String): QuestionEntity?
 }
@@ -19,6 +20,9 @@ class QuestionLocalDataSourceImpl(
 
     override suspend fun upsertByIdIfNewerVersion(entity: QuestionEntity) =
         dao.upsertByIdIfNewerVersion(entity)
+
+    override suspend fun upsertFromSyncList(entity: QuestionEntity) =
+        dao.upsertFromSyncList(entity)
 
     override suspend fun deleteById(id: String) = dao.deleteById(id)
 

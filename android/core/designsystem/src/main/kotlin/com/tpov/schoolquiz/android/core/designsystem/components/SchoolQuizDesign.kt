@@ -7,8 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,7 +43,7 @@ import com.tpov.schoolquiz.android.core.designsystem.glowEasy
 import com.tpov.schoolquiz.android.core.designsystem.glowHard
 
 enum class SchoolQuizDesignStyle {
-    MainLegacy,
+    Main,
 }
 
 @Immutable
@@ -56,7 +56,7 @@ data class SchoolQuizDesignTokens(
     val chipContainerAlpha: Float,
 )
 
-val MainLegacyDesignTokens =
+val MainDesignTokens =
     SchoolQuizDesignTokens(
         backgroundAccentAlpha = 0.08f,
         backgroundSurfaceAlpha = 0.76f,
@@ -68,7 +68,7 @@ val MainLegacyDesignTokens =
 
 fun SchoolQuizDesignStyle.tokens(): SchoolQuizDesignTokens =
     when (this) {
-        SchoolQuizDesignStyle.MainLegacy -> MainLegacyDesignTokens
+        SchoolQuizDesignStyle.Main -> MainDesignTokens
     }
 
 @Composable
@@ -86,33 +86,25 @@ fun schoolQuizDesignModeAccent(
 }
 
 @Composable
-fun schoolQuizDesignNeutralBorderColor(
-    style: SchoolQuizDesignStyle? = null,
-): Color =
+fun schoolQuizDesignNeutralBorderColor(style: SchoolQuizDesignStyle? = null): Color =
     MaterialTheme.colorScheme.outline.copy(
         alpha = (style ?: currentSchoolQuizDesignStyle()).tokens().neutralBorderAlpha,
     )
 
 @Composable
-fun schoolQuizDesignLightBorderColor(
-    style: SchoolQuizDesignStyle? = null,
-): Color =
+fun schoolQuizDesignLightBorderColor(style: SchoolQuizDesignStyle? = null): Color =
     MaterialTheme.colorScheme.onSurface.copy(
         alpha = (style ?: currentSchoolQuizDesignStyle()).tokens().lightBorderAlpha,
     )
 
 @Composable
-fun schoolQuizDesignDeepSurfaceColor(
-    style: SchoolQuizDesignStyle? = null,
-): Color =
+fun schoolQuizDesignDeepSurfaceColor(style: SchoolQuizDesignStyle? = null): Color =
     MaterialTheme.colorScheme.surface
         .copy(alpha = (style ?: currentSchoolQuizDesignStyle()).tokens().deepSurfaceAlpha)
         .compositeOver(Color.Black)
 
 @Composable
-fun schoolQuizDesignGroupSurfaceColor(
-    style: SchoolQuizDesignStyle? = null,
-): Color {
+fun schoolQuizDesignGroupSurfaceColor(style: SchoolQuizDesignStyle? = null): Color {
     (style ?: currentSchoolQuizDesignStyle()).tokens()
     return MaterialTheme.colorScheme.surface
 }
@@ -141,6 +133,10 @@ fun SchoolQuizDesignBackground(
     style: SchoolQuizDesignStyle? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val edgeSurface =
+        MaterialTheme.colorScheme.surface
+            .copy(alpha = 0.34f)
+            .compositeOver(Color.Black)
     val centerGlow =
         schoolQuizDesignCenterGlowColor(
             isHard = isHard,
@@ -152,9 +148,9 @@ fun SchoolQuizDesignBackground(
             modifier
                 .background(
                     Brush.verticalGradient(
-                        0f to Color.Black,
+                        0f to edgeSurface,
                         0.52f to centerGlow,
-                        1f to Color.Black,
+                        1f to edgeSurface,
                     ),
                 ),
         content = content,
@@ -162,6 +158,7 @@ fun SchoolQuizDesignBackground(
 }
 
 @Composable
+@Suppress("LongParameterList")
 fun SchoolQuizDesignCard(
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary,
@@ -446,6 +443,7 @@ private fun SchoolQuizDesignProgressMarker(
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
+@Suppress("UnusedPrivateMember")
 private fun SchoolQuizDesignPreview() {
     SchoolQuizTheme {
         SchoolQuizDesignBackground(

@@ -9,6 +9,18 @@ import kotlinx.coroutines.tasks.await
 class FirebaseSectionRemoteDataSource(
     private val firestore: FirebaseFirestore,
 ) : SectionRemoteDataSource {
+    override suspend fun fetchByIds(ids: Set<String>): List<SectionDto> {
+        if (ids.isEmpty()) return emptyList()
+        return ids.mapNotNull { id ->
+            firestore.collection("sections")
+                .document(id)
+                .get()
+                .await()
+                .takeIf { it.exists() }
+                ?.toSectionDto()
+        }
+    }
+
     override suspend fun fetchChangedByParents(
         questIds: Set<String>,
         cursor: Long,

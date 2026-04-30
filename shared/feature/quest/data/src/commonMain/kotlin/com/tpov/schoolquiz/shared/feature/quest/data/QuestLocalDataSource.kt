@@ -9,6 +9,7 @@ interface QuestLocalDataSource {
     fun observeByShelf(shelf: String): Flow<List<QuestEntity>>
     fun observeByCatalog(catalogId: String, shelf: String): Flow<List<QuestEntity>>
     suspend fun upsertByIdIfNewerVersion(entity: QuestEntity)
+    suspend fun upsertFromSyncList(entity: QuestEntity) = upsertByIdIfNewerVersion(entity)
     suspend fun deleteById(id: String)
     suspend fun findById(id: String): QuestEntity?
 }
@@ -28,6 +29,9 @@ class QuestLocalDataSourceImpl(
 
     override suspend fun upsertByIdIfNewerVersion(entity: QuestEntity) =
         dao.upsertByIdIfNewerVersion(entity)
+
+    override suspend fun upsertFromSyncList(entity: QuestEntity) =
+        dao.upsertFromSyncList(entity)
 
     override suspend fun deleteById(id: String) = dao.deleteById(id)
 

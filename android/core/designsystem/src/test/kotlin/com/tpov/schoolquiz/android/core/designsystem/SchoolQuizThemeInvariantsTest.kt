@@ -25,6 +25,9 @@ class SchoolQuizThemeInvariantsTest {
             .map { it.relativeTo(sourceRoot).path }
             .toList()
 
-        assertFalse(violations.isNotEmpty(), "lightColorScheme found in: $violations — dark-only per ADR-0010 (spec NFR #4)")
+        assertFalse(
+            violations.isNotEmpty(),
+            "lightColorScheme found in: $violations — dark-only per ADR-0010 (spec NFR #4)",
+        )
     }
 }

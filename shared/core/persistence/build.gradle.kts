@@ -22,6 +22,7 @@ kotlin {
             implementation(libs.androidx.sqlite.bundled)
             implementation(project(":shared:core:question-schema"))
             implementation(project(":shared:core:leaderboard"))
+            implementation(project(":shared:core:sync"))
             implementation(libs.kotlinx.serialization.json)
         }
         androidMain.dependencies {
@@ -44,5 +45,4 @@ dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspJvm", libs.androidx.room.compiler)
 }
-
 

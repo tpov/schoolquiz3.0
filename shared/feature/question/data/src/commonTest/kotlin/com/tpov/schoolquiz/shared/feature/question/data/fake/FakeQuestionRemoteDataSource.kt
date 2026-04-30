@@ -10,6 +10,16 @@ class FakeQuestionRemoteDataSource : QuestionRemoteDataSource {
     var callCount: Int = 0
     var lastLessonIds: Set<String> = emptySet()
     var lastCursor: Long = -1L
+    var fetchByIdsResult: List<QuestionDto> = emptyList()
+    var fetchByIdsCallCount: Int = 0
+    var lastFetchByIds: Set<String> = emptySet()
+
+    override suspend fun fetchByIds(ids: Set<String>): List<QuestionDto> {
+        fetchByIdsCallCount++
+        lastFetchByIds = ids
+        if (shouldThrow) throw RuntimeException("FakeQuestionRemoteDataSource: network error")
+        return fetchByIdsResult
+    }
 
     override suspend fun fetchChangedByParents(lessonIds: Set<String>, cursor: Long): List<QuestionDto> {
         callCount++

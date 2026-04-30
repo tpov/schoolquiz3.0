@@ -29,6 +29,11 @@ interface SectionRepository {
     suspend fun getById(id: SectionId): Section?
 
     /**
+     * Pulls concrete sections by id for sync-list based refresh.
+     */
+    suspend fun refreshByIds(ids: Set<SectionId>): Result<Unit> = Result.success(Unit)
+
+    /**
      * Pulls sections for the given [questIds] from remote and persists them locally.
      *
      * Implements cascading sync step 3: for quests whose contentsVersion grew,

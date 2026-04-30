@@ -17,7 +17,6 @@ kotlin {
             implementation(project(":shared:feature:theme:domain"))
             implementation(project(":shared:feature:lesson:domain"))
             implementation(project(":shared:feature:question:domain"))
-            implementation(project(":shared:feature:app-shell:domain"))
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)

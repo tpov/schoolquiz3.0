@@ -61,7 +61,7 @@ fun QuestionProgressHeader(
     val progress = (current.toFloat() / total.toFloat()).coerceIn(0f, 1f)
 
     Box(modifier = modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp)) {
-        RunnerLegacyCard(
+        RunnerDesignCard(
             modifier = Modifier.fillMaxWidth(),
             accentColor = accent,
             elevated = true,
@@ -88,7 +88,7 @@ fun QuestionProgressHeader(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    RunnerLegacyChip(
+                    RunnerDesignChip(
                         text = "${(remainingMs + 999L) / 1000L}s",
                         color = MaterialTheme.colorScheme.secondary,
                     )

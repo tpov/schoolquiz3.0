@@ -48,7 +48,7 @@ fun RatingPromptSection(
         }
     }
 
-    RunnerLegacyCard(
+    RunnerDesignCard(
         modifier = modifier.fillMaxWidth(),
         accentColor = MaterialTheme.colorScheme.secondary,
     ) {

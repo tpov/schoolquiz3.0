@@ -157,7 +157,8 @@ class DefaultLessonListComponentTest {
      * Spec: LL-U-04 edge case — onLessonClick with hardUnlocked=true + isHardChecked=true pushes HARD mode.
      */
     @Test
-    fun `onLessonClick pushes LessonRunner with HARD mode when hardUnlocked and isHardChecked`() = runTest(testScheduler) {
+    fun `onLessonClick pushes LessonRunner with HARD mode when hardUnlocked and isHardChecked`() =
+        runTest(testScheduler) {
         val component = buildComponent(titles = listOf("Math", "Quest 1", "Section A", "Theme A"))
         val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = true, isHardChecked = true)
 

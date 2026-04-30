@@ -45,6 +45,9 @@ interface QuestDao {
     @Query("SELECT * FROM quests WHERE id = :id")
     suspend fun findById(id: String): QuestEntity?
 
+    @Query("SELECT COUNT(*) FROM catalogs WHERE id = :id")
+    suspend fun catalogCount(id: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(entity: QuestEntity)
 
@@ -56,6 +59,23 @@ interface QuestDao {
         }
     }
 
+    @Transaction
+    suspend fun upsertFromSyncList(entity: QuestEntity) {
+        if (catalogCount(entity.catalogId) == 0) {
+            deleteById(entity.id)
+            return
+        }
+        val existing = findById(entity.id)
+        if (existing == null || existing.shouldBeReplacedBySyncList(entity)) {
+            insertOrReplace(entity)
+        }
+    }
+
     @Query("DELETE FROM quests WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    private fun QuestEntity.shouldBeReplacedBySyncList(incoming: QuestEntity): Boolean =
+        version < incoming.version ||
+            lastModifiedAt < incoming.lastModifiedAt ||
+            (lastModifiedAt == incoming.lastModifiedAt && this != incoming)
 }

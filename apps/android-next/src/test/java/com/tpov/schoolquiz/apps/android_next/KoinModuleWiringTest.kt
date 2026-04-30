@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.stats.RawUserStats
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
 import com.tpov.schoolquiz.shared.feature.app_shell.data.AuthRepositoryImpl
@@ -79,7 +80,6 @@ import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepos
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
-import androidx.work.WorkManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -141,8 +141,12 @@ class KoinModuleWiringTest : KoinTest {
         }
     }
 
-    private val testWorkManagerModule = module {
-        single<WorkManager> { mock(WorkManager::class.java) }
+    private val testSyncSchedulerModule = module {
+        single<SyncScheduler> {
+            object : SyncScheduler {
+                override fun enqueueManualSync() = Unit
+            }
+        }
     }
 
     private val testRepositoryStubsModule = module {
@@ -300,7 +304,7 @@ class KoinModuleWiringTest : KoinTest {
             modules(
                 testDataSourceModule,
                 testDaoModule,
-                testWorkManagerModule,
+                testSyncSchedulerModule,
                 testRepositoryStubsModule,
                 appShellDataModule(),
                 questDomainModule,
@@ -348,7 +352,9 @@ class KoinModuleWiringTest : KoinTest {
             observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = fakeRepo,
-            workManager = mock(WorkManager::class.java),
+            syncScheduler = object : SyncScheduler {
+                override fun enqueueManualSync() = Unit
+            },
             homeQuestsFactory = { _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
@@ -425,7 +431,9 @@ class KoinModuleWiringTest : KoinTest {
             observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = fakeRepo,
-            workManager = mock(WorkManager::class.java),
+            syncScheduler = object : SyncScheduler {
+                override fun enqueueManualSync() = Unit
+            },
             homeQuestsFactory = { _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())

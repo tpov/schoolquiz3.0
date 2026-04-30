@@ -47,6 +47,14 @@ interface CatalogRepository {
     suspend fun refreshFromRemote(): Result<Set<CatalogId>>
 
     /**
+     * Pulls concrete catalogs by id for sync-list based refresh.
+     *
+     * Default keeps older tests/fakes source-compatible; production repositories
+     * override it.
+     */
+    suspend fun refreshByIds(ids: Set<CatalogId>): Result<Unit> = Result.success(Unit)
+
+    /**
      * Returns a single catalog by id from the local cache, or `null` if
      * the id is not present.
      *

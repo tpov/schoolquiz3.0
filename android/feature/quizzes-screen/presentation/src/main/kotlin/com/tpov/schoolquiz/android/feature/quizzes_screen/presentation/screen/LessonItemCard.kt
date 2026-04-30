@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +15,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
+import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignChip
 import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
+import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignModeAccent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
@@ -55,17 +56,21 @@ fun LessonItemCard(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (item.hardUnlocked) {
+                SchoolQuizDesignChip(
+                    text = if (item.isHardChecked) "Сложный" else "Легкий",
+                    color = schoolQuizDesignModeAccent(isHard = item.isHardChecked),
+                    modifier =
+                        Modifier
+                            .padding(start = 8.dp)
+                            .clickable { onHardCheckChanged(!item.isHardChecked) },
+                )
+            }
             StarRating(
                 rating = item.bestStarsRawTenths / 10f,
                 modifier = Modifier.padding(start = 8.dp),
                 size = 28.dp,
             )
-            if (item.hardUnlocked) {
-                Checkbox(
-                    checked = item.isHardChecked,
-                    onCheckedChange = onHardCheckChanged,
-                )
-            }
         }
     }
 }

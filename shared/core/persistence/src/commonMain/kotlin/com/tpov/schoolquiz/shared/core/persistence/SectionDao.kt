@@ -20,6 +20,9 @@ interface SectionDao {
     @Query("SELECT * FROM sections WHERE id = :id")
     suspend fun findById(id: String): SectionEntity?
 
+    @Query("SELECT COUNT(*) FROM quests WHERE id = :id")
+    suspend fun questCount(id: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(entity: SectionEntity)
 
@@ -31,9 +34,26 @@ interface SectionDao {
         }
     }
 
+    @Transaction
+    suspend fun upsertFromSyncList(entity: SectionEntity) {
+        if (questCount(entity.questId) == 0) {
+            deleteById(entity.id)
+            return
+        }
+        val existing = findById(entity.id)
+        if (existing == null || existing.shouldBeReplacedBySyncList(entity)) {
+            insertOrReplace(entity)
+        }
+    }
+
     @Query("DELETE FROM sections WHERE id = :id")
     suspend fun deleteById(id: String)
 
     @Query("SELECT contentsVersion FROM sections WHERE id = :id")
     suspend fun getContentsVersion(id: String): Long?
+
+    private fun SectionEntity.shouldBeReplacedBySyncList(incoming: SectionEntity): Boolean =
+        version < incoming.version ||
+            lastModifiedAt < incoming.lastModifiedAt ||
+            (lastModifiedAt == incoming.lastModifiedAt && this != incoming)
 }

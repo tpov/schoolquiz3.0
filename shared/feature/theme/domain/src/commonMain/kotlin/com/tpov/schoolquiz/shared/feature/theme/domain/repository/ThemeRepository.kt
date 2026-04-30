@@ -26,6 +26,11 @@ interface ThemeRepository {
     suspend fun getById(id: ThemeId): Theme?
 
     /**
+     * Pulls concrete themes by id for sync-list based refresh.
+     */
+    suspend fun refreshByIds(ids: Set<ThemeId>): Result<Unit> = Result.success(Unit)
+
+    /**
      * Pulls themes for the given [sectionIds] from remote and persists locally.
      *
      * Implements cascading sync step 4: fetch with

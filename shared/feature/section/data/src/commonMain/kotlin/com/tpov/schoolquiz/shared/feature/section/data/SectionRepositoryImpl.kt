@@ -24,6 +24,30 @@ class SectionRepositoryImpl(
     override suspend fun getLocalContentsVersion(id: SectionId): Long? =
         local.getLocalContentsVersion(id.value)
 
+    override suspend fun refreshByIds(ids: Set<SectionId>): Result<Unit> {
+        if (ids.isEmpty()) return Result.success(Unit)
+        return try {
+            val requested = ids.map { it.value }.toSet()
+            val dtos = remote.fetchByIds(requested)
+            val returned = dtos.map { it.id }.toSet()
+            for (missingId in requested - returned) {
+                local.deleteById(missingId)
+            }
+            for (dto in dtos) {
+                if (dto.archived) {
+                    local.deleteById(dto.id)
+                } else {
+                    local.upsertFromSyncList(dto.toEntity())
+                }
+            }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun refreshByParents(questIds: Set<QuestId>, cursor: Long): Result<Set<SectionId>> {
         if (questIds.isEmpty()) return Result.success(emptySet())
         return try {

@@ -16,6 +16,9 @@ interface ThemeDao {
     @Query("SELECT * FROM themes WHERE id = :id")
     suspend fun findById(id: String): ThemeEntity?
 
+    @Query("SELECT COUNT(*) FROM sections WHERE id = :id")
+    suspend fun sectionCount(id: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(entity: ThemeEntity)
 
@@ -27,9 +30,26 @@ interface ThemeDao {
         }
     }
 
+    @Transaction
+    suspend fun upsertFromSyncList(entity: ThemeEntity) {
+        if (sectionCount(entity.sectionId) == 0) {
+            deleteById(entity.id)
+            return
+        }
+        val existing = findById(entity.id)
+        if (existing == null || existing.shouldBeReplacedBySyncList(entity)) {
+            insertOrReplace(entity)
+        }
+    }
+
     @Query("DELETE FROM themes WHERE id = :id")
     suspend fun deleteById(id: String)
 
     @Query("SELECT contentsVersion FROM themes WHERE id = :id")
     suspend fun getContentsVersion(id: String): Long?
+
+    private fun ThemeEntity.shouldBeReplacedBySyncList(incoming: ThemeEntity): Boolean =
+        version < incoming.version ||
+            lastModifiedAt < incoming.lastModifiedAt ||
+            (lastModifiedAt == incoming.lastModifiedAt && this != incoming)
 }

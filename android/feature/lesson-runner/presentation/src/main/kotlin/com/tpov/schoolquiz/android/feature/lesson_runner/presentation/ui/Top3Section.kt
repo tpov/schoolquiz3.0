@@ -76,7 +76,7 @@ private fun TopParticipantCard(
         } else {
             MaterialTheme.colorScheme.primary
         }
-    RunnerLegacyCard(
+    RunnerDesignCard(
         modifier = modifier.fillMaxWidth(),
         accentColor = rankColor,
         containerColor = runnerDeepSurfaceColor(),
@@ -131,7 +131,7 @@ private fun ParticipantPercent(
     modifier: Modifier = Modifier,
 ) {
     if (highlighted) {
-        RunnerLegacyChip(
+        RunnerDesignChip(
             text = "$percent%",
             color = color,
             modifier = modifier,

@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.question.data.dto.QuestionDto
 import com.tpov.schoolquiz.shared.feature.question.data.fake.FakeQuestionLocalDataSource
 import com.tpov.schoolquiz.shared.feature.question.data.fake.FakeQuestionRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -153,5 +154,41 @@ class QuestionRepositoryImplTest {
         assertEquals(1, fakeLocal.upsertCallsFor["q1"] ?: 0)
         assertEquals(1, fakeLocal.upsertCallsFor["q2"] ?: 0)
         assertEquals(1, fakeLocal.upsertCallsFor["q3"] ?: 0)
+    }
+
+    @Test
+    fun `refreshByIds preserves imageUrl payload from concrete question`() = runTest {
+        val payload = """{"imageUrl":"https://example.com/question.jpg"}"""
+        fakeRemote.fetchByIdsResult = listOf(makeDto(id = "q-image", payload = payload, version = 2L))
+
+        val result = repository.refreshByIds(setOf(QuestionId("q-image")))
+
+        assertTrue(result.isSuccess)
+        assertEquals(setOf("q-image"), fakeRemote.lastFetchByIds)
+        assertEquals(payload, fakeLocal.findById("q-image")?.payload)
+    }
+
+    @Test
+    fun `refreshByIds deletes local question when requested id is missing remotely`() = runTest {
+        fakeLocal.seed(listOf(makeEntity("q-missing", version = 1L)))
+        fakeRemote.fetchByIdsResult = emptyList()
+
+        val result = repository.refreshByIds(setOf(QuestionId("q-missing")))
+
+        assertTrue(result.isSuccess)
+        assertTrue(fakeLocal.deletedIds.contains("q-missing"))
+        assertNull(fakeLocal.findById("q-missing"))
+    }
+
+    @Test
+    fun `refreshByIds deletes archived concrete question`() = runTest {
+        fakeLocal.seed(listOf(makeEntity("q-archived", version = 1L)))
+        fakeRemote.fetchByIdsResult = listOf(makeDto(id = "q-archived", version = 2L, archived = true))
+
+        val result = repository.refreshByIds(setOf(QuestionId("q-archived")))
+
+        assertTrue(result.isSuccess)
+        assertTrue(fakeLocal.deletedIds.contains("q-archived"))
+        assertNull(fakeLocal.findById("q-archived"))
     }
 }

@@ -19,6 +19,13 @@ service cloud.firestore {
       // Public read — catalogs are static categories shown to all users incl. guests.
       allow read: if true;
       allow write: if isAdmin();
+
+      // Tiny per-catalog change records used by offline-first sync.
+      // Real content is still read from the flat collections below by document ID.
+      match /sync_changes/{changeId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+      }
     }
 
     match /quests/{questId} {

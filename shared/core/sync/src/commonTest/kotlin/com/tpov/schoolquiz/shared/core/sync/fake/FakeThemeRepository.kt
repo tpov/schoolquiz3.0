@@ -13,6 +13,8 @@ class FakeThemeRepository : ThemeRepository {
     private val cache = MutableStateFlow<Map<ThemeId, Theme>>(emptyMap())
 
     var refreshCallCount = 0
+    var refreshByIdsCallCount = 0
+    var lastRefreshByIds: Set<ThemeId> = emptySet()
     private var nextRefreshFailure: Throwable? = null
     private var nextRefreshChangedOverride: Set<ThemeId>? = null
 
@@ -31,6 +33,12 @@ class FakeThemeRepository : ThemeRepository {
         return Result.success(nextRefreshChangedOverride ?: emptySet())
     }
 
+    override suspend fun refreshByIds(ids: Set<ThemeId>): Result<Unit> {
+        refreshByIdsCallCount++
+        lastRefreshByIds = ids
+        return Result.success(Unit)
+    }
+
     override suspend fun getLocalContentsVersion(id: ThemeId): Long? =
         cache.value[id]?.contentsVersion
 
@@ -40,6 +48,8 @@ class FakeThemeRepository : ThemeRepository {
 
     fun resetAll() {
         refreshCallCount = 0
+        refreshByIdsCallCount = 0
+        lastRefreshByIds = emptySet()
         nextRefreshFailure = null
         nextRefreshChangedOverride = null
         cache.value = emptyMap()

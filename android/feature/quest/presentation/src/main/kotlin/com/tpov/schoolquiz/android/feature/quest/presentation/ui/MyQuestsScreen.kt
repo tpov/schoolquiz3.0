@@ -10,8 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tpov.schoolquiz.android.core.designsystem.components.BrandSquareIconButton
 import com.tpov.schoolquiz.android.core.designsystem.components.CatalogSpinner
 import com.tpov.schoolquiz.android.core.designsystem.components.QuestCard
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
@@ -97,14 +96,14 @@ fun MyQuestsScreen(
             }
         }
 
-        FloatingActionButton(
+        BrandSquareIconButton(
+            icon = Icons.Default.Add,
+            contentDescription = "Создать квест",
             onClick = component::onCreateQuestClick,
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Создать квест")
-        }
+        )
     }
 }

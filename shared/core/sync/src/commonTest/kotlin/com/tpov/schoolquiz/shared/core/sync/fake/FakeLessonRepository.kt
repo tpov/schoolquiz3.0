@@ -13,6 +13,8 @@ class FakeLessonRepository : LessonRepository {
     private val cache = MutableStateFlow<Map<LessonId, Lesson>>(emptyMap())
 
     var refreshCallCount = 0
+    var refreshByIdsCallCount = 0
+    var lastRefreshByIds: Set<LessonId> = emptySet()
     private var nextRefreshFailure: Throwable? = null
     private var nextRefreshChangedOverride: Set<LessonId>? = null
 
@@ -31,6 +33,12 @@ class FakeLessonRepository : LessonRepository {
         return Result.success(nextRefreshChangedOverride ?: emptySet())
     }
 
+    override suspend fun refreshByIds(ids: Set<LessonId>): Result<Unit> {
+        refreshByIdsCallCount++
+        lastRefreshByIds = ids
+        return Result.success(Unit)
+    }
+
     override suspend fun getLocalContentsVersion(id: LessonId): Long? =
         cache.value[id]?.contentsVersion
 
@@ -40,6 +48,8 @@ class FakeLessonRepository : LessonRepository {
 
     fun resetAll() {
         refreshCallCount = 0
+        refreshByIdsCallCount = 0
+        lastRefreshByIds = emptySet()
         nextRefreshFailure = null
         nextRefreshChangedOverride = null
         cache.value = emptyMap()

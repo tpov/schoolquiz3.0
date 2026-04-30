@@ -1,20 +1,20 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.runtime.collectAsState
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
+import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignBackground
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
@@ -30,7 +30,6 @@ fun QuizzesScreen(component: QuizzesComponent) {
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .clickable(
                     enabled = false,
                     indication = null,
@@ -38,6 +37,11 @@ fun QuizzesScreen(component: QuizzesComponent) {
                 ) {},
     ) {
         if (active !is QuizzesChild.Idle && active !is QuizzesChild.LessonRunner) {
+            SchoolQuizDesignBackground(
+                isHard = false,
+                accentColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxSize(),
+            ) {}
             FloatingIconsLayer(
                 modifier = Modifier.fillMaxSize(),
                 icons = iconSet,

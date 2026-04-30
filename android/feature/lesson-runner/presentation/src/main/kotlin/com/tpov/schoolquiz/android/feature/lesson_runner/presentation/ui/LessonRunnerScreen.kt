@@ -131,7 +131,7 @@ fun LessonRunnerScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
-        RunnerLegacyBackground(
+        RunnerDesignBackground(
             isHard = isHard,
             modifier = Modifier.fillMaxSize().padding(innerPadding),
             accentColor = backgroundAccent,

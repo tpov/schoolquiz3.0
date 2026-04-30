@@ -28,7 +28,7 @@ val appShellPresentationModule =
                 observeUseCase = get(),
                 retapUseCase = get(),
                 userStatsRepository = get(),
-                workManager = get(),
+                syncScheduler = get(),
                 myQuestsFactory = { compCtx, nav, onQuestDrillDown ->
                     koin.get(MyQuestsComponent::class, parameters = { parametersOf(compCtx, nav, onQuestDrillDown) })
                 },

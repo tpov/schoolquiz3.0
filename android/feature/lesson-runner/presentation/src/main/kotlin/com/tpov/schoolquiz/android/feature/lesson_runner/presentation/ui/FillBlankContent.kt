@@ -80,7 +80,7 @@ fun FillBlankContent(
             )
         },
     ) {
-        RunnerLegacyCard(
+        RunnerDesignCard(
             modifier = Modifier.fillMaxWidth(),
             accentColor = MaterialTheme.colorScheme.primary,
         ) {

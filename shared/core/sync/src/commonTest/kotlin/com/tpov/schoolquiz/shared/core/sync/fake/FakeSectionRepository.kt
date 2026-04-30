@@ -19,6 +19,8 @@ class FakeSectionRepository : SectionRepository {
     private val cache = MutableStateFlow<Map<SectionId, Section>>(emptyMap())
 
     var refreshCallCount = 0
+    var refreshByIdsCallCount = 0
+    var lastRefreshByIds: Set<SectionId> = emptySet()
     var captureRefreshBatches = false
     val batchedRefreshCalls = mutableListOf<Set<QuestId>>()
 
@@ -42,6 +44,12 @@ class FakeSectionRepository : SectionRepository {
         return Result.success(nextRefreshChangedOverride ?: emptySet())
     }
 
+    override suspend fun refreshByIds(ids: Set<SectionId>): Result<Unit> {
+        refreshByIdsCallCount++
+        lastRefreshByIds = ids
+        return Result.success(Unit)
+    }
+
     override suspend fun getLocalContentsVersion(id: SectionId): Long? =
         cache.value[id]?.contentsVersion
 
@@ -52,6 +60,8 @@ class FakeSectionRepository : SectionRepository {
 
     fun resetAll() {
         refreshCallCount = 0
+        refreshByIdsCallCount = 0
+        lastRefreshByIds = emptySet()
         captureRefreshBatches = false
         batchedRefreshCalls.clear()
         nextRefreshFailure = null

@@ -283,13 +283,13 @@ private fun PreviewAnswer(
 private val SchoolQuizDesignStyle.title: String
     get() =
         when (this) {
-            SchoolQuizDesignStyle.MainLegacy -> "Основной"
+            SchoolQuizDesignStyle.Main -> "Основной"
         }
 
 private val SchoolQuizDesignStyle.caption: String
     get() =
         when (this) {
-            SchoolQuizDesignStyle.MainLegacy -> "Тёмные карточки, белые контуры и цветной акцент"
+            SchoolQuizDesignStyle.Main -> "Тёмные карточки, белые контуры и цветной акцент"
         }
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
@@ -297,7 +297,7 @@ private val SchoolQuizDesignStyle.caption: String
 private fun DesignSettingsScreenPreview() {
     SchoolQuizTheme {
         DesignSettingsScreen(
-            selectedStyle = SchoolQuizDesignStyle.MainLegacy,
+            selectedStyle = SchoolQuizDesignStyle.Main,
             onStyleSelected = {},
         )
     }

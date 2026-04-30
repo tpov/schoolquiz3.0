@@ -27,6 +27,8 @@ class FakeQuestRepository : QuestRepository {
     var lastRefreshCatalogIds: Set<CatalogId> = emptySet()
     var lastRefreshShelves: Set<String> = emptySet()
     var lastRefreshCursor: Long = 0L
+    var refreshByIdsCallCount = 0
+    var lastRefreshByIds: Set<QuestId> = emptySet()
 
     private var nextRefreshFailure: Throwable? = null
     private var nextRefreshChangedOverride: Set<QuestId>? = null
@@ -89,6 +91,12 @@ class FakeQuestRepository : QuestRepository {
         return Result.success(nextRefreshChangedOverride ?: emptySet())
     }
 
+    override suspend fun refreshByIds(ids: Set<QuestId>): Result<Unit> {
+        refreshByIdsCallCount++
+        lastRefreshByIds = ids
+        return Result.success(Unit)
+    }
+
     fun setNextRefreshFailure(error: Throwable) { nextRefreshFailure = error }
     fun setNextRefreshChanged(ids: Set<QuestId>) { nextRefreshChangedOverride = ids }
     fun seedServerQuests(quests: List<Quest>) { serverQuests = quests }
@@ -101,6 +109,8 @@ class FakeQuestRepository : QuestRepository {
         lastRefreshCatalogIds = emptySet()
         lastRefreshShelves = emptySet()
         lastRefreshCursor = 0L
+        refreshByIdsCallCount = 0
+        lastRefreshByIds = emptySet()
         nextRefreshFailure = null
         nextRefreshChangedOverride = null
         throwCancellation = false

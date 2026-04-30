@@ -21,6 +21,30 @@ class QuestionRepositoryImpl(
     override suspend fun getById(id: QuestionId): Question? =
         local.findById(id.value)?.toDomain()
 
+    override suspend fun refreshByIds(ids: Set<QuestionId>): Result<Unit> {
+        if (ids.isEmpty()) return Result.success(Unit)
+        return try {
+            val requested = ids.map { it.value }.toSet()
+            val dtos = remote.fetchByIds(requested)
+            val returned = dtos.map { it.id }.toSet()
+            for (missingId in requested - returned) {
+                local.deleteById(missingId)
+            }
+            for (dto in dtos) {
+                if (dto.archived) {
+                    local.deleteById(dto.id)
+                } else {
+                    local.upsertFromSyncList(dto.toEntity())
+                }
+            }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun refreshByParents(lessonIds: Set<LessonId>, cursor: Long): Result<Unit> {
         if (lessonIds.isEmpty()) return Result.success(Unit)
         return try {

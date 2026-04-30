@@ -38,12 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tpov.schoolquiz.android.core.designsystem.LegacyContour
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
@@ -126,7 +124,7 @@ fun ResultContent(
                 modifier = Modifier.fillMaxWidth(),
             )
             if (state.saveWarning) {
-                RunnerLegacyCard(
+                RunnerDesignCard(
                     modifier = Modifier.fillMaxWidth(),
                     accentColor = MaterialTheme.colorScheme.error,
                     elevated = true,
@@ -178,7 +176,7 @@ private fun ResultSummaryCard(
         shape = MaterialTheme.shapes.medium,
         color = runnerCenterGlowColor(isHard = isHard),
         contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(1.dp, LegacyContour),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)),
         tonalElevation = 0.dp,
         shadowElevation = 2.dp,
     ) {
@@ -419,7 +417,7 @@ private fun ResultMetricCard(
     accent: Color,
     modifier: Modifier = Modifier,
 ) {
-    RunnerLegacyCard(
+    RunnerDesignCard(
         modifier = modifier.fillMaxWidth(),
         accentColor = accent,
         containerColor = runnerDeepSurfaceColor(),

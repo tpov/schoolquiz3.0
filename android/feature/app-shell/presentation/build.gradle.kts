@@ -15,10 +15,9 @@ dependencies {
     implementation(project(":shared:core:foundation"))
     implementation(project(":shared:core:catalog:domain"))
     implementation(project(":shared:feature:qualification:domain"))
-    implementation(project(":platform:android-services"))
+    implementation(project(":shared:core:sync"))
     implementation(project(":android:core:navigation"))
     implementation(project(":android:core:designsystem"))
-    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)

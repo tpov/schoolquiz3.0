@@ -9,6 +9,18 @@ import kotlinx.coroutines.tasks.await
 class FirebaseQuestRemoteDataSource(
     private val firestore: FirebaseFirestore,
 ) : QuestRemoteDataSource {
+    override suspend fun fetchByIds(ids: Set<String>): List<QuestDto> {
+        if (ids.isEmpty()) return emptyList()
+        return ids.mapNotNull { id ->
+            firestore.collection("quests")
+                .document(id)
+                .get()
+                .await()
+                .takeIf { it.exists() }
+                ?.toQuestDto()
+        }
+    }
+
     override suspend fun fetchOwnChanged(
         authorUid: String,
         catalogIds: Set<String>,

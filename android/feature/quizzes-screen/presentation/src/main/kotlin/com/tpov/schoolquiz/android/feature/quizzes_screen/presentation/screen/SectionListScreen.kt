@@ -1,8 +1,11 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,7 +39,14 @@ fun SectionListScreen(
     val lazyListState = rememberLazyListState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        BreadcrumbBar(titles = component.titles, onSegmentClick = onSegmentClick)
+        BreadcrumbBar(
+            titles = component.titles,
+            onSegmentClick = onSegmentClick,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+        )
         when (val state = uiState) {
             is HierarchyListUiState.Loading ->
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -51,14 +61,17 @@ fun SectionListScreen(
                     )
                 }
             is HierarchyListUiState.Loaded ->
-                LazyColumn(state = lazyListState) {
+                LazyColumn(
+                    state = lazyListState,
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     items(state.items, key = { it.id }) { item ->
                         HierarchyItemCard(
                             title = item.title,
                             orderLabel = item.orderLabel,
                             subtitleCount = item.subtitleCount,
                             onClick = { component.onSectionClick(item) },
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         )
                     }
                 }

@@ -29,6 +29,11 @@ interface QuestionRepository {
     suspend fun getById(id: QuestionId): Question?
 
     /**
+     * Pulls concrete questions by id for sync-list based refresh.
+     */
+    suspend fun refreshByIds(ids: Set<QuestionId>): Result<Unit> = Result.success(Unit)
+
+    /**
      * Pulls questions for the given [lessonIds] from remote and persists locally.
      *
      * Implements cascading sync step 6 (leaf): for lessons whose contentsVersion

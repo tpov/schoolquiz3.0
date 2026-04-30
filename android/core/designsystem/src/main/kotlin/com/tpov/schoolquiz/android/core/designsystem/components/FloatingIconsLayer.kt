@@ -3,7 +3,14 @@
 package com.tpov.schoolquiz.android.core.designsystem.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,11 +30,13 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import kotlinx.coroutines.isActive
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -46,6 +55,7 @@ private const val INITIAL_STAGGER_MS = 8_000L
 private const val RESPAWN_DELAY_MIN_MS = 1_500L
 private const val RESPAWN_DELAY_MAX_MS = 5_000L
 
+@Suppress("LongParameterList")
 private class IconState(
     var iconIndex: Int,
     var x: Float,
@@ -58,7 +68,7 @@ private class IconState(
     var spawnAtNs: Long,
 )
 
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("CyclomaticComplexMethod", "FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun FloatingIconsLayer(
     icons: List<ImageVector>,
@@ -123,26 +133,27 @@ fun FloatingIconsLayer(
     }
 
     Canvas(
-        modifier = modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        event.changes.forEach { change ->
-                            if (change.pressed && change.positionChanged()) {
-                                applyImpulse(
-                                    icons = sprites,
-                                    touch = change.position,
-                                    radius = impulseRadiusPx,
-                                    strength = impulseStrengthPx,
-                                    iconSize = iconSizePx,
-                                )
+        modifier =
+            modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            event.changes.forEach { change ->
+                                if (change.pressed && change.positionChanged()) {
+                                    applyImpulse(
+                                        icons = sprites,
+                                        touch = change.position,
+                                        radius = impulseRadiusPx,
+                                        strength = impulseStrengthPx,
+                                        iconSize = iconSizePx,
+                                    )
+                                }
                             }
                         }
                     }
-                }
-            },
+                },
     ) {
         @Suppress("UNUSED_VARIABLE", "UnusedPrivateProperty")
         val unused = tick
@@ -222,7 +233,10 @@ private fun spawnFromRandomSide(
     icon.spawnAtNs = 0L
 }
 
-private fun scheduleRespawn(icon: IconState, nowNs: Long) {
+private fun scheduleRespawn(
+    icon: IconState,
+    nowNs: Long,
+) {
     icon.alive = false
     val delayMs = Random.nextLong(RESPAWN_DELAY_MIN_MS, RESPAWN_DELAY_MAX_MS)
     icon.spawnAtNs = nowNs + delayMs * 1_000_000L
@@ -231,6 +245,7 @@ private fun scheduleRespawn(icon: IconState, nowNs: Long) {
     icon.angularVelocity = 0f
 }
 
+@Suppress("LongParameterList")
 private fun stepPhysics(
     icons: MutableList<IconState>,
     nowNs: Long,
@@ -296,6 +311,29 @@ private fun applyImpulse(
             icon.vx += nx * strength * falloff
             icon.vy += ny * strength * falloff
             icon.angularVelocity += (Random.nextFloat() - 0.5f) * 720f * falloff
+        }
+    }
+}
+
+@Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun FloatingIconsLayerPreview() {
+    SchoolQuizTheme {
+        Box(
+            modifier =
+                Modifier
+                    .size(220.dp)
+                    .background(MaterialTheme.colorScheme.surface),
+        ) {
+            FloatingIconsLayer(
+                icons =
+                    listOf(
+                        Icons.Filled.School,
+                        Icons.Filled.Calculate,
+                        Icons.Filled.Science,
+                    ),
+            )
         }
     }
 }

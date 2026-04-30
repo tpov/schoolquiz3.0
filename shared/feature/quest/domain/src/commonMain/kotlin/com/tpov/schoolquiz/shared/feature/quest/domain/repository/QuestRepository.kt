@@ -75,6 +75,14 @@ interface QuestRepository {
     suspend fun getById(id: QuestId): Quest?
 
     /**
+     * Pulls concrete quests by id for sync-list based refresh.
+     *
+     * Default keeps existing fakes source-compatible; production repositories
+     * override it.
+     */
+    suspend fun refreshByIds(ids: Set<QuestId>): Result<Unit> = Result.success(Unit)
+
+    /**
      * Pulls quests from remote for the given filter and persists them locally.
      *
      * **No-op guard**: if [catalogIdsToSync] is empty, returns immediately without

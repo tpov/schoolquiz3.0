@@ -8,6 +8,8 @@ android {
 
 dependencies {
     implementation(project(":shared:core:stats"))
+    implementation(project(":shared:core:sync"))
+    implementation(project(":shared:core:catalog:domain"))
     implementation(project(":shared:core:catalog:data"))
     implementation(project(":shared:feature:quest:data"))
     implementation(project(":shared:feature:section:data"))

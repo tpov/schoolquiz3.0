@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -39,12 +40,15 @@ fun BreadcrumbBar(
     if (titles.isEmpty()) return
 
     val scrollState = rememberScrollState()
+    LaunchedEffect(titles, scrollState.maxValue) {
+        scrollState.scrollTo(scrollState.maxValue)
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             modifier
                 .horizontalScroll(scrollState)
-                .padding(horizontal = 4.dp, vertical = 2.dp),
+                .padding(vertical = 4.dp),
     ) {
         titles.forEachIndexed { index, title ->
             val isLast = index == titles.lastIndex

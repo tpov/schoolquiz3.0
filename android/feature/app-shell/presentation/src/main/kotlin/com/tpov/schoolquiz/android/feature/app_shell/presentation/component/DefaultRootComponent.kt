@@ -1,11 +1,6 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.component
 
 import android.util.Log
-import androidx.work.Constraints
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigation
@@ -20,9 +15,9 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
-import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
@@ -78,7 +73,7 @@ class DefaultRootComponent(
     private val observeUseCase: ObserveAppShellStateUseCase,
     private val retapUseCase: OnTabRetapUseCase,
     private val userStatsRepository: UserStatsRepository,
-    private val workManager: WorkManager,
+    private val syncScheduler: SyncScheduler,
     myQuestsFactory: (ComponentContext, Navigator, (QuestDisplayItem) -> Unit) -> MyQuestsComponent,
     homeQuestsFactory: (ComponentContext, (CatalogId, String) -> Unit) -> HomeQuestsComponent,
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
@@ -267,11 +262,7 @@ class DefaultRootComponent(
     }
 
     override fun onSyncNow() {
-        val request =
-            OneTimeWorkRequestBuilder<SyncWorker>()
-                .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
-                .build()
-        workManager.enqueueUniqueWork(SyncWorker.WORK_NAME_MANUAL, ExistingWorkPolicy.REPLACE, request)
+        syncScheduler.enqueueManualSync()
         sendEvent(RootEvent.SyncStarted)
     }
 

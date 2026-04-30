@@ -18,6 +18,18 @@ class FirebaseCatalogRemoteDataSource(
             .documents
             .mapNotNull { it.toCatalogDto() }
     }
+
+    override suspend fun fetchByIds(ids: Set<String>): List<CatalogDto> {
+        if (ids.isEmpty()) return emptyList()
+        return ids.mapNotNull { id ->
+            firestore.collection("catalogs")
+                .document(id)
+                .get()
+                .await()
+                .takeIf { it.exists() }
+                ?.toCatalogDto()
+        }
+    }
 }
 
 internal fun Long.toTimestamp(): Timestamp = Timestamp(this / 1000L, ((this % 1000L) * 1_000_000L).toInt())

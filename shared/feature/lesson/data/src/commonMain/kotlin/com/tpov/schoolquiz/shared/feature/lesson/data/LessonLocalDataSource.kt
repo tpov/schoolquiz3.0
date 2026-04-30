@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface LessonLocalDataSource {
     fun observeByTheme(themeId: String): Flow<List<LessonEntity>>
     suspend fun upsertByIdIfNewerVersion(entity: LessonEntity)
+    suspend fun upsertFromSyncList(entity: LessonEntity) = upsertByIdIfNewerVersion(entity)
     suspend fun deleteById(id: String)
     suspend fun findById(id: String): LessonEntity?
     suspend fun getLocalContentsVersion(id: String): Long?
@@ -20,6 +21,9 @@ class LessonLocalDataSourceImpl(
 
     override suspend fun upsertByIdIfNewerVersion(entity: LessonEntity) =
         dao.upsertByIdIfNewerVersion(entity)
+
+    override suspend fun upsertFromSyncList(entity: LessonEntity) =
+        dao.upsertFromSyncList(entity)
 
     override suspend fun deleteById(id: String) = dao.deleteById(id)
 

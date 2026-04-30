@@ -14,15 +14,18 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -40,7 +43,9 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.catalog.DesignCatalogScreen
+import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignBackground
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
+import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.InternetScreenComponent
@@ -96,7 +101,7 @@ fun AppShellScreen(
     rootComponent: DefaultRootComponent,
     appVersionName: String,
     isDebugBuild: Boolean = false,
-    selectedDesignStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.MainLegacy,
+    selectedDesignStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.Main,
     onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -195,12 +200,21 @@ fun AppShellScreen(
                                     }
                                 }
                             },
+                            colors =
+                                TopAppBarDefaults.topAppBarColors(
+                                    containerColor = schoolQuizDesignDeepSurfaceColor(),
+                                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                                    navigationIconContentColor = MaterialTheme.colorScheme.primary,
+                                ),
                         )
                     }
                 },
                 bottomBar = {
                     if (!isRunnerActive) {
-                        NavigationBar {
+                        NavigationBar(
+                            containerColor = schoolQuizDesignDeepSurfaceColor(),
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ) {
                             Tab.entries.forEach { tab ->
                                 BrandNavBarItem(
                                     tab = tab,
@@ -225,8 +239,13 @@ fun AppShellScreen(
                     }
                 },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
+                containerColor = MaterialTheme.colorScheme.background,
             ) { paddingValues ->
-                Box(modifier = Modifier.fillMaxSize()) {
+                SchoolQuizDesignBackground(
+                    isHard = false,
+                    accentColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                     AppShellContent(
                         rootComponent = rootComponent,
                         activeTab = state.activeTab,
@@ -330,6 +349,14 @@ private fun RowScope.BrandNavBarItem(
         icon = { Icon(tab.icon, contentDescription = tab.displayName) },
         label = { Text(tab.displayName) },
         modifier = modifier,
+        colors =
+            NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.primary,
+                selectedTextColor = MaterialTheme.colorScheme.primary,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
+                unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
+                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+            ),
     )
 }
 

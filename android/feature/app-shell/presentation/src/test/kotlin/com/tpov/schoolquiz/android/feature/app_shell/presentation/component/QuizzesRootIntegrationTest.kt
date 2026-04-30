@@ -16,7 +16,7 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeWorkManager
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsComponent
@@ -196,7 +196,7 @@ class QuizzesRootIntegrationTest {
         observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
-        workManager = FakeWorkManager().workManager,
+        syncScheduler = FakeSyncScheduler(),
         homeQuestsFactory = { ctx, onCatalogDrillDown ->
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
@@ -232,7 +232,7 @@ class QuizzesRootIntegrationTest {
         observeUseCase = ObserveAppShellStateUseCase(FakeUserStatsRepository()),
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = FakeUserStatsRepository(),
-        workManager = FakeWorkManager().workManager,
+        syncScheduler = FakeSyncScheduler(),
         homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         quizzesFactory = { ctx ->

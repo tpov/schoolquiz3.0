@@ -72,7 +72,7 @@ internal fun QuestionInfoDialog(
                     .padding(horizontal = 24.dp),
             contentAlignment = Alignment.Center,
         ) {
-            RunnerLegacyCard(
+            RunnerDesignCard(
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = runnerDeepSurfaceColor(),
                 borderColor = runnerLightBorderColor(),
@@ -112,10 +112,13 @@ internal fun QuestionInfoDialog(
 
 @Preview(showBackground = true)
 @Composable
+@Suppress("UnusedPrivateMember")
 private fun QuestionInfoDialogPreview() {
     SchoolQuizTheme {
         QuestionInfoDialog(
-            info = "val создает ссылку, которую нельзя переназначить. Объект внутри все еще может быть изменяемым, если его тип это позволяет.",
+            info =
+                "val создает ссылку, которую нельзя переназначить. " +
+                    "Объект внутри все еще может быть изменяемым, если его тип это позволяет.",
             onDismiss = {},
         )
     }

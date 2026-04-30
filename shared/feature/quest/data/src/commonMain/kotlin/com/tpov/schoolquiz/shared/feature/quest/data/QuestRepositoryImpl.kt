@@ -33,6 +33,26 @@ class QuestRepositoryImpl(
     override suspend fun getById(id: QuestId): Quest? =
         local.findById(id.value)?.toDomain()
 
+    override suspend fun refreshByIds(ids: Set<QuestId>): Result<Unit> {
+        if (ids.isEmpty()) return Result.success(Unit)
+        return try {
+            val requested = ids.map { it.value }.toSet()
+            val dtos = remote.fetchByIds(requested)
+            val returned = dtos.map { it.id }.toSet()
+            for (missingId in requested - returned) {
+                local.deleteById(missingId)
+            }
+            for (dto in dtos) {
+                applyDto(dto, fromSyncList = true)
+            }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun refreshFromRemote(
         currentUserUid: String?,
         availableShelves: Set<String>,
@@ -57,20 +77,7 @@ class QuestRepositoryImpl(
             }
             val changedIds = mutableSetOf<QuestId>()
             for (dto in dtos) {
-                val localEntity = local.findById(dto.id)
-                val path = dto.picturePath
-                val resolvedUrl = when {
-                    path == null -> null
-                    else -> runCatching { storageUrlResolver(path) }
-                        .onFailure { if (it is CancellationException) throw it }
-                        .getOrNull()
-                }
-                val entity = dto.toEntity(resolvedUrl)
-                if (dto.archived || dto.visibleOn.isEmpty()) {
-                    val localVersion = localEntity?.version ?: 0L
-                    if (dto.version > localVersion) local.deleteById(dto.id)
-                } else {
-                    local.upsertByIdIfNewerVersion(entity)
+                if (applyDto(dto, fromSyncList = false)) {
                     changedIds.add(QuestId(dto.id))
                 }
             }
@@ -79,6 +86,34 @@ class QuestRepositoryImpl(
             throw e
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private suspend fun applyDto(
+        dto: com.tpov.schoolquiz.shared.feature.quest.data.dto.QuestDto,
+        fromSyncList: Boolean,
+    ): Boolean {
+        val localEntity = local.findById(dto.id)
+        val path = dto.picturePath
+        val retainedUrl =
+            localEntity?.pictureUrl?.takeIf {
+                localEntity.picturePath == path
+            }
+        val resolvedUrl = when {
+            path == null -> null
+            retainedUrl != null -> retainedUrl
+            else -> runCatching { storageUrlResolver(path) }
+                .onFailure { if (it is CancellationException) throw it }
+                .getOrNull()
+        }
+        val entity = dto.toEntity(resolvedUrl)
+        return if (dto.archived || dto.visibleOn.isEmpty()) {
+            val localVersion = localEntity?.version ?: 0L
+            if (fromSyncList || dto.version > localVersion) local.deleteById(dto.id)
+            false
+        } else {
+            if (fromSyncList) local.upsertFromSyncList(entity) else local.upsertByIdIfNewerVersion(entity)
+            true
         }
     }
 }

@@ -8,8 +8,8 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeWorkManager
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
@@ -42,7 +42,7 @@ import kotlin.test.assertTrue
  * Spec: 0-spec-dev-mode.md § Dev Mode Activation / State Matrix.
  *
  * NOTE: These tests reference the Phase-07 expected constructor signature for
- * [DefaultRootComponent] (adds `userStatsRepository` and `workManager` params).
+ * [DefaultRootComponent] (adds `userStatsRepository` and sync scheduling).
  * They will compile once backend-dev completes task 1 in phase-07/backend.md.
  *
  * DM-phase7-02 spec discrepancy: tests.md says "× 1" tap triggers AlreadyDev, but
@@ -55,7 +55,6 @@ class DevModeActivationIntegrationTest {
     private val testScheduler = TestCoroutineScheduler()
     private val testDispatcher = UnconfinedTestDispatcher(testScheduler)
     private lateinit var lifecycle: LifecycleRegistry
-    private val stubWorkManager = FakeWorkManager()
 
     @Before
     fun setUp() {
@@ -86,7 +85,7 @@ class DevModeActivationIntegrationTest {
         observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
-        workManager = stubWorkManager.workManager,
+        syncScheduler = FakeSyncScheduler(),
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },

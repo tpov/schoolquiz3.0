@@ -3,8 +3,10 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -40,6 +42,10 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 
 private const val TAG = "QuestListScreen"
+private const val PREVIEW_ALGEBRA_RATING = 2.5f
+private const val PREVIEW_ALGEBRA_RATING_COUNT = 42
+private const val PREVIEW_TRIGONOMETRY_RATING = 3.0f
+private const val PREVIEW_TRIGONOMETRY_RATING_COUNT = 7
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -56,7 +62,10 @@ fun QuestListScreen(
         BreadcrumbBar(
             titles = component.titles,
             onSegmentClick = onSegmentClick,
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
         )
         when (val state = uiState) {
             is QuestListUiState.Loading ->
@@ -72,7 +81,11 @@ fun QuestListScreen(
                     )
                 }
             is QuestListUiState.Loaded ->
-                LazyColumn(state = lazyListState) {
+                LazyColumn(
+                    state = lazyListState,
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
                         Box {
                             HierarchyItemCard(
@@ -82,7 +95,6 @@ fun QuestListScreen(
                                 ratingCount = quest.averageRatingCount,
                                 onClick = { component.onQuestClick(quest) },
                                 onLongClick = { expandedQuestId = quest.id },
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             )
                             DropdownMenu(
                                 expanded = expandedQuestId == quest.id,
@@ -171,9 +183,23 @@ private fun QuestListScreenLoadedPreview() {
                             QuestListUiState.Loaded(
                                 quests =
                                     listOf(
-                                        QuestDisplayItem(QuestId("1"), catalogId, "Алгебра — основы", null, 2.5f, 42),
+                                        QuestDisplayItem(
+                                            QuestId("1"),
+                                            catalogId,
+                                            "Алгебра — основы",
+                                            null,
+                                            PREVIEW_ALGEBRA_RATING,
+                                            PREVIEW_ALGEBRA_RATING_COUNT,
+                                        ),
                                         QuestDisplayItem(QuestId("2"), catalogId, "Геометрия", null, null, 0),
-                                        QuestDisplayItem(QuestId("3"), catalogId, "Тригонометрия", null, 3.0f, 7),
+                                        QuestDisplayItem(
+                                            QuestId("3"),
+                                            catalogId,
+                                            "Тригонометрия",
+                                            null,
+                                            PREVIEW_TRIGONOMETRY_RATING,
+                                            PREVIEW_TRIGONOMETRY_RATING_COUNT,
+                                        ),
                                     ),
                             ),
                         )

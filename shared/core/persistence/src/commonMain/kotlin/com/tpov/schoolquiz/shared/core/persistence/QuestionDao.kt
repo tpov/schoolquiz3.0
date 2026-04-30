@@ -16,6 +16,9 @@ interface QuestionDao {
     @Query("SELECT * FROM questions WHERE id = :id")
     suspend fun findById(id: String): QuestionEntity?
 
+    @Query("SELECT COUNT(*) FROM lessons WHERE id = :id")
+    suspend fun lessonCount(id: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrReplace(entity: QuestionEntity)
 
@@ -27,6 +30,23 @@ interface QuestionDao {
         }
     }
 
+    @Transaction
+    suspend fun upsertFromSyncList(entity: QuestionEntity) {
+        if (lessonCount(entity.lessonId) == 0) {
+            deleteById(entity.id)
+            return
+        }
+        val existing = findById(entity.id)
+        if (existing == null || existing.shouldBeReplacedBySyncList(entity)) {
+            insertOrReplace(entity)
+        }
+    }
+
     @Query("DELETE FROM questions WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    private fun QuestionEntity.shouldBeReplacedBySyncList(incoming: QuestionEntity): Boolean =
+        version < incoming.version ||
+            lastModifiedAt < incoming.lastModifiedAt ||
+            (lastModifiedAt == incoming.lastModifiedAt && this != incoming)
 }

@@ -29,7 +29,7 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
  * Spec: docs/features/quizzes-screen/06-api-contract.md:677
  * BrandComponentsInvariantsTest: @Preview required; all colors via MaterialTheme.colorScheme.*
  */
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 fun HierarchyItemCard(
     title: String,

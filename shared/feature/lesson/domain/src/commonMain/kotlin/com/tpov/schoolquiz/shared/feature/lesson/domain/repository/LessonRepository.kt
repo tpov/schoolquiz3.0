@@ -26,6 +26,11 @@ interface LessonRepository {
     suspend fun getById(id: LessonId): Lesson?
 
     /**
+     * Pulls concrete lessons by id for sync-list based refresh.
+     */
+    suspend fun refreshByIds(ids: Set<LessonId>): Result<Unit> = Result.success(Unit)
+
+    /**
      * Pulls lessons for the given [themeIds] from remote and persists locally.
      *
      * Implements cascading sync step 5: fetch with

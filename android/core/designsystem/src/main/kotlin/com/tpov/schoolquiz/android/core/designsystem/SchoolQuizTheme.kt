@@ -28,7 +28,7 @@ private val DarkColorScheme =
 @Composable
 fun SchoolQuizTheme(
     darkTheme: Boolean = true,
-    designStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.MainLegacy,
+    designStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.Main,
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(LocalSchoolQuizDesignStyle provides designStyle) {
@@ -41,7 +41,7 @@ fun SchoolQuizTheme(
     }
 }
 
-val LocalSchoolQuizDesignStyle = staticCompositionLocalOf { SchoolQuizDesignStyle.MainLegacy }
+val LocalSchoolQuizDesignStyle = staticCompositionLocalOf { SchoolQuizDesignStyle.Main }
 
 @Composable
 fun currentSchoolQuizDesignStyle(): SchoolQuizDesignStyle = LocalSchoolQuizDesignStyle.current

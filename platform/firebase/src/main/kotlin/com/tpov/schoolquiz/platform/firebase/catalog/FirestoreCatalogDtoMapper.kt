@@ -9,10 +9,11 @@ fun DocumentSnapshot.toCatalogDto(): CatalogDto? {
     val rawPath = getString("picturePath")
     val picturePath = if (rawPath != null && isValidRelativePath(rawPath)) rawPath else null
     val rawIconNames = get("iconNames")
-    val iconNames: List<String> = when (rawIconNames) {
-        is List<*> -> rawIconNames.filterIsInstance<String>().filter { it.isNotBlank() }
-        else -> emptyList()
-    }
+    val iconNames: List<String> =
+        when (rawIconNames) {
+            is List<*> -> rawIconNames.filterIsInstance<String>().filter { it.isNotBlank() }
+            else -> emptyList()
+        }
     return CatalogDto(
         id = id,
         name = name,

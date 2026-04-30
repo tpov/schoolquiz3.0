@@ -2,18 +2,17 @@
 
 package com.tpov.schoolquiz.android.feature.app_shell.presentation
 
-import androidx.work.WorkManager
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
-import org.mockito.Mockito.mock
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
@@ -93,7 +92,7 @@ class DefaultRootComponentTest {
 
     private fun buildComponent(
         fakeRepo: FakeUserStatsRepository = FakeUserStatsRepository(),
-        workManager: WorkManager = mock(WorkManager::class.java),
+        syncScheduler: FakeSyncScheduler = FakeSyncScheduler(),
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
@@ -101,7 +100,7 @@ class DefaultRootComponentTest {
         observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
-        workManager = workManager,
+        syncScheduler = syncScheduler,
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
@@ -150,7 +149,7 @@ class DefaultRootComponentTest {
             observeUseCase = ObserveAppShellStateUseCase(FakeUserStatsRepository()),
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = errorRepo,
-            workManager = mock(WorkManager::class.java),
+            syncScheduler = FakeSyncScheduler(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
             homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },
@@ -388,7 +387,7 @@ class DefaultRootComponentTest {
             observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
             retapUseCase = OnTabRetapUseCase(),
             userStatsRepository = fakeRepo,
-            workManager = mock(WorkManager::class.java),
+            syncScheduler = FakeSyncScheduler(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
             homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },

@@ -30,7 +30,7 @@ fun BrandProgressBar(
                 .fillMaxWidth()
                 .height(height)
                 .clip(MaterialTheme.shapes.extraSmall)
-                .background(MaterialTheme.colorScheme.outline),
+                .background(schoolQuizDesignNeutralBorderColor()),
     ) {
         Box(
             modifier =

@@ -35,9 +35,6 @@ val OnBackground = Color(0xFFE0E0E0)
 /** Outline / stroke color — 1dp borders per ADR-0010 flat design */
 val OutlineColor = Color(0xFF2C2C2C)
 
-/** Dim blue contour from legacy palette (`contour_unable #0C4678`). Used for muted card borders. */
-val LegacyContour = Color(0xFF0C4678)
-
 // ---- Difficulty glow accents (Phase-11) ----
 // errorContainer (#7D0000 ish) was too muted; vivid tones chosen for edge-glow visibility on dark bg.
 

@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.shared.core.catalog.data.fake
 
-import com.tpov.schoolquiz.shared.core.sync.PendingCascade
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 
 class FakeSyncStateRepository : SyncStateRepository {
@@ -13,16 +12,6 @@ class FakeSyncStateRepository : SyncStateRepository {
         cursors[collectionId] = value
         setCursorCalls.add(Pair(collectionId, value))
     }
-
-    override suspend fun markCascadeInProgress(
-        parentId: String,
-        parentType: String,
-        pendingChildIds: Set<String>,
-    ) = Unit
-
-    override suspend fun markCascadeCompleted(parentId: String, parentType: String) = Unit
-
-    override suspend fun getPendingCascades(): List<PendingCascade> = emptyList()
 
     fun resetAll() {
         cursors.clear()

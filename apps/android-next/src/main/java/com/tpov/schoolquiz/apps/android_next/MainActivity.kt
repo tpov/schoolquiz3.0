@@ -61,6 +61,10 @@ class MainActivity : AppCompatActivity() {
 }
 
 private fun String?.toSchoolQuizDesignStyle(): SchoolQuizDesignStyle =
-    this
-        ?.let { value -> runCatching { SchoolQuizDesignStyle.valueOf(value) }.getOrNull() }
-        ?: SchoolQuizDesignStyle.MainLegacy
+    when (this) {
+        "MainLegacy" -> SchoolQuizDesignStyle.Main
+        else ->
+            this
+                ?.let { value -> runCatching { SchoolQuizDesignStyle.valueOf(value) }.getOrNull() }
+                ?: SchoolQuizDesignStyle.Main
+    }
