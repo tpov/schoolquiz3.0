@@ -84,14 +84,14 @@ class QuestDaoBoundaryTest {
     }
 
     @Test
-    fun observeMyQuestsExcludesArchived() = runTest {
+    fun observeMyQuestsIncludesArchivedAsOnDemandMarker() = runTest {
         upsert(questEntity(id = "q1", authorUid = "uid-a", archived = false))
         upsert(questEntity(id = "q2", authorUid = "uid-a", archived = true))
 
         val result = dao.observeMyQuests("uid-a").first()
 
-        assert(result.size == 1) { "Expected 1 non-archived quest, got ${result.size}" }
-        assert(!result[0].archived) { "Expected archived=false, got true" }
+        assert(result.size == 2) { "Expected 2 quests including on-demand marker, got ${result.size}" }
+        assert(result.any { it.archived }) { "Expected archived=true quest to remain visible" }
     }
 
     @Test

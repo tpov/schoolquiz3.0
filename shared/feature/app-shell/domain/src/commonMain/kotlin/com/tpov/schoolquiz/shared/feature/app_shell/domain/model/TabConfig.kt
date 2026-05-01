@@ -22,6 +22,7 @@ sealed interface TabConfig
 sealed interface LocalConfig : TabConfig {
     data object MyQuestsRoot : LocalConfig
     data object HomeQuestsRoot : LocalConfig
+    data object ArchiveRoot : LocalConfig
     data object SettingsRoot : LocalConfig
     /** Always exists as type; rendered as UnderConstructionScreen("Недоступно") in release. */
     data object DesignCatalogRoot : LocalConfig

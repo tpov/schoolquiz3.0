@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di.questAuthoringPresentationModule
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
@@ -36,6 +37,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerData
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDomainKoinAdapter
 import com.tpov.schoolquiz.shared.feature.quest.data.di.questDataModule
 import com.tpov.schoolquiz.shared.feature.quest.domain.di.questDomainModule
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.di.questAuthoringDataModule
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di.questAuthoringDomainModule
 import com.tpov.schoolquiz.shared.feature.question.data.di.questionDataModule
 import com.tpov.schoolquiz.shared.feature.question.domain.di.questionDomainModule
 import com.tpov.schoolquiz.shared.feature.section.data.di.sectionDataModule
@@ -109,11 +112,14 @@ class AppApplication : Application(), Configuration.Provider {
                 appShellDataModule { sharedAuthUidFlow },
                 appShellPresentationModule,
                 questPresentationModule,
+                questAuthoringPresentationModule,
                 quizzesPresentationModule,
                 catalogDataModule,
                 catalogDomainModule,
                 questDataModule,
                 questDomainModule,
+                questAuthoringDataModule,
+                questAuthoringDomainModule,
                 sectionDataModule,
                 sectionDomainModule,
                 themeDataModule,

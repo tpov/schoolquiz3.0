@@ -58,7 +58,7 @@ fun BrandSquareIconButton(
 ) {
     Surface(
         modifier = modifier.size(48.dp),
-        shape = MaterialTheme.shapes.medium,
+        shape = schoolQuizDesignCardShape(),
         color = schoolQuizDesignDeepSurfaceColor(),
         contentColor = MaterialTheme.colorScheme.primary,
         border = BorderStroke(1.dp, schoolQuizDesignLightBorderColor()),

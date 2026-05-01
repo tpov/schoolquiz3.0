@@ -7,12 +7,25 @@ import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
+import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
+import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
+import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
+import com.tpov.schoolquiz.shared.feature.theme.domain.model.Theme
+import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -39,7 +52,12 @@ class DefaultQuestListComponentTest {
     private val dispatcher = StandardTestDispatcher(testScheduler)
     private lateinit var lifecycle: LifecycleRegistry
     private val fakeRepo = FakeQuestRepository()
+    private val fakeSectionRepo = FakeSectionRepository()
+    private val fakeThemeRepo = FakeThemeRepository()
+    private val fakeLessonRepo = FakeLessonRepository()
+    private val fakeQuestionRepo = FakeQuestionRepository()
     private val fakeNavigation = FakeStackNavigation()
+    private var syncedQuestIds = emptyList<QuestId>()
 
     @After
     fun tearDown() {
@@ -54,6 +72,8 @@ class DefaultQuestListComponentTest {
     private fun buildComponent(
         catalogId: String = "cat-1",
         titles: List<String> = listOf("Mathematics"),
+        shelf: String = "home",
+        mode: QuestListMode = QuestListMode.Home,
     ): DefaultQuestListComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -62,7 +82,15 @@ class DefaultQuestListComponentTest {
             componentContext = ctx,
             navigation = fakeNavigation,
             questRepository = fakeRepo,
-            config = QuizzesConfig.QuestList(catalogId = catalogId, titles = titles),
+            sectionRepository = fakeSectionRepo,
+            themeRepository = fakeThemeRepo,
+            lessonRepository = fakeLessonRepo,
+            questionRepository = fakeQuestionRepo,
+            questContentSync = { questId ->
+                syncedQuestIds = syncedQuestIds + questId
+                Result.success(Unit)
+            },
+            config = QuizzesConfig.QuestList(catalogId = catalogId, titles = titles, shelf = shelf, mode = mode),
             coroutineContext = dispatcher,
         )
     }
@@ -72,16 +100,19 @@ class DefaultQuestListComponentTest {
         catalogId: String = "cat-1",
         title: String = "Quest A",
         lastModifiedAt: Long = 0L,
+        visibleOn: Set<String> = setOf("home"),
+        archived: Boolean = false,
     ) = Quest(
         id = QuestId(id),
         catalogId = CatalogId(catalogId),
         authorUid = "author-uid",
         title = title,
         picturePath = null,
-        visibleOn = setOf("home"),
+        visibleOn = visibleOn,
         version = 1L,
         contentsVersion = 0L,
         lastModifiedAt = lastModifiedAt,
+        archived = archived,
     )
 
     private fun questDisplayItemFixture(
@@ -95,6 +126,43 @@ class DefaultQuestListComponentTest {
         pictureUrl = null,
         averageRating = null,
     )
+
+    private fun seedHierarchyForQuest(
+        questId: String,
+        lessonId: String = "lesson-$questId",
+    ): LessonId {
+        val sectionId = SectionId("section-$questId")
+        val themeId = ThemeId("theme-$questId")
+        val lesson = LessonId(lessonId)
+        fakeSectionRepo.emit(
+            listOf(
+                Section(sectionId, QuestId(questId), "Section", order = 0, version = 1, contentsVersion = 1, lastModifiedAt = 1),
+            ),
+        )
+        fakeThemeRepo.emit(
+            listOf(
+                Theme(ThemeId("theme-$questId"), sectionId, "Theme", order = 0, version = 1, contentsVersion = 1, lastModifiedAt = 1),
+            ),
+        )
+        fakeLessonRepo.emit(
+            listOf(
+                Lesson(lesson, themeId, "Lesson", order = 0, version = 1, contentsVersion = 1, lastModifiedAt = 1),
+            ),
+        )
+        return lesson
+    }
+
+    private fun questionFixture(lessonId: LessonId) =
+        Question(
+            id = QuestionId("question-${lessonId.value}"),
+            lessonId = lessonId,
+            text = "Question",
+            payload = "{}",
+            language = "ru",
+            order = 0,
+            version = 1,
+            lastModifiedAt = 1,
+        )
 
     // ── QL-U-01 ──────────────────────────────────────────────────────────────
 
@@ -230,14 +298,13 @@ class DefaultQuestListComponentTest {
     // ── QL-U-archived ─────────────────────────────────────────────────────────
 
     /**
-     * Spec: AC#1 — only public non-archived quests appear in QuestList.
-     * FakeQuestRepository.observeByCatalog filters archived=true quests.
+     * Spec: AC#1 — public quests appear in QuestList; archived marks on-demand content.
      * GIVEN: repo emits mix of archived and non-archived quests with same catalogId
      * WHEN: advanceUntilIdle()
-     * THEN: only non-archived quests appear in Loaded.quests
+     * THEN: both quests appear in Loaded.quests
      */
     @Test
-    fun `archived quests are excluded from Loaded state`() = runTest(testScheduler) {
+    fun `archived quests are included in Loaded state`() = runTest(testScheduler) {
         val component = buildComponent(catalogId = "cat-1")
         fakeRepo.emit(
             listOf(
@@ -248,7 +315,133 @@ class DefaultQuestListComponentTest {
         advanceUntilIdle()
         val state = component.uiState.value
         assertIs<QuestListUiState.Loaded>(state)
-        assertEquals(1, state.quests.size, "archived quest must be excluded")
-        assertEquals("q-visible", state.quests.first().id.value)
+        assertEquals(2, state.quests.size, "archived quest must remain visible")
+        assertEquals(setOf("q-visible", "q-archived"), state.quests.map { it.id.value }.toSet())
+        assertEquals(
+            true,
+            state.quests.first { it.id.value == "q-archived" }.isDownloadable,
+            "archived root quest should expose an explicit download action",
+        )
+    }
+
+    @Test
+    fun `courses home shows only downloaded archived courses`() = runTest(testScheduler) {
+        val lessonId = seedHierarchyForQuest("q-course")
+        val component = buildComponent(catalogId = "courses")
+        fakeRepo.emit(
+            listOf(
+                questFixture(
+                    id = "q-course",
+                    catalogId = "courses",
+                    title = "Course",
+                    visibleOn = setOf("archive"),
+                    archived = true,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+        assertIs<QuestListUiState.Empty>(component.uiState.value)
+
+        fakeQuestionRepo.emit(listOf(questionFixture(lessonId)))
+        advanceUntilIdle()
+
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+        assertEquals(1, state.quests.size)
+        assertEquals(false, state.quests.first().isDownloadable)
+        assertEquals(false, state.quests.first().isDownloadComplete)
+    }
+
+    @Test
+    fun `course archive shows downloaded courses with persistent complete mark`() = runTest(testScheduler) {
+        val lessonId = seedHierarchyForQuest("q-course")
+        val component = buildComponent(
+            catalogId = "courses",
+            titles = listOf("Архив", "Курсы"),
+            shelf = "archive",
+            mode = QuestListMode.Archive,
+        )
+        fakeQuestionRepo.emit(listOf(questionFixture(lessonId)))
+        fakeRepo.emit(
+            listOf(
+                questFixture(
+                    id = "q-course",
+                    catalogId = "courses",
+                    title = "Course",
+                    visibleOn = setOf("archive"),
+                    archived = true,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+        assertEquals(false, state.quests.first().isDownloadable)
+        assertEquals(true, state.quests.first().isDownloadComplete)
+    }
+
+    @Test
+    fun `course archive click on not downloaded course opens hierarchy without download`() = runTest(testScheduler) {
+        seedHierarchyForQuest("q-course")
+        val component = buildComponent(
+            catalogId = "courses",
+            titles = listOf("Архив", "Курсы"),
+            shelf = "archive",
+            mode = QuestListMode.Archive,
+        )
+        fakeRepo.emit(
+            listOf(
+                questFixture(
+                    id = "q-course",
+                    catalogId = "courses",
+                    title = "Course",
+                    visibleOn = setOf("archive"),
+                    archived = true,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+
+        component.onQuestClick(state.quests.first())
+        advanceUntilIdle()
+
+        assertTrue(syncedQuestIds.isEmpty())
+        val pushed = fakeNavigation.pushedConfigs.last()
+        assertIs<QuizzesConfig.SectionList>(pushed)
+        assertEquals("q-course", pushed.questId)
+    }
+
+    @Test
+    fun `course archive download icon starts download`() = runTest(testScheduler) {
+        seedHierarchyForQuest("q-course")
+        val component = buildComponent(
+            catalogId = "courses",
+            titles = listOf("Архив", "Курсы"),
+            shelf = "archive",
+            mode = QuestListMode.Archive,
+        )
+        fakeRepo.emit(
+            listOf(
+                questFixture(
+                    id = "q-course",
+                    catalogId = "courses",
+                    title = "Course",
+                    visibleOn = setOf("archive"),
+                    archived = true,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+
+        component.onQuestDownloadClick(state.quests.first())
+        advanceUntilIdle()
+
+        assertEquals(listOf(QuestId("q-course")), syncedQuestIds)
+        assertTrue(fakeNavigation.pushedConfigs.isEmpty())
     }
 }

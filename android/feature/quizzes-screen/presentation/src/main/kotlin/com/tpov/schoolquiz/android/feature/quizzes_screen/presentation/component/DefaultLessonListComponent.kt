@@ -52,19 +52,26 @@ class DefaultLessonListComponent(
     private val hardCheckedSet: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
 
     init {
+        val statsFlow =
+            authRepository.observeUid().flatMapLatest { uid ->
+                if (uid == null) {
+                    flowOf(emptyMap())
+                } else {
+                    attemptRepository.observeAllStatsByUser(uid)
+                }
+            }
         scope.launch {
-            combine(
-                lessonRepository.observeByTheme(themeId),
-                authRepository.observeUid().flatMapLatest { uid ->
-                    if (uid == null) {
-                        flowOf(emptyMap())
-                    } else {
-                        attemptRepository.observeAllStatsByUser(uid)
-                    }
-                },
-                hardCheckedSet,
-            ) { lessons, stats, checkedSet ->
-                mapToUi(lessons, stats, checkedSet)
+            lessonRepository.observeByTheme(themeId).flatMapLatest { lessons ->
+                combine(
+                    statsFlow,
+                    hardCheckedSet,
+                ) { stats, checkedSet ->
+                    mapToUi(
+                        lessons = lessons,
+                        stats = stats,
+                        checkedSet = checkedSet,
+                    )
+                }
             }
                 .catch { /* log */ }
                 .collect { _uiState.value = it }

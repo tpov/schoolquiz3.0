@@ -28,7 +28,7 @@ fun BrandSecondaryButton(
             modifier
                 .defaultMinSize(minHeight = 48.dp)
                 .clickable(enabled = enabled, onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
+        shape = schoolQuizDesignCardShape(),
         color = schoolQuizDesignDeepSurfaceColor(),
         contentColor =
             if (enabled) {

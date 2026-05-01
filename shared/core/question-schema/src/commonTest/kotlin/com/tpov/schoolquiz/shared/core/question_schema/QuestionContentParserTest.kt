@@ -72,6 +72,17 @@ class QuestionContentParserTest {
     }
 
     @Test
+    fun `given fillBlank protected text segments when parse then preserves segments`() {
+        val json = """{"type":"FillBlank","id":"q1","difficulty":"EASY","text":"Fill ___","imageUrl":null,"blanks":[{"id":"b1","correctCandidateId":"c1"}],"candidates":[{"id":"c1","text":"Kotlin"},{"id":"c2","text":"Java"},{"id":"c3","text":"Swift"},{"id":"c4","text":"Go"},{"id":"c5","text":"Scala"}],"protectedTextSegments":["Kotlin"]}"""
+
+        val result = parser.parse(json)
+
+        assertTrue(result.isSuccess, "Expected success but got: ${result.exceptionOrNull()}")
+        val content = assertIs<QuestionContent.FillBlank>(result.getOrThrow())
+        assertEquals(listOf("Kotlin"), content.protectedTextSegments)
+    }
+
+    @Test
     fun `given unknown type json when parse then returns failure without crash`() {
         // Spec scenario A-05: parser_unknownType_returnsFailure
         val json = """{"type":"VideoQuestion","foo":"bar"}"""

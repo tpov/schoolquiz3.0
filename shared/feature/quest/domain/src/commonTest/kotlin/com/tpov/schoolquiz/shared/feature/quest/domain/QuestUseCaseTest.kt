@@ -29,7 +29,7 @@ import kotlin.test.assertTrue
  *   48    : parallel query merge/dedupe
  *   49    : upsert deduplication (only 1 row for same id)
  *   50    : chunking for >30 parent ids
- *   AC#47 : quest archived=true → always deleted (independent of authorUid)
+ *   AC#47 : quest archived=true → kept as on-demand marker
  *   AC#48 : quest visibleOn=emptySet + authorUid=me → deleted
  *   AC#49 : quest visibleOn=emptySet + authorUid=other → deleted
  *   Fix #3 (no-op): catalogIdsToSync=emptySet → no sync call to repository
@@ -299,9 +299,9 @@ class QuestUseCaseTest {
         assertEquals("existing", snapshot[0].id.value)
     }
 
-    // ── AC#47 : archived=true → always deleted (independent of authorUid) ─────
+    // ── AC#47 : archived=true → kept as on-demand quest marker ───────────────
     @Test
-    fun `AC47 quest with archived=true is deleted from local cache regardless of authorUid`() = runTest {
+    fun `AC47 quest with archived=true remains in local cache as on-demand marker`() = runTest {
         // Own quest that gets archived on server
         val ownQuest = makeQuest(id = "mine", authorUid = "uid-42", catalogId = surveys, version = 1L, visibleOn = setOf("home"), lastModifiedAt = 500L)
         val fake = FakeQuestRepository(initial = listOf(ownQuest))
@@ -317,7 +317,9 @@ class QuestUseCaseTest {
             cursor = 0L,
         )
 
-        assertTrue(fake.snapshot().isEmpty(), "Quest with archived=true must be deleted even if authorUid==me")
+        val snapshot = fake.snapshot()
+        assertEquals(1, snapshot.size)
+        assertTrue(snapshot.first().archived, "Quest with archived=true must remain as on-demand marker")
     }
 
     // ── AC#48 : visibleOn=emptySet + authorUid=me → deleted ──────────────────
@@ -410,12 +412,12 @@ class QuestUseCaseTest {
         assertEquals(3000L, fake.lastCursor, "Cursor must advance to max lastModifiedAt")
     }
 
-    // ── Scenario 23b (quest analog) : stale tombstone version guard ───────────
+    // ── Scenario 23b (quest analog) : stale archived marker version guard ─────
     // GIVEN local quest(v=5) AND server sends archived=true, version=3 (stale)
-    // WHEN sync THEN local preserved (version guard fires before delete-marker)
-    // Spec State Matrix 1: present + dto.v < local.v → SKIP regardless of archived
+    // WHEN sync THEN local preserved (version guard keeps the newer local row)
+    // Spec State Matrix 1: present + dto.v < local.v → SKIP
     @Test
-    fun `scenario 23b quest stale tombstone archived=true version below local THEN local preserved`() = runTest {
+    fun `scenario 23b quest stale archived marker version below local THEN local preserved`() = runTest {
         val existing = makeQuest(
             id = "q1",
             authorUid = "uid-42",
@@ -427,8 +429,8 @@ class QuestUseCaseTest {
         val fake = FakeQuestRepository(initial = listOf(existing))
 
         // Server sends stale archived=true with version=3 (below local v=5)
-        val staleTombstone = existing.copy(version = 3L, archived = true, lastModifiedAt = 2000L)
-        fake.seedServerQuests(listOf(staleTombstone))
+        val staleArchivedMarker = existing.copy(version = 3L, archived = true, lastModifiedAt = 2000L)
+        fake.seedServerQuests(listOf(staleArchivedMarker))
 
         SyncQuestsUseCase(fake).invoke(
             currentUserUid = "uid-42",
@@ -438,15 +440,15 @@ class QuestUseCaseTest {
         )
 
         val after = fake.snapshot()
-        assertEquals(1, after.size, "Local quest must be preserved: stale tombstone ignored by version guard")
+        assertEquals(1, after.size, "Local quest must be preserved: stale archived marker ignored by version guard")
         assertEquals(5L, after[0].version, "Version must remain 5 (local), not downgraded")
     }
 
-    // ── Scenario 23c (quest analog) : equal version tombstone version guard ───
+    // ── Scenario 23c (quest analog) : equal version archived marker guard ─────
     // GIVEN local quest(v=5) AND server sends archived=true, version=5 (equal)
     // WHEN sync THEN local preserved (dto.v == local.v → SKIP per spec)
     @Test
-    fun `scenario 23c quest equal version tombstone archived=true THEN local preserved`() = runTest {
+    fun `scenario 23c quest equal version archived marker THEN local preserved`() = runTest {
         val existing = makeQuest(
             id = "q1",
             authorUid = "uid-42",
@@ -458,8 +460,8 @@ class QuestUseCaseTest {
         val fake = FakeQuestRepository(initial = listOf(existing))
 
         // Server sends archived=true with same version=5
-        val equalVersionTombstone = existing.copy(archived = true, lastModifiedAt = 2000L)
-        fake.seedServerQuests(listOf(equalVersionTombstone))
+        val equalVersionArchivedMarker = existing.copy(archived = true, lastModifiedAt = 2000L)
+        fake.seedServerQuests(listOf(equalVersionArchivedMarker))
 
         SyncQuestsUseCase(fake).invoke(
             currentUserUid = "uid-42",
@@ -469,8 +471,8 @@ class QuestUseCaseTest {
         )
 
         val after = fake.snapshot()
-        assertEquals(1, after.size, "Local quest must be preserved: equal-version tombstone ignored by version guard")
-        assertEquals(5L, after[0].version, "Version unchanged (equal version tombstone skipped)")
+        assertEquals(1, after.size, "Local quest must be preserved: equal-version archived marker ignored by version guard")
+        assertEquals(5L, after[0].version, "Version unchanged (equal version archived marker skipped)")
     }
 
     // ── Query B: public quest from different catalog is filtered by catalogIdsToSync ──

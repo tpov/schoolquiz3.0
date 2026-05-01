@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.shared.core.sync.CATALOG_LIST_CURSOR_ID
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class CatalogRepositoryImpl(
@@ -24,7 +25,8 @@ class CatalogRepositoryImpl(
 
     override suspend fun refreshFromRemote(): Result<Set<CatalogId>> {
         return try {
-            val cursor = syncStateRepo.getCursor(CATALOG_LIST_CURSOR_ID)
+            val savedCursor = syncStateRepo.getCursor(CATALOG_LIST_CURSOR_ID)
+            val cursor = if (local.observeAll().first().isEmpty()) 0L else savedCursor
             val dtos = remote.fetchChangedSince(cursor)
             val changedIds = mutableSetOf<CatalogId>()
             for (dto in dtos) {

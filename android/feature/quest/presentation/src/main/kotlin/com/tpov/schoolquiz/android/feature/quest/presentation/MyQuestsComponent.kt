@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.android.feature.quest.presentation
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -22,6 +24,9 @@ interface MyQuestsComponent {
 
     /** Drill-down from MyQuests into SectionList for the tapped quest. */
     fun onQuestClick(quest: QuestDisplayItem)
+
+    /** Open existing local draft in the authoring flow. */
+    fun onDraftClick(draft: DraftQuestDisplayItem)
 }
 
 /**
@@ -32,8 +37,18 @@ interface MyQuestsComponent {
  */
 data class MyQuestsUiState(
     val quests: List<QuestDisplayItem> = emptyList(),
+    val drafts: List<DraftQuestDisplayItem> = emptyList(),
     val catalogs: List<CatalogDisplayItem> = emptyList(),
     val selectedCatalogId: CatalogId? = null,
     val isGuest: Boolean = false,
     val isLoading: Boolean = false,
+)
+
+data class DraftQuestDisplayItem(
+    val id: QuestDraftId,
+    val catalogId: CatalogId,
+    val title: String,
+    val status: QuestDraftStatus,
+    val questionCount: Int,
+    val isActive: Boolean,
 )

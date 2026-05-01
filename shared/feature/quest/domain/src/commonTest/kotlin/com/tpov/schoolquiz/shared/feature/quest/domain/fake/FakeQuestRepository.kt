@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.update
  *   **Merge + dedupe** by id. Then apply State Matrix 1 rules with version FIRST:
  *
  *   **absent (local == null):**
- *   - delete-marker true (`archived=true` OR `visibleOn.isEmpty()`) → **SKIP** (no tombstone)
+ *   - delete-marker true (`visibleOn.isEmpty()`) → **SKIP** (no tombstone)
  *   - delete-marker false → **INSERT**
  *
  *   **present (local != null) — version check FIRST:**
@@ -85,7 +85,6 @@ class FakeQuestRepository(
             map.values
                 .filter { quest ->
                     quest.authorUid == authorUid &&
-                        !quest.archived &&
                         (catalogId == null || quest.catalogId == catalogId)
                 }
                 .sortedBy { it.id.value }
@@ -103,8 +102,7 @@ class FakeQuestRepository(
             map.values
                 .filter { quest ->
                     quest.catalogId == catalogId &&
-                        shelf in quest.visibleOn &&
-                        !quest.archived
+                        shelf in quest.visibleOn
                 }
                 .sortedByDescending { it.lastModifiedAt }
         }
@@ -157,8 +155,7 @@ class FakeQuestRepository(
                 newMaxLastMod = maxOf(newMaxLastMod, incoming.lastModifiedAt)
                 processedIds.add(incoming.id)
 
-                // delete-marker = archived=true OR visibleOn.isEmpty() (AC#47, AC#48, AC#49)
-                val deleteMarker = incoming.archived || incoming.visibleOn.isEmpty()
+                val deleteMarker = incoming.visibleOn.isEmpty()
                 val existing = mutable[incoming.id]
 
                 if (existing == null) {
@@ -219,8 +216,8 @@ class FakeQuestRepository(
     /**
      * Directly applies State Matrix 1 delete/upsert rules to [items] without
      * Query A+B filtering. Use this when testing the delete semantics of arrived
-     * items in isolation (e.g. testing that archived=true or visibleOn=empty
-     * items are deleted when they arrive, regardless of how they arrived).
+     * items in isolation (e.g. testing that visibleOn=empty items are deleted
+     * when they arrive, regardless of how they arrived).
      *
      * This corresponds to AC#47-49: testing the apply-to-Room semantics, not the
      * Firestore query path. In reality, AC#49 (authorUid=other, visibleOn=empty)
@@ -229,7 +226,7 @@ class FakeQuestRepository(
     fun applyRawRemoteItems(items: List<Quest>, cursor: Long = 0L) {
         cache.value = cache.value.toMutableMap().also { mutable ->
             for (incoming in items) {
-                val deleteMarker = incoming.archived || incoming.visibleOn.isEmpty()
+                val deleteMarker = incoming.visibleOn.isEmpty()
                 val existing = mutable[incoming.id]
                 if (existing == null) {
                     // absent case

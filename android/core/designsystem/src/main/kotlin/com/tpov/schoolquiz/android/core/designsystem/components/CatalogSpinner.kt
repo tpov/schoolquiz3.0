@@ -53,7 +53,7 @@ fun CatalogSpinner(
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) },
-            shape = MaterialTheme.shapes.medium,
+            shape = schoolQuizDesignCardShape(),
             colors =
                 OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,

@@ -15,6 +15,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.statekeeper.SerializableContainer
 import com.tpov.schoolquiz.android.core.designsystem.components.resolveIcons
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
@@ -24,6 +25,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonReposit
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -47,8 +49,10 @@ class DefaultQuizzesComponent(
     private val lessonRepository: LessonRepository,
     private val lessonAttemptRepository: LessonAttemptRepository,
     private val authRepository: AuthRepository,
+    private val questionRepository: QuestionRepository,
     private val catalogRepository: CatalogRepository,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
+    private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
     private val mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, QuizzesComponent {
     private val navigation = StackNavigation<QuizzesConfig>()
@@ -165,6 +169,17 @@ class DefaultQuizzesComponent(
         navigation.pushNew(QuizzesConfig.QuestList(catalogId.value, listOf("Каталоги", catalogName)))
     }
 
+    override fun openCourseArchive() {
+        navigation.pushNew(
+            QuizzesConfig.QuestList(
+                catalogId = COURSES_CATALOG_ID,
+                titles = listOf("Архив", "Курсы"),
+                shelf = ARCHIVE_SHELF,
+                mode = QuestListMode.Archive,
+            ),
+        )
+    }
+
     override fun openSectionList(
         questId: QuestId,
         titles: List<String>,
@@ -190,8 +205,12 @@ class DefaultQuizzesComponent(
         val virtualCount = (titlesSize + 1 - childStack.value.items.size).coerceAtLeast(0)
         val adjustedLevel = uiLevel - virtualCount
         if (adjustedLevel < 0) {
-            // Clicked a virtual breadcrumb (e.g., catalog name from MyQuests path) — dismiss overlay
-            navigation.popToFirst()
+            if (isArchiveNavigationPath(active.configuration)) {
+                navigation.popTo(QUEST_LIST_STACK_INDEX)
+            } else {
+                // Clicked a virtual breadcrumb (e.g., catalog name from MyQuests path) — dismiss overlay
+                navigation.popToFirst()
+            }
         } else {
             navigation.popTo(adjustedLevel + 1)
         }
@@ -214,7 +233,18 @@ class DefaultQuizzesComponent(
                 QuizzesChild.Idle
             is QuizzesConfig.QuestList ->
                 QuizzesChild.QuestList(
-                    DefaultQuestListComponent(ctx, config, questRepository, navigation, mainContext),
+                    DefaultQuestListComponent(
+                        ctx,
+                        config,
+                        questRepository,
+                        sectionRepository,
+                        themeRepository,
+                        lessonRepository,
+                        questionRepository,
+                        questContentSync,
+                        navigation,
+                        mainContext,
+                    ),
                 )
             is QuizzesConfig.SectionList ->
                 QuizzesChild.SectionList(
@@ -241,4 +271,19 @@ class DefaultQuizzesComponent(
                     lessonRunnerFactory.create(ctx, LessonId(config.lessonId), config.mode),
                 )
         }
+
+    private fun isArchiveNavigationPath(config: QuizzesConfig): Boolean =
+        when (config) {
+            QuizzesConfig.Idle -> false
+            is QuizzesConfig.QuestList -> config.mode == QuestListMode.Archive
+            is QuizzesConfig.SectionList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
+            is QuizzesConfig.ThemeList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
+            is QuizzesConfig.LessonList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
+            is QuizzesConfig.LessonRunner -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
+        }
 }
+
+private const val COURSES_CATALOG_ID = "courses"
+private const val ARCHIVE_SHELF = "archive"
+private const val ARCHIVE_ENTRY_TITLE = "Архив"
+private const val QUEST_LIST_STACK_INDEX = 1

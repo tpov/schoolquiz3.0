@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignChip
+import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignModeAccent
+import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
@@ -28,6 +30,8 @@ fun LessonItemCard(
     onHardCheckChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val designStyle = currentSchoolQuizDesignStyle()
+    val isClean = designStyle == SchoolQuizDesignStyle.Clean
     BrandCard(
         modifier =
             modifier
@@ -38,15 +42,18 @@ fun LessonItemCard(
             verticalAlignment = Alignment.CenterVertically,
             modifier =
                 Modifier
-                    .height(64.dp)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .height(if (isClean) 72.dp else 64.dp)
+                    .padding(
+                        horizontal = if (isClean) 16.dp else 12.dp,
+                        vertical = if (isClean) 12.dp else 8.dp,
+                    ),
         ) {
             if (item.orderLabel != null) {
                 Text(
                     text = item.orderLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 8.dp),
+                    style = if (isClean) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isClean) 0.5f else 0.62f),
+                    modifier = Modifier.padding(end = if (isClean) 10.dp else 8.dp),
                 )
             }
             Text(
@@ -69,7 +76,7 @@ fun LessonItemCard(
             StarRating(
                 rating = item.bestStarsRawTenths / 10f,
                 modifier = Modifier.padding(start = 8.dp),
-                size = 28.dp,
+                size = if (isClean) 24.dp else 28.dp,
             )
         }
     }
@@ -88,6 +95,7 @@ private fun LessonItemCardBasicPreview() {
                     orderLabel = "1.",
                     bestStarsRawTenths = 20,
                     hardUnlocked = false,
+                    isDownloaded = true,
                 ),
             onClick = {},
             onHardCheckChanged = {},
@@ -109,6 +117,7 @@ private fun LessonItemCardHardUnlockedPreview() {
                     bestStarsRawTenths = 27,
                     hardUnlocked = true,
                     isHardChecked = true,
+                    isDownloaded = false,
                 ),
             onClick = {},
             onHardCheckChanged = {},
@@ -128,6 +137,7 @@ private fun LessonItemCardZeroStarsPreview() {
                     title = "Урок 3 — Новый урок (нет попыток)",
                     bestStarsRawTenths = 0,
                     hardUnlocked = false,
+                    isDownloading = true,
                 ),
             onClick = {},
             onHardCheckChanged = {},

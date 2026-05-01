@@ -18,6 +18,7 @@ val questPresentationModule =
                 componentContext = ctx,
                 authRepo = get(),
                 observeMyQuests = get(),
+                observeDraftSummaries = get(),
                 observeCatalogs = get(),
                 navigator = nav,
                 onQuestDrillDown = onQuestDrillDown,

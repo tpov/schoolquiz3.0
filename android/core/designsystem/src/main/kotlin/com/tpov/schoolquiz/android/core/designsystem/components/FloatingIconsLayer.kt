@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import kotlinx.coroutines.isActive
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -49,6 +50,7 @@ private const val FLOOR_FRICTION = 0.92f
 private const val IMPULSE_STRENGTH_DP_PER_SEC = 1200f
 private const val IMPULSE_RADIUS_DP = 80f
 private const val ICON_TINT_ALPHA = 0.18f
+private const val CLEAN_ICON_TINT_ALPHA = 0.07f
 private const val DRIFT_SPEED_DP_PER_SEC = 50f
 private const val MAX_FRAME_DT_SEC = 0.05f
 private const val INITIAL_STAGGER_MS = 8_000L
@@ -68,20 +70,28 @@ private class IconState(
     var spawnAtNs: Long,
 )
 
-@Suppress("CyclomaticComplexMethod", "FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("CyclomaticComplexMethod", "FunctionNaming", "LongMethod", "ktlint:standard:function-naming")
 @Composable
 fun FloatingIconsLayer(
     icons: List<ImageVector>,
     modifier: Modifier = Modifier,
 ) {
     if (icons.isEmpty()) return
+    val designStyle = currentSchoolQuizDesignStyle()
     val density = LocalDensity.current
-    val iconSizePx = with(density) { ICON_SIZE_DP.dp.toPx() }
+    val iconSizeDp = if (designStyle == SchoolQuizDesignStyle.Clean) 24.dp else ICON_SIZE_DP.dp
+    val iconTintAlpha =
+        if (designStyle == SchoolQuizDesignStyle.Clean) {
+            CLEAN_ICON_TINT_ALPHA
+        } else {
+            ICON_TINT_ALPHA
+        }
+    val iconSizePx = with(density) { iconSizeDp.toPx() }
     val driftSpeedPx = with(density) { DRIFT_SPEED_DP_PER_SEC.dp.toPx() }
     val impulseStrengthPx = with(density) { IMPULSE_STRENGTH_DP_PER_SEC.dp.toPx() }
     val impulseRadiusPx = with(density) { IMPULSE_RADIUS_DP.dp.toPx() }
 
-    val tint = MaterialTheme.colorScheme.onSurface.copy(alpha = ICON_TINT_ALPHA)
+    val tint = MaterialTheme.colorScheme.onSurface.copy(alpha = iconTintAlpha)
     val colorFilter = remember(tint) { ColorFilter.tint(tint) }
 
     val painters = icons.map { rememberVectorPainter(image = it) }

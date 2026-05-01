@@ -12,14 +12,14 @@ interface QuestDao {
 
     @Query("""
         SELECT * FROM quests
-        WHERE authorUid = :authorUid AND archived = 0
+        WHERE authorUid = :authorUid
         ORDER BY lastModifiedAt DESC
     """)
     fun observeMyQuests(authorUid: String): Flow<List<QuestEntity>>
 
     @Query("""
         SELECT * FROM quests
-        WHERE authorUid = :authorUid AND catalogId = :catalogId AND archived = 0
+        WHERE authorUid = :authorUid AND catalogId = :catalogId
         ORDER BY lastModifiedAt DESC
     """)
     fun observeMyQuestsInCatalog(authorUid: String, catalogId: String): Flow<List<QuestEntity>>
@@ -28,7 +28,6 @@ interface QuestDao {
     @Query("""
         SELECT * FROM quests
         WHERE (CHAR(31) || visibleOn || CHAR(31)) LIKE ('%' || CHAR(31) || :shelf || CHAR(31) || '%')
-        AND archived = 0
         ORDER BY lastModifiedAt DESC
     """)
     fun observeByShelf(shelf: String): Flow<List<QuestEntity>>
@@ -37,10 +36,37 @@ interface QuestDao {
         SELECT * FROM quests
         WHERE catalogId = :catalogId
         AND (CHAR(31) || visibleOn || CHAR(31)) LIKE ('%' || CHAR(31) || :shelf || CHAR(31) || '%')
-        AND archived = 0
         ORDER BY lastModifiedAt DESC
     """)
     fun observeByCatalog(catalogId: String, shelf: String): Flow<List<QuestEntity>>
+
+    @Query("""
+        SELECT q.* FROM quests q
+        WHERE q.catalogId = :catalogId
+        AND q.archived = 1
+        AND (CHAR(31) || q.visibleOn || CHAR(31)) LIKE ('%' || CHAR(31) || :shelf || CHAR(31) || '%')
+        AND EXISTS (
+            SELECT 1 FROM sections s
+            JOIN themes t ON t.sectionId = s.id AND t.archived = 0
+            JOIN lessons l ON l.themeId = t.id AND l.archived = 0
+            WHERE s.questId = q.id
+            AND s.archived = 0
+        )
+        AND NOT EXISTS (
+            SELECT 1 FROM sections s
+            JOIN themes t ON t.sectionId = s.id AND t.archived = 0
+            JOIN lessons l ON l.themeId = t.id AND l.archived = 0
+            WHERE s.questId = q.id
+            AND s.archived = 0
+            AND NOT EXISTS (
+                SELECT 1 FROM questions question
+                WHERE question.lessonId = l.id
+                AND question.archived = 0
+            )
+        )
+        ORDER BY q.lastModifiedAt DESC
+    """)
+    fun observeDownloadedArchivedByCatalog(catalogId: String, shelf: String): Flow<List<QuestEntity>>
 
     @Query("SELECT * FROM quests WHERE id = :id")
     suspend fun findById(id: String): QuestEntity?

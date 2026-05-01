@@ -15,7 +15,7 @@ class FakeQuestRepository : QuestRepository {
     override fun observeMyQuests(authorUid: String, catalogId: CatalogId?): Flow<List<Quest>> =
         store.map { list ->
             list.filter { q ->
-                q.authorUid == authorUid && !q.archived &&
+                q.authorUid == authorUid &&
                     (catalogId == null || q.catalogId == catalogId)
             }
         }
@@ -26,7 +26,7 @@ class FakeQuestRepository : QuestRepository {
     override fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> =
         store.map { list ->
             list.filter { q ->
-                q.catalogId == catalogId && shelf in q.visibleOn && !q.archived
+                q.catalogId == catalogId && shelf in q.visibleOn
             }.sortedByDescending { it.lastModifiedAt }
         }
 

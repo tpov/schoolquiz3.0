@@ -15,9 +15,11 @@ dependencies {
     implementation(project(":shared:feature:theme:domain"))
     implementation(project(":shared:feature:lesson:domain"))
     implementation(project(":shared:feature:lesson-runner:domain"))
+    implementation(project(":shared:feature:question:domain"))
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(project(":shared:core:catalog:domain"))
     implementation(project(":shared:core:question-schema"))
+    implementation(project(":shared:core:sync"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)

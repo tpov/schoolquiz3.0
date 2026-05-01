@@ -24,6 +24,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.tpov.schoolquiz.android.core.designsystem.R
+import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 
@@ -47,12 +48,13 @@ fun CatalogGrid(
     onCatalogClick: (CatalogId, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isClean = currentSchoolQuizDesignStyle() == SchoolQuizDesignStyle.Clean
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(if (isClean) 18.dp else 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (isClean) 14.dp else 12.dp),
+        verticalArrangement = Arrangement.spacedBy(if (isClean) 14.dp else 12.dp),
     ) {
         items(items, key = { it.id.value }) { item ->
             CatalogGridItem(
@@ -70,6 +72,7 @@ fun CatalogGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isClean = currentSchoolQuizDesignStyle() == SchoolQuizDesignStyle.Clean
     BrandCard(
         modifier =
             modifier
@@ -97,7 +100,11 @@ fun CatalogGridItem(
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                modifier =
+                    Modifier.padding(
+                        horizontal = if (isClean) 12.dp else 8.dp,
+                        vertical = if (isClean) 10.dp else 4.dp,
+                    ),
             )
         }
     }

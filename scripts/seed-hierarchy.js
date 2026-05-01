@@ -4,7 +4,16 @@ admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const T = admin.firestore.Timestamp;
 const now = T.now();
+const baseMs = now.toMillis();
 const AUTHOR = 'seed-author-uid';
+
+function syncChange(type, id, offset) {
+  return {
+    type,
+    id,
+    changedAtMs: baseMs + offset,
+  };
+}
 
 (async () => {
   const quest = {
@@ -13,13 +22,13 @@ const AUTHOR = 'seed-author-uid';
     authorUid: AUTHOR,
     title: 'Основы Kotlin',
     picturePath: null,
-    visibleOn: ['home', 'arena'],
+    visibleOn: ['archive'],
     averageRating: null,
     averageRatingCount: 0,
     version: 1,
     contentsVersion: 1,
     lastModifiedAt: now,
-    archived: false,
+    archived: true,
   };
   const section = {
     id: 'section-sample',
@@ -79,6 +88,27 @@ const AUTHOR = 'seed-author-uid';
   batch.set(db.doc('themes/' + theme.id), theme);
   batch.set(db.doc('lessons/' + lesson.id), lesson);
   batch.set(db.doc('questions/' + question.id), question);
+  [
+    syncChange('catalog', quest.catalogId, 1),
+    syncChange('quest', quest.id, 2),
+    syncChange('section', section.id, 3),
+    syncChange('theme', theme.id, 4),
+    syncChange('lesson', lesson.id, 5),
+  ].forEach((change) => {
+    batch.set(
+      db.doc(
+        `catalogs/${quest.catalogId}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`,
+      ),
+      change,
+    );
+  });
+  const questionChange = syncChange('question', question.id, 6);
+  batch.set(
+    db.doc(
+      `lesson_content/${lesson.id}/sync_changes/${questionChange.changedAtMs}-${questionChange.type}-${questionChange.id}`,
+    ),
+    questionChange,
+  );
   batch.update(db.doc('catalogs/' + quest.catalogId), catalogUpd);
   await batch.commit();
 

@@ -30,6 +30,11 @@ class QuestRepositoryImpl(
     override fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> =
         local.observeByCatalog(catalogId.value, shelf).map { list -> list.map { it.toDomain() } }
 
+    override fun observeDownloadedArchivedByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> =
+        local.observeDownloadedArchivedByCatalog(catalogId.value, shelf).map { list ->
+            list.map { it.toDomain() }
+        }
+
     override suspend fun getById(id: QuestId): Quest? =
         local.findById(id.value)?.toDomain()
 
@@ -107,7 +112,7 @@ class QuestRepositoryImpl(
                 .getOrNull()
         }
         val entity = dto.toEntity(resolvedUrl)
-        return if (dto.archived || dto.visibleOn.isEmpty()) {
+        return if (dto.visibleOn.isEmpty()) {
             val localVersion = localEntity?.version ?: 0L
             if (fromSyncList || dto.version > localVersion) local.deleteById(dto.id)
             false

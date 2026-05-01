@@ -1,7 +1,9 @@
 package com.tpov.schoolquiz.android.feature.quest.presentation.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,9 +20,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandSquareIconButton
 import com.tpov.schoolquiz.android.core.designsystem.components.CatalogSpinner
 import com.tpov.schoolquiz.android.core.designsystem.components.QuestCard
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 
 /**
@@ -60,7 +64,7 @@ fun MyQuestsScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            } else if (state.quests.isEmpty()) {
+            } else if (state.quests.isEmpty() && state.drafts.isEmpty()) {
                 Box(
                     modifier =
                         Modifier
@@ -82,6 +86,16 @@ fun MyQuestsScreen(
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(state.drafts) { draft ->
+                        DraftQuestCard(
+                            item = draft,
+                            onClick = { component.onDraftClick(draft) },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    }
                     items(state.quests) { quest ->
                         QuestCard(
                             item = quest,
@@ -105,5 +119,35 @@ fun MyQuestsScreen(
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
         )
+    }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun DraftQuestCard(
+    item: DraftQuestDisplayItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BrandCard(modifier = modifier.clickable(onClick = onClick)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "Черновик",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            Text(
+                text = "Вопросов: ${item.questionCount}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
     }
 }

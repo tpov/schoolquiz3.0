@@ -112,6 +112,18 @@ class CatalogFirstFetchIntegrationTest {
     @Test
     fun `delta sync after first fetch reads only changed`() = runTest {
         // Simulate previous sync having advanced cursor to 1000L
+        fakeLocal.seed(
+            listOf(
+                com.tpov.schoolquiz.shared.core.persistence.CatalogEntity(
+                    id = "a",
+                    name = "A",
+                    picturePath = null,
+                    pictureUrl = null,
+                    version = 1L,
+                    lastModifiedAt = 100L,
+                ),
+            ),
+        )
         fakeSyncState.setCursor("catalogs", 1000L)
         fakeRemote.result = Result.success(
             listOf(

@@ -42,6 +42,11 @@ sealed interface DrawerSection {
         }
 
         // emptyMap (always visible)
+        data object Archive : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
+        // emptyMap (always visible)
         data object Settings : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }

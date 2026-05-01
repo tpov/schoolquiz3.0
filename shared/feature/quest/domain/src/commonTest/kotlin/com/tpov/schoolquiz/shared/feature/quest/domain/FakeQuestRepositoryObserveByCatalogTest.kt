@@ -72,17 +72,17 @@ class FakeQuestRepositoryObserveByCatalogTest {
         assertEquals(2, emissions[1].size, "Second emission includes both quests")
     }
 
-    // ── RX-04: archived quest → excluded from result ──────────────────────────
+    // ── RX-04: archived quest → included as on-demand result ─────────────────
     @Test
-    fun `when quest is archived then excluded`() = runTest {
+    fun `when quest is archived then included`() = runTest {
         val archivedQuest = makeQuest(id = "archived", catalogId = catA, visibleOn = setOf("home"), archived = true)
         val activeQuest = makeQuest(id = "active", catalogId = catA, visibleOn = setOf("home"), archived = false)
         val repo = FakeQuestRepository(initial = listOf(archivedQuest, activeQuest))
 
         val result = repo.observeByCatalog(catA, "home").first()
 
-        assertEquals(1, result.size)
-        assertEquals(QuestId("active"), result[0].id)
+        assertEquals(2, result.size)
+        assertEquals(setOf(QuestId("active"), QuestId("archived")), result.map { it.id }.toSet())
     }
 
     // ── Shelf exact match: "tournament" must NOT match "tournamentFinal" ───────
@@ -109,9 +109,9 @@ class FakeQuestRepositoryObserveByCatalogTest {
         assertEquals(QuestId("q1"), result[0].id)
     }
 
-    // ── Edge: all archived → emits empty list ────────────────────────────────
+    // ── Edge: all archived → emits on-demand roots ──────────────────────────
     @Test
-    fun `when all quests in catalog are archived then emits empty list`() = runTest {
+    fun `when all quests in catalog are archived then emits them`() = runTest {
         val repo = FakeQuestRepository(
             initial = listOf(
                 makeQuest(id = "q1", catalogId = catA, visibleOn = setOf("home"), archived = true),
@@ -121,7 +121,8 @@ class FakeQuestRepositoryObserveByCatalogTest {
 
         val result = repo.observeByCatalog(catA, "home").first()
 
-        assertTrue(result.isEmpty())
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.archived })
     }
 
     // ── Edge: empty backing store → emits empty list ─────────────────────────

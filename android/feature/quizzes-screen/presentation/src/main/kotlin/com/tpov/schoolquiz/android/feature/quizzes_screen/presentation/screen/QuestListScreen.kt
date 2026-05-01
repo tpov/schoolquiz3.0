@@ -34,6 +34,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
+import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyDownloadStatus
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
@@ -95,6 +96,8 @@ fun QuestListScreen(
                                 ratingCount = quest.averageRatingCount,
                                 onClick = { component.onQuestClick(quest) },
                                 onLongClick = { expandedQuestId = quest.id },
+                                downloadStatus = quest.downloadStatus,
+                                onDownloadClick = { component.onQuestDownloadClick(quest) },
                             )
                             DropdownMenu(
                                 expanded = expandedQuestId == quest.id,
@@ -142,6 +145,8 @@ private fun QuestListScreenLoadingPreview() {
 
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
 
+                    override fun onQuestDownloadClick(quest: QuestDisplayItem) = Unit
+
                     override fun onShareClick(quest: QuestDisplayItem) = Unit
                 },
             onSegmentClick = {},
@@ -161,6 +166,8 @@ private fun QuestListScreenEmptyPreview() {
                     override val titles = listOf("Математика")
 
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
+
+                    override fun onQuestDownloadClick(quest: QuestDisplayItem) = Unit
 
                     override fun onShareClick(quest: QuestDisplayItem) = Unit
                 },
@@ -190,6 +197,7 @@ private fun QuestListScreenLoadedPreview() {
                                             null,
                                             PREVIEW_ALGEBRA_RATING,
                                             PREVIEW_ALGEBRA_RATING_COUNT,
+                                            isDownloadable = true,
                                         ),
                                         QuestDisplayItem(QuestId("2"), catalogId, "Геометрия", null, null, 0),
                                         QuestDisplayItem(
@@ -207,9 +215,20 @@ private fun QuestListScreenLoadedPreview() {
 
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
 
+                    override fun onQuestDownloadClick(quest: QuestDisplayItem) = Unit
+
                     override fun onShareClick(quest: QuestDisplayItem) = Unit
                 },
             onSegmentClick = {},
         )
     }
 }
+
+private val QuestDisplayItem.downloadStatus: HierarchyDownloadStatus
+    get() =
+        when {
+            isDownloading -> HierarchyDownloadStatus.Downloading
+            isDownloadComplete -> HierarchyDownloadStatus.Complete
+            isDownloadable -> HierarchyDownloadStatus.Available
+            else -> HierarchyDownloadStatus.Hidden
+        }

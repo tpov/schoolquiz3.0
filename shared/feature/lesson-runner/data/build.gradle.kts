@@ -1,3 +1,5 @@
+@file:OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+
 plugins {
     id("schoolquiz.kmp.library")
 }
@@ -7,13 +9,16 @@ android {
 }
 
 kotlin {
-    sourceSets {
-        val jvmAndAndroidMain by creating {
-            dependsOn(commonMain.get())
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmAndAndroid") {
+                withAndroidTarget()
+                withJvm()
+            }
         }
-        jvmMain.get().dependsOn(jvmAndAndroidMain)
-        androidMain.get().dependsOn(jvmAndAndroidMain)
+    }
 
+    sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)

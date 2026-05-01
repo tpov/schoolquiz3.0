@@ -8,4 +8,6 @@ data class LessonItemUi(
     val bestStarsRawTenths: Int = 0,
     val hardUnlocked: Boolean = false,
     val isHardChecked: Boolean = false,
+    val isDownloaded: Boolean = true,
+    val isDownloading: Boolean = false,
 )

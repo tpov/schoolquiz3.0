@@ -16,6 +16,7 @@ class FakeLessonRepository : LessonRepository {
     var refreshByIdsCallCount = 0
     var lastRefreshByIds: Set<LessonId> = emptySet()
     private var nextRefreshFailure: Throwable? = null
+    private var nextRefreshByIdsFailure: Throwable? = null
     private var nextRefreshChangedOverride: Set<LessonId>? = null
 
     override fun observeByTheme(themeId: ThemeId): Flow<List<Lesson>> =
@@ -36,6 +37,11 @@ class FakeLessonRepository : LessonRepository {
     override suspend fun refreshByIds(ids: Set<LessonId>): Result<Unit> {
         refreshByIdsCallCount++
         lastRefreshByIds = ids
+        val failure = nextRefreshByIdsFailure
+        if (failure != null) {
+            nextRefreshByIdsFailure = null
+            return Result.failure(failure)
+        }
         return Result.success(Unit)
     }
 
@@ -43,6 +49,7 @@ class FakeLessonRepository : LessonRepository {
         cache.value[id]?.contentsVersion
 
     fun setNextRefreshFailure(error: Throwable) { nextRefreshFailure = error }
+    fun setNextRefreshByIdsFailure(error: Throwable) { nextRefreshByIdsFailure = error }
     fun setNextRefreshChanged(ids: Set<LessonId>) { nextRefreshChangedOverride = ids }
     fun seed(lessons: List<Lesson>) { cache.value = lessons.associateBy { it.id } }
 
@@ -51,6 +58,7 @@ class FakeLessonRepository : LessonRepository {
         refreshByIdsCallCount = 0
         lastRefreshByIds = emptySet()
         nextRefreshFailure = null
+        nextRefreshByIdsFailure = null
         nextRefreshChangedOverride = null
         cache.value = emptyMap()
     }

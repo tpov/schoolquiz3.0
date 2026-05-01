@@ -7,6 +7,7 @@ const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const now = admin.firestore.Timestamp.now();
+const baseMs = now.toMillis();
 const INC1 = admin.firestore.FieldValue.increment(1);
 const AUTHOR = 'seed-author-uid';
 const VERSION = 4;
@@ -19,6 +20,11 @@ const LESSON_ID  = 'lesson-lr-types';
 
 // Inline payload helper — stores QuestionContent JSON as a string field per ADR-0003.
 const mkPayload = (obj) => JSON.stringify(obj);
+const syncChange = (type, id, offset) => ({
+  type,
+  id,
+  changedAtMs: baseMs + offset,
+});
 
 // ── 8 Questions ───────────────────────────────────────────────────────────────
 
@@ -331,6 +337,27 @@ const quest = {
     batch.set(db.doc(`questions/${q.id}`), q, { merge: true });
   }
 
+  [
+    syncChange('catalog', CATALOG_ID, 1),
+    syncChange('quest', QUEST_ID, 2),
+    syncChange('section', SECTION_ID, 3),
+    syncChange('theme', THEME_ID, 4),
+    syncChange('lesson', LESSON_ID, 5),
+  ].forEach((change) => {
+    batch.set(
+      db.doc(`catalogs/${CATALOG_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+      change,
+    );
+  });
+  questions
+    .map((q, index) => syncChange('question', q.id, 6 + index))
+    .forEach((change) => {
+      batch.set(
+        db.doc(`lesson_content/${LESSON_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+        change,
+      );
+    });
+
   // Bump catalog contentsVersion so delta-sync picks up the new quest subtree.
   batch.update(db.doc(`catalogs/${CATALOG_ID}`), {
     contentsVersion: INC1,
@@ -347,6 +374,8 @@ const quest = {
   console.log(`  lesson:   ${lesson.id} — "${lesson.title}"`);
   console.log(`  top3:     Alice 95%, Bob 87%, Charlie 72%`);
   console.log(`  rating:   avg=${lesson.averageRating} count=${lesson.ratingCount}`);
+  console.log('  sync:     5 catalog sync_changes');
+  console.log(`  content:  ${questions.length} lesson_content sync_changes`);
   console.log(`  questions (${questions.length}):`);
   for (const q of questions) {
     const p = JSON.parse(q.payload);

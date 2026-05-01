@@ -23,7 +23,6 @@ class FakeQuestRepository : QuestRepository {
         return store.map { list ->
             list.filter { q ->
                 q.authorUid == authorUid &&
-                    !q.archived &&
                     (catalogId == null || q.catalogId == catalogId)
             }
         }
@@ -36,8 +35,7 @@ class FakeQuestRepository : QuestRepository {
         store.map { list ->
             list.filter { quest ->
                 quest.catalogId == catalogId &&
-                    shelf in quest.visibleOn &&
-                    !quest.archived
+                    shelf in quest.visibleOn
             }.sortedByDescending { it.lastModifiedAt }
         }
 

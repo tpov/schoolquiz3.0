@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -46,6 +47,8 @@ fun QuestCard(
     modifier: Modifier = Modifier,
     onLongClick: ((QuestId) -> Unit)? = null,
 ) {
+    val designStyle = currentSchoolQuizDesignStyle()
+    val isClean = designStyle == SchoolQuizDesignStyle.Clean
     val clickModifier =
         if (onLongClick != null) {
             Modifier.combinedClickable(
@@ -92,14 +95,23 @@ fun QuestCard(
                             .align(Alignment.CenterHorizontally),
                 )
             }
-            Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+            Column(
+                modifier =
+                    Modifier.padding(
+                        horizontal = if (isClean) 12.dp else 8.dp,
+                        vertical = if (isClean) 10.dp else 4.dp,
+                    ),
+            ) {
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                StarRating(rating = item.averageRating)
+                StarRating(
+                    rating = item.averageRating,
+                    size = if (isClean) 16.dp else 18.dp,
+                )
             }
         }
     }

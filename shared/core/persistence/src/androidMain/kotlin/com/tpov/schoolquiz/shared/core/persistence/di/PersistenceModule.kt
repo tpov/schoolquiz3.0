@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestAuthoringDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestDao
 import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
@@ -18,6 +19,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_3_4
 import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_4_5
 import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_5_6
 import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_6_7
+import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_7_8
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -28,7 +30,7 @@ val persistenceModule = module {
             AppDatabase::class.java,
             "schoolquiz.db",
         )
-            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
             .addTypeConverter(StringSetConverter())
             .addTypeConverter(TopParticipantListConverter())
             .build()
@@ -43,4 +45,5 @@ val persistenceModule = module {
     single<LessonAttemptDao> { get<AppDatabase>().lessonAttemptDao() }
     single<LessonRatingLocalDao> { get<AppDatabase>().lessonRatingLocalDao() }
     single<SyncStateDao> { get<AppDatabase>().syncStateDao() }
+    single<QuestAuthoringDao> { get<AppDatabase>().questAuthoringDao() }
 }

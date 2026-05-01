@@ -15,6 +15,7 @@ class FakeQuestListComponent(
     override val uiState: Value<QuestListUiState> get() = _uiState
 
     var onQuestClickCalled: QuestDisplayItem? = null
+    var onQuestDownloadClickCalled: QuestDisplayItem? = null
     var onShareClickCalled: QuestDisplayItem? = null
 
     fun setState(state: QuestListUiState) {
@@ -23,6 +24,10 @@ class FakeQuestListComponent(
 
     override fun onQuestClick(quest: QuestDisplayItem) {
         onQuestClickCalled = quest
+    }
+
+    override fun onQuestDownloadClick(quest: QuestDisplayItem) {
+        onQuestDownloadClickCalled = quest
     }
 
     override fun onShareClick(quest: QuestDisplayItem) {

@@ -85,9 +85,10 @@ data class Quest(
      */
     val lastModifiedAt: Long,
     /**
-     * Soft-delete flag. When `true` (and authorUid != me) or visibleOn is empty,
-     * the client deletes the local quest entry.
-     * Consistent with Catalog.archived semantics.
+     * On-demand content marker for root quests/courses. When `true`, the quest
+     * remains visible, but question payload is synced through lesson_content only.
+     * Removal from local views is controlled by [visibleOn] becoming empty or by a
+     * missing concrete document during sync-list refresh.
      */
     val archived: Boolean = false,
 ) {

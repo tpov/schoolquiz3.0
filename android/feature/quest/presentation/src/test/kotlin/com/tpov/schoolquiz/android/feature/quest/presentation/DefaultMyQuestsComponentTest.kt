@@ -10,14 +10,19 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultMyQuestsCom
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeNavigator
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestAuthoringRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildQuest
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
-import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -72,6 +77,7 @@ class DefaultMyQuestsComponentTest {
     private fun buildComponent(
         authRepo: FakeAuthRepository = FakeAuthRepository(),
         questRepo: FakeQuestRepository = FakeQuestRepository(),
+        authoringRepo: FakeQuestAuthoringRepository = FakeQuestAuthoringRepository(),
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
         navigator: FakeNavigator = FakeNavigator(),
         onQuestDrillDown: (QuestDisplayItem) -> Unit = { },
@@ -79,6 +85,7 @@ class DefaultMyQuestsComponentTest {
         componentContext = testCtx(),
         authRepo = authRepo,
         observeMyQuests = ObserveMyQuestsUseCase(questRepo),
+        observeDraftSummaries = ObserveQuestDraftSummariesUseCase(authoringRepo),
         observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
         navigator = navigator,
         onQuestDrillDown = onQuestDrillDown,
@@ -183,10 +190,38 @@ class DefaultMyQuestsComponentTest {
         assertEquals(Destination.OpenQuestCreate, navigator.destinations.first())
     }
 
-    // ── AC#47 — archived quests excluded ──────────────────────────────────────
+    @Test
+    fun `when draft summaries emitted then state shows local drafts`() = runTest {
+        val authoringRepo = FakeQuestAuthoringRepository()
+        authoringRepo.emit(
+            listOf(
+                QuestDraftSummary(
+                    id = QuestDraftId("draft-1"),
+                    catalogId = CatalogId("cat1"),
+                    title = "Draft quest",
+                    status = QuestDraftStatus.DRAFT,
+                    questionCount = 3,
+                    updatedAtMs = 10L,
+                    isActive = true,
+                ),
+            ),
+        )
+
+        val component = buildComponent(
+            authRepo = FakeAuthRepository(initialUid = "user1"),
+            authoringRepo = authoringRepo,
+        )
+
+        val drafts = component.state.value.drafts
+        assertEquals(1, drafts.size)
+        assertEquals("Draft quest", drafts.first().title)
+        assertEquals(3, drafts.first().questionCount)
+    }
+
+    // ── AC#47 — archived quests visible as on-demand roots ───────────────────
 
     @Test
-    fun `when store has archived quest then archived quest is not in state`() = runTest {
+    fun `when store has archived quest then archived quest is in state`() = runTest {
         val questRepo = FakeQuestRepository()
         questRepo.emit(listOf(
             buildQuest(id = "active", authorUid = "user1", archived = false),
@@ -199,8 +234,8 @@ class DefaultMyQuestsComponentTest {
         )
 
         val quests = component.state.value.quests
-        assertEquals(1, quests.size, "only non-archived quest must appear")
-        assertEquals("active", quests.first().id.value, "active quest must be present")
+        assertEquals(2, quests.size, "archived quest must remain visible as on-demand root")
+        assertEquals(setOf("active", "archived"), quests.map { it.id.value }.toSet())
     }
 
     // ── selectedCatalogId reset on sign-out ───────────────────────────────────

@@ -30,6 +30,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
@@ -152,6 +153,7 @@ class AppShellScreenTest {
                     override fun onCatalogSelected(id: CatalogId?) = Unit
                     override fun onCreateQuestClick() = Unit
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
+                    override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
                 }
             },
             homeQuestsFactory = { _, _ ->
@@ -172,6 +174,7 @@ class AppShellScreenTest {
                     override val currentCatalogIcons: kotlinx.coroutines.flow.StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         kotlinx.coroutines.flow.MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
+                    override fun openCourseArchive() = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit

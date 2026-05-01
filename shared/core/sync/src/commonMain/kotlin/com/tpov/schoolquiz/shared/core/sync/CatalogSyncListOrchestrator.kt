@@ -14,7 +14,6 @@ import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Clock
 
 /**
  * Sync-list based catalog content sync.
@@ -39,13 +38,22 @@ class CatalogSyncListOrchestrator(
 
     override suspend fun sync(): Result<Unit> {
         return try {
-            val catalogFreshTime = Clock.System.now().toEpochMilliseconds()
             catalogRepo.refreshFromRemote().onFailure { return Result.failure(it) }
-            syncStateRepo.setCursor(CATALOG_LIST_CURSOR_ID, catalogFreshTime)
 
             val catalogs = catalogRepo.observeAll().first()
-            for (catalog in catalogs) {
-                syncCatalog(catalog.id).onFailure { return Result.failure(it) }
+            catalogs
+                .maxOfOrNull { it.lastModifiedAt }
+                ?.let { syncStateRepo.setCursor(CATALOG_LIST_CURSOR_ID, it) }
+
+            val catalogIds = catalogs
+                .map { it.id }
+                .plus(CatalogId(ON_DEMAND_COURSES_CATALOG_ID))
+                .distinctBy { it.value }
+            for (catalogId in catalogIds) {
+                syncCatalog(
+                    catalogId,
+                    includeQuestions = catalogId.value != ON_DEMAND_COURSES_CATALOG_ID,
+                ).onFailure { return Result.failure(it) }
             }
             Result.success(Unit)
         } catch (e: CancellationException) {
@@ -55,19 +63,38 @@ class CatalogSyncListOrchestrator(
         }
     }
 
-    private suspend fun syncCatalog(catalogId: CatalogId): Result<Unit> {
+    suspend fun syncCatalogStructure(catalogId: CatalogId): Result<Unit> =
+        syncCatalog(catalogId, includeQuestions = false)
+
+    private suspend fun syncCatalog(
+        catalogId: CatalogId,
+        includeQuestions: Boolean,
+    ): Result<Unit> {
+        catalogRepo.refreshByIds(setOf(catalogId)).onFailure { return Result.failure(it) }
         val cursorId = catalogSyncCursorId(catalogId)
-        val cursor = syncStateRepo.getCursor(cursorId)
+        val cursor =
+            if (shouldForceFullCourseArchiveSync(catalogId)) {
+                0L
+            } else {
+                syncStateRepo.getCursor(cursorId)
+            }
         val changes = syncChangeRemote.fetchChangedSince(catalogId, cursor)
             .filter { it.nodeId.isNotBlank() }
         if (changes.isEmpty()) return Result.success(Unit)
 
-        applyChanges(changes).onFailure { return Result.failure(it) }
+        applyChanges(changes, includeQuestions).onFailure { return Result.failure(it) }
         syncStateRepo.setCursor(cursorId, changes.maxOf { it.changedAtMs })
         return Result.success(Unit)
     }
 
-    private suspend fun applyChanges(changes: List<CatalogSyncChange>): Result<Unit> {
+    private suspend fun shouldForceFullCourseArchiveSync(catalogId: CatalogId): Boolean =
+        catalogId.value == ON_DEMAND_COURSES_CATALOG_ID &&
+            questRepo.observeByCatalog(catalogId, ARCHIVE_SHELF).first().isEmpty()
+
+    private suspend fun applyChanges(
+        changes: List<CatalogSyncChange>,
+        includeQuestions: Boolean,
+    ): Result<Unit> {
         val grouped = changes
             .groupBy { it.type }
             .mapValues { (_, items) -> items.map { it.nodeId }.toSet() }
@@ -102,12 +129,17 @@ class CatalogSyncListOrchestrator(
             ?.takeIf { it.isNotEmpty() }
             ?.let { lessonRepo.refreshByIds(it).onFailure { e -> return Result.failure(e) } }
 
-        grouped[CatalogSyncNodeType.Question]
-            ?.map(::QuestionId)
-            ?.toSet()
-            ?.takeIf { it.isNotEmpty() }
-            ?.let { questionRepo.refreshByIds(it).onFailure { e -> return Result.failure(e) } }
+        if (includeQuestions) {
+            grouped[CatalogSyncNodeType.Question]
+                ?.map(::QuestionId)
+                ?.toSet()
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { questionRepo.refreshByIds(it).onFailure { e -> return Result.failure(e) } }
+        }
 
         return Result.success(Unit)
     }
 }
+
+private const val ON_DEMAND_COURSES_CATALOG_ID = "courses"
+private const val ARCHIVE_SHELF = "archive"

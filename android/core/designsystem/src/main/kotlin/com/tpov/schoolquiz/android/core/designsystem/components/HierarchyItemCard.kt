@@ -2,11 +2,19 @@ package com.tpov.schoolquiz.android.core.designsystem.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 
 /**
  * Generic card for hierarchy levels: Section / Theme / Lesson.
@@ -41,7 +50,11 @@ fun HierarchyItemCard(
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
     modifier: Modifier = Modifier,
+    downloadStatus: HierarchyDownloadStatus = HierarchyDownloadStatus.Hidden,
+    onDownloadClick: (() -> Unit)? = null,
 ) {
+    val designStyle = currentSchoolQuizDesignStyle()
+    val isClean = designStyle == SchoolQuizDesignStyle.Clean
     val clickModifier =
         if (onLongClick != null) {
             Modifier.combinedClickable(
@@ -63,15 +76,18 @@ fun HierarchyItemCard(
             verticalAlignment = Alignment.CenterVertically,
             modifier =
                 Modifier
-                    .height(64.dp)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .height(if (isClean) 72.dp else 64.dp)
+                    .padding(
+                        horizontal = if (isClean) 16.dp else 12.dp,
+                        vertical = if (isClean) 12.dp else 8.dp,
+                    ),
         ) {
             if (orderLabel != null) {
                 Text(
                     text = orderLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 8.dp),
+                    style = if (isClean) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isClean) 0.5f else 0.62f),
+                    modifier = Modifier.padding(end = if (isClean) 10.dp else 8.dp),
                 )
             }
             Text(
@@ -92,13 +108,18 @@ fun HierarchyItemCard(
                             .wrapContentHeight(),
                 )
             }
+            hierarchyDownloadButton(
+                status = downloadStatus,
+                onClick = onDownloadClick,
+                modifier = Modifier.padding(start = 8.dp),
+            )
             StarRating(
                 rating = rating,
                 modifier =
                     Modifier
                         .padding(start = 8.dp)
                         .semantics { contentDescription = "rating" },
-                size = 28.dp,
+                size = if (isClean) 24.dp else 28.dp,
             )
             if (rating != null) {
                 Text(
@@ -116,6 +137,66 @@ fun HierarchyItemCard(
                     )
                 }
             }
+        }
+    }
+}
+
+enum class HierarchyDownloadStatus {
+    Hidden,
+    Available,
+    Downloading,
+    Complete,
+}
+
+@Composable
+private fun hierarchyDownloadButton(
+    status: HierarchyDownloadStatus,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    if (status == HierarchyDownloadStatus.Hidden) return
+
+    Box(
+        modifier = modifier.size(40.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (status) {
+            HierarchyDownloadStatus.Hidden -> Unit
+            HierarchyDownloadStatus.Downloading ->
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                )
+            HierarchyDownloadStatus.Available,
+            HierarchyDownloadStatus.Complete,
+            ->
+                IconButton(
+                    enabled = status == HierarchyDownloadStatus.Available && onClick != null,
+                    onClick = { onClick?.invoke() },
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        imageVector =
+                            if (status == HierarchyDownloadStatus.Complete) {
+                                Icons.Default.CheckCircle
+                            } else {
+                                Icons.Default.FileDownload
+                            },
+                        contentDescription =
+                            if (status == HierarchyDownloadStatus.Complete) {
+                                "Скачано"
+                            } else {
+                                "Скачать"
+                            },
+                        tint =
+                            if (status == HierarchyDownloadStatus.Complete) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
         }
     }
 }
@@ -170,6 +251,8 @@ private fun HierarchyItemCardWithRatingPreview() {
             orderLabel = "1.",
             rating = 2.5f,
             ratingCount = 42,
+            downloadStatus = HierarchyDownloadStatus.Available,
+            onDownloadClick = {},
             onClick = {},
         )
     }

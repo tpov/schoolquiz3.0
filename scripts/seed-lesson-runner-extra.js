@@ -8,12 +8,18 @@ const sa = require('/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 const now = admin.firestore.Timestamp.now();
+const baseMs = now.toMillis();
 const INC1 = admin.firestore.FieldValue.increment(1);
 
 const LESSON_ID  = 'lesson-sample';
 const CATALOG_ID = 'courses';
 
 const mkPayload = (obj) => JSON.stringify(obj);
+const syncChange = (type, id, offset) => ({
+  type,
+  id,
+  changedAtMs: baseMs + offset,
+});
 
 // ── 8 Questions (order 1..8, keeping order=0 for question-sample) ─────────────
 
@@ -266,6 +272,25 @@ const lessonUpdate = {
     batch.set(db.doc(`questions/${q.id}`), q, { merge: true });
   }
 
+  [
+    syncChange('catalog', CATALOG_ID, 1),
+    syncChange('lesson', LESSON_ID, 2),
+  ].forEach((change) => {
+    batch.set(
+      db.doc(`catalogs/${CATALOG_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+      change,
+    );
+  });
+
+  questions
+    .map((q, index) => syncChange('question', q.id, 3 + index))
+    .forEach((change) => {
+      batch.set(
+        db.doc(`lesson_content/${LESSON_ID}/sync_changes/${change.changedAtMs}-${change.type}-${change.id}`),
+        change,
+      );
+    });
+
   // Bump catalog so delta-sync picks up the updated lesson subtree.
   batch.update(db.doc(`catalogs/${CATALOG_ID}`), {
     contentsVersion: INC1,
@@ -278,6 +303,8 @@ const lessonUpdate = {
   console.log(`  lesson:   ${LESSON_ID} — "val и var" (contentsVersion → ${lessonUpdate.contentsVersion})`);
   console.log(`  top3:     Alice 95%, Bob 87%, Charlie 72%`);
   console.log(`  rating:   avg=${lessonUpdate.averageRating} count=${lessonUpdate.ratingCount}`);
+  console.log('  sync:     2 catalog sync_changes');
+  console.log(`  content:  ${questions.length} lesson_content sync_changes`);
   console.log(`  questions (${questions.length} new, 1 existing preserved):`);
   for (const q of questions) {
     const p = JSON.parse(q.payload);

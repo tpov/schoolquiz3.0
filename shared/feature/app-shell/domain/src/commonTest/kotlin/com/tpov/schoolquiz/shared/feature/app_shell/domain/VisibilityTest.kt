@@ -191,12 +191,13 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 22 visibleSections LOCAL guest returns HomeQuests MyQuests Settings`() {
+    fun `scenario 22 visibleSections LOCAL guest returns HomeQuests Archive MyQuests Settings`() {
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
-        // DesignCatalog removed from LocalSection (now DrawerFooterAction) — 3 sections remain
+        // DesignCatalog removed from LocalSection (now DrawerFooterAction).
         assertEquals(
             listOf(
                 DrawerSection.LocalSection.HomeQuests,
+                DrawerSection.LocalSection.Archive,
                 DrawerSection.LocalSection.MyQuests,
                 DrawerSection.LocalSection.Settings,
             ),
@@ -343,11 +344,17 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules LOCAL has exactly 3 sections HomeQuests MyQuests Settings`() {
+    fun `visibility rules row 4 LOCAL Archive has empty requiredRoles`() {
+        assertTrue(DrawerSection.LocalSection.Archive.requiredRoles.isEmpty())
+    }
+
+    @Test
+    fun `visibility rules LOCAL has exactly 4 sections HomeQuests Archive MyQuests Settings`() {
         // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction)
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
-        assertEquals(3, sections.size)
+        assertEquals(4, sections.size)
         assertTrue(sections.contains(DrawerSection.LocalSection.HomeQuests))
+        assertTrue(sections.contains(DrawerSection.LocalSection.Archive))
         assertTrue(sections.contains(DrawerSection.LocalSection.MyQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Settings))
     }
@@ -440,6 +447,7 @@ class VisibilityTest {
     fun `scenario 44 rootOf maps each DrawerSection to correct TabConfig member`() {
         assertEquals(LocalConfig.MyQuestsRoot, rootOf(DrawerSection.LocalSection.MyQuests))
         assertEquals(LocalConfig.HomeQuestsRoot, rootOf(DrawerSection.LocalSection.HomeQuests))
+        assertEquals(LocalConfig.ArchiveRoot, rootOf(DrawerSection.LocalSection.Archive))
         assertEquals(LocalConfig.SettingsRoot, rootOf(DrawerSection.LocalSection.Settings))
         assertEquals(InternetConfig.ArenaRoot, rootOf(DrawerSection.InternetSection.Arena))
         assertEquals(InternetConfig.CatalogRoot, rootOf(DrawerSection.InternetSection.Catalog))

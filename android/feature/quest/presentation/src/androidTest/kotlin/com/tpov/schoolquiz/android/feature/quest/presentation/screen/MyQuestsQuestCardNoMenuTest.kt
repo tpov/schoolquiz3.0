@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
@@ -42,6 +43,7 @@ class MyQuestsQuestCardNoMenuTest {
             override fun onCatalogSelected(id: CatalogId?) = Unit
             override fun onCreateQuestClick() = Unit
             override fun onQuestClick(quest: QuestDisplayItem) = Unit
+            override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
         }
     }
 

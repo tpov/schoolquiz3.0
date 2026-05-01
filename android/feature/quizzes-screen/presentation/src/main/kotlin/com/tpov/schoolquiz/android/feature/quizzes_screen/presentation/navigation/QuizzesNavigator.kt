@@ -9,6 +9,8 @@ interface QuizzesNavigator {
         catalogName: String,
     )
 
+    fun openCourseArchive()
+
     fun openSectionList(
         questId: QuestId,
         titles: List<String>,

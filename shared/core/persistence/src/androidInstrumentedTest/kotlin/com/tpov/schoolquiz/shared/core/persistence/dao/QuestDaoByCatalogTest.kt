@@ -4,9 +4,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.shared.core.persistence.AppDatabase
 import com.tpov.schoolquiz.shared.core.persistence.CatalogEntity
+import com.tpov.schoolquiz.shared.core.persistence.LessonEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestEntity
+import com.tpov.schoolquiz.shared.core.persistence.QuestionEntity
+import com.tpov.schoolquiz.shared.core.persistence.SectionEntity
 import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
+import com.tpov.schoolquiz.shared.core.persistence.ThemeEntity
 import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -86,6 +90,66 @@ class QuestDaoByCatalogTest {
         archived = archived,
     )
 
+    private suspend fun insertHierarchy(
+        questId: String,
+        withQuestion: Boolean,
+    ) {
+        val sectionId = "section-$questId"
+        val themeId = "theme-$questId"
+        val lessonId = "lesson-$questId"
+        db.sectionDao().insertOrReplace(
+            SectionEntity(
+                id = sectionId,
+                questId = questId,
+                title = "Section $questId",
+                order = 0,
+                version = 1L,
+                contentsVersion = 0L,
+                lastModifiedAt = 0L,
+                archived = false,
+            ),
+        )
+        db.themeDao().insertOrReplace(
+            ThemeEntity(
+                id = themeId,
+                sectionId = sectionId,
+                title = "Theme $questId",
+                order = 0,
+                version = 1L,
+                contentsVersion = 0L,
+                lastModifiedAt = 0L,
+                archived = false,
+            ),
+        )
+        db.lessonDao().insertOrReplace(
+            LessonEntity(
+                id = lessonId,
+                themeId = themeId,
+                title = "Lesson $questId",
+                order = 0,
+                version = 1L,
+                contentsVersion = 0L,
+                lastModifiedAt = 0L,
+                archived = false,
+            ),
+        )
+        if (withQuestion) {
+            db.questionDao().insertOrReplace(
+                QuestionEntity(
+                    id = "question-$questId",
+                    lessonId = lessonId,
+                    text = "Question $questId",
+                    payload = "{}",
+                    language = "ru",
+                    order = 0,
+                    version = 1L,
+                    lastModifiedAt = 0L,
+                    archived = false,
+                ),
+            )
+        }
+    }
+
     // DAO-01: quests with matching catalogId returned
     @Test
     fun questsWithMatchingCatalogIdReturned() = runTest {
@@ -102,9 +166,9 @@ class QuestDaoByCatalogTest {
         }
     }
 
-    // DAO-02: archived=1 quests excluded from result
+    // DAO-02: archived=1 quests remain visible as on-demand roots
     @Test
-    fun archivedQuestsExcludedFromResult() = runTest {
+    fun archivedQuestsIncludedInResult() = runTest {
         insertCatalog("catA")
         dao.insertOrReplace(questEntity(id = "active", catalogId = "catA", archived = false))
         dao.insertOrReplace(questEntity(id = "archived", catalogId = "catA", archived = true))
@@ -112,7 +176,7 @@ class QuestDaoByCatalogTest {
         val result = dao.observeByCatalog("catA", "home").take(1).toList()
 
         val ids = result.first().map { it.id }
-        assert("archived" !in ids) { "Archived quest must not appear, got: $ids" }
+        assert("archived" in ids) { "Archived quest must remain visible, got: $ids" }
         assert("active" in ids) { "Active quest must appear, got: $ids" }
     }
 
@@ -198,6 +262,45 @@ class QuestDaoByCatalogTest {
 
         assert(result.none { it.id == "no-shelf" }) {
             "Quest with empty visibleOn must not match any shelf"
+        }
+    }
+
+    @Test
+    fun downloadedArchivedByCatalogIncludesOnlyArchiveQuestsWithLocalQuestions() = runTest {
+        insertCatalog("courses")
+        dao.insertOrReplace(
+            questEntity(
+                id = "downloaded",
+                catalogId = "courses",
+                visibleOn = setOf("archive"),
+                archived = true,
+            ),
+        )
+        dao.insertOrReplace(
+            questEntity(
+                id = "not-downloaded",
+                catalogId = "courses",
+                visibleOn = setOf("archive"),
+                archived = true,
+            ),
+        )
+        dao.insertOrReplace(
+            questEntity(
+                id = "home-only",
+                catalogId = "courses",
+                visibleOn = setOf("home"),
+                archived = true,
+            ),
+        )
+        insertHierarchy("downloaded", withQuestion = true)
+        insertHierarchy("not-downloaded", withQuestion = false)
+        insertHierarchy("home-only", withQuestion = true)
+
+        val result = dao.observeDownloadedArchivedByCatalog("courses", "archive").first()
+
+        val ids = result.map { it.id }
+        assert(ids == listOf("downloaded")) {
+            "Expected only downloaded archive quest, got: $ids"
         }
     }
 }

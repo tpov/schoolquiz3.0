@@ -45,7 +45,8 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.catalog.DesignCatalogScreen
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignBackground
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
-import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
+import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignChromeSurfaceColor
+import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.InternetScreenComponent
@@ -59,6 +60,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.Scro
 import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.DesignSettingsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.QuestCreateScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
@@ -119,6 +121,14 @@ fun AppShellScreen(
     val currentState by rememberUpdatedState(state)
     val quizzesStack by rootComponent.quizzesComponent.childStack.subscribeAsState()
     val isRunnerActive = quizzesStack.active.instance is QuizzesChild.LessonRunner
+    val questCreateState by rootComponent.questCreateComponent.state.collectAsStateWithLifecycle(
+        initialValue = rootComponent.questCreateComponent.state.value,
+    )
+    val isQuestAuthoringEditorActive =
+        state.activeTab == Tab.LOCAL &&
+            state.localState.stack.active == LocalConfig.QuestCreateRoot &&
+            questCreateState.editor != null
+    val isImmersiveScreenActive = isRunnerActive || isQuestAuthoringEditorActive
 
     // Drawer sync: UI drawer state → domain (journeys 5, 7, 8).
     // onOpenDrawer/onCloseDrawer are idempotent (AppShellTransitions): repeated calls produce equal
@@ -171,7 +181,7 @@ fun AppShellScreen(
         ModalNavigationDrawer(
             modifier = modifier,
             drawerState = drawerState,
-            gesturesEnabled = !state.isShopActive && !isRunnerActive,
+            gesturesEnabled = !state.isShopActive && !isImmersiveScreenActive,
             drawerContent = {
                 DrawerContent(
                     userStats = state.userStats,
@@ -188,7 +198,7 @@ fun AppShellScreen(
         ) {
             Scaffold(
                 topBar = {
-                    if (!isRunnerActive) {
+                    if (!isImmersiveScreenActive) {
                         TopAppBar(
                             title = {
                                 Text(state.activeSection?.displayName ?: state.activeTab.displayName)
@@ -202,7 +212,7 @@ fun AppShellScreen(
                             },
                             colors =
                                 TopAppBarDefaults.topAppBarColors(
-                                    containerColor = schoolQuizDesignDeepSurfaceColor(),
+                                    containerColor = schoolQuizDesignChromeSurfaceColor(),
                                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                                     navigationIconContentColor = MaterialTheme.colorScheme.primary,
                                 ),
@@ -210,9 +220,9 @@ fun AppShellScreen(
                     }
                 },
                 bottomBar = {
-                    if (!isRunnerActive) {
+                    if (!isImmersiveScreenActive) {
                         NavigationBar(
-                            containerColor = schoolQuizDesignDeepSurfaceColor(),
+                            containerColor = schoolQuizDesignChromeSurfaceColor(),
                             contentColor = MaterialTheme.colorScheme.onSurface,
                         ) {
                             Tab.entries.forEach { tab ->
@@ -343,6 +353,12 @@ private fun RowScope.BrandNavBarItem(
     badge: BadgeContent? = null,
     modifier: Modifier = Modifier,
 ) {
+    val designStyle = currentSchoolQuizDesignStyle()
+    val indicatorAlpha =
+        when (designStyle) {
+            SchoolQuizDesignStyle.Main -> 0.14f
+            SchoolQuizDesignStyle.Clean -> 0.08f
+        }
     NavigationBarItem(
         selected = selected,
         onClick = onClick,
@@ -355,7 +371,7 @@ private fun RowScope.BrandNavBarItem(
                 selectedTextColor = MaterialTheme.colorScheme.primary,
                 unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
                 unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
-                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = indicatorAlpha),
             ),
     )
 }
@@ -384,8 +400,13 @@ private fun LocalTabContent(
                     MyQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
                 is LocalConfig.HomeQuestsRoot ->
                     HomeQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
+                is LocalConfig.ArchiveRoot ->
+                    CourseArchiveContent(rootComponent = rootComponent, paddingValues = paddingValues)
                 is LocalConfig.QuestCreateRoot ->
-                    UnderConstructionScreen("Создание квеста в разработке", modifier = Modifier.padding(paddingValues))
+                    QuestCreateScreen(
+                        component = rootComponent.questCreateComponent,
+                        modifier = Modifier.padding(paddingValues),
+                    )
                 is LocalConfig.SettingsRoot ->
                     DesignSettingsScreen(
                         selectedStyle = selectedDesignStyle,
@@ -397,6 +418,18 @@ private fun LocalTabContent(
             }
         }
     }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun CourseArchiveContent(
+    rootComponent: DefaultRootComponent,
+    paddingValues: PaddingValues,
+) {
+    LaunchedEffect(rootComponent.quizzesComponent) {
+        rootComponent.quizzesComponent.openCourseArchive()
+    }
+    Box(modifier = Modifier.padding(paddingValues).fillMaxSize())
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

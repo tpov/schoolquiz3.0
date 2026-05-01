@@ -165,6 +165,30 @@ class CatalogRepositoryImplTest {
         assertEquals(0L, fakeRemote.lastCursor)
     }
 
+    @Test
+    fun `when local catalogs empty then refresh uses full cursor to self heal`() = runTest {
+        fakeSyncState.setCursor("catalogs", 500L)
+        fakeLocal.seed(emptyList())
+        fakeRemote.result = Result.success(
+            listOf(
+                CatalogDto(
+                    id = "courses",
+                    name = "Курсы",
+                    picturePath = null,
+                    version = 1L,
+                    contentsVersion = 0L,
+                    lastModifiedAt = 100L,
+                    archived = false,
+                ),
+            ),
+        )
+
+        repository.refreshFromRemote()
+
+        assertEquals(0L, fakeRemote.lastCursor)
+        assertNotNull(fakeLocal.findById("courses"))
+    }
+
     // AC#7: 3 DTOs returned → all 3 upserted to local
     @Test
     fun `when 3 dtos returned then all upserted`() = runTest {

@@ -22,16 +22,16 @@ service cloud.firestore {
 
       // Tiny per-catalog change records used by offline-first sync.
       // Real content is still read from the flat collections below by document ID.
+      // Admin/backfill tooling must only place public catalog content here.
       match /sync_changes/{changeId} {
-        allow read: if request.auth != null;
+        allow read: if true;
         allow write: if isAdmin();
       }
     }
 
     match /quests/{questId} {
-      allow read: if request.auth != null
-        && (resource.data.authorUid == request.auth.uid
-            || resource.data.visibleOn.size() > 0);
+      allow read: if resource.data.visibleOn.size() > 0
+        || (request.auth != null && resource.data.authorUid == request.auth.uid);
 
       // Author can create own quests; coarse field allowlist prevents arbitrary field injection.
       // MVP: field list coarse check; strict value validation for rating/lastModifiedAt deferred.
@@ -60,17 +60,24 @@ service cloud.firestore {
     }
 
     // Nested content — MVP security posture (Option C, see ADR in 03-decisions.md):
-    // Any authenticated user can read sections/themes/lessons/questions directly by document ID.
+    // Any client can read sections/themes/lessons/questions directly by document ID.
     // Quest-level visibility enforcement (authorUid / visibleOn) is applied by the sync
     // orchestrator client-side: only quests visible to the user are synced, and their
     // descendants are fetched only as part of that quest's subtree cascade.
     // Direct reads of nested content are not guarded at Firestore level to avoid
     // expensive parent-lookup get() calls on every read. Accepted MVP trade-off;
     // post-MVP: denormalize questAuthorUid + questIsPublic into nested documents (Option B).
-    match /sections/{sectionId}   { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /themes/{themeId}       { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /lessons/{lessonId}     { allow read: if request.auth != null; allow write: if isAdmin(); }
-    match /questions/{questionId} { allow read: if request.auth != null; allow write: if isAdmin(); }
+    match /sections/{sectionId}   { allow read: if true; allow write: if isAdmin(); }
+    match /themes/{themeId}       { allow read: if true; allow write: if isAdmin(); }
+    match /lessons/{lessonId}     { allow read: if true; allow write: if isAdmin(); }
+    match /questions/{questionId} { allow read: if true; allow write: if isAdmin(); }
+
+    match /lesson_content/{lessonId} {
+      match /sync_changes/{changeId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
 
     function isAdmin() {
       return request.auth != null

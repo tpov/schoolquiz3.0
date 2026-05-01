@@ -21,4 +21,7 @@ data class QuestDisplayItem(
     val pictureUrl: String?,
     val averageRating: Float?,
     val averageRatingCount: Int = 0,
+    val isDownloadable: Boolean = false,
+    val isDownloading: Boolean = false,
+    val isDownloadComplete: Boolean = false,
 )

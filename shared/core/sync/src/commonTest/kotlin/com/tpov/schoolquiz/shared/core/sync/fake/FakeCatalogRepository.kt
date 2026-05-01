@@ -24,6 +24,7 @@ class FakeCatalogRepository : CatalogRepository {
     var refreshCalls = 0
     var refreshByIdsCallCount = 0
     var lastRefreshByIds: Set<CatalogId> = emptySet()
+    val refreshByIdsRequests = mutableListOf<Set<CatalogId>>()
     var nextChangedIds: Set<CatalogId> = emptySet()
     var nextLocalCvMap: Map<CatalogId, Long> = emptyMap()
     private var nextRefreshFailure: Throwable? = null
@@ -56,6 +57,7 @@ class FakeCatalogRepository : CatalogRepository {
     override suspend fun refreshByIds(ids: Set<CatalogId>): Result<Unit> {
         refreshByIdsCallCount++
         lastRefreshByIds = ids
+        refreshByIdsRequests += ids
         return Result.success(Unit)
     }
 
@@ -77,6 +79,7 @@ class FakeCatalogRepository : CatalogRepository {
         refreshCalls = 0
         refreshByIdsCallCount = 0
         lastRefreshByIds = emptySet()
+        refreshByIdsRequests.clear()
         nextChangedIds = emptySet()
         nextLocalCvMap = emptyMap()
         nextRefreshFailure = null

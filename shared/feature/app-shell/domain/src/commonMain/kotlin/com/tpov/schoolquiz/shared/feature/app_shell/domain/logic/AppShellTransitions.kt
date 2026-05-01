@@ -29,6 +29,7 @@ fun rootLocalStackForSection(section: DrawerSection.LocalSection): NavStack<Loca
     when (section) {
         DrawerSection.LocalSection.MyQuests -> NavStack(LocalConfig.MyQuestsRoot)
         DrawerSection.LocalSection.HomeQuests -> NavStack(LocalConfig.HomeQuestsRoot)
+        DrawerSection.LocalSection.Archive -> NavStack(LocalConfig.ArchiveRoot)
         DrawerSection.LocalSection.Settings -> NavStack(LocalConfig.SettingsRoot)
     }
 

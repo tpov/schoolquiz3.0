@@ -107,9 +107,9 @@ class QuestRepositoryImplTest {
         assertEquals(1, local.upsertCallsFor["q1"] ?: 0)
     }
 
-    // Matrix 1 Quest 1.3 / AC#48: archived=true → deleted locally
+    // Matrix 1 Quest 1.3: archived=true → upserted as on-demand marker
     @Test
-    fun `when quest archived true then deleted`() = runTest {
+    fun `when quest archived true then upserted`() = runTest {
         val local = FakeQuestLocalDataSource()
         local.seed(listOf(makeEntity("q1")))
         val fakeRemote = FakeQuestRemoteDataSource(
@@ -119,7 +119,8 @@ class QuestRepositoryImplTest {
 
         repo.refreshFromRemote("uid-a", availableShelves, catalogIds, 0L)
 
-        assertTrue(local.deletedIds.contains("q1"))
+        assertEquals(1, local.upsertCallsFor["q1"] ?: 0)
+        assertTrue(local.findById("q1")?.archived == true)
     }
 
     // EDGE 1.9 / AC#48: visibleOn=[] → deleted locally

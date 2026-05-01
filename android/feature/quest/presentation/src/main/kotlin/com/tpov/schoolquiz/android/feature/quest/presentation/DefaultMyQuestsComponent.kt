@@ -13,6 +13,8 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +47,7 @@ class DefaultMyQuestsComponent(
     componentContext: ComponentContext,
     private val authRepo: AuthRepository,
     private val observeMyQuests: ObserveMyQuestsUseCase,
+    private val observeDraftSummaries: ObserveQuestDraftSummariesUseCase,
     private val observeCatalogs: ObserveCatalogsUseCase,
     private val navigator: Navigator,
     private val onQuestDrillDown: (QuestDisplayItem) -> Unit = {},
@@ -73,6 +76,20 @@ class DefaultMyQuestsComponent(
             }
         }
 
+    private val draftSummariesFlow =
+        uidFlow.flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyList())
+            } else {
+                combine(
+                    observeDraftSummaries(uid),
+                    selectedCatalog,
+                ) { drafts, selectedId ->
+                    drafts.filter { selectedId == null || it.catalogId == selectedId }
+                }
+            }
+        }
+
     private val isGuestFlow = uidFlow.map { it == null }
 
     // Catalogs are public data; no uid gating required.
@@ -81,12 +98,14 @@ class DefaultMyQuestsComponent(
     override val state =
         combine(
             questsFlow,
+            draftSummariesFlow,
             catalogsFlow,
             selectedCatalog,
             isGuestFlow,
-        ) { quests, catalogs, selectedId, isGuest ->
+        ) { quests, drafts, catalogs, selectedId, isGuest ->
             MyQuestsUiState(
                 quests = quests.map { it.toDisplayItem() },
+                drafts = drafts.map { it.toDisplayItem() },
                 catalogs = catalogs.map { it.toDisplayItem() },
                 selectedCatalogId = selectedId,
                 isGuest = isGuest,
@@ -117,9 +136,23 @@ class DefaultMyQuestsComponent(
         onQuestDrillDown(quest)
     }
 
+    override fun onDraftClick(draft: DraftQuestDisplayItem) {
+        navigator.goTo(Destination.OpenQuestCreate)
+    }
+
     private class SelectedCatalogHolder : InstanceKeeper.Instance {
         val flow = MutableStateFlow<CatalogId?>(null)
 
         override fun onDestroy() = Unit
     }
 }
+
+private fun QuestDraftSummary.toDisplayItem(): DraftQuestDisplayItem =
+    DraftQuestDisplayItem(
+        id = id,
+        catalogId = catalogId,
+        title = title,
+        status = status,
+        questionCount = questionCount,
+        isActive = isActive,
+    )

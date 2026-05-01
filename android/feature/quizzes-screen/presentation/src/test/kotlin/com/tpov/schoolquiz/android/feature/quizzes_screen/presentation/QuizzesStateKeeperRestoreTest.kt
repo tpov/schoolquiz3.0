@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
@@ -84,6 +85,7 @@ class QuizzesStateKeeperRestoreTest {
             lessonRepository = FakeLessonRepository(),
             lessonAttemptRepository = FakeLessonAttemptRepository(),
             authRepository = FakeAuthRepository(),
+            questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
             mainContext = Dispatchers.Unconfined,

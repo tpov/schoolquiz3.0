@@ -10,5 +10,7 @@ interface QuestListComponent {
 
     fun onQuestClick(quest: QuestDisplayItem)
 
+    fun onQuestDownloadClick(quest: QuestDisplayItem)
+
     fun onShareClick(quest: QuestDisplayItem)
 }

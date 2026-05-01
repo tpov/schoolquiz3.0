@@ -14,6 +14,8 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultShopTabComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
@@ -76,6 +78,9 @@ class DefaultRootComponent(
     private val syncScheduler: SyncScheduler,
     myQuestsFactory: (ComponentContext, Navigator, (QuestDisplayItem) -> Unit) -> MyQuestsComponent,
     homeQuestsFactory: (ComponentContext, (CatalogId, String) -> Unit) -> HomeQuestsComponent,
+    questCreateFactory: (ComponentContext, Navigator) -> QuestCreateComponent = { _, nav ->
+        PlaceholderQuestCreateComponent(nav)
+    },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
@@ -151,6 +156,11 @@ class DefaultRootComponent(
                         .find { it.id == quest.catalogId }?.name ?: "Без каталога"
                 quizzesComponent.openSectionList(quest.id, listOf(catalogName, quest.title))
             },
+        )
+    val questCreateComponent: QuestCreateComponent =
+        questCreateFactory(
+            childContext("QuestCreateContent"),
+            navigator,
         )
 
     init {

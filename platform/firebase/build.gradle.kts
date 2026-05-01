@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":shared:feature:section:data"))
     implementation(project(":shared:feature:theme:data"))
     implementation(project(":shared:feature:lesson:data"))
+    implementation(project(":shared:feature:lesson:domain"))
     implementation(project(":shared:core:leaderboard"))
     implementation(project(":shared:feature:question:data"))
     implementation(libs.koin.core)

@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogReposito
 import com.tpov.schoolquiz.shared.core.persistence.RoomSyncStateRepository
 import com.tpov.schoolquiz.shared.core.persistence.SyncStateDao
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncListOrchestrator
+import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
@@ -32,6 +33,18 @@ val syncModule =
                 sectionRepo = get<SectionRepository>(),
                 themeRepo = get<ThemeRepository>(),
                 lessonRepo = get<LessonRepository>(),
+                questionRepo = get<QuestionRepository>(),
+                syncStateRepo = get<SyncStateRepository>(),
+                syncChangeRemote = get(),
+            )
+        }
+        single<LessonContentSyncOrchestrator> {
+            LessonContentSyncOrchestrator(
+                catalogSync = get<CatalogSyncListOrchestrator>(),
+                lessonRepo = get<LessonRepository>(),
+                themeRepo = get<ThemeRepository>(),
+                sectionRepo = get<SectionRepository>(),
+                questRepo = get<QuestRepository>(),
                 questionRepo = get<QuestionRepository>(),
                 syncStateRepo = get<SyncStateRepository>(),
                 syncChangeRemote = get(),

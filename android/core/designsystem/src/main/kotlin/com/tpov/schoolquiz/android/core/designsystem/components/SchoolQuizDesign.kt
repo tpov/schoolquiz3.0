@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
@@ -44,31 +45,55 @@ import com.tpov.schoolquiz.android.core.designsystem.glowHard
 
 enum class SchoolQuizDesignStyle {
     Main,
+    Clean,
 }
 
 @Immutable
 data class SchoolQuizDesignTokens(
     val backgroundAccentAlpha: Float,
     val backgroundSurfaceAlpha: Float,
+    val backgroundEdgeSurfaceAlpha: Float,
     val deepSurfaceAlpha: Float,
+    val groupSurfaceAlpha: Float,
+    val chromeSurfaceAlpha: Float,
     val neutralBorderAlpha: Float,
     val lightBorderAlpha: Float,
     val chipContainerAlpha: Float,
+    val usesCompactCorners: Boolean,
 )
 
 val MainDesignTokens =
     SchoolQuizDesignTokens(
         backgroundAccentAlpha = 0.08f,
         backgroundSurfaceAlpha = 0.76f,
+        backgroundEdgeSurfaceAlpha = 0.34f,
         deepSurfaceAlpha = 0.72f,
+        groupSurfaceAlpha = 1f,
+        chromeSurfaceAlpha = 0.72f,
         neutralBorderAlpha = 0.5f,
         lightBorderAlpha = 0.3f,
         chipContainerAlpha = 0.12f,
+        usesCompactCorners = false,
+    )
+
+val CleanDesignTokens =
+    SchoolQuizDesignTokens(
+        backgroundAccentAlpha = 0.035f,
+        backgroundSurfaceAlpha = 0.58f,
+        backgroundEdgeSurfaceAlpha = 0.42f,
+        deepSurfaceAlpha = 0.86f,
+        groupSurfaceAlpha = 0.68f,
+        chromeSurfaceAlpha = 0.9f,
+        neutralBorderAlpha = 0.22f,
+        lightBorderAlpha = 0.18f,
+        chipContainerAlpha = 0.08f,
+        usesCompactCorners = true,
     )
 
 fun SchoolQuizDesignStyle.tokens(): SchoolQuizDesignTokens =
     when (this) {
         SchoolQuizDesignStyle.Main -> MainDesignTokens
+        SchoolQuizDesignStyle.Clean -> CleanDesignTokens
     }
 
 @Composable
@@ -105,8 +130,24 @@ fun schoolQuizDesignDeepSurfaceColor(style: SchoolQuizDesignStyle? = null): Colo
 
 @Composable
 fun schoolQuizDesignGroupSurfaceColor(style: SchoolQuizDesignStyle? = null): Color {
-    (style ?: currentSchoolQuizDesignStyle()).tokens()
-    return MaterialTheme.colorScheme.surface
+    val tokens = (style ?: currentSchoolQuizDesignStyle()).tokens()
+    return MaterialTheme.colorScheme.surface.copy(alpha = tokens.groupSurfaceAlpha).compositeOver(Color.Black)
+}
+
+@Composable
+fun schoolQuizDesignChromeSurfaceColor(style: SchoolQuizDesignStyle? = null): Color {
+    val tokens = (style ?: currentSchoolQuizDesignStyle()).tokens()
+    return MaterialTheme.colorScheme.surface.copy(alpha = tokens.chromeSurfaceAlpha).compositeOver(Color.Black)
+}
+
+@Composable
+fun schoolQuizDesignCardShape(style: SchoolQuizDesignStyle? = null): Shape {
+    val tokens = (style ?: currentSchoolQuizDesignStyle()).tokens()
+    return if (tokens.usesCompactCorners) {
+        MaterialTheme.shapes.small
+    } else {
+        MaterialTheme.shapes.medium
+    }
 }
 
 @Composable
@@ -133,15 +174,17 @@ fun SchoolQuizDesignBackground(
     style: SchoolQuizDesignStyle? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val resolvedStyle = style ?: currentSchoolQuizDesignStyle()
+    val tokens = resolvedStyle.tokens()
     val edgeSurface =
         MaterialTheme.colorScheme.surface
-            .copy(alpha = 0.34f)
+            .copy(alpha = tokens.backgroundEdgeSurfaceAlpha)
             .compositeOver(Color.Black)
     val centerGlow =
         schoolQuizDesignCenterGlowColor(
             isHard = isHard,
             accentColor = accentColor,
-            style = style,
+            style = resolvedStyle,
         )
     Box(
         modifier =
@@ -179,7 +222,7 @@ fun SchoolQuizDesignCard(
             }
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
+        shape = schoolQuizDesignCardShape(resolvedStyle),
         color = containerColor,
         contentColor = MaterialTheme.colorScheme.onSurface,
         border = BorderStroke(1.dp, resolvedBorderColor),
@@ -199,7 +242,7 @@ fun SchoolQuizDesignChip(
     val resolvedStyle = style ?: currentSchoolQuizDesignStyle()
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
+        shape = schoolQuizDesignCardShape(resolvedStyle),
         color = color.copy(alpha = resolvedStyle.tokens().chipContainerAlpha),
         contentColor = color,
         border = BorderStroke(1.dp, schoolQuizDesignNeutralBorderColor(resolvedStyle)),
@@ -227,7 +270,7 @@ fun SchoolQuizDesignIconBadge(
     val resolvedStyle = style ?: currentSchoolQuizDesignStyle()
     Surface(
         modifier = modifier.size(48.dp),
-        shape = MaterialTheme.shapes.medium,
+        shape = schoolQuizDesignCardShape(resolvedStyle),
         color = color.copy(alpha = resolvedStyle.tokens().chipContainerAlpha),
         contentColor = color,
         border = BorderStroke(1.dp, schoolQuizDesignNeutralBorderColor(resolvedStyle)),
@@ -250,7 +293,7 @@ fun SchoolQuizDesignAction(
                 .fillMaxWidth()
                 .heightIn(min = 54.dp)
                 .clickable(enabled = enabled, onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
+        shape = schoolQuizDesignCardShape(),
         color = schoolQuizDesignDeepSurfaceColor(),
         contentColor =
             if (enabled) {
@@ -339,10 +382,12 @@ fun SchoolQuizDesignScoreProgress(
     userMarkerProgress: Float,
     leaderMarkerProgress: Float?,
     modifier: Modifier = Modifier,
+    style: SchoolQuizDesignStyle? = null,
 ) {
     BoxWithConstraints(
         modifier = modifier.fillMaxWidth().height(44.dp),
     ) {
+        val resolvedStyle = style ?: currentSchoolQuizDesignStyle()
         val clampedProgress = progress.coerceIn(0f, 1f)
         val userProgress = userMarkerProgress.coerceIn(0f, 1f)
         val leaderProgress = leaderMarkerProgress?.coerceIn(0f, 1f)
@@ -353,7 +398,7 @@ fun SchoolQuizDesignScoreProgress(
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
                     .height(12.dp)
-                    .background(schoolQuizDesignNeutralBorderColor(), MaterialTheme.shapes.small),
+                    .background(schoolQuizDesignNeutralBorderColor(resolvedStyle), MaterialTheme.shapes.small),
         )
         Box(
             modifier =

@@ -54,7 +54,7 @@ class CatalogSyncListOrchestratorTest {
     }
 
     @Test
-    fun `sync fetches flat nodes from catalog change list and advances catalog cursor`() = runTest {
+    fun `sync fetches structure nodes from catalog change list and advances catalog cursor`() = runTest {
         val catalogId = CatalogId("cat-1")
         catalogRepo.nextChangedIds = setOf(catalogId)
         syncState.setCursor(catalogSyncCursorId(catalogId), 50L)
@@ -74,15 +74,16 @@ class CatalogSyncListOrchestratorTest {
         val result = orchestrator.sync()
 
         assertTrue(result.isSuccess)
-        assertEquals(listOf(catalogId to 50L), syncChanges.requests)
-        assertEquals(setOf(catalogId), catalogRepo.lastRefreshByIds)
+        assertEquals(listOf(catalogId to 50L, CatalogId("courses") to 0L), syncChanges.requests)
+        assertTrue(setOf(catalogId) in catalogRepo.refreshByIdsRequests)
         assertEquals(setOf(QuestId("quest-1")), questRepo.lastRefreshByIds)
         assertEquals(setOf(SectionId("section-1")), sectionRepo.lastRefreshByIds)
         assertEquals(setOf(ThemeId("theme-1")), themeRepo.lastRefreshByIds)
         assertEquals(setOf(LessonId("lesson-1")), lessonRepo.lastRefreshByIds)
+        assertEquals(1, questionRepo.refreshByIdsCallCount)
         assertEquals(setOf(QuestionId("question-1")), questionRepo.lastRefreshByIds)
         assertEquals(160L, syncState.getCursor(catalogSyncCursorId(catalogId)))
-        assertTrue(syncState.getCursor(CATALOG_LIST_CURSOR_ID) > 0L)
+        assertEquals(1_000L, syncState.getCursor(CATALOG_LIST_CURSOR_ID))
     }
 
     @Test
@@ -93,10 +94,10 @@ class CatalogSyncListOrchestratorTest {
         syncState.setCursor(cursorId, 50L)
         syncChanges.changesByCatalog = mapOf(
             catalogId to listOf(
-                change(catalogId, CatalogSyncNodeType.Question, "question-1", 150L),
+                change(catalogId, CatalogSyncNodeType.Lesson, "lesson-1", 150L),
             ),
         )
-        questionRepo.setNextRefreshByIdsFailure(IllegalStateException("question refresh failed"))
+        lessonRepo.setNextRefreshByIdsFailure(IllegalStateException("lesson refresh failed"))
 
         val result = orchestrator.sync()
 
@@ -118,12 +119,80 @@ class CatalogSyncListOrchestratorTest {
 
         assertTrue(result.isSuccess)
         assertEquals(
-            listOf(firstCatalog to 0L, secondCatalog to 0L),
+            listOf(firstCatalog to 0L, secondCatalog to 0L, CatalogId("courses") to 0L),
             syncChanges.requests,
         )
-        assertEquals(setOf(QuestionId("question-2")), questionRepo.lastRefreshByIds)
+        assertEquals(2, questionRepo.refreshByIdsCallCount)
         assertEquals(100L, syncState.getCursor(catalogSyncCursorId(firstCatalog)))
         assertEquals(200L, syncState.getCursor(catalogSyncCursorId(secondCatalog)))
+    }
+
+    @Test
+    fun `sync skips questions for courses catalog`() = runTest {
+        val catalogId = CatalogId("courses")
+        catalogRepo.nextChangedIds = setOf(catalogId)
+        syncChanges.changesByCatalog = mapOf(
+            catalogId to listOf(change(catalogId, CatalogSyncNodeType.Question, "question-1", 100L)),
+        )
+
+        val result = orchestrator.sync()
+
+        assertTrue(result.isSuccess)
+        assertEquals(0, questionRepo.refreshByIdsCallCount)
+        assertEquals(100L, syncState.getCursor(catalogSyncCursorId(catalogId)))
+    }
+
+    @Test
+    fun `sync scans courses even when local catalog cache is empty`() = runTest {
+        val courses = CatalogId("courses")
+        catalogRepo.nextChangedIds = emptySet()
+        syncChanges.changesByCatalog = mapOf(
+            courses to listOf(
+                change(courses, CatalogSyncNodeType.Catalog, "courses", 90L),
+                change(courses, CatalogSyncNodeType.Quest, "quest-course", 100L),
+            ),
+        )
+
+        val result = orchestrator.sync()
+
+        assertTrue(result.isSuccess)
+        assertEquals(listOf(courses to 0L), syncChanges.requests)
+        assertEquals(setOf(QuestId("quest-course")), questRepo.lastRefreshByIds)
+        assertEquals(100L, syncState.getCursor(catalogSyncCursorId(courses)))
+    }
+
+    @Test
+    fun `sync uses full courses cursor when local archive quests are empty`() = runTest {
+        val courses = CatalogId("courses")
+        catalogRepo.nextChangedIds = setOf(courses)
+        syncState.setCursor(catalogSyncCursorId(courses), 500L)
+        syncChanges.changesByCatalog = mapOf(
+            courses to listOf(change(courses, CatalogSyncNodeType.Quest, "quest-course", 100L)),
+        )
+
+        val result = orchestrator.sync()
+
+        assertTrue(result.isSuccess)
+        assertEquals(listOf(courses to 0L), syncChanges.requests)
+        assertEquals(setOf(QuestId("quest-course")), questRepo.lastRefreshByIds)
+    }
+
+    @Test
+    fun `sync catalog structure applies hierarchy changes but skips question refresh`() = runTest {
+        val catalogId = CatalogId("cat-1")
+        syncChanges.changesByCatalog = mapOf(
+            catalogId to listOf(
+                change(catalogId, CatalogSyncNodeType.Lesson, "lesson-1", 100L),
+                change(catalogId, CatalogSyncNodeType.Question, "question-1", 200L),
+            ),
+        )
+
+        val result = orchestrator.syncCatalogStructure(catalogId)
+
+        assertTrue(result.isSuccess)
+        assertEquals(setOf(LessonId("lesson-1")), lessonRepo.lastRefreshByIds)
+        assertEquals(0, questionRepo.refreshByIdsCallCount)
+        assertEquals(200L, syncState.getCursor(catalogSyncCursorId(catalogId)))
     }
 
     private fun change(

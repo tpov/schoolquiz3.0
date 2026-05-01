@@ -29,10 +29,11 @@ interface QuestRepository {
      * When null, all quests from the author are emitted (i.e. "all categories" mode).
      *
      * Filtering contract:
-     *   `quest.authorUid == authorUid && !quest.archived && (catalogId == null || quest.catalogId == catalogId)`
+     *   `quest.authorUid == authorUid && (catalogId == null || quest.catalogId == catalogId)`.
      *
-     * Filters out `archived=true` quests locally (spec AC#47: archived is always
-     * deleted, never displayed).
+     * `archived=true` root quests remain visible and mark question content as
+     * on-demand. Deletion/removal is represented by empty [Quest.visibleOn] or by
+     * a missing concrete document during sync-list refresh.
      *
      * Spec: FR#21, AC#47, Primary User Journey 7, Domain Test Scenario 26-27.
      */
@@ -41,18 +42,29 @@ interface QuestRepository {
     /**
      * Observes public quests belonging to [catalogId] that are visible on [shelf].
      *
-     * Filter: `catalogId == catalogId AND visibleOn contains shelf AND archived == false`.
+     * Filter: `catalogId == catalogId AND visibleOn contains shelf`.
      * Sort: `lastModifiedAt DESC` (Quest has no order field — User Decision Q1).
      *
      * DAO pattern: delimiter-wrapped LIKE — `(CHAR(31) || visibleOn || CHAR(31)) LIKE
      * ('%' || CHAR(31) || :shelf || CHAR(31) || '%')` — prevents "home" matching "homeExtra".
-     * `archived = 0` filter is applied in the DAO query, not in this layer.
+     * `archived` is not a visibility filter for root quests; it controls
+     * on-demand question content.
      *
      * Emits empty list when no matching quests exist. Re-emits on Room writes.
      *
      * Spec: docs/features/quizzes-screen/plan/phase-01/backend.md, AC#1-4.
      */
     fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>>
+
+    /**
+     * Observes archived quests from [catalogId] on [shelf] whose lesson questions
+     * already exist in the local cache.
+     *
+     * Used by the Courses/Home entry so users see only courses they downloaded,
+     * while the Archive entry can still show the full downloadable catalog.
+     */
+    fun observeDownloadedArchivedByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> =
+        observeByCatalog(catalogId, shelf)
 
     /**
      * Observes quests where [visibleOn] contains [shelf].
@@ -111,17 +123,16 @@ interface QuestRepository {
      * For each returned DTO:
      * ```
      * 1. If local == null (absent):
-     *    - delete-marker (archived=true || visibleOn.isEmpty()) → SKIP (no tombstone created)
+     *    - visibleOn.isEmpty() → SKIP (no tombstone created)
      *    - else → INSERT
      * 2. If local != null (present):
-     *    - dto.version <= local.version → SKIP (stale or equal — regardless of archived/visibleOn)
-     *    - dto.version > local.version + delete-marker → DELETE local
-     *    - dto.version > local.version + not delete-marker → UPSERT
+     *    - dto.version <= local.version → SKIP (stale or equal — regardless of visibleOn)
+     *    - dto.version > local.version + visibleOn.isEmpty() → DELETE local
+     *    - dto.version > local.version + visibleOn not empty → UPSERT
      * ```
      *
-     * **Version check comes FIRST for the present case.** A stale tombstone
-     * (archived=true but version <= local.version) must be ignored, not applied.
-     * Tested in scenarios 23b, 23c (quest analogs).
+     * **Version check comes FIRST for the present case.** A stale removal marker
+     * (visibleOn empty but version <= local.version) must be ignored, not applied.
      *
      * After successful refresh, cursor must be updated to `max(lastModifiedAt)` of all
      * processed items.

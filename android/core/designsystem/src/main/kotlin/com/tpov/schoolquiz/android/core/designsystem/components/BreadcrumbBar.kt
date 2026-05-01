@@ -2,6 +2,8 @@ package com.tpov.schoolquiz.android.core.designsystem.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 
 /**
  * Horizontal breadcrumb navigation bar. Displays a path of titles separated by "›".
@@ -38,6 +41,15 @@ fun BreadcrumbBar(
     modifier: Modifier = Modifier,
 ) {
     if (titles.isEmpty()) return
+
+    if (currentSchoolQuizDesignStyle() == SchoolQuizDesignStyle.Clean) {
+        CleanBreadcrumbBar(
+            titles = titles,
+            onSegmentClick = onSegmentClick,
+            modifier = modifier,
+        )
+        return
+    }
 
     val scrollState = rememberScrollState()
     LaunchedEffect(titles, scrollState.maxValue) {
@@ -76,6 +88,46 @@ fun BreadcrumbBar(
                         MaterialTheme.colorScheme.primary
                     },
                 modifier = if (isLast) Modifier else Modifier.clickable { onSegmentClick(index) },
+            )
+        }
+    }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun CleanBreadcrumbBar(
+    titles: List<String>,
+    onSegmentClick: (uiLevel: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(vertical = 2.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        if (titles.size > 1) {
+            Text(
+                text = "← ${titles[titles.lastIndex - 1]}",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f),
+                modifier = Modifier.clickable { onSegmentClick(titles.lastIndex - 1) },
+            )
+        }
+        Text(
+            text = titles.last(),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        if (titles.size > 2) {
+            Text(
+                text = titles.dropLast(1).joinToString(" / "),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.48f),
             )
         }
     }

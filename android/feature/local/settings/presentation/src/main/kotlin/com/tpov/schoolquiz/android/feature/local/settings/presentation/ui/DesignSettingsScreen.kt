@@ -208,6 +208,7 @@ private fun DesignStylePreview(style: SchoolQuizDesignStyle) {
                 progress = 0.62f,
                 userMarkerProgress = 0.72f,
                 leaderMarkerProgress = 0.88f,
+                style = style,
             )
         }
     }
@@ -284,12 +285,14 @@ private val SchoolQuizDesignStyle.title: String
     get() =
         when (this) {
             SchoolQuizDesignStyle.Main -> "Основной"
+            SchoolQuizDesignStyle.Clean -> "Чистый"
         }
 
 private val SchoolQuizDesignStyle.caption: String
     get() =
         when (this) {
             SchoolQuizDesignStyle.Main -> "Тёмные карточки, белые контуры и цветной акцент"
+            SchoolQuizDesignStyle.Clean -> "Тише фон, мягче меню и больше воздуха"
         }
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
@@ -297,7 +300,7 @@ private val SchoolQuizDesignStyle.caption: String
 private fun DesignSettingsScreenPreview() {
     SchoolQuizTheme {
         DesignSettingsScreen(
-            selectedStyle = SchoolQuizDesignStyle.Main,
+            selectedStyle = SchoolQuizDesignStyle.Clean,
             onStyleSelected = {},
         )
     }

@@ -118,6 +118,7 @@ sealed interface QuestionContent {
         override val imageUrl: String?,
         val blanks: List<Blank>,
         val candidates: List<Candidate>,
+        val protectedTextSegments: List<String> = emptyList(),
         override val info: String? = null,
     ) : QuestionContent {
         init {
@@ -132,6 +133,9 @@ sealed interface QuestionContent {
             val candidateIds = candidates.map { it.id }.toSet()
             require(blanks.all { it.correctCandidateId in candidateIds }) {
                 "FillBlank.blanks.correctCandidateId must all be in candidates"
+            }
+            require(protectedTextSegments.none { it.isBlank() }) {
+                "FillBlank.protectedTextSegments must not contain blank values"
             }
         }
     }

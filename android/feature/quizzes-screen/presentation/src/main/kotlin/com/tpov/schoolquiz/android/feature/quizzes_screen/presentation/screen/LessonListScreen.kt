@@ -114,6 +114,7 @@ private fun LessonListScreenLoadedPreview() {
                                         title = "Урок 1 — Введение",
                                         orderLabel = "1.",
                                         bestStarsRawTenths = 20,
+                                        isDownloaded = true,
                                     ),
                                     LessonItemUi(
                                         id = "l2",
@@ -122,6 +123,7 @@ private fun LessonListScreenLoadedPreview() {
                                         bestStarsRawTenths = 0,
                                         hardUnlocked = true,
                                         isHardChecked = false,
+                                        isDownloaded = false,
                                     ),
                                 ),
                             ),

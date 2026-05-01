@@ -62,7 +62,7 @@ fun isVisible(section: DrawerSection, stats: UserStats): Boolean {
  * Returns the ordered list of visible [DrawerSection]s for [tab] given [stats].
  *
  * Output order follows the Section Visibility Rules table order.
- * LOCAL: [HomeQuests, MyQuests, Settings] (Phase 02 spec reorder; differs from declaration order).
+ * LOCAL: [HomeQuests, Archive, MyQuests, Settings] (Phase 02 spec reorder; differs from declaration order).
  * INTERNET/EVENTS: declaration order of the sealed interface.
  *
  * Business Rule #17: only visible sections are returned; callers render exactly this list.
@@ -74,6 +74,7 @@ fun isVisible(section: DrawerSection, stats: UserStats): Boolean {
 fun visibleSections(tab: Tab, stats: UserStats): List<DrawerSection> = when (tab) {
     Tab.LOCAL -> listOf(
         DrawerSection.LocalSection.HomeQuests,
+        DrawerSection.LocalSection.Archive,
         DrawerSection.LocalSection.MyQuests,
         DrawerSection.LocalSection.Settings,
     ).filter { isVisible(it, stats) }
@@ -113,6 +114,7 @@ fun defaultSection(tab: Tab, stats: UserStats): DrawerSection? =
 fun rootOf(section: DrawerSection): TabConfig = when (section) {
     DrawerSection.LocalSection.MyQuests -> LocalConfig.MyQuestsRoot
     DrawerSection.LocalSection.HomeQuests -> LocalConfig.HomeQuestsRoot
+    DrawerSection.LocalSection.Archive -> LocalConfig.ArchiveRoot
     DrawerSection.LocalSection.Settings -> LocalConfig.SettingsRoot
     DrawerSection.InternetSection.Arena -> InternetConfig.ArenaRoot
     DrawerSection.InternetSection.Catalog -> InternetConfig.CatalogRoot

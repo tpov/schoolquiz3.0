@@ -37,7 +37,7 @@ class FakeQuestRepository : QuestRepository {
     override fun observeMyQuests(authorUid: String, catalogId: CatalogId?): Flow<List<Quest>> =
         cache.map { map ->
             map.values.filter { q ->
-                q.authorUid == authorUid && !q.archived &&
+                q.authorUid == authorUid &&
                     (catalogId == null || q.catalogId == catalogId)
             }.sortedBy { it.id.value }
         }
@@ -50,8 +50,7 @@ class FakeQuestRepository : QuestRepository {
             map.values
                 .filter { quest ->
                     quest.catalogId == catalogId &&
-                        shelf in quest.visibleOn &&
-                        !quest.archived
+                        shelf in quest.visibleOn
                 }
                 .sortedByDescending { it.lastModifiedAt }
         }
@@ -83,7 +82,7 @@ class FakeQuestRepository : QuestRepository {
             cache.value = cache.value.toMutableMap().also { map ->
                 for (quest in serverQuests) {
                     if (quest.catalogId !in catalogIdsToSync) continue
-                    if (quest.archived) map.remove(quest.id) else map[quest.id] = quest
+                    if (quest.visibleOn.isEmpty()) map.remove(quest.id) else map[quest.id] = quest
                 }
             }
         }

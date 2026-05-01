@@ -23,6 +23,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsC
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestAuthoringRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
@@ -46,10 +47,14 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
+import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
+import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
+import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
@@ -132,6 +137,7 @@ class QuizzesRootIntegrationTest {
         override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Loading)
         override val titles: List<String> = emptyList()
         override fun onQuestClick(quest: QuestDisplayItem) = Unit
+        override fun onQuestDownloadClick(quest: QuestDisplayItem) = Unit
         override fun onShareClick(quest: QuestDisplayItem) = Unit
     }
 
@@ -156,6 +162,8 @@ class QuizzesRootIntegrationTest {
             openQuestListArgs = OpenQuestListArgs(catalogId, catalogName)
             _childStack.value = questListStack(catalogId, catalogName)
         }
+
+        override fun openCourseArchive() = Unit
 
         override fun openSectionList(questId: QuestId, titles: List<String>) {
             openSectionListArgs = OpenSectionListArgs(questId, titles)
@@ -210,6 +218,7 @@ class QuizzesRootIntegrationTest {
                 componentContext = ctx,
                 authRepo = FakeAuthRepository(initialUid = "user1"),
                 observeMyQuests = ObserveMyQuestsUseCase(questRepo),
+                observeDraftSummaries = ObserveQuestDraftSummariesUseCase(FakeQuestAuthoringRepository()),
                 observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
                 navigator = navigator,
                 onQuestDrillDown = onQuestDrillDown,
@@ -271,6 +280,11 @@ class QuizzesRootIntegrationTest {
                 authRepository = object : AuthRepository {
                     override suspend fun currentUid(): String? = null
                     override fun observeUid(): Flow<String?> = flowOf(null)
+                },
+                questionRepository = object : QuestionRepository {
+                    override fun observeByLesson(lessonId: LessonId): Flow<List<Question>> = flowOf(emptyList())
+                    override suspend fun getById(id: QuestionId): Question? = null
+                    override suspend fun refreshByParents(lessonIds: Set<LessonId>, cursor: Long): Result<Unit> = Result.success(Unit)
                 },
                 catalogRepository = object : CatalogRepository {
                     override fun observeAll(): Flow<List<Catalog>> = flowOf(emptyList())

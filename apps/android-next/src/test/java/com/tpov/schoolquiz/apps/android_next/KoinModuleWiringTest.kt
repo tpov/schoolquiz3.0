@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.Defa
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
@@ -69,7 +70,16 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.SubmitLessonRatingUseCase
+import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
+import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.di.questAuthoringDomainModule
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftSummary
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository.QuestAuthoringRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.di.questDomainModule
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -166,6 +176,29 @@ class KoinModuleWiringTest : KoinTest {
                 ): Result<Set<QuestId>> = Result.success(emptySet())
             }
         }
+        single<QuestAuthoringRepository> {
+            object : QuestAuthoringRepository {
+                override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummary>> =
+                    flowOf(emptyList())
+
+                override fun observeDraft(draftId: QuestDraftId): Flow<QuestAuthoringBundle?> =
+                    flowOf(null)
+
+                override suspend fun getDraft(draftId: QuestDraftId): QuestAuthoringBundle? = null
+
+                override suspend fun getActiveDraft(ownerUid: String): QuestAuthoringBundle? = null
+
+                override suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit> = Result.success(Unit)
+
+                override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> = Result.success(Unit)
+
+                override suspend fun setDraftStatus(
+                    draftId: QuestDraftId,
+                    status: QuestDraftStatus,
+                    updatedAtMs: Long,
+                ): Result<Unit> = Result.success(Unit)
+            }
+        }
         single<CatalogRepository> {
             object : CatalogRepository {
                 override fun observeAll() = flowOf(emptyList<Catalog>())
@@ -205,6 +238,16 @@ class KoinModuleWiringTest : KoinTest {
                     cursor: Long,
                 ): Result<Set<LessonId>> = Result.success(emptySet())
                 override suspend fun getLocalContentsVersion(id: LessonId): Long? = null
+            }
+        }
+        single<QuestionRepository> {
+            object : QuestionRepository {
+                override fun observeByLesson(lessonId: LessonId) = flowOf(emptyList<Question>())
+                override suspend fun getById(id: QuestionId): Question? = null
+                override suspend fun refreshByParents(
+                    lessonIds: Set<LessonId>,
+                    cursor: Long,
+                ): Result<Unit> = Result.success(Unit)
             }
         }
         single<LessonAttemptRepository> {
@@ -308,6 +351,7 @@ class KoinModuleWiringTest : KoinTest {
                 testRepositoryStubsModule,
                 appShellDataModule(),
                 questDomainModule,
+                questAuthoringDomainModule,
                 catalogDomainModule,
                 questPresentationModule,
                 quizzesPresentationModule,
@@ -367,6 +411,7 @@ class KoinModuleWiringTest : KoinTest {
                     override fun onCatalogSelected(id: CatalogId?) = Unit
                     override fun onCreateQuestClick() = Unit
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
+                    override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
                 }
             },
             quizzesFactory = { _ ->
@@ -382,6 +427,7 @@ class KoinModuleWiringTest : KoinTest {
                     override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
+                    override fun openCourseArchive() = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit
@@ -446,6 +492,7 @@ class KoinModuleWiringTest : KoinTest {
                     override fun onCatalogSelected(id: CatalogId?) = Unit
                     override fun onCreateQuestClick() = Unit
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
+                    override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
                 }
             },
             quizzesFactory = { _ ->
@@ -461,6 +508,7 @@ class KoinModuleWiringTest : KoinTest {
                     override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
+                    override fun openCourseArchive() = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit

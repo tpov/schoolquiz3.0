@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponen
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
@@ -22,6 +23,7 @@ object StubMyQuestsComponent : MyQuestsComponent {
     override fun onCatalogSelected(id: CatalogId?) = Unit
     override fun onCreateQuestClick() = Unit
     override fun onQuestClick(quest: QuestDisplayItem) = Unit
+    override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
 }
 
 object StubHomeQuestsComponent : HomeQuestsComponent {
@@ -41,6 +43,7 @@ object StubQuizzesComponent : QuizzesComponent {
         MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
 
     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
+    override fun openCourseArchive() = Unit
     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
     override fun dismissQuizzes() = Unit
     override fun popToLevel(uiLevel: Int) = Unit

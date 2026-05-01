@@ -22,7 +22,6 @@ class FakeQuestLocalDataSource : QuestLocalDataSource {
         _flow.map { list ->
             list.filter { entity ->
                 entity.authorUid == authorUid &&
-                    !entity.archived &&
                     (catalogId == null || entity.catalogId == catalogId)
             }
         }
@@ -34,8 +33,7 @@ class FakeQuestLocalDataSource : QuestLocalDataSource {
         _flow.map { list ->
             list.filter { entity ->
                 entity.catalogId == catalogId &&
-                    shelf in entity.visibleOn &&
-                    !entity.archived
+                    shelf in entity.visibleOn
             }
         }
 

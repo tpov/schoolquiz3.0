@@ -35,7 +35,11 @@ fun SchoolQuizTheme(
         MaterialTheme(
             colorScheme = DarkColorScheme,
             shapes = SchoolQuizShapes,
-            typography = SchoolQuizTypography,
+            typography =
+                when (designStyle) {
+                    SchoolQuizDesignStyle.Main -> SchoolQuizTypography
+                    SchoolQuizDesignStyle.Clean -> SchoolQuizCleanTypography
+                },
             content = content,
         )
     }

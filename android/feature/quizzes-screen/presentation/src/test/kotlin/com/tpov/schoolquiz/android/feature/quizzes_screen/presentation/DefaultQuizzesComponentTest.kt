@@ -8,14 +8,16 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeBackDispatcher
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
@@ -76,6 +78,7 @@ class DefaultQuizzesComponentTest {
             lessonRepository = FakeLessonRepository(),
             lessonAttemptRepository = FakeLessonAttemptRepository(),
             authRepository = FakeAuthRepository(),
+            questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
             mainContext = Dispatchers.Unconfined,
@@ -329,5 +332,34 @@ class DefaultQuizzesComponentTest {
 
         assertEquals(2, component.stackSize(), "stack must remain unchanged on negative popToLevel")
         assertIs<QuizzesChild.QuestList>(component.childStack.value.active.instance)
+    }
+
+    @Test
+    fun `archive root breadcrumb does not collapse stack to Idle`() {
+        val component = buildComponent()
+        component.openCourseArchive()
+        assertEquals(2, component.stackSize())
+
+        component.popToLevel(0)
+
+        assertEquals(2, component.stackSize(), "archive root must remain on QuestList")
+        assertIs<QuizzesChild.QuestList>(component.childStack.value.active.instance)
+        val config = assertIs<QuizzesConfig.QuestList>(component.childStack.value.active.configuration)
+        assertEquals(QuestListMode.Archive, config.mode)
+    }
+
+    @Test
+    fun `archive path breadcrumb from details returns to archive quest list`() {
+        val component = buildComponent()
+        component.openCourseArchive()
+        component.openSectionList(QuestId("quest-sample"), listOf("Архив", "Курсы", "Основы Kotlin"))
+        assertEquals(3, component.stackSize())
+
+        component.popToLevel(0)
+
+        assertEquals(2, component.stackSize(), "archive path must pop to QuestList, not Idle")
+        assertIs<QuizzesChild.QuestList>(component.childStack.value.active.instance)
+        val config = assertIs<QuizzesConfig.QuestList>(component.childStack.value.active.configuration)
+        assertEquals(QuestListMode.Archive, config.mode)
     }
 }

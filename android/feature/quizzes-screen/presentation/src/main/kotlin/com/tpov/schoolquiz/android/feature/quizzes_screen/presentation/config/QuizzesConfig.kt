@@ -12,6 +12,8 @@ sealed class QuizzesConfig {
     data class QuestList(
         val catalogId: String,
         val titles: List<String>,
+        val shelf: String = "home",
+        val mode: QuestListMode = QuestListMode.Home,
     ) : QuizzesConfig()
 
     @Serializable
@@ -38,4 +40,10 @@ sealed class QuizzesConfig {
         val mode: Difficulty,
         val titles: List<String>,
     ) : QuizzesConfig()
+}
+
+@Serializable
+enum class QuestListMode {
+    Home,
+    Archive,
 }
