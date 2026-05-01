@@ -387,11 +387,60 @@ Lead **не участвует** в fix loop. Reviewer↔coder автономн�
 
 Нет hard cap на количество итераций внутри autonomous loop. Escalation триггерится по сигналу (architectural mismatch, repeated blocker того же класса, reviewer disagreement), не по счётчику.
 
+## Шаг 2.5: Smoke Test BEFORE Cross-Phase Codex Review (REQUIRED)
+
+После того как **все фазы PASS от same-model reviewers** — запусти **smoke test** и **E2E instrumented tests** ДО Codex review. Codex review должен получить green build, не build-broken state.
+
+**Source rationale**: quizzes-screen retrospective Bug #1, #4 — `KoinModuleWiringTest` имел stale constructor + missing modules; phase-07 frontend-dev claimed PASS на subset suite (`:android:feature:quizzes-screen:presentation:test`), full suite не запускался. Smoke test поймал bag после Codex review (post-Codex) — backwards order. Codex spent budget на build-broken state instead of design issues.
+
+### 2.5.1 Full ciCheck (Android JVM + KMP allTests + detekt + ktlint)
+
+```bash
+./gradlew ciCheck --no-configuration-cache
+```
+
+Lead **обязан**:
+- Verify exit code 0 (BUILD SUCCESSFUL)
+- Скопировать last 30 lines output в TaskList comment / implementation.md draft
+- НЕ accept "all tests passed" claim coder-а без gradle output verification
+
+Если падает → fix loop с relevant dev (через SendMessage) → повторить ciCheck. Не переходи к Codex (Шаг 3) до зелёного ciCheck.
+
+### 2.5.2 Instrumented test APK build
+
+Если фаза changed `androidTest` или фича имеет UI flow:
+
+```bash
+./gradlew assembleDebugAndroidTest --no-configuration-cache
+```
+
+### 2.5.3 E2E Instrumented Test Stage (NEW — lesson-runner retro Fix #5)
+
+Если фича имеет UI flow с lifecycle dependencies (rotation, system Back, FLAG_SECURE, save state restore) → **обязательный** E2E instrumented test:
+
+- Test runs против real Decompose Component graph + Compose UI + Room DB (not pure unit)
+- Lifecycle scenarios included: rotation, system Back, configuration change recreation, low-memory recreation simulation
+- Если connected device доступен:
+
+```bash
+./gradlew connectedAndroidTest
+```
+
+- Если no device — тест **не считается completed**; лид помечает в `implementation.md` "Manual smoke на device required" + escalates пользователю с AskUserQuestion (запустить APK manually или defer to user)
+
+**Почему обязательно**: lesson-runner Bug #9-11 (rotation drafts lost, system Back bypass, FLAG_SECURE timing) — эти ошибки **invisible** в JVM unit tests и Compose preview tests. Только real Android Activity + lifecycle их catch'ит. Manual smoke deferred = bugs missed.
+
+### 2.5.4 Hooks defensive layer
+
+Hooks (`check-plan-paths.sh`, `check-c4-vs-gradle.sh`, `check-api-contract-types.sh`) запускаются deterministically при каждом save и flag drift документов. Это complementary к smoke test — hooks catch design-doc drift, smoke test catches integration drift.
+
 ## Шаг 3: Cross-Phase Review (Codex CLI — единственная точка cross-model review)
 
-После **полного завершения всех фаз** (когда каждая phase получила PASS от всех same-model reviewers через autonomous loop) — запусти cross-phase review.
+После **зелёного smoke test** (Шаг 2.5) — запусти cross-phase Codex review.
 
 **Codex CLI (cross-model adversarial review)** — ЕДИНСТВЕННАЯ точка в пайплайне, где задействуется другая модель. Per-phase review использует только same-model teammates. Здесь Codex проверяет результат всех фаз вместе, ловит shared blind spots same-model reviewers.
+
+**Сначала smoke test, потом Codex** — это критическая последовательность. Codex more useful when given working code, не build-broken state.
 
 Используй skill `adversarial-review` и его `references/cli-protocol.md`. Codex получает:
 - Полный source diff всех фаз
@@ -457,10 +506,38 @@ Grading: A = 0 findings, B = only medium, C = 1-2 high, D = 3+ high, F = any blo
 
 Если падает → исправить → повторить. НЕ продолжать при failing tests.
 
+## Шаг 4.5: Deferred HIGH/BLOCKER findings — explicit user approval
+
+Если cross-phase Codex review (или smoke test, или per-phase reviewer) выдал finding **severity HIGH или BLOCKER**, который impl phase не fix'ит а помечает как **DEFERRED** (post-MVP, next feature, accepted debt) — Lead **обязан** через AskUserQuestion получить explicit approval до handoff.
+
+Шаблон AskUserQuestion:
+```
+question: "Found <severity> issue '<short>' that won't be fixed in this feature scope. Accept as known debt?"
+options:
+  A) Accept defer — добавь в implementation.md Remaining Issues с явным owner/gate (post-MVP / followup ticket / next feature)
+  B) Block handoff — implement fix loop now (severity warrants in-feature)
+  C) Reduce severity — finding не actually HIGH/BLOCKER (lead обоснует)
+  D) Other (free text)
+```
+
+Если user не approves defer → fix loop, не handoff.
+
+В implementation.md Remaining Issues каждый deferred item ОБЯЗАН включать:
+```
+- **<ID>**: <symptom>
+  - Severity: <HIGH | BLOCKER>
+  - Owner: <who fixes — post-MVP / followup ticket #N / next feature>
+  - Gate: <when fixed — before next implementation / next sprint / etc>
+  - Rationale: <why deferred>
+  - User approval: <date> via AskUserQuestion (<reference>)
+```
+
+**Source rationale**: home-and-my-quests retrospective Bug #7, #9 — 5 of 8 HIGH findings deferred without user approval (DefaultRootComponent layer violation, getKoin() в Composable). Это violation CLAUDE.md "Escalate, не импровизируй" — silent debt accept = pipeline bug. Decisions about deferring HIGH must be user-approved.
+
 ## Шаг 5: Handoff
 
 Запиши `docs/features/<slug>/implementation.md`:
-- Summary, Phases Completed, Review Verdicts, Changed Files, Remaining Issues
+- Summary, Phases Completed, Review Verdicts, Changed Files, Remaining Issues (с user-approved defer entries из Шаг 4.5)
 
 Обнови README.md: Status: `implemented`.
 

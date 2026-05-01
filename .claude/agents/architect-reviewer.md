@@ -138,12 +138,58 @@ rg -n "@(Inject|Provides|Binds|Module|HiltAndroidApp|AndroidEntryPoint|HiltViewM
 
 Duplicate Koin binding for the same exposed type, missing module registration, or new Hilt/Dagger annotation → blocker unless explicitly documented.
 
-### 6. Reporting checklist completeness
+### 6. ADR-vs-code fidelity audit (home-and-my-quests retro fix)
+
+Для каждой фазы, где есть design ADRs (`docs/features/<slug>/03-decisions.md`) с constraints про код:
+
+**Шаги:**
+1. Прочитай `03-decisions.md` и extract все assertions с code-level constraints. Примеры:
+   - "all repository implementations must filter `cv > local` before emit" (ADR-CMP-49)
+   - "subtree-atomic cursor advance" (ADR-CMP-49)
+   - "use `Clock.System.now()` для cursor strategy" (ADR-CMP-49 amendment)
+   - "cache-busting URL `?v={version}`" (ADR-CMP-50)
+   - "all repositories use `.limit(1000)` for bootstrap" (ADR-HMQ-02)
+2. Для каждой assertion — grep в changed code:
+   ```bash
+   # Example: ADR требует cv > local filter в repositories
+   rg -n "cv\s*>\s*local|cv > local|cv >= local" <changed_repository_files>
+   ```
+3. Если ADR mentions pattern, и changed file НЕ contains pattern → **finding**:
+   ```
+   Severity: HIGH (Modeling Error / Plan Faithfulness)
+   ADR: ADR-CMP-49 (`03-decisions.md:906`)
+   ADR Constraint: "all repositories return only items with cv > local"
+   Code Evidence: `SectionRepositoryImpl.kt:32` returns ALL processed IDs without filter
+   Impact: stale parents trigger cascade — design contract violated
+   ```
+4. Phase-level architect-reviewer **обязан** включить ADR Audit в Reporting Checklist (#7).
+
+**Source rationale**: home-and-my-quests retrospective Bug #1, #3 — ADR-CMP-49 constraints (cv > local filter, subtree-atomic advance) flagged в design; Phase-02/03 implementation не applied; per-phase architect-reviewer не cross-checked ADR vs code line-by-line. Cross-phase Codex Skeptic поймал. Per-phase audit предотвратит повторение.
+
+### 7. Module direction grep check (quizzes-screen retro fix)
+
+При phase review, особенно если фаза трогает `core/designsystem` или cross-feature components:
+
+```bash
+# Core не должен импортировать feature types
+rg -n "^import .*\.shared\.feature\." android/core/designsystem -g "*.kt"
+rg -n "^import .*\.android\.feature\." android/core/designsystem -g "*.kt"
+
+# Feature/A не должен импортировать feature/B напрямую (за исключением Decompose ChildStack rendering)
+rg -n "^import .*\.android\.feature\.([a-z_-]+)\." android/feature/<other-slug>/presentation -g "*.kt"
+```
+
+Любой match → blocker, требует ADR-обоснование (ChildStack exception, или explicit cross-feature contract).
+
+**Source rationale**: quizzes-screen retrospective Bug #5 — `HierarchyItemCard` в `android/core/designsystem` принимает параметр `HierarchyItemUi` из `quizzes-screen/presentation`. Module direction violation. Design-phase architect не enforced; Codex Skeptic поймал.
+
+### 8. Reporting checklist completeness
 
 В финальном отчёте явно укажите:
-- Какие grep-проверки запущены (1-5)
+- Какие grep-проверки запущены (1-7)
 - Какие нашли matches (с `file:line`)
 - Какие clean (no matches)
+- ADR audit: какие ADR constraints проверены, какие matched code, какие violated
 - Если какую-то проверку пропустили — указать причину (например "N/A: в этой фазе нет Activity изменений")
 
 ## Правила
@@ -151,5 +197,5 @@ Duplicate Koin binding for the same exposed type, missing module registration, o
 - Проводите ревью относительно текущего утвержденного дизайна, а не идеализированной архитектуры будущего.
 - Сразу отмечайте предположения о DI-фреймворках, которые не поддерживаются PROJECT-CONTEXT.md.
 - Явно указывайте нарушения DI и утечки между data/UI-границами.
-- **Обязательно запускайте все 5 grep-проверок перед выдачей verdict**. Verdict без grep results = incomplete review.
+- **Обязательно запускайте все 7 grep-проверок перед выдачей verdict**. Verdict без grep results = incomplete review. Sections 1-5 = базовый набор; section 6 (ADR-vs-code audit) = home-and-my-quests retro fix; section 7 (module direction) = quizzes-screen retro fix.
 - Следуйте `.claude/rules/agent-communication.md` — ждите build gate через TaskList, начинайте review немедленно после unblock.

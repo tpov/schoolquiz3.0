@@ -22,6 +22,7 @@
 | `reviews/` | **Complete** | Codex CLI (Realist + Skeptic + Architect) |
 | `plan/` | **Complete** (5 phases, 17 files, 0 hook violations) | `/feature-plan` + plan-reviewer + fix loop |
 | `implementation.md` | **Complete** (5 phases + cross-fix pass, smoke test green) | `/feature-implement` |
+| `retrospective.md` | **Complete** (2026-05-01) | `/feature-retrospective` — 22 findings (5 BLOCKER + 8 HIGH + 9 MEDIUM); 7 pipeline fixes applied: ADR-vs-code grep audit для architect-reviewer, Spec Contradictions Gate в Grounding, Server Contract Verification, Logout Primary Journey enforcement, §13 Koin SSoT round-trip, Deferred HIGH approval, Mechanical repository abstraction. См. `retrospective.md` + `docs/invariants.md#8` (Auth-Scoped Flow). |
 
 ## Highlights
 

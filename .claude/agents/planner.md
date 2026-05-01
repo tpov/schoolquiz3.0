@@ -137,6 +137,38 @@ Plan = **ТЗ, не implementation**. Каждый new file в `backend.md`/`fro
   - New Files
   - Modified Files
   - Deleted Files (`none`, если удалений нет)
+- **Cross-Phase Dependencies** (menu-refactor / quizzes-screen retro fix) — обязательная секция:
+  ```
+  ### Cross-Phase Dependencies
+
+  **Consumed from previous phases** (types/Flows/Channels/DI bindings):
+  - <Type / Flow / Channel> from phase-NN: consumer contract <single-consumer / multicast / state / event>
+
+  **Provided for next phases**:
+  - <Type / Flow / Channel>: что фаза создаёт + кто consumer
+
+  **Temporary stubs** (TODO markers создаваемые для compile safety):
+  - <file>:<line> — TODO "Phase NN cleanup": <что должно быть удалено / replaced>
+
+  **Required cleanup in this phase** (from earlier temp stubs):
+  - phase-NN TODO @ <file>:<line> — action: <remove / replace with real impl>
+  ```
+  Plan-reviewer обязан cross-verify: все "Consumed" имеют matching "Provided" в earlier phase или external contract; все Temporary stubs имеют corresponding "Required cleanup" в downstream phase.
+- **DI Bindings** (menu-refactor retro fix) — для фазы, которая регистрирует Koin modules:
+  ```
+  ### DI Bindings
+
+  **Provided in this phase** (single/factory):
+  - <Type> via <Module>: dependencies = [<Type2>, <Type3>]
+
+  **Required from earlier phases**:
+  - <Type2> (expected в Phase-NN)
+
+  **Koin Verify status**:
+  - [ ] All `get()` / constructor deps have binding в этой фазе или earlier phases
+  - [ ] Unit test runs `koinApplication { modules(<all modules>) }.checkModules()` if applicable
+  ```
+  Plan-reviewer verifies closure: каждое "Required from earlier" имеет matching "Provided" в предшествующих фазах. Иначе — orphaned binding (см. menu-refactor Bug #4, #6, #8).
 - Dependencies
 - Критерии приемки
 - **Tests Required** (TDD-style) — обязательная секция для каждой фазы, меняющей production code:

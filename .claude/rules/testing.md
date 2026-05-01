@@ -62,6 +62,7 @@ fun `given pending sync when retry succeeds then state is updated`() = runTest {
 - Never delete test files unless listed in the phase `overview.md` section "Deleted Files".
 - TDD-style work means tests are written in parallel with production code, not after the feature is complete.
 - When code composes paths, channels, config, or generated IDs, include at least one test for the fully resolved value.
+- **Mapper round-trip field-level assertions** (menu-refactor retro fix): Mapper round-trip tests (Entity ↔ Domain, Domain ↔ DTO) MUST verify each field explicitly, не только `equals(original)`. Используй field-by-field assertions или property-based testing с field introspection. `equals()` on data class с дефолтными значениями (`val pictureUrl: String? = null`) скрывает field-drop bugs — `original.pictureUrl == null` AND `mapped.pictureUrl == null` returns true даже если mapper случайно dropped non-null value. **Source rationale**: menu-refactor Bug #5 — `pictureUrl` dropped в `CatalogMapper.kt` chain Entity→Domain→UI; round-trip tests passed because `equals()` returned true on default-null values.
 
 ## Avoid
 

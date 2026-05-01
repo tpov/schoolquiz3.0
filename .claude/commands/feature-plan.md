@@ -122,6 +122,32 @@ phases_ref: [phase-01] or none
 ### Deleted Files
 - `none` or exact files allowed to delete in this phase
 
+### Cross-Phase Dependencies (menu-refactor / quizzes-screen retro fix)
+
+**Consumed from previous phases** (types/Flows/Channels/DI bindings):
+- <Type / Flow / Channel> from phase-NN: consumer contract <single-consumer / multicast / state / event>
+
+**Provided for next phases**:
+- <Type / Flow / Channel>: что фаза создаёт + кто consumer
+
+**Temporary stubs** (TODO markers):
+- <file>:<line> — TODO "Phase NN cleanup": <что должно быть удалено / replaced>
+
+**Required cleanup in this phase** (from earlier temp stubs):
+- phase-NN TODO @ <file>:<line> — action: <remove / replace>
+
+### DI Bindings (menu-refactor retro fix — required if phase wires Koin)
+
+**Provided in this phase** (single/factory):
+- <Type> via <Module>: dependencies = [<Type2>, <Type3>]
+
+**Required from earlier phases**:
+- <Type2> (expected в Phase-NN)
+
+**Koin Verify status**:
+- [ ] All `get()` / constructor deps have binding в этой фазе или earlier phases
+- [ ] Unit test для `koinApplication { modules(...) }.checkModules()` if applicable
+
 ### Acceptance Criteria
 - [ ] [Критерий этой фазы]
 

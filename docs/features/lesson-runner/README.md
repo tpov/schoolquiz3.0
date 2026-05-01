@@ -25,6 +25,7 @@
 | Codex Round 1 | [_codex-review/cross-phase/codex-output.md](./_codex-review/cross-phase/codex-output.md) | 4 BLOCKERS + 5 HIGH + 1 MEDIUM (2026-04-28) |
 | Codex Round 2 | [_codex-review/cross-phase/codex-output-round2.md](./_codex-review/cross-phase/codex-output-round2.md) | 0 BLOCKER + 3 HIGH + 3 MEDIUM (after phase-08 round 1 fixes) |
 | Codex Round 3 | [_codex-review/cross-phase/codex-output-round3-focused.md](./_codex-review/cross-phase/codex-output-round3-focused.md) | **PASS — 6/6 closed, 0 issues** (after phase-08 round 3 fixes) |
+| Retrospective | [retrospective.md](./retrospective.md) | **Complete** (2026-05-01) — 17 findings analyzed across 6 Codex rounds (4 BLOCKER + 8 HIGH + 5 MEDIUM); 7 pipeline fixes applied: Codex prompts include code references (Walking Skeleton + Gradle), `check-c4-vs-gradle.sh` + `check-api-contract-types.sh` hooks для manual SSoT drift, Existing cross-cutting ADR re-validation в `feature-spec.md`, mandatory E2E instrumented test stage перед Codex, Grounding BLOCKER as phase gate, Lifecycle patterns checkpoint в research. |
 
 ## Key Decisions Summary
 

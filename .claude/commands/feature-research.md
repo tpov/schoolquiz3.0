@@ -323,6 +323,24 @@ Web-researcher findings включаются в synthesis (Шаг 2) и испо
 - Для каждого предположения о backend (формат ответа, поддержка поля, WebSocket event) — ссылка на source: server code file:line, или API doc, или `[ASSUMPTION — NOT VERIFIED]`.
 - Прочитай `docs/invariants.md` (если существует) и проверь: не нарушает ли фича существующие cross-feature инварианты. Если нарушает — добавь секцию `### Invariant Conflicts`.
 
+### BLOCKER findings = phase gate (lesson-runner retro fix)
+
+Каждая grounding-карточка может содержать **BLOCKER** finding (например "TopParticipant location violates module direction", "QuestionContentParser implementation отсутствует"). BLOCKER findings — это **hard gate** для следующей фазы:
+
+- **Lead обязан** перед началом design phase верифицировать что **все BLOCKERs из `2-grounding.md` resolved**:
+  - Либо amendment в `0-spec.md` (зафиксирован в Spec Updates)
+  - Либо явная ADR в `03-decisions.md` design phase, который addresses blocker (предусмотрен fix в plan)
+  - Либо escalated пользователю (BLOCKER принят как "accepted risk" с explicit user approval)
+- **Никогда не start design phase до resolved.** Если BLOCKER carry-over — дизайн будет work на сломанной модели, ошибка проявится в реализации (lesson-runner Bug #1 — TopParticipant blocker carried from grounding to phase-04).
+- Пометка resolution в `2-grounding.md`:
+  ```
+  ### Status: BLOCKER → RESOLVED (date)
+  - Resolution: <amendment в 0-spec.md / ADR в 03-decisions.md / accepted risk>
+  - Reference: <link to spec/ADR/user approval>
+  ```
+
+**Source rationale**: lesson-runner retrospective Bug #1 (TopParticipant module direction violation flagged как BLOCKER #2 в grounding, ADR-LR-05 предложил fix в design, но implementation не applied — blocker carry-over к phase-04, поймал Codex Round 1).
+
 ## Шаг 4: Записать результат
 
 Собери единый report в `docs/features/<slug>/1-research.md`:

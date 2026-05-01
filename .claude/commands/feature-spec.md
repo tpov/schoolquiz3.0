@@ -211,6 +211,37 @@ Leaf-узел закрыт, когда он помечен:
 
 **Результат**: каждая ситуация становится отдельной строкой в секции `Primary User Journeys` с явным статусом, либо `N/A` с обоснованием. Если в фиче несколько use case'ов хранят данные пользователя — чеклист проходится для каждого отдельно.
 
+### Шаг 3.6.7: Cross-cutting ADR re-validation (lesson-runner retro fix)
+
+Прежде чем переходить к Feature Domain Contract — пройди existing cross-cutting ADRs и проверь применимость к текущей фиче.
+
+**Шаги:**
+
+1. **Найди existing cross-cutting ADRs**:
+   ```bash
+   # ADRs в design docs других фич, которые помечены cross-cutting / global / architecture-wide
+   grep -l "cross-cutting\|architecture-wide\|global ADR" docs/features/*/03-decisions.md
+   # Также project-level ADRs если есть
+   ls docs/decisions/ 2>/dev/null
+   ```
+
+2. **Для каждого найденного ADR**: прочитай его decision + consequences. Спроси пользователя:
+   - Затрагивает ли эта ADR текущую фичу? (например ADR-0003 определяет timer formula → если фича использует timer, затрагивает)
+   - Если да — нужны ли amendments к ADR? Если да — capture amendments сразу в `0-spec.md` секция "ADR Impact" + draft amendments в `0-spec.md` (не post-implementation).
+   - Если ADR применим как есть — note "Applies as-is" в spec.
+
+3. **Output в `0-spec.md`** новая секция:
+   ```markdown
+   ## Cross-Cutting ADR Impact
+
+   ### ADR-XXX (e.g., ADR-0003 timer formula)
+   - **Applies**: Yes / No / Partial
+   - **Amendments needed**: <none / amendment list>
+   - **Reference**: docs/features/<other>/03-decisions.md:NN
+   ```
+
+**Source rationale**: lesson-runner retrospective Bug "ADR-0003 4 amendments" — 4 amendments дискаверены **во время implementation**, не на spec phase. ADR-0003 (timer formula, EASY error behavior, feedback timing) был cross-cutting decision сделанный до lesson-runner. Spec не делал re-validation → amendments появились retroactively. Pipeline question: сделать ADR re-validation explicit checklist на spec phase.
+
 ### Шаг 3.7: Feature Domain Contract (если фича содержит бизнес-логику)
 
 Если в фиче есть бизнес-правила, состояния, инварианты, guards, retry/recovery логика или иная нетривиальная доменная логика — **зафиксируй feature-local domain contract прямо в spec**.

@@ -60,6 +60,18 @@ Lead видит progress в TaskList без твоих DM.
 4. Когда task unblocked — lead шлёт SendMessage с kickoff prompt (assignment). С этого момента — начинай немедленно (см. Self-starting выше)
 5. Review по реальному коду (после build pass), не по plan файлам до build
 
+### Build status confirmation в assignment (menu-refactor retro fix)
+
+Lead's assignment prompt ОБЯЗАН включать поле `Build Status: PASSED (commit <sha-or-phase-ref>)`. Reviewer проверяет:
+
+1. Строка `Build Status: PASSED (commit <sha-or-phase-ref>)` присутствует в kickoff prompt.
+2. Значение PASSED (не FAILED, не TBD).
+3. Commit/phase reference валиден (либо git short SHA, либо `phase-NN`).
+
+**Если любое не выполнено** → SendMessage lead-у ERROR: "Build status not confirmed in assignment, refusing to start review (per agent-communication.md)" и НЕ начинай review. **Не делай "самопроверку"** через bash (`./gradlew test`) — reviewer не build agent. Lead ответственен за build verification.
+
+**Source rationale**: menu-refactor retrospective Bug #9 — security-reviewer дважды (Phase 01, Phase 06) запустился до build gate. Самостоятельно отказался когда не нашёл build artifacts. Это inconsistent — нужен deterministic gate в assignment.
+
 ## Архитектурный mismatch — STOP, не импровизация
 
 Если в ходе работы обнаруживаешь расхождение с spec/design, которое требует:

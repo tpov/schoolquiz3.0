@@ -20,6 +20,8 @@ Entry points: HomeQuestsScreen (тап каталога) + MyQuestsScreen (та�
 | `06-api-contract.md` | Designed | Canonical SSoT: QuizzesNavigator, QuizzesConfig (6 variants), QuizzesComponent + 5 child interfaces, UiState types, designsystem signatures, repository extension, DI |
 | `_codex-review/` | Complete | Adversarial review логи: realist (3 pass), skeptic (2 pass), architect (2 pass), plan-review (3 pass) — final verdict PASS |
 | `plan/` | Complete | 7 phase directories + plan/README.md dashboard. Codex plan review pass-3 PASS. |
+| `implementation.md` | Complete | 7 phases + cross-phase fix loop (smoke test fix + HIGH #1, #2). |
+| `retrospective.md` | **Complete** (2026-05-01) | `/feature-retrospective` — 14 findings (1 BLOCKER + 6 HIGH + 7 MEDIUM); 7 pipeline fixes applied: smoke test BEFORE Codex (sequence change), REQUIRES VERIFY blocks design PASS, module direction grep check, Multi-Path State Machine artifact, ADR↔api-contract round-trip, full ciCheck verification, DFD state source attribution. См. `retrospective.md`. |
 
 ## Key Decisions (после design-фазы)
 

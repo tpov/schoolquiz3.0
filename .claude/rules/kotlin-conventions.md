@@ -37,6 +37,29 @@
 - Prefer `withContext(Dispatchers.IO)` over creating new scopes for IO work.
 - Expose `Flow<T>` from repositories; collect in Decompose Component scope or a lifecycle-aware Android scope.
 
+## Event streams: Channel vs SharedFlow vs StateFlow (menu-refactor retro fix)
+
+| Use case | Type | Rationale |
+|----------|------|-----------|
+| One-shot event, single consumer | `Channel` + `receiveAsFlow()` | Single-consumer contract; multiple collectors → race condition (events split) |
+| Event, multiple observers | `MutableSharedFlow(replay = 0..1, extraBufferCapacity = N)` | Multicast; все collectors видят все emissions |
+| Current state snapshot | `MutableStateFlow(initial)` | State + distinct updates |
+| Recent state history | `MutableSharedFlow(replay >= 1)` | Multicast + replay |
+
+**Avoid**: `Channel.receiveAsFlow()` с >1 consumer = nondeterministic event split. Если несколько слоёв UI должны observe — используй `SharedFlow`.
+
+**Source rationale**: menu-refactor retrospective Bug #3 — `DefaultRootComponent.events` Channel с двумя consumers (MainActivity + AppShellScreen). `DevModeActivated` events nondeterministically consumed по no-op TODO branch вместо snackbar handler.
+
+### Review check
+
+```bash
+# Channel.receiveAsFlow() с >1 collect site — likely violation
+rg -n "Channel.*receiveAsFlow\|consumeAsFlow" --type kt
+# Then for each: count `.collect|collectLatest|collectIndexed` references on the same field name → if >1, blocker.
+```
+
+concurrency-reviewer обязан запустить эту проверку для phases meняющих event streams.
+
 ## Avoid
 
 - No JSON parsing in Compose Screen, Decompose Component, Fragment, ViewModel, or Activity.

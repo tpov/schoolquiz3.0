@@ -62,6 +62,14 @@
 - **Rule source**: `.claude/rules/agent-communication.md`, `.claude/commands/feature-implement.md`
 - **Added**: 2026-04-16, pipeline-retrospective 2026-04-16 (Bug #6).
 
+## 8. Auth-scoped Flow re-subscribe
+
+- **Invariant**: User-specific Flows (отдающие данные текущего пользователя — profile, stats, sync state, orders, messages, achievements) ОБЯЗАНЫ re-subscribe на auth state changes. Прямое `dao.observeByUid(currentUid())` без auth trigger = stale data after logout / account-switch.
+- **Constraint**: Repository implementation публичного user-specific Flow ОБЯЗАН принимать `currentUidFlow: () -> Flow<String?>` или ссылку на `AuthRepository.currentUidFlow()` в конструктор и применять `.flatMapLatest { uid -> uid?.let { dao.observeByUid(it) } ?: flowOf(guestDefaults) }`. `emptyFlow()` для null uid = anti-pattern (downstream collector видит "no data" вместо "guest").
+- **Owner**: `architect-reviewer` (grep check), `backend-dev` (implementation).
+- **Rule source**: `.claude/rules/auth-scoped-flow.md`
+- **Added**: 2026-05-01, pipeline-retrospective 2026-05-01 (home-and-my-quests Bug #6, recurrence из menu-refactor Bug #1).
+
 ## Как использовать этот файл
 
 - `/feature-spec` Phase 2 — прочитать invariants, добавить секцию "Invariant Check" в `0-spec.md` для затронутых

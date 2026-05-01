@@ -134,6 +134,28 @@ Codex вызывается **последовательно после кажд�
 
 Каждый вызов — в отдельный файл (`-o`). Если blocker на шаге N — вернуть findings архитекторам, исправить, повторить шаг N перед переходом к N+1.
 
+### Codex prompt MUST include code references (lesson-runner retro fix)
+
+Каждый Codex CLI invocation **обязан** в prompt передать пути к существующему коду — иначе Codex видит только дизайн-документы и пропускает drift docs ↔ source.
+
+Включи в Codex prompt (через `-c file=path` или inline):
+- `shared/feature/<slug>/domain/` (Walking Skeleton — если spec phase сгенерировал domain)
+- `*/build.gradle.kts` для модулей упомянутых в `01-architecture.md` mermaid graph
+- Существующие `*.kt` для типов упомянутых в `06-api-contract.md`
+
+Пример Realist lens prompt дополнения:
+```
+Сверь module graph в 01-architecture.md против реальных Gradle dependencies (читай build.gradle.kts модулей).
+Сверь signature snippets в 06-api-contract.md против существующих implementations в shared/feature/<slug>/domain/
+(Walking Skeleton). Любое расхождение — blocker.
+```
+
+**Source rationale**: lesson-runner retrospective Bug #2 (C4 vs Gradle drift), Bug #4 (api-contract snippets не из source). Codex review без code references — это review документов в вакууме; finds contradictions внутри docs, но не drift docs vs source.
+
+### Defensive automation (hooks, не replace Codex)
+
+Hooks `.claude/hooks/check-c4-vs-gradle.sh` и `.claude/hooks/check-api-contract-types.sh` запускаются deterministically при сохранении design docs и flag drift между документами и кодом. Это **defensive layer** — Codex review остаётся primary gate, hooks — second-chance catch (CLAUDE.md philosophy: "Deterministic enforcement > hope").
+
 ## Шаг 4: Lead Judge
 
 Сведи результаты debate и Codex review:
@@ -186,6 +208,88 @@ Codex вызывается **последовательно после кажд�
 
 ### Gate 4: Human Approval
 - [ ] Пользователь одобрил design
+
+### Gate 5: REQUIRES VERIFY resolved (no hopeful gates)
+
+- [ ] Никаких `REQUIRES VERIFY`, `TBD`, `TODO`, `?` без явного resolution в `03-decisions.md` ADRs или conditional docs
+- [ ] Каждое такое маркер должно быть либо resolved (с ссылкой на verified API/docs/code), либо escalated пользователю как Spec Ambiguity
+
+```bash
+# Check для residual hopeful gates в design docs
+rg -nE "REQUIRES?\s+VERIFY|UNRESOLVED|TBD\b" docs/features/<slug>/03-decisions.md docs/features/<slug>/01-architecture.md docs/features/<slug>/02-behavior.md docs/features/<slug>/04-testing.md docs/features/<slug>/06-api-contract.md
+```
+
+**Любой match = blocker.** Resolve через verification (открыть library docs / source) или эскалировать пользователю.
+
+**Source rationale**: quizzes-screen retrospective Bug #7 (`docs/features/quizzes-screen/retrospective.md`) — ADR-QS-12 marked BackCallback priority как "REQUIRES verify Essenty 2.x API", design проходит PASS, implementation hardcoded `priority=100` без verification. Hopeful gate = no gate.
+
+### Gate 6: Module Direction Audit
+
+- [ ] Каждый класс/тип, упомянутый в ADRs (`03-decisions.md`) и `06-api-contract.md`, проверен на module direction:
+  - `core/*` НЕ импортирует `feature/*` types
+  - `feature/A` НЕ импортирует `feature/B` напрямую (исключение — Decompose ChildStack rendering, документировано в ADR)
+  - Components в `core/designsystem` принимают параметры только из `core` или typed UI models (не feature domain types)
+
+architect-reviewer запускает grep audit:
+```bash
+# Если ADR упоминает класс, который живёт в core/designsystem с параметром из feature
+rg -nE "(core/designsystem.*\b\w+).*(:)\s*(\w+)" docs/features/<slug>/03-decisions.md docs/features/<slug>/06-api-contract.md
+```
+
+Любой подозрительный паттерн → architect-reviewer проверяет: класс живёт в core, параметр typed как feature type? blocker.
+
+**Source rationale**: quizzes-screen retrospective Bug #5 (HierarchyItemCard в `core/designsystem` с параметром `HierarchyItemUi` из `quizzes-screen/presentation`) — design-phase architect missed cross-module invariant в ADR-QS-09. Detected only Codex Skeptic pass-1.
+
+### Gate 7: ADR ↔ api-contract round-trip consistency
+
+- [ ] Каждый тип, упомянутый в `03-decisions.md` ADRs, имеет matching canonical signature в `06-api-contract.md` (или `07-events.md` / `08-storage-model.md` если боковая зона)
+- [ ] Один тип = один canonical record; ADRs ссылаются, не дублируют сигнатуру
+
+```bash
+# Extract types из ADRs
+ADR_TYPES=$(grep -oE "\b[A-Z][a-zA-Z]+(?:Component|UseCase|Repository|Mapper|DataSource|State|Action|Effect)" docs/features/<slug>/03-decisions.md | sort -u)
+
+# Check что каждый есть в 06-api-contract.md как class/interface declaration
+for t in $ADR_TYPES; do
+    if ! grep -qE "\b(class|interface|data class|sealed class|object)\s+$t\b" docs/features/<slug>/06-api-contract.md; then
+        echo "MISSING in 06-api-contract.md: $t"
+    fi
+done
+```
+
+ADR упоминает type без canonical entry в 06-api-contract.md → blocker (либо добавить canonical, либо удалить ADR-mention).
+
+**Source rationale**: quizzes-screen retrospective Bug #6 — ADR-QS-05 говорит "extend `QuestDisplayItem.catalogId`", `06-api-contract.md:307` вводит `QuestDisplayItemWithCatalog` wrapper. Two SSoT для one тип. Codex Skeptic pass-1 поймал; design phase должен был enforce consistency.
+
+### Gate 8: Multi-Path State Machine (conditional)
+
+**Trigger**: Если фича имеет multiple entry points с разными ChildStack shapes (e.g., HomeQuests vs MyQuests, Login-via-X vs Login-via-Y) ИЛИ multiple flows в Domain Test Scenarios.
+
+- [ ] `02-behavior.md` содержит **Multi-Path State Machine** секцию:
+  - Stack shape для каждого path
+  - Operations across paths (taps, back, breadcrumb) с явным behavior per path
+  - Edge cases при переключении paths (state transfer, fallback)
+
+Шаблон:
+```markdown
+## Stack Shapes по entry point
+
+### Path A: <name>
+Initial stack: [Step1, Step2, Step3]
+
+### Path B: <name>  
+Initial stack: [Step2, Step3]  # diverges at Step1
+
+## Operations across paths
+
+| Operation | Path A | Path B |
+|-----------|--------|--------|
+| Back at Step2 | pop to Step1 | pop closes feature |
+| Breadcrumb tap level 0 | pop to Step1 | pop closes feature |
+| ... | ... | ... |
+```
+
+**Source rationale**: quizzes-screen retrospective Bug #3 (popToLevel off-by-one для MyQuests entry path). Two-path geometry treated implicitly identical, но stack shapes отличались; per-phase reviewers reviewed BreadcrumbBar в isolation.
 
 ## Document Responsibility Matrix (Single Source of Truth)
 
