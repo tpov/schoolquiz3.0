@@ -15,6 +15,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetAct
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetArenaReadinessUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -140,6 +141,31 @@ class QuestAuthoringUseCaseTest {
         val afterHard = GetArenaReadinessUseCase(repo)(draftId).getOrThrow()
         assertTrue(afterHard.canSend)
         assertEquals(emptySet(), afterHard.invalidQuestionIds)
+    }
+
+    @Test
+    fun `submit arena queues local event and marks draft review queued`() = runTest {
+        val repo = FakeQuestAuthoringRepository()
+        val ids = FakeIdProvider()
+        val clock = FakeTimestampProvider(1_000L)
+        val draftId = CreateQuestDraftUseCase(repo, ids, clock)(createCommand()).getOrThrow()
+        val lessonId = repo.getDraft(draftId)!!.lessons.single().id
+        val save = SaveDraftQuestionUseCase(repo, parser, ids, clock)
+        saveQuestion(save, draftId, lessonId, "q-easy", Difficulty.EASY, order = 0)
+        saveQuestion(save, draftId, lessonId, "q-hard", Difficulty.HARD, order = 1)
+        clock.value = 5_000L
+
+        val result = SubmitQuestDraftToArenaUseCase(repo, ids, clock)(draftId)
+
+        assertTrue(result.isSuccess)
+        assertEquals(1, repo.queuedArenaSubmissions.size)
+        assertEquals(draftId, repo.queuedArenaSubmissions.single().draftId)
+        assertEquals(QuestDraftStatus.REVIEW_QUEUED, repo.getDraft(draftId)!!.draft.status)
+        assertEquals(5_000L, repo.queuedArenaSubmissions.single().requestedAtMs)
+
+        val secondResult = SubmitQuestDraftToArenaUseCase(repo, ids, clock)(draftId)
+        assertTrue(secondResult.isFailure)
+        assertEquals(1, repo.queuedArenaSubmissions.size)
     }
 
     @Test

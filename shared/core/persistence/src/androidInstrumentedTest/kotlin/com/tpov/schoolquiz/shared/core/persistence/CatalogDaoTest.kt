@@ -136,16 +136,29 @@ class CatalogDaoTest {
         }
     }
 
-    // Phase-01 AC#13: upsertByIdIfNewerVersion skips when stored version >= incoming version
+    // Catalog sync allows same-version payload backfills (for example iconNames/pictureUrl)
+    // when the incoming entity differs from the stored entity.
     @Test
-    fun upsertByIdIfNewerVersion_skips_on_equal_version() = runTest {
+    fun upsertByIdIfNewerVersion_replaces_equal_version_when_payload_changed() = runTest {
         upsert(id = "c1", name = "Original", version = 3L)
         upsert(id = "c1", name = "Updated", version = 3L)
 
         val result = dao.findById("c1")
 
+        assert(result?.name == "Updated") {
+            "Expected name='Updated' (same-version backfill), got '${result?.name}'"
+        }
+    }
+
+    @Test
+    fun upsertByIdIfNewerVersion_skips_on_older_version() = runTest {
+        upsert(id = "c1", name = "Original", version = 3L)
+        upsert(id = "c1", name = "Older", version = 2L)
+
+        val result = dao.findById("c1")
+
         assert(result?.name == "Original") {
-            "Expected name='Original' (version guard), got '${result?.name}'"
+            "Expected name='Original' (older version guard), got '${result?.name}'"
         }
     }
 

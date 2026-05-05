@@ -15,6 +15,37 @@ service cloud.firestore {
                      'qualifications']));
     }
 
+    match /profiles/{userId} {
+      // Trusted profile mirror used by server-side review routing. Clients can read
+      // their own profile, but never write qualification fields here.
+      allow read: if request.auth != null && (request.auth.uid == userId || isReviewer());
+      allow write: if false;
+    }
+
+    match /private/{userId}/{document=**} {
+      // Private authored hierarchy: private/{uid}/catalogs/{catalogId}/quests/... .
+      // It is server-written from quest_review_requests; the owner can read it.
+      allow read: if request.auth != null && (request.auth.uid == userId || isReviewer());
+      allow write: if false;
+    }
+
+    match /admin/{document=**} {
+      // Admin review hierarchy: admin/review/lessons/{lessonId}/quests/{questId}/questions/{questionId}.
+      // Reviewers can read only if their trusted profile has the required qualification.
+      allow read: if isReviewer();
+      allow write: if false;
+    }
+
+    match /quest_review_requests/{requestId} {
+      // Client only creates an outbox request. Processing/copying is server-only.
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.processed == false;
+      allow read: if request.auth != null
+        && (resource.data.ownerUid == request.auth.uid || isReviewer());
+      allow update, delete: if false;
+    }
+
     match /catalogs/{catalogId} {
       // Public read — catalogs are static categories shown to all users incl. guests.
       allow read: if true;
@@ -80,8 +111,27 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      return request.auth != null && (
+        (
+          exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+          && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.adminLevel >= 100
+        )
+        || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.qualifications.admin >= 100
+        )
+      );
+    }
+
+    function isReviewer() {
       return request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.qualifications.admin >= 100;
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.developerLevel > 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.testerLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.adminLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.translatorLevel >= 100
+        );
     }
   }
 }

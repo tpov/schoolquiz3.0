@@ -5,11 +5,18 @@ import com.tpov.schoolquiz.shared.core.persistence.DraftLessonEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftQuestionEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftSectionEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftThemeEntity
+import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
+import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentEntity
+import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentQuestionEntity
+import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentWithQuestions
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.QuestAuthoringEntityBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewAssignmentDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLesson
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
@@ -20,6 +27,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSect
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSectionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftTheme
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftThemeId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmissionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraft
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
@@ -147,6 +156,7 @@ object QuestAuthoringMapper {
             payload = payload,
             validationState = validationState.name,
             updatedAtMs = updatedAtMs,
+            languageLevel = languageLevel,
         )
 
     fun DraftQuestionEntity.toDomain(): DraftQuestion =
@@ -163,6 +173,7 @@ object QuestAuthoringMapper {
             payload = payload,
             validationState = DraftQuestionValidationState.valueOf(validationState),
             updatedAtMs = updatedAtMs,
+            languageLevel = languageLevel,
         )
 
     fun QuestDraftSummaryEntity.toDomain(): QuestDraftSummary =
@@ -175,4 +186,151 @@ object QuestAuthoringMapper {
             updatedAtMs = updatedAtMs,
             isActive = isActive,
         )
+
+    fun QuestArenaSubmission.toEntity(): QuestArenaSubmissionEntity =
+        QuestArenaSubmissionEntity(
+            id = id.value,
+            draftId = draftId.value,
+            ownerUid = ownerUid,
+            localRevision = localRevision,
+            requestedAtMs = requestedAtMs,
+            attemptCount = attemptCount,
+            lastError = lastError,
+        )
+
+    fun QuestArenaSubmissionEntity.toDomain(): QuestArenaSubmission =
+        QuestArenaSubmission(
+            id = QuestArenaSubmissionId(id),
+            draftId = QuestDraftId(draftId),
+            ownerUid = ownerUid,
+            localRevision = localRevision,
+            requestedAtMs = requestedAtMs,
+            attemptCount = attemptCount,
+            lastError = lastError,
+        )
+
+    fun PrivateQuestSnapshot.toEntityBundle(): QuestAuthoringEntityBundle =
+        QuestAuthoringEntityBundle(
+            draft =
+                QuestDraftEntity(
+                    id = request.draft.id,
+                    ownerUid = request.ownerUid,
+                    catalogId = request.draft.catalogId,
+                    title = request.draft.title,
+                    description = request.draft.description,
+                    defaultLanguage = request.draft.defaultLanguage,
+                    defaultDifficulty = request.draft.defaultDifficulty,
+                    status = QuestDraftStatus.SYNCED_PRIVATE.name,
+                    localRevision = serverRevision,
+                    serverRevision = serverRevision,
+                    publicQuestId = request.draft.publicQuestId,
+                    createdAtMs = request.draft.createdAtMs,
+                    updatedAtMs = snapshotUpdatedAt(),
+                    isActive = false,
+                ),
+            sections =
+                request.sections.map {
+                    DraftSectionEntity(
+                        id = it.id,
+                        draftId = it.draftId,
+                        title = it.title,
+                        order = it.order,
+                    )
+                },
+            themes =
+                request.themes.map {
+                    DraftThemeEntity(
+                        id = it.id,
+                        draftId = it.draftId,
+                        sectionId = it.sectionId,
+                        title = it.title,
+                        order = it.order,
+                    )
+                },
+            lessons =
+                request.lessons.map {
+                    DraftLessonEntity(
+                        id = it.id,
+                        draftId = it.draftId,
+                        themeId = it.themeId,
+                        title = it.title,
+                        order = it.order,
+                    )
+                },
+            questions =
+                request.questions.map {
+                    DraftQuestionEntity(
+                        id = it.id,
+                        draftId = it.draftId,
+                        lessonId = it.lessonId,
+                        type = it.type,
+                        language = it.language,
+                        difficulty = it.difficulty,
+                        order = it.order,
+                        text = it.text,
+                        imagePath = it.imagePath,
+                        payload = it.payload,
+                        validationState = DraftQuestionValidationState.SAVED.name,
+                        updatedAtMs = it.updatedAtMs,
+                        languageLevel = it.languageLevel,
+                    )
+                },
+        )
+
+    fun ReviewAssignmentDto.toEntity(viewerUid: String): ReviewAssignmentEntity =
+        ReviewAssignmentEntity(
+            id = id,
+            ownerUid = viewerUid,
+            submissionId = submissionId,
+            catalogId = catalogId,
+            draftId = draftId,
+            questId = questId,
+            lessonId = lessonId,
+            title = title,
+            createdAtMs = createdAtMs,
+            taskKinds = taskKinds.sorted(),
+            sourceLanguages = sourceLanguages.sorted(),
+            newTranslationLanguages = newTranslationLanguages.sorted(),
+            reviewLanguages = reviewLanguages.sorted(),
+            isTested = checks.isTested,
+            testingScore = checks.testingScore,
+            isLogicReviewed = checks.isLogicReviewed,
+            logicScore = checks.logicScore,
+            isTranslationReviewed = checks.isTranslationReviewed,
+            translationScore = checks.translationScore,
+            translatedLanguages =
+                checks.translatedLanguages
+                    .toSortedMap()
+                    .map { (language, level) -> "$language=$level" },
+        )
+
+    fun ReviewAssignmentDto.toEntityWithQuestions(viewerUid: String): ReviewAssignmentWithQuestions =
+        ReviewAssignmentWithQuestions(
+            assignment = toEntity(viewerUid),
+            questions = questions.map { it.toQuestionEntity(viewerUid, id) },
+        )
+
+    private fun ArenaQuestionDto.toQuestionEntity(
+        viewerUid: String,
+        assignmentId: String,
+    ): ReviewAssignmentQuestionEntity =
+        ReviewAssignmentQuestionEntity(
+            ownerUid = viewerUid,
+            assignmentId = assignmentId,
+            questionId = id,
+            draftId = draftId,
+            lessonId = lessonId,
+            type = type,
+            language = language,
+            languageLevel = languageLevel,
+            difficulty = difficulty,
+            order = order,
+            text = text,
+            imagePath = imagePath,
+            payload = payload,
+            updatedAtMs = updatedAtMs,
+        )
+
+    private fun PrivateQuestSnapshot.snapshotUpdatedAt(): Long =
+        maxOf(changedAtMs, request.draft.updatedAtMs)
 }

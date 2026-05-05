@@ -59,6 +59,27 @@ Spec — первый шаг. Он задаёт направление для в
 - Описание упоминает данные с сервера
 - `PROJECT-CONTEXT.md` описывает server interaction в затронутой области
 
+### 0.5 Determine pipeline tier
+
+Определи минимальный pipeline tier, достаточный для фичи. Цель — автономность без лишней процессной тяжести: маленькие изменения не должны проходить весь Heavy pipeline, а рискованные изменения не должны идти по Light пути.
+
+| Tier | Signals | Required pipeline |
+|------|---------|-------------------|
+| Light | 1-2 файла, локальный bugfix/UI polish, нет новых contracts/DI/storage/API | Spec-lite → Implement → local validation |
+| Medium | 1 feature/module, понятные requirements, нет миграций/security/offline sync | Spec → Research-lite → Plan-lite → Implement |
+| Heavy | Новая фича, 2+ модуля, новые domain/data contracts, Decompose/Koin wiring, cross-feature coupling | Полный Spec → Research → Design → Plan → Implement |
+| Critical | Auth/privacy/security/payment, irreversible storage migration, data loss risk, external cost, server contract ambiguity | Heavy + explicit user approvals for high-risk decisions + extra smoke/e2e gates |
+
+Default: если есть сомнения между двумя tiers — выбирай более высокий tier и зафиксируй причину в `Decision Ledger`.
+
+Tier можно понизить только если:
+- нет новых public contracts;
+- нет DI/storage/API/server изменений;
+- риск rollback низкий;
+- пользователь явно подтвердил shortcut или scope объективно маленький.
+
+Tier можно повысить в любой фазе, если research/design нашёл скрытую сложность. Повышение tier — автономное low/medium-risk решение: зафиксируй его в `Decision Ledger` и продолжай.
+
 ## Phase 1: Server-Side Analysis (conditional)
 
 Выполни ТОЛЬКО если Phase 0.4 определил необходимость.
@@ -111,6 +132,21 @@ READ-ONLY анализ серверного кода для фичи <feature-sl
 
 Используй паттерн **"Smart Defaults → Confirm → Drill-down"**: сначала догадайся, потом уточняй.
 
+### Autonomy Policy
+
+Для максимальной автономности не спрашивай пользователя о каждом мелком выборе. Классифицируй решения по риску:
+
+| Risk | Agent behavior | Examples |
+|------|----------------|----------|
+| Low | Реши сам, запиши в `Decision Ledger` | naming, локальная UI microcopy, test organization, non-public helper shape |
+| Medium | Реши сам, запиши rationale + rollback в `Decision Ledger` | выбор из существующих project patterns, phase split, tier повышение, internal state representation без public API |
+| High | Спроси пользователя до фиксации | scope trade-off, удаление/скрытие функционала, новый UX flow, user-visible behavior change |
+| Blocked | STOP и спроси пользователя | security/privacy/auth, irreversible migration, external cost, server contract change, архитектурный паттерн в обход PROJECT-CONTEXT |
+
+Если пользователь отвечает "на твой взгляд" — это delegated decision. Прими решение, но обязательно запиши: why, alternatives considered, risk, rollback.
+
+Если решение reversible и не меняет scope — двигайся автономно. Если решение irreversible или меняет обещание пользователю — спрашивай.
+
 ### Шаг 1: Догадайся (первый ответ после описания фичи)
 
 Прочитай описание фичи и **попробуй догадаться обо ВСЁМ**. Представь, что ты — product-менеджер, который уже делал похожие фичи, и достраиваешь полную картину:
@@ -134,7 +170,7 @@ READ-ONLY анализ серверного кода для фичи <feature-sl
 - Пользователь сказал "да, верно" → узел закрыт, **[USER DECIDED]**
 - Пользователь сказал "нет, по-другому" → углубляйся, задавай follow-up
 - Пользователь сказал "тут на твой взгляд" → узел закрыт, **[DELEGATED: твоё решение + обоснование]**
-- Пользователь не упомянул эту тему → спроси явно
+- Пользователь не упомянул эту тему → классифицируй по `Autonomy Policy`: Low/Medium реши сам и запиши в `Decision Ledger`, High/Blocked спроси явно
 
 **Задавай 2-4 уточняющих вопроса за раз**, группируя по одной сфере (UI, логика, edge cases — что сейчас актуально). К каждому вопросу добавляй свой вариант: "Я бы сделал так: ... Но решать тебе."
 
@@ -326,6 +362,7 @@ commit: $(git rev-parse --short HEAD)
 ## Source
 - Description: <оригинальное описание фичи>
 - Type: <type>
+- Pipeline tier: <Light | Medium | Heavy | Critical> — reason: <почему этот tier минимально достаточен>
 
 ## Requirements
 
@@ -352,6 +389,28 @@ commit: $(git rev-parse --short HEAD)
 | # | Question | Answer | Impact on Design |
 |---|----------|--------|-----------------|
 | 1 | <вопрос> | <ответ> | <как это влияет на design> |
+
+## Decision Ledger
+
+| # | Risk | Decision | Rationale | Evidence | Rollback / Revisit Trigger |
+|---|------|----------|-----------|----------|----------------------------|
+| 1 | Low/Medium/High | <что решено> | <почему> | <user answer / PROJECT-CONTEXT / invariant / existing pattern> | <как откатить или когда пересмотреть> |
+
+Rules:
+- Low/Medium decisions can be made autonomously if reversible and within scope.
+- High/Blocked decisions require explicit user approval before they become requirements.
+- Every delegated decision appears both here and in `Delegated Decisions Summary`.
+
+## Assumption Ledger
+
+| # | Assumption | Risk | Verification Plan | Expiry / Blocking Phase |
+|---|------------|------|-------------------|-------------------------|
+| 1 | <что предполагаем> | Low/Medium/High | <что research/design должен проверить> | <до какой фазы нельзя оставить непроверенным> |
+
+Rules:
+- High-risk assumptions block the next phase until verified or explicitly accepted by user.
+- Medium-risk assumptions must have a concrete verification command/search criterion.
+- Low-risk assumptions can proceed but must be revisited if evidence contradicts them.
 
 ## Server-Side Context
 <!-- Пропустить если фича не затрагивает API -->
@@ -646,9 +705,12 @@ codex exec --full-auto -s read-only \
 
 Покажи пользователю краткую сводку:
 - Feature type
+- Pipeline tier + reason
 - Количество requirements
 - Scope: in / out
 - Ключевые user decisions
+- Autonomous/delegated decisions из `Decision Ledger`
+- High/Medium assumptions из `Assumption Ledger`
 - Server-side issues (если есть)
 - Search criteria для research (что будет искаться)
 - Primary user journeys
@@ -660,9 +722,18 @@ codex exec --full-auto -s read-only \
 ## Quality Gates
 
 ### Gate 1: User Intent Captured
-- [ ] Каждое scope decision основано на ответе пользователя (не на предположении агента)
+- [ ] Каждое High/Blocked scope decision основано на ответе пользователя (не на предположении агента)
 - [ ] User decisions таблица заполнена с impact column
-- [ ] НИ ОДНО scope decision не принято агентом самостоятельно
+- [ ] Low/Medium delegated decisions записаны в `Decision Ledger` с rationale + rollback
+- [ ] НИ ОДНО High/Blocked scope decision не принято агентом самостоятельно
+
+Severity: Critical
+
+### Gate 1.5: Pipeline Tier and Autonomy Policy
+- [ ] Pipeline tier выбран и записан в `Source`
+- [ ] Tier reason конкретный, не "на всякий случай"
+- [ ] `Decision Ledger` заполнен для всех autonomous/delegated decisions
+- [ ] `Assumption Ledger` не содержит High-risk assumptions без verification или explicit user approval
 
 Severity: Critical
 
@@ -716,13 +787,14 @@ Severity: Critical
 - [ ] Ни одного решения без метки
 - [ ] Все [DELEGATED] имеют обоснование
 - [ ] Delegated Decisions Summary заполнена
+- [ ] Все [DELEGATED] продублированы в `Decision Ledger`
 - [ ] Пользователь подтвердил сводку перед генерацией spec
 
 Severity: Critical
 
 ## Правила
 
-1. **=user is source of truth=** — scope decisions принимает пользователь, не агент. Используй AskUserQuestion.
+1. **=risk-based autonomy=** — Low/Medium reversible decisions агент принимает сам и записывает в `Decision Ledger`; High/Blocked decisions принимает пользователь. Используй AskUserQuestion только когда риск действительно требует подтверждения.
 2. **=no architecture=** — spec описывает ЧТО + полный Walking Skeleton domain (Variant Y). **Разрешены**: domain class names в `domain/<slug>/{model,state,logic,repository,use_case}/`, value objects, sealed interfaces, pure function signatures, repository interfaces, use case classes, in-memory fakes в тестах. **Запрещены**: repository implementation design (Room/Retrofit/Firebase), DAO names, adapter/mapper design в data layer, module structure вне domain, DI wiring, framework decisions, Android/SDK types в domain.
 3. **=lock business logic early=** — если фича содержит доменную логику, она фиксируется в `Feature Domain Contract`, `Primary User Journeys`, `State Matrix`, `Domain Test Scenarios` + полный Walking Skeleton код (pure core + repositories + use cases + fakes) уже на spec-этапе.
 4. **=walking skeleton is production=** — domain код, сгенерированный в Phase 3.8, НЕ throw-away. Design/plan/implement работают С этим кодом, не переписывают его и не добавляют новых use cases или repository interfaces. Переименование классов в design phase допустимо, но бизнес-правила и signatures сохраняются.

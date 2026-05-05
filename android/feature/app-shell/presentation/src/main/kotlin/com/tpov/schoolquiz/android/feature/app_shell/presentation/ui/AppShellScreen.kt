@@ -61,6 +61,7 @@ import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.Design
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.QuestCreateScreen
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.ReviewQueueScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
@@ -76,6 +77,8 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
 import kotlinx.coroutines.launch
 
 private const val TAB_CROSSFADE_DURATION_MS = 300
+private const val MAIN_INDICATOR_ALPHA = 0.14f
+private const val CLEAN_INDICATOR_ALPHA = 0.08f
 
 /**
  * Root shell Composable.
@@ -356,8 +359,8 @@ private fun RowScope.BrandNavBarItem(
     val designStyle = currentSchoolQuizDesignStyle()
     val indicatorAlpha =
         when (designStyle) {
-            SchoolQuizDesignStyle.Main -> 0.14f
-            SchoolQuizDesignStyle.Clean -> 0.08f
+            SchoolQuizDesignStyle.Main -> MAIN_INDICATOR_ALPHA
+            SchoolQuizDesignStyle.Clean -> CLEAN_INDICATOR_ALPHA
         }
     NavigationBarItem(
         selected = selected,
@@ -402,6 +405,11 @@ private fun LocalTabContent(
                     HomeQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
                 is LocalConfig.ArchiveRoot ->
                     CourseArchiveContent(rootComponent = rootComponent, paddingValues = paddingValues)
+                is LocalConfig.ReviewQueueRoot ->
+                    ReviewQueueScreen(
+                        component = rootComponent.reviewQueueComponent,
+                        modifier = Modifier.padding(paddingValues),
+                    )
                 is LocalConfig.QuestCreateRoot ->
                     QuestCreateScreen(
                         component = rootComponent.questCreateComponent,

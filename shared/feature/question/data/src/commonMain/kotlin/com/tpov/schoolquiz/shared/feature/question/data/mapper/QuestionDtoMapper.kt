@@ -14,5 +14,6 @@ object QuestionDtoMapper {
         version = version,
         lastModifiedAt = lastModifiedAt,
         archived = archived,
+        languageLevel = languageLevel,
     )
 }

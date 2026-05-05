@@ -39,9 +39,15 @@ interface QuestCreateComponent {
 
     fun onLessonTitleChanged(value: String)
 
+    fun onStructureCheckClick()
+
     fun onCreateClick()
 
     fun onContinueDraftClick()
+
+    fun onSubmitToArenaClick()
+
+    fun onQuestionsClick(difficulty: Difficulty)
 
     fun onQuestionSelected(index: Int)
 

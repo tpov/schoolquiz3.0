@@ -46,6 +46,10 @@ sealed interface DrawerSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
+        data object ReviewQueue : LocalSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
         // emptyMap (always visible)
         data object Settings : LocalSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()

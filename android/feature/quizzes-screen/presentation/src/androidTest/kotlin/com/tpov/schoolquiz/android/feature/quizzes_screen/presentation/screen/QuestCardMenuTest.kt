@@ -10,6 +10,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,7 +18,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.Espresso
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -89,7 +89,7 @@ class QuestCardMenuTest {
 
     // QC-UI-02
     // GIVEN DropdownMenu is open (QC-UI-01 precondition)
-    // WHEN user presses Back (tap outside / system back)
+    // WHEN user taps outside the menu
     // THEN "Поделиться" node no longer exists in composition
     @Test
     fun qcUi02_tapOutside_closes_menu() {
@@ -108,8 +108,7 @@ class QuestCardMenuTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("quest_menu").assertIsDisplayed()
 
-        // Back key triggers onDismissRequest in DropdownMenu
-        Espresso.pressBack()
+        composeTestRule.onNodeWithTag("quest_menu_dismiss_layer").performTouchInput { click() }
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Поделиться").assertDoesNotExist()
@@ -228,4 +227,5 @@ class QuestCardMenuTest {
             "HapticFeedbackType.LongPress must be triggered via LocalHapticFeedback on long press",
         )
     }
+
 }

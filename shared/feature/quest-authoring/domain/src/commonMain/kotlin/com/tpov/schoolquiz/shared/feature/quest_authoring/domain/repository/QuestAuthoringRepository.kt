@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.repository
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
@@ -19,6 +20,9 @@ interface QuestAuthoringRepository {
     suspend fun saveDraft(bundle: QuestAuthoringBundle): Result<Unit>
 
     suspend fun upsertQuestion(question: DraftQuestion): Result<Unit>
+
+    suspend fun queueArenaSubmission(submission: QuestArenaSubmission): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Arena submission queue is not implemented"))
 
     suspend fun setDraftStatus(
         draftId: QuestDraftId,

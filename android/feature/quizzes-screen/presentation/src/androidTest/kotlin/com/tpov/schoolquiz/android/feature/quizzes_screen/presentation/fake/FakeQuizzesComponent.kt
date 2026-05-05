@@ -23,7 +23,7 @@ class FakeQuizzesComponent : QuizzesComponent {
     private val _currentCatalogName = MutableStateFlow<String?>(null)
     override val currentCatalogName: StateFlow<String?> = _currentCatalogName.asStateFlow()
 
-    private val _currentCatalogIcons = MutableStateFlow(emptyList())
+    private val _currentCatalogIcons = MutableStateFlow<List<ImageVector>>(emptyList())
     override val currentCatalogIcons: StateFlow<List<ImageVector>> = _currentCatalogIcons.asStateFlow()
 
     var lastPoppedLevel: Int? = null

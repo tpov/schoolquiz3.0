@@ -12,6 +12,7 @@ object QuestionMapper {
         text = text,
         payload = payload,
         language = language,
+        languageLevel = languageLevel,
         order = order,
         version = version,
         lastModifiedAt = lastModifiedAt,

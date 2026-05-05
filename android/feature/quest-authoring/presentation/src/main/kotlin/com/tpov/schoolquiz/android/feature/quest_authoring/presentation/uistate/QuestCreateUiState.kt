@@ -50,7 +50,9 @@ data class QuestCreateUiState(
     val editor: QuestQuestionEditorUiState? = null,
     val isWaitingForUser: Boolean = true,
     val isCreating: Boolean = false,
+    val isSubmittingToArena: Boolean = false,
     val errorMessage: String? = null,
+    val arenaMessage: String? = null,
 ) {
     val hasActiveDraft: Boolean
         get() = activeDraftTitle != null
@@ -59,12 +61,19 @@ data class QuestCreateUiState(
         get() =
             !isWaitingForUser &&
                 !isCreating &&
+                !isSubmittingToArena &&
                 selectedCatalogId != null &&
                 hasValidStructureTitles &&
                 defaultLanguage.isNotBlank()
 
     val canContinueDraft: Boolean
-        get() = !isWaitingForUser && !isCreating && hasActiveDraft
+        get() = !isWaitingForUser && !isCreating && !isSubmittingToArena && hasActiveDraft
+
+    val canOpenQuestions: Boolean
+        get() = !isWaitingForUser && !isCreating && !isSubmittingToArena && defaultLanguage.isNotBlank()
+
+    val canSubmitToArena: Boolean
+        get() = !isWaitingForUser && !isCreating && !isSubmittingToArena && hasActiveDraft
 
     private val hasValidStructureTitles: Boolean
         get() =

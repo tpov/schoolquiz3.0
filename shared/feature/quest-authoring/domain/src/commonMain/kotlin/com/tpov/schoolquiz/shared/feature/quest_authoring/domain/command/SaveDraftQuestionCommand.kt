@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.command
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionLanguageLevel
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
@@ -16,9 +17,11 @@ data class SaveDraftQuestionCommand(
     val order: Int,
     val imagePath: String?,
     val payload: String,
+    val languageLevel: Int = QuestionLanguageLevel.DEFAULT,
 ) {
     init {
         require(language.isNotBlank()) { "SaveDraftQuestionCommand.language must not be blank" }
+        QuestionLanguageLevel.requireValid(languageLevel, "SaveDraftQuestionCommand.languageLevel")
         require(order >= 0) { "SaveDraftQuestionCommand.order must be >= 0, got $order" }
         require(imagePath == null || imagePath.isNotBlank()) {
             "SaveDraftQuestionCommand.imagePath must be null or non-blank"

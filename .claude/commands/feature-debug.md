@@ -100,6 +100,42 @@ Package: значение debug_package_name из PROJECT-CONTEXT.md
 
 И severity: `blocker` (data loss, user-blocking) / `high` (workaround нужен) / `medium` (degraded UX) / `low` (cosmetic).
 
+### 1.2.5 Debugger Team Composition Proposal
+
+Перед тем как предлагать Phase 2 пользователю, создай `Agent(subagent_type: "diagnostics")` **без Teams** как debugger-advisor:
+
+```
+Team Composition Proposal для debug-сессии <slug>.
+
+Problem: <problem>
+Category: <category>
+Severity: <severity>
+Phase 1 evidence:
+- doc-analyst summary: <summary>
+- log-reader summary: <summary или none>
+- past reports: <same symptom? yes/no>
+
+Прочитай только:
+- .claude/PROJECT-CONTEXT.md
+- docs/features/<slug>/README.md
+- docs/features/<slug>/0-spec.md (если есть)
+- docs/features/<slug>/2-grounding.md (если есть)
+- docs/features/<slug>/debug-*.md / fix-spec-*.md (если есть)
+- docs/invariants.md (если есть)
+
+НЕ запускай build/test/logcat/device commands.
+НЕ читай production source files.
+
+Предложи targeted teammates для Phase 2:
+- mandatory teammates;
+- optional teammates with triggers;
+- кого НЕ поднимать;
+- when to add log-reader/code-analyst/web-researcher later;
+- evidence each teammate must produce.
+```
+
+Lead использует proposal как default team list. Таблица в Phase 2.2 ниже — fallback/minimum, если diagnostics недоступен или proposal неполный.
+
 ### 1.3 Early-out decision
 
 Применимо если ОДНО ИЗ выполнено:
@@ -136,7 +172,7 @@ Hypothesis:
 Recommended next step:
 - [OBVIOUS] Root cause highly likely: <X>. Предлагаю сразу Phase 3 (Generate Fix Spec).
   ИЛИ
-- [INVESTIGATION NEEDED] Hypothesis не подтверждена. Рекомендую Phase 2 (Deep Debug) с командой: <list of specific teammates based on category>.
+- [INVESTIGATION NEEDED] Hypothesis не подтверждена. Рекомендую Phase 2 (Deep Debug) с командой: <list from diagnostics Team Composition Proposal>.
 ```
 
 Затем `AskUserQuestion`:
@@ -166,7 +202,15 @@ adb devices -l
 
 ### 2.2 Agent selection (targeted, не all-in)
 
-**НЕ поднимай всех teammates по умолчанию.** Выбор по Phase 1 category:
+**НЕ поднимай всех teammates по умолчанию.** Primary source = `diagnostics` Team Composition Proposal из Phase 1.2.5.
+
+Lead обязан:
+- поднять mandatory teammates из proposal;
+- добавить optional teammates только если trigger уже выполнен;
+- записать любые overrides в debug report;
+- если proposal недоступен/неполный — использовать fallback таблицу ниже.
+
+Fallback/minimum выбор по Phase 1 category:
 
 | Category | Обязательные | Опциональные |
 |----------|--------------|--------------|
@@ -452,7 +496,8 @@ Fix spec saved: docs/features/<slug>/fix-spec-<date>.md
 
 - **=investigation first=** — Phase 1 всегда, независимо от severity. Без контекста не поднимай team
 - **=early-out=** — если past report описывает same symptom или stack trace очевидный — пропусти Phase 2, не тратьте turns на teamwork
-- **=targeted agents=** — Phase 2 поднимает только нужных teammates по category, не all-in
+- **=debugger proposes team=** — diagnostics Team Composition Proposal является default составом Phase 2; category table только fallback/minimum
+- **=targeted agents=** — Phase 2 поднимает только нужных teammates по proposal/category, не all-in
 - **=immediate start=** — в prompt каждого teammate явно "начинай немедленно, без ack"
 - **=no peer DM for status=** — teammates шлют DM только для evidence/action, не для "принято, жду"
 - **=fix spec, not fix apply=** — Phase 3 генерирует ТЗ, fix применяется ТОЛЬКО после `AskUserQuestion` approval

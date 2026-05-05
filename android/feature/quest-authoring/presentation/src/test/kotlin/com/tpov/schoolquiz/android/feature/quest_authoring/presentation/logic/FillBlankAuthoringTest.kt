@@ -102,4 +102,51 @@ class FillBlankAuthoringTest {
             result,
         )
     }
+
+    @Test
+    fun `given empty text when upsert first answer marker then appends blank marker`() {
+        val result =
+            upsertFillBlankAnswerMarker(
+                text = "",
+                answerIndex = 0,
+                answer = FillBlankAnswerSpec(text = ""),
+            )
+
+        assertEquals("**blank**", result)
+    }
+
+    @Test
+    fun `given blank marker when answer changes then marker receives answer text`() {
+        val result =
+            upsertFillBlankAnswerMarker(
+                text = "JetBrains создал **blank**",
+                answerIndex = 0,
+                answer = FillBlankAnswerSpec(text = "Kotlin"),
+            )
+
+        assertEquals("JetBrains создал **Kotlin**", result)
+    }
+
+    @Test
+    fun `given answer marker when protected flag changes then marker becomes triple star`() {
+        val result =
+            upsertFillBlankAnswerMarker(
+                text = "JetBrains создал **Kotlin**",
+                answerIndex = 0,
+                answer = FillBlankAnswerSpec(text = "Kotlin", isProtected = true),
+            )
+
+        assertEquals("JetBrains создал ***Kotlin***", result)
+    }
+
+    @Test
+    fun `given answer markers when remove second answer then removes second marker`() {
+        val result =
+            removeFillBlankAnswerMarker(
+                text = "JetBrains создал **Kotlin** и **Compose**",
+                answerIndex = 1,
+            )
+
+        assertEquals("JetBrains создал **Kotlin** и", result)
+    }
 }

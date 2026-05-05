@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionLanguageLevel
 
 data class DraftQuestion(
     val id: DraftQuestionId,
@@ -15,9 +16,11 @@ data class DraftQuestion(
     val payload: String?,
     val validationState: DraftQuestionValidationState,
     val updatedAtMs: Long,
+    val languageLevel: Int = QuestionLanguageLevel.DEFAULT,
 ) {
     init {
         require(language.isNotBlank()) { "DraftQuestion.language must not be blank" }
+        QuestionLanguageLevel.requireValid(languageLevel, "DraftQuestion.languageLevel")
         require(order >= 0) { "DraftQuestion.order must be >= 0, got $order" }
         require(imagePath == null || imagePath.isNotBlank()) {
             "DraftQuestion.imagePath must be null or non-blank"

@@ -5,9 +5,11 @@ import com.tpov.schoolquiz.shared.core.persistence.DraftLessonEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftQuestionEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftSectionEntity
 import com.tpov.schoolquiz.shared.core.persistence.DraftThemeEntity
+import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLesson
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
@@ -18,6 +20,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSect
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftSectionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftTheme
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftThemeId
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmissionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraft
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
@@ -109,6 +113,20 @@ class QuestAuthoringRepositoryImplTest {
     }
 
     @Test
+    fun queueArenaSubmission_mapsDomainSubmissionToEntity() = runTest {
+        val local = FakeQuestAuthoringLocalDataSource()
+        val repository = QuestAuthoringRepositoryImpl(local)
+
+        val result = repository.queueArenaSubmission(domainSubmission())
+
+        assertTrue(result.isSuccess)
+        val submission = assertNotNull(local.queuedSubmission)
+        assertEquals("submission-1", submission.id)
+        assertEquals("draft-1", submission.draftId)
+        assertEquals("owner-1", submission.ownerUid)
+    }
+
+    @Test
     fun localFailure_returnsResultFailure() = runTest {
         val local = FakeQuestAuthoringLocalDataSource()
         val repository = QuestAuthoringRepositoryImpl(local)
@@ -127,6 +145,7 @@ class QuestAuthoringRepositoryImplTest {
         var activeDraft: QuestAuthoringEntityBundle? = null
         var savedBundle: QuestAuthoringEntityBundle? = null
         var upsertedQuestion: DraftQuestionEntity? = null
+        var queuedSubmission: QuestArenaSubmissionEntity? = null
         var statusUpdate: StatusUpdate? = null
         var saveFailure: Exception? = null
 
@@ -150,6 +169,26 @@ class QuestAuthoringRepositoryImplTest {
         override suspend fun upsertQuestion(question: DraftQuestionEntity) {
             upsertedQuestion = question
         }
+
+        override suspend fun queueArenaSubmission(submission: QuestArenaSubmissionEntity) {
+            queuedSubmission = submission
+        }
+
+        override suspend fun findPendingArenaSubmissions(limit: Int): List<QuestArenaSubmissionEntity> =
+            emptyList()
+
+        override suspend fun markArenaSubmissionFailure(
+            submissionId: String,
+            message: String?,
+        ) = Unit
+
+        override suspend fun markArenaSubmissionSent(
+            submissionId: String,
+            draftId: String,
+            updatedAtMs: Long,
+        ) = Unit
+
+        override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) = Unit
 
         override suspend fun setDraftStatus(
             draftId: String,
@@ -227,6 +266,15 @@ class QuestAuthoringRepositoryImplTest {
             payload = """{"type":"single_choice"}""",
             validationState = DraftQuestionValidationState.SAVED,
             updatedAtMs = 3L,
+        )
+
+    private fun domainSubmission(): QuestArenaSubmission =
+        QuestArenaSubmission(
+            id = QuestArenaSubmissionId("submission-1"),
+            draftId = QuestDraftId("draft-1"),
+            ownerUid = "owner-1",
+            localRevision = 3L,
+            requestedAtMs = 4L,
         )
 
     private fun entityBundle(): QuestAuthoringEntityBundle =

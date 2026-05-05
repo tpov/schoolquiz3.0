@@ -9,9 +9,11 @@ android {
 dependencies {
     implementation(project(":shared:core:stats"))
     implementation(project(":shared:core:sync"))
+    implementation(project(":shared:core:question-schema"))
     implementation(project(":shared:core:catalog:domain"))
     implementation(project(":shared:core:catalog:data"))
     implementation(project(":shared:feature:quest:data"))
+    implementation(project(":shared:feature:quest-authoring:data"))
     implementation(project(":shared:feature:section:data"))
     implementation(project(":shared:feature:theme:data"))
     implementation(project(":shared:feature:lesson:data"))

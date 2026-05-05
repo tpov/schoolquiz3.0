@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
@@ -82,50 +84,63 @@ fun QuestListScreen(
                     )
                 }
             is QuestListUiState.Loaded ->
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
-                        Box {
-                            HierarchyItemCard(
-                                title = quest.title,
-                                orderLabel = "${index + 1}.",
-                                rating = quest.averageRating,
-                                ratingCount = quest.averageRatingCount,
-                                onClick = { component.onQuestClick(quest) },
-                                onLongClick = { expandedQuestId = quest.id },
-                                downloadStatus = quest.downloadStatus,
-                                onDownloadClick = { component.onQuestDownloadClick(quest) },
-                            )
-                            DropdownMenu(
-                                expanded = expandedQuestId == quest.id,
-                                onDismissRequest = { expandedQuestId = null },
-                                modifier = Modifier.testTag("quest_menu"),
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Поделиться") },
-                                    onClick = {
-                                        expandedQuestId = null
-                                        val appName =
-                                            context.applicationInfo
-                                                .loadLabel(context.packageManager).toString()
-                                        val shareText = "Квест «${quest.title}» — $appName"
-                                        val intent =
-                                            Intent(Intent.ACTION_SEND).apply {
-                                                type = "text/plain"
-                                                putExtra(Intent.EXTRA_TEXT, shareText)
-                                            }
-                                        try {
-                                            context.startActivity(Intent.createChooser(intent, null))
-                                        } catch (e: ActivityNotFoundException) {
-                                            Log.w(TAG, "Share unavailable", e)
-                                        }
-                                    },
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = lazyListState,
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
+                            Box {
+                                HierarchyItemCard(
+                                    title = quest.title,
+                                    orderLabel = "${index + 1}.",
+                                    rating = quest.averageRating,
+                                    ratingCount = quest.averageRatingCount,
+                                    onClick = { component.onQuestClick(quest) },
+                                    onLongClick = { expandedQuestId = quest.id },
+                                    downloadStatus = quest.downloadStatus,
+                                    onDownloadClick = { component.onQuestDownloadClick(quest) },
                                 )
+                                DropdownMenu(
+                                    expanded = expandedQuestId == quest.id,
+                                    onDismissRequest = { expandedQuestId = null },
+                                    modifier = Modifier.testTag("quest_menu"),
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Поделиться") },
+                                        onClick = {
+                                            expandedQuestId = null
+                                            val appName =
+                                                context.applicationInfo
+                                                    .loadLabel(context.packageManager).toString()
+                                            val shareText = "Квест «${quest.title}» — $appName"
+                                            val intent =
+                                                Intent(Intent.ACTION_SEND).apply {
+                                                    type = "text/plain"
+                                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                                }
+                                            try {
+                                                context.startActivity(Intent.createChooser(intent, null))
+                                            } catch (e: ActivityNotFoundException) {
+                                                Log.w(TAG, "Share unavailable", e)
+                                            }
+                                        },
+                                    )
+                                }
                             }
                         }
+                    }
+                    if (expandedQuestId != null) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .testTag("quest_menu_dismiss_layer")
+                                    .pointerInput(expandedQuestId) {
+                                        detectTapGestures { expandedQuestId = null }
+                                    },
+                        )
                     }
                 }
         }

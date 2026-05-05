@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Visibility
@@ -114,7 +113,6 @@ fun QuestQuestionEditorContent(
     onFillBlankDistractorChanged: (index: Int, value: String) -> Unit,
     onFillBlankDistractorAdded: () -> Unit,
     onFillBlankDistractorRemoved: (Int) -> Unit,
-    onSaveQuestionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -123,7 +121,6 @@ fun QuestQuestionEditorContent(
             onBackClick = onBackClick,
             onQuestionImageClick = onQuestionImageClick,
             onQuestionPreviewClick = onQuestionPreviewClick,
-            onSaveQuestionClick = onSaveQuestionClick,
         )
         if (state.isPreviewVisible) {
             Box(
@@ -199,7 +196,6 @@ private fun EditorTopPanel(
     onBackClick: () -> Unit,
     onQuestionImageClick: () -> Unit,
     onQuestionPreviewClick: () -> Unit,
-    onSaveQuestionClick: () -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -235,21 +231,6 @@ private fun EditorTopPanel(
                     Icon(
                         imageVector = Icons.Filled.Visibility,
                         contentDescription = if (state.isPreviewVisible) "Редактировать" else "Превью",
-                    )
-                }
-                IconButton(
-                    onClick = onSaveQuestionClick,
-                    enabled = state.canSave,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = "Сохранить",
-                        tint =
-                            if (state.canSave) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
                     )
                 }
                 if (state.isSaving) {
@@ -514,7 +495,7 @@ private fun FillBlankTransformedPreview(state: QuestQuestionEditorUiState) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             segments.forEach { segment ->
-                if (segment.isBlank || segment.isProtected) {
+                if (segment.isBlank) {
                     val frameColor = segment.markerColor()
                     Surface(
                         shape = MaterialTheme.shapes.small,
@@ -536,7 +517,12 @@ private fun FillBlankTransformedPreview(state: QuestQuestionEditorUiState) {
                     Text(
                         text = segment.text,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color =
+                            if (segment.isProtected) {
+                                ProtectedMarkerColor
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
                         modifier = Modifier.padding(vertical = 6.dp),
                     )
                 }
@@ -1092,11 +1078,13 @@ private fun EditorBottomBar(
                             onClick = { onQuestionSelected(index) },
                         )
                     }
-                    NewQuestionChip(
-                        selected = state.isNewQuestion,
-                        number = state.questionItems.size + 1,
-                        onClick = { onQuestionSelected(state.questionItems.size) },
-                    )
+                    if (state.isNewQuestion) {
+                        NewQuestionChip(
+                            selected = true,
+                            number = state.questionItems.size + 1,
+                            onClick = { onQuestionSelected(state.questionItems.size) },
+                        )
+                    }
                 }
                 IconButton(
                     onClick = onNextQuestionClick,
@@ -1277,7 +1265,18 @@ private fun QuestQuestionEditorUiState.validationMessage(): String? =
     }
 
 private fun QuestQuestionEditorUiState.shouldHideValidationMessage(): Boolean =
-    canSave || isSaving || errorMessage != null || lastSavedMessage != null
+    canSave || isSaving || errorMessage != null || lastSavedMessage != null || isEmptyNewQuestion()
+
+private fun QuestQuestionEditorUiState.isEmptyNewQuestion(): Boolean =
+    selectedQuestionId == null &&
+        text.isBlank() &&
+        imagePath.isBlank() &&
+        info.isBlank() &&
+        optionTexts.all { it.isBlank() } &&
+        orderingItems.all { it.isBlank() } &&
+        fillBlankText.isBlank() &&
+        fillBlankAnswers.all { it.text.isBlank() } &&
+        fillBlankDistractors.all { it.isBlank() }
 
 private fun QuestQuestionEditorUiState.toPreviewState(): QuestionUiState? =
     when (type) {
@@ -1444,7 +1443,6 @@ private fun QuestQuestionEditorContentPreview() {
             onFillBlankDistractorChanged = { _, _ -> },
             onFillBlankDistractorAdded = {},
             onFillBlankDistractorRemoved = {},
-            onSaveQuestionClick = {},
         )
     }
 }

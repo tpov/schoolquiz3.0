@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.fake
 
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
@@ -15,6 +16,7 @@ class FakeQuestAuthoringRepository(
     initial: List<QuestAuthoringBundle> = emptyList(),
 ) : QuestAuthoringRepository {
     private val cache = MutableStateFlow(initial.associateBy { it.draft.id })
+    val queuedArenaSubmissions = mutableListOf<QuestArenaSubmission>()
 
     override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummary>> =
         cache.map { drafts ->
@@ -79,6 +81,24 @@ class FakeQuestAuthoringRepository(
                     status = QuestDraftStatus.DRAFT,
                 )
                 current + (question.draftId to bundle.copy(draft = updatedDraft, questions = questions))
+            }
+        }
+
+    override suspend fun queueArenaSubmission(submission: QuestArenaSubmission): Result<Unit> =
+        runCatching {
+            queuedArenaSubmissions += submission
+            cache.update { current ->
+                val bundle = requireNotNull(current[submission.draftId]) {
+                    "Draft ${submission.draftId.value} not found"
+                }
+                current + (
+                    submission.draftId to bundle.copy(
+                        draft = bundle.draft.copy(
+                            status = QuestDraftStatus.REVIEW_QUEUED,
+                            updatedAtMs = maxOf(bundle.draft.updatedAtMs, submission.requestedAtMs),
+                        ),
+                    )
+                    )
             }
         }
 

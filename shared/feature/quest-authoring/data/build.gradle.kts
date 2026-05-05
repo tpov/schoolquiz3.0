@@ -15,6 +15,7 @@ kotlin {
             implementation(project(":shared:core:catalog:domain"))
             implementation(project(":shared:core:persistence"))
             implementation(project(":shared:core:question-schema"))
+            implementation(project(":shared:core:sync"))
             implementation(project(":shared:feature:quest:domain"))
             implementation(project(":shared:feature:quest-authoring:domain"))
         }

@@ -12,9 +12,13 @@ import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestArenaSubmissionSync
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestPrivateSync
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.ReviewAssignmentSync
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
@@ -50,9 +54,28 @@ val syncModule =
                 syncChangeRemote = get(),
             )
         }
+        single<QuestPrivateSync> {
+            QuestPrivateSync(
+                local = get(),
+                remote = get(),
+                syncStateRepo = get<SyncStateRepository>(),
+                currentUidProvider = { get<AuthRepository>().currentUid() },
+            )
+        }
+        single<ReviewAssignmentSync> {
+            ReviewAssignmentSync(
+                local = get(),
+                remote = get(),
+                syncStateRepo = get<SyncStateRepository>(),
+                currentUidProvider = { get<AuthRepository>().currentUid() },
+            )
+        }
         single<List<Syncable>> {
             listOf(
                 get<UserStatsRepository>() as Syncable,
+                get<QuestPrivateSync>(),
+                get<QuestArenaSubmissionSync>(),
+                get<ReviewAssignmentSync>(),
                 get<CatalogSyncListOrchestrator>(),
             )
         }

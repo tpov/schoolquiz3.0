@@ -42,6 +42,7 @@ class SaveDraftQuestionUseCase(
                 payload = command.payload,
                 validationState = DraftQuestionValidationState.SAVED,
                 updatedAtMs = timestampProvider.nowMs(),
+                languageLevel = command.languageLevel,
             )
             repository.upsertQuestion(question).getOrThrow()
             Result.success(questionId)

@@ -1,9 +1,11 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionLanguageLevel
 
 @Entity(
     tableName = "questions",
@@ -30,4 +32,5 @@ data class QuestionEntity(
     val version: Long,
     val lastModifiedAt: Long,
     val archived: Boolean,
+    @ColumnInfo(defaultValue = "1") val languageLevel: Int = QuestionLanguageLevel.DEFAULT,
 )

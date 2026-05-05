@@ -160,10 +160,72 @@ internal fun orderFillBlankAnswersByText(
     return findFillBlankMatches(text, answers)?.map { it.answer }
 }
 
+internal fun upsertFillBlankAnswerMarker(
+    text: String,
+    answerIndex: Int,
+    answer: FillBlankAnswerSpec,
+): String {
+    val markerText = answer.text.trim().ifBlank { FILL_BLANK_PLACEHOLDER_TEXT }
+    val segments = parseAuthorMarkup(text).segments.toMutableList()
+    var blankIndex = 0
+    var didReplace = false
+    for (segmentIndex in segments.indices) {
+        val segment = segments[segmentIndex]
+        if (segment.isBlank) {
+            if (blankIndex == answerIndex) {
+                segments[segmentIndex] =
+                    segment.copy(
+                        text = markerText,
+                        isProtected = answer.isProtected,
+                    )
+                didReplace = true
+                break
+            }
+            blankIndex += 1
+        }
+    }
+    if (!didReplace) {
+        if (segments.size == 1 && segments.first().text.isBlank() && !segments.first().isBlank) {
+            segments.clear()
+        } else if (segments.isNotEmpty() && segments.last().text.lastOrNull()?.isWhitespace() != true) {
+            segments += FillBlankVisualSegment(text = " ", isBlank = false, isProtected = false)
+        }
+        segments +=
+            FillBlankVisualSegment(
+                text = markerText,
+                isBlank = true,
+                isProtected = answer.isProtected,
+            )
+    }
+    return segments.toAuthorMarkupText()
+}
+
+internal fun removeFillBlankAnswerMarker(
+    text: String,
+    answerIndex: Int,
+): String {
+    var blankIndex = 0
+    return parseAuthorMarkup(text)
+        .segments
+        .filterNot { segment ->
+            if (!segment.isBlank) {
+                false
+            } else {
+                val shouldRemove = blankIndex == answerIndex
+                blankIndex += 1
+                shouldRemove
+            }
+        }
+        .toAuthorMarkupText()
+        .replace(Regex("\\s{2,}"), " ")
+        .trim()
+}
+
 private const val FILL_BLANK_MIN_ANSWERS = 1
 private const val FILL_BLANK_MAX_ANSWERS = 3
 private const val FILL_BLANK_MIN_CANDIDATES = 5
 private const val FILL_BLANK_MAX_CANDIDATES = 10
+private const val FILL_BLANK_PLACEHOLDER_TEXT = "blank"
 
 private data class FillBlankMatch(
     val answer: FillBlankAnswerSpec,
@@ -312,3 +374,13 @@ private fun IntRange.overlaps(
     start: Int,
     end: Int,
 ): Boolean = first < end && start < last + 1
+
+private fun List<FillBlankVisualSegment>.toAuthorMarkupText(): String =
+    joinToString(separator = "") { segment ->
+        when {
+            segment.isBlank && segment.isProtected -> "***${segment.text}***"
+            segment.isBlank -> "**${segment.text}**"
+            segment.isProtected -> "*${segment.text}*"
+            else -> segment.text
+        }
+    }.trim()

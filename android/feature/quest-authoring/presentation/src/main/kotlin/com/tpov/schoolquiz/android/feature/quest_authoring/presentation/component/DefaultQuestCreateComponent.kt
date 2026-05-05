@@ -7,7 +7,9 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.bu
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.extractFillBlankAnswers
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.extractProtectedTextSegments
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.orderFillBlankAnswersByText
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.removeFillBlankAnswerMarker
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.restoreFillBlankAuthorText
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.upsertFillBlankAnswerMarker
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.mapper.toAuthoringDisplayItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.DraftQuestionListItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankAnswerItem
@@ -38,6 +40,7 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepositor
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.command.CreateQuestDraftCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.command.SaveDraftQuestionCommand
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLesson
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
@@ -45,6 +48,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuth
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SaveDraftQuestionUseCase
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.SubmitQuestDraftToArenaUseCase
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
@@ -84,6 +88,7 @@ class DefaultQuestCreateComponent(
     private val createQuestDraft: CreateQuestDraftUseCase,
     private val getActiveQuestDraft: GetActiveQuestDraftUseCase,
     private val saveDraftQuestion: SaveDraftQuestionUseCase,
+    private val submitQuestDraftToArena: SubmitQuestDraftToArenaUseCase,
     private val questionContentParser: QuestionContentParser,
     private val questRepository: QuestRepository,
     private val sectionRepository: SectionRepository,
@@ -165,9 +170,97 @@ class DefaultQuestCreateComponent(
         _state.update { it.copy(newLessonTitle = value, errorMessage = null) }
     }
 
+    override fun onStructureCheckClick() {
+        if (_state.value.hasActiveDraft) {
+            _state.update { it.copy(errorMessage = null) }
+        } else {
+            onCreateClick()
+        }
+    }
+
     override fun onCreateClick() {
-        val snapshot = _state.value
-        val command = createDraftCommandOrNull(snapshot) ?: return
+        createDraft(
+            snapshot = _state.value,
+            showEditor = false,
+        )
+    }
+
+    override fun onContinueDraftClick() {
+        openQuestions(_state.value.defaultDifficulty)
+    }
+
+    override fun onSubmitToArenaClick() {
+        val uid = ownerUid
+        val draftId = activeBundle?.draft?.id
+        when {
+            uid == null ->
+                _state.update {
+                    it.copy(
+                        errorMessage = "Авторизация еще не готова",
+                        arenaMessage = null,
+                    )
+                }
+            draftId == null ->
+                _state.update {
+                    it.copy(
+                        errorMessage = "Сначала создайте черновик",
+                        arenaMessage = null,
+                    )
+                }
+            else ->
+                scope.launch {
+                    _state.update {
+                        it.copy(
+                            isSubmittingToArena = true,
+                            errorMessage = null,
+                            arenaMessage = null,
+                        )
+                    }
+                    val result = submitQuestDraftToArena(draftId)
+                    if (result.isSuccess) {
+                        refreshActiveDraft(uid)
+                        _state.update {
+                            it.copy(
+                                isSubmittingToArena = false,
+                                errorMessage = null,
+                                arenaMessage = "Квест поставлен в очередь отправки на арену",
+                            )
+                        }
+                    } else {
+                        _state.update {
+                            it.copy(
+                                isSubmittingToArena = false,
+                                errorMessage = result.exceptionOrNull().arenaSubmissionErrorMessage(),
+                                arenaMessage = null,
+                            )
+                        }
+                    }
+                }
+        }
+    }
+
+    override fun onQuestionsClick(difficulty: Difficulty) {
+        val snapshot = _state.value.copy(defaultDifficulty = difficulty)
+        _state.update { it.copy(defaultDifficulty = difficulty, errorMessage = null) }
+        if (snapshot.hasActiveDraft) {
+            openQuestions(difficulty)
+        } else {
+            createDraft(
+                snapshot = snapshot,
+                showEditor = true,
+                editorDifficulty = difficulty,
+                requireStructureTitles = false,
+            )
+        }
+    }
+
+    private fun createDraft(
+        snapshot: QuestCreateUiState,
+        showEditor: Boolean,
+        editorDifficulty: Difficulty = snapshot.defaultDifficulty,
+        requireStructureTitles: Boolean = true,
+    ) {
+        val command = createDraftCommandOrNull(snapshot, requireStructureTitles) ?: return
         scope.launch {
             _state.update { it.copy(isCreating = true, errorMessage = null) }
             val result = createQuestDraft(command)
@@ -175,8 +268,9 @@ class DefaultQuestCreateComponent(
                 refreshActiveDraft(
                     uid = command.ownerUid,
                     selectedQuestionId = null,
-                    openNewQuestion = true,
-                    showEditor = true,
+                    openNewQuestion = false,
+                    showEditor = showEditor,
+                    difficulty = editorDifficulty,
                 )
                 _state.update { it.copy(isCreating = false, errorMessage = null) }
             } else {
@@ -190,26 +284,31 @@ class DefaultQuestCreateComponent(
         }
     }
 
-    override fun onContinueDraftClick() {
+    private fun openQuestions(difficulty: Difficulty) {
         scope.launch {
             val uid = ownerUid
             if (uid == null) {
                 _state.update { it.copy(errorMessage = "Авторизация еще не готова") }
                 return@launch
             }
+            _state.update { it.copy(defaultDifficulty = difficulty, errorMessage = null) }
             refreshActiveDraft(
                 uid = uid,
                 selectedQuestionId = null,
-                openNewQuestion = true,
+                openNewQuestion = false,
                 showEditor = true,
+                difficulty = difficulty,
             )
         }
     }
 
-    private fun createDraftCommandOrNull(snapshot: QuestCreateUiState): CreateQuestDraftCommand? {
+    private fun createDraftCommandOrNull(
+        snapshot: QuestCreateUiState,
+        requireStructureTitles: Boolean,
+    ): CreateQuestDraftCommand? {
         val uid = ownerUid
         val catalogId = snapshot.selectedCatalogId
-        val structureError = snapshot.structureValidationError()
+        val structureError = if (requireStructureTitles) snapshot.structureValidationError() else null
         return when {
             uid == null -> {
                 _state.update { it.copy(errorMessage = "Авторизация еще не готова") }
@@ -240,22 +339,30 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onQuestionSelected(index: Int) {
-        selectQuestion(index)
+        navigateFromEditor { difficulty ->
+            selectQuestion(index, difficulty)
+        }
     }
 
     override fun onPreviousQuestionClick() {
         val current = _state.value.editor ?: return
-        selectQuestion(current.activeIndex - 1)
+        navigateFromEditor { difficulty ->
+            selectQuestion(current.activeIndex - 1, difficulty)
+        }
     }
 
     override fun onNextQuestionClick() {
         val current = _state.value.editor ?: return
-        selectQuestion(current.activeIndex + 1)
+        navigateFromEditor { difficulty ->
+            selectQuestion(current.activeIndex + 1, difficulty)
+        }
     }
 
     override fun onAddQuestionClick() {
-        val bundle = activeBundle ?: return
-        selectQuestion(bundle.sortedQuestionsForActiveLesson().size)
+        navigateFromEditor { difficulty ->
+            val bundle = activeBundle ?: return@navigateFromEditor
+            selectQuestion(bundle.sortedQuestionsForActiveLesson(difficulty).size, difficulty)
+        }
     }
 
     override fun onQuestionTypeSelected(value: DraftQuestionType) {
@@ -387,16 +494,16 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onFillBlankTextChanged(value: String) {
-        updateEditor { it.copy(fillBlankText = value, errorMessage = null, lastSavedMessage = null) }
+        updateEditor {
+            it.withSyncedFillBlankText(value)
+                .copy(errorMessage = null, lastSavedMessage = null)
+        }
     }
 
     override fun onFillBlankMarkerAdded(kind: FillBlankMarkerKind) {
         updateEditor {
-            it.copy(
-                fillBlankText = it.fillBlankText.appendFillBlankMarker(kind),
-                errorMessage = null,
-                lastSavedMessage = null,
-            )
+            it.withSyncedFillBlankText(it.fillBlankText.appendFillBlankMarker(kind))
+                .copy(errorMessage = null, lastSavedMessage = null)
         }
     }
 
@@ -405,7 +512,19 @@ class DefaultQuestCreateComponent(
         value: String,
     ) {
         updateEditor {
+            val currentAnswer = it.fillBlankAnswers.getOrNull(index) ?: return@updateEditor it
+            val nextAnswer = currentAnswer.copy(text = value)
             it.copy(
+                fillBlankText =
+                    upsertFillBlankAnswerMarker(
+                        text = it.fillBlankText,
+                        answerIndex = index,
+                        answer =
+                            FillBlankAnswerSpec(
+                                text = value,
+                                isProtected = nextAnswer.isProtected,
+                            ),
+                    ),
                 fillBlankAnswers =
                     it.fillBlankAnswers.withValue(index) { answer ->
                         answer.copy(text = value)
@@ -421,7 +540,18 @@ class DefaultQuestCreateComponent(
         value: Boolean,
     ) {
         updateEditor {
+            val currentAnswer = it.fillBlankAnswers.getOrNull(index) ?: return@updateEditor it
             it.copy(
+                fillBlankText =
+                    upsertFillBlankAnswerMarker(
+                        text = it.fillBlankText,
+                        answerIndex = index,
+                        answer =
+                            FillBlankAnswerSpec(
+                                text = currentAnswer.text,
+                                isProtected = value,
+                            ),
+                    ),
                 fillBlankAnswers =
                     it.fillBlankAnswers.withValue(index) { answer ->
                         answer.copy(isProtected = value)
@@ -437,7 +567,14 @@ class DefaultQuestCreateComponent(
             if (it.fillBlankAnswers.size >= MAX_FILL_BLANK_ANSWERS) {
                 it
             } else {
+                val nextIndex = it.fillBlankAnswers.size
                 it.copy(
+                    fillBlankText =
+                        upsertFillBlankAnswerMarker(
+                            text = it.fillBlankText,
+                            answerIndex = nextIndex,
+                            answer = FillBlankAnswerSpec(text = ""),
+                        ),
                     fillBlankAnswers = it.fillBlankAnswers + FillBlankAnswerItem(),
                     errorMessage = null,
                     lastSavedMessage = null,
@@ -452,6 +589,11 @@ class DefaultQuestCreateComponent(
                 it
             } else {
                 it.copy(
+                    fillBlankText =
+                        removeFillBlankAnswerMarker(
+                            text = it.fillBlankText,
+                            answerIndex = index,
+                        ),
                     fillBlankAnswers = it.fillBlankAnswers.removeAtOrSame(index).ensureFillBlankAnswerRows(),
                     errorMessage = null,
                     lastSavedMessage = null,
@@ -498,59 +640,10 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onSaveQuestionClick() {
-        val uid = ownerUid
         val editor = _state.value.editor
-        if (uid == null) {
-            updateEditor { it.copy(errorMessage = "Авторизация еще не готова") }
-            return
-        }
         if (editor == null) return
         scope.launch {
-            updateEditor { it.copy(isSaving = true, errorMessage = null, lastSavedMessage = null) }
-            val contentResult = buildQuestionContent(editor)
-            val content = contentResult.getOrNull()
-            if (content == null) {
-                updateEditor {
-                    it.copy(
-                        isSaving = false,
-                        errorMessage = contentResult.exceptionOrNull()?.message ?: "Проверьте поля вопроса",
-                    )
-                }
-                return@launch
-            }
-
-            val payload = questionJson.encodeToString<QuestionContent>(content)
-            val result =
-                saveDraftQuestion(
-                    SaveDraftQuestionCommand(
-                        draftId = editor.draftId,
-                        lessonId = editor.lessonId,
-                        questionId = editor.selectedQuestionId,
-                        type = editor.type,
-                        language = editor.language.ifBlank { "ru" },
-                        difficulty = editor.difficulty,
-                        order = editor.selectedQuestionId?.existingQuestionOrder() ?: editor.activeIndex,
-                        imagePath = editor.imagePath.cleanNullable(),
-                        payload = payload,
-                    ),
-                )
-            val savedQuestionId = result.getOrNull()
-            if (savedQuestionId != null) {
-                refreshActiveDraft(
-                    uid = uid,
-                    selectedQuestionId = savedQuestionId,
-                    openNewQuestion = false,
-                    showEditor = true,
-                )
-                updateEditor { it.copy(isSaving = false, lastSavedMessage = "Вопрос сохранен") }
-            } else {
-                updateEditor {
-                    it.copy(
-                        isSaving = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Не удалось сохранить вопрос",
-                    )
-                }
-            }
+            saveEditorQuestion(editor, showSavedMessage = true)
         }
     }
 
@@ -559,11 +652,107 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onBackToStructureClick() {
-        _state.update { it.copy(editor = null, errorMessage = null) }
+        navigateFromEditor {
+            _state.update { it.copy(editor = null, errorMessage = null) }
+        }
     }
 
     override fun onBackClick() {
         navigator.goTo(Destination.Back)
+    }
+
+    private fun navigateFromEditor(navigate: (Difficulty) -> Unit) {
+        val editor = _state.value.editor ?: return
+        val difficulty = editor.difficulty
+        when {
+            editor.canSave -> {
+                scope.launch {
+                    if (saveEditorQuestion(editor, showSavedMessage = false) != null) {
+                        navigate(difficulty)
+                    }
+                }
+            }
+            editor.isEmptyNewQuestion() -> navigate(difficulty)
+            else ->
+                updateEditor {
+                    it.copy(
+                        errorMessage = it.autosaveValidationMessage(),
+                        lastSavedMessage = null,
+                    )
+                }
+        }
+    }
+
+    @Suppress("ReturnCount")
+    private suspend fun saveEditorQuestion(
+        editor: QuestQuestionEditorUiState,
+        showSavedMessage: Boolean,
+    ): DraftQuestionId? {
+        val uid = ownerUid
+        if (uid == null) {
+            updateEditor { it.copy(errorMessage = "Авторизация еще не готова") }
+            return null
+        }
+
+        updateEditor { it.copy(isSaving = true, errorMessage = null, lastSavedMessage = null) }
+        val isNewQuestion = editor.selectedQuestionId == null
+        val contentResult = buildQuestionContent(editor)
+        val content = contentResult.getOrNull()
+        if (content == null) {
+            updateEditor {
+                it.copy(
+                    isSaving = false,
+                    errorMessage = contentResult.exceptionOrNull()?.message ?: "Проверьте поля вопроса",
+                )
+            }
+            return null
+        }
+
+        val payload = questionJson.encodeToString<QuestionContent>(content)
+        val result =
+            saveDraftQuestion(
+                SaveDraftQuestionCommand(
+                    draftId = editor.draftId,
+                    lessonId = editor.lessonId,
+                    questionId = editor.selectedQuestionId,
+                    type = editor.type,
+                    language = editor.language.ifBlank { "ru" },
+                    difficulty = editor.difficulty,
+                    order = editor.selectedQuestionId?.existingQuestionOrder() ?: nextQuestionOrder(editor.lessonId),
+                    imagePath = editor.imagePath.cleanNullable(),
+                    payload = payload,
+                ),
+            )
+        val savedQuestionId = result.getOrNull()
+        if (savedQuestionId != null) {
+            refreshActiveDraft(
+                uid = uid,
+                selectedQuestionId = savedQuestionId,
+                openNewQuestion = false,
+                showEditor = true,
+                difficulty = editor.difficulty,
+            )
+            updateEditor {
+                it.copy(
+                    isSaving = false,
+                    lastSavedMessage =
+                        if (showSavedMessage) {
+                            if (isNewQuestion) "Вопрос создан" else "Вопрос сохранен"
+                        } else {
+                            null
+                        },
+                )
+            }
+            return savedQuestionId
+        }
+
+        updateEditor {
+            it.copy(
+                isSaving = false,
+                errorMessage = result.exceptionOrNull()?.message ?: "Не удалось сохранить вопрос",
+            )
+        }
+        return null
     }
 
     private fun observeUser() {
@@ -771,6 +960,7 @@ class DefaultQuestCreateComponent(
         selectedQuestionId: DraftQuestionId? = null,
         openNewQuestion: Boolean = false,
         showEditor: Boolean = false,
+        difficulty: Difficulty? = null,
     ) {
         try {
             activeBundle = getActiveQuestDraft(uid).getOrNull()
@@ -779,6 +969,7 @@ class DefaultQuestCreateComponent(
                     activeBundle?.toEditorUiState(
                         selectedQuestionId = selectedQuestionId,
                         openNewQuestion = openNewQuestion,
+                        difficulty = difficulty,
                     )
                 } else {
                     null
@@ -810,15 +1001,19 @@ class DefaultQuestCreateComponent(
         )
     }
 
-    private fun selectQuestion(index: Int) {
+    private fun selectQuestion(
+        index: Int,
+        difficulty: Difficulty,
+    ) {
         val bundle = activeBundle ?: return
-        val questions = bundle.sortedQuestionsForActiveLesson()
+        val questions = bundle.sortedQuestionsForActiveLesson(difficulty)
         val normalizedIndex = index.coerceIn(0, questions.size)
         val selectedQuestionId = questions.getOrNull(normalizedIndex)?.id
         val editor =
             bundle.toEditorUiState(
                 selectedQuestionId = selectedQuestionId,
                 openNewQuestion = selectedQuestionId == null,
+                difficulty = difficulty,
             )
         _state.update { it.copy(editor = editor, errorMessage = null) }
     }
@@ -911,9 +1106,14 @@ class DefaultQuestCreateComponent(
     private fun QuestAuthoringBundle.toEditorUiState(
         selectedQuestionId: DraftQuestionId?,
         openNewQuestion: Boolean,
+        difficulty: Difficulty?,
     ): QuestQuestionEditorUiState? {
         val lesson = lessons.sortedForEditor().firstOrNull() ?: return null
-        val sortedQuestions = sortedQuestionsForLesson(lesson)
+        val targetDifficulty =
+            difficulty
+                ?: selectedQuestionId?.let { id -> questions.firstOrNull { it.id == id }?.difficulty }
+                ?: draft.defaultDifficulty
+        val sortedQuestions = sortedQuestionsForLesson(lesson, targetDifficulty)
         val resolvedIndex =
             if (openNewQuestion) {
                 sortedQuestions.size
@@ -942,7 +1142,7 @@ class DefaultQuestCreateComponent(
                 activeIndex = resolvedIndex.coerceAtLeast(0),
                 selectedQuestionId = selectedQuestion?.id,
                 type = selectedQuestion?.type ?: DraftQuestionType.SINGLE_CHOICE,
-                difficulty = selectedQuestion?.difficulty ?: draft.defaultDifficulty,
+                difficulty = selectedQuestion?.difficulty ?: targetDifficulty,
                 language = selectedQuestion?.language ?: draft.defaultLanguage,
             )
         return selectedQuestion?.let { base.withQuestion(it) } ?: base
@@ -1051,15 +1251,21 @@ class DefaultQuestCreateComponent(
             }
         }
 
-    private fun QuestAuthoringBundle.sortedQuestionsForActiveLesson(): List<DraftQuestion> {
+    private fun QuestAuthoringBundle.sortedQuestionsForActiveLesson(
+        difficulty: Difficulty? = null,
+    ): List<DraftQuestion> {
         val lesson = lessons.sortedForEditor().firstOrNull() ?: return emptyList()
-        return sortedQuestionsForLesson(lesson)
+        return sortedQuestionsForLesson(lesson, difficulty)
     }
 
-    private fun QuestAuthoringBundle.sortedQuestionsForLesson(lesson: DraftLesson): List<DraftQuestion> =
+    private fun QuestAuthoringBundle.sortedQuestionsForLesson(
+        lesson: DraftLesson,
+        difficulty: Difficulty? = null,
+    ): List<DraftQuestion> =
         questions
             .asSequence()
             .filter { it.lessonId == lesson.id }
+            .filter { difficulty == null || it.difficulty == difficulty }
             .sortedWith(compareBy<DraftQuestion> { it.order }.thenBy { it.id.value })
             .toList()
 
@@ -1068,6 +1274,13 @@ class DefaultQuestCreateComponent(
 
     private fun DraftQuestionId.existingQuestionOrder(): Int? =
         activeBundle?.questions?.firstOrNull { it.id == this }?.order
+
+    private fun nextQuestionOrder(lessonId: DraftLessonId): Int =
+        activeBundle
+            ?.questions
+            ?.filter { it.lessonId == lessonId }
+            ?.maxOfOrNull { it.order + 1 }
+            ?: 0
 }
 
 private val DraftQuestionType.title: String
@@ -1150,6 +1363,12 @@ private fun QuestCreateUiState.structureValidationError(): String? =
         else -> null
     }
 
+private fun Throwable?.arenaSubmissionErrorMessage(): String =
+    when (this) {
+        is IllegalArgumentException -> "Для арены нужны сохраненные легкие и сложные вопросы без ошибок"
+        else -> this?.message ?: "Не удалось поставить квест в очередь арены"
+    }
+
 private fun String.appendFillBlankMarker(kind: FillBlankMarkerKind): String {
     val marker =
         when (kind) {
@@ -1177,6 +1396,45 @@ private fun QuestQuestionEditorUiState.resolveFillBlankAnswers(): List<FillBlank
     return orderFillBlankAnswersByText(
         text = fillBlankText,
         answers = manualAnswers,
+    )
+}
+
+private fun QuestQuestionEditorUiState.isEmptyNewQuestion(): Boolean =
+    selectedQuestionId == null &&
+        text.isBlank() &&
+        imagePath.isBlank() &&
+        info.isBlank() &&
+        optionTexts.all { it.isBlank() } &&
+        orderingItems.all { it.isBlank() } &&
+        fillBlankText.isBlank() &&
+        fillBlankAnswers.all { it.text.isBlank() } &&
+        fillBlankDistractors.all { it.isBlank() }
+
+private fun QuestQuestionEditorUiState.autosaveValidationMessage(): String =
+    when (type) {
+        DraftQuestionType.SINGLE_CHOICE -> "Нужны вопрос, два варианта и правильный ответ"
+        DraftQuestionType.MULTIPLE_CHOICE -> "Нужны вопрос, два варианта и минимум два правильных ответа"
+        DraftQuestionType.ORDERING -> "Нужны вопрос и минимум два элемента"
+        DraftQuestionType.FILL_BLANK -> "Нужны 1-3 пропуска через **текст** или правильные ответы в тексте"
+    }
+
+private fun QuestQuestionEditorUiState.withSyncedFillBlankText(value: String): QuestQuestionEditorUiState {
+    val markupAnswers = extractFillBlankAnswers(value)
+    return copy(
+        fillBlankText = value,
+        fillBlankAnswers =
+            if (markupAnswers.isEmpty()) {
+                fillBlankAnswers
+            } else {
+                markupAnswers
+                    .map { answer ->
+                        FillBlankAnswerItem(
+                            text = answer.text,
+                            isProtected = answer.isProtected,
+                        )
+                    }
+                    .ensureFillBlankAnswerRows()
+            },
     )
 }
 

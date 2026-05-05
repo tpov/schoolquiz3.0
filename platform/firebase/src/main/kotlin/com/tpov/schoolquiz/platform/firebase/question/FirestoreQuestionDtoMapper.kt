@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.question
 
 import com.google.firebase.firestore.DocumentSnapshot
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionLanguageLevel
 import com.tpov.schoolquiz.shared.feature.question.data.dto.QuestionDto
 
 fun DocumentSnapshot.toQuestionDto(): QuestionDto =
@@ -14,4 +15,9 @@ fun DocumentSnapshot.toQuestionDto(): QuestionDto =
         version = getLong("version") ?: 1L,
         lastModifiedAt = getTimestamp("lastModifiedAt")?.toDate()?.time ?: 0L,
         archived = getBoolean("archived") ?: false,
+        languageLevel =
+            getLong("languageLevel")
+                ?.toInt()
+                ?.takeIf { it >= QuestionLanguageLevel.MIN }
+                ?: QuestionLanguageLevel.DEFAULT,
     )

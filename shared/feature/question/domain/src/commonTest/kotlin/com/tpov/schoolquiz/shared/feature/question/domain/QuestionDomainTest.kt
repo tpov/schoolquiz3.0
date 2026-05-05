@@ -56,6 +56,20 @@ class QuestionDomainTest {
         assertEquals(true, error.message?.contains("language"))
     }
 
+    @Test
+    fun `Question with negative languageLevel throws`() {
+        val error = assertFailsWith<IllegalArgumentException> {
+            makeQuestion(languageLevel = -1)
+        }
+        assertEquals(true, error.message?.contains("languageLevel"))
+    }
+
+    @Test
+    fun `Question accepts high languageLevel`() {
+        val q = makeQuestion(languageLevel = 250)
+        assertEquals(250, q.languageLevel)
+    }
+
     // ── Scenario 20 : payload="" throws ──────────────────────────────────────
     @Test
     fun `scenario 20 Question with empty payload throws`() {
@@ -85,6 +99,7 @@ class QuestionDomainTest {
         val q = makeQuestion()
         assertEquals("qn1", q.id.value)
         assertEquals("ru", q.language)
+        assertEquals(1, q.languageLevel)
         assertEquals(0L, q.lastModifiedAt)
     }
 
@@ -225,6 +240,7 @@ class QuestionDomainTest {
         text: String = "What is 2+2?",
         payload: String = """{"type":"SingleChoice","options":["3","4","5"],"correctIndex":1}""",
         language: String = "ru",
+        languageLevel: Int = 1,
         order: Int = 0,
         version: Long = 1L,
         lastModifiedAt: Long = 0L,
@@ -235,6 +251,7 @@ class QuestionDomainTest {
         text = text,
         payload = payload,
         language = language,
+        languageLevel = languageLevel,
         order = order,
         version = version,
         lastModifiedAt = lastModifiedAt,

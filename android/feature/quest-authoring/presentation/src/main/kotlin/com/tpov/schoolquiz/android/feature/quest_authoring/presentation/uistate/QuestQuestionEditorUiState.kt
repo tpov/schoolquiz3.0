@@ -60,7 +60,7 @@ data class QuestQuestionEditorUiState(
         get() = activeIndex > 0
 
     val canGoNext: Boolean
-        get() = activeIndex < questionItems.size
+        get() = activeIndex < questionItems.lastIndex
 
     val isNewQuestion: Boolean
         get() = selectedQuestionId == null

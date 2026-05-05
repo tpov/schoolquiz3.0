@@ -75,6 +75,7 @@ fun visibleSections(tab: Tab, stats: UserStats): List<DrawerSection> = when (tab
     Tab.LOCAL -> listOf(
         DrawerSection.LocalSection.HomeQuests,
         DrawerSection.LocalSection.Archive,
+        DrawerSection.LocalSection.ReviewQueue,
         DrawerSection.LocalSection.MyQuests,
         DrawerSection.LocalSection.Settings,
     ).filter { isVisible(it, stats) }
@@ -115,6 +116,7 @@ fun rootOf(section: DrawerSection): TabConfig = when (section) {
     DrawerSection.LocalSection.MyQuests -> LocalConfig.MyQuestsRoot
     DrawerSection.LocalSection.HomeQuests -> LocalConfig.HomeQuestsRoot
     DrawerSection.LocalSection.Archive -> LocalConfig.ArchiveRoot
+    DrawerSection.LocalSection.ReviewQueue -> LocalConfig.ReviewQueueRoot
     DrawerSection.LocalSection.Settings -> LocalConfig.SettingsRoot
     DrawerSection.InternetSection.Arena -> InternetConfig.ArenaRoot
     DrawerSection.InternetSection.Catalog -> InternetConfig.CatalogRoot

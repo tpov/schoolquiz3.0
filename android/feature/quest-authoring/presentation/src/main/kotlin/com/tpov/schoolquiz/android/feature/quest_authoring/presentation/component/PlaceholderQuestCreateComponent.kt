@@ -45,9 +45,15 @@ class PlaceholderQuestCreateComponent(
 
     override fun onLessonTitleChanged(value: String) = Unit
 
+    override fun onStructureCheckClick() = Unit
+
     override fun onCreateClick() = Unit
 
     override fun onContinueDraftClick() = Unit
+
+    override fun onSubmitToArenaClick() = Unit
+
+    override fun onQuestionsClick(difficulty: Difficulty) = Unit
 
     override fun onQuestionSelected(index: Int) = Unit
 

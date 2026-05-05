@@ -126,6 +126,10 @@ Plan = **ТЗ, не implementation**. Каждый new file в `backend.md`/`fro
   - `tests.md` or `none`
 - Layer
 - **Review Tags**: перечисли какие conditional reviewers нужны для фазы. Если фаза содержит coroutines, Flow, shared mutable state, lifecycle callbacks, async fetch + observe — добавь тег `concurrency-review`. Lead использует эти теги чтобы поднять нужных reviewers
+- **Diagnostics Hints**: перечисли expected failure signals и debugger triggers для `diagnostics` Team Composition Proposal:
+  - Expected failure signals: compile/Koin/Room migration/lifecycle restore/realtime reconnect/network/backend/device/none
+  - Suggested debugger triggers: когда подключать `diagnostics`, `log-reader`, `code-analyst`, `web-researcher`
+  - Device/backend prerequisites: connected device, backend emulator, Firebase, network, none
 - **State Matrix Coverage** (если `0-spec.md` или `02-behavior.md` содержат State Matrix): укажи какие строки/ячейки матрицы реализуются в этой фазе. Формат: `Matrix rows: [R1, R2, R5]`. Если фаза не покрывает ни одной строки — это красный флаг.
 - **Domain Contract Coverage** (если `0-spec.md` содержит `Feature Domain Contract`): укажи какие правила, journeys и domain scenarios реализуются в этой фазе. Для `phase-01` это обязательно.
 - **Traceability** (ОБЯЗАТЕЛЬНО) — таблица привязки к grounding:

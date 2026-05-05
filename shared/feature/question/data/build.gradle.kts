@@ -12,6 +12,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(project(":shared:feature:question:domain"))
             implementation(project(":shared:feature:lesson:domain"))
+            implementation(project(":shared:core:question-schema"))
             implementation(project(":shared:core:persistence"))
             implementation(project(":shared:core:sync"))
             implementation(libs.koin.core)

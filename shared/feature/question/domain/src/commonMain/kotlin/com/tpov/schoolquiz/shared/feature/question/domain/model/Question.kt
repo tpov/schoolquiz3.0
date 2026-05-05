@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.question.domain.model
 
+import com.tpov.schoolquiz.shared.core.question_schema.QuestionLanguageLevel
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 
 /**
@@ -15,6 +16,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
  *
  * [language] is an ISO 639-1 language code (e.g. "ru", "en"). The field is stored
  * but not used for filtering in MVP — it is ready for a future multilanguage feature.
+ * [languageLevel] is the reviewer/translator language-level marker used by the review workflow.
  *
  * Spec: docs/features/home-and-my-quests/0-spec.md
  *   FR#13, Feature Domain Contract — Question invariants (scenarios 19-20).
@@ -35,6 +37,10 @@ data class Question(
      * Invariant: non-blank.
      */
     val language: String,
+    /**
+     * Non-negative language review level. Defaults to 1 for existing content and early authoring flows.
+     */
+    val languageLevel: Int = QuestionLanguageLevel.DEFAULT,
     /**
      * Display order within the parent lesson. Non-negative.
      * Invariant: >= 0.
@@ -63,6 +69,7 @@ data class Question(
         require(text.isNotBlank()) { "Question.text must not be blank" }
         require(payload.isNotBlank()) { "Question.payload must not be blank" }
         require(language.isNotBlank()) { "Question.language must not be blank" }
+        QuestionLanguageLevel.requireValid(languageLevel, "Question.languageLevel")
         require(order >= 0) { "Question.order must be >= 0, got $order" }
         require(version >= 1) { "Question.version must be >= 1, got $version" }
         require(lastModifiedAt >= 0) { "Question.lastModifiedAt must be >= 0, got $lastModifiedAt" }

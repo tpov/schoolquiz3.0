@@ -15,7 +15,7 @@ argument-hint: "<feature-slug>"
 5. Координируешь review
 6. Принимаешь решения по quality gates
 
-**Delegate Mode:** Ты ограничен coordination-only — spawning, messaging, task management. Ты НЕ МОЖЕШЬ писать код, редактировать файлы, или принимать architectural decisions за пользователя. Если обнаружен architectural mismatch (agent хочет удалить/скрыть функционал, сменить паттерн, пропустить модуль) — STOP и спроси пользователя.
+**Delegate Mode:** Ты ограничен coordination-only — spawning, messaging, task management. Ты НЕ МОЖЕШЬ писать код, редактировать production files, или принимать High/Blocked architectural decisions за пользователя. Low/Medium process decisions (phase ordering внутри approved graph, retry routing, reviewer re-check routing, tier escalation по evidence) можно принимать автономно, но записывай их в Run Ledger. Если обнаружен architectural mismatch (agent хочет удалить/скрыть функционал, сменить паттерн, пропустить модуль) — STOP и спроси пользователя.
 
 ## Шаг 0: Подготовка
 
@@ -33,11 +33,89 @@ argument-hint: "<feature-slug>"
 | Independent | Нет общих файлов | Parallel |
 | Dependent | Phase-B зависит от Phase-A | Sequential |
 
+### 0.5 Run Ledger (обязательно для автономности)
+
+Создай/обнови директорию:
+
+```text
+docs/features/<slug>/run/
+```
+
+Веди два артефакта:
+
+- `pipeline-state.json` — текущий resumable state: active phase, completed phases, blocked phases, spawned teams, last green command, open blockers, next action.
+- `run.jsonl` — append-only event log: timestamp, event type, phase, agent, decision/finding/command, evidence path.
+
+Минимальный `pipeline-state.json`:
+
+```json
+{
+  "feature": "<slug>",
+  "status": "implementing",
+  "activePhase": null,
+  "completedPhases": [],
+  "blockedPhases": [],
+  "lastGreenCommand": null,
+  "openBlockers": [],
+  "nextAction": "create team"
+}
+```
+
+Обновляй ledger после:
+- старта/завершения фазы;
+- build/test pass/fail;
+- HIGH/BLOCKER finding;
+- autonomous Low/Medium process decision;
+- user approval/defer decision;
+- handoff/resume point.
+
+Если session/context оборвался — первым делом прочитай `pipeline-state.json` и продолжай с `nextAction`, не рестартуя pipeline с нуля.
+
+### 0.6 Debugger Team Composition Preflight
+
+Перед `TeamCreate` запусти `diagnostics` как read-only debugger-advisor **без `team_name`**. Это исключение из правила "все devs/reviewers только через Teams": advisor не реализует, не review-ит и не участвует в fix loop, он только предлагает состав команды.
+
+Prompt:
+
+```text
+Team Composition Preflight для implementation feature <slug>.
+
+Прочитай только:
+- .claude/PROJECT-CONTEXT.md
+- docs/invariants.md (если есть)
+- docs/features/<slug>/0-spec.md (если есть)
+- docs/features/<slug>/2-grounding.md (если есть)
+- docs/features/<slug>/plan/README.md
+- docs/features/<slug>/plan/phase-*/overview.md
+
+НЕ читай role files backend.md/frontend.md/tests.md.
+НЕ запускай build/test/logcat/device commands.
+НЕ предлагай code changes.
+
+Верни Team Composition Proposal:
+- mandatory teammates per phase;
+- conditional teammates per trigger;
+- which teammates NOT to spawn;
+- scaling recommendations;
+- debug hooks: какие failure signals route-ить в diagnostics/log-reader/code-analyst;
+- device/backend prerequisites.
+
+Use available agents: frontend-dev, backend-dev, firebase-dev, test-dev, integration-tester,
+code-reviewer, architect-reviewer, security-reviewer, completeness-reviewer,
+concurrency-reviewer, diagnostics, code-analyst, log-reader, web-researcher.
+```
+
+Lead обязан:
+- принять proposal как default;
+- проверить hard rules ниже (security-reviewer обязателен; test-dev обязателен для production code; scaffold ownership не нарушать);
+- записать proposal summary и любые overrides в `run/run.jsonl`;
+- если proposal говорит `diagnostics` или `log-reader` нужен в phase team, поднять их как teammates с конкретным trigger/scope.
+
 ## Шаг 1: Создать Teams
 
 **ОБЯЗАТЕЛЬНАЯ последовательность** — нарушение = ошибка:
 1. `TeamCreate` → создать команду
-2. `Agent` с `team_name` → поднять **ВСЕХ** teammates (devs + reviewers)
+2. `Agent` с `team_name` → поднять **ВСЕХ** teammates из Debugger Team Composition Proposal (devs + reviewers + conditional diagnostics/log readers)
 3. `TaskCreate` + `TaskUpdate` (blockedBy) → создать задачи с зависимостями
 4. `SendMessage` → назначить первые фазы
 
@@ -61,6 +139,12 @@ TeamCreate: `"feature-<slug>-impl"`
 - `completeness-reviewer`
 - `concurrency-reviewer` — только для фаз с тегом `concurrency-review` в phase file (тег ставит planner)
 
+**Debuggers / analysts (по proposal или failure trigger):**
+- `diagnostics` — debugger teammate для build/test/runtime failures, DI/migration/lifecycle/concurrency risk, или когда previous phase имела repeated failures. Не пишет код, только root-cause analysis + evidence.
+- `code-analyst` — deep code trace для confirmed/likely bug, когда нужен call chain и file:line root cause.
+- `log-reader` — по одному на connected device для runtime/lifecycle/crash/realtime symptoms.
+- `web-researcher` — только если failure зависит от external SDK/platform behavior.
+
 **Важно:** все reviewers спавнятся одновременно с devs при `TeamCreate`, не после build gate. Их task-и в TaskList blockedBy build_task — они сидят idle пока lead не пометит build completed, затем lead высылает assignment SendMessage. Это делает команду полноценной visibility-wise и позволяет autonomous loop (reviewer↔coder peer DM) работать без дополнительного spawn overhead.
 
 Onboarding prompt для idle reviewer (короткий):
@@ -68,14 +152,14 @@ Onboarding prompt для idle reviewer (короткий):
 === TEAM ONBOARD ===
 Ты <reviewer-type> в команде feature-<slug>-impl.
 
-Текущий status: phase-NN в реализации, build gate ещё не пройден. Твоя задача `Phase-NN: review-<type>` — blocked. НЕ начинай review пока не получишь SendMessage assignment от lead-а с "Начни review НЕМЕДЛЕННО" + Build status: PASSED.
+Текущий status: phase-NN в реализации, build gate ещё не пройден. Твоя задача `Phase-NN: review-<type>` — blocked. НЕ начинай review пока не получишь SendMessage assignment от lead-а с "Начни review НЕМЕДЛЕННО" + `Build Status: PASSED (commit <sha-or-phase-ref>)`.
 
 Пока idle. Когда assignment — autonomous loop с implementer-ами напрямую (findings/fix/re-check через SendMessage EVIDENCE). Lead получает только финальный PASS или ERROR (escalation: architectural mismatch / repeated blocker / reviewer disagreement).
 
 Без подтверждений.
 ```
 
-Не поднимай firebase-dev если фича не затрагивает Firebase. Не поднимай frontend-dev если фича только backend. Concurrency-reviewer спавнится только если хотя бы одна фаза имеет тег `concurrency-review`.
+Не поднимай firebase-dev если фича не затрагивает Firebase. Не поднимай frontend-dev если фича только backend. Concurrency-reviewer спавнится только если хотя бы одна фаза имеет тег `concurrency-review` или diagnostics proposal объясняет concurrency risk. Diagnostics/log-reader/code-analyst не обязательны всегда: поднимай их по proposal или при failure trigger.
 
 ### Scaffold File Ownership (обязательно)
 
@@ -119,6 +203,7 @@ Onboarding prompt для idle reviewer (короткий):
 | Фаза требует >8 тест-сценариев | 2 test-dev агента (разделить по модулям/классам) |
 | Фаза затрагивает и UI и data layer одновременно | frontend-dev + backend-dev параллельно |
 | Фаза включает lifecycle/realtime/concurrency логику | test-dev (JVM) + integration-tester (instrumented) параллельно |
+| Фаза имеет высокий риск build/test/runtime failures или repeated failure из previous phase | diagnostics teammate как debugger-on-call |
 | Cross-phase review: >10 файлов изменено за все фазы | 2 code-reviewer агента (разделить по модулям) |
 
 **Как масштабировать:**
@@ -202,7 +287,8 @@ Test Deletion Gate: `git diff --name-status HEAD -- '*/test/**'` — удалё�
 Build FAIL:
 - Fix в своём scope → retry
 - Error в test code → SendMessage test-dev EVIDENCE (file:line + stacktrace)
-- Не понимаешь root cause / нужен scope change / architectural mismatch → ERROR SendMessage lead-у, НЕ импровизируй
+- Не понимаешь root cause / repeated failure того же класса → SendMessage diagnostics EVIDENCE если diagnostics teammate поднят; иначе ERROR SendMessage lead-у с просьбой поднять diagnostics
+- Нужен scope change / architectural mismatch → ERROR SendMessage lead-у, НЕ импровизируй
 
 **Шаг 3 — Broadcast reviewers (когда build PASS):**
 - TaskUpdate(build_task, completed) — unblocks reviewer tasks
@@ -214,7 +300,8 @@ Build FAIL:
 
 Feature: <slug>, Phase: <N>
 Changed files: <полный список>
-Build status: PASSED (все AC из overview.md)
+Build Status: PASSED (commit <sha-or-phase-ref>)
+Build evidence: `./gradlew ciCheck --no-configuration-cache` + phase validation commands from overview.md, exit code 0; Test Deletion Gate OK
 Your task ID: phase-NN-review-<type>
 Coder contact: <me> (findings шлите мне напрямую)
 Test author contact: test-dev
@@ -266,11 +353,12 @@ Reviewer присылает EVIDENCE → исправляешь → SendMessage 
 В autonomous fix loop: reviewer шлёт finding про test code → исправляешь → SendMessage reviewer "re-check". Production fixes — coder.
 ```
 
-**Спавн агентов СТРОГО по наличию файлов** в `plan/phase-NN/`:
+**Спавн implementer-агентов СТРОГО по наличию файлов** в `plan/phase-NN/` + Debugger Team Composition Proposal:
 - Есть `backend.md` → спавнь backend-dev
 - Есть `frontend.md` → спавнь frontend-dev
 - Есть `tests.md` → спавнь test-dev
-- Нет файла → НЕ спавнь агента
+- Нет role file → НЕ спавнь соответствующего implementer-а
+- Debug/analysis teammates (`diagnostics`, `code-analyst`, `log-reader`, `web-researcher`) спавнятся только если proposal или failure trigger даёт конкретный scope
 
 Агенты НЕ читают design docs, overview, или файлы других вертикалей. Только свой файл.
 
@@ -300,7 +388,7 @@ Build gate — **ответственность coder-а** (backend-dev / fronte
 
 **Build PASS** → coder сам broadcast всем reviewers через SendMessage (см. Шаг 2.3) "build passed, please review". НЕ ждёт lead-а.
 
-**Build FAIL** → coder фиксит сам (если в своём scope) или SendMessage implementer-у/test-dev-у с evidence (если scope не его, напр. test fails из-за missing deps). Повторяет build до PASS. НЕ отправляет reviewers.
+**Build FAIL** → coder фиксит сам (если root cause очевиден и в своём scope) или SendMessage implementer-у/test-dev-у с evidence (если scope не его, напр. test fails из-за missing deps). Если root cause не очевиден, failure повторился, stacktrace указывает на DI/migration/lifecycle/concurrency/runtime или proposal включил debugger-on-call → SendMessage diagnostics EVIDENCE с command output + changed files + suspected phase. Diagnostics возвращает root cause и route-to-owner; coder продолжает fix loop. НЕ отправляет reviewers до PASS.
 
 Если coder в ответ на build fail пытается менять scope, переопределять `Feature Domain Contract`, переносить feature-specific logic в `core/` без явного основания или читать соседние vertical docs — это **architectural mismatch**. Coder STOP и SendMessage lead-у как ERROR. Lead эскалирует пользователю.
 
@@ -331,7 +419,8 @@ Coder (backend-dev / frontend-dev) сам пишет SendMessage каждому 
 
 Feature: <slug>, Phase: <N>
 Changed files: <list>
-Build status: PASSED (`./gradlew ciCheck --no-configuration-cache` green, Test Deletion Gate OK)
+Build Status: PASSED (commit <sha-or-phase-ref>)
+Build evidence: `./gradlew ciCheck --no-configuration-cache` green, phase validation commands green, Test Deletion Gate OK
 Your task ID: <task_id>
 Coder contact: <my name, backend-dev / frontend-dev>
 Test author contact: test-dev
@@ -430,9 +519,17 @@ Lead **обязан**:
 
 **Почему обязательно**: lesson-runner Bug #9-11 (rotation drafts lost, system Back bypass, FLAG_SECURE timing) — эти ошибки **invisible** в JVM unit tests и Compose preview tests. Только real Android Activity + lifecycle их catch'ит. Manual smoke deferred = bugs missed.
 
-### 2.5.4 Hooks defensive layer
+### 2.5.4 Pipeline docs check defensive layer
 
 Hooks (`check-plan-paths.sh`, `check-c4-vs-gradle.sh`, `check-api-contract-types.sh`) запускаются deterministically при каждом save и flag drift документов. Это complementary к smoke test — hooks catch design-doc drift, smoke test catches integration drift.
+
+Перед Codex review lead дополнительно запускает агрегированный deterministic check:
+
+```bash
+scripts/pipeline/check_pipeline_docs.sh docs/features/<slug>
+```
+
+Если check падает → исправить docs/process artifact до Codex review. Codex должен тратить budget на архитектурные и поведенческие риски, не на mechanically detectable drift.
 
 ## Шаг 3: Cross-Phase Review (Codex CLI — единственная точка cross-model review)
 
@@ -486,7 +583,13 @@ Grading: A = 0 findings, B = only medium, C = 1-2 high, D = 3+ high, F = any blo
 
 Это оценка качества реализации ДО вмешательства Codex — метрика pipeline quality.
 
-## Шаг 4: Smoke Test
+## Шаг 4: Post-Codex Final Smoke Test
+
+Это финальная проверка после Codex/fix loop. Не дублируй Шаг 2.5 mechanically: цель здесь — подтвердить, что fixes после Codex не сломали build/docs gates.
+
+```bash
+scripts/pipeline/check_pipeline_docs.sh docs/features/<slug>
+```
 
 ```bash
 ./gradlew ciCheck --no-configuration-cache
@@ -554,11 +657,12 @@ Architectural mismatch = любое изменение, не описанное 
 
 ## Правила
 
-- **ЗАПРЕЩЕНО вызывать Agent без team_name для devs/reviewers** — все in-team агенты только через Teams API. Исключение: phase-lead агенты в hierarchical pattern (спавнятся без team_name, создают свою sub-team)
+- **ЗАПРЕЩЕНО вызывать Agent без team_name для devs/reviewers** — все in-team агенты только через Teams API. Исключения: phase-lead агенты в hierarchical pattern (спавнятся без team_name, создают свою sub-team) и preflight `diagnostics` debugger-advisor (read-only Team Composition Proposal до TeamCreate)
 - **Delegate Mode** — lead координирует, НЕ пишет код, НЕ редактирует файлы
 - **Self-starting prompts** — каждый SendMessage assignment содержит "Начни НЕМЕДЛЕННО, без ack", путь к role file, list обязательных rules, формат финального отчёта. Prompt — полное задание, не "приветствие"
 - **=peer DM for evidence/action, not status=** — teammates шлют DM друг другу ТОЛЬКО для evidence (finding, diff, file:line) или action request (fix, re-check, проверь log). НЕ шлют "принято, жду", "ack", "в процессе" — это турны впустую. Статус идёт через TaskUpdate, не через DM
 - **Autonomous reviewer ↔ coder fix loop** — findings идут напрямую от reviewer к implementer через SendMessage (EVIDENCE), implementer фиксит, re-check у того же reviewer. Lead НЕ участвует в fix loop. Lead получает только финальный RESULT (PASS) или ERROR (escalation: architectural mismatch / repeated blocker / reviewer disagreement)
+- **Debugger routes failures, not status** — diagnostics/code-analyst/log-reader получают только evidence-bearing requests: command output, stacktrace, changed files, device serial, suspected phase. Они возвращают root cause + route-to-owner, не принимают product/scope decisions и не пишут production code
 - **Полная команда reviewers обязательна** после каждой фазы — code, architect, **security**, completeness (+ concurrency если тег). Security-reviewer НЕ опциональный, НЕ "потом" — полноправный участник autonomous loop, проверяет каждую фазу параллельно с остальными. Ни один reviewer не пропускается, ни один не считается "secondary"
 - **Phase scope coordination через lead** — координация фаз и решения о scope = задача lead-а через phase files. Dev'ы НЕ договариваются между собой "кто что делает" через DM. Reviewer↔coder peer DMs разрешены ТОЛЬКО для findings/fix verification, не для переговоров о scope
 - **Build gate через blockedBy** — reviewer tasks создаются через TaskCreate с `addBlockedBy: [build_task]`. Это технически блокирует reviewers от старта до build pass, не надежда на compliance

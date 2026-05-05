@@ -191,13 +191,14 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 22 visibleSections LOCAL guest returns HomeQuests Archive MyQuests Settings`() {
+    fun `scenario 22 visibleSections LOCAL guest returns HomeQuests Archive ReviewQueue MyQuests Settings`() {
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
         // DesignCatalog removed from LocalSection (now DrawerFooterAction).
         assertEquals(
             listOf(
                 DrawerSection.LocalSection.HomeQuests,
                 DrawerSection.LocalSection.Archive,
+                DrawerSection.LocalSection.ReviewQueue,
                 DrawerSection.LocalSection.MyQuests,
                 DrawerSection.LocalSection.Settings,
             ),
@@ -349,12 +350,13 @@ class VisibilityTest {
     }
 
     @Test
-    fun `visibility rules LOCAL has exactly 4 sections HomeQuests Archive MyQuests Settings`() {
+    fun `visibility rules LOCAL has exactly 5 sections HomeQuests Archive ReviewQueue MyQuests Settings`() {
         // DesignCatalog removed from LocalSection (spec codex fix #3 — now DrawerFooterAction)
         val sections = visibleSections(Tab.LOCAL, UserStats.guest())
-        assertEquals(4, sections.size)
+        assertEquals(5, sections.size)
         assertTrue(sections.contains(DrawerSection.LocalSection.HomeQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Archive))
+        assertTrue(sections.contains(DrawerSection.LocalSection.ReviewQueue))
         assertTrue(sections.contains(DrawerSection.LocalSection.MyQuests))
         assertTrue(sections.contains(DrawerSection.LocalSection.Settings))
     }
@@ -448,6 +450,7 @@ class VisibilityTest {
         assertEquals(LocalConfig.MyQuestsRoot, rootOf(DrawerSection.LocalSection.MyQuests))
         assertEquals(LocalConfig.HomeQuestsRoot, rootOf(DrawerSection.LocalSection.HomeQuests))
         assertEquals(LocalConfig.ArchiveRoot, rootOf(DrawerSection.LocalSection.Archive))
+        assertEquals(LocalConfig.ReviewQueueRoot, rootOf(DrawerSection.LocalSection.ReviewQueue))
         assertEquals(LocalConfig.SettingsRoot, rootOf(DrawerSection.LocalSection.Settings))
         assertEquals(InternetConfig.ArenaRoot, rootOf(DrawerSection.InternetSection.Arena))
         assertEquals(InternetConfig.CatalogRoot, rootOf(DrawerSection.InternetSection.Catalog))

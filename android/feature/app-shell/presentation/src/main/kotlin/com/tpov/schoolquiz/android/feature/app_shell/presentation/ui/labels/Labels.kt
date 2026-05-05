@@ -54,6 +54,7 @@ val DrawerSection.displayName: String
             DrawerSection.LocalSection.MyQuests -> "Мои квесты"
             DrawerSection.LocalSection.HomeQuests -> "Домашние квесты"
             DrawerSection.LocalSection.Archive -> "Архив"
+            DrawerSection.LocalSection.ReviewQueue -> "Проверка"
             DrawerSection.LocalSection.Settings -> "Настройки"
             DrawerSection.InternetSection.Arena -> "Арена"
             DrawerSection.InternetSection.Catalog -> "Каталог"
@@ -71,6 +72,7 @@ val DrawerSection.icon: ImageVector
             DrawerSection.LocalSection.MyQuests -> Icons.Default.Book
             DrawerSection.LocalSection.HomeQuests -> Icons.Default.Home
             DrawerSection.LocalSection.Archive -> Icons.Default.Book
+            DrawerSection.LocalSection.ReviewQueue -> Icons.Default.Book
             DrawerSection.LocalSection.Settings -> Icons.Default.Settings
             DrawerSection.InternetSection.Arena -> Icons.Default.Stadium
             DrawerSection.InternetSection.Catalog -> Icons.Default.Book
@@ -92,6 +94,7 @@ val TabConfig.displayName: String
                     LocalConfig.MyQuestsRoot -> "Мои квесты"
                     LocalConfig.HomeQuestsRoot -> "Домашние квесты"
                     LocalConfig.ArchiveRoot -> "Архив"
+                    LocalConfig.ReviewQueueRoot -> "Проверка"
                     LocalConfig.SettingsRoot -> "Настройки"
                     LocalConfig.DesignCatalogRoot -> "Design Catalog"
                     LocalConfig.EmptyRoot -> "Локальная"

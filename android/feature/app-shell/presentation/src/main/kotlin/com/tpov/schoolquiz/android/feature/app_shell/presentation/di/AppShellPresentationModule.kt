@@ -5,7 +5,9 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.Defa
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
@@ -42,6 +44,13 @@ val appShellPresentationModule =
                         koin.get(QuestCreateComponent::class, parameters = { parametersOf(compCtx, nav) })
                     }.getOrElse {
                         PlaceholderQuestCreateComponent(nav)
+                    }
+                },
+                reviewQueueFactory = { compCtx ->
+                    runCatching<ReviewQueueComponent> {
+                        koin.get(ReviewQueueComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderReviewQueueComponent()
                     }
                 },
                 quizzesFactory = { compCtx ->

@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
  *
  * CT-22: StarRating renders with bestStarsRawTenths=15 (smoke — no test tags on stars)
  * CT-23: hardUnlocked=false → no Checkbox
- * CT-24: hardUnlocked=true  → Checkbox visible and unchecked
+ * CT-24: hardUnlocked=true  → mode chip visible as unchecked/easy
  */
 @RunWith(AndroidJUnit4::class)
 class LessonItemCardTest {
@@ -73,9 +73,9 @@ class LessonItemCardTest {
     // CT-24
     // GIVEN LessonItemUi(hardUnlocked=true, isHardChecked=false)
     // WHEN LessonItemCard rendered
-    // THEN exactly one Checkbox visible
+    // THEN mode chip is visible as unchecked/easy
     @Test
-    fun ct24_lessonItemCard_hardUnlocked_true_checkboxVisible() {
+    fun ct24_lessonItemCard_hardUnlocked_true_easyChipVisible() {
         val item = LessonItemUi(
             id = "l3",
             title = "Урок 3",
@@ -87,6 +87,6 @@ class LessonItemCardTest {
                 LessonItemCard(item = item, onClick = {}, onHardCheckChanged = {})
             }
         }
-        composeTestRule.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox)).assertCountEquals(1)
+        composeTestRule.onNodeWithText("Легкий").assertIsDisplayed()
     }
 }

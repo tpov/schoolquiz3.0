@@ -15,7 +15,9 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
@@ -81,6 +83,7 @@ class DefaultRootComponent(
     questCreateFactory: (ComponentContext, Navigator) -> QuestCreateComponent = { _, nav ->
         PlaceholderQuestCreateComponent(nav)
     },
+    reviewQueueFactory: (ComponentContext) -> ReviewQueueComponent = { PlaceholderReviewQueueComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
@@ -161,6 +164,10 @@ class DefaultRootComponent(
         questCreateFactory(
             childContext("QuestCreateContent"),
             navigator,
+        )
+    val reviewQueueComponent: ReviewQueueComponent =
+        reviewQueueFactory(
+            childContext("ReviewQueueContent"),
         )
 
     init {

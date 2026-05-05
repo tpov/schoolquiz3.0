@@ -37,7 +37,8 @@ class QuestionRepositoryImplTest {
         version: Long = 1L,
         lastModifiedAt: Long = 100L,
         archived: Boolean = false,
-    ) = QuestionDto(id, lessonId, text, payload, language, order, version, lastModifiedAt, archived)
+        languageLevel: Int = 1,
+    ) = QuestionDto(id, lessonId, text, payload, language, order, version, lastModifiedAt, archived, languageLevel)
 
     private fun makeEntity(id: String, version: Long = 1L, text: String = "Question text") =
         QuestionEntity(id, "ls1", text, "{}", "en", 0, version, 0L, false)
@@ -154,6 +155,17 @@ class QuestionRepositoryImplTest {
         assertEquals(1, fakeLocal.upsertCallsFor["q1"] ?: 0)
         assertEquals(1, fakeLocal.upsertCallsFor["q2"] ?: 0)
         assertEquals(1, fakeLocal.upsertCallsFor["q3"] ?: 0)
+    }
+
+    @Test
+    fun `when question has languageLevel then persisted and mapped`() = runTest {
+        fakeRemote.result = listOf(makeDto("q-level", languageLevel = 12))
+
+        val result = repository.refreshByParents(lessonIds, 0L)
+
+        assertTrue(result.isSuccess)
+        assertEquals(12, fakeLocal.findById("q-level")?.languageLevel)
+        assertEquals(12, repository.getById(QuestionId("q-level"))?.languageLevel)
     }
 
     @Test

@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
+import java.util.Locale
 
 /**
  * Generic card for hierarchy levels: Section / Theme / Lesson.
@@ -123,7 +124,7 @@ fun HierarchyItemCard(
             )
             if (rating != null) {
                 Text(
-                    text = "%.1f".format(rating),
+                    text = String.format(Locale.US, "%.1f", rating),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 2.dp),

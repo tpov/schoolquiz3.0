@@ -258,6 +258,40 @@ Pre-production на момент изменения — нет существу�
 
 - Запрос для "Домашние квесты": `quests.where('visibleOn', 'array-contains', 'home')`.
 - Запрос для "Арена": `quests.where('visibleOn', 'array-contains', 'arena')`.
+
+## Amendment 2026-05-03 — Arena review as server-owned checks and scores
+
+User-authored arena submissions are not represented as a quest enum status on the server.
+The client creates a `quest_review_requests/{submissionId}` event, and the server copies the
+snapshot into two server-owned trees:
+
+- `private/{ownerUid}/catalogs/{catalogId}/quests/{questId}/...` — author's private hierarchy.
+- `admin/review/lessons/{lessonId}/quests/{questId}/questions/{questionId}` — lesson-centric review queue.
+
+The review queue uses independent fields:
+
+```kotlin
+isTested: Boolean
+testingScore: Double?      // 0.0..3.0
+isLogicReviewed: Boolean
+logicScore: Double?        // 0.0..3.0
+isTranslationReviewed: Boolean
+translationScore: Int?     // 0..100
+translatedLanguages: Map<String, Int> // language -> question languageLevel (1..25)
+```
+
+For arena submissions the reviewer workflow is sequential:
+
+1. Testing is available first.
+2. Logic review is available after testing.
+3. Translation is available only after testing and logic review.
+
+Routing uses the trusted server-side `profiles/{uid}` document. Clients may read their own
+profile but cannot write qualification fields. A developer with `developerLevel > 100` can see
+all open review stages. Testers see only testing. Admins see testing and logic review. Translators
+see translation tasks only when they know one existing language and one target language, and their
+`translatorLevel` is at least 100. A translated language is treated as still needing review for a
+translator if `translatorLevel >= question.languageLevel + 100`.
 - Sync клиента: `quests.where('visibleOn', 'array-contains-any', availableShelves)` — один запрос для всех доступных юзеру полок (до 10 значений).
 - Локальный UI filter: `quest.visibleOn.contains("home")` — плоский set check.
 

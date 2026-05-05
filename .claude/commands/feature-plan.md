@@ -63,7 +63,7 @@ Feature: <slug>
 
 Каждая фаза — директория в docs/features/<slug>/plan/ с файлами per role:
 - plan/phase-01/overview.md, backend.md, tests.md, (frontend.md если нужен)
-- overview: Goal, Scope, Layer, Dependencies, AC, Traceability, Review Tags
+- overview: Goal, Scope, Layer, Dependencies, AC, Traceability, Review Tags, Diagnostics Hints
 - backend.md / frontend.md: конкретные файлы, изменения, сигнатуры для dev
 - tests.md: сценарии, fakes, edge cases для test-dev
 - frontend.md создаётся ТОЛЬКО если фаза затрагивает UI/presentation
@@ -107,6 +107,15 @@ phases_ref: [phase-01] or none
 - backend: `backend.md` or `none`
 - frontend: `frontend.md` or `none`
 - tests: `tests.md` or `none`
+
+### Review Tags
+- `security-review` (always)
+- `concurrency-review` if phase touches coroutines/Flow/shared mutable state/lifecycle callbacks
+
+### Diagnostics Hints
+- Expected failure signals: <compile error / Koin missing binding / Room migration / lifecycle restore / realtime reconnect / none>
+- Suggested debugger triggers: <when diagnostics/log-reader/code-analyst should join>
+- Device/backend prerequisites: <device required? backend emulator? Firebase? none>
 
 ### Traceability
 | Problem (from grounding) | Code Owner | Entry Points | Contract Limits | Fix Approach | Validation |
@@ -181,6 +190,14 @@ phases_ref: [phase-01] or none
 
 **Defence-in-depth**: hook `.claude/hooks/check-plan-no-code.sh` блокирует save plan-файлов с fenced кодом на уровне файловой системы. Review lens — дополнительная проверка на уровне содержания (canonical refs, Signature Card полнота, Options для complex).
 
+Перед Human Approval запусти агрегированный deterministic gate:
+
+```bash
+scripts/pipeline/check_pipeline_docs.sh docs/features/<slug>
+```
+
+Если он падает — исправь plan/design/spec artifacts до approval. Warnings по legacy artifacts допустимы только если явно не относятся к текущему плану.
+
 ## Шаг 3: Human Approval
 
 Покажи пользователю:
@@ -220,3 +237,4 @@ Plan: N phase files
 - Каждая фаза ОБЯЗАНА содержать Traceability таблицу со ссылкой на grounding
 - **Complex фазы** (3+ модулей / новый architectural pattern / FSM / REQUIRES tag) ОБЯЗАНЫ содержать секцию `### Options Considered` с минимум 2 вариантами + recommended + rationale + rejected trade-offs (см. `planner.md`)
 - План не может пропустить acceptance criterion из `0-spec.md` — completeness-reviewer проверит покрытие
+- Перед handoff в implementation `scripts/pipeline/check_pipeline_docs.sh docs/features/<slug>` должен быть green или иметь только явно accepted legacy warnings

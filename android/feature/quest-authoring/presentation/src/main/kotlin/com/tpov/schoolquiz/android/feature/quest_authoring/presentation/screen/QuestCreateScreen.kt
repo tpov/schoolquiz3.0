@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -110,7 +111,6 @@ fun QuestCreateScreen(
             onFillBlankDistractorChanged = component::onFillBlankDistractorChanged,
             onFillBlankDistractorAdded = component::onFillBlankDistractorAdded,
             onFillBlankDistractorRemoved = component::onFillBlankDistractorRemoved,
-            onSaveQuestionClick = component::onSaveQuestionClick,
             modifier = modifier,
         )
     } else {
@@ -127,9 +127,10 @@ fun QuestCreateScreen(
             onThemeTitleChanged = component::onThemeTitleChanged,
             onLessonTitleChanged = component::onLessonTitleChanged,
             onLanguageChanged = component::onLanguageChanged,
-            onDifficultySelected = component::onDifficultySelected,
-            onCreateClick = component::onCreateClick,
+            onStructureCheckClick = component::onStructureCheckClick,
             onContinueDraftClick = component::onContinueDraftClick,
+            onSubmitToArenaClick = component::onSubmitToArenaClick,
+            onQuestionsClick = component::onQuestionsClick,
             modifier = modifier,
         )
     }
@@ -150,11 +151,15 @@ private fun QuestCreateContent(
     onThemeTitleChanged: (String) -> Unit,
     onLessonTitleChanged: (String) -> Unit,
     onLanguageChanged: (String) -> Unit,
-    onDifficultySelected: (Difficulty) -> Unit,
-    onCreateClick: () -> Unit,
+    onStructureCheckClick: () -> Unit,
     onContinueDraftClick: () -> Unit,
+    onSubmitToArenaClick: () -> Unit,
+    onQuestionsClick: (Difficulty) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isStructureActionEnabled = if (state.hasActiveDraft) state.canContinueDraft else state.canCreate
+    val isQuestionActionEnabled = state.canOpenQuestions
+
     Column(
         modifier =
             modifier
@@ -173,13 +178,35 @@ private fun QuestCreateContent(
             Text(
                 text = "Создание квеста",
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(start = 4.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 4.dp),
             )
+            if (state.isCreating || state.isSubmittingToArena) {
+                CircularProgressIndicator(modifier = Modifier.padding(horizontal = 12.dp))
+            } else {
+                IconButton(
+                    onClick = onStructureCheckClick,
+                    enabled = isStructureActionEnabled,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Сохранить структуру",
+                        tint =
+                            if (isStructureActionEnabled) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                }
+            }
         }
 
         state.activeDraftTitle?.let { title ->
             AssistChip(
-                onClick = {},
+                onClick = onContinueDraftClick,
                 label = { Text("Черновик: $title") },
             )
         }
@@ -198,55 +225,35 @@ private fun QuestCreateContent(
                 QuestPathSpinner(
                     items = state.questItems,
                     selectedId = state.selectedQuestId,
+                    createTitle = state.newQuestTitle,
                     onSelectionChanged = onQuestSelected,
+                    onCreateTitleChanged = onQuestTitleChanged,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (state.selectedQuestId == null) {
-                    StructureTitleField(
-                        value = state.newQuestTitle,
-                        onValueChange = onQuestTitleChanged,
-                        label = "Название квеста",
-                    )
-                }
                 SectionPathSpinner(
                     items = state.sectionItems,
                     selectedId = state.selectedSectionId,
+                    createTitle = state.newSectionTitle,
                     onSelectionChanged = onSectionSelected,
+                    onCreateTitleChanged = onSectionTitleChanged,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (state.selectedSectionId == null) {
-                    StructureTitleField(
-                        value = state.newSectionTitle,
-                        onValueChange = onSectionTitleChanged,
-                        label = "Название раздела",
-                    )
-                }
                 ThemePathSpinner(
                     items = state.themeItems,
                     selectedId = state.selectedThemeId,
+                    createTitle = state.newThemeTitle,
                     onSelectionChanged = onThemeSelected,
+                    onCreateTitleChanged = onThemeTitleChanged,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (state.selectedThemeId == null) {
-                    StructureTitleField(
-                        value = state.newThemeTitle,
-                        onValueChange = onThemeTitleChanged,
-                        label = "Название темы",
-                    )
-                }
                 LessonPathSpinner(
                     items = state.lessonItems,
                     selectedId = state.selectedLessonId,
+                    createTitle = state.newLessonTitle,
                     onSelectionChanged = onLessonSelected,
+                    onCreateTitleChanged = onLessonTitleChanged,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (state.selectedLessonId == null) {
-                    StructureTitleField(
-                        value = state.newLessonTitle,
-                        onValueChange = onLessonTitleChanged,
-                        label = "Название урока",
-                    )
-                }
             }
         }
 
@@ -255,23 +262,6 @@ private fun QuestCreateContent(
                 modifier = Modifier.padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    DifficultyChip(
-                        title = "Легкий",
-                        selected = state.defaultDifficulty == Difficulty.EASY,
-                        onClick = { onDifficultySelected(Difficulty.EASY) },
-                        modifier = Modifier.weight(1f),
-                    )
-                    DifficultyChip(
-                        title = "Сложный",
-                        selected = state.defaultDifficulty == Difficulty.HARD,
-                        onClick = { onDifficultySelected(Difficulty.HARD) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
                 LanguageChipRow(
                     languages = state.availableLanguages,
                     selectedLanguage = state.defaultLanguage,
@@ -288,19 +278,50 @@ private fun QuestCreateContent(
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
+        state.arenaMessage?.let { message ->
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
 
-        BrandPrimaryButton(
-            text =
-                when {
-                    state.isCreating -> "Сохраняю"
-                    else -> "К вопросам"
-                },
-            onClick = if (state.hasActiveDraft) onContinueDraftClick else onCreateClick,
-            enabled = if (state.hasActiveDraft) state.canContinueDraft else state.canCreate,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-        )
-        if (state.isCreating) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            BrandPrimaryButton(
+                text =
+                    when {
+                        state.isCreating -> "Сохраняю"
+                        else -> "Легкие вопросы"
+                    },
+                onClick = { onQuestionsClick(Difficulty.EASY) },
+                enabled = isQuestionActionEnabled,
+                modifier = Modifier.weight(1f),
+            )
+            BrandPrimaryButton(
+                text =
+                    when {
+                        state.isCreating -> "Сохраняю"
+                        else -> "Сложные вопросы"
+                    },
+                onClick = { onQuestionsClick(Difficulty.HARD) },
+                enabled = isQuestionActionEnabled,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        if (state.hasActiveDraft) {
+            BrandPrimaryButton(
+                text =
+                    when {
+                        state.isSubmittingToArena -> "Отправляю"
+                        else -> "Отправить на арену"
+                    },
+                onClick = onSubmitToArenaClick,
+                enabled = state.canSubmitToArena,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         Spacer(modifier = Modifier.height(12.dp))
     }
@@ -311,14 +332,19 @@ private fun QuestCreateContent(
 private fun QuestPathSpinner(
     items: List<QuestPathItem>,
     selectedId: QuestId?,
+    createTitle: String,
     onSelectionChanged: (QuestId?) -> Unit,
+    onCreateTitleChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
         label = "Квест",
+        createPlaceholder = "Создать квест",
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
+        createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
+        onCreateTitleChanged = onCreateTitleChanged,
         modifier = modifier,
     )
 }
@@ -328,14 +354,19 @@ private fun QuestPathSpinner(
 private fun SectionPathSpinner(
     items: List<SectionPathItem>,
     selectedId: SectionId?,
+    createTitle: String,
     onSelectionChanged: (SectionId?) -> Unit,
+    onCreateTitleChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
         label = "Раздел",
+        createPlaceholder = "Создать раздел",
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
+        createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
+        onCreateTitleChanged = onCreateTitleChanged,
         modifier = modifier,
     )
 }
@@ -345,14 +376,19 @@ private fun SectionPathSpinner(
 private fun ThemePathSpinner(
     items: List<ThemePathItem>,
     selectedId: ThemeId?,
+    createTitle: String,
     onSelectionChanged: (ThemeId?) -> Unit,
+    onCreateTitleChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
         label = "Тема",
+        createPlaceholder = "Создать тему",
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
+        createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
+        onCreateTitleChanged = onCreateTitleChanged,
         modifier = modifier,
     )
 }
@@ -362,33 +398,48 @@ private fun ThemePathSpinner(
 private fun LessonPathSpinner(
     items: List<LessonPathItem>,
     selectedId: LessonId?,
+    createTitle: String,
     onSelectionChanged: (LessonId?) -> Unit,
+    onCreateTitleChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
         label = "Урок",
+        createPlaceholder = "Создать урок",
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
+        createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
+        onCreateTitleChanged = onCreateTitleChanged,
         modifier = modifier,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 private fun <T> StructureDropdown(
     label: String,
+    createPlaceholder: String,
     options: List<StructureOption<T>>,
     selectedId: T?,
+    createTitle: String,
     onSelectionChanged: (T?) -> Unit,
+    onCreateTitleChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val expanded = remember { mutableStateOf(false) }
+    val isCreating = selectedId == null
     val selectedTitle =
         selectedId
             ?.let { id -> options.firstOrNull { it.id == id }?.title }
-            ?: CREATE_OPTION_TITLE
+            ?: createTitle
+    val anchorType =
+        if (isCreating) {
+            MenuAnchorType.PrimaryEditable
+        } else {
+            MenuAnchorType.PrimaryNotEditable
+        }
 
     ExposedDropdownMenuBox(
         expanded = expanded.value,
@@ -397,9 +448,19 @@ private fun <T> StructureDropdown(
     ) {
         OutlinedTextField(
             value = selectedTitle,
-            onValueChange = {},
-            readOnly = true,
+            onValueChange = { value ->
+                if (isCreating) {
+                    onCreateTitleChanged(value)
+                }
+            },
+            readOnly = !isCreating,
+            singleLine = true,
             label = { Text(label) },
+            placeholder = {
+                if (isCreating) {
+                    Text(createPlaceholder)
+                }
+            },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) },
             shape = schoolQuizDesignCardShape(),
             colors =
@@ -413,7 +474,10 @@ private fun <T> StructureDropdown(
                     focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
                     unfocusedTrailingIconColor = MaterialTheme.colorScheme.primary,
                 ),
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            modifier =
+                Modifier
+                    .menuAnchor(anchorType)
+                    .fillMaxWidth(),
         )
         ExposedDropdownMenu(
             expanded = expanded.value,
@@ -437,32 +501,6 @@ private fun <T> StructureDropdown(
             }
         }
     }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun StructureTitleField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        singleLine = true,
-        shape = schoolQuizDesignCardShape(),
-        colors =
-            OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
-                unfocusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = schoolQuizDesignLightBorderColor(),
-            ),
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
@@ -494,27 +532,6 @@ private data class StructureOption<T>(
 
 private const val CREATE_OPTION_TITLE = "Создать"
 
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun DifficultyChip(
-    title: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = {
-            Text(
-                text = title,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        modifier = modifier,
-    )
-}
-
 @Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
@@ -545,9 +562,10 @@ private fun QuestCreateScreenPreview() {
             onThemeTitleChanged = {},
             onLessonTitleChanged = {},
             onLanguageChanged = {},
-            onDifficultySelected = {},
-            onCreateClick = {},
+            onStructureCheckClick = {},
             onContinueDraftClick = {},
+            onSubmitToArenaClick = {},
+            onQuestionsClick = {},
         )
     }
 }

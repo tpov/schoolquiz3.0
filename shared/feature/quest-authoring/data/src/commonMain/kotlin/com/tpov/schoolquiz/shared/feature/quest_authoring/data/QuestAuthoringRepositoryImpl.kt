@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAutho
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toEntity
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toEntityBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestArenaSubmission
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestDraftStatus
@@ -39,6 +40,11 @@ class QuestAuthoringRepositoryImpl(
     override suspend fun upsertQuestion(question: DraftQuestion): Result<Unit> =
         runCancellable {
             local.upsertQuestion(question.toEntity())
+        }
+
+    override suspend fun queueArenaSubmission(submission: QuestArenaSubmission): Result<Unit> =
+        runCancellable {
+            local.queueArenaSubmission(submission.toEntity())
         }
 
     override suspend fun setDraftStatus(

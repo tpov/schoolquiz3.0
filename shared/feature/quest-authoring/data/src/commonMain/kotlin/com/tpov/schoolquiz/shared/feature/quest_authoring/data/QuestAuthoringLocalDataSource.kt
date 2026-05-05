@@ -1,9 +1,13 @@
 package com.tpov.schoolquiz.shared.feature.quest_authoring.data
 
 import com.tpov.schoolquiz.shared.core.persistence.DraftQuestionEntity
+import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestAuthoringDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestDraftSummaryEntity
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.mapper.QuestAuthoringMapper.toEntityBundle
+import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.PrivateQuestSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -20,6 +24,23 @@ interface QuestAuthoringLocalDataSource {
 
     suspend fun upsertQuestion(question: DraftQuestionEntity)
 
+    suspend fun queueArenaSubmission(submission: QuestArenaSubmissionEntity)
+
+    suspend fun findPendingArenaSubmissions(limit: Int): List<QuestArenaSubmissionEntity>
+
+    suspend fun markArenaSubmissionFailure(
+        submissionId: String,
+        message: String?,
+    )
+
+    suspend fun markArenaSubmissionSent(
+        submissionId: String,
+        draftId: String,
+        updatedAtMs: Long,
+    )
+
+    suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot)
+
     suspend fun setDraftStatus(
         draftId: String,
         status: String,
@@ -29,6 +50,7 @@ interface QuestAuthoringLocalDataSource {
 
 class QuestAuthoringLocalDataSourceImpl(
     private val dao: QuestAuthoringDao,
+    private val submissionDao: QuestArenaSubmissionDao,
 ) : QuestAuthoringLocalDataSource {
 
     override fun observeDraftSummaries(ownerUid: String): Flow<List<QuestDraftSummaryEntity>> =
@@ -80,6 +102,61 @@ class QuestAuthoringLocalDataSourceImpl(
         dao.upsertQuestion(question)
     }
 
+    override suspend fun queueArenaSubmission(submission: QuestArenaSubmissionEntity) {
+        submissionDao.queueSubmission(submission)
+        dao.updateDraftStatus(
+            draftId = submission.draftId,
+            status = "REVIEW_QUEUED",
+            updatedAtMs = submission.requestedAtMs,
+        )
+    }
+
+    override suspend fun findPendingArenaSubmissions(limit: Int): List<QuestArenaSubmissionEntity> =
+        submissionDao.findPending(limit)
+
+    override suspend fun markArenaSubmissionFailure(
+        submissionId: String,
+        message: String?,
+    ) {
+        submissionDao.markFailure(submissionId, message)
+    }
+
+    override suspend fun markArenaSubmissionSent(
+        submissionId: String,
+        draftId: String,
+        updatedAtMs: Long,
+    ) {
+        submissionDao.markSent(submissionId)
+        dao.updateDraftStatus(
+            draftId = draftId,
+            status = "REVIEW_SENT",
+            updatedAtMs = updatedAtMs,
+        )
+    }
+
+    override suspend fun upsertSyncedPrivateQuest(snapshot: PrivateQuestSnapshot) {
+        val incoming = snapshot.toEntityBundle()
+        val existing = dao.findDraftById(incoming.draft.id)
+        if (existing != null &&
+            existing.localRevision > snapshot.serverRevision &&
+            existing.status in localDirtyStatuses
+        ) {
+            dao.updateDraftStatus(
+                draftId = existing.id,
+                status = "CONFLICT",
+                updatedAtMs = snapshot.changedAtMs,
+            )
+            return
+        }
+        dao.saveDraft(
+            draft = incoming.draft,
+            sections = incoming.sections,
+            themes = incoming.themes,
+            lessons = incoming.lessons,
+            questions = incoming.questions,
+        )
+    }
+
     override suspend fun setDraftStatus(
         draftId: String,
         status: String,
@@ -107,6 +184,11 @@ class QuestAuthoringLocalDataSourceImpl(
             "SYNC_PENDING",
             "SYNCED_PRIVATE",
             "CONFLICT",
+        )
+        val localDirtyStatuses = setOf(
+            "DRAFT",
+            "SYNC_PENDING",
+            "REVIEW_QUEUED",
         )
     }
 }
