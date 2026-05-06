@@ -786,6 +786,50 @@ class AppShellTransitionsTest {
         assertEquals(EventsConfig.QualifierTournamentRoot, result.newState.eventsState.stack.active)
     }
 
+    @Test
+    fun `open qualifier leaderboard pushes leaderboard over qualifier root`() {
+        val state = defaultState().copy(isDrawerOpen = true)
+
+        val result = navigate(
+            state,
+            Destination.OpenTournamentLeaderboard(DrawerSection.EventsSection.QualifierTournament),
+        )
+
+        assertEquals(Tab.EVENTS, result.newState.activeTab)
+        assertFalse(result.newState.isDrawerOpen)
+        assertEquals(DrawerSection.EventsSection.QualifierTournament, result.newState.eventsState.activeSection)
+        assertEquals(EventsConfig.QualifierTournamentLeaderboardRoot, result.newState.eventsState.stack.active)
+        assertEquals(listOf(EventsConfig.QualifierTournamentRoot), result.newState.eventsState.stack.backStack)
+    }
+
+    @Test
+    fun `open world participants pushes participants over world root`() {
+        val result = navigate(
+            defaultState(),
+            Destination.OpenTournamentParticipants(DrawerSection.EventsSection.WorldChampionship),
+        )
+
+        assertEquals(Tab.EVENTS, result.newState.activeTab)
+        assertEquals(DrawerSection.EventsSection.WorldChampionship, result.newState.eventsState.activeSection)
+        assertEquals(EventsConfig.WorldChampionshipParticipantsRoot, result.newState.eventsState.stack.active)
+        assertEquals(listOf(EventsConfig.WorldChampionshipRoot), result.newState.eventsState.stack.backStack)
+    }
+
+    @Test
+    fun `back from qualifier leaderboard returns to qualifier root`() {
+        val leaderboardState =
+            navigate(
+                defaultState(),
+                Destination.OpenTournamentLeaderboard(DrawerSection.EventsSection.QualifierTournament),
+            ).newState
+
+        val result = navigate(leaderboardState, Destination.Back)
+
+        assertEquals(Tab.EVENTS, result.newState.activeTab)
+        assertEquals(EventsConfig.QualifierTournamentRoot, result.newState.eventsState.stack.active)
+        assertTrue(result.newState.eventsState.stack.backStack.isEmpty())
+    }
+
     // -----------------------------------------------------------------------
     // Domain Test Scenario 41 — OpenDesignCatalog footer action
     // -----------------------------------------------------------------------

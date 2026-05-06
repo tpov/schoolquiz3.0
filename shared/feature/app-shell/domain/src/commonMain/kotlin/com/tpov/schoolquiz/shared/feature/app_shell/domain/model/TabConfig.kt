@@ -52,7 +52,11 @@ sealed interface InternetConfig : TabConfig {
 
 sealed interface EventsConfig : TabConfig {
     data object QualifierTournamentRoot : EventsConfig
+    data object QualifierTournamentLeaderboardRoot : EventsConfig
+    data object QualifierTournamentParticipantsRoot : EventsConfig
     data object WorldChampionshipRoot : EventsConfig
+    data object WorldChampionshipLeaderboardRoot : EventsConfig
+    data object WorldChampionshipParticipantsRoot : EventsConfig
     data object ActiveEventsRoot : EventsConfig
     data object MinigamesRoot : EventsConfig
     /** Sentinel shown when no visible sections exist for this tab. */

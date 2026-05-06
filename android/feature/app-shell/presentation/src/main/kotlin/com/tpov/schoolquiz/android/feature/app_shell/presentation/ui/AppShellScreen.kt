@@ -71,6 +71,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterAc
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
@@ -274,6 +275,7 @@ fun AppShellScreen(
                         paddingValues = paddingValues,
                         canSeeDesignCatalog = canSeeDesignCatalog,
                         canManagePublicShelves = canManagePublicShelves,
+                        userStats = state.userStats,
                         selectedDesignStyle = selectedDesignStyle,
                         onDesignStyleSelected = onDesignStyleSelected,
                     )
@@ -305,6 +307,7 @@ private fun AppShellContent(
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
     canManagePublicShelves: Boolean,
+    userStats: UserStats,
     selectedDesignStyle: SchoolQuizDesignStyle,
     onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
@@ -346,6 +349,7 @@ private fun AppShellContent(
                         screen = child.instance,
                         paddingValues = paddingValues,
                         canManagePublicShelves = canManagePublicShelves,
+                        userStats = userStats,
                     )
                 }
             Tab.SHOP ->
@@ -536,6 +540,7 @@ private fun EventsTabContent(
     screen: EventsScreenComponent,
     paddingValues: PaddingValues,
     canManagePublicShelves: Boolean,
+    userStats: UserStats,
 ) {
     when (screen) {
         is EventsScreenComponent.Placeholder ->
@@ -550,6 +555,16 @@ private fun EventsTabContent(
                         stageLabel = "Лёгкие вопросы",
                         forcedHardMode = false,
                     )
+                EventsConfig.QualifierTournamentLeaderboardRoot ->
+                    TournamentLeaderboardScreen(
+                        model = qualifierLeaderboardModel(userStats),
+                        modifier = Modifier.padding(paddingValues),
+                    )
+                EventsConfig.QualifierTournamentParticipantsRoot ->
+                    TournamentParticipantsScreen(
+                        model = qualifierParticipantsModel(userStats),
+                        modifier = Modifier.padding(paddingValues),
+                    )
                 EventsConfig.WorldChampionshipRoot ->
                     TournamentEventContent(
                         rootComponent = rootComponent,
@@ -559,6 +574,16 @@ private fun EventsTabContent(
                         title = "Чемпионат мира",
                         stageLabel = "Сложные вопросы",
                         forcedHardMode = true,
+                    )
+                EventsConfig.WorldChampionshipLeaderboardRoot ->
+                    TournamentLeaderboardScreen(
+                        model = worldLeaderboardModel(userStats),
+                        modifier = Modifier.padding(paddingValues),
+                    )
+                EventsConfig.WorldChampionshipParticipantsRoot ->
+                    TournamentParticipantsScreen(
+                        model = worldParticipantsModel(userStats),
+                        modifier = Modifier.padding(paddingValues),
                     )
                 else ->
                     UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
@@ -577,6 +602,12 @@ private fun TournamentEventContent(
     stageLabel: String,
     forcedHardMode: Boolean,
 ) {
+    val eventSection =
+        if (targetShelf == QUALIFIER_TOURNAMENT_SHELF) {
+            DrawerSection.EventsSection.QualifierTournament
+        } else {
+            DrawerSection.EventsSection.WorldChampionship
+        }
     val openTournamentLessons = {
         rootComponent.quizzesComponent.openPublicQuestShelfCatalog(
             targetShelf = targetShelf,
@@ -594,9 +625,13 @@ private fun TournamentEventContent(
             TournamentEventActions(
                 canManagePublicShelves = canManagePublicShelves,
                 onStartClick = openTournamentLessons,
-                onLeaderboardClick = {},
+                onLeaderboardClick = {
+                    rootComponent.navigator.goTo(Destination.OpenTournamentLeaderboard(eventSection))
+                },
                 onLessonsClick = openTournamentLessons,
-                onParticipantsClick = {},
+                onParticipantsClick = {
+                    rootComponent.navigator.goTo(Destination.OpenTournamentParticipants(eventSection))
+                },
                 onAddLessonsClick = {
                     rootComponent.quizzesComponent.openPublicQuestCatalogPicker(
                         targetShelf = targetShelf,
@@ -607,6 +642,54 @@ private fun TournamentEventContent(
         modifier = Modifier.padding(paddingValues),
     )
 }
+
+private fun qualifierLeaderboardModel(userStats: UserStats): TournamentLeaderboardUi =
+    TournamentLeaderboardUi(
+        title = "Отборочный турнир",
+        stageLabel = "Лёгкие вопросы",
+        qualificationRule = "Топ-32",
+        currentUserNickname = userStats.nickname,
+        currentUserPercent = null,
+        standings = emptyList(),
+    )
+
+private fun worldLeaderboardModel(userStats: UserStats): TournamentLeaderboardUi =
+    TournamentLeaderboardUi(
+        title = "Чемпионат мира",
+        stageLabel = "Сложные вопросы",
+        qualificationRule = "Финальная таблица",
+        currentUserNickname = userStats.nickname,
+        currentUserPercent = null,
+        standings = emptyList(),
+    )
+
+private fun qualifierParticipantsModel(userStats: UserStats): TournamentParticipantsUi =
+    TournamentParticipantsUi(
+        title = "Отборочный турнир",
+        stageLabel = "Лёгкие вопросы",
+        participants =
+            listOf(
+                TournamentParticipantUi(
+                    nickname = userStats.nickname,
+                    status = "доступ открыт",
+                    attempts = 0,
+                ),
+            ),
+    )
+
+private fun worldParticipantsModel(userStats: UserStats): TournamentParticipantsUi =
+    TournamentParticipantsUi(
+        title = "Чемпионат мира",
+        stageLabel = "Сложные вопросы",
+        participants =
+            listOf(
+                TournamentParticipantUi(
+                    nickname = userStats.nickname,
+                    status = "ожидает отбора",
+                    attempts = 0,
+                ),
+            ),
+    )
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable

@@ -34,6 +34,24 @@ sealed interface Destination {
     data object OpenDesignCatalog : Destination
 
     /**
+     * Open the leaderboard for a public tournament event.
+     *
+     * Result: switches to EVENTS and pushes the leaderboard child screen over the event root.
+     * Only [DrawerSection.EventsSection.QualifierTournament] and
+     * [DrawerSection.EventsSection.WorldChampionship] are tournament events.
+     */
+    data class OpenTournamentLeaderboard(val event: DrawerSection.EventsSection) : Destination
+
+    /**
+     * Open the participant list for a public tournament event.
+     *
+     * Result: switches to EVENTS and pushes the participants child screen over the event root.
+     * Only [DrawerSection.EventsSection.QualifierTournament] and
+     * [DrawerSection.EventsSection.WorldChampionship] are tournament events.
+     */
+    data class OpenTournamentParticipants(val event: DrawerSection.EventsSection) : Destination
+
+    /**
      * Open the create-quest screen (FAB on "Мои квесты").
      *
      * Result: pushes [LocalConfig.QuestCreateRoot] onto the LOCAL tab's stack,

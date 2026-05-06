@@ -117,7 +117,11 @@ val TabConfig.displayName: String
             is EventsConfig ->
                 when (this) {
                     EventsConfig.QualifierTournamentRoot -> "Отборочный турнир"
+                    EventsConfig.QualifierTournamentLeaderboardRoot -> "Лидерборд"
+                    EventsConfig.QualifierTournamentParticipantsRoot -> "Участники"
                     EventsConfig.WorldChampionshipRoot -> "Чемпионат мира"
+                    EventsConfig.WorldChampionshipLeaderboardRoot -> "Лидерборд"
+                    EventsConfig.WorldChampionshipParticipantsRoot -> "Участники"
                     EventsConfig.ActiveEventsRoot -> "Активные события"
                     EventsConfig.MinigamesRoot -> "Мини-игры"
                     EventsConfig.EmptyRoot -> "События"

@@ -78,6 +78,8 @@ fun navigate(state: AppShellState, destination: Destination): TransitionResult =
         Destination.OpenDrawer -> onOpenDrawer(state)
         Destination.CloseDrawer -> TransitionResult(state.copy(isDrawerOpen = false))
         Destination.OpenDesignCatalog -> onOpenDesignCatalog(state)
+        is Destination.OpenTournamentLeaderboard -> onOpenTournamentLeaderboard(state, destination.event)
+        is Destination.OpenTournamentParticipants -> onOpenTournamentParticipants(state, destination.event)
         Destination.OpenQuestCreate -> onOpenQuestCreate(state)
     }
 
@@ -321,6 +323,68 @@ fun onOpenDesignCatalog(state: AppShellState): TransitionResult =
             isDrawerOpen = false,
         ),
     )
+
+// ---------------------------------------------------------------------------
+// onOpenTournamentLeaderboard / onOpenTournamentParticipants
+// ---------------------------------------------------------------------------
+
+fun onOpenTournamentLeaderboard(
+    state: AppShellState,
+    event: DrawerSection.EventsSection,
+): TransitionResult =
+    pushTournamentChild(state, event, leaderboardConfigFor(event))
+
+fun onOpenTournamentParticipants(
+    state: AppShellState,
+    event: DrawerSection.EventsSection,
+): TransitionResult =
+    pushTournamentChild(state, event, participantsConfigFor(event))
+
+private fun leaderboardConfigFor(event: DrawerSection.EventsSection): EventsConfig? =
+    when (event) {
+        DrawerSection.EventsSection.QualifierTournament -> EventsConfig.QualifierTournamentLeaderboardRoot
+        DrawerSection.EventsSection.WorldChampionship -> EventsConfig.WorldChampionshipLeaderboardRoot
+        DrawerSection.EventsSection.ActiveEvents,
+        DrawerSection.EventsSection.Minigames,
+        -> null
+    }
+
+private fun participantsConfigFor(event: DrawerSection.EventsSection): EventsConfig? =
+    when (event) {
+        DrawerSection.EventsSection.QualifierTournament -> EventsConfig.QualifierTournamentParticipantsRoot
+        DrawerSection.EventsSection.WorldChampionship -> EventsConfig.WorldChampionshipParticipantsRoot
+        DrawerSection.EventsSection.ActiveEvents,
+        DrawerSection.EventsSection.Minigames,
+        -> null
+    }
+
+private fun pushTournamentChild(
+    state: AppShellState,
+    event: DrawerSection.EventsSection,
+    child: EventsConfig?,
+): TransitionResult {
+    child ?: return TransitionResult(state)
+    if (!isVisible(event, state.userStats)) return TransitionResult(state)
+
+    val rootStack = rootEventsStackForSection(event)
+    val currentEventsStack = state.eventsState.stack
+    val baseStack =
+        if (state.eventsState.activeSection == event && currentEventsStack.backStack.isNotEmpty()) {
+            currentEventsStack.replaceWithRoot(currentEventsStack.backStack.first())
+        } else {
+            rootStack
+        }
+    return TransitionResult(
+        state.copy(
+            activeTab = Tab.EVENTS,
+            eventsState = TabState(
+                activeSection = event,
+                stack = baseStack.push(child),
+            ),
+            isDrawerOpen = false,
+        ),
+    )
+}
 
 // ---------------------------------------------------------------------------
 // onOpenQuestCreate — FAB destination (push QuestCreateRoot onto LOCAL stack)
