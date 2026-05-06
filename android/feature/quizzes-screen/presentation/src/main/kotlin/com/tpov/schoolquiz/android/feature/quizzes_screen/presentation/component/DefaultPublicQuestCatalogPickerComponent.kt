@@ -59,13 +59,15 @@ class DefaultPublicQuestCatalogPickerComponent(
         id: CatalogId,
         name: String,
     ) {
+        val selectionTargetShelf = config.selectionTargetShelf
         navigation.pushNew(
             QuizzesConfig.QuestList(
                 catalogId = id.value,
                 titles = titles + (name.takeIf { it.isNotBlank() } ?: "Каталог"),
-                shelf = ARENA_SHELF,
+                shelf = if (selectionTargetShelf == null) config.targetShelf else ARENA_SHELF,
                 mode = QuestListMode.Arena,
-                selectionTargetShelf = config.targetShelf,
+                selectionTargetShelf = selectionTargetShelf,
+                forcedLessonMode = config.forcedLessonMode,
             ),
         )
     }

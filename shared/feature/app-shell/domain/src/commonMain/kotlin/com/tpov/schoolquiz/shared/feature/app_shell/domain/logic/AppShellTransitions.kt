@@ -46,6 +46,8 @@ fun rootInternetStackForSection(section: DrawerSection.InternetSection): NavStac
 
 fun rootEventsStackForSection(section: DrawerSection.EventsSection): NavStack<EventsConfig> =
     when (section) {
+        DrawerSection.EventsSection.QualifierTournament -> NavStack(EventsConfig.QualifierTournamentRoot)
+        DrawerSection.EventsSection.WorldChampionship -> NavStack(EventsConfig.WorldChampionshipRoot)
         DrawerSection.EventsSection.ActiveEvents -> NavStack(EventsConfig.ActiveEventsRoot)
         DrawerSection.EventsSection.Minigames -> NavStack(EventsConfig.MinigamesRoot)
     }

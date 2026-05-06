@@ -32,6 +32,7 @@ class DefaultSectionListComponent(
 
     private val questId = QuestId(config.questId)
     override val titles: List<String> = config.titles
+    private val forcedLessonMode = config.forcedLessonMode
 
     private val _uiState = MutableValue<HierarchyListUiState>(HierarchyListUiState.Loading)
     override val uiState: Value<HierarchyListUiState> = _uiState
@@ -57,6 +58,7 @@ class DefaultSectionListComponent(
             QuizzesConfig.ThemeList(
                 sectionId = section.id,
                 titles = titles + listOf(section.title),
+                forcedLessonMode = forcedLessonMode,
             ),
         )
     }

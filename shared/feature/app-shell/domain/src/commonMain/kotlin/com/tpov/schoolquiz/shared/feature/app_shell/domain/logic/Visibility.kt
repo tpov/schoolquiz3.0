@@ -90,6 +90,8 @@ fun visibleSections(tab: Tab, stats: UserStats): List<DrawerSection> = when (tab
     ).filter { isVisible(it, stats) }
 
     Tab.EVENTS -> listOf(
+        DrawerSection.EventsSection.QualifierTournament,
+        DrawerSection.EventsSection.WorldChampionship,
         DrawerSection.EventsSection.ActiveEvents,
         DrawerSection.EventsSection.Minigames,
     ).filter { isVisible(it, stats) }
@@ -124,6 +126,8 @@ fun rootOf(section: DrawerSection): TabConfig = when (section) {
     DrawerSection.InternetSection.Profile -> InternetConfig.ProfileRoot
     DrawerSection.InternetSection.Social -> InternetConfig.SocialRoot
     DrawerSection.InternetSection.Leaderboard -> InternetConfig.LeaderboardRoot
+    DrawerSection.EventsSection.QualifierTournament -> EventsConfig.QualifierTournamentRoot
+    DrawerSection.EventsSection.WorldChampionship -> EventsConfig.WorldChampionshipRoot
     DrawerSection.EventsSection.ActiveEvents -> EventsConfig.ActiveEventsRoot
     DrawerSection.EventsSection.Minigames -> EventsConfig.MinigamesRoot
 }

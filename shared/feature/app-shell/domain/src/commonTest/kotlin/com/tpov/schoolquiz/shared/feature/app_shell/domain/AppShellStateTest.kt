@@ -69,16 +69,16 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given cold start with guest stats when default state created then events activeSection is null`() {
-        // FR #7 / BR #3: visibleSections(EVENTS, guestStats) is empty → null, EmptyRoot
+    fun `given cold start with guest stats when default state created then events activeSection is QualifierTournament`() {
+        // Qualifier is public, so EVENTS has a visible root for ordinary users.
         val state = AppShellState.default()
-        assertNull(state.eventsState.activeSection)
+        assertEquals(DrawerSection.EventsSection.QualifierTournament, state.eventsState.activeSection)
     }
 
     @Test
-    fun `given cold start with guest stats when default state created then events stack active is EmptyRoot`() {
+    fun `given cold start with guest stats when default state created then events stack active is QualifierTournamentRoot`() {
         val state = AppShellState.default()
-        assertEquals(EventsConfig.EmptyRoot, state.eventsState.stack.active)
+        assertEquals(EventsConfig.QualifierTournamentRoot, state.eventsState.stack.active)
     }
 
     @Test
@@ -126,10 +126,10 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given corrupted saved state when fallback called then events stack active is EmptyRoot`() {
-        // Fallback uses formula: guest stats → no visible sections for EVENTS → EmptyRoot
+    fun `given corrupted saved state when fallback called then events stack active is QualifierTournamentRoot`() {
+        // Fallback uses formula: guest stats → Qualifier is first visible for EVENTS.
         val state = fallbackState()
-        assertEquals(EventsConfig.EmptyRoot, state.eventsState.stack.active)
+        assertEquals(EventsConfig.QualifierTournamentRoot, state.eventsState.stack.active)
     }
 
     @Test
@@ -210,35 +210,35 @@ class AppShellStateTest {
     }
 
     // -----------------------------------------------------------------------
-    // Domain Test Scenario 37 — EmptyRoot for EVENTS with guest stats
+    // Domain Test Scenario 37 — public qualifier for EVENTS with guest stats
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 37 initialTabState EVENTS guest stats activeSection null and active is EmptyRoot`() {
+    fun `scenario 37 initialTabState EVENTS guest stats activeSection QualifierTournament`() {
         val state = AppShellState.default()
-        assertNull(state.eventsState.activeSection)
-        assertEquals(EventsConfig.EmptyRoot, state.eventsState.stack.active)
+        assertEquals(DrawerSection.EventsSection.QualifierTournament, state.eventsState.activeSection)
+        assertEquals(EventsConfig.QualifierTournamentRoot, state.eventsState.stack.active)
     }
 
     @Test
-    fun `scenario 37 initialTabState EVENTS skill 10000 activeSection is Minigames`() {
-        // At skill >= 10000: Minigames becomes visible
+    fun `scenario 37 initialTabState EVENTS skill 10000 activeSection remains QualifierTournament`() {
+        // At skill >= 10000: Minigames becomes visible, but Qualifier remains first.
         val stats = UserStats.guest().copy(currentSkill = 10_000)
         val state = AppShellState.default(stats)
-        assertEquals(DrawerSection.EventsSection.Minigames, state.eventsState.activeSection)
-        assertEquals(EventsConfig.MinigamesRoot, state.eventsState.stack.active)
+        assertEquals(DrawerSection.EventsSection.QualifierTournament, state.eventsState.activeSection)
+        assertEquals(EventsConfig.QualifierTournamentRoot, state.eventsState.stack.active)
     }
 
     // -----------------------------------------------------------------------
-    // Domain Test Scenario 38 — EmptyRoot switch: user switches to EVENTS tab when guest
+    // Domain Test Scenario 38 — public qualifier switch: user switches to EVENTS tab when guest
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 38 default eventsState with guest stats has EmptyRoot backStack empty`() {
+    fun `scenario 38 default eventsState with guest stats has QualifierTournamentRoot backStack empty`() {
         val state = AppShellState.default()
-        // EmptyRoot is valid — backStack must be empty
+        // Public qualifier root is valid — backStack must be empty
         assertTrue(state.eventsState.stack.backStack.isEmpty())
-        assertEquals(EventsConfig.EmptyRoot, state.eventsState.stack.active)
+        assertEquals(EventsConfig.QualifierTournamentRoot, state.eventsState.stack.active)
     }
 
     // -----------------------------------------------------------------------

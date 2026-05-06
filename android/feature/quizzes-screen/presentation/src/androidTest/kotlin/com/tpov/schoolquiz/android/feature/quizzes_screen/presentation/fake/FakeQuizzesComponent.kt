@@ -64,6 +64,12 @@ class FakeQuizzesComponent : QuizzesComponent {
         title: String,
     ) = Unit
 
+    override fun openPublicQuestShelfCatalog(
+        targetShelf: String,
+        title: String,
+        forcedHardMode: Boolean?,
+    ) = Unit
+
     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
 
     override fun dismissQuizzes() {

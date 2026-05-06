@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.onDeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RetapOutcome
@@ -776,13 +777,13 @@ class AppShellTransitionsTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `tab switch EVENTS with guest stats - eventsState activeSection is null and stack is EmptyRoot`() {
-        // FR #7 / BR #3: defaultSection(EVENTS, guestStats) = null (no visible sections for guest)
-        // initialEventsTabState → activeSection=null, active=EmptyRoot
+    fun `tab switch EVENTS with guest stats - eventsState activeSection is QualifierTournament`() {
+        // Qualifier is public, so defaultSection(EVENTS, guestStats) is QualifierTournament.
         val state = defaultState()
         val result = navigate(state, Destination.SwitchTab(Tab.EVENTS))
         assertEquals(Tab.EVENTS, result.newState.activeTab)
-        assertNull(result.newState.eventsState.activeSection)
+        assertEquals(DrawerSection.EventsSection.QualifierTournament, result.newState.eventsState.activeSection)
+        assertEquals(EventsConfig.QualifierTournamentRoot, result.newState.eventsState.stack.active)
     }
 
     // -----------------------------------------------------------------------

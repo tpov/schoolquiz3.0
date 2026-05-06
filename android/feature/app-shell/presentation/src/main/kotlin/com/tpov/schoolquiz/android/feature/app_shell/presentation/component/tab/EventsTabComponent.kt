@@ -20,7 +20,7 @@ class DefaultEventsTabComponent(
         childStack(
             source = navigation,
             serializer = null,
-            initialConfiguration = EventsConfig.EmptyRoot,
+            initialConfiguration = EventsConfig.QualifierTournamentRoot,
             handleBackButton = false,
             key = "EventsStack",
             childFactory = { config, _ -> EventsScreenComponent.Placeholder(config) },

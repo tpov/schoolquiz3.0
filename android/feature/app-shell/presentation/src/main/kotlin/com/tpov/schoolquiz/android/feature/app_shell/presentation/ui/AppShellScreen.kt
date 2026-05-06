@@ -71,6 +71,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterAc
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RetapOutcome
@@ -84,6 +85,8 @@ private const val TAB_CROSSFADE_DURATION_MS = 300
 private const val MAIN_INDICATOR_ALPHA = 0.14f
 private const val CLEAN_INDICATOR_ALPHA = 0.08f
 private const val HOME_SHELF = "home"
+private const val QUALIFIER_TOURNAMENT_SHELF = "tournament"
+private const val WORLD_CHAMPIONSHIP_SHELF = "tournamentFinal"
 
 /**
  * Root shell Composable.
@@ -338,7 +341,12 @@ private fun AppShellContent(
                     rootComponent.eventsTabComponent.childStack,
                     animation = stackAnimation(fade(tween(TAB_CROSSFADE_DURATION_MS))),
                 ) { child ->
-                    EventsTabContent(child.instance, paddingValues)
+                    EventsTabContent(
+                        rootComponent = rootComponent,
+                        screen = child.instance,
+                        paddingValues = paddingValues,
+                        canManagePublicShelves = canManagePublicShelves,
+                    )
                 }
             Tab.SHOP ->
                 Children(
@@ -524,13 +532,80 @@ private fun CourseArenaContent(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun EventsTabContent(
+    rootComponent: DefaultRootComponent,
     screen: EventsScreenComponent,
     paddingValues: PaddingValues,
+    canManagePublicShelves: Boolean,
 ) {
     when (screen) {
         is EventsScreenComponent.Placeholder ->
-            UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
+            when (screen.config) {
+                EventsConfig.QualifierTournamentRoot ->
+                    TournamentEventContent(
+                        rootComponent = rootComponent,
+                        paddingValues = paddingValues,
+                        canManagePublicShelves = canManagePublicShelves,
+                        targetShelf = QUALIFIER_TOURNAMENT_SHELF,
+                        title = "Отборочный турнир",
+                        stageLabel = "Лёгкие вопросы",
+                        forcedHardMode = false,
+                    )
+                EventsConfig.WorldChampionshipRoot ->
+                    TournamentEventContent(
+                        rootComponent = rootComponent,
+                        paddingValues = paddingValues,
+                        canManagePublicShelves = canManagePublicShelves,
+                        targetShelf = WORLD_CHAMPIONSHIP_SHELF,
+                        title = "Чемпионат мира",
+                        stageLabel = "Сложные вопросы",
+                        forcedHardMode = true,
+                    )
+                else ->
+                    UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
+            }
     }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun TournamentEventContent(
+    rootComponent: DefaultRootComponent,
+    paddingValues: PaddingValues,
+    canManagePublicShelves: Boolean,
+    targetShelf: String,
+    title: String,
+    stageLabel: String,
+    forcedHardMode: Boolean,
+) {
+    val openTournamentLessons = {
+        rootComponent.quizzesComponent.openPublicQuestShelfCatalog(
+            targetShelf = targetShelf,
+            title = title,
+            forcedHardMode = forcedHardMode,
+        )
+    }
+    TournamentEventScreen(
+        model =
+            TournamentEventUi(
+                title = title,
+                stageLabel = stageLabel,
+            ),
+        actions =
+            TournamentEventActions(
+                canManagePublicShelves = canManagePublicShelves,
+                onStartClick = openTournamentLessons,
+                onLeaderboardClick = {},
+                onLessonsClick = openTournamentLessons,
+                onParticipantsClick = {},
+                onAddLessonsClick = {
+                    rootComponent.quizzesComponent.openPublicQuestCatalogPicker(
+                        targetShelf = targetShelf,
+                        title = title,
+                    )
+                },
+            ),
+        modifier = Modifier.padding(paddingValues),
+    )
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

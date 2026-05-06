@@ -19,6 +19,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Qu
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
@@ -204,6 +205,21 @@ class DefaultQuizzesComponent(
             QuizzesConfig.PublicQuestCatalogPicker(
                 targetShelf = targetShelf,
                 titles = listOf(title, "Каталоги"),
+            ),
+        )
+    }
+
+    override fun openPublicQuestShelfCatalog(
+        targetShelf: String,
+        title: String,
+        forcedHardMode: Boolean?,
+    ) {
+        navigation.pushNew(
+            QuizzesConfig.PublicQuestCatalogPicker(
+                targetShelf = targetShelf,
+                titles = listOf(title, "Каталоги"),
+                selectionTargetShelf = null,
+                forcedLessonMode = forcedHardMode?.let { if (it) Difficulty.HARD else Difficulty.EASY },
             ),
         )
     }

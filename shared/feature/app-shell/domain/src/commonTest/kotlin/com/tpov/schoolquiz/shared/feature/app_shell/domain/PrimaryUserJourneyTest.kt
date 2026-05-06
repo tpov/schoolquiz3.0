@@ -195,9 +195,9 @@ class PrimaryUserJourneyTest {
 
         // Internet: guest stats → first visible = Profile
         assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
-        // Events: guest stats → no visible sections → EmptyRoot
-        assertEquals(EventsConfig.EmptyRoot, state.eventsState.stack.active)
-        assertNull(state.eventsState.activeSection)
+        // Events: guest stats → public qualifier is first visible
+        assertEquals(EventsConfig.QualifierTournamentRoot, state.eventsState.stack.active)
+        assertEquals(DrawerSection.EventsSection.QualifierTournament, state.eventsState.activeSection)
         // Shop: always ShopRoot
         assertEquals(ShopConfig.ShopRoot, state.shopState.stack.active)
     }

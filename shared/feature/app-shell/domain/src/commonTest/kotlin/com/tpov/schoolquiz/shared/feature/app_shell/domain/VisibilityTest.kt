@@ -227,13 +227,19 @@ class VisibilityTest {
     }
 
     // -----------------------------------------------------------------------
-    // Domain Test Scenario 24 — visibleSections EVENTS for guest = empty
+    // Domain Test Scenario 24 — visibleSections EVENTS for guest has public tournaments
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 24 visibleSections EVENTS guest returns empty list`() {
+    fun `scenario 24 visibleSections EVENTS guest returns public tournament sections`() {
         val sections = visibleSections(Tab.EVENTS, UserStats.guest())
-        assertTrue(sections.isEmpty())
+        assertEquals(
+            listOf(
+                DrawerSection.EventsSection.QualifierTournament,
+                DrawerSection.EventsSection.WorldChampionship,
+            ),
+            sections,
+        )
     }
 
     // -----------------------------------------------------------------------
@@ -284,12 +290,19 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 27 visibleSections EVENTS skill 10000 returns Minigames only`() {
+    fun `scenario 27 visibleSections EVENTS skill 10000 returns public tournaments and Minigames`() {
         val stats = UserStats.guest().copy(currentSkill = 10_000)
         val sections = visibleSections(Tab.EVENTS, stats)
         // ActiveEvents needs all 4 Qualification roles >= 100 (qualification is still zero())
         // Minigames needs USER >= 10000 → visible
-        assertEquals(listOf(DrawerSection.EventsSection.Minigames), sections)
+        assertEquals(
+            listOf(
+                DrawerSection.EventsSection.QualifierTournament,
+                DrawerSection.EventsSection.WorldChampionship,
+                DrawerSection.EventsSection.Minigames,
+            ),
+            sections,
+        )
     }
 
     // -----------------------------------------------------------------------
@@ -297,7 +310,7 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 28 visibleSections EVENTS with developer at 100 superqual returns ActiveEvents and Minigames`() {
+    fun `scenario 28 visibleSections EVENTS with developer at 100 superqual returns all event sections`() {
         val stats = UserStats.guest().copy(
             qualification = Qualification(
                 tester = 100,
@@ -313,6 +326,8 @@ class VisibilityTest {
         // Superqualification OR-bypass: developer >= LEVEL_1.points overrides ALL requiredRoles
         assertEquals(
             listOf(
+                DrawerSection.EventsSection.QualifierTournament,
+                DrawerSection.EventsSection.WorldChampionship,
                 DrawerSection.EventsSection.ActiveEvents,
                 DrawerSection.EventsSection.Minigames,
             ),
@@ -406,6 +421,16 @@ class VisibilityTest {
     }
 
     @Test
+    fun `visibility rules row 11a EVENTS QualifierTournament has empty requiredRoles`() {
+        assertTrue(DrawerSection.EventsSection.QualifierTournament.requiredRoles.isEmpty())
+    }
+
+    @Test
+    fun `visibility rules row 11b EVENTS WorldChampionship has empty requiredRoles`() {
+        assertTrue(DrawerSection.EventsSection.WorldChampionship.requiredRoles.isEmpty())
+    }
+
+    @Test
     fun `visibility rules row 12 EVENTS Minigames requires USER at PLAYER first 10000`() {
         val roles = DrawerSection.EventsSection.Minigames.requiredRoles
         assertEquals(1, roles.size)
@@ -438,7 +463,7 @@ class VisibilityTest {
     }
 
     // -----------------------------------------------------------------------
-    // Domain Test Scenario 44 — rootOf table-driven: 11 section → TabConfig mappings
+    // Domain Test Scenario 44 — rootOf table-driven: section → TabConfig mappings
     // -----------------------------------------------------------------------
 
     @Test
@@ -454,6 +479,8 @@ class VisibilityTest {
         assertEquals(InternetConfig.ProfileRoot, rootOf(DrawerSection.InternetSection.Profile))
         assertEquals(InternetConfig.SocialRoot, rootOf(DrawerSection.InternetSection.Social))
         assertEquals(InternetConfig.LeaderboardRoot, rootOf(DrawerSection.InternetSection.Leaderboard))
+        assertEquals(EventsConfig.QualifierTournamentRoot, rootOf(DrawerSection.EventsSection.QualifierTournament))
+        assertEquals(EventsConfig.WorldChampionshipRoot, rootOf(DrawerSection.EventsSection.WorldChampionship))
         assertEquals(EventsConfig.ActiveEventsRoot, rootOf(DrawerSection.EventsSection.ActiveEvents))
         assertEquals(EventsConfig.MinigamesRoot, rootOf(DrawerSection.EventsSection.Minigames))
     }

@@ -62,6 +62,8 @@ val DrawerSection.displayName: String
             DrawerSection.InternetSection.Profile -> "Профиль"
             DrawerSection.InternetSection.Social -> "Социальное"
             DrawerSection.InternetSection.Leaderboard -> "Таблица лидеров"
+            DrawerSection.EventsSection.QualifierTournament -> "Отборочный турнир"
+            DrawerSection.EventsSection.WorldChampionship -> "Чемпионат мира"
             DrawerSection.EventsSection.ActiveEvents -> "Активные события"
             DrawerSection.EventsSection.Minigames -> "Мини-игры"
         }
@@ -80,6 +82,8 @@ val DrawerSection.icon: ImageVector
             DrawerSection.InternetSection.Profile -> Icons.Default.AccountCircle
             DrawerSection.InternetSection.Social -> Icons.Default.People
             DrawerSection.InternetSection.Leaderboard -> Icons.Default.Leaderboard
+            DrawerSection.EventsSection.QualifierTournament -> Icons.Default.Event
+            DrawerSection.EventsSection.WorldChampionship -> Icons.Default.EmojiEvents
             DrawerSection.EventsSection.ActiveEvents -> Icons.Default.Event
             DrawerSection.EventsSection.Minigames -> Icons.Default.SportsEsports
         }
@@ -112,6 +116,8 @@ val TabConfig.displayName: String
                 }
             is EventsConfig ->
                 when (this) {
+                    EventsConfig.QualifierTournamentRoot -> "Отборочный турнир"
+                    EventsConfig.WorldChampionshipRoot -> "Чемпионат мира"
                     EventsConfig.ActiveEventsRoot -> "Активные события"
                     EventsConfig.MinigamesRoot -> "Мини-игры"
                     EventsConfig.EmptyRoot -> "События"

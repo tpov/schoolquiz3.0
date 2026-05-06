@@ -12,6 +12,8 @@ sealed class QuizzesConfig {
     data class PublicQuestCatalogPicker(
         val targetShelf: String,
         val titles: List<String>,
+        val selectionTargetShelf: String? = targetShelf,
+        val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
     @Serializable
@@ -21,24 +23,28 @@ sealed class QuizzesConfig {
         val shelf: String = "home",
         val mode: QuestListMode = QuestListMode.Home,
         val selectionTargetShelf: String? = null,
+        val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
     @Serializable
     data class SectionList(
         val questId: String,
         val titles: List<String>,
+        val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
     @Serializable
     data class ThemeList(
         val sectionId: String,
         val titles: List<String>,
+        val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
     @Serializable
     data class LessonList(
         val themeId: String,
         val titles: List<String>,
+        val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
     @Serializable

@@ -23,6 +23,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -364,5 +366,36 @@ class DefaultQuizzesComponentTest {
         assertIs<QuizzesChild.QuestList>(component.childStack.value.active.instance)
         val config = assertIs<QuizzesConfig.QuestList>(component.childStack.value.active.configuration)
         assertEquals(QuestListMode.Archive, config.mode)
+    }
+
+    @Test
+    fun `openPublicQuestCatalogPicker opens mutable catalog picker`() {
+        val component = buildComponent()
+
+        component.openPublicQuestCatalogPicker(targetShelf = "tournament", title = "Отборочный турнир")
+
+        val config = assertIs<QuizzesConfig.PublicQuestCatalogPicker>(
+            component.childStack.value.active.configuration,
+        )
+        assertEquals("tournament", config.targetShelf)
+        assertEquals("tournament", config.selectionTargetShelf)
+    }
+
+    @Test
+    fun `openPublicQuestShelfCatalog opens read-only shelf catalog`() {
+        val component = buildComponent()
+
+        component.openPublicQuestShelfCatalog(
+            targetShelf = "tournamentFinal",
+            title = "Чемпионат мира",
+            forcedHardMode = true,
+        )
+
+        val config = assertIs<QuizzesConfig.PublicQuestCatalogPicker>(
+            component.childStack.value.active.configuration,
+        )
+        assertEquals("tournamentFinal", config.targetShelf)
+        assertNull(config.selectionTargetShelf)
+        assertEquals(Difficulty.HARD, config.forcedLessonMode)
     }
 }

@@ -52,9 +52,9 @@ fun initialInternetTabState(stats: UserStats): TabState<InternetConfig> {
 /**
  * Returns the initial [TabState] for the EVENTS tab given [stats].
  *
- * For guest stats: no sections visible → activeSection=null, active=EmptyRoot.
- * For skill >= 10000: Minigames visible.
- * For full qualification: ActiveEvents visible.
+ * For guest stats: QualifierTournament is the first visible event.
+ * For skill >= 10000: Minigames also becomes visible.
+ * For full qualification: ActiveEvents also becomes visible.
  */
 fun initialEventsTabState(stats: UserStats): TabState<EventsConfig> {
     val section = defaultSection(Tab.EVENTS, stats)

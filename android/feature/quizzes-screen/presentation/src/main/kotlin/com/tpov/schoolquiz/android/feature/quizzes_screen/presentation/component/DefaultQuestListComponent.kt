@@ -58,6 +58,7 @@ class DefaultQuestListComponent(
     override val titles: List<String> = config.titles
     override val mode: QuestListMode = config.mode
     override val selectionTargetShelf: String? = config.selectionTargetShelf
+    private val forcedLessonMode = config.forcedLessonMode
     private val isCoursesCatalog = catalogId.value == COURSES_CATALOG_ID
     private val sourceShelf =
         when {
@@ -109,6 +110,7 @@ class DefaultQuestListComponent(
             QuizzesConfig.SectionList(
                 questId = quest.id.value,
                 titles = titles + listOf(quest.title),
+                forcedLessonMode = forcedLessonMode,
             ),
         )
     }

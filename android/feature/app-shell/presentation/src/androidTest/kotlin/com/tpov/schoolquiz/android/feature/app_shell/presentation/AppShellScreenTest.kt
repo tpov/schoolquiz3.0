@@ -177,6 +177,11 @@ class AppShellScreenTest {
                     override fun openCourseArchive() = Unit
                     override fun openCourseArena() = Unit
                     override fun openPublicQuestCatalogPicker(targetShelf: String, title: String) = Unit
+                    override fun openPublicQuestShelfCatalog(
+                        targetShelf: String,
+                        title: String,
+                        forcedHardMode: Boolean?,
+                    ) = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit

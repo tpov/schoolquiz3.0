@@ -47,6 +47,7 @@ class DefaultLessonListComponent(
 
     private val themeId = ThemeId(config.themeId)
     override val titles: List<String> = config.titles
+    private val forcedLessonMode = config.forcedLessonMode
 
     private val _uiState = MutableValue<LessonListUiState>(LessonListUiState.Loading)
     override val uiState: Value<LessonListUiState> = _uiState
@@ -85,7 +86,12 @@ class DefaultLessonListComponent(
     }
 
     override fun onLessonClick(lesson: LessonItemUi) {
-        val mode = if (lesson.hardUnlocked && lesson.isHardChecked) Difficulty.HARD else Difficulty.EASY
+        val mode =
+            forcedLessonMode ?: if (lesson.hardUnlocked && lesson.isHardChecked) {
+                Difficulty.HARD
+            } else {
+                Difficulty.EASY
+            }
         // AC-49: each new visit defaults to unchecked — clear before pushing runner.
         hardCheckedSet.update { it - lesson.id }
         scope.launch {

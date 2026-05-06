@@ -16,7 +16,7 @@ sealed interface TabConfig
  * Design phase will add kotlinx-serialization in the Decompose integration layer.
  *
  * [EmptyRoot] sentinel: rendered when no visible sections exist for the tab (spec FR #7 / BR #3).
- * Guest stats on EVENTS → visibleSections empty → activeSection = null, active = EventsConfig.EmptyRoot.
+ * EVENTS now has public tournament sections, so ordinary users land on the qualifier root.
  */
 
 sealed interface LocalConfig : TabConfig {
@@ -51,9 +51,11 @@ sealed interface InternetConfig : TabConfig {
 }
 
 sealed interface EventsConfig : TabConfig {
+    data object QualifierTournamentRoot : EventsConfig
+    data object WorldChampionshipRoot : EventsConfig
     data object ActiveEventsRoot : EventsConfig
     data object MinigamesRoot : EventsConfig
-    /** Sentinel shown when no visible sections exist for this tab (e.g. guest stats). */
+    /** Sentinel shown when no visible sections exist for this tab. */
     data object EmptyRoot : EventsConfig
 }
 

@@ -104,6 +104,16 @@ sealed interface DrawerSection {
     sealed interface EventsSection : DrawerSection {
         override val tab: Tab get() = Tab.EVENTS
 
+        // Public event — every user can enter the qualifier.
+        data object QualifierTournament : EventsSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
+        // Public entry point; final eligibility is enforced by tournament server state.
+        data object WorldChampionship : EventsSection {
+            override val requiredRoles: Map<Role, Int> get() = emptyMap()
+        }
+
         // Row 11 — requires TESTER AND MODERATOR AND ADMIN AND DEVELOPER all >= QualificationLevel.LEVEL_1.points
         data object ActiveEvents : EventsSection {
             override val requiredRoles: Map<Role, Int>

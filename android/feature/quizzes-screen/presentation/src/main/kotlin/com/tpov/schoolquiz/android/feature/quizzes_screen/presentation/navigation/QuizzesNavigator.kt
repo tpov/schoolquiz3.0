@@ -18,6 +18,12 @@ interface QuizzesNavigator {
         title: String,
     )
 
+    fun openPublicQuestShelfCatalog(
+        targetShelf: String,
+        title: String,
+        forcedHardMode: Boolean? = null,
+    )
+
     fun openSectionList(
         questId: QuestId,
         titles: List<String>,
