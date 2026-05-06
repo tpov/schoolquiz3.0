@@ -20,6 +20,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
 import com.tpov.schoolquiz.shared.feature.question.domain.model.QuestionId
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
@@ -74,6 +75,7 @@ class DefaultQuestListComponentTest {
         titles: List<String> = listOf("Mathematics"),
         shelf: String = "home",
         mode: QuestListMode = QuestListMode.Home,
+        selectionTargetShelf: String? = null,
     ): DefaultQuestListComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -86,11 +88,19 @@ class DefaultQuestListComponentTest {
             themeRepository = fakeThemeRepo,
             lessonRepository = fakeLessonRepo,
             questionRepository = fakeQuestionRepo,
+            setPublicQuestShelf = SetPublicQuestShelfUseCase(fakeRepo),
             questContentSync = { questId ->
                 syncedQuestIds = syncedQuestIds + questId
                 Result.success(Unit)
             },
-            config = QuizzesConfig.QuestList(catalogId = catalogId, titles = titles, shelf = shelf, mode = mode),
+            config =
+                QuizzesConfig.QuestList(
+                    catalogId = catalogId,
+                    titles = titles,
+                    shelf = shelf,
+                    mode = mode,
+                    selectionTargetShelf = selectionTargetShelf,
+                ),
             coroutineContext = dispatcher,
         )
     }
@@ -248,6 +258,18 @@ class DefaultQuestListComponentTest {
         assertIs<QuizzesConfig.SectionList>(pushed)
         assertEquals("q-1", pushed.questId)
         assertTrue("Quest A" in pushed.titles, "titles must include quest.title")
+    }
+
+    @Test
+    fun `onQuestClick in selection mode sets target shelf instead of opening sections`() = runTest(testScheduler) {
+        val component = buildComponent(shelf = "arena", mode = QuestListMode.Arena, selectionTargetShelf = "home")
+        val questItem = questDisplayItemFixture(id = "q-1", title = "Quest A")
+
+        component.onQuestClick(questItem)
+        advanceUntilIdle()
+
+        assertEquals(listOf(QuestId("q-1") to "home"), fakeRepo.shelfSetRequests)
+        assertTrue(fakeNavigation.pushedConfigs.isEmpty(), "selection mode must not push SectionList")
     }
 
     // ── QL-U-06 ──────────────────────────────────────────────────────────────

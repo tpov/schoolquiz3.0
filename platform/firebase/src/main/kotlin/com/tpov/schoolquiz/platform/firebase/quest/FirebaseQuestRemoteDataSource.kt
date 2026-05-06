@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.quest
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.platform.firebase.catalog.toTimestamp
 import com.tpov.schoolquiz.platform.firebase.util.fetchDocumentsByIds
 import com.tpov.schoolquiz.shared.feature.quest.data.QuestRemoteDataSource
@@ -9,6 +10,7 @@ import kotlinx.coroutines.tasks.await
 
 class FirebaseQuestRemoteDataSource(
     private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions,
 ) : QuestRemoteDataSource {
     override suspend fun fetchByIds(ids: Set<String>): List<QuestDto> {
         if (ids.isEmpty()) return emptyList()
@@ -45,5 +47,24 @@ class FirebaseQuestRemoteDataSource(
             .await()
             .documents
             .map { it.toQuestDto() }
+    }
+
+    override suspend fun setPublicShelf(
+        questId: String,
+        targetShelf: String,
+    ) {
+        functions
+            .getHttpsCallable(SET_PUBLIC_QUEST_SHELF)
+            .call(
+                mapOf(
+                    "questId" to questId,
+                    "targetShelf" to targetShelf,
+                ),
+            )
+            .await()
+    }
+
+    private companion object {
+        const val SET_PUBLIC_QUEST_SHELF = "setPublicQuestShelf"
     }
 }

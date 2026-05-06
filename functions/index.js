@@ -53,6 +53,7 @@ const GIFT_BOX_LOGO_NAMES = [
 const NICKNAME_CLAIMS_COLLECTION = "nickname_claims";
 const NICKNAME_POLICY_DOC = "configs/nickname_policy";
 const NICKNAME_GENERATION_ATTEMPTS = 20;
+const PUBLIC_QUEST_SHELVES = new Set(["home", "arena", "tournament", "tournamentFinal"]);
 
 exports.processQuestReviewRequest = onDocumentCreated(
   {...FUNCTION_OPTIONS, document: "quest_review_requests/{submissionId}"},
@@ -437,6 +438,55 @@ exports.openGiftBox = onCall(FUNCTION_OPTIONS, async (request) => {
     );
   });
   return reward;
+});
+
+exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
+    throw new HttpsError("permission-denied", "Developer level is required");
+  }
+
+  const questId = stringValue(request.data && request.data.questId);
+  if (!questId) throw new HttpsError("invalid-argument", "questId is required");
+  const targetShelf = publicQuestShelfValue(request.data && request.data.targetShelf);
+  const now = Date.now();
+  const questRef = db.collection("quests").doc(questId);
+
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(questRef);
+    if (!snapshot.exists) {
+      throw new HttpsError("not-found", `Quest ${questId} not found`);
+    }
+    const quest = snapshot.data() || {};
+    const catalogId = stringValue(quest.catalogId);
+    if (!catalogId) {
+      throw new HttpsError("failed-precondition", `Quest ${questId} has no catalogId`);
+    }
+    const nextVersion = numberValue(quest.version, 0) + 1;
+    const lastModifiedAt = admin.firestore.Timestamp.fromMillis(now);
+    transaction.set(
+      questRef,
+      {
+        visibleOn: [targetShelf],
+        version: nextVersion,
+        lastModifiedAt,
+      },
+      {merge: true},
+    );
+    transaction.set(
+      db.doc(publicCatalogSyncChangePath(catalogId, "quest", questId)),
+      syncChangeDocument("quest", questId, now),
+      {merge: true},
+    );
+    return {
+      questId,
+      catalogId,
+      targetShelf,
+      version: nextVersion,
+      changedAtMs: now,
+    };
+  });
 });
 
 async function processArenaRequest(request) {
@@ -2621,6 +2671,16 @@ function stringArray(value) {
 function targetShelfValue(value) {
   const shelf = stringValue(value, "arena");
   return shelf === "archive" ? "archive" : "arena";
+}
+
+function publicQuestShelfValue(value) {
+  const rawShelf = stringValue(value).trim();
+  const normalizedShelf = rawShelf.toLowerCase();
+  const shelf = normalizedShelf === "tournamentfinal" ? "tournamentFinal" : normalizedShelf;
+  if (!PUBLIC_QUEST_SHELVES.has(shelf)) {
+    throw new HttpsError("invalid-argument", `Unsupported targetShelf ${shelf || "<empty>"}`);
+  }
+  return shelf;
 }
 
 function listMaps(value) {

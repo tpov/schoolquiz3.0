@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Diamond
@@ -69,6 +70,8 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
 fun HomeQuestsScreen(
     component: HomeQuestsComponent,
     modifier: Modifier = Modifier,
+    canManagePublicShelves: Boolean = false,
+    onAddPublicQuestClick: () -> Unit = {},
 ) {
     val state by component.state.collectAsState()
 
@@ -77,6 +80,8 @@ fun HomeQuestsScreen(
         onCatalogClick = component::onCatalogClick,
         onGiftBoxFabClick = component::onGiftBoxFabClick,
         onGiftBoxDismiss = component::onGiftBoxDismiss,
+        canManagePublicShelves = canManagePublicShelves,
+        onAddPublicQuestClick = onAddPublicQuestClick,
         modifier = modifier,
     )
 }
@@ -87,6 +92,8 @@ private fun HomeQuestsContent(
     onCatalogClick: (CatalogId, String) -> Unit,
     onGiftBoxFabClick: () -> Unit,
     onGiftBoxDismiss: () -> Unit,
+    canManagePublicShelves: Boolean,
+    onAddPublicQuestClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -108,6 +115,15 @@ private fun HomeQuestsContent(
                 modifier =
                     Modifier
                         .align(Alignment.BottomEnd)
+                        .padding(24.dp),
+            )
+        }
+        if (canManagePublicShelves) {
+            AddPublicQuestFab(
+                onClick = onAddPublicQuestClick,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
                         .padding(24.dp),
             )
         }
@@ -143,6 +159,24 @@ private fun EmptyContent(modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun AddPublicQuestFab(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "Добавить квест",
+        )
     }
 }
 

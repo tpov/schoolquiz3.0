@@ -21,7 +21,10 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
-fun QuizzesScreen(component: QuizzesComponent) {
+fun QuizzesScreen(
+    component: QuizzesComponent,
+    canManagePublicShelves: Boolean = false,
+) {
     val stack by component.childStack.subscribeAsState()
 
     val active = stack.active.instance
@@ -49,7 +52,17 @@ fun QuizzesScreen(component: QuizzesComponent) {
         }
         when (active) {
             is QuizzesChild.Idle -> Unit
-            is QuizzesChild.QuestList -> QuestListScreen(active.component, onSegmentClick = component::popToLevel)
+            is QuizzesChild.PublicQuestCatalogPicker ->
+                PublicQuestCatalogPickerScreen(
+                    component = active.component,
+                    onSegmentClick = component::popToLevel,
+                )
+            is QuizzesChild.QuestList ->
+                QuestListScreen(
+                    component = active.component,
+                    onSegmentClick = component::popToLevel,
+                    canManagePublicShelves = canManagePublicShelves,
+                )
             is QuizzesChild.SectionList -> SectionListScreen(active.component, onSegmentClick = component::popToLevel)
             is QuizzesChild.ThemeList -> ThemeListScreen(active.component, onSegmentClick = component::popToLevel)
             is QuizzesChild.LessonList -> LessonListScreen(active.component, onSegmentClick = component::popToLevel)

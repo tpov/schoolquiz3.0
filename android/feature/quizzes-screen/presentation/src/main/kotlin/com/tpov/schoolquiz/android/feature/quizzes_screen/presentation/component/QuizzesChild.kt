@@ -5,6 +5,8 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 sealed interface QuizzesChild {
     data object Idle : QuizzesChild
 
+    data class PublicQuestCatalogPicker(val component: PublicQuestCatalogPickerComponent) : QuizzesChild
+
     data class QuestList(val component: QuestListComponent) : QuizzesChild
 
     data class SectionList(val component: SectionListComponent) : QuizzesChild

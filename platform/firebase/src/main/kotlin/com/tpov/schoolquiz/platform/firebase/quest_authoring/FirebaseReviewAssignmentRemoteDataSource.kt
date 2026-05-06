@@ -10,6 +10,52 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ReviewSegm
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.SubmitReviewActionDto
 import kotlinx.coroutines.tasks.await
 
+private data class RequiredReviewAssignmentFields(
+    val id: String,
+    val submissionId: String,
+    val ownerUid: String,
+    val catalogId: String,
+    val draftId: String,
+    val questId: String,
+    val lessonId: String,
+    val title: String,
+) {
+    fun hasNoBlankValues(): Boolean =
+        listOf(
+            id,
+            submissionId,
+            ownerUid,
+            catalogId,
+            draftId,
+            questId,
+            lessonId,
+            title,
+        ).all { it.isNotBlank() }
+}
+
+private data class RequiredArenaQuestionFields(
+    val id: String,
+    val draftId: String,
+    val lessonId: String,
+    val type: String,
+    val language: String,
+    val difficulty: String,
+    val text: String,
+    val payload: String,
+) {
+    fun hasNoBlankValues(): Boolean =
+        listOf(
+            id,
+            draftId,
+            lessonId,
+            type,
+            language,
+            difficulty,
+            text,
+            payload,
+        ).all { it.isNotBlank() }
+}
+
 class FirebaseReviewAssignmentRemoteDataSource(
     private val functions: FirebaseFunctions,
 ) : ReviewAssignmentRemoteDataSource {
@@ -25,15 +71,18 @@ class FirebaseReviewAssignmentRemoteDataSource(
     }
 
     override suspend fun fetchByIds(ids: Set<String>): List<ReviewAssignmentDto> {
-        if (ids.isEmpty()) return emptyList()
-        val data =
-            functions
-                .getHttpsCallable(FETCH_REVIEW_ASSIGNMENTS)
-                .call(mapOf(IDS to ids.sorted()))
-                .await()
-                .data
-        val root = data as? Map<*, *> ?: return emptyList()
-        return root.list(ASSIGNMENTS).mapNotNull { it.toReviewAssignmentDto() }
+        return if (ids.isEmpty()) {
+            emptyList()
+        } else {
+            val data =
+                functions
+                    .getHttpsCallable(FETCH_REVIEW_ASSIGNMENTS)
+                    .call(mapOf(IDS to ids.sorted()))
+                    .await()
+                    .data
+            val root = data as? Map<*, *>
+            root?.list(ASSIGNMENTS).orEmpty().mapNotNull { it.toReviewAssignmentDto() }
+        }
     }
 
     override suspend fun submitReviewAction(action: SubmitReviewActionDto) {
@@ -52,15 +101,16 @@ class FirebaseReviewAssignmentRemoteDataSource(
 
     private fun Map<*, *>.toReviewAssignmentDto(): ReviewAssignmentDto? {
         val checks = map(CHECKS).toArenaReviewDto()
+        val requiredFields = requiredReviewAssignmentFields() ?: return null
         return ReviewAssignmentDto(
-            id = string(ID) ?: return null,
-            submissionId = string(SUBMISSION_ID) ?: return null,
-            ownerUid = string(OWNER_UID) ?: return null,
-            catalogId = string(CATALOG_ID) ?: return null,
-            draftId = string(DRAFT_ID) ?: return null,
-            questId = string(QUEST_ID) ?: return null,
-            lessonId = string(LESSON_ID) ?: return null,
-            title = string(TITLE) ?: return null,
+            id = requiredFields.id,
+            submissionId = requiredFields.submissionId,
+            ownerUid = requiredFields.ownerUid,
+            catalogId = requiredFields.catalogId,
+            draftId = requiredFields.draftId,
+            questId = requiredFields.questId,
+            lessonId = requiredFields.lessonId,
+            title = requiredFields.title,
             createdAtMs = long(CREATED_AT_MS),
             taskKinds = stringSet(TASK_KINDS),
             sourceLanguages = stringSet(SOURCE_LANGUAGES),
@@ -71,21 +121,53 @@ class FirebaseReviewAssignmentRemoteDataSource(
         )
     }
 
-    private fun Map<*, *>.toArenaQuestionDto(): ArenaQuestionDto? =
-        ArenaQuestionDto(
-            id = string(ID) ?: return null,
-            draftId = string(DRAFT_ID) ?: return null,
-            lessonId = string(LESSON_ID) ?: return null,
-            type = string(TYPE) ?: return null,
-            language = string(LANGUAGE) ?: return null,
+    private fun Map<*, *>.toArenaQuestionDto(): ArenaQuestionDto? {
+        val requiredFields = requiredArenaQuestionFields() ?: return null
+        return ArenaQuestionDto(
+            id = requiredFields.id,
+            draftId = requiredFields.draftId,
+            lessonId = requiredFields.lessonId,
+            type = requiredFields.type,
+            language = requiredFields.language,
             languageLevel = long(LANGUAGE_LEVEL).toInt(),
-            difficulty = string(DIFFICULTY) ?: return null,
+            difficulty = requiredFields.difficulty,
             order = long(ORDER).toInt(),
-            text = string(TEXT) ?: return null,
+            text = requiredFields.text,
             imagePath = string(IMAGE_PATH),
-            payload = string(PAYLOAD) ?: return null,
+            payload = requiredFields.payload,
             updatedAtMs = long(UPDATED_AT_MS),
         )
+    }
+
+    private fun Map<*, *>.requiredReviewAssignmentFields(): RequiredReviewAssignmentFields? {
+        val fields =
+            RequiredReviewAssignmentFields(
+                id = string(ID).orEmpty(),
+                submissionId = string(SUBMISSION_ID).orEmpty(),
+                ownerUid = string(OWNER_UID).orEmpty(),
+                catalogId = string(CATALOG_ID).orEmpty(),
+                draftId = string(DRAFT_ID).orEmpty(),
+                questId = string(QUEST_ID).orEmpty(),
+                lessonId = string(LESSON_ID).orEmpty(),
+                title = string(TITLE).orEmpty(),
+            )
+        return fields.takeIf { it.hasNoBlankValues() }
+    }
+
+    private fun Map<*, *>.requiredArenaQuestionFields(): RequiredArenaQuestionFields? {
+        val fields =
+            RequiredArenaQuestionFields(
+                id = string(ID).orEmpty(),
+                draftId = string(DRAFT_ID).orEmpty(),
+                lessonId = string(LESSON_ID).orEmpty(),
+                type = string(TYPE).orEmpty(),
+                language = string(LANGUAGE).orEmpty(),
+                difficulty = string(DIFFICULTY).orEmpty(),
+                text = string(TEXT).orEmpty(),
+                payload = string(PAYLOAD).orEmpty(),
+            )
+        return fields.takeIf { it.hasNoBlankValues() }
+    }
 
     private fun Map<*, *>.toArenaReviewDto(): ArenaReviewDto =
         ArenaReviewDto(

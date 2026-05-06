@@ -64,17 +64,13 @@ class FirebaseQuestPrivateRemoteDataSource(
         val themeDtos = mutableListOf<ArenaThemeDto>()
         val lessonDtos = mutableListOf<ArenaLessonDto>()
         val questionDtos = mutableListOf<ArenaQuestionDto>()
-        sections.forEach { section ->
-            section.reference.collection(THEMES_COLLECTION).get().await().documents.forEach { theme ->
-                themeDtos += theme.toThemeDto(id, section.id)
-                theme.reference.collection(LESSONS_COLLECTION).get().await().documents.forEach { lesson ->
-                    lessonDtos += lesson.toLessonDto(id, theme.id)
-                    lesson.reference.collection(QUESTIONS_COLLECTION).get().await().documents.forEach { question ->
-                        questionDtos += question.toQuestionDto(id, lesson.id)
-                    }
-                }
-            }
-        }
+        collectThemeLessonQuestionDtos(
+            sections = sections,
+            questId = id,
+            themeDtos = themeDtos,
+            lessonDtos = lessonDtos,
+            questionDtos = questionDtos,
+        )
         val revision = long(LOCAL_REVISION)
         val changedAtMs = long(CHANGED_AT_MS, fallback = changedAtMsFallback.takeIf { it > 0L } ?: long(UPDATED_AT_MS))
         return PrivateQuestSnapshot(
@@ -99,15 +95,53 @@ class FirebaseQuestPrivateRemoteDataSource(
         )
     }
 
+    private suspend fun collectThemeLessonQuestionDtos(
+        sections: List<DocumentSnapshot>,
+        questId: String,
+        themeDtos: MutableList<ArenaThemeDto>,
+        lessonDtos: MutableList<ArenaLessonDto>,
+        questionDtos: MutableList<ArenaQuestionDto>,
+    ) {
+        sections.forEach { section ->
+            section.reference.collection(THEMES_COLLECTION).get().await().documents.forEach { theme ->
+                themeDtos += theme.toThemeDto(questId, section.id)
+                collectLessonQuestionDtos(
+                    theme = theme,
+                    questId = questId,
+                    lessonDtos = lessonDtos,
+                    questionDtos = questionDtos,
+                )
+            }
+        }
+    }
+
+    private suspend fun collectLessonQuestionDtos(
+        theme: DocumentSnapshot,
+        questId: String,
+        lessonDtos: MutableList<ArenaLessonDto>,
+        questionDtos: MutableList<ArenaQuestionDto>,
+    ) {
+        theme.reference.collection(LESSONS_COLLECTION).get().await().documents.forEach { lesson ->
+            lessonDtos += lesson.toLessonDto(questId, theme.id)
+            lesson.reference.collection(QUESTIONS_COLLECTION).get().await().documents.forEach { question ->
+                questionDtos += question.toQuestionDto(questId, lesson.id)
+            }
+        }
+    }
+
     private fun DocumentSnapshot.toPrivateQuestSyncChange(): PrivateQuestSyncChange? {
-        val catalogId = getString(CATALOG_ID)?.takeIf { it.isNotBlank() } ?: return null
-        val questId = getString(QUEST_ID)?.takeIf { it.isNotBlank() } ?: return null
-        val changedAtMs = longOrNull(CHANGED_AT_MS) ?: return null
-        return PrivateQuestSyncChange(
-            catalogId = catalogId,
-            questId = questId,
-            changedAtMs = changedAtMs,
-        )
+        val catalogId = getString(CATALOG_ID)?.takeIf { it.isNotBlank() }
+        val questId = getString(QUEST_ID)?.takeIf { it.isNotBlank() }
+        val changedAtMs = longOrNull(CHANGED_AT_MS)
+        return if (catalogId != null && questId != null && changedAtMs != null) {
+            PrivateQuestSyncChange(
+                catalogId = catalogId,
+                questId = questId,
+                changedAtMs = changedAtMs,
+            )
+        } else {
+            null
+        }
     }
 
     private fun DocumentSnapshot.toDraftDto(catalogId: String): ArenaDraftDto =
@@ -198,8 +232,7 @@ class FirebaseQuestPrivateRemoteDataSource(
         fallback: Long = 0L,
     ): Long = longField(field) ?: fallback
 
-    private fun DocumentSnapshot.longOrNull(field: String): Long? =
-        millisField(field)
+    private fun DocumentSnapshot.longOrNull(field: String): Long? = millisField(field)
 
     private fun DocumentSnapshot.reviewMap(): Map<String, Any?> =
         (get(REVIEW) as? Map<*, *>).orEmpty().mapKeys { it.key.toString() }

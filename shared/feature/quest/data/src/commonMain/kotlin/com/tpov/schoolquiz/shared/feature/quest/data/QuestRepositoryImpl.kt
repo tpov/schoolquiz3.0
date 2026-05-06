@@ -58,6 +58,19 @@ class QuestRepositoryImpl(
         }
     }
 
+    override suspend fun setPublicShelf(
+        questId: QuestId,
+        targetShelf: String,
+    ): Result<Unit> =
+        try {
+            remote.setPublicShelf(questId.value, targetShelf)
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
     override suspend fun refreshFromRemote(
         currentUserUid: String?,
         availableShelves: Set<String>,

@@ -24,6 +24,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Fake
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.StubCatalogRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Test
@@ -70,9 +71,10 @@ class DefaultQuizzesComponentTest {
             stateKeeper = stateKeeper,
             backHandler = backHandler,
         )
+        val questRepository = FakeQuestRepository()
         return DefaultQuizzesComponent(
             componentContext = ctx,
-            questRepository = FakeQuestRepository(),
+            questRepository = questRepository,
             sectionRepository = FakeSectionRepository(),
             themeRepository = FakeThemeRepository(),
             lessonRepository = FakeLessonRepository(),
@@ -80,6 +82,7 @@ class DefaultQuizzesComponentTest {
             authRepository = FakeAuthRepository(),
             questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
+            setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
             mainContext = Dispatchers.Unconfined,
         )

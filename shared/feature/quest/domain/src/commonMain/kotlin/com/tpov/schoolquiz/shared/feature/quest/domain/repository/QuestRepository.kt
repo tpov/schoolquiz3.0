@@ -95,6 +95,18 @@ interface QuestRepository {
     suspend fun refreshByIds(ids: Set<QuestId>): Result<Unit> = Result.success(Unit)
 
     /**
+     * Developer-only server operation that moves a public quest to exactly one shelf.
+     *
+     * Server contract: updates `quests/{questId}.visibleOn = [targetShelf]`,
+     * bumps quest metadata, and writes one `catalogs/{catalogId}/sync_changes/quest_{questId}`
+     * record so clients refresh this single quest.
+     */
+    suspend fun setPublicShelf(
+        questId: QuestId,
+        targetShelf: String,
+    ): Result<Unit> = Result.success(Unit)
+
+    /**
      * Pulls quests from remote for the given filter and persists them locally.
      *
      * **No-op guard**: if [catalogIdsToSync] is empty, returns immediately without

@@ -10,6 +10,8 @@ interface QuestListComponent {
     val titles: List<String>
     val mode: QuestListMode
         get() = QuestListMode.Home
+    val selectionTargetShelf: String?
+        get() = null
 
     fun onQuestClick(quest: QuestDisplayItem)
 
@@ -18,4 +20,9 @@ interface QuestListComponent {
     fun onShareClick(quest: QuestDisplayItem)
 
     fun onRandomQuestClick() = Unit
+
+    fun onSetShelfClick(
+        quest: QuestDisplayItem,
+        targetShelf: String,
+    ) = Unit
 }

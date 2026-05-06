@@ -13,6 +13,11 @@ interface QuizzesNavigator {
 
     fun openCourseArena()
 
+    fun openPublicQuestCatalogPicker(
+        targetShelf: String,
+        title: String,
+    )
+
     fun openSectionList(
         questId: QuestId,
         titles: List<String>,

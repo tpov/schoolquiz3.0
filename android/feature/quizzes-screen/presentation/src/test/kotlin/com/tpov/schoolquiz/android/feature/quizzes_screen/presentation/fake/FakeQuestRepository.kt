@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 class FakeQuestRepository : QuestRepository {
 
     private val store = MutableStateFlow<List<Quest>>(emptyList())
+    val shelfSetRequests = mutableListOf<Pair<QuestId, String>>()
 
     override fun observeMyQuests(authorUid: String, catalogId: CatalogId?): Flow<List<Quest>> =
         store.map { list ->
@@ -38,6 +39,14 @@ class FakeQuestRepository : QuestRepository {
         catalogIdsToSync: Set<CatalogId>,
         cursor: Long,
     ): Result<Set<QuestId>> = Result.success(emptySet())
+
+    override suspend fun setPublicShelf(
+        questId: QuestId,
+        targetShelf: String,
+    ): Result<Unit> {
+        shelfSetRequests += questId to targetShelf
+        return Result.success(Unit)
+    }
 
     fun emit(quests: List<Quest>) { store.value = quests }
 }

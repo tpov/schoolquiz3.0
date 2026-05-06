@@ -25,6 +25,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonReposit
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
 import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepository
@@ -51,6 +52,7 @@ class DefaultQuizzesComponent(
     private val authRepository: AuthRepository,
     private val questionRepository: QuestionRepository,
     private val catalogRepository: CatalogRepository,
+    private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
     private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
@@ -143,6 +145,7 @@ class DefaultQuizzesComponent(
     private fun updateCurrentCatalogId(config: QuizzesConfig) {
         when (config) {
             QuizzesConfig.Idle -> currentCatalogId.value = null
+            is QuizzesConfig.PublicQuestCatalogPicker -> currentCatalogId.value = null
             is QuizzesConfig.QuestList -> currentCatalogId.value = config.catalogId
             // deeper drill-down levels — keep the previously-set catalog id
             is QuizzesConfig.SectionList,
@@ -155,6 +158,7 @@ class DefaultQuizzesComponent(
 
     private fun catalogNameFromConfig(config: QuizzesConfig): String? =
         when (config) {
+            is QuizzesConfig.PublicQuestCatalogPicker -> config.titles.lastOrNull()
             is QuizzesConfig.QuestList -> config.titles.getOrNull(1)
             is QuizzesConfig.SectionList -> config.titles.getOrNull(1)
             is QuizzesConfig.ThemeList -> config.titles.getOrNull(1)
@@ -192,6 +196,18 @@ class DefaultQuizzesComponent(
         )
     }
 
+    override fun openPublicQuestCatalogPicker(
+        targetShelf: String,
+        title: String,
+    ) {
+        navigation.pushNew(
+            QuizzesConfig.PublicQuestCatalogPicker(
+                targetShelf = targetShelf,
+                titles = listOf(title, "Каталоги"),
+            ),
+        )
+    }
+
     override fun openSectionList(
         questId: QuestId,
         titles: List<String>,
@@ -205,6 +221,7 @@ class DefaultQuizzesComponent(
         val titlesSize =
             when (val cfg = active.configuration) {
                 is QuizzesConfig.Idle -> 0
+                is QuizzesConfig.PublicQuestCatalogPicker -> cfg.titles.size
                 is QuizzesConfig.QuestList -> cfg.titles.size
                 is QuizzesConfig.SectionList -> cfg.titles.size
                 is QuizzesConfig.ThemeList -> cfg.titles.size
@@ -243,6 +260,16 @@ class DefaultQuizzesComponent(
         when (config) {
             is QuizzesConfig.Idle ->
                 QuizzesChild.Idle
+            is QuizzesConfig.PublicQuestCatalogPicker ->
+                QuizzesChild.PublicQuestCatalogPicker(
+                    DefaultPublicQuestCatalogPickerComponent(
+                        componentContext = ctx,
+                        config = config,
+                        catalogRepository = catalogRepository,
+                        navigation = navigation,
+                        coroutineContext = mainContext,
+                    ),
+                )
             is QuizzesConfig.QuestList ->
                 QuizzesChild.QuestList(
                     DefaultQuestListComponent(
@@ -253,6 +280,7 @@ class DefaultQuizzesComponent(
                         themeRepository,
                         lessonRepository,
                         questionRepository,
+                        setPublicQuestShelf,
                         questContentSync,
                         navigation,
                         mainContext,
@@ -288,6 +316,7 @@ class DefaultQuizzesComponent(
     private fun isArchiveNavigationPath(config: QuizzesConfig): Boolean =
         when (config) {
             QuizzesConfig.Idle -> false
+            is QuizzesConfig.PublicQuestCatalogPicker -> false
             is QuizzesConfig.QuestList -> config.mode == QuestListMode.Archive
             is QuizzesConfig.SectionList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
             is QuizzesConfig.ThemeList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE

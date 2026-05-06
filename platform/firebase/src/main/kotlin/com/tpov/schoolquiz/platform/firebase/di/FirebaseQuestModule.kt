@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 val firebaseQuestModule =
     module {
-        single<QuestRemoteDataSource> { FirebaseQuestRemoteDataSource(get()) }
+        single<QuestRemoteDataSource> { FirebaseQuestRemoteDataSource(get(), get()) }
     }

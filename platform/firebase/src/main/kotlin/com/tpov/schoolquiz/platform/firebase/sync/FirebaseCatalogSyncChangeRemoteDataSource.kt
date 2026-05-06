@@ -28,15 +28,19 @@ class FirebaseCatalogSyncChangeRemoteDataSource(
 }
 
 private fun DocumentSnapshot.toCatalogSyncChange(catalogId: CatalogId): CatalogSyncChange? {
-    val type = getString("type").toSyncNodeType() ?: return null
-    val nodeId = getString("id")?.takeIf { it.isNotBlank() } ?: return null
-    val changedAtMs = millisField("changedAtMs") ?: return null
-    return CatalogSyncChange(
-        catalogId = catalogId,
-        type = type,
-        nodeId = nodeId,
-        changedAtMs = changedAtMs,
-    )
+    val type = getString("type").toSyncNodeType()
+    val nodeId = getString("id")?.takeIf { it.isNotBlank() }
+    val changedAtMs = millisField("changedAtMs")
+    return if (type != null && nodeId != null && changedAtMs != null) {
+        CatalogSyncChange(
+            catalogId = catalogId,
+            type = type,
+            nodeId = nodeId,
+            changedAtMs = changedAtMs,
+        )
+    } else {
+        null
+    }
 }
 
 private fun String?.toSyncNodeType(): CatalogSyncNodeType? =

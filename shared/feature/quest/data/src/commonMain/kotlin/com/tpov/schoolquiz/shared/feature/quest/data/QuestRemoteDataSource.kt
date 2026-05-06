@@ -18,4 +18,10 @@ interface QuestRemoteDataSource {
         shelves: Set<String>,
         cursor: Long,
     ): List<QuestDto>
+
+    /** Developer-only callable: sets `quests/{questId}.visibleOn` to exactly [targetShelf]. */
+    suspend fun setPublicShelf(
+        questId: String,
+        targetShelf: String,
+    ) = Unit
 }

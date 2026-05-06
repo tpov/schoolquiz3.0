@@ -28,15 +28,19 @@ class FirebaseLessonContentSyncChangeRemoteDataSource(
 }
 
 private fun DocumentSnapshot.toLessonContentSyncChange(lessonId: LessonId): LessonContentSyncChange? {
-    val type = getString("type").toSyncNodeType() ?: return null
-    val nodeId = getString("id")?.takeIf { it.isNotBlank() } ?: return null
-    val changedAtMs = millisField("changedAtMs") ?: return null
-    return LessonContentSyncChange(
-        lessonId = lessonId,
-        type = type,
-        nodeId = nodeId,
-        changedAtMs = changedAtMs,
-    )
+    val type = getString("type").toSyncNodeType()
+    val nodeId = getString("id")?.takeIf { it.isNotBlank() }
+    val changedAtMs = millisField("changedAtMs")
+    return if (type != null && nodeId != null && changedAtMs != null) {
+        LessonContentSyncChange(
+            lessonId = lessonId,
+            type = type,
+            nodeId = nodeId,
+            changedAtMs = changedAtMs,
+        )
+    } else {
+        null
+    }
 }
 
 private fun String?.toSyncNodeType(): CatalogSyncNodeType? =

@@ -9,11 +9,18 @@ sealed class QuizzesConfig {
     data object Idle : QuizzesConfig()
 
     @Serializable
+    data class PublicQuestCatalogPicker(
+        val targetShelf: String,
+        val titles: List<String>,
+    ) : QuizzesConfig()
+
+    @Serializable
     data class QuestList(
         val catalogId: String,
         val titles: List<String>,
         val shelf: String = "home",
         val mode: QuestListMode = QuestListMode.Home,
+        val selectionTargetShelf: String? = null,
     ) : QuizzesConfig()
 
     @Serializable

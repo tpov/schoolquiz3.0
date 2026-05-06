@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
+private const val COURSES_CATALOG_ID = "courses"
+
 /**
  * Default implementation of [HomeQuestsComponent].
  *
@@ -49,7 +51,10 @@ class DefaultHomeQuestsComponent(
             giftBoxOpening,
         ) { catalogs, profile, opening ->
             HomeQuestsUiState(
-                catalogs = catalogs.map { it.toDisplayItem() },
+                catalogs =
+                    catalogs
+                        .filterNot { it.id.value == COURSES_CATALOG_ID }
+                        .map { it.toDisplayItem() },
                 giftBoxCount = profile.boxCount,
                 giftBoxStreakDays = profile.boxStreakDays,
                 giftBoxOpening = opening,

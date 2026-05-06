@@ -6,6 +6,9 @@ import com.tpov.schoolquiz.shared.core.catalog.data.CatalogDto
 import com.tpov.schoolquiz.shared.core.catalog.data.CatalogRemoteDataSource
 import kotlinx.coroutines.tasks.await
 
+private const val MILLIS_PER_SECOND = 1_000L
+private const val NANOS_PER_MILLI = 1_000_000L
+
 class FirebaseCatalogRemoteDataSource(
     private val firestore: FirebaseFirestore,
 ) : CatalogRemoteDataSource {
@@ -32,4 +35,5 @@ class FirebaseCatalogRemoteDataSource(
     }
 }
 
-internal fun Long.toTimestamp(): Timestamp = Timestamp(this / 1000L, ((this % 1000L) * 1_000_000L).toInt())
+internal fun Long.toTimestamp(): Timestamp =
+    Timestamp(this / MILLIS_PER_SECOND, ((this % MILLIS_PER_SECOND) * NANOS_PER_MILLI).toInt())

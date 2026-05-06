@@ -66,6 +66,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.Q
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.ReviewQueueScreen
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
+import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
@@ -82,6 +83,7 @@ import kotlinx.coroutines.launch
 private const val TAB_CROSSFADE_DURATION_MS = 300
 private const val MAIN_INDICATOR_ALPHA = 0.14f
 private const val CLEAN_INDICATOR_ALPHA = 0.08f
+private const val HOME_SHELF = "home"
 
 /**
  * Root shell Composable.
@@ -182,6 +184,7 @@ fun AppShellScreen(
     val canSeeDesignCatalog =
         visibleFooterActions(isDebugBuild, state.userStats)
             .contains(DrawerFooterAction.DesignCatalog)
+    val canManagePublicShelves = state.userStats.qualification.developer > QualificationLevel.LEVEL_1.points
 
     CompositionLocalProvider(LocalScrollToTopRegistry provides registry) {
         ModalNavigationDrawer(
@@ -267,6 +270,7 @@ fun AppShellScreen(
                         activeTab = state.activeTab,
                         paddingValues = paddingValues,
                         canSeeDesignCatalog = canSeeDesignCatalog,
+                        canManagePublicShelves = canManagePublicShelves,
                         selectedDesignStyle = selectedDesignStyle,
                         onDesignStyleSelected = onDesignStyleSelected,
                     )
@@ -278,7 +282,10 @@ fun AppShellScreen(
                                 Modifier.fillMaxSize().padding(paddingValues)
                             }
                         Box(modifier = overlayModifier) {
-                            QuizzesScreen(rootComponent.quizzesComponent)
+                            QuizzesScreen(
+                                component = rootComponent.quizzesComponent,
+                                canManagePublicShelves = canManagePublicShelves,
+                            )
                         }
                     }
                 }
@@ -294,6 +301,7 @@ private fun AppShellContent(
     activeTab: Tab,
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
+    canManagePublicShelves: Boolean,
     selectedDesignStyle: SchoolQuizDesignStyle,
     onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
@@ -313,6 +321,7 @@ private fun AppShellContent(
                         screen = child.instance,
                         paddingValues = paddingValues,
                         canSeeDesignCatalog = canSeeDesignCatalog,
+                        canManagePublicShelves = canManagePublicShelves,
                         selectedDesignStyle = selectedDesignStyle,
                         onDesignStyleSelected = onDesignStyleSelected,
                     )
@@ -389,6 +398,7 @@ private fun LocalTabContent(
     screen: LocalScreenComponent,
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
+    canManagePublicShelves: Boolean,
     selectedDesignStyle: SchoolQuizDesignStyle,
     onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
@@ -405,7 +415,11 @@ private fun LocalTabContent(
                 is LocalConfig.MyQuestsRoot ->
                     MyQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
                 is LocalConfig.HomeQuestsRoot ->
-                    HomeQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
+                    HomeQuestsContent(
+                        rootComponent = rootComponent,
+                        paddingValues = paddingValues,
+                        canManagePublicShelves = canManagePublicShelves,
+                    )
                 is LocalConfig.ArchiveRoot ->
                     CourseArchiveContent(rootComponent = rootComponent, paddingValues = paddingValues)
                 is LocalConfig.ReviewQueueRoot ->
@@ -457,8 +471,19 @@ private fun MyQuestsContent(
 private fun HomeQuestsContent(
     rootComponent: DefaultRootComponent,
     paddingValues: PaddingValues,
+    canManagePublicShelves: Boolean,
 ) {
-    HomeQuestsScreen(component = rootComponent.homeQuestsComponent, modifier = Modifier.padding(paddingValues))
+    HomeQuestsScreen(
+        component = rootComponent.homeQuestsComponent,
+        modifier = Modifier.padding(paddingValues),
+        canManagePublicShelves = canManagePublicShelves,
+        onAddPublicQuestClick = {
+            rootComponent.quizzesComponent.openPublicQuestCatalogPicker(
+                targetShelf = HOME_SHELF,
+                title = "Домашние квесты",
+            )
+        },
+    )
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

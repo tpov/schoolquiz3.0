@@ -1,4 +1,4 @@
-@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@file:Suppress("FunctionNaming", "MagicNumber", "ktlint:standard:function-naming")
 
 package com.tpov.schoolquiz.android.feature.internet.profile.presentation.screen
 
@@ -176,7 +176,7 @@ private fun ProfileDashboardCard(
                 onRefresh = onRefresh,
             )
             MetricStrip(profile = profile, metrics = metrics)
-            ProfileCharts(profile = profile, metrics = metrics)
+            ProfileCharts(metrics = metrics)
         }
     }
 }
@@ -328,10 +328,7 @@ private fun MetricPill(
 }
 
 @Composable
-private fun ProfileCharts(
-    profile: UserProfile,
-    metrics: ProfileDashboardMetrics,
-) {
+private fun ProfileCharts(metrics: ProfileDashboardMetrics) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         if (maxWidth < 520.dp) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {

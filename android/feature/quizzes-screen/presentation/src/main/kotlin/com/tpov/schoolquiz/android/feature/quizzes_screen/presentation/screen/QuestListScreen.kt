@@ -1,11 +1,15 @@
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,16 +59,35 @@ private const val PREVIEW_ALGEBRA_RATING_COUNT = 42
 private const val PREVIEW_TRIGONOMETRY_RATING = 3.0f
 private const val PREVIEW_TRIGONOMETRY_RATING_COUNT = 7
 
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+private data class PublicShelfAction(
+    val shelf: String,
+    val label: String,
+)
+
+private data class QuestListItemActions(
+    val onClick: () -> Unit,
+    val onLongClick: () -> Unit,
+    val onDismissMenu: () -> Unit,
+    val onDownloadClick: () -> Unit,
+    val onShareClick: () -> Unit,
+    val onSetShelfClick: (String) -> Unit,
+)
+
+private val publicShelfActions =
+    listOf(
+        PublicShelfAction("home", "Показать в домашних"),
+        PublicShelfAction("arena", "Показать на арене"),
+        PublicShelfAction("tournament", "Показать в отборочном"),
+        PublicShelfAction("tournamentFinal", "Показать в чемпионате мира"),
+    )
+
 @Composable
 fun QuestListScreen(
     component: QuestListComponent,
     onSegmentClick: (Int) -> Unit,
+    canManagePublicShelves: Boolean = false,
 ) {
     val uiState by component.uiState.subscribeAsState()
-    val lazyListState = rememberLazyListState()
-    val context = LocalContext.current
-    var expandedQuestId by remember { mutableStateOf<QuestId?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
@@ -89,91 +112,159 @@ fun QuestListScreen(
                     )
                 }
             is QuestListUiState.Loaded ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    val isArena = component.mode == QuestListMode.Arena
-                    val useArenaRatingStyle = isArena || component.mode == QuestListMode.Archive
-                    LazyColumn(
-                        state = lazyListState,
-                        contentPadding =
-                            PaddingValues(
-                                start = 16.dp,
-                                end = 16.dp,
-                                bottom = if (isArena) 96.dp else 24.dp,
-                            ),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
-                            Box {
-                                HierarchyItemCard(
-                                    title = quest.title,
-                                    orderLabel = "${index + 1}.",
-                                    rating = quest.averageRating,
-                                    ratingCount = quest.averageRatingCount,
-                                    ratingTint = if (useArenaRatingStyle) MaterialTheme.colorScheme.secondary else null,
-                                    onClick = { component.onQuestClick(quest) },
-                                    onLongClick = { expandedQuestId = quest.id },
-                                    downloadStatus = quest.downloadStatus,
-                                    onDownloadClick = { component.onQuestDownloadClick(quest) },
-                                )
-                                DropdownMenu(
-                                    expanded = expandedQuestId == quest.id,
-                                    onDismissRequest = { expandedQuestId = null },
-                                    modifier = Modifier.testTag("quest_menu"),
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Поделиться") },
-                                        onClick = {
-                                            expandedQuestId = null
-                                            val appName =
-                                                context.applicationInfo
-                                                    .loadLabel(context.packageManager).toString()
-                                            val shareText = "Квест «${quest.title}» — $appName"
-                                            val intent =
-                                                Intent(Intent.ACTION_SEND).apply {
-                                                    type = "text/plain"
-                                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                                }
-                                            try {
-                                                context.startActivity(Intent.createChooser(intent, null))
-                                            } catch (e: ActivityNotFoundException) {
-                                                Log.w(TAG, "Share unavailable", e)
-                                            }
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    if (isArena && state.quests.isNotEmpty()) {
-                        FloatingActionButton(
-                            onClick = component::onRandomQuestClick,
-                            containerColor = MaterialTheme.colorScheme.secondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondary,
-                            modifier =
-                                Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(16.dp)
-                                    .testTag("arena_random_quest_fab"),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SportsEsports,
-                                contentDescription = "Случайный квест",
-                            )
-                        }
-                    }
-                    if (expandedQuestId != null) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .testTag("quest_menu_dismiss_layer")
-                                    .pointerInput(expandedQuestId) {
-                                        detectTapGestures { expandedQuestId = null }
-                                    },
-                        )
-                    }
-                }
+                QuestListLoadedContent(
+                    component = component,
+                    state = state,
+                    canManagePublicShelves = canManagePublicShelves,
+                )
         }
+    }
+}
+
+@Composable
+private fun QuestListLoadedContent(
+    component: QuestListComponent,
+    state: QuestListUiState.Loaded,
+    canManagePublicShelves: Boolean,
+) {
+    val lazyListState = rememberLazyListState()
+    val context = LocalContext.current
+    var expandedQuestId by remember { mutableStateOf<QuestId?>(null) }
+    val isArena = component.mode == QuestListMode.Arena
+    val isSelectionMode = component.selectionTargetShelf != null
+    val useArenaRatingStyle = isArena || component.mode == QuestListMode.Archive
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = lazyListState,
+            contentPadding =
+                PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = if (isArena && !isSelectionMode) 96.dp else 24.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
+                QuestListItem(
+                    quest = quest,
+                    orderLabel = "${index + 1}.",
+                    isMenuExpanded = expandedQuestId == quest.id,
+                    useArenaRatingStyle = useArenaRatingStyle,
+                    canManagePublicShelves = canManagePublicShelves,
+                    actions =
+                        QuestListItemActions(
+                            onClick = { component.onQuestClick(quest) },
+                            onLongClick = { expandedQuestId = quest.id },
+                            onDismissMenu = { expandedQuestId = null },
+                            onDownloadClick = { component.onQuestDownloadClick(quest) },
+                            onShareClick = {
+                                expandedQuestId = null
+                                shareQuest(context, quest)
+                            },
+                            onSetShelfClick = { targetShelf ->
+                                expandedQuestId = null
+                                component.onSetShelfClick(quest, targetShelf)
+                            },
+                        ),
+                )
+            }
+        }
+        if (isArena && !isSelectionMode && state.quests.isNotEmpty()) {
+            ArenaRandomQuestFab(onClick = component::onRandomQuestClick)
+        }
+        if (expandedQuestId != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .testTag("quest_menu_dismiss_layer")
+                        .pointerInput(expandedQuestId) {
+                            detectTapGestures { expandedQuestId = null }
+                        },
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuestListItem(
+    quest: QuestDisplayItem,
+    orderLabel: String,
+    isMenuExpanded: Boolean,
+    useArenaRatingStyle: Boolean,
+    canManagePublicShelves: Boolean,
+    actions: QuestListItemActions,
+) {
+    Box {
+        HierarchyItemCard(
+            title = quest.title,
+            orderLabel = orderLabel,
+            rating = quest.averageRating,
+            ratingCount = quest.averageRatingCount,
+            ratingTint = if (useArenaRatingStyle) MaterialTheme.colorScheme.secondary else null,
+            onClick = actions.onClick,
+            onLongClick = actions.onLongClick,
+            downloadStatus = quest.downloadStatus,
+            onDownloadClick = actions.onDownloadClick,
+        )
+        DropdownMenu(
+            expanded = isMenuExpanded,
+            onDismissRequest = actions.onDismissMenu,
+            modifier = Modifier.testTag("quest_menu"),
+        ) {
+            DropdownMenuItem(
+                text = { Text("Поделиться") },
+                onClick = actions.onShareClick,
+            )
+            if (canManagePublicShelves) {
+                publicShelfActions.forEach { action ->
+                    DropdownMenuItem(
+                        text = { Text(action.label) },
+                        onClick = { actions.onSetShelfClick(action.shelf) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.ArenaRandomQuestFab(onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onClick,
+        containerColor = MaterialTheme.colorScheme.secondary,
+        contentColor = MaterialTheme.colorScheme.onSecondary,
+        modifier =
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .testTag("arena_random_quest_fab"),
+    ) {
+        Icon(
+            imageVector = Icons.Default.SportsEsports,
+            contentDescription = "Случайный квест",
+        )
+    }
+}
+
+private fun shareQuest(
+    context: Context,
+    quest: QuestDisplayItem,
+) {
+    val appName =
+        context.applicationInfo
+            .loadLabel(context.packageManager).toString()
+    val shareText = "Квест «${quest.title}» — $appName"
+    val intent =
+        Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, shareText)
+        }
+    try {
+        context.startActivity(Intent.createChooser(intent, null))
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "Share unavailable", e)
     }
 }
 

@@ -2,8 +2,8 @@ package com.tpov.schoolquiz.platform.firebase
 
 import android.app.Application
 import com.google.firebase.FirebaseApp
-import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.AppCheckProviderFactory
+import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 
 fun initializeFirebaseSecurity(

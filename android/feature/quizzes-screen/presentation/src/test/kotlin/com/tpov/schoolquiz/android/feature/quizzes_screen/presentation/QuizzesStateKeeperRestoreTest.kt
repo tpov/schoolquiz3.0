@@ -7,10 +7,10 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
@@ -21,6 +21,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.Stub
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Test
@@ -77,9 +78,10 @@ class QuizzesStateKeeperRestoreTest {
             stateKeeper = stateKeeper,
             backHandler = backDispatcher,
         )
+        val questRepository = FakeQuestRepository()
         return DefaultQuizzesComponent(
             componentContext = ctx,
-            questRepository = FakeQuestRepository(),
+            questRepository = questRepository,
             sectionRepository = FakeSectionRepository(),
             themeRepository = FakeThemeRepository(),
             lessonRepository = FakeLessonRepository(),
@@ -87,6 +89,7 @@ class QuizzesStateKeeperRestoreTest {
             authRepository = FakeAuthRepository(),
             questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
+            setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
             lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
             mainContext = Dispatchers.Unconfined,
         )

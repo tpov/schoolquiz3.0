@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.componen
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.popToFirst
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
@@ -16,6 +17,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonReposit
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
@@ -44,6 +46,7 @@ class DefaultQuestListComponent(
     private val themeRepository: ThemeRepository,
     private val lessonRepository: LessonRepository,
     private val questionRepository: QuestionRepository,
+    private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
     private val questContentSync: suspend (QuestId) -> Result<Unit>,
     private val navigation: StackNavigation<QuizzesConfig>,
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
@@ -54,6 +57,7 @@ class DefaultQuestListComponent(
     private val catalogId = CatalogId(config.catalogId)
     override val titles: List<String> = config.titles
     override val mode: QuestListMode = config.mode
+    override val selectionTargetShelf: String? = config.selectionTargetShelf
     private val isCoursesCatalog = catalogId.value == COURSES_CATALOG_ID
     private val sourceShelf =
         when {
@@ -96,6 +100,11 @@ class DefaultQuestListComponent(
     }
 
     override fun onQuestClick(quest: QuestDisplayItem) {
+        val targetShelf = selectionTargetShelf
+        if (targetShelf != null) {
+            setQuestShelf(quest, targetShelf, dismissOnSuccess = true)
+            return
+        }
         navigation.pushNew(
             QuizzesConfig.SectionList(
                 questId = quest.id.value,
@@ -127,6 +136,29 @@ class DefaultQuestListComponent(
     override fun onRandomQuestClick() {
         if (mode != QuestListMode.Arena) return
         currentQuestItems.randomOrNull()?.let(::onQuestClick)
+    }
+
+    override fun onSetShelfClick(
+        quest: QuestDisplayItem,
+        targetShelf: String,
+    ) {
+        setQuestShelf(quest, targetShelf, dismissOnSuccess = false)
+    }
+
+    private fun setQuestShelf(
+        quest: QuestDisplayItem,
+        targetShelf: String,
+        dismissOnSuccess: Boolean,
+    ) {
+        scope.launch {
+            setPublicQuestShelf.execute(quest.id, targetShelf)
+                .onSuccess {
+                    questRepository.refreshByIds(setOf(quest.id))
+                    if (dismissOnSuccess) {
+                        navigation.popToFirst()
+                    }
+                }
+        }
     }
 
     private fun mapToUi(

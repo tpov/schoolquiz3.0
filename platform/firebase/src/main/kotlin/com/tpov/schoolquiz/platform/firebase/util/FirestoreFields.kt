@@ -31,5 +31,4 @@ internal fun DocumentSnapshot.booleanField(field: String): Boolean? =
         else -> null
     }
 
-internal fun DocumentSnapshot.millisField(field: String): Long? =
-    longField(field)
+internal fun DocumentSnapshot.millisField(field: String): Long? = longField(field)

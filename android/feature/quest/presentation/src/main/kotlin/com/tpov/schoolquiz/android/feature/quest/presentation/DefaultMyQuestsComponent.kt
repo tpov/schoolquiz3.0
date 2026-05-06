@@ -43,6 +43,7 @@ import kotlin.coroutines.CoroutineContext
  * ADR-CMP-51: Decompose Component pattern + instanceKeeper retention.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("LongParameterList")
 class DefaultMyQuestsComponent(
     componentContext: ComponentContext,
     private val authRepo: AuthRepository,

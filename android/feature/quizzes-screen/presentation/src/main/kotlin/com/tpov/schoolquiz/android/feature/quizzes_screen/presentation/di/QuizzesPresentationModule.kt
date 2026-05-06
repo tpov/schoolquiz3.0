@@ -21,6 +21,7 @@ val quizzesPresentationModule =
                 authRepository = get(),
                 questionRepository = get(),
                 catalogRepository = get(),
+                setPublicQuestShelf = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
                 questContentSync = contentSync?.let { it::syncQuestContent } ?: { Result.success(Unit) },
                 lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { Result.success(Unit) },

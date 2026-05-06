@@ -60,6 +60,7 @@ import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.ObserveMyQuestsUseCase
+import com.tpov.schoolquiz.shared.feature.quest.domain.use_case.SetPublicQuestShelfUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.ObserveQuestDraftSummariesUseCase
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
@@ -171,6 +172,7 @@ class QuizzesRootIntegrationTest {
 
         override fun openCourseArchive() = Unit
         override fun openCourseArena() = Unit
+        override fun openPublicQuestCatalogPicker(targetShelf: String, title: String) = Unit
 
         override fun openSectionList(questId: QuestId, titles: List<String>) {
             openSectionListArgs = OpenSectionListArgs(questId, titles)
@@ -254,15 +256,22 @@ class QuizzesRootIntegrationTest {
         homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         quizzesFactory = { ctx ->
-            DefaultQuizzesComponent(
-                componentContext = ctx,
-                questRepository = object : QuestRepository {
+            val questRepository =
+                object : QuestRepository {
                     override fun observeMyQuests(authorUid: String, catalogId: CatalogId?): Flow<List<Quest>> = flowOf(emptyList())
                     override fun observeByCatalog(catalogId: CatalogId, shelf: String): Flow<List<Quest>> = flowOf(emptyList())
                     override fun observeByShelf(shelf: String): Flow<List<Quest>> = flowOf(emptyList())
                     override suspend fun getById(id: QuestId): Quest? = null
-                    override suspend fun refreshFromRemote(currentUserUid: String?, availableShelves: Set<String>, catalogIdsToSync: Set<CatalogId>, cursor: Long): Result<Set<QuestId>> = Result.success(emptySet())
-                },
+                    override suspend fun refreshFromRemote(
+                        currentUserUid: String?,
+                        availableShelves: Set<String>,
+                        catalogIdsToSync: Set<CatalogId>,
+                        cursor: Long,
+                    ): Result<Set<QuestId>> = Result.success(emptySet())
+                }
+            DefaultQuizzesComponent(
+                componentContext = ctx,
+                questRepository = questRepository,
                 sectionRepository = object : SectionRepository {
                     override fun observeByQuest(questId: QuestId): Flow<List<Section>> = flowOf(emptyList())
                     override suspend fun getById(id: SectionId): Section? = null
@@ -300,6 +309,7 @@ class QuizzesRootIntegrationTest {
                     override suspend fun refreshFromRemote(): Result<Set<CatalogId>> = Result.success(emptySet())
                     override suspend fun getById(id: CatalogId): Catalog? = null
                 },
+                setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
                 mainContext = testDispatcher,
             )

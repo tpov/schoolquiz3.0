@@ -63,6 +63,16 @@ class QuizzesConfigSerializationTest {
         assertEquals(original, decoded)
     }
 
+    @Test
+    fun `QuizzesConfig PublicQuestCatalogPicker round-trip`() {
+        val original = QuizzesConfig.PublicQuestCatalogPicker(
+            targetShelf = "tournamentFinal",
+            titles = listOf("Чемпионат мира", "Каталоги"),
+        )
+        val decoded = roundTrip(original)
+        assertEquals(original, decoded)
+    }
+
     // ── SER-03 — QuizzesConfig.SectionList ───────────────────────────────────
 
     /**
