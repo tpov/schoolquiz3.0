@@ -44,6 +44,8 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLess
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestion
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionType
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARCHIVE_TARGET_SHELF
+import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QUEST_ARENA_TARGET_SHELF
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.CreateQuestDraftUseCase
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.use_case.GetActiveQuestDraftUseCase
@@ -190,8 +192,26 @@ class DefaultQuestCreateComponent(
     }
 
     override fun onSubmitToArenaClick() {
+        submitNodeToArena(
+            target = QuestArenaTargetNode.QUEST,
+            targetShelfOverride = QUEST_ARENA_TARGET_SHELF,
+        )
+    }
+
+    override fun onSubmitNodeToArenaLongClick(target: QuestArenaTargetNode) {
+        submitNodeToArena(target)
+    }
+
+    private fun submitNodeToArena(
+        target: QuestArenaTargetNode,
+        targetShelfOverride: String? = null,
+    ) {
         val uid = ownerUid
-        val draftId = activeBundle?.draft?.id
+        val bundle = activeBundle
+        val draftId = bundle?.draft?.id
+        val targetShelf = targetShelfOverride ?: _state.value.targetShelf()
+        val lessonIds = bundle?.targetLessonIds(target).orEmpty()
+        val targetTitle = target.submissionTitle(targetShelf)
         when {
             uid == null ->
                 _state.update {
@@ -203,7 +223,14 @@ class DefaultQuestCreateComponent(
             draftId == null ->
                 _state.update {
                     it.copy(
-                        errorMessage = "Сначала создайте черновик",
+                        errorMessage = "Сначала сохраните квест",
+                        arenaMessage = null,
+                    )
+                }
+            lessonIds.isEmpty() ->
+                _state.update {
+                    it.copy(
+                        errorMessage = "В выбранном узле нет уроков для отправки",
                         arenaMessage = null,
                     )
                 }
@@ -216,14 +243,19 @@ class DefaultQuestCreateComponent(
                             arenaMessage = null,
                         )
                     }
-                    val result = submitQuestDraftToArena(draftId)
+                    val result =
+                        submitQuestDraftToArena(
+                            draftId = draftId,
+                            lessonIds = lessonIds,
+                            targetShelf = targetShelf,
+                        )
                     if (result.isSuccess) {
                         refreshActiveDraft(uid)
                         _state.update {
                             it.copy(
                                 isSubmittingToArena = false,
                                 errorMessage = null,
-                                arenaMessage = "Квест поставлен в очередь отправки на арену",
+                                arenaMessage = "$targetTitle поставлен в очередь",
                             )
                         }
                     } else {
@@ -277,7 +309,7 @@ class DefaultQuestCreateComponent(
                 _state.update {
                     it.copy(
                         isCreating = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Не удалось сохранить черновик",
+                        errorMessage = result.exceptionOrNull()?.message ?: "Не удалось сохранить квест",
                     )
                 }
             }
@@ -1281,6 +1313,36 @@ class DefaultQuestCreateComponent(
             ?.filter { it.lessonId == lessonId }
             ?.maxOfOrNull { it.order + 1 }
             ?: 0
+
+    private fun QuestAuthoringBundle.targetLessonIds(target: QuestArenaTargetNode): Set<DraftLessonId> {
+        val sortedSections = sections.sortedWith(compareBy { it.order })
+        val sortedThemes = themes.sortedWith(compareBy { it.order })
+        val sortedLessons = lessons.sortedForEditor()
+        return when (target) {
+            QuestArenaTargetNode.QUEST -> sortedLessons.mapTo(linkedSetOf()) { it.id }
+            QuestArenaTargetNode.SECTION -> {
+                val sectionId = sortedSections.firstOrNull()?.id
+                if (sectionId == null) {
+                    emptySet()
+                } else {
+                    val themeIds =
+                        sortedThemes
+                            .filter { it.sectionId == sectionId }
+                            .mapTo(linkedSetOf()) { it.id }
+                    sortedLessons.filter { it.themeId in themeIds }.mapTo(linkedSetOf()) { it.id }
+                }
+            }
+            QuestArenaTargetNode.THEME -> {
+                val themeId = sortedThemes.firstOrNull()?.id
+                if (themeId == null) {
+                    emptySet()
+                } else {
+                    sortedLessons.filter { it.themeId == themeId }.mapTo(linkedSetOf()) { it.id }
+                }
+            }
+            QuestArenaTargetNode.LESSON -> sortedLessons.firstOrNull()?.let { linkedSetOf(it.id) }.orEmpty()
+        }
+    }
 }
 
 private val DraftQuestionType.title: String
@@ -1365,9 +1427,33 @@ private fun QuestCreateUiState.structureValidationError(): String? =
 
 private fun Throwable?.arenaSubmissionErrorMessage(): String =
     when (this) {
-        is IllegalArgumentException -> "Для арены нужны сохраненные легкие и сложные вопросы без ошибок"
+        is IllegalArgumentException -> "Для отправки нужны сохраненные легкие и сложные вопросы в каждом уроке"
         else -> this?.message ?: "Не удалось поставить квест в очередь арены"
     }
+
+private fun QuestCreateUiState.targetShelf(): String =
+    if (selectedCatalogId?.value == "courses") {
+        QUEST_ARCHIVE_TARGET_SHELF
+    } else {
+        QUEST_ARENA_TARGET_SHELF
+    }
+
+private fun QuestArenaTargetNode.submissionTitle(targetShelf: String): String {
+    val destination =
+        if (targetShelf == QUEST_ARCHIVE_TARGET_SHELF) {
+            "архив"
+        } else {
+            "арену"
+        }
+    val node =
+        when (this) {
+            QuestArenaTargetNode.QUEST -> "Квест"
+            QuestArenaTargetNode.SECTION -> "Раздел"
+            QuestArenaTargetNode.THEME -> "Тема"
+            QuestArenaTargetNode.LESSON -> "Урок"
+        }
+    return "$node на $destination"
+}
 
 private fun String.appendFillBlankMarker(kind: FillBlankMarkerKind): String {
     val marker =

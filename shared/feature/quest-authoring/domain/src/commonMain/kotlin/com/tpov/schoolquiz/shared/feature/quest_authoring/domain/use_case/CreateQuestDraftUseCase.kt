@@ -36,7 +36,7 @@ class CreateQuestDraftUseCase(
                 description = command.description?.trim()?.takeIf { it.isNotEmpty() },
                 defaultLanguage = command.defaultLanguage,
                 defaultDifficulty = command.defaultDifficulty,
-                status = QuestDraftStatus.DRAFT,
+                status = QuestDraftStatus.SAVED,
                 localRevision = 1L,
                 serverRevision = null,
                 publicQuestId = command.sourceQuestId,

@@ -47,7 +47,7 @@ class QuestAuthoringRepositoryImplTest {
                 id = "draft-1",
                 catalogId = "catalog-1",
                 title = "My draft",
-                status = "DRAFT",
+                status = "SAVED",
                 questionCount = 2,
                 updatedAtMs = 42L,
                 isActive = true,
@@ -59,7 +59,7 @@ class QuestAuthoringRepositoryImplTest {
         assertEquals(1, result.size)
         assertEquals(QuestDraftId("draft-1"), result.first().id)
         assertEquals(CatalogId("catalog-1"), result.first().catalogId)
-        assertEquals(QuestDraftStatus.DRAFT, result.first().status)
+        assertEquals(QuestDraftStatus.SAVED, result.first().status)
         assertEquals(2, result.first().questionCount)
         assertTrue(result.first().isActive)
     }
@@ -215,7 +215,7 @@ class QuestAuthoringRepositoryImplTest {
                 description = null,
                 defaultLanguage = "ru",
                 defaultDifficulty = Difficulty.EASY,
-                status = QuestDraftStatus.DRAFT,
+                status = QuestDraftStatus.SAVED,
                 localRevision = 1L,
                 serverRevision = null,
                 publicQuestId = null,
@@ -275,6 +275,8 @@ class QuestAuthoringRepositoryImplTest {
             ownerUid = "owner-1",
             localRevision = 3L,
             requestedAtMs = 4L,
+            lessonIds = setOf(DraftLessonId("lesson-1")),
+            targetShelf = "arena",
         )
 
     private fun entityBundle(): QuestAuthoringEntityBundle =
@@ -287,7 +289,7 @@ class QuestAuthoringRepositoryImplTest {
                 description = null,
                 defaultLanguage = "ru",
                 defaultDifficulty = "EASY",
-                status = "DRAFT",
+                status = "SAVED",
                 localRevision = 1L,
                 serverRevision = null,
                 publicQuestId = null,

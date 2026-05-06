@@ -28,6 +28,8 @@ val questPresentationModule =
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
                 observeCatalogs = get(),
+                observeProfile = get(),
+                openGiftBoxUseCase = get(),
                 onCatalogDrillDown = onCatalogDrillDown,
             )
         }

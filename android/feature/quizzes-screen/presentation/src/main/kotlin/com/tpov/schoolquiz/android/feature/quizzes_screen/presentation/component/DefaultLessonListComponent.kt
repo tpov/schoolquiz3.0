@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("LongParameterList")
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultLessonListComponent(
     componentContext: ComponentContext,
@@ -38,6 +39,7 @@ class DefaultLessonListComponent(
     private val attemptRepository: LessonAttemptRepository,
     private val authRepository: AuthRepository,
     private val navigation: StackNavigation<QuizzesConfig>,
+    private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonListComponent {
     private val componentJob = SupervisorJob()
@@ -86,13 +88,16 @@ class DefaultLessonListComponent(
         val mode = if (lesson.hardUnlocked && lesson.isHardChecked) Difficulty.HARD else Difficulty.EASY
         // AC-49: each new visit defaults to unchecked — clear before pushing runner.
         hardCheckedSet.update { it - lesson.id }
-        navigation.pushNew(
-            QuizzesConfig.LessonRunner(
-                lessonId = lesson.id,
-                mode = mode,
-                titles = titles + lesson.title,
-            ),
-        )
+        scope.launch {
+            lessonContentSync(LessonId(lesson.id))
+            navigation.pushNew(
+                QuizzesConfig.LessonRunner(
+                    lessonId = lesson.id,
+                    mode = mode,
+                    titles = titles + lesson.title,
+                ),
+            )
+        }
     }
 
     override fun onHardCheckToggled(lessonId: String) {
@@ -111,12 +116,14 @@ class DefaultLessonListComponent(
     ): LessonListUiState {
         if (lessons.isEmpty()) return LessonListUiState.Empty("Нет уроков")
         val items =
-            lessons.map { lesson ->
+            lessons.sortedBy { it.order }.map { lesson ->
                 val lessonStats = stats[lesson.id]
                 LessonItemUi(
                     id = lesson.id.value,
                     title = lesson.title,
                     orderLabel = "${lesson.order + 1}.",
+                    averageRating = lesson.averageRating,
+                    ratingCount = lesson.ratingCount,
                     bestStarsRawTenths = lessonStats?.bestStarsRawTenths ?: 0,
                     hardUnlocked = lessonStats?.hardUnlocked ?: false,
                     isHardChecked = lesson.id.value in checkedSet,

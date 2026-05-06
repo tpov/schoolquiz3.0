@@ -14,9 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +44,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyDownloa
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -85,9 +90,16 @@ fun QuestListScreen(
                 }
             is QuestListUiState.Loaded ->
                 Box(modifier = Modifier.fillMaxSize()) {
+                    val isArena = component.mode == QuestListMode.Arena
+                    val useArenaRatingStyle = isArena || component.mode == QuestListMode.Archive
                     LazyColumn(
                         state = lazyListState,
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                        contentPadding =
+                            PaddingValues(
+                                start = 16.dp,
+                                end = 16.dp,
+                                bottom = if (isArena) 96.dp else 24.dp,
+                            ),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
@@ -97,6 +109,7 @@ fun QuestListScreen(
                                     orderLabel = "${index + 1}.",
                                     rating = quest.averageRating,
                                     ratingCount = quest.averageRatingCount,
+                                    ratingTint = if (useArenaRatingStyle) MaterialTheme.colorScheme.secondary else null,
                                     onClick = { component.onQuestClick(quest) },
                                     onLongClick = { expandedQuestId = quest.id },
                                     downloadStatus = quest.downloadStatus,
@@ -129,6 +142,23 @@ fun QuestListScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+                    if (isArena && state.quests.isNotEmpty()) {
+                        FloatingActionButton(
+                            onClick = component::onRandomQuestClick,
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary,
+                            modifier =
+                                Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(16.dp)
+                                    .testTag("arena_random_quest_fab"),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SportsEsports,
+                                contentDescription = "Случайный квест",
+                            )
                         }
                     }
                     if (expandedQuestId != null) {

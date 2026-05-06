@@ -208,23 +208,19 @@ class VisibilityTest {
 
     // -----------------------------------------------------------------------
     // Domain Test Scenario 23 — visibleSections INTERNET for guest
-    // Spec says "returns [Profile, Qualifications]" but declaration order in sealed is:
-    // Arena, Catalog, Qualifications, Profile, Social, Leaderboard
-    // → visible for guest (emptyMap): Qualifications, Profile
-    // Spec scenario 23 says "[Profile, Qualifications]" but declaration order would give [Qualifications, Profile]
-    // This is an Open Question — see OQ-2 in AppShellTransitions header
-    // We follow declaration order per spec: "порядок — согласованный с declaration order"
+    // Product order keeps Profile before Qualifications so Internet opens on the profile card
+    // for guest and anonymous users.
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 23 visibleSections INTERNET guest returns Qualifications and Profile`() {
+    fun `scenario 23 visibleSections INTERNET guest returns Profile and Qualifications`() {
         val sections = visibleSections(Tab.INTERNET, UserStats.guest())
-        // Declaration order: Arena(3000), Catalog(3000), Qualifications(empty), Profile(empty), Social(10000), Leaderboard(3000)
-        // Visible for guest: Qualifications, Profile
+        // Product order: Arena(3000), Catalog(3000), Profile(empty), Qualifications(empty), Social(10000), Leaderboard(3000)
+        // Visible for guest: Profile, Qualifications
         assertEquals(
             listOf(
-                DrawerSection.InternetSection.Qualifications,
                 DrawerSection.InternetSection.Profile,
+                DrawerSection.InternetSection.Qualifications,
             ),
             sections,
         )
@@ -245,16 +241,16 @@ class VisibilityTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 25 visibleSections INTERNET skill 3000 returns Arena Catalog Qualifications Profile Leaderboard`() {
+    fun `scenario 25 visibleSections INTERNET skill 3000 returns Arena Catalog Profile Qualifications Leaderboard`() {
         val stats = UserStats.guest().copy(currentSkill = 3_000)
         val sections = visibleSections(Tab.INTERNET, stats)
-        // Arena(3000✓), Catalog(3000✓), Qualifications(empty✓), Profile(empty✓), Social(10000✗), Leaderboard(3000✓)
+        // Arena(3000✓), Catalog(3000✓), Profile(empty✓), Qualifications(empty✓), Social(10000✗), Leaderboard(3000✓)
         assertEquals(
             listOf(
                 DrawerSection.InternetSection.Arena,
                 DrawerSection.InternetSection.Catalog,
-                DrawerSection.InternetSection.Qualifications,
                 DrawerSection.InternetSection.Profile,
+                DrawerSection.InternetSection.Qualifications,
                 DrawerSection.InternetSection.Leaderboard,
             ),
             sections,
@@ -274,8 +270,8 @@ class VisibilityTest {
             listOf(
                 DrawerSection.InternetSection.Arena,
                 DrawerSection.InternetSection.Catalog,
-                DrawerSection.InternetSection.Qualifications,
                 DrawerSection.InternetSection.Profile,
+                DrawerSection.InternetSection.Qualifications,
                 DrawerSection.InternetSection.Social,
                 DrawerSection.InternetSection.Leaderboard,
             ),
@@ -417,18 +413,18 @@ class VisibilityTest {
     }
 
     // -----------------------------------------------------------------------
-    // visibleSections preserves declaration order
+    // visibleSections preserves product order
     // -----------------------------------------------------------------------
 
     @Test
-    fun `visibleSections INTERNET at skill 10000 preserves declaration order`() {
+    fun `visibleSections INTERNET at skill 10000 preserves product order`() {
         val stats = UserStats.guest().copy(currentSkill = 10_000)
         val sections = visibleSections(Tab.INTERNET, stats)
         val expected = listOf(
             DrawerSection.InternetSection.Arena,
             DrawerSection.InternetSection.Catalog,
-            DrawerSection.InternetSection.Qualifications,
             DrawerSection.InternetSection.Profile,
+            DrawerSection.InternetSection.Qualifications,
             DrawerSection.InternetSection.Social,
             DrawerSection.InternetSection.Leaderboard,
         )

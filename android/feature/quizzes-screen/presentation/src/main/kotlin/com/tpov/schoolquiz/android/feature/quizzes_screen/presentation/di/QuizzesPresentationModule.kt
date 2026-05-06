@@ -23,6 +23,7 @@ val quizzesPresentationModule =
                 catalogRepository = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
                 questContentSync = contentSync?.let { it::syncQuestContent } ?: { Result.success(Unit) },
+                lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { Result.success(Unit) },
             )
         }
     }

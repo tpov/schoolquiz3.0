@@ -99,6 +99,7 @@ class QuestAuthoringDaoTest {
         val questions = dao.findQuestions("draft-1")
         assert(draft.localRevision == 2L) { "Expected revision 2, got ${draft.localRevision}" }
         assert(draft.updatedAtMs == 99L) { "Expected updatedAtMs 99, got ${draft.updatedAtMs}" }
+        assert(draft.status == "SAVED") { "Expected SAVED after saved question, got ${draft.status}" }
         assert(questions.single().id == "question-1") { "Question should be inserted" }
     }
 
@@ -114,7 +115,7 @@ class QuestAuthoringDaoTest {
             description = null,
             defaultLanguage = "ru",
             defaultDifficulty = "EASY",
-            status = "DRAFT",
+            status = "SAVED",
             localRevision = 1L,
             serverRevision = null,
             publicQuestId = null,

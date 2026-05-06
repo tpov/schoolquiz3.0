@@ -114,6 +114,23 @@ class DefaultThemeListComponentTest {
         assertEquals(1, state.items.size)
     }
 
+    @Test
+    fun `themes are ordered by list order`() = runTest(testScheduler) {
+        val component = buildComponent(sectionId = "s-1")
+        fakeRepo.emit(
+            listOf(
+                themeFixture(id = "third", sectionId = "s-1", title = "Third", order = 2),
+                themeFixture(id = "first", sectionId = "s-1", title = "First", order = 0),
+                themeFixture(id = "second", sectionId = "s-1", title = "Second", order = 1),
+            ),
+        )
+        advanceUntilIdle()
+
+        val state = component.uiState.value
+        assertIs<HierarchyListUiState.Loaded>(state)
+        assertEquals(listOf("first", "second", "third"), state.items.map { it.id })
+    }
+
     // ── TH-U-03 ──────────────────────────────────────────────────────────────
 
     /**

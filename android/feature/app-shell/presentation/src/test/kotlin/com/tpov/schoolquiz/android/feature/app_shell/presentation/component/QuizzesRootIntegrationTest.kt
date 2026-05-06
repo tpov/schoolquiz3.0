@@ -41,7 +41,13 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseC
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
@@ -164,6 +170,7 @@ class QuizzesRootIntegrationTest {
         }
 
         override fun openCourseArchive() = Unit
+        override fun openCourseArena() = Unit
 
         override fun openSectionList(questId: QuestId, titles: List<String>) {
             openSectionListArgs = OpenSectionListArgs(questId, titles)
@@ -209,6 +216,8 @@ class QuizzesRootIntegrationTest {
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
                 observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+                observeProfile = ObserveCurrentProfileUseCase(OfflineProfileRepository()),
+                openGiftBoxUseCase = OpenGiftBoxUseCase(NoGiftBoxRepository),
                 onCatalogDrillDown = onCatalogDrillDown,
                 mainContext = testDispatcher,
             )
@@ -486,4 +495,20 @@ class QuizzesRootIntegrationTest {
         assertTrue(handled,
             "BackDispatcher.back() must return true when root BackCallback (isEnabled=true) handles Back in Idle state")
     }
+}
+
+private class OfflineProfileRepository : ProfileRepository {
+    override fun observeCurrentProfile(): Flow<UserProfile> = flowOf(UserProfile.offline())
+
+    override suspend fun currentProfile(): UserProfile = UserProfile.offline()
+
+    override suspend fun ensureCurrentProfile(): Result<UserProfile> = Result.success(UserProfile.offline())
+
+    override suspend fun updateNickname(nickname: String): Result<UserProfile> =
+        Result.success(UserProfile.offline().copy(nickname = nickname))
+}
+
+private object NoGiftBoxRepository : GiftBoxRepository {
+    override suspend fun openGiftBox(): Result<GiftBoxOpening> =
+        Result.failure(IllegalStateException("No gift boxes available"))
 }

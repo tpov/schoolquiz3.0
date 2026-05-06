@@ -12,6 +12,8 @@ data class QuestArenaSubmissionRequest(
     val lessons: List<ArenaLessonDto>,
     val questions: List<ArenaQuestionDto>,
     val review: ArenaReviewDto,
+    val targetShelf: String = "arena",
+    val targetLessonIds: Set<String> = emptySet(),
 )
 
 data class ArenaReviewDto(

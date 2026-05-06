@@ -50,7 +50,11 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
     @Test
     fun pixelRunsFullReviewWorkflowAgainstProductionFirebase() =
         runBlocking {
-            val ids = LiveIds(requiredArg(ARG_PREFIX))
+            val prefix = requiredArg(ARG_PREFIX)
+            val ids = LiveIds(
+                prefix = prefix,
+                catalogIdOverride = args.getString(ARG_CATALOG_ID)?.takeIf { it.isNotBlank() },
+            )
             val tokens = LiveTokens.fromArgs(args)
             val assignmentId = "${ids.submissionId}_${ids.lessonId}"
 
@@ -75,12 +79,12 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
             )
             val testerAssignment = reviewRemote.fetchByIds(setOf(assignmentId)).single()
             assertEquals(setOf(TESTING), testerAssignment.taskKinds)
-            assertEquals(1, testerAssignment.questions.size)
+            assertEquals(2, testerAssignment.questions.size)
             assertLocalReviewSyncDownloadsOnlyVisibleAssignments(
                 uid = ids.testerStrongUid,
                 expectedAssignmentId = assignmentId,
                 expectedTaskKind = TESTING,
-                expectedQuestionId = ids.questionId,
+                expectedQuestionIds = setOf(ids.questionId, ids.hardQuestionId),
             )
 
             signIn(tokens.testerWeak, ids.testerWeakUid)
@@ -132,7 +136,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
                     lessonId = ids.lessonId,
                     kind = TRANSLATION,
                     language = "en",
-                    translatedQuestions = listOf(translatedQuestion(ids)),
+                    translatedQuestions = translatedQuestions(ids),
                 ),
             )
             waitForAdminLesson(ids) { snapshot ->
@@ -160,6 +164,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
             )
 
             waitForAdminLesson(ids) { it.getLong("translationScore") == 50L }
+            waitForPublicPublication(ids)
             assertEquals(4L, serverDoc(profilePath(ids.translatorUid)).getLong("reviewReputation"))
             assertEquals(-3L, serverDoc(profilePath(ids.testerWeakUid)).getLong("reviewReputation"))
         }
@@ -168,7 +173,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
         uid: String,
         expectedAssignmentId: String,
         expectedTaskKind: String,
-        expectedQuestionId: String,
+        expectedQuestionIds: Set<String>,
     ) {
         val database = inMemoryDatabase()
         try {
@@ -183,7 +188,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
             assertEquals(listOf(expectedAssignmentId), localAssignments.map { it.assignment.id })
             val localAssignment = localAssignments.single()
             assertEquals(setOf(expectedTaskKind), localAssignment.assignment.taskKinds.toSet())
-            assertEquals(listOf(expectedQuestionId), localAssignment.questions.map { it.questionId })
+            assertEquals(expectedQuestionIds, localAssignment.questions.map { it.questionId }.toSet())
             assertTrue(syncState.getCursor(reviewAssignmentSyncCursorId(uid)) > 0L)
 
             val secondResult = sync.sync()
@@ -256,6 +261,24 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
         }
     }
 
+    private suspend fun waitForPublicPublication(ids: LiveIds) {
+        withTimeout(DEFAULT_TIMEOUT_MS) {
+            while (true) {
+                val quest = serverDoc(publicQuestPath(ids))
+                val syncChange = serverDoc(publicQuestSyncChangePath(ids))
+                if (
+                    quest.exists() &&
+                    quest.getString("catalogId") == ids.catalogId &&
+                    (quest.get("visibleOn") as? List<*>)?.contains("arena") == true &&
+                    syncChange.exists()
+                ) {
+                    return@withTimeout
+                }
+                delay(POLL_INTERVAL_MS)
+            }
+        }
+    }
+
     private fun serverDoc(path: String): DocumentSnapshot =
         firestore.document(path).get(Source.SERVER).awaitValue()
 
@@ -277,7 +300,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
                 ArenaDraftDto(
                     id = ids.questId,
                     catalogId = ids.catalogId,
-                    title = "Pixel live review e2e",
+                    title = ids.questTitle,
                     description = "Temporary production Firebase fixture",
                     defaultLanguage = "ru",
                     defaultDifficulty = "EASY",
@@ -285,32 +308,41 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
                     createdAtMs = 1L,
                     updatedAtMs = System.currentTimeMillis(),
                 ),
-            sections = listOf(ArenaSectionDto(ids.sectionId, ids.questId, "Pixel section", 0)),
-            themes = listOf(ArenaThemeDto(ids.themeId, ids.questId, ids.sectionId, "Pixel theme", 0)),
-            lessons = listOf(ArenaLessonDto(ids.lessonId, ids.questId, ids.themeId, "Pixel lesson", 0)),
-            questions = listOf(sourceQuestion(ids)),
+            sections = listOf(ArenaSectionDto(ids.sectionId, ids.questId, ids.sectionTitle, 0)),
+            themes = listOf(ArenaThemeDto(ids.themeId, ids.questId, ids.sectionId, ids.themeTitle, 0)),
+            lessons = listOf(ArenaLessonDto(ids.lessonId, ids.questId, ids.themeId, ids.lessonTitle, 0)),
+            questions =
+                listOf(
+                    sourceQuestion(ids, ids.questionId, "EASY", "Сколько будет два плюс два?"),
+                    sourceQuestion(ids, ids.hardQuestionId, "HARD", "Сколько будет три плюс три?"),
+                ),
             review = ArenaReviewDto(translatedLanguages = mapOf("ru" to 125)),
         )
 
-    private fun sourceQuestion(ids: LiveIds): ArenaQuestionDto =
+    private fun sourceQuestion(
+        ids: LiveIds,
+        questionId: String,
+        difficulty: String,
+        text: String,
+    ): ArenaQuestionDto =
         ArenaQuestionDto(
-            id = ids.questionId,
+            id = questionId,
             draftId = ids.questId,
             lessonId = ids.lessonId,
             type = "SINGLE_CHOICE",
             language = "ru",
             languageLevel = 125,
-            difficulty = "EASY",
-            order = 0,
-            text = "Сколько будет два плюс два?",
+            difficulty = difficulty,
+            order = if (difficulty == "HARD") 1 else 0,
+            text = text,
             imagePath = null,
             payload =
                 """
                 {
                   "type":"SingleChoice",
-                  "id":"${ids.questionId}",
-                  "difficulty":"EASY",
-                  "text":"Сколько будет два плюс два?",
+                  "id":"$questionId",
+                  "difficulty":"$difficulty",
+                  "text":"$text",
                   "imageUrl":null,
                   "options":[{"id":"A","text":"Четыре"},{"id":"B","text":"Пять"}],
                   "correctOptionId":"A",
@@ -320,17 +352,28 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
             updatedAtMs = System.currentTimeMillis(),
         )
 
-    private fun translatedQuestion(ids: LiveIds): ArenaQuestionDto =
-        sourceQuestion(ids).copy(
+    private fun translatedQuestions(ids: LiveIds): List<ArenaQuestionDto> =
+        listOf(
+            translatedQuestion(ids, ids.questionId, "EASY", "What is two plus two?"),
+            translatedQuestion(ids, ids.hardQuestionId, "HARD", "What is three plus three?"),
+        )
+
+    private fun translatedQuestion(
+        ids: LiveIds,
+        questionId: String,
+        difficulty: String,
+        text: String,
+    ): ArenaQuestionDto =
+        sourceQuestion(ids, questionId, difficulty, text).copy(
             language = "en",
-            text = "What is two plus two?",
+            text = text,
             payload =
                 """
                 {
                   "type":"SingleChoice",
-                  "id":"${ids.questionId}",
-                  "difficulty":"EASY",
-                  "text":"What is two plus two?",
+                  "id":"$questionId",
+                  "difficulty":"$difficulty",
+                  "text":"$text",
                   "imageUrl":null,
                   "options":[{"id":"A","text":"Four"},{"id":"B","text":"Five"}],
                   "correctOptionId":"A",
@@ -341,6 +384,7 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
 
     private data class LiveIds(
         private val prefix: String,
+        private val catalogIdOverride: String? = null,
     ) {
         val ownerUid = "${prefix}_owner"
         val testerWeakUid = "${prefix}_tester_weak"
@@ -349,13 +393,18 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
         val translatorWeakUid = "${prefix}_translator_weak"
         val translatorUid = "${prefix}_translator"
         val translationReviewerUid = "${prefix}_translation_reviewer"
-        val catalogId = "${prefix}_catalog"
+        val catalogId = catalogIdOverride ?: "${prefix}_catalog"
         val questId = "${prefix}_quest"
         val sectionId = "${prefix}_section"
         val themeId = "${prefix}_theme"
         val lessonId = "${prefix}_lesson"
         val questionId = "${prefix}_question"
+        val hardQuestionId = "${prefix}_hard_question"
         val submissionId = "${prefix}_submission"
+        val questTitle = "Pixel live review $prefix"
+        val sectionTitle = "Pixel section $prefix"
+        val themeTitle = "Pixel theme $prefix"
+        val lessonTitle = "Pixel lesson $prefix"
     }
 
     private data class LiveTokens(
@@ -401,12 +450,18 @@ class LiveFirebaseReviewWorkflowInstrumentedTest {
 
     private fun profilePath(uid: String): String = "profiles/$uid"
 
+    private fun publicQuestPath(ids: LiveIds): String = "quests/${ids.questId}"
+
+    private fun publicQuestSyncChangePath(ids: LiveIds): String =
+        "catalogs/${ids.catalogId}/sync_changes/quest_${ids.questId}"
+
     private fun DocumentSnapshot.doubleValue(field: String): Double? =
         getDouble(field) ?: getLong(field)?.toDouble()
 
     private companion object {
         const val REGION = "us-central1"
         const val ARG_PREFIX = "reviewE2ePrefix"
+        const val ARG_CATALOG_ID = "reviewE2eCatalogId"
         const val ARG_OWNER_TOKEN = "reviewE2eOwnerToken"
         const val ARG_TESTER_WEAK_TOKEN = "reviewE2eTesterWeakToken"
         const val ARG_TESTER_STRONG_TOKEN = "reviewE2eTesterStrongToken"

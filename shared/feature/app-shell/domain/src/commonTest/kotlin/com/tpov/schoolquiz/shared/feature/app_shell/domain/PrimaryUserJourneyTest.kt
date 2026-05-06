@@ -193,8 +193,8 @@ class PrimaryUserJourneyTest {
         assertTrue(state.localState.stack.backStack.isEmpty())
         assertFalse(state.isDrawerOpen)
 
-        // Internet: guest stats → first visible = Qualifications
-        assertEquals(InternetConfig.QualificationsRoot, state.internetState.stack.active)
+        // Internet: guest stats → first visible = Profile
+        assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
         // Events: guest stats → no visible sections → EmptyRoot
         assertEquals(EventsConfig.EmptyRoot, state.eventsState.stack.active)
         assertNull(state.eventsState.activeSection)

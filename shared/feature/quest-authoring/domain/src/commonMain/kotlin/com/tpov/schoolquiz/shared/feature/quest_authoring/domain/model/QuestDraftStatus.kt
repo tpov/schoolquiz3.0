@@ -2,8 +2,9 @@ package com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model
 
 enum class QuestDraftStatus {
     DRAFT,
+    SAVED,
     SYNC_PENDING,
-    SYNCED_PRIVATE,
+    SYNCED,
     CONFLICT,
     REVIEW_QUEUED,
     REVIEW_SENT,

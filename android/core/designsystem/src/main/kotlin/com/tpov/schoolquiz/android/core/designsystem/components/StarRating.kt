@@ -146,8 +146,8 @@ fun StarRating(
     rating: Float?,
     modifier: Modifier = Modifier,
     size: Dp = 18.dp,
+    tint: Color = MaterialTheme.colorScheme.primary,
 ) {
-    val primary = MaterialTheme.colorScheme.primary
     Row(modifier = modifier) {
         repeat(STAR_COUNT) { index ->
             val progress =
@@ -158,7 +158,7 @@ fun StarRating(
                 }
             StarProgressIcon(
                 progress = progress,
-                tint = primary,
+                tint = tint,
                 starSize = size,
             )
         }

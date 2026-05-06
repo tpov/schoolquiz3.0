@@ -78,7 +78,7 @@ class FakeQuestAuthoringRepository(
                 val updatedDraft = bundle.draft.copy(
                     updatedAtMs = maxOf(bundle.draft.updatedAtMs, question.updatedAtMs),
                     localRevision = bundle.draft.localRevision + 1,
-                    status = QuestDraftStatus.DRAFT,
+                    status = QuestDraftStatus.SAVED,
                 )
                 current + (question.draftId to bundle.copy(draft = updatedDraft, questions = questions))
             }

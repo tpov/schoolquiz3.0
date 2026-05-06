@@ -78,6 +78,8 @@ class DefaultLessonListComponentTest {
         themeId: String = "t-1",
         title: String = "Lesson A",
         order: Int = 1,
+        averageRating: Float? = null,
+        ratingCount: Int = 0,
     ) = Lesson(
         id = LessonId(id),
         themeId = ThemeId(themeId),
@@ -86,6 +88,8 @@ class DefaultLessonListComponentTest {
         version = 1L,
         contentsVersion = 0L,
         lastModifiedAt = 0L,
+        averageRating = averageRating,
+        ratingCount = ratingCount,
     )
 
     private fun lessonItemFixture(
@@ -120,6 +124,46 @@ class DefaultLessonListComponentTest {
         assertIs<LessonListUiState.Loaded>(component.uiState.value)
     }
 
+    @Test
+    fun `lessons are ordered by list order and map average rating`() = runTest(testScheduler) {
+        val component = buildComponent(themeId = "t-1")
+        fakeRepo.emit(
+            listOf(
+                lessonFixture(
+                    id = "third",
+                    themeId = "t-1",
+                    title = "Third",
+                    order = 2,
+                    averageRating = 1.2f,
+                    ratingCount = 4,
+                ),
+                lessonFixture(
+                    id = "first",
+                    themeId = "t-1",
+                    title = "First",
+                    order = 0,
+                    averageRating = 2.8f,
+                    ratingCount = 20,
+                ),
+                lessonFixture(
+                    id = "second",
+                    themeId = "t-1",
+                    title = "Second",
+                    order = 1,
+                    averageRating = 1.9f,
+                    ratingCount = 9,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+
+        val state = component.uiState.value
+        assertIs<LessonListUiState.Loaded>(state)
+        assertEquals(listOf("first", "second", "third"), state.items.map { it.id })
+        assertEquals(2.8f, state.items.first().averageRating)
+        assertEquals(20, state.items.first().ratingCount)
+    }
+
     // ── LL-U-03 ──────────────────────────────────────────────────────────────
 
     /**
@@ -145,6 +189,7 @@ class DefaultLessonListComponentTest {
         val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = false, isHardChecked = false)
 
         component.onLessonClick(lessonItem)
+        advanceUntilIdle()
 
         val pushed = fakeNavigation.pushedConfigs.last()
         assertIs<QuizzesConfig.LessonRunner>(pushed)
@@ -163,6 +208,7 @@ class DefaultLessonListComponentTest {
         val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = true, isHardChecked = true)
 
         component.onLessonClick(lessonItem)
+        advanceUntilIdle()
 
         val pushed = fakeNavigation.pushedConfigs.last() as QuizzesConfig.LessonRunner
         assertEquals(Difficulty.HARD, pushed.mode, "mode must be HARD when hardUnlocked=true and isHardChecked=true")

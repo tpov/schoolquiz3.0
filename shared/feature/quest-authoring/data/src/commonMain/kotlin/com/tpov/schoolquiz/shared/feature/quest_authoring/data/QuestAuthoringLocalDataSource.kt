@@ -181,12 +181,14 @@ class QuestAuthoringLocalDataSourceImpl(
     private companion object {
         val activeDraftStatuses = listOf(
             "DRAFT",
+            "SAVED",
             "SYNC_PENDING",
-            "SYNCED_PRIVATE",
+            "SYNCED",
             "CONFLICT",
         )
         val localDirtyStatuses = setOf(
             "DRAFT",
+            "SAVED",
             "SYNC_PENDING",
             "REVIEW_QUEUED",
         )

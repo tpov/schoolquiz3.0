@@ -12,8 +12,17 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRe
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -63,10 +72,14 @@ class DefaultHomeQuestsComponentTest {
 
     private fun buildComponent(
         catalogRepo: FakeCatalogRepository = FakeCatalogRepository(),
+        profileRepo: FakeProfileRepository = FakeProfileRepository(),
+        giftBoxRepo: FakeGiftBoxRepository = FakeGiftBoxRepository(),
         onCatalogDrillDown: (CatalogId, String) -> Unit = { _, _ -> },
     ) = DefaultHomeQuestsComponent(
         componentContext = testCtx(),
         observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
+        observeProfile = ObserveCurrentProfileUseCase(profileRepo),
+        openGiftBoxUseCase = OpenGiftBoxUseCase(giftBoxRepo),
         onCatalogDrillDown = onCatalogDrillDown,
         mainContext = testDispatcher,
     )
@@ -104,6 +117,21 @@ class DefaultHomeQuestsComponentTest {
         val catalogs = component.state.value.catalogs
         assertEquals(1, catalogs.size, "archived catalog must be excluded")
         assertEquals(CatalogId("active"), catalogs.first().id)
+    }
+
+    @Test
+    fun `courses catalog is not shown in home`() = runTest {
+        val catalogRepo = FakeCatalogRepository()
+        catalogRepo.emit(listOf(
+            buildCatalog(id = "school", name = "Школа"),
+            buildCatalog(id = "courses", name = "Курсы"),
+        ))
+
+        val component = buildComponent(catalogRepo = catalogRepo)
+
+        val catalogs = component.state.value.catalogs
+        assertEquals(1, catalogs.size, "courses catalog is opened from archive, not home")
+        assertEquals(CatalogId("school"), catalogs.first().id)
     }
 
     // ── Late catalog emission updates state reactively ────────────────────────
@@ -196,4 +224,57 @@ class DefaultHomeQuestsComponentTest {
 
         assertEquals(1, invocationCount, "onCatalogDrillDown must be invoked exactly once per click")
     }
+
+    @Test
+    fun `when profile has boxes then gift box count appears in state`() = runTest {
+        val profileRepo = FakeProfileRepository(UserProfile.offline().copy(boxCount = 2, boxStreakDays = 7))
+        val component = buildComponent(profileRepo = profileRepo)
+
+        assertEquals(2, component.state.value.giftBoxCount)
+        assertEquals(7, component.state.value.giftBoxStreakDays)
+    }
+
+    @Test
+    fun `when gift box opened then state shows reward and remaining count`() = runTest {
+        val profileRepo = FakeProfileRepository(UserProfile.offline().copy(boxCount = 1))
+        val giftBoxRepo =
+            FakeGiftBoxRepository(
+                Result.success(
+                    GiftBoxOpening(
+                        reward = GiftBoxReward.Nolics(500),
+                        profileSynced = true,
+                        remainingBoxCount = 0,
+                    ),
+                ),
+            )
+        val component = buildComponent(profileRepo = profileRepo, giftBoxRepo = giftBoxRepo)
+
+        component.onGiftBoxFabClick()
+
+        val opening = component.state.value.giftBoxOpening as HomeGiftBoxOpeningState.Opened
+        assertEquals(GiftBoxReward.Nolics(500), opening.reward)
+        assertEquals(0, opening.remainingBoxCount)
+    }
+}
+
+private class FakeProfileRepository(
+    initialProfile: UserProfile = UserProfile.offline(),
+) : ProfileRepository {
+    private val state = MutableStateFlow(initialProfile)
+
+    override fun observeCurrentProfile(): Flow<UserProfile> = state
+
+    override suspend fun currentProfile(): UserProfile = state.value
+
+    override suspend fun ensureCurrentProfile(): Result<UserProfile> = Result.success(state.value)
+
+    override suspend fun updateNickname(nickname: String): Result<UserProfile> =
+        Result.success(state.value.copy(nickname = nickname))
+}
+
+private class FakeGiftBoxRepository(
+    private val result: Result<GiftBoxOpening> =
+        Result.failure(IllegalStateException("No gift boxes available")),
+) : GiftBoxRepository {
+    override suspend fun openGiftBox(): Result<GiftBoxOpening> = result
 }

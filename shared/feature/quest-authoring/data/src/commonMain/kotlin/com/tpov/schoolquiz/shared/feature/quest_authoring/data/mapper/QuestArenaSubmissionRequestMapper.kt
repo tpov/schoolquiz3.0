@@ -12,8 +12,18 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAren
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.QuestAuthoringBundle
 
 object QuestArenaSubmissionRequestMapper {
-    fun QuestArenaSubmission.toRequest(bundle: QuestAuthoringBundle): QuestArenaSubmissionRequest =
-        QuestArenaSubmissionRequest(
+    fun QuestArenaSubmission.toRequest(bundle: QuestAuthoringBundle): QuestArenaSubmissionRequest {
+        val targetLessons = bundle.lessons.filter { it.id in lessonIds }
+        val targetThemeIds = targetLessons.mapTo(linkedSetOf()) { it.themeId }
+        val targetThemes = bundle.themes.filter { it.id in targetThemeIds }
+        val targetSectionIds = targetThemes.mapTo(linkedSetOf()) { it.sectionId }
+        val targetSections = bundle.sections.filter { it.id in targetSectionIds }
+        val savedTargetQuestions =
+            bundle.questions
+                .filter { it.lessonId in lessonIds }
+                .filter { it.validationState == DraftQuestionValidationState.SAVED && it.payload != null }
+
+        return QuestArenaSubmissionRequest(
             submissionId = id.value,
             draftId = draftId.value,
             ownerUid = ownerUid,
@@ -32,7 +42,7 @@ object QuestArenaSubmissionRequestMapper {
                     updatedAtMs = bundle.draft.updatedAtMs,
                 ),
             sections =
-                bundle.sections.map {
+                targetSections.map {
                     ArenaSectionDto(
                         id = it.id.value,
                         draftId = it.draftId.value,
@@ -41,7 +51,7 @@ object QuestArenaSubmissionRequestMapper {
                     )
                 },
             themes =
-                bundle.themes.map {
+                targetThemes.map {
                     ArenaThemeDto(
                         id = it.id.value,
                         draftId = it.draftId.value,
@@ -51,7 +61,7 @@ object QuestArenaSubmissionRequestMapper {
                     )
                 },
             lessons =
-                bundle.lessons.map {
+                targetLessons.map {
                     ArenaLessonDto(
                         id = it.id.value,
                         draftId = it.draftId.value,
@@ -61,8 +71,7 @@ object QuestArenaSubmissionRequestMapper {
                     )
                 },
             questions =
-                bundle.questions
-                    .filter { it.validationState == DraftQuestionValidationState.SAVED && it.payload != null }
+                savedTargetQuestions
                     .map {
                         ArenaQuestionDto(
                             id = it.id.value,
@@ -82,10 +91,12 @@ object QuestArenaSubmissionRequestMapper {
             review =
                 ArenaReviewDto(
                     translatedLanguages =
-                        bundle.questions
-                            .filter { it.validationState == DraftQuestionValidationState.SAVED && it.payload != null }
+                        savedTargetQuestions
                             .groupBy { it.language }
                             .mapValues { (_, questions) -> questions.maxOf { it.languageLevel } },
                 ),
+            targetShelf = targetShelf,
+            targetLessonIds = lessonIds.mapTo(linkedSetOf()) { it.value },
         )
+    }
 }

@@ -43,7 +43,7 @@ class DefaultSectionListComponent(
                     if (sections.isEmpty()) {
                         HierarchyListUiState.Empty("Нет секций")
                     } else {
-                        HierarchyListUiState.Loaded(sections.map { it.toDrillItem() })
+                        HierarchyListUiState.Loaded(sections.sortedBy { it.order }.map { it.toDrillItem() })
                     }
                 }
                 .catch { /* log */ }

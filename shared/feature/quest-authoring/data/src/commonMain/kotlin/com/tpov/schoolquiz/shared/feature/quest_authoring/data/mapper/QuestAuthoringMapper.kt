@@ -194,6 +194,8 @@ object QuestAuthoringMapper {
             ownerUid = ownerUid,
             localRevision = localRevision,
             requestedAtMs = requestedAtMs,
+            lessonIds = lessonIds.map { it.value }.sorted(),
+            targetShelf = targetShelf,
             attemptCount = attemptCount,
             lastError = lastError,
         )
@@ -205,6 +207,8 @@ object QuestAuthoringMapper {
             ownerUid = ownerUid,
             localRevision = localRevision,
             requestedAtMs = requestedAtMs,
+            lessonIds = lessonIds.map(::DraftLessonId).toSet(),
+            targetShelf = targetShelf,
             attemptCount = attemptCount,
             lastError = lastError,
         )
@@ -220,7 +224,7 @@ object QuestAuthoringMapper {
                     description = request.draft.description,
                     defaultLanguage = request.draft.defaultLanguage,
                     defaultDifficulty = request.draft.defaultDifficulty,
-                    status = QuestDraftStatus.SYNCED_PRIVATE.name,
+                    status = QuestDraftStatus.SYNCED.name,
                     localRevision = serverRevision,
                     serverRevision = serverRevision,
                     publicQuestId = request.draft.publicQuestId,

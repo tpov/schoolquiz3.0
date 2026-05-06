@@ -20,7 +20,7 @@ class DefaultInternetTabComponent(
         childStack(
             source = navigation,
             serializer = null,
-            initialConfiguration = InternetConfig.QualificationsRoot,
+            initialConfiguration = InternetConfig.ProfileRoot,
             handleBackButton = false,
             key = "InternetStack",
             childFactory = { config, _ -> InternetScreenComponent.Placeholder(config) },

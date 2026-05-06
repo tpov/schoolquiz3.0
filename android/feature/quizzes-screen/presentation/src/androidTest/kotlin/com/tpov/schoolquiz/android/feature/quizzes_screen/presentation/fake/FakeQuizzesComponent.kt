@@ -55,6 +55,10 @@ class FakeQuizzesComponent : QuizzesComponent {
         setQuestListActive("courses", "Курсы")
     }
 
+    override fun openCourseArena() {
+        setQuestListActive("courses", "Курсы")
+    }
+
     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
 
     override fun dismissQuizzes() {

@@ -43,7 +43,7 @@ class DefaultThemeListComponent(
                     if (themes.isEmpty()) {
                         HierarchyListUiState.Empty("Нет тем")
                     } else {
-                        HierarchyListUiState.Loaded(themes.map { it.toDrillItem() })
+                        HierarchyListUiState.Loaded(themes.sortedBy { it.order }.map { it.toDrillItem() })
                     }
                 }
                 .catch { /* log */ }

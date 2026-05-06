@@ -115,7 +115,7 @@ interface QuestAuthoringDao {
         UPDATE quest_drafts
         SET updatedAtMs = :updatedAtMs,
             localRevision = localRevision + 1,
-            status = 'DRAFT'
+            status = 'SAVED'
         WHERE id = :draftId
         """,
     )

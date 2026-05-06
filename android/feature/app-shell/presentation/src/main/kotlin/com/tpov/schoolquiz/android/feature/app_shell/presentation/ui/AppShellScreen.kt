@@ -57,6 +57,8 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.disp
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.icon
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
+import com.tpov.schoolquiz.android.feature.economy.presentation.screen.ShopScreen
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.screen.ProfileScreen
 import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.DesignSettingsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
@@ -68,6 +70,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterAc
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RetapOutcome
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.RootEvent
@@ -319,7 +322,7 @@ private fun AppShellContent(
                     rootComponent.internetTabComponent.childStack,
                     animation = stackAnimation(fade(tween(TAB_CROSSFADE_DURATION_MS))),
                 ) { child ->
-                    InternetTabContent(child.instance, paddingValues)
+                    InternetTabContent(rootComponent, child.instance, paddingValues)
                 }
             Tab.EVENTS ->
                 Children(
@@ -333,7 +336,7 @@ private fun AppShellContent(
                     rootComponent.shopTabComponent.childStack,
                     animation = stackAnimation(fade(tween(TAB_CROSSFADE_DURATION_MS))),
                 ) { child ->
-                    ShopTabContent(child.instance, paddingValues)
+                    ShopTabContent(rootComponent, child.instance, paddingValues)
                 }
         }
     }
@@ -461,13 +464,36 @@ private fun HomeQuestsContent(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun InternetTabContent(
+    rootComponent: DefaultRootComponent,
     screen: InternetScreenComponent,
     paddingValues: PaddingValues,
 ) {
     when (screen) {
         is InternetScreenComponent.Placeholder ->
-            UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
+            when (screen.config) {
+                InternetConfig.ProfileRoot ->
+                    ProfileScreen(
+                        component = rootComponent.profileComponent,
+                        modifier = Modifier.padding(paddingValues),
+                    )
+                InternetConfig.ArenaRoot ->
+                    CourseArenaContent(rootComponent = rootComponent, paddingValues = paddingValues)
+                else ->
+                    UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
+            }
     }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun CourseArenaContent(
+    rootComponent: DefaultRootComponent,
+    paddingValues: PaddingValues,
+) {
+    LaunchedEffect(rootComponent.quizzesComponent) {
+        rootComponent.quizzesComponent.openCourseArena()
+    }
+    Box(modifier = Modifier.padding(paddingValues).fillMaxSize())
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
@@ -485,11 +511,15 @@ private fun EventsTabContent(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun ShopTabContent(
+    rootComponent: DefaultRootComponent,
     screen: ShopScreenComponent,
     paddingValues: PaddingValues,
 ) {
     when (screen) {
         is ShopScreenComponent.Placeholder ->
-            UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
+            ShopScreen(
+                component = rootComponent.shopComponent,
+                modifier = Modifier.padding(paddingValues),
+            )
     }
 }

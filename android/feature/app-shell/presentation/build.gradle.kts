@@ -9,6 +9,8 @@ android {
 dependencies {
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(project(":android:feature:local:settings:presentation"))
+    implementation(project(":android:feature:internet:profile:presentation"))
+    implementation(project(":android:feature:economy:presentation"))
     implementation(project(":android:feature:quest:presentation"))
     implementation(project(":android:feature:quest-authoring:presentation"))
     implementation(project(":android:feature:quizzes-screen:presentation"))
@@ -36,6 +38,8 @@ dependencies {
     testImplementation(project(":shared:feature:lesson:domain"))
     testImplementation(project(":shared:feature:question:domain"))
     testImplementation(project(":shared:feature:quest-authoring:domain"))
+    testImplementation(project(":shared:feature:economy:domain"))
+    testImplementation(project(":shared:feature:internet:profile:domain"))
     testImplementation(project(":shared:core:question-schema"))
     testImplementation(project(":shared:feature:lesson-runner:domain"))
     testImplementation(project(":android:feature:lesson-runner:presentation"))

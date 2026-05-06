@@ -73,11 +73,11 @@ class AppShellTransitionsTest {
     }
 
     @Test
-    fun `scenario 2 given LOCAL backStack empty when switchTab INTERNET then internet activeSection is Qualifications`() {
-        // FR #7 / BR #3: defaultSection(INTERNET, guestStats) = Qualifications (first visible)
+    fun `scenario 2 given LOCAL backStack empty when switchTab INTERNET then internet activeSection is Profile`() {
+        // FR #7 / BR #3: defaultSection(INTERNET, guestStats) = Profile (first visible)
         val state = defaultState()
         val result = navigate(state, Destination.SwitchTab(Tab.INTERNET))
-        assertEquals(DrawerSection.InternetSection.Qualifications, result.newState.internetState.activeSection)
+        assertEquals(DrawerSection.InternetSection.Profile, result.newState.internetState.activeSection)
     }
 
     @Test
@@ -688,7 +688,7 @@ class AppShellTransitionsTest {
 
     @Test
     fun `section switch row 2 same tab different section - updates activeSection`() {
-        // INTERNET, currently showing Arena (saved state), switch to Qualifications (emptyMap = always visible)
+        // INTERNET, currently showing Profile, switch to Qualifications (emptyMap = always visible)
         val state = defaultState().copy(activeTab = Tab.INTERNET) // guest stats
         val result = navigate(state, Destination.SelectSection(DrawerSection.InternetSection.Qualifications))
         assertEquals(DrawerSection.InternetSection.Qualifications, result.newState.internetState.activeSection)

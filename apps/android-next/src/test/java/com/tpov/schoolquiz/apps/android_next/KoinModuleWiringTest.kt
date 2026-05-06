@@ -54,13 +54,24 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
+import com.tpov.schoolquiz.shared.core.persistence.LessonDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
+import com.tpov.schoolquiz.shared.core.persistence.LessonResultSyncOutboxDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestDao
+import com.tpov.schoolquiz.shared.core.persistence.SectionDao
 import com.tpov.schoolquiz.shared.core.persistence.StringSetConverter
+import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
 import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
 import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
+import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDomainModule
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDataModule
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDomainKoinAdapter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.AttemptIdProvider
@@ -257,6 +268,21 @@ class KoinModuleWiringTest : KoinTest {
                 override fun observeAllByUser(userId: String): Flow<List<Attempt>> = flowOf(emptyList())
             }
         }
+        single<ProfileRepository> {
+            object : ProfileRepository {
+                override fun observeCurrentProfile(): Flow<UserProfile> = flowOf(UserProfile.offline())
+                override suspend fun currentProfile(): UserProfile = UserProfile.offline()
+                override suspend fun ensureCurrentProfile(): Result<UserProfile> = Result.success(UserProfile.offline())
+                override suspend fun updateNickname(nickname: String): Result<UserProfile> =
+                    Result.success(UserProfile.offline().copy(nickname = nickname))
+            }
+        }
+        single<GiftBoxRepository> {
+            object : GiftBoxRepository {
+                override suspend fun openGiftBox(): Result<GiftBoxOpening> =
+                    Result.failure(IllegalStateException("No gift boxes available"))
+            }
+        }
         single<LessonRunnerComponentFactory> {
             LessonRunnerComponentFactory { _, _, _ -> error("Not wired in KoinModuleWiringTest") }
         }
@@ -353,6 +379,8 @@ class KoinModuleWiringTest : KoinTest {
                 questDomainModule,
                 questAuthoringDomainModule,
                 catalogDomainModule,
+                profileDomainModule,
+                economyDomainModule,
                 questPresentationModule,
                 quizzesPresentationModule,
                 appShellPresentationModule,
@@ -427,6 +455,7 @@ class KoinModuleWiringTest : KoinTest {
                     override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
+                    override fun openCourseArena() = Unit
                     override fun openCourseArchive() = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
@@ -508,6 +537,7 @@ class KoinModuleWiringTest : KoinTest {
                     override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
+                    override fun openCourseArena() = Unit
                     override fun openCourseArchive() = Unit
                     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
                     override fun dismissQuizzes() = Unit
@@ -533,6 +563,14 @@ class KoinModuleWiringTest : KoinTest {
         single<LessonRatingLocalDao> { mock(LessonRatingLocalDao::class.java) }
     }
 
+    private val testLessonResultOutboxDepsStub = module {
+        single<LessonResultSyncOutboxDao> { mock(LessonResultSyncOutboxDao::class.java) }
+        single<LessonDao> { mock(LessonDao::class.java) }
+        single<ThemeDao> { mock(ThemeDao::class.java) }
+        single<SectionDao> { mock(SectionDao::class.java) }
+        single<QuestDao> { mock(QuestDao::class.java) }
+    }
+
     private val testRunnerRepositoryStubs = module {
         single<QuestionRepository> { mock(QuestionRepository::class.java) }
         single<LessonRepository> { mock(LessonRepository::class.java) }
@@ -549,7 +587,7 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `it09a lessonAttemptRepository resolves from lessonRunnerDataModule`() {
         startKoin {
-            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, lessonRunnerDataModule)
+            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, testLessonResultOutboxDepsStub, lessonRunnerDataModule)
         }
         assertNotNull(getKoin().get<LessonAttemptRepository>())
     }
@@ -564,7 +602,7 @@ class KoinModuleWiringTest : KoinTest {
     @Test
     fun `it09b lessonRatingRepository resolves from lessonRunnerDataModule`() {
         startKoin {
-            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, lessonRunnerDataModule)
+            modules(testLessonAttemptDaoStub, testLessonRatingLocalDaoStub, testLessonResultOutboxDepsStub, lessonRunnerDataModule)
         }
         assertNotNull(getKoin().get<LessonRatingRepository>())
     }
@@ -597,6 +635,7 @@ class KoinModuleWiringTest : KoinTest {
             modules(
                 testLessonAttemptDaoStub,
                 testLessonRatingLocalDaoStub,
+                testLessonResultOutboxDepsStub,
                 testRunnerRepositoryStubs,
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
@@ -625,6 +664,7 @@ class KoinModuleWiringTest : KoinTest {
             modules(
                 testLessonAttemptDaoStub,
                 testLessonRatingLocalDaoStub,
+                testLessonResultOutboxDepsStub,
                 testRunnerRepositoryStubs,
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,

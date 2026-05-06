@@ -1,0 +1,10 @@
+# Copy the block you want into ~/.codex/config.toml, then restart Codex.
+
+[mcp_servers.appium]
+command = "npx"
+args = ["-y", "appium-mcp@1.72.8"]
+
+# Optional alternative: WebdriverIO MCP can also drive Android/iOS through Appium.
+# [mcp_servers.wdio]
+# command = "npx"
+# args = ["-y", "@wdio/mcp@3.4.1"]

@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -30,6 +31,7 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,6 +50,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
@@ -130,6 +133,7 @@ fun QuestCreateScreen(
             onStructureCheckClick = component::onStructureCheckClick,
             onContinueDraftClick = component::onContinueDraftClick,
             onSubmitToArenaClick = component::onSubmitToArenaClick,
+            onSubmitNodeLongClick = component::onSubmitNodeToArenaLongClick,
             onQuestionsClick = component::onQuestionsClick,
             modifier = modifier,
         )
@@ -154,11 +158,36 @@ private fun QuestCreateContent(
     onStructureCheckClick: () -> Unit,
     onContinueDraftClick: () -> Unit,
     onSubmitToArenaClick: () -> Unit,
+    onSubmitNodeLongClick: (QuestArenaTargetNode) -> Unit,
     onQuestionsClick: (Difficulty) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isStructureActionEnabled = if (state.hasActiveDraft) state.canContinueDraft else state.canCreate
     val isQuestionActionEnabled = state.canOpenQuestions
+    val submitQuestLongClick =
+        if (state.hasActiveDraft) {
+            { onSubmitNodeLongClick(QuestArenaTargetNode.QUEST) }
+        } else {
+            null
+        }
+    val submitSectionLongClick =
+        if (state.hasActiveDraft) {
+            { onSubmitNodeLongClick(QuestArenaTargetNode.SECTION) }
+        } else {
+            null
+        }
+    val submitThemeLongClick =
+        if (state.hasActiveDraft) {
+            { onSubmitNodeLongClick(QuestArenaTargetNode.THEME) }
+        } else {
+            null
+        }
+    val submitLessonLongClick =
+        if (state.hasActiveDraft) {
+            { onSubmitNodeLongClick(QuestArenaTargetNode.LESSON) }
+        } else {
+            null
+        }
 
     Column(
         modifier =
@@ -186,20 +215,11 @@ private fun QuestCreateContent(
             if (state.isCreating || state.isSubmittingToArena) {
                 CircularProgressIndicator(modifier = Modifier.padding(horizontal = 12.dp))
             } else {
-                IconButton(
+                TextButton(
                     onClick = onStructureCheckClick,
                     enabled = isStructureActionEnabled,
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = "Сохранить структуру",
-                        tint =
-                            if (isStructureActionEnabled) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
+                    Text("Сохранить")
                 }
             }
         }
@@ -207,7 +227,7 @@ private fun QuestCreateContent(
         state.activeDraftTitle?.let { title ->
             AssistChip(
                 onClick = onContinueDraftClick,
-                label = { Text("Черновик: $title") },
+                label = { Text("Сохраненный квест: $title") },
             )
         }
 
@@ -228,6 +248,7 @@ private fun QuestCreateContent(
                     createTitle = state.newQuestTitle,
                     onSelectionChanged = onQuestSelected,
                     onCreateTitleChanged = onQuestTitleChanged,
+                    onLongClick = submitQuestLongClick,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 SectionPathSpinner(
@@ -236,6 +257,7 @@ private fun QuestCreateContent(
                     createTitle = state.newSectionTitle,
                     onSelectionChanged = onSectionSelected,
                     onCreateTitleChanged = onSectionTitleChanged,
+                    onLongClick = submitSectionLongClick,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 ThemePathSpinner(
@@ -244,6 +266,7 @@ private fun QuestCreateContent(
                     createTitle = state.newThemeTitle,
                     onSelectionChanged = onThemeSelected,
                     onCreateTitleChanged = onThemeTitleChanged,
+                    onLongClick = submitThemeLongClick,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 LessonPathSpinner(
@@ -252,6 +275,7 @@ private fun QuestCreateContent(
                     createTitle = state.newLessonTitle,
                     onSelectionChanged = onLessonSelected,
                     onCreateTitleChanged = onLessonTitleChanged,
+                    onLongClick = submitLessonLongClick,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -335,6 +359,7 @@ private fun QuestPathSpinner(
     createTitle: String,
     onSelectionChanged: (QuestId?) -> Unit,
     onCreateTitleChanged: (String) -> Unit,
+    onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
@@ -345,6 +370,7 @@ private fun QuestPathSpinner(
         createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
         onCreateTitleChanged = onCreateTitleChanged,
+        onLongClick = onLongClick,
         modifier = modifier,
     )
 }
@@ -357,6 +383,7 @@ private fun SectionPathSpinner(
     createTitle: String,
     onSelectionChanged: (SectionId?) -> Unit,
     onCreateTitleChanged: (String) -> Unit,
+    onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
@@ -367,6 +394,7 @@ private fun SectionPathSpinner(
         createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
         onCreateTitleChanged = onCreateTitleChanged,
+        onLongClick = onLongClick,
         modifier = modifier,
     )
 }
@@ -379,6 +407,7 @@ private fun ThemePathSpinner(
     createTitle: String,
     onSelectionChanged: (ThemeId?) -> Unit,
     onCreateTitleChanged: (String) -> Unit,
+    onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
@@ -389,6 +418,7 @@ private fun ThemePathSpinner(
         createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
         onCreateTitleChanged = onCreateTitleChanged,
+        onLongClick = onLongClick,
         modifier = modifier,
     )
 }
@@ -401,6 +431,7 @@ private fun LessonPathSpinner(
     createTitle: String,
     onSelectionChanged: (LessonId?) -> Unit,
     onCreateTitleChanged: (String) -> Unit,
+    onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
@@ -411,11 +442,12 @@ private fun LessonPathSpinner(
         createTitle = createTitle,
         onSelectionChanged = onSelectionChanged,
         onCreateTitleChanged = onCreateTitleChanged,
+        onLongClick = onLongClick,
         modifier = modifier,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 private fun <T> StructureDropdown(
@@ -426,6 +458,7 @@ private fun <T> StructureDropdown(
     createTitle: String,
     onSelectionChanged: (T?) -> Unit,
     onCreateTitleChanged: (String) -> Unit,
+    onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val expanded = remember { mutableStateOf(false) }
@@ -477,6 +510,16 @@ private fun <T> StructureDropdown(
             modifier =
                 Modifier
                     .menuAnchor(anchorType)
+                    .then(
+                        if (onLongClick != null && !isCreating) {
+                            Modifier.combinedClickable(
+                                onClick = { expanded.value = true },
+                                onLongClick = onLongClick,
+                            )
+                        } else {
+                            Modifier
+                        },
+                    )
                     .fillMaxWidth(),
         )
         ExposedDropdownMenu(
@@ -535,7 +578,7 @@ private const val CREATE_OPTION_TITLE = "Создать"
 @Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
 @Preview(showBackground = true, backgroundColor = 0xFF000000)
 @Composable
-private fun QuestCreateScreenPreview() {
+private fun questCreateScreenPreview() {
     SchoolQuizTheme {
         QuestCreateContent(
             state =
@@ -565,6 +608,7 @@ private fun QuestCreateScreenPreview() {
             onStructureCheckClick = {},
             onContinueDraftClick = {},
             onSubmitToArenaClick = {},
+            onSubmitNodeLongClick = {},
             onQuestionsClick = {},
         )
     }

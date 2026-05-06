@@ -2,6 +2,10 @@ package com.tpov.schoolquiz.android.feature.app_shell.presentation.di
 
 import com.arkivanov.decompose.ComponentContext
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.PlaceholderProfileComponent
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
@@ -51,6 +55,20 @@ val appShellPresentationModule =
                         koin.get(ReviewQueueComponent::class, parameters = { parametersOf(compCtx) })
                     }.getOrElse {
                         PlaceholderReviewQueueComponent()
+                    }
+                },
+                profileFactory = { compCtx ->
+                    runCatching<ProfileComponent> {
+                        koin.get(ProfileComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderProfileComponent()
+                    }
+                },
+                shopFactory = { compCtx ->
+                    runCatching<ShopComponent> {
+                        koin.get(ShopComponent::class, parameters = { parametersOf(compCtx) })
+                    }.getOrElse {
+                        PlaceholderShopComponent()
                     }
                 },
                 quizzesFactory = { compCtx ->

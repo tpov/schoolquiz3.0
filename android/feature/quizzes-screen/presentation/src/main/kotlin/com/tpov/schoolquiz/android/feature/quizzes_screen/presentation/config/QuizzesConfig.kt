@@ -46,4 +46,5 @@ sealed class QuizzesConfig {
 enum class QuestListMode {
     Home,
     Archive,
+    Arena,
 }

@@ -33,6 +33,8 @@ class QuestArenaSubmissionSyncTest {
                         ownerUid = "owner-1",
                         localRevision = 2L,
                         requestedAtMs = 10L,
+                        lessonIds = listOf("lesson-1"),
+                        targetShelf = "arena",
                         attemptCount = 0,
                         lastError = null,
                     ),
@@ -48,6 +50,7 @@ class QuestArenaSubmissionSyncTest {
         assertEquals("Draft", remote.requests.single().draft.title)
         assertEquals(7, remote.requests.single().questions.single().languageLevel)
         assertEquals(mapOf("ru" to 7), remote.requests.single().review.translatedLanguages)
+        assertEquals(setOf("lesson-1"), remote.requests.single().targetLessonIds)
         assertEquals(listOf("submission-1"), local.sentIds)
     }
 
@@ -63,6 +66,8 @@ class QuestArenaSubmissionSyncTest {
                         ownerUid = "owner-1",
                         localRevision = 2L,
                         requestedAtMs = 10L,
+                        lessonIds = listOf("lesson-1"),
+                        targetShelf = "arena",
                         attemptCount = 0,
                         lastError = null,
                     ),

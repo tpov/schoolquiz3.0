@@ -3,6 +3,11 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+fun String.toBuildConfigString(): String = "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+val firebaseAppCheckDebugSecret: String =
+    providers.environmentVariable("FIREBASE_APP_CHECK_DEBUG_SECRET").orNull.orEmpty()
+
 android {
     namespace = "com.tpov.schoolquiz.apps.android_next"
 
@@ -10,6 +15,19 @@ android {
         applicationId = "com.tpov.schoolquiz.next"
         versionCode = 1
         versionName = "0.1.0"
+    }
+
+    buildTypes {
+        named("debug") {
+            buildConfigField(
+                "String",
+                "FIREBASE_APP_CHECK_DEBUG_SECRET",
+                firebaseAppCheckDebugSecret.toBuildConfigString(),
+            )
+        }
+        named("release") {
+            buildConfigField("String", "FIREBASE_APP_CHECK_DEBUG_SECRET", "\"\"")
+        }
     }
 
     buildFeatures {
@@ -37,6 +55,12 @@ dependencies {
     implementation(project(":shared:feature:quest:domain"))
     implementation(project(":shared:feature:quest-authoring:data"))
     implementation(project(":shared:feature:quest-authoring:domain"))
+    implementation(project(":shared:feature:internet:profile:data"))
+    implementation(project(":shared:feature:internet:profile:domain"))
+    implementation(project(":android:feature:internet:profile:presentation"))
+    implementation(project(":shared:feature:economy:data"))
+    implementation(project(":shared:feature:economy:domain"))
+    implementation(project(":android:feature:economy:presentation"))
     implementation(project(":shared:feature:section:data"))
     implementation(project(":shared:feature:section:domain"))
     implementation(project(":shared:feature:theme:data"))

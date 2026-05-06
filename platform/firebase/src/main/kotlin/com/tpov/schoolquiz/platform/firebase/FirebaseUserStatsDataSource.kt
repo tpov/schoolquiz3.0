@@ -3,6 +3,9 @@ package com.tpov.schoolquiz.platform.firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.tpov.schoolquiz.platform.firebase.util.booleanField
+import com.tpov.schoolquiz.platform.firebase.util.intField
+import com.tpov.schoolquiz.platform.firebase.util.longField
 import com.tpov.schoolquiz.shared.core.stats.AuthUidChanged
 import com.tpov.schoolquiz.shared.core.stats.RawUserStats
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
@@ -68,20 +71,20 @@ private fun DocumentSnapshot.toRawUserStats(): RawUserStats? {
     return RawUserStats(
         nickname = getString("nickname") ?: "",
         avatarUrl = getString("avatarUrl")?.takeIf { it.startsWith("https://") },
-        hasPremium = getBoolean("hasPremium") ?: false,
-        streakDays = getLong("streakDays")?.toInt() ?: 0,
-        stars = getLong("stars") ?: 0L,
-        nolics = getLong("pointsNolics") ?: 0L,
-        standardHearts = getLong("standardHearts")?.toInt() ?: 0,
-        goldHearts = getLong("goldHearts")?.toInt() ?: 0,
-        gold = getLong("gold") ?: 0L,
-        currentSkill = getLong("pointsSkill")?.toInt() ?: 0,
-        testerLevel = (getLong("tester")?.toInt() ?: 0).coerceAtLeast(0),
-        moderatorLevel = (getLong("moderator")?.toInt() ?: 0).coerceAtLeast(0),
-        sponsorLevel = (getLong("sponsor")?.toInt() ?: 0).coerceAtLeast(0),
+        hasPremium = booleanField("hasPremium") ?: false,
+        streakDays = intField("streakDays") ?: 0,
+        stars = longField("stars") ?: 0L,
+        nolics = longField("pointsNolics") ?: 0L,
+        standardHearts = intField("standardHearts") ?: 0,
+        goldHearts = intField("goldHearts") ?: 0,
+        gold = longField("gold") ?: 0L,
+        currentSkill = intField("pointsSkill") ?: 0,
+        testerLevel = (intField("tester") ?: 0).coerceAtLeast(0),
+        moderatorLevel = (intField("moderator") ?: 0).coerceAtLeast(0),
+        sponsorLevel = (intField("sponsor") ?: 0).coerceAtLeast(0),
         // "translater" is the actual Firestore field name (intentional typo in production schema)
-        translatorLevel = (getLong("translater")?.toInt() ?: 0).coerceAtLeast(0),
-        adminLevel = (getLong("admin")?.toInt() ?: 0).coerceAtLeast(0),
-        developerLevel = (getLong("developer")?.toInt() ?: 0).coerceAtLeast(0),
+        translatorLevel = (intField("translater") ?: 0).coerceAtLeast(0),
+        adminLevel = (intField("admin") ?: 0).coerceAtLeast(0),
+        developerLevel = (intField("developer") ?: 0).coerceAtLeast(0),
     )
 }

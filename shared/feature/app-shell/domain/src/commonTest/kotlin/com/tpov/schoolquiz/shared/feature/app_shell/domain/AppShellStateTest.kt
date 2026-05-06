@@ -60,12 +60,12 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given cold start with guest stats when default state created then internet activeSection is Qualifications`() {
+    fun `given cold start with guest stats when default state created then internet activeSection is Profile`() {
         // FR #7 / BR #3: defaultSection = visibleSections(INTERNET, guestStats).first()
         // Guest has skill=0; Arena/Catalog/Social/Leaderboard require skill >= 3000/10000
-        // First visible for guest: Qualifications (emptyMap)
+        // First visible for guest: Profile (emptyMap)
         val state = AppShellState.default()
-        assertEquals(DrawerSection.InternetSection.Qualifications, state.internetState.activeSection)
+        assertEquals(DrawerSection.InternetSection.Profile, state.internetState.activeSection)
     }
 
     @Test
@@ -119,10 +119,10 @@ class AppShellStateTest {
     }
 
     @Test
-    fun `given corrupted saved state when fallback called then internet stack active is QualificationsRoot`() {
-        // Fallback uses same formula: guest stats → Qualifications is first visible for INTERNET
+    fun `given corrupted saved state when fallback called then internet stack active is ProfileRoot`() {
+        // Fallback uses same formula: guest stats → Profile is first visible for INTERNET
         val state = fallbackState()
-        assertEquals(InternetConfig.QualificationsRoot, state.internetState.stack.active)
+        assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
     }
 
     @Test
@@ -193,11 +193,11 @@ class AppShellStateTest {
     // -----------------------------------------------------------------------
 
     @Test
-    fun `scenario 36 initialTabState INTERNET guest stats activeSection is Qualifications`() {
-        // FR #7 / BR #3: defaultSection(INTERNET, guest) = visibleSections.first() = Qualifications
+    fun `scenario 36 initialTabState INTERNET guest stats activeSection is Profile`() {
+        // FR #7 / BR #3: defaultSection(INTERNET, guest) = visibleSections.first() = Profile
         val state = AppShellState.default()
-        assertEquals(DrawerSection.InternetSection.Qualifications, state.internetState.activeSection)
-        assertEquals(InternetConfig.QualificationsRoot, state.internetState.stack.active)
+        assertEquals(DrawerSection.InternetSection.Profile, state.internetState.activeSection)
+        assertEquals(InternetConfig.ProfileRoot, state.internetState.stack.active)
     }
 
     @Test

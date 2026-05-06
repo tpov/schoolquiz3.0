@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
  * Spec: docs/features/lesson-runner/plan/phase-06/tests.md §Scenario Group C
  * AC: AC-47 (CT-22), AC-50 (CT-23), AC-51 (CT-24)
  *
- * CT-22: StarRating renders with bestStarsRawTenths=15 (smoke — no test tags on stars)
+ * CT-22: StarRating renders with averageRating=1.5 (smoke — no test tags on stars)
  * CT-23: hardUnlocked=false → no Checkbox
  * CT-24: hardUnlocked=true  → mode chip visible as unchecked/easy
  */
@@ -31,15 +31,17 @@ class LessonItemCardTest {
     val composeTestRule = createComposeRule()
 
     // CT-22
-    // GIVEN LessonItemUi(bestStarsRawTenths=15, hardUnlocked=false)
+    // GIVEN LessonItemUi(averageRating=1.5, hardUnlocked=false)
     // WHEN LessonItemCard rendered
     // THEN lesson title is visible (smoke — StarRating has no test tags)
     @Test
-    fun ct22_lessonItemCard_bestStarsRawTenths15_rendersWithoutCrash() {
+    fun ct22_lessonItemCard_averageRating15_rendersWithoutCrash() {
         val item = LessonItemUi(
             id = "l1",
             title = "Урок 1",
             orderLabel = "1.",
+            averageRating = 1.5f,
+            ratingCount = 3,
             bestStarsRawTenths = 15,
             hardUnlocked = false,
         )

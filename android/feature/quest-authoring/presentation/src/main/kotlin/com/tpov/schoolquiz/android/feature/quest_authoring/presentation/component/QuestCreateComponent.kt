@@ -11,6 +11,13 @@ import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.flow.StateFlow
 
+enum class QuestArenaTargetNode {
+    QUEST,
+    SECTION,
+    THEME,
+    LESSON,
+}
+
 @Suppress("TooManyFunctions")
 interface QuestCreateComponent {
     val state: StateFlow<QuestCreateUiState>
@@ -46,6 +53,8 @@ interface QuestCreateComponent {
     fun onContinueDraftClick()
 
     fun onSubmitToArenaClick()
+
+    fun onSubmitNodeToArenaLongClick(target: QuestArenaTargetNode)
 
     fun onQuestionsClick(difficulty: Difficulty)
 

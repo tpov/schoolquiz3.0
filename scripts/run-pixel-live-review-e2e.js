@@ -12,7 +12,9 @@ const DEFAULT_SERVICE_ACCOUNT =
   "/home/tpov/Downloads/school-quiz-89336951-firebase-adminsdk-h5hhr-0d54a7e117.json";
 const serviceAccountPath = process.env.SCHOOLQUIZ_FIREBASE_SERVICE_ACCOUNT || DEFAULT_SERVICE_ACCOUNT;
 const prefix = process.env.REVIEW_E2E_PREFIX || `pixel_live_review_${Date.now()}`;
-const ids = liveIds(prefix);
+const catalogIdOverride = process.env.REVIEW_E2E_CATALOG_ID || null;
+const keepPublicFixture = /^(1|true|yes|y)$/i.test(process.env.REVIEW_E2E_KEEP_PUBLIC || "");
+const ids = liveIds(prefix, catalogIdOverride);
 const assignmentId = `${ids.submissionId}_${ids.lessonId}`;
 
 main().catch((error) => {
@@ -96,6 +98,9 @@ function runInstrumentation(serial, tokens) {
     "-e",
     "reviewE2ePrefix",
     prefix,
+    "-e",
+    "reviewE2eCatalogId",
+    ids.catalogId,
     "-e",
     "reviewE2eOwnerToken",
     tokens.owner,
@@ -253,6 +258,10 @@ async function cleanup(db, originalConfig) {
   await deleteIfExists(db, `private/${ids.ownerUid}/catalogs/${ids.catalogId}`);
   await deleteIfExists(db, `quest_review_requests/${ids.submissionId}`);
 
+  if (!keepPublicFixture) {
+    await cleanupPublicPublication(db);
+  }
+
   await Promise.all(userUids().map((uid) => deleteIfExists(db, `profiles/${uid}`)));
   const configRef = db.doc("configs/arena_review");
   if (originalConfig) {
@@ -260,6 +269,23 @@ async function cleanup(db, originalConfig) {
   } else {
     await configRef.delete();
   }
+}
+
+async function cleanupPublicPublication(db) {
+  await deleteIfExists(db, `lesson_content/${ids.lessonId}/sync_changes/${ids.questionId}`);
+  await deleteIfExists(db, `lesson_content/${ids.lessonId}/sync_changes/${ids.hardQuestionId}`);
+  await deleteIfExists(db, `catalogs/${ids.catalogId}/sync_changes/question_${ids.questionId}`);
+  await deleteIfExists(db, `catalogs/${ids.catalogId}/sync_changes/question_${ids.hardQuestionId}`);
+  await deleteIfExists(db, `catalogs/${ids.catalogId}/sync_changes/lesson_${ids.lessonId}`);
+  await deleteIfExists(db, `catalogs/${ids.catalogId}/sync_changes/theme_${ids.themeId}`);
+  await deleteIfExists(db, `catalogs/${ids.catalogId}/sync_changes/section_${ids.sectionId}`);
+  await deleteIfExists(db, `catalogs/${ids.catalogId}/sync_changes/quest_${ids.questId}`);
+  await deleteIfExists(db, `questions/${ids.questionId}`);
+  await deleteIfExists(db, `questions/${ids.hardQuestionId}`);
+  await deleteIfExists(db, `lessons/${ids.lessonId}`);
+  await deleteIfExists(db, `themes/${ids.themeId}`);
+  await deleteIfExists(db, `sections/${ids.sectionId}`);
+  await deleteIfExists(db, `quests/${ids.questId}`);
 }
 
 async function cleanupAuthUsers() {
@@ -319,7 +345,7 @@ function privateLessonPath() {
   return `${privateThemePath()}/lessons/${ids.lessonId}`;
 }
 
-function liveIds(value) {
+function liveIds(value, catalogId) {
   return {
     ownerUid: `${value}_owner`,
     testerWeakUid: `${value}_tester_weak`,
@@ -328,12 +354,13 @@ function liveIds(value) {
     translatorWeakUid: `${value}_translator_weak`,
     translatorUid: `${value}_translator`,
     translationReviewerUid: `${value}_translation_reviewer`,
-    catalogId: `${value}_catalog`,
+    catalogId: catalogId || `${value}_catalog`,
     questId: `${value}_quest`,
     sectionId: `${value}_section`,
     themeId: `${value}_theme`,
     lessonId: `${value}_lesson`,
     questionId: `${value}_question`,
+    hardQuestionId: `${value}_hard_question`,
     submissionId: `${value}_submission`,
   };
 }

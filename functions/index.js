@@ -1,8 +1,10 @@
 "use strict";
 
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -19,6 +21,38 @@ const TRANSLATION_REVIEW_LEVEL_GAP = 100;
 const ACTIVE_LEVEL_WINDOW = 100;
 const ACCEPTED_TRANSLATION_SEGMENT_POINTS = 5;
 const REJECTED_TRANSLATION_SEGMENT_POINTS = -1;
+const REVIEW_PASS_LEVEL = 100;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PUBLIC_SCOPE = "public";
+const PRIVATE_SCOPE = "private";
+const MAX_RESULT_EVENTS_PER_CALL = 50;
+const DIRTY_RATING_READ_BATCH = 400;
+const DAILY_DIRTY_RATING_LIMIT = 5000;
+const HARD_RESULT_REWARD_MULTIPLIER = 2;
+const NOLICS_PERCENT_STEP = 10;
+const QUEST_RATING_QUALIFICATION_USER_FIELD = "developer";
+const QUEST_RATING_QUALIFICATION_PROFILE_FIELD = "developerLevel";
+const QUEST_RATING_QUALIFICATION_POINTS_PER_STAR = 10;
+const SHOP_ITEM_STANDARD_HEART_SLOT = "STANDARD_HEART_SLOT";
+const SHOP_ITEM_GOLD_HEART = "GOLD_HEART";
+const STANDARD_HEART_SLOT_COSTS = [1000, 2000, 5000, 10000, 20000];
+const MAX_STANDARD_HEARTS = 5;
+const MAX_GOLD_HEARTS = 1;
+const GOLD_HEART_COST = 10;
+const GIFT_BOX_STREAK_TARGET_DAYS = 10;
+const GIFT_BOX_LOGO_NAMES = [
+  "Golden Crown Logo",
+  "Diamond Star Logo",
+  "Phoenix Wings Logo",
+  "Dragon Scale Logo",
+  "Crystal Orb Logo",
+  "Thunder Bolt Logo",
+  "Mystic Eye Logo",
+  "Royal Shield Logo",
+];
+const NICKNAME_CLAIMS_COLLECTION = "nickname_claims";
+const NICKNAME_POLICY_DOC = "configs/nickname_policy";
+const NICKNAME_GENERATION_ATTEMPTS = 20;
 
 exports.processQuestReviewRequest = onDocumentCreated(
   {...FUNCTION_OPTIONS, document: "quest_review_requests/{submissionId}"},
@@ -138,6 +172,7 @@ exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
   const updatedTask = {
     ...taskWithTranslatedQuestions,
     checks: aggregation.checks,
+    status: lessonReviewStatus(aggregation.checks, taskWithTranslatedQuestions, config),
     changedAtMs: now,
   };
   const reviewerDeltas = newReviewerDeltas(
@@ -157,12 +192,251 @@ exports.submitReviewAction = onCall(FUNCTION_OPTIONS, async (request) => {
   for (const delta of reviewerDeltas) {
     if (delta.points !== 0) await addReviewerReputation(delta.reviewerUid, delta.points);
   }
+  const published = await publishSubmissionIfReady(updatedTask.submissionId, config, now);
 
   return {
     recordId: record.id,
     aggregate: checksToCallableMap(aggregation.checks),
     reviewerDeltas,
+    published,
   };
+});
+
+exports.reconcileQuestReviewDaily = onSchedule(
+  {...FUNCTION_OPTIONS, schedule: "every day 03:00", timeZone: "UTC"},
+  async () => {
+    const now = Date.now();
+    await reconcileChangedReviewLessons(now - DAY_MS, now);
+  },
+);
+
+exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const attempts = listMaps(request.data && request.data.attempts);
+  if (attempts.length > MAX_RESULT_EVENTS_PER_CALL) {
+    throw new HttpsError("invalid-argument", `At most ${MAX_RESULT_EVENTS_PER_CALL} attempts are accepted per call`);
+  }
+  if (attempts.length === 0) return {accepted: 0};
+
+  const now = Date.now();
+  const events = attempts.map((item) => {
+    const event = normalizeLessonResultAttemptEvent(item, uid);
+    const content = contentKeysForEvent(event);
+    const ref = db
+      .collection(scopedCollection("result_events", event.scope))
+      .doc(eventBucketId(event.completedAtMs, event.attemptId))
+      .collection("events")
+      .doc(safeDocId(event.attemptId));
+    return {event, content, ref};
+  });
+  let reward = {skillPoints: 0, nolics: 0};
+  await db.runTransaction(async (transaction) => {
+    const existingSnapshots = [];
+    for (const item of events) {
+      existingSnapshots.push(await transaction.get(item.ref));
+    }
+    const delta = {skillPoints: 0, nolics: 0};
+    events.forEach((item, index) => {
+      transaction.set(
+        item.ref,
+        clean({
+          ...item.event,
+          ...item.content,
+          receivedAtMs: now,
+          schemaVersion: 1,
+        }),
+        {merge: true},
+      );
+      if (!existingSnapshots[index].exists) {
+        const itemReward = lessonResultReward(item.event);
+        delta.skillPoints += itemReward.skillPoints;
+        delta.nolics += itemReward.nolics;
+      }
+    });
+    if (delta.skillPoints > 0 || delta.nolics > 0) {
+      writeUserProgressDelta(transaction, uid, delta, now);
+    }
+    reward = delta;
+  });
+  return {accepted: attempts.length, reward};
+});
+
+exports.submitQuestRatingEvents = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const ratings = listMaps(request.data && request.data.ratings);
+  if (ratings.length > MAX_RESULT_EVENTS_PER_CALL) {
+    throw new HttpsError("invalid-argument", `At most ${MAX_RESULT_EVENTS_PER_CALL} ratings are accepted per call`);
+  }
+  if (ratings.length === 0) return {accepted: 0};
+
+  const now = Date.now();
+  const batch = db.batch();
+  for (const item of ratings) {
+    const event = normalizeQuestRatingEvent(item, uid);
+    const content = contentKeysForEvent(event);
+    const bucketId = eventBucketId(event.ratedAtMs, event.ratingId);
+    const eventRef = db
+      .collection(scopedCollection("rating_events", event.scope))
+      .doc(bucketId)
+      .collection("events")
+      .doc(safeDocId(event.ratingId));
+    const submissionRef = db
+      .collection(scopedCollection("quest_rating_submissions", event.scope))
+      .doc(content.questContentKey)
+      .collection("ratings")
+      .doc(hashHex(uid));
+    const dirtyRef = db
+      .collection(scopedCollection("quest_rating_dirty", event.scope))
+      .doc(content.questContentKey);
+    const eventData = clean({
+      ...event,
+      ...content,
+      receivedAtMs: now,
+      schemaVersion: 1,
+    });
+    batch.set(eventRef, eventData, {merge: true});
+    batch.set(
+      submissionRef,
+      clean({
+        ...eventData,
+        uidHash: hashHex(uid),
+        updatedAtMs: now,
+      }),
+      {merge: true},
+    );
+    batch.set(
+      dirtyRef,
+      clean({
+        contentKey: content.questContentKey,
+        scope: event.scope,
+        ownerUid: event.ownerUid,
+        catalogId: event.catalogId,
+        questId: event.questId,
+        sourceShelf: event.sourceShelf,
+        changedAtMs: now,
+      }),
+      {merge: true},
+    );
+  }
+  await batch.commit();
+  return {accepted: ratings.length};
+});
+
+exports.aggregateQuestRatingsDaily = onSchedule(
+  {...FUNCTION_OPTIONS, schedule: "every day 04:00", timeZone: "UTC"},
+  async () => {
+    await aggregateDirtyQuestRatings(Date.now(), DAILY_DIRTY_RATING_LIMIT);
+  },
+);
+
+exports.aggregateQuestRatingsNow = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
+    throw new HttpsError("permission-denied", "Developer level is required");
+  }
+  const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 200), DAILY_DIRTY_RATING_LIMIT));
+  return aggregateDirtyQuestRatings(Date.now(), limit);
+});
+
+exports.ensureUserProfile = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const result = await upsertUserProfile(uid, {
+    nickname: generatedNickname(uid),
+    knownLanguages: normalizeLanguages(request.data && request.data.knownLanguages),
+    now: Date.now(),
+    authStatus: authProfileStatus(request),
+    allowNicknameUpgrade: false,
+  });
+  return profileResponse(result);
+});
+
+exports.updateUserNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const nickname = sanitizeNickname(stringValue(request.data && request.data.nickname), null);
+  if (!nickname) {
+    throw new HttpsError("invalid-argument", "Nickname must contain 3..24 supported characters");
+  }
+  const result = await upsertUserProfile(uid, {
+    nickname,
+    knownLanguages: normalizeLanguages(request.data && request.data.knownLanguages),
+    now: Date.now(),
+    authStatus: authProfileStatus(request),
+    allowNicknameUpgrade: true,
+  });
+  return profileResponse(result);
+});
+
+exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const itemId = stringValue(request.data && request.data.itemId);
+  if (![SHOP_ITEM_STANDARD_HEART_SLOT, SHOP_ITEM_GOLD_HEART].includes(itemId)) {
+    throw new HttpsError("invalid-argument", `Unsupported shop item ${itemId}`);
+  }
+
+  const userRef = db.collection("users").doc(uid);
+  const now = Date.now();
+  let response = null;
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(userRef);
+    const current = readEconomyBalance(snapshot.exists ? snapshot.data() || {} : {});
+    const balance = applyShopPurchaseToBalance(current, itemId);
+    transaction.set(
+      userRef,
+      clean({
+        uid,
+        updatedAtMs: now,
+        hasPremium: balance.hasPremium,
+        streakDays: balance.streakDays,
+        stars: balance.stars,
+        pointsNolics: balance.nolics,
+        nolics: balance.nolics,
+        standardHearts: balance.standardHearts,
+        goldHearts: balance.goldHearts,
+        gold: balance.gold,
+      }),
+      {merge: true},
+    );
+    response = {itemId, balance};
+  });
+  return response;
+});
+
+exports.openGiftBox = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const now = Date.now();
+  await upsertUserProfile(uid, {
+    nickname: generatedNickname(uid),
+    knownLanguages: normalizeLanguages(request.data && request.data.knownLanguages),
+    now,
+    authStatus: authProfileStatus(request),
+    allowNicknameUpgrade: false,
+  });
+
+  const reward = generateGiftBoxReward();
+  await db.runTransaction(async (transaction) => {
+    const userRef = db.collection("users").doc(uid);
+    const userSnapshot = await transaction.get(userRef);
+    const existingUser = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    const boxState = advanceGiftBoxState(existingUser, now);
+    if (boxState.boxCount <= 0) {
+      throw new HttpsError("failed-precondition", "No gift boxes available");
+    }
+    transaction.set(
+      userRef,
+      clean({
+        uid,
+        updatedAtMs: now,
+        ...boxState,
+        boxCount: boxState.boxCount - 1,
+        ...giftBoxRewardUpdate(existingUser, reward, now),
+      }),
+      {merge: true},
+    );
+  });
+  return reward;
 });
 
 async function processArenaRequest(request) {
@@ -183,6 +457,9 @@ async function processArenaRequest(request) {
       processed: true,
       processedAtMs: now,
       lastError: null,
+      status: "UNDER_REVIEW",
+      targetShelf: request.targetShelf,
+      targetLessonIds: request.targetLessonIds,
     },
     {merge: true},
   );
@@ -204,6 +481,378 @@ function writeAdminReviewLessonTasksToBatch(batch, tasks) {
   for (const [path, data] of Object.entries(adminDocuments(tasks))) {
     batch.set(db.doc(path), clean(data), {merge: true});
   }
+}
+
+async function reconcileChangedReviewLessons(sinceMs, now) {
+  const changes = await db.collection("admin/review/sync_changes")
+    .where("changedAtMs", ">", sinceMs)
+    .get();
+  const assignmentIds = new Set(
+    changes.docs
+      .map((doc) => stringValue((doc.data() || {}).assignmentId, doc.id))
+      .filter(Boolean),
+  );
+  if (assignmentIds.size === 0) return {checked: 0, published: 0};
+
+  const config = await readArenaReviewConfig();
+  const tasks = await readAdminReviewLessonTasksByIds(assignmentIds);
+  const touchedSubmissionIds = new Set();
+  const batch = db.batch();
+
+  for (const task of tasks) {
+    const records = await readReviewRecords(task.lessonId);
+    const aggregation = rebuildAggregate(task, records, config);
+    const updatedTask = {
+      ...task,
+      checks: aggregation.checks,
+      status: lessonReviewStatus(aggregation.checks, task, config),
+      changedAtMs: now,
+    };
+    writeAdminReviewLessonTasksToBatch(batch, [updatedTask]);
+    touchedSubmissionIds.add(task.submissionId);
+  }
+  await batch.commit();
+
+  let published = 0;
+  for (const submissionId of touchedSubmissionIds) {
+    if (await publishSubmissionIfReady(submissionId, config, now)) published += 1;
+  }
+  return {checked: tasks.length, published};
+}
+
+async function aggregateDirtyQuestRatings(now, maxDirtyDocs) {
+  const publicResult = await aggregateDirtyQuestRatingsForScope(PUBLIC_SCOPE, now, maxDirtyDocs);
+  const remaining = Math.max(0, maxDirtyDocs - publicResult.processed - publicResult.skipped);
+  const privateResult = await aggregateDirtyQuestRatingsForScope(PRIVATE_SCOPE, now, remaining);
+  return {public: publicResult, private: privateResult};
+}
+
+async function aggregateDirtyQuestRatingsForScope(scope, now, maxDirtyDocs) {
+  if (maxDirtyDocs <= 0) return {processed: 0, skipped: 0, qualificationDelta: 0};
+  const root = db.collection(scopedCollection("quest_rating_dirty", scope));
+  let processed = 0;
+  let skipped = 0;
+  let qualificationDelta = 0;
+  while (processed + skipped < maxDirtyDocs) {
+    const limit = Math.min(DIRTY_RATING_READ_BATCH, maxDirtyDocs - processed - skipped);
+    const snapshot = await root.limit(limit).get();
+    if (snapshot.empty) break;
+    for (const doc of snapshot.docs) {
+      const result = await aggregateDirtyQuestRatingDoc(scope, doc, now);
+      processed += result.processed;
+      skipped += result.skipped;
+      qualificationDelta += numberValue(result.qualificationDelta, 0);
+    }
+    if (snapshot.size < limit) break;
+  }
+  return {processed, skipped, qualificationDelta};
+}
+
+async function aggregateDirtyQuestRatingDoc(scope, dirtyDoc, now) {
+  const dirty = normalizeDirtyQuestRating(dirtyDoc.data() || {}, dirtyDoc.id, scope);
+  if (!dirty.contentKey || !dirty.catalogId || !dirty.questId || (dirty.scope === PRIVATE_SCOPE && !dirty.ownerUid)) {
+    await dirtyDoc.ref.delete();
+    return {processed: 0, skipped: 1};
+  }
+
+  const targetUid = await ratingQualificationTargetUid(dirty);
+  const ratingsSnapshot = await db
+    .collection(scopedCollection("quest_rating_submissions", dirty.scope))
+    .doc(dirty.contentKey)
+    .collection("ratings")
+    .get();
+  let count = 0;
+  let sum = 0;
+  for (const doc of ratingsSnapshot.docs) {
+    const rating = numberValue((doc.data() || {}).rating, null);
+    if (rating >= 1 && rating <= 3) {
+      count += 1;
+      sum += rating;
+    }
+  }
+  const averageRating = count > 0 ? Math.round((sum / count) * 10) / 10 : null;
+  const qualificationScore = questRatingQualificationScore(ratingsSnapshot.docs, targetUid);
+  const aggregateRef = db.collection(scopedCollection("quest_rating_aggregates", dirty.scope)).doc(dirty.contentKey);
+  const result = {processed: 1, skipped: 0, qualificationDelta: 0};
+  await db.runTransaction(async (transaction) => {
+    const dirtySnapshot = await transaction.get(dirtyDoc.ref);
+    if (!dirtySnapshot.exists) {
+      result.processed = 0;
+      result.skipped = 1;
+      return;
+    }
+    const aggregateSnapshot = await transaction.get(aggregateRef);
+    const previousAggregate = aggregateSnapshot.exists ? aggregateSnapshot.data() || {} : {};
+    const previousTargetUid = nullableString(previousAggregate.qualificationTargetUid);
+    const previousScore = numberValue(previousAggregate.qualificationScore, 0);
+    const previousAppliedScore = numberValue(previousAggregate.qualificationAppliedScore, previousScore);
+    const targetSnapshots = await readQualificationTargets(
+      transaction,
+      [previousTargetUid, targetUid].filter(Boolean),
+    );
+    const qualificationApplication = writeRatingQualificationDelta(
+      transaction,
+      targetSnapshots,
+      {
+        previousTargetUid,
+        previousAppliedScore,
+        targetUid,
+        qualificationScore,
+        now,
+      },
+    );
+    result.qualificationDelta = qualificationApplication.delta;
+
+    transaction.set(
+      aggregateRef,
+      clean({
+        contentKey: dirty.contentKey,
+        scope: dirty.scope,
+        ownerUid: dirty.ownerUid,
+        catalogId: dirty.catalogId,
+        questId: dirty.questId,
+        averageRating,
+        averageRatingCount: count,
+        qualificationTargetUid: targetUid,
+        qualificationField: QUEST_RATING_QUALIFICATION_USER_FIELD,
+        qualificationScore,
+        qualificationAppliedScore: qualificationApplication.appliedScore,
+        updatedAtMs: now,
+      }),
+      {merge: true},
+    );
+    writeQuestRatingAggregateToWriter(transaction, dirty, averageRating, count, now);
+    transaction.delete(dirtyDoc.ref);
+  });
+  return result;
+}
+
+function writeQuestRatingAggregateToWriter(writer, dirty, averageRating, averageRatingCount, now) {
+  const ratingPatch = clean({
+    averageRating,
+    averageRatingCount,
+    ratingUpdatedAtMs: now,
+    lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+    version: admin.firestore.FieldValue.increment(1),
+  });
+  if (dirty.scope === PRIVATE_SCOPE) {
+    writer.set(
+      db.doc(privateQuestPath(dirty.ownerUid, dirty.catalogId, dirty.questId)),
+      {...ratingPatch, changedAtMs: now},
+      {merge: true},
+    );
+    writer.set(
+      db.doc(privateSyncChangePath(dirty.ownerUid, dirty.catalogId, dirty.questId)),
+      {
+        id: dirty.questId,
+        type: "quest",
+        catalogId: dirty.catalogId,
+        questId: dirty.questId,
+        changedAtMs: now,
+      },
+      {merge: true},
+    );
+    return;
+  }
+  writer.set(db.collection("quests").doc(dirty.questId), ratingPatch, {merge: true});
+  writer.set(
+    db.doc(publicCatalogSyncChangePath(dirty.catalogId, "quest", dirty.questId)),
+    syncChangeDocument("quest", dirty.questId, now),
+    {merge: true},
+  );
+}
+
+async function ratingQualificationTargetUid(dirty) {
+  if (dirty.scope === PRIVATE_SCOPE) return dirty.ownerUid;
+  const snapshot = await db.collection("quests").doc(dirty.questId).get();
+  if (!snapshot.exists) return null;
+  const data = snapshot.data() || {};
+  return nullableString(data.authorUid || data.ownerUid);
+}
+
+function questRatingQualificationScore(ratingDocs, targetUid) {
+  if (!targetUid) return 0;
+  let score = 0;
+  for (const doc of ratingDocs) {
+    const data = doc.data() || {};
+    const rating = numberValue(data.rating, null);
+    if (rating < 1 || rating > 3) continue;
+    const raterUid = nullableString(data.userId);
+    if (raterUid && raterUid === targetUid) continue;
+    score += questRatingQualificationDelta(rating);
+  }
+  return score;
+}
+
+function questRatingQualificationDelta(rating) {
+  return (rating - 2) * QUEST_RATING_QUALIFICATION_POINTS_PER_STAR;
+}
+
+async function readQualificationTargets(transaction, uids) {
+  const result = new Map();
+  for (const uid of Array.from(new Set(uids.filter(Boolean)))) {
+    const userRef = db.collection("users").doc(uid);
+    const profileRef = db.collection("profiles").doc(uid);
+    const userSnapshot = await transaction.get(userRef);
+    const profileSnapshot = await transaction.get(profileRef);
+    result.set(uid, {
+      userRef,
+      profileRef,
+      userData: userSnapshot.exists ? userSnapshot.data() || {} : {},
+      profileData: profileSnapshot.exists ? profileSnapshot.data() || {} : {},
+    });
+  }
+  return result;
+}
+
+function writeRatingQualificationDelta(transaction, targetSnapshots, options) {
+  let appliedDelta = 0;
+  let appliedScore = 0;
+  if (
+    options.previousTargetUid &&
+    options.previousTargetUid !== options.targetUid &&
+    options.previousAppliedScore !== 0
+  ) {
+    appliedDelta += writeUserQualificationLevelDelta(
+      transaction,
+      targetSnapshots,
+      options.previousTargetUid,
+      -options.previousAppliedScore,
+      options.now,
+    );
+  }
+  if (options.targetUid) {
+    const previousTargetAppliedScore =
+      options.previousTargetUid === options.targetUid ? options.previousAppliedScore : 0;
+    const targetDelta = writeUserQualificationLevelDelta(
+      transaction,
+      targetSnapshots,
+      options.targetUid,
+      options.qualificationScore - previousTargetAppliedScore,
+      options.now,
+    );
+    appliedDelta += targetDelta;
+    appliedScore = previousTargetAppliedScore + targetDelta;
+  }
+  return {delta: appliedDelta, appliedScore};
+}
+
+function writeUserQualificationLevelDelta(transaction, targetSnapshots, uid, delta, now) {
+  if (!uid || delta === 0) return 0;
+  const target = targetSnapshots.get(uid);
+  if (!target) return 0;
+  const current = currentRatingQualificationLevel(target.userData, target.profileData);
+  const next = Math.max(0, current + delta);
+  const appliedDelta = next - current;
+  if (appliedDelta === 0) return 0;
+  transaction.set(
+    target.userRef,
+    clean({
+      uid,
+      updatedAtMs: now,
+      [QUEST_RATING_QUALIFICATION_USER_FIELD]: next,
+      qualifications: {
+        [QUEST_RATING_QUALIFICATION_USER_FIELD]: next,
+      },
+      qualification: {
+        [QUEST_RATING_QUALIFICATION_USER_FIELD]: next,
+        [QUEST_RATING_QUALIFICATION_PROFILE_FIELD]: next,
+      },
+    }),
+    {merge: true},
+  );
+  transaction.set(
+    target.profileRef,
+    clean({
+      uid,
+      updatedAtMs: now,
+      [QUEST_RATING_QUALIFICATION_PROFILE_FIELD]: next,
+    }),
+    {merge: true},
+  );
+  return appliedDelta;
+}
+
+function currentRatingQualificationLevel(userData, profileData) {
+  const userQualifications = userData.qualifications || {};
+  const userQualification = userData.qualification || {};
+  return Math.max(
+    nonNegativeNumber(profileData[QUEST_RATING_QUALIFICATION_PROFILE_FIELD], 0),
+    nonNegativeNumber(userData[QUEST_RATING_QUALIFICATION_USER_FIELD], 0),
+    nonNegativeNumber(userQualifications[QUEST_RATING_QUALIFICATION_USER_FIELD], 0),
+    nonNegativeNumber(userQualification[QUEST_RATING_QUALIFICATION_USER_FIELD], 0),
+    nonNegativeNumber(userQualification[QUEST_RATING_QUALIFICATION_PROFILE_FIELD], 0),
+  );
+}
+
+async function publishSubmissionIfReady(submissionId, config, now) {
+  const requestSnapshot = await db.collection("quest_review_requests").doc(submissionId).get();
+  if (!requestSnapshot.exists) return false;
+  const request = normalizeRequest(requestSnapshot.data() || {}, submissionId);
+  if (request.status === "PUBLISHED") return false;
+
+  const taskSnapshot = await db.collection("admin/review/lessons")
+    .where("submissionId", "==", submissionId)
+    .get();
+  const tasks = [];
+  for (const doc of taskSnapshot.docs) {
+    tasks.push(await adminLessonSnapshotToTask(doc));
+  }
+  const requestedLessonIds =
+    request.targetLessonIds.length > 0
+      ? new Set(request.targetLessonIds)
+      : new Set(request.lessons.map((lesson) => lesson.id));
+  const targetTasks = tasks.filter((task) => requestedLessonIds.has(task.lessonId));
+  if (targetTasks.length === 0 || targetTasks.length < requestedLessonIds.size) {
+    await requestSnapshot.ref.set({status: "UNDER_REVIEW", updatedAtMs: now}, {merge: true});
+    return false;
+  }
+  const allReady = targetTasks.every((task) => lessonPassed(task.checks, task, config));
+  if (!allReady) {
+    await requestSnapshot.ref.set({status: "UNDER_REVIEW", updatedAtMs: now}, {merge: true});
+    return false;
+  }
+
+  const batch = db.batch();
+  writePublicHierarchyToBatch(batch, requestWithPublishedQuestions(request, targetTasks), now);
+  for (const task of targetTasks) {
+    writeAdminReviewLessonTasksToBatch(batch, [{...task, status: "PUBLISHED", changedAtMs: now}]);
+  }
+  batch.set(
+    requestSnapshot.ref,
+    {
+      status: "PUBLISHED",
+      publishedAtMs: now,
+      updatedAtMs: now,
+      publicQuestId: request.draft.id,
+    },
+    {merge: true},
+  );
+  await batch.commit();
+  return true;
+}
+
+function requestWithPublishedQuestions(request, targetTasks) {
+  const questionsByLesson = new Map(
+    targetTasks.map((task) => [task.lessonId, task.questions]),
+  );
+  const writtenLessons = new Set();
+  const questions = [];
+  for (const question of request.questions) {
+    const publishedQuestions = questionsByLesson.get(question.lessonId);
+    if (!publishedQuestions) {
+      questions.push(question);
+    } else if (!writtenLessons.has(question.lessonId)) {
+      questions.push(...publishedQuestions);
+      writtenLessons.add(question.lessonId);
+    }
+  }
+  for (const [lessonId, publishedQuestions] of questionsByLesson.entries()) {
+    if (!writtenLessons.has(lessonId)) {
+      questions.push(...publishedQuestions);
+    }
+  }
+  return {...request, questions};
 }
 
 function privateDocuments(request) {
@@ -232,6 +881,8 @@ function privateDocuments(request) {
     defaultLanguage: request.draft.defaultLanguage,
     defaultDifficulty: request.draft.defaultDifficulty,
     publicQuestId: request.draft.publicQuestId,
+    targetShelf: request.targetShelf,
+    targetLessonIds: request.targetLessonIds,
     createdAtMs: request.draft.createdAtMs,
     localRevision: request.localRevision,
     updatedAtMs: request.draft.updatedAtMs,
@@ -300,6 +951,8 @@ function adminDocuments(tasks) {
       title: task.title,
       createdAtMs: task.createdAtMs,
       changedAtMs: task.changedAtMs,
+      status: task.status || lessonReviewStatus(task.checks, task, null),
+      targetShelf: task.targetShelf,
       availableLanguages: Array.from(availableLanguages(task)).sort(),
       sourceLanguages: Array.from(task.sourceLanguages).sort(),
       testingScore: task.checks.testingScore,
@@ -332,6 +985,98 @@ function adminDocuments(tasks) {
   return documents;
 }
 
+function writePublicHierarchyToBatch(batch, request, now) {
+  for (const [path, data] of Object.entries(publicDocuments(request, now))) {
+    batch.set(db.doc(path), clean(data), {merge: true});
+  }
+}
+
+function publicDocuments(request, now) {
+  const documents = {};
+  const catalogId = request.draft.catalogId;
+  const questId = request.draft.id;
+  const archivedRoot = request.targetShelf === "archive";
+  documents[`quests/${questId}`] = {
+    id: questId,
+    catalogId,
+    authorUid: request.ownerUid,
+    title: request.draft.title,
+    picturePath: null,
+    visibleOn: [request.targetShelf],
+    averageRating: null,
+    averageRatingCount: 0,
+    version: request.localRevision,
+    contentsVersion: request.localRevision,
+    lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+    archived: archivedRoot,
+  };
+  documents[publicCatalogSyncChangePath(catalogId, "quest", questId)] = syncChangeDocument("quest", questId, now);
+  for (const section of request.sections) {
+    documents[`sections/${section.id}`] = {
+      id: section.id,
+      questId,
+      title: section.title,
+      order: section.order,
+      version: request.localRevision,
+      contentsVersion: request.localRevision,
+      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      archived: false,
+    };
+    documents[publicCatalogSyncChangePath(catalogId, "section", section.id)] =
+      syncChangeDocument("section", section.id, now);
+  }
+  for (const theme of request.themes) {
+    documents[`themes/${theme.id}`] = {
+      id: theme.id,
+      sectionId: theme.sectionId,
+      title: theme.title,
+      order: theme.order,
+      version: request.localRevision,
+      contentsVersion: request.localRevision,
+      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      archived: false,
+    };
+    documents[publicCatalogSyncChangePath(catalogId, "theme", theme.id)] = syncChangeDocument("theme", theme.id, now);
+  }
+  for (const lesson of request.lessons) {
+    documents[`lessons/${lesson.id}`] = {
+      id: lesson.id,
+      themeId: lesson.themeId,
+      title: lesson.title,
+      order: lesson.order,
+      version: request.localRevision,
+      contentsVersion: request.localRevision,
+      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      archived: false,
+    };
+    documents[publicCatalogSyncChangePath(catalogId, "lesson", lesson.id)] =
+      syncChangeDocument("lesson", lesson.id, now);
+  }
+  for (const question of request.questions) {
+    documents[`questions/${question.id}`] = {
+      id: question.id,
+      lessonId: question.lessonId,
+      text: question.text,
+      payload: question.payload,
+      language: question.language,
+      languageLevel: question.languageLevel,
+      order: question.order,
+      version: request.localRevision,
+      lastModifiedAt: admin.firestore.Timestamp.fromMillis(now),
+      archived: false,
+    };
+    documents[publicCatalogSyncChangePath(catalogId, "question", question.id)] =
+      syncChangeDocument("question", question.id, now);
+    documents[lessonContentSyncChangePath(question.lessonId, question.id)] =
+      syncChangeDocument("question", question.id, now);
+  }
+  return documents;
+}
+
+function syncChangeDocument(type, id, changedAtMs) {
+  return {type, id, changedAtMs};
+}
+
 function toAdminLessonTasks(request, createdAtMs) {
   return request.lessons.map((lesson) => {
     const lessonQuestions = request.questions.filter((question) => question.lessonId === lesson.id);
@@ -344,6 +1089,7 @@ function toAdminLessonTasks(request, createdAtMs) {
       questId: request.draft.id,
       lessonId: lesson.id,
       title: lesson.title,
+      targetShelf: request.targetShelf,
       createdAtMs,
       changedAtMs: createdAtMs,
       checks: reviewToChecks(request.review, questionLanguages(lessonQuestions)),
@@ -428,18 +1174,24 @@ function canSubmit(profile, task, kind, config, existingRecords) {
 }
 
 function translationTargets(profile, task, config) {
-  if (!isReadyForTranslation(task.checks) || profile.translatorLevel < QUALIFIED_LEVEL) {
+  const hasDeveloperOverride = profile.developerLevel > DEVELOPER_ALL_ACCESS_LEVEL;
+  if (!isReadyForTranslation(task.checks) || (!hasDeveloperOverride && profile.translatorLevel < QUALIFIED_LEVEL)) {
     return emptyTranslationTargets();
   }
-  const known = new Set(profile.knownLanguages.map(normalizeLanguage).filter(Boolean));
   const sourceLanguages = new Set(
     Array.from(task.sourceLanguages).map(normalizeLanguage).filter(Boolean),
   );
+  const required = requiredLanguages(task, config);
+  const known = new Set(
+    (hasDeveloperOverride
+      ? [...profile.knownLanguages, ...sourceLanguages, ...required]
+      : profile.knownLanguages
+    ).map(normalizeLanguage).filter(Boolean),
+  );
   const translated = new Set(Object.keys(task.checks.translatedLanguages || {}).map(normalizeLanguage).filter(Boolean));
-  const knownSources = intersect(sourceLanguages, known);
+  const knownSources = hasDeveloperOverride ? sourceLanguages : intersect(sourceLanguages, known);
   if (knownSources.size === 0) return emptyTranslationTargets();
 
-  const required = requiredLanguages(task, config);
   const newTargets = intersect(difference(required, translated), known);
   const reviewThreshold = profile.translatorLevel - TRANSLATION_REVIEW_LEVEL_GAP;
   let reviewTargets = new Set();
@@ -527,6 +1279,26 @@ function rebuildAggregate(task, records, config) {
     },
     reviewerDeltas: testing.reviewerDeltas.concat(logic.reviewerDeltas),
   };
+}
+
+function lessonReviewStatus(checks, task, config) {
+  return lessonPassed(checks, task, config) ? "READY_FOR_PUBLICATION" : "UNDER_REVIEW";
+}
+
+function lessonPassed(checks, task, config) {
+  const required = requiredLanguages(task, config);
+  const translated = checks.translatedLanguages || {};
+  const sourceLanguages = new Set(
+    Array.from(task.sourceLanguages || []).map(normalizeLanguage).filter(Boolean),
+  );
+  return (
+    hasTestingResult(checks) &&
+    hasLogicResult(checks) &&
+    Array.from(required).every((language) =>
+      sourceLanguages.has(normalizeLanguage(language)) ||
+      numberValue(translated[language], 0) >= REVIEW_PASS_LEVEL
+    )
+  );
 }
 
 function scoreAggregate(records, kind) {
@@ -749,6 +1521,8 @@ async function adminLessonSnapshotToTask(snapshot) {
     questId,
     lessonId: snapshot.id,
     title: stringValue(data.title),
+    targetShelf: targetShelfValue(data.targetShelf),
+    status: stringValue(data.status, "UNDER_REVIEW"),
     createdAtMs: numberValue(data.createdAtMs, 0),
     changedAtMs: numberValue(data.changedAtMs, numberValue(data.createdAtMs, 0)),
     checks,
@@ -807,6 +1581,9 @@ function normalizeRequest(data, fallbackSubmissionId) {
     ownerUid: stringValue(data.ownerUid),
     localRevision: numberValue(data.localRevision, 0),
     requestedAtMs: numberValue(data.requestedAtMs, 0),
+    targetShelf: targetShelfValue(data.targetShelf),
+    targetLessonIds: stringArray(data.targetLessonIds),
+    status: stringValue(data.status),
     draft: {
       id: stringValue(data.draft && data.draft.id),
       catalogId: stringValue(data.draft && data.draft.catalogId),
@@ -840,6 +1617,271 @@ function normalizeRequest(data, fallbackSubmissionId) {
     })),
     questions: listMaps(data.questions).map((item) => normalizeQuestion(item)),
     review: reviewToChecks(data.review || {}),
+  };
+}
+
+function normalizeLessonResultAttemptEvent(data, authUid) {
+  const userId = stringValue(data.userId, authUid);
+  if (userId !== authUid) {
+    throw new HttpsError("permission-denied", "Attempt userId must match authenticated uid");
+  }
+  const event = normalizeContentEvent(data, authUid);
+  const attemptId = stringValue(data.attemptId);
+  if (!attemptId) throw new HttpsError("invalid-argument", "attemptId is required");
+  const percentScore = numberValue(data.percentScore, null);
+  if (percentScore === null || percentScore < 0 || percentScore > 100) {
+    throw new HttpsError("invalid-argument", "percentScore must be in 0..100");
+  }
+  return {
+    ...event,
+    attemptId,
+    difficulty: stringValue(data.difficulty, "EASY"),
+    codeAnswer: stringValue(data.codeAnswer),
+    percentScore,
+    completedAtMs: nonNegativeEventTime(data.completedAtMs),
+    createdAtMs: nonNegativeEventTime(data.createdAtMs),
+  };
+}
+
+function normalizeQuestRatingEvent(data, authUid) {
+  const userId = stringValue(data.userId, authUid);
+  if (userId !== authUid) {
+    throw new HttpsError("permission-denied", "Rating userId must match authenticated uid");
+  }
+  const event = normalizeContentEvent(data, authUid);
+  const ratingId = stringValue(data.ratingId);
+  if (!ratingId) throw new HttpsError("invalid-argument", "ratingId is required");
+  const rating = numberValue(data.rating, null);
+  if (rating === null || rating < 1 || rating > 3) {
+    throw new HttpsError("invalid-argument", "rating must be in 1..3");
+  }
+  return {
+    ...event,
+    ratingId,
+    rating,
+    ratedAtMs: nonNegativeEventTime(data.ratedAtMs),
+    createdAtMs: nonNegativeEventTime(data.createdAtMs),
+  };
+}
+
+function lessonResultReward(event) {
+  const percent = Math.max(0, Math.min(numberValue(event.percentScore, 0), 100));
+  const multiplier = stringValue(event.difficulty).toUpperCase() === "HARD" ? HARD_RESULT_REWARD_MULTIPLIER : 1;
+  return {
+    skillPoints: percent * multiplier,
+    nolics: Math.floor(percent / NOLICS_PERCENT_STEP) * multiplier,
+  };
+}
+
+function writeUserProgressDelta(transaction, uid, delta, now) {
+  const userRef = db.collection("users").doc(uid);
+  transaction.set(
+    userRef,
+    clean({
+      uid,
+      updatedAtMs: now,
+      pointsSkill: admin.firestore.FieldValue.increment(delta.skillPoints),
+      skillPoints: admin.firestore.FieldValue.increment(delta.skillPoints),
+      pointsNolics: admin.firestore.FieldValue.increment(delta.nolics),
+      nolics: admin.firestore.FieldValue.increment(delta.nolics),
+    }),
+    {merge: true},
+  );
+}
+
+function generateGiftBoxReward() {
+  const firstRoll = Math.random();
+  const secondRoll = Math.random();
+
+  if (firstRoll > 0.05) {
+    return {
+      type: "addNolics",
+      amount: randomIntInclusive(500, 2000),
+    };
+  }
+
+  if (secondRoll <= 0.95) {
+    switch (randomIntInclusive(0, 2)) {
+      case 0:
+        return {
+          type: "addNolics",
+          amount: randomIntInclusive(7000, 13000),
+        };
+      case 1: {
+        const goldAmount = randomIntInclusive(0, 1);
+        if (goldAmount === 0) {
+          return {
+            type: "addNolics",
+            amount: randomIntInclusive(7000, 13000),
+          };
+        }
+        return {
+          type: "addGold",
+          amount: goldAmount,
+        };
+      }
+      case 2:
+        return {
+          type: "datePremium",
+          amount: 86400,
+        };
+      default:
+        break;
+    }
+  }
+
+  switch (randomIntInclusive(0, 4)) {
+    case 0:
+      return {
+        type: "logo",
+        amount: 1,
+        itemName: GIFT_BOX_LOGO_NAMES[randomIntInclusive(0, GIFT_BOX_LOGO_NAMES.length - 1)],
+      };
+    case 1: {
+      const trophyAmount = randomIntInclusive(0, 1);
+      if (trophyAmount === 0) {
+        return {
+          type: "addGold",
+          amount: randomIntInclusive(10, 20),
+        };
+      }
+      return {
+        type: "trophy",
+        amount: trophyAmount,
+      };
+    }
+    case 2:
+      return {
+        type: "addGold",
+        amount: randomIntInclusive(10, 20),
+      };
+    case 3:
+      return {
+        type: "datePremium",
+        amount: 86400 * 30,
+      };
+    case 4:
+      return {
+        type: "addNolics",
+        amount: randomIntInclusive(50000, 200000),
+      };
+    default:
+      return {
+        type: "addNolics",
+        amount: 1000,
+      };
+  }
+}
+
+function giftBoxRewardUpdate(existingUser, reward, now) {
+  const amount = Math.max(0, numberValue(reward.amount, 0));
+  switch (reward.type) {
+    case "addNolics":
+      return {
+        pointsNolics: admin.firestore.FieldValue.increment(amount),
+        nolics: admin.firestore.FieldValue.increment(amount),
+      };
+    case "addGold":
+      return {
+        gold: admin.firestore.FieldValue.increment(amount),
+      };
+    case "datePremium": {
+      const premiumDeltaMs = amount * 1000;
+      const premiumBaseMs = Math.max(now, numberValue(existingUser.premiumUntilMs, 0));
+      const premiumUntilMs = premiumBaseMs + premiumDeltaMs;
+      return {
+        hasPremium: premiumUntilMs > now,
+        premiumUntilMs,
+      };
+    }
+    case "logo": {
+      const itemName = stringValue(reward.itemName);
+      return itemName ? {ownedLogos: admin.firestore.FieldValue.arrayUnion(itemName)} : {};
+    }
+    case "trophy":
+      return {
+        trophies: admin.firestore.FieldValue.increment(amount),
+      };
+    default:
+      return {};
+  }
+}
+
+function advanceGiftBoxState(existingUser, now) {
+  const currentCount = nonNegativeNumber(existingUser.boxCount, existingUser.countBox);
+  const currentStreak = nonNegativeNumber(existingUser.boxStreakDays, existingUser.countDayBox);
+  const nextBoxAtMs = nonNegativeNumber(existingUser.nextBoxAtMs, existingUser.timeLastOpenBox);
+  if (nextBoxAtMs === 0) {
+    return {
+      boxCount: currentCount,
+      boxStreakDays: currentStreak,
+      nextBoxAtMs: now + DAY_MS,
+    };
+  }
+  if (nextBoxAtMs > now) {
+    return {
+      boxCount: currentCount,
+      boxStreakDays: currentStreak,
+      nextBoxAtMs,
+    };
+  }
+
+  const nextStreak = currentStreak + 1;
+  if (nextStreak >= GIFT_BOX_STREAK_TARGET_DAYS) {
+    return {
+      boxCount: currentCount + 1,
+      boxStreakDays: nextStreak,
+      nextBoxAtMs: now + DAY_MS,
+    };
+  }
+  return {
+    boxCount: currentCount,
+    boxStreakDays: nextStreak,
+    nextBoxAtMs: now + DAY_MS,
+  };
+}
+
+function randomIntInclusive(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function normalizeContentEvent(data, authUid) {
+  const scope = normalizeScope(data.scope);
+  const ownerUid = nullableString(data.ownerUid);
+  if (scope === PRIVATE_SCOPE && ownerUid !== authUid) {
+    throw new HttpsError("permission-denied", "Private event ownerUid must match authenticated uid");
+  }
+  const catalogId = stringValue(data.catalogId);
+  const questId = stringValue(data.questId);
+  const sectionId = stringValue(data.sectionId);
+  const themeId = stringValue(data.themeId);
+  const lessonId = stringValue(data.lessonId);
+  if (!catalogId || !questId || !sectionId || !themeId || !lessonId) {
+    throw new HttpsError("invalid-argument", "catalogId, questId, sectionId, themeId, and lessonId are required");
+  }
+  return {
+    userId: authUid,
+    scope,
+    ownerUid: scope === PRIVATE_SCOPE ? ownerUid : null,
+    catalogId,
+    questId,
+    sectionId,
+    themeId,
+    lessonId,
+    lessonVersion: Math.max(1, numberValue(data.lessonVersion, 1)),
+    sourceShelf: stringValue(data.sourceShelf, scope === PRIVATE_SCOPE ? PRIVATE_SCOPE : "arena"),
+  };
+}
+
+function normalizeDirtyQuestRating(data, fallbackContentKey, scope) {
+  return {
+    contentKey: stringValue(data.contentKey, fallbackContentKey),
+    scope: normalizeScope(scope),
+    ownerUid: nullableString(data.ownerUid),
+    catalogId: stringValue(data.catalogId),
+    questId: stringValue(data.questId),
+    sourceShelf: stringValue(data.sourceShelf),
+    changedAtMs: numberValue(data.changedAtMs, 0),
   };
 }
 
@@ -1059,6 +2101,378 @@ function requireAuthUid(request) {
   return uid;
 }
 
+function authProfileStatus(request) {
+  const provider = request.auth &&
+    request.auth.token &&
+    request.auth.token.firebase &&
+    request.auth.token.firebase.sign_in_provider;
+  return provider && provider !== "anonymous" ? "REGISTERED" : "ANONYMOUS";
+}
+
+async function upsertUserProfile(uid, options) {
+  const nicknamePolicy = await readNicknamePolicy();
+  const userRef = db.collection("users").doc(uid);
+  const profileRef = db.collection("profiles").doc(uid);
+  return db.runTransaction(async (transaction) => {
+    const userSnapshot = await transaction.get(userRef);
+    const profileSnapshot = await transaction.get(profileRef);
+    const existingUser = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    const existingProfile = profileSnapshot.exists ? profileSnapshot.data() || {} : {};
+    const qualification = readQualification(existingProfile, existingUser);
+    const status = profileStatus(existingProfile.status || existingUser.status, options.authStatus, qualification);
+    const shouldReplaceNickname =
+      options.allowNicknameUpgrade ||
+      !userSnapshot.exists ||
+      !stringValue(existingUser.nickname);
+    const requestedNickname = shouldReplaceNickname ? options.nickname : stringValue(existingUser.nickname, options.nickname);
+    const nicknameClaim = await resolveNicknameClaim(transaction, {
+      uid,
+      requestedNickname,
+      currentNickname: stringValue(existingUser.nickname || existingProfile.nickname),
+      allowGeneratedFallback: !options.allowNicknameUpgrade,
+      policy: nicknamePolicy,
+      now: options.now,
+    });
+    const nickname = nicknameClaim.nickname;
+    const knownLanguages =
+      options.knownLanguages.length > 0
+        ? options.knownLanguages
+        : stringArray(existingProfile.knownLanguages).concat(stringArray(existingUser.knownLanguages));
+    const languages = normalizeLanguages(knownLanguages);
+    const createdAtMs = numberValue(existingUser.createdAtMs || existingProfile.createdAtMs, options.now);
+    const updatedAtMs = options.now;
+    const boxState = advanceGiftBoxState(existingUser, options.now);
+    const premiumUntilMs = nonNegativeNumber(existingUser.premiumUntilMs, 0);
+    const publicProfile = {
+      uid,
+      nickname,
+      avatarUrl: nullableString(existingUser.avatarUrl),
+      status,
+      knownLanguages: languages,
+      createdAtMs,
+      updatedAtMs,
+      streakDays: numberValue(existingUser.streakDays, 0),
+      stars: numberValue(existingUser.stars, 0),
+      pointsNolics: numberValue(existingUser.pointsNolics, 0),
+      standardHearts: numberValue(existingUser.standardHearts, 5),
+      goldHearts: numberValue(existingUser.goldHearts, 0),
+      gold: numberValue(existingUser.gold, 0),
+      pointsSkill: numberValue(existingUser.pointsSkill, 0),
+      boxCount: boxState.boxCount,
+      boxStreakDays: boxState.boxStreakDays,
+      nextBoxAtMs: boxState.nextBoxAtMs,
+      premiumUntilMs,
+      hasPremium: premiumUntilMs > options.now || Boolean(existingUser.hasPremium),
+      trophies: nonNegativeNumber(existingUser.trophies, 0),
+      ownedLogos: stringArray(existingUser.ownedLogos),
+      sponsor: qualification.sponsorLevel,
+      tester: qualification.testerLevel,
+      translater: qualification.translatorLevel,
+      moderator: qualification.moderatorLevel,
+      admin: qualification.adminLevel,
+      developer: qualification.developerLevel,
+      qualifications: {
+        sponsor: qualification.sponsorLevel,
+        tester: qualification.testerLevel,
+        translater: qualification.translatorLevel,
+        moderator: qualification.moderatorLevel,
+        admin: qualification.adminLevel,
+        developer: qualification.developerLevel,
+      },
+    };
+    const trustedProfile = {
+      uid,
+      nickname,
+      status,
+      knownLanguages: languages,
+      createdAtMs,
+      updatedAtMs,
+      reviewReputation: numberValue(existingProfile.reviewReputation, 0),
+      sponsorLevel: qualification.sponsorLevel,
+      testerLevel: qualification.testerLevel,
+      translatorLevel: qualification.translatorLevel,
+      moderatorLevel: qualification.moderatorLevel,
+      adminLevel: qualification.adminLevel,
+      developerLevel: qualification.developerLevel,
+    };
+    if (nicknameClaim.releaseRef) {
+      transaction.delete(nicknameClaim.releaseRef);
+    }
+    transaction.set(
+      nicknameClaim.ref,
+      {
+        uid,
+        nickname,
+        canonical: nicknameClaim.canonical,
+        createdAtMs: numberValue((nicknameClaim.snapshot.data() || {}).createdAtMs, updatedAtMs),
+        updatedAtMs,
+      },
+      {merge: true},
+    );
+    transaction.set(userRef, publicProfile, {merge: true});
+    transaction.set(profileRef, trustedProfile, {merge: true});
+    return {uid, publicProfile, trustedProfile};
+  });
+}
+
+async function readNicknamePolicy() {
+  const snapshot = await db.doc(NICKNAME_POLICY_DOC).get();
+  if (!snapshot.exists) {
+    return {blockedWords: [], blockedSymbols: []};
+  }
+  const data = snapshot.data() || {};
+  return {
+    blockedWords: stringArray(data.blockedWords)
+      .map(canonicalNickname)
+      .filter(Boolean),
+    blockedSymbols: stringArray(data.blockedSymbols)
+      .map((symbol) => stringValue(symbol).normalize("NFKC"))
+      .filter(Boolean),
+  };
+}
+
+async function resolveNicknameClaim(transaction, options) {
+  const candidates = options.allowGeneratedFallback
+    ? generatedNicknameCandidates(options.uid, options.requestedNickname)
+    : [options.requestedNickname];
+  let lastPolicyError = null;
+
+  for (const candidate of candidates) {
+    let validated;
+    try {
+      validated = validateNicknameOrThrow(candidate, options.policy);
+    } catch (error) {
+      if (!options.allowGeneratedFallback) throw error;
+      lastPolicyError = error;
+      continue;
+    }
+
+    const ref = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(validated.canonical));
+    const snapshot = await transaction.get(ref);
+    const ownerUid = snapshot.exists ? stringValue((snapshot.data() || {}).uid) : "";
+    if (!snapshot.exists || ownerUid === options.uid) {
+      const releaseRef = await nicknameReleaseRef(transaction, {
+        uid: options.uid,
+        currentNickname: options.currentNickname,
+        nextCanonical: validated.canonical,
+      });
+      return {
+        ...validated,
+        ref,
+        snapshot,
+        releaseRef,
+      };
+    }
+
+    if (!options.allowGeneratedFallback) {
+      throw new HttpsError("already-exists", "Nickname is already taken");
+    }
+  }
+
+  if (lastPolicyError) throw lastPolicyError;
+  throw new HttpsError("already-exists", "Could not allocate a unique nickname");
+}
+
+async function nicknameReleaseRef(transaction, options) {
+  const currentCanonical = canonicalNickname(options.currentNickname);
+  if (!currentCanonical || currentCanonical === options.nextCanonical) return null;
+  const ref = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(currentCanonical));
+  const snapshot = await transaction.get(ref);
+  const ownerUid = snapshot.exists ? stringValue((snapshot.data() || {}).uid) : "";
+  return ownerUid === options.uid ? ref : null;
+}
+
+function validateNicknameOrThrow(value, policy) {
+  const nickname = sanitizeNickname(value, null);
+  if (!nickname) {
+    throw new HttpsError("invalid-argument", "Nickname must contain 3..24 supported characters");
+  }
+  const canonical = canonicalNickname(nickname);
+  const normalizedNickname = nickname.normalize("NFKC");
+  const blockedSymbol = policy.blockedSymbols.find((symbol) => symbol && normalizedNickname.includes(symbol));
+  if (blockedSymbol) {
+    throw new HttpsError("invalid-argument", "Nickname contains a blocked symbol");
+  }
+
+  const compactCanonical = canonical.replace(/\s+/g, "");
+  const blockedWord = policy.blockedWords.find((word) => {
+    const compactWord = word.replace(/\s+/g, "");
+    return word && (canonical.includes(word) || (compactWord && compactCanonical.includes(compactWord)));
+  });
+  if (blockedWord) {
+    throw new HttpsError("invalid-argument", "Nickname contains a blocked word");
+  }
+  return {
+    nickname,
+    canonical,
+  };
+}
+
+function readQualification(profile, user) {
+  return {
+    sponsorLevel: nonNegativeNumber(profile.sponsorLevel, user.sponsor),
+    testerLevel: nonNegativeNumber(profile.testerLevel, user.tester),
+    translatorLevel: nonNegativeNumber(profile.translatorLevel, user.translater),
+    moderatorLevel: nonNegativeNumber(profile.moderatorLevel, user.moderator),
+    adminLevel: nonNegativeNumber(profile.adminLevel, user.admin),
+    developerLevel: nonNegativeNumber(profile.developerLevel, user.developer),
+  };
+}
+
+function nonNegativeNumber(primary, fallback) {
+  return Math.max(0, numberValue(primary, numberValue(fallback, 0)));
+}
+
+function profileStatus(existingStatus, authStatus, qualification) {
+  if (existingStatus === "VALIDATED") return "VALIDATED";
+  const hasQualification = Object.values(qualification).some((value) => value > 0);
+  if (hasQualification) return "VALIDATED";
+  return authStatus === "REGISTERED" ? "REGISTERED" : "ANONYMOUS";
+}
+
+function profileResponse(result) {
+  const user = result.publicProfile;
+  const profile = result.trustedProfile;
+  return {
+    uid: result.uid,
+    nickname: stringValue(user.nickname),
+    status: stringValue(profile.status || user.status, "ANONYMOUS"),
+    avatarUrl: nullableString(user.avatarUrl),
+    knownLanguages: stringArray(profile.knownLanguages).length > 0
+      ? stringArray(profile.knownLanguages)
+      : stringArray(user.knownLanguages),
+    createdAtMs: numberValue(user.createdAtMs || profile.createdAtMs, 0),
+    updatedAtMs: numberValue(user.updatedAtMs || profile.updatedAtMs, 0),
+    skillPoints: numberValue(user.pointsSkill, 0),
+    gold: numberValue(user.gold, 0),
+    nolics: numberValue(user.pointsNolics, 0),
+    standardHearts: numberValue(user.standardHearts, 5),
+    goldHearts: numberValue(user.goldHearts, 0),
+    boxCount: numberValue(user.boxCount, 0),
+    boxStreakDays: numberValue(user.boxStreakDays, 0),
+    nextBoxAtMs: numberValue(user.nextBoxAtMs, 0),
+    premiumUntilMs: numberValue(user.premiumUntilMs, 0),
+    trophies: numberValue(user.trophies, 0),
+    ownedLogos: stringArray(user.ownedLogos),
+    qualification: {
+      sponsorLevel: numberValue(profile.sponsorLevel, 0),
+      testerLevel: numberValue(profile.testerLevel, 0),
+      translatorLevel: numberValue(profile.translatorLevel, 0),
+      moderatorLevel: numberValue(profile.moderatorLevel, 0),
+      adminLevel: numberValue(profile.adminLevel, 0),
+      developerLevel: numberValue(profile.developerLevel, 0),
+    },
+  };
+}
+
+function readEconomyBalance(user) {
+  return {
+    hasPremium: Boolean(user.hasPremium),
+    streakDays: nonNegativeInteger(user.streakDays, 0),
+    stars: nonNegativeInteger(user.stars, 0),
+    nolics: nonNegativeInteger(user.pointsNolics, numberValue(user.nolics, 0)),
+    standardHearts: Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS)),
+    goldHearts: Math.min(MAX_GOLD_HEARTS, nonNegativeInteger(user.goldHearts, 0)),
+    gold: nonNegativeInteger(user.gold, 0),
+  };
+}
+
+function applyShopPurchaseToBalance(balance, itemId) {
+  switch (itemId) {
+    case SHOP_ITEM_STANDARD_HEART_SLOT:
+      return buyStandardHeart(balance);
+    case SHOP_ITEM_GOLD_HEART:
+      return buyGoldHeart(balance);
+    default:
+      throw new HttpsError("invalid-argument", `Unsupported shop item ${itemId}`);
+  }
+}
+
+function buyStandardHeart(balance) {
+  if (balance.standardHearts >= MAX_STANDARD_HEARTS) {
+    throw new HttpsError("failed-precondition", "Standard hearts are already full");
+  }
+  const price = standardHeartSlotCost(balance.standardHearts);
+  if (balance.nolics < price) {
+    throw new HttpsError("failed-precondition", "Not enough nolics");
+  }
+  return {
+    ...balance,
+    nolics: balance.nolics - price,
+    standardHearts: balance.standardHearts + 1,
+  };
+}
+
+function buyGoldHeart(balance) {
+  if (balance.goldHearts >= MAX_GOLD_HEARTS) {
+    throw new HttpsError("failed-precondition", "Gold hearts are already full");
+  }
+  if (balance.gold < GOLD_HEART_COST) {
+    throw new HttpsError("failed-precondition", "Not enough gold");
+  }
+  return {
+    ...balance,
+    gold: balance.gold - GOLD_HEART_COST,
+    goldHearts: balance.goldHearts + 1,
+  };
+}
+
+function standardHeartSlotCost(currentHearts) {
+  const index = Math.min(Math.max(0, currentHearts), STANDARD_HEART_SLOT_COSTS.length - 1);
+  return STANDARD_HEART_SLOT_COSTS[index];
+}
+
+function nonNegativeInteger(value, fallback) {
+  return Math.trunc(Math.max(0, numberValue(value, fallback)));
+}
+
+function normalizeLanguages(value) {
+  const languages = stringArray(value)
+    .map(normalizeLanguage)
+    .filter(Boolean);
+  const unique = Array.from(new Set(languages)).slice(0, 8);
+  return unique.length > 0 ? unique : ["ru"];
+}
+
+function generatedNicknameCandidates(uid, requestedNickname) {
+  const candidates = [requestedNickname, generatedNickname(uid)];
+  for (let attempt = 1; attempt <= NICKNAME_GENERATION_ATTEMPTS; attempt++) {
+    candidates.push(generatedNickname(uid, attempt));
+  }
+  return Array.from(new Set(candidates.filter(Boolean)));
+}
+
+function generatedNickname(uid, attempt = 0) {
+  const suffix = stringValue(uid)
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(-6)
+    .toUpperCase();
+  if (attempt <= 0) return `User${suffix || "000000"}`;
+  const attemptSuffix = hashHex(`${uid}:${attempt}`).slice(0, 4).toUpperCase();
+  return `User${suffix || "000000"}${attemptSuffix}`;
+}
+
+function sanitizeNickname(value, fallback) {
+  const text = stringValue(value, fallback || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (text.length < 3 || text.length > 24) return fallback;
+  if (/[\u0000-\u001F/\\]/.test(text)) return fallback;
+  return text;
+}
+
+function canonicalNickname(value) {
+  return stringValue(value)
+    .normalize("NFKC")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function nicknameClaimId(canonicalNicknameValue) {
+  return hashHex(canonicalNicknameValue);
+}
+
 function privateCatalogPath(ownerUid, catalogId) {
   return `private/${ownerUid}/catalogs/${catalogId}`;
 }
@@ -1069,6 +2483,14 @@ function privateQuestPath(ownerUid, catalogId, questId) {
 
 function privateSyncChangePath(ownerUid, catalogId, questId) {
   return `private/${ownerUid}/sync_changes/${catalogId}_${questId}`;
+}
+
+function publicCatalogSyncChangePath(catalogId, type, id) {
+  return `catalogs/${catalogId}/sync_changes/${type}_${id}`;
+}
+
+function lessonContentSyncChangePath(lessonId, questionId) {
+  return `lesson_content/${lessonId}/sync_changes/${questionId}`;
 }
 
 function privateSectionPath(ownerUid, catalogId, questId, sectionId) {
@@ -1110,6 +2532,7 @@ function adminSyncChangePath(changeId) {
 function clean(value) {
   if (Array.isArray(value)) return value.map(clean);
   if (value && typeof value === "object") {
+    if (isFirestoreNativeValue(value)) return value;
     return Object.fromEntries(
       Object.entries(value)
         .filter(([, item]) => item !== undefined)
@@ -1117,6 +2540,22 @@ function clean(value) {
     );
   }
   return value;
+}
+
+function isFirestoreNativeValue(value) {
+  const firestore = admin.firestore;
+  if (isInstanceOf(value, Date)) return true;
+  if (isInstanceOf(value, firestore.Timestamp)) return true;
+  if (isInstanceOf(value, firestore.GeoPoint)) return true;
+  if (isInstanceOf(value, firestore.Bytes)) return true;
+  const constructorName = value.constructor && value.constructor.name;
+  return typeof value.isEqual === "function" &&
+    typeof constructorName === "string" &&
+    constructorName.endsWith("Transform");
+}
+
+function isInstanceOf(value, constructor) {
+  return typeof constructor === "function" && value instanceof constructor;
 }
 
 function indexBy(items, field) {
@@ -1131,10 +2570,57 @@ function difference(a, b) {
   return new Set(Array.from(a).filter((item) => !b.has(item)));
 }
 
+function scopedCollection(base, scope) {
+  return `${base}_${normalizeScope(scope)}`;
+}
+
+function normalizeScope(value) {
+  return stringValue(value, PUBLIC_SCOPE) === PRIVATE_SCOPE ? PRIVATE_SCOPE : PUBLIC_SCOPE;
+}
+
+function contentKeysForEvent(event) {
+  return {
+    questContentKey: questContentKey(event.scope, event.ownerUid, event.catalogId, event.questId),
+    lessonContentKey: lessonContentKey(event.scope, event.ownerUid, event.catalogId, event.questId, event.lessonId),
+  };
+}
+
+function questContentKey(scope, ownerUid, catalogId, questId) {
+  return hashHex([normalizeScope(scope), ownerUid || "", catalogId, questId].join("\u0000"));
+}
+
+function lessonContentKey(scope, ownerUid, catalogId, questId, lessonId) {
+  return hashHex([normalizeScope(scope), ownerUid || "", catalogId, questId, lessonId].join("\u0000"));
+}
+
+function eventBucketId(timeMs, stableId) {
+  const date = new Date(nonNegativeEventTime(timeMs)).toISOString().slice(0, 10).replace(/-/g, "");
+  return `${date}_${hashHex(stableId).slice(0, 2)}`;
+}
+
+function hashHex(value) {
+  return crypto.createHash("sha256").update(stringValue(value)).digest("hex");
+}
+
+function safeDocId(value) {
+  return hashHex(stringValue(value)).slice(0, 12) + "_" + stringValue(value)
+    .replace(/[^A-Za-z0-9_.-]/g, "_")
+    .slice(0, 80);
+}
+
+function nonNegativeEventTime(value) {
+  return Math.max(0, numberValue(value, Date.now()));
+}
+
 function stringArray(value) {
   return Array.isArray(value)
     ? value.map((item) => stringValue(item)).filter(Boolean)
     : [];
+}
+
+function targetShelfValue(value) {
+  const shelf = stringValue(value, "arena");
+  return shelf === "archive" ? "archive" : "arena";
 }
 
 function listMaps(value) {

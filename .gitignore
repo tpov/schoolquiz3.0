@@ -82,6 +82,9 @@ node_modules/
 .npm
 .node_repl_history
 
+# Appium E2E runtime output
+/e2e/appium/artifacts/
+
 # Custom plugins
 /logger-gradle-plugin/ 
 

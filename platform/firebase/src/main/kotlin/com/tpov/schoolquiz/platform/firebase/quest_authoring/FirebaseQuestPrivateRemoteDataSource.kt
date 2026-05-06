@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.platform.firebase.quest_authoring
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.tpov.schoolquiz.platform.firebase.util.longField
+import com.tpov.schoolquiz.platform.firebase.util.millisField
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaDraftDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaLessonDto
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.ArenaQuestionDto
@@ -91,6 +93,8 @@ class FirebaseQuestPrivateRemoteDataSource(
                     lessons = lessonDtos,
                     questions = questionDtos,
                     review = reviewMap().toArenaReviewDto(),
+                    targetShelf = string(TARGET_SHELF, fallback = "arena"),
+                    targetLessonIds = stringList(TARGET_LESSON_IDS).toSet(),
                 ),
         )
     }
@@ -186,13 +190,16 @@ class FirebaseQuestPrivateRemoteDataSource(
         fallback: String = "",
     ): String = getString(field)?.takeIf { it.isNotBlank() } ?: fallback
 
+    private fun DocumentSnapshot.stringList(field: String): List<String> =
+        (get(field) as? List<*>).orEmpty().mapNotNull { it as? String }.filter { it.isNotBlank() }
+
     private fun DocumentSnapshot.long(
         field: String,
         fallback: Long = 0L,
-    ): Long = getLong(field) ?: fallback
+    ): Long = longField(field) ?: fallback
 
     private fun DocumentSnapshot.longOrNull(field: String): Long? =
-        getLong(field) ?: getTimestamp(field)?.toDate()?.time
+        millisField(field)
 
     private fun DocumentSnapshot.reviewMap(): Map<String, Any?> =
         (get(REVIEW) as? Map<*, *>).orEmpty().mapKeys { it.key.toString() }
@@ -245,6 +252,8 @@ class FirebaseQuestPrivateRemoteDataSource(
         const val UPDATED_AT_MS = "updatedAtMs"
         const val CHANGED_AT_MS = "changedAtMs"
         const val LOCAL_REVISION = "localRevision"
+        const val TARGET_SHELF = "targetShelf"
+        const val TARGET_LESSON_IDS = "targetLessonIds"
         const val SECTION_ID = "sectionId"
         const val THEME_ID = "themeId"
         const val LESSON_ID = "lessonId"

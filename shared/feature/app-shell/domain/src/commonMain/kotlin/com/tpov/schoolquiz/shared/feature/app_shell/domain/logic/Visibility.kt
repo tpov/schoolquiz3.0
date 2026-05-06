@@ -63,7 +63,7 @@ fun isVisible(section: DrawerSection, stats: UserStats): Boolean {
  *
  * Output order follows the Section Visibility Rules table order.
  * LOCAL: [HomeQuests, Archive, MyQuests, Settings] (Phase 02 spec reorder; differs from declaration order).
- * INTERNET/EVENTS: declaration order of the sealed interface.
+ * INTERNET/EVENTS: product order of the drawer sections.
  *
  * Business Rule #17: only visible sections are returned; callers render exactly this list.
  * Business Rule #18: bottom-tabs themselves are NOT filtered here — call site decides tab visibility.
@@ -83,8 +83,8 @@ fun visibleSections(tab: Tab, stats: UserStats): List<DrawerSection> = when (tab
     Tab.INTERNET -> listOf(
         DrawerSection.InternetSection.Arena,
         DrawerSection.InternetSection.Catalog,
-        DrawerSection.InternetSection.Qualifications,
         DrawerSection.InternetSection.Profile,
+        DrawerSection.InternetSection.Qualifications,
         DrawerSection.InternetSection.Social,
         DrawerSection.InternetSection.Leaderboard,
     ).filter { isVisible(it, stats) }

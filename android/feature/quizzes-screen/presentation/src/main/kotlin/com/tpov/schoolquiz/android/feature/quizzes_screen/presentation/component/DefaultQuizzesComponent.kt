@@ -53,6 +53,7 @@ class DefaultQuizzesComponent(
     private val catalogRepository: CatalogRepository,
     private val lessonRunnerFactory: LessonRunnerComponentFactory,
     private val questContentSync: suspend (QuestId) -> Result<Unit> = { Result.success(Unit) },
+    private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
     private val mainContext: CoroutineDispatcher = Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, QuizzesComponent {
     private val navigation = StackNavigation<QuizzesConfig>()
@@ -180,6 +181,17 @@ class DefaultQuizzesComponent(
         )
     }
 
+    override fun openCourseArena() {
+        navigation.pushNew(
+            QuizzesConfig.QuestList(
+                catalogId = COURSES_CATALOG_ID,
+                titles = listOf("Арена", "Курсы"),
+                shelf = ARENA_SHELF,
+                mode = QuestListMode.Arena,
+            ),
+        )
+    }
+
     override fun openSectionList(
         questId: QuestId,
         titles: List<String>,
@@ -263,6 +275,7 @@ class DefaultQuizzesComponent(
                         lessonAttemptRepository,
                         authRepository,
                         navigation,
+                        lessonContentSync,
                         mainContext,
                     ),
                 )
@@ -285,5 +298,6 @@ class DefaultQuizzesComponent(
 
 private const val COURSES_CATALOG_ID = "courses"
 private const val ARCHIVE_SHELF = "archive"
+private const val ARENA_SHELF = "arena"
 private const val ARCHIVE_ENTRY_TITLE = "Архив"
 private const val QUEST_LIST_STACK_INDEX = 1

@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailure
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
+import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
 import com.tpov.schoolquiz.shared.feature.question.domain.repository.QuestionRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
@@ -41,7 +42,9 @@ class StartLessonAttemptUseCase(
             ?: return RunnerState.InitFailed(InitFailureReason.LessonNotFound)
 
         val questions = questionRepository.observeByLesson(lessonId).first()
-        val activeQuestions = questions.filter { !it.archived }
+        val activeQuestions = questions
+            .filter { !it.archived }
+            .dedupeTranslatedVariants()
 
         val valids = activeQuestions.mapNotNull { q ->
             parser.parse(
@@ -108,4 +111,25 @@ class StartLessonAttemptUseCase(
     companion object {
         const val POOL_SIZE = 20
     }
+}
+
+private fun List<Question>.dedupeTranslatedVariants() =
+    groupBy { it.id.value.canonicalQuestionId() }
+        .values
+        .map { variants ->
+            variants.minWith(
+                compareBy<Question>(
+                    { if (it.id.value == it.id.value.canonicalQuestionId()) 0 else 1 },
+                    { it.order },
+                    { it.id.value },
+                ),
+            )
+        }
+
+private fun String.canonicalQuestionId(): String {
+    val separatorIndex = lastIndexOf("__")
+    if (separatorIndex <= 0 || separatorIndex >= lastIndex - 1) return this
+    val suffix = substring(separatorIndex + 2)
+    val isLanguageSuffix = suffix.length in 2..8 && suffix.all { it.isLetter() || it == '-' }
+    return if (isLanguageSuffix) substring(0, separatorIndex) else this
 }

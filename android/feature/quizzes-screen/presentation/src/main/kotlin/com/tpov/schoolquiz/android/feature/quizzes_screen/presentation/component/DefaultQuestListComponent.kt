@@ -53,11 +53,12 @@ class DefaultQuestListComponent(
 
     private val catalogId = CatalogId(config.catalogId)
     override val titles: List<String> = config.titles
-    private val mode = config.mode
+    override val mode: QuestListMode = config.mode
     private val isCoursesCatalog = catalogId.value == COURSES_CATALOG_ID
     private val sourceShelf =
         when {
             mode == QuestListMode.Archive -> ARCHIVE_SHELF
+            mode == QuestListMode.Arena -> config.shelf
             isCoursesCatalog -> ARCHIVE_SHELF
             else -> config.shelf
         }
@@ -66,6 +67,7 @@ class DefaultQuestListComponent(
     override val uiState: Value<QuestListUiState> = _uiState
     private val downloadingQuestIds = kotlinx.coroutines.flow.MutableStateFlow<Set<String>>(emptySet())
     private val completedQuestIds = kotlinx.coroutines.flow.MutableStateFlow<Set<String>>(emptySet())
+    private var currentQuestItems: List<QuestDisplayItem> = emptyList()
 
     init {
         scope.launch {
@@ -122,6 +124,11 @@ class DefaultQuestListComponent(
         // Intent dispatched from QuestListScreen (ADR-QS-08)
     }
 
+    override fun onRandomQuestClick() {
+        if (mode != QuestListMode.Arena) return
+        currentQuestItems.randomOrNull()?.let(::onQuestClick)
+    }
+
     private fun mapToUi(
         quests: List<Quest>,
         downloadingIds: Set<String>,
@@ -147,6 +154,8 @@ class DefaultQuestListComponent(
                             },
                     )
                 }
+                .sortedForMode()
+        currentQuestItems = items
         return if (items.isEmpty()) {
             QuestListUiState.Empty
         } else {
@@ -154,19 +163,30 @@ class DefaultQuestListComponent(
         }
     }
 
+    private fun List<QuestDisplayItem>.sortedForMode(): List<QuestDisplayItem> =
+        when (mode) {
+            QuestListMode.Arena,
+            QuestListMode.Archive,
+            ->
+                sortedByDescending { it.averageRating ?: NO_RATING_SORT_VALUE }
+            else -> this
+        }
+
     private fun shouldShowQuest(
         quest: Quest,
         isDownloaded: Boolean,
     ): Boolean =
         when {
+            isCoursesCatalog && mode == QuestListMode.Home -> false
             mode == QuestListMode.Archive -> quest.archived
+            mode == QuestListMode.Arena -> !quest.archived
             isCoursesCatalog -> !quest.archived || isDownloaded
             else -> true
         }
 
     private fun observeSourceQuests() =
         if (isCoursesCatalog && mode == QuestListMode.Home) {
-            questRepository.observeDownloadedArchivedByCatalog(catalogId, sourceShelf)
+            flowOf(emptyList())
         } else {
             questRepository.observeByCatalog(catalogId, sourceShelf)
         }
@@ -222,3 +242,4 @@ class DefaultQuestListComponent(
 
 private const val COURSES_CATALOG_ID = "courses"
 private const val ARCHIVE_SHELF = "archive"
+private const val NO_RATING_SORT_VALUE = -1f

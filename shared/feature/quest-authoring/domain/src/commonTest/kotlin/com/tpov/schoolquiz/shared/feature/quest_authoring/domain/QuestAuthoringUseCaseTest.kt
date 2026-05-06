@@ -29,7 +29,7 @@ class QuestAuthoringUseCaseTest {
     private val parser = KotlinxSerializationQuestionContentParser()
 
     @Test
-    fun `create draft builds full private hierarchy and marks it active`() = runTest {
+    fun `save quest builds full private hierarchy and marks it active`() = runTest {
         val repo = FakeQuestAuthoringRepository()
         val ids = FakeIdProvider()
         val clock = FakeTimestampProvider(1_000L)
@@ -41,7 +41,7 @@ class QuestAuthoringUseCaseTest {
         val bundle = repo.getDraft(result.getOrThrow())
         assertNotNull(bundle)
         assertEquals("uid-1", bundle.draft.ownerUid)
-        assertEquals(QuestDraftStatus.DRAFT, bundle.draft.status)
+        assertEquals(QuestDraftStatus.SAVED, bundle.draft.status)
         assertTrue(bundle.draft.isActive)
         assertEquals(1, bundle.sections.size)
         assertEquals(1, bundle.themes.size)
@@ -50,7 +50,7 @@ class QuestAuthoringUseCaseTest {
     }
 
     @Test
-    fun `get active draft returns unfinished draft for owner`() = runTest {
+    fun `get active draft returns saved quest for owner`() = runTest {
         val repo = FakeQuestAuthoringRepository()
         val ids = FakeIdProvider()
         val clock = FakeTimestampProvider(1_000L)
@@ -160,6 +160,7 @@ class QuestAuthoringUseCaseTest {
         assertTrue(result.isSuccess)
         assertEquals(1, repo.queuedArenaSubmissions.size)
         assertEquals(draftId, repo.queuedArenaSubmissions.single().draftId)
+        assertEquals(setOf(lessonId), repo.queuedArenaSubmissions.single().lessonIds)
         assertEquals(QuestDraftStatus.REVIEW_QUEUED, repo.getDraft(draftId)!!.draft.status)
         assertEquals(5_000L, repo.queuedArenaSubmissions.single().requestedAtMs)
 
@@ -169,7 +170,7 @@ class QuestAuthoringUseCaseTest {
     }
 
     @Test
-    fun `observe summaries returns local draft for my quests surface`() = runTest {
+    fun `observe summaries returns saved quest for my quests surface`() = runTest {
         val repo = FakeQuestAuthoringRepository()
         val ids = FakeIdProvider()
         val clock = FakeTimestampProvider(1_000L)

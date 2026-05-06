@@ -5,6 +5,8 @@ data class LessonItemUi(
     val title: String,
     val orderLabel: String? = null,
     val subtitleCount: String? = null,
+    val averageRating: Float? = null,
+    val ratingCount: Int = 0,
     val bestStarsRawTenths: Int = 0,
     val hardUnlocked: Boolean = false,
     val isHardChecked: Boolean = false,

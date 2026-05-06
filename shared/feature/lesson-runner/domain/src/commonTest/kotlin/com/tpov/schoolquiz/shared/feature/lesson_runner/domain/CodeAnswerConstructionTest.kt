@@ -134,4 +134,26 @@ class CodeAnswerConstructionTest {
         assertEquals(50, state.codeAnswer.raw.length, "Spec scenario #16: codeAnswer.length=50")
         assertEquals(Difficulty.HARD, state.mode, "Spec scenario #16: mode=HARD")
     }
+
+    @Test
+    fun `given translated question variants when starting lesson then original questions are not duplicated`() = runTest {
+        lessonRepo.addLesson(makeLesson(id = "lesson1"))
+        val easySource = makeQuestion(id = "easy-1", order = 0, payload = "easy-source", language = "ru")
+        val easyTranslation = makeQuestion(id = "easy-1__en", order = 0, payload = "easy-en", language = "en")
+        val hardSource = makeQuestion(id = "hard-1", order = 1, payload = "hard-source", language = "ru")
+        val hardTranslation = makeQuestion(id = "hard-1__en", order = 1, payload = "hard-en", language = "en")
+        parser.addResponse(easySource.payload, singleChoiceContent(difficulty = Difficulty.EASY, text = "Easy source"))
+        parser.addResponse(easyTranslation.payload, singleChoiceContent(difficulty = Difficulty.EASY, text = "Easy EN"))
+        parser.addResponse(hardSource.payload, singleChoiceContent(difficulty = Difficulty.HARD, text = "Hard source"))
+        parser.addResponse(hardTranslation.payload, singleChoiceContent(difficulty = Difficulty.HARD, text = "Hard EN"))
+        questionRepo.setQuestions(listOf(easyTranslation, hardTranslation, easySource, hardSource))
+
+        val easyState = startUseCase(LessonId("lesson1"), Difficulty.EASY) as RunnerState.Ready
+        val hardState = startUseCase(LessonId("lesson1"), Difficulty.HARD) as RunnerState.Ready
+
+        assertEquals(1, easyState.eligibleSize)
+        assertEquals(setOf("easy-1"), easyState.playOrder.map { it.sourceId.value }.toSet())
+        assertEquals(1, hardState.eligibleSize)
+        assertEquals(setOf("hard-1"), hardState.playOrder.map { it.sourceId.value }.toSet())
+    }
 }

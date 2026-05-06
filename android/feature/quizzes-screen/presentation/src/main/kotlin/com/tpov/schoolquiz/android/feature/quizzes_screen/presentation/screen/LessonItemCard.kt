@@ -21,6 +21,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignModeAccent
 import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
+import java.util.Locale
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -74,10 +75,27 @@ fun LessonItemCard(
                 )
             }
             StarRating(
-                rating = item.bestStarsRawTenths / 10f,
+                rating = item.averageRating,
                 modifier = Modifier.padding(start = 8.dp),
                 size = if (isClean) 24.dp else 28.dp,
+                tint = MaterialTheme.colorScheme.secondary,
             )
+            if (item.averageRating != null) {
+                Text(
+                    text = String.format(Locale.US, "%.1f", item.averageRating),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(start = 2.dp),
+                )
+                if (item.ratingCount > 0) {
+                    Text(
+                        text = "(${item.ratingCount})",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 2.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -93,7 +111,8 @@ private fun LessonItemCardBasicPreview() {
                     id = "l1",
                     title = "Урок 1 — Введение в алгебру",
                     orderLabel = "1.",
-                    bestStarsRawTenths = 20,
+                    averageRating = 2.0f,
+                    ratingCount = 12,
                     hardUnlocked = false,
                     isDownloaded = true,
                 ),
@@ -114,7 +133,8 @@ private fun LessonItemCardHardUnlockedPreview() {
                     id = "l2",
                     title = "Урок 2 — Сложные задачи с длинным названием которое не помещается",
                     orderLabel = "2.",
-                    bestStarsRawTenths = 27,
+                    averageRating = 2.7f,
+                    ratingCount = 8,
                     hardUnlocked = true,
                     isHardChecked = true,
                     isDownloaded = false,

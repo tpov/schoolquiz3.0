@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.platform.firebase.lesson
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.tpov.schoolquiz.platform.firebase.catalog.toTimestamp
+import com.tpov.schoolquiz.platform.firebase.util.fetchDocumentsByIds
 import com.tpov.schoolquiz.shared.feature.lesson.data.LessonRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson.data.dto.LessonDto
 import kotlinx.coroutines.tasks.await
@@ -11,14 +12,7 @@ class FirebaseLessonRemoteDataSource(
 ) : LessonRemoteDataSource {
     override suspend fun fetchByIds(ids: Set<String>): List<LessonDto> {
         if (ids.isEmpty()) return emptyList()
-        return ids.mapNotNull { id ->
-            firestore.collection("lessons")
-                .document(id)
-                .get()
-                .await()
-                .takeIf { it.exists() }
-                ?.toLessonDto()
-        }
+        return firestore.fetchDocumentsByIds("lessons", ids) { it.toLessonDto() }
     }
 
     override suspend fun fetchChangedByParents(

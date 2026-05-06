@@ -15,6 +15,8 @@ import androidx.room.TypeConverters
         QuestionEntity::class,
         LessonAttemptEntity::class,
         LessonRatingSubmittedLocalEntity::class,
+        LessonResultAttemptOutboxEntity::class,
+        QuestRatingOutboxEntity::class,
         SyncStateEntity::class,
         QuestDraftEntity::class,
         DraftSectionEntity::class,
@@ -24,8 +26,9 @@ import androidx.room.TypeConverters
         QuestArenaSubmissionEntity::class,
         ReviewAssignmentEntity::class,
         ReviewAssignmentQuestionEntity::class,
+        UserProfileEntity::class,
     ],
-    version = 12,
+    version = 17,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
@@ -39,8 +42,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun questionDao(): QuestionDao
     abstract fun lessonAttemptDao(): LessonAttemptDao
     abstract fun lessonRatingLocalDao(): LessonRatingLocalDao
+    abstract fun lessonResultSyncOutboxDao(): LessonResultSyncOutboxDao
     abstract fun syncStateDao(): SyncStateDao
     abstract fun questAuthoringDao(): QuestAuthoringDao
     abstract fun questArenaSubmissionDao(): QuestArenaSubmissionDao
     abstract fun reviewAssignmentDao(): ReviewAssignmentDao
+    abstract fun userProfileDao(): UserProfileDao
 }

@@ -339,10 +339,10 @@ class LessonRunnerScreenTest {
         assertEquals(1, fakeComponent.exitCount)
     }
 
-    // --- CT-18: GIVEN showRatingPrompt=true WHEN rendered THEN rating section hidden in result UI ---
+    // --- CT-18: GIVEN showRatingPrompt=true WHEN rendered THEN rating section is visible in result UI ---
     // Spec AC-21
     @Test
-    fun ct18_ratingPrompt_showRatingPrompt_true_hidden() {
+    fun ct18_ratingPrompt_showRatingPrompt_true_visible() {
         val fakeComponent = RunFakeComponent(MutableStateFlow(resultState(showRatingPrompt = true)))
 
         composeTestRule.setContent {
@@ -351,7 +351,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Оцените урок").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Оцените урок").assertIsDisplayed()
     }
 
     // --- CT-19: GIVEN showRatingPrompt=false WHEN rendered THEN rating section absent ---

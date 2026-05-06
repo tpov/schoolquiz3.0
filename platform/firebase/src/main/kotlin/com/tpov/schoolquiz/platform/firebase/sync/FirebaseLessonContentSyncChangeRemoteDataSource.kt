@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.platform.firebase.sync
 
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.tpov.schoolquiz.platform.firebase.util.millisField
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncNodeType
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChange
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSource
@@ -29,10 +30,7 @@ class FirebaseLessonContentSyncChangeRemoteDataSource(
 private fun DocumentSnapshot.toLessonContentSyncChange(lessonId: LessonId): LessonContentSyncChange? {
     val type = getString("type").toSyncNodeType() ?: return null
     val nodeId = getString("id")?.takeIf { it.isNotBlank() } ?: return null
-    val changedAtMs =
-        getLong("changedAtMs")
-            ?: getTimestamp("changedAtMs")?.toDate()?.time
-            ?: return null
+    val changedAtMs = millisField("changedAtMs") ?: return null
     return LessonContentSyncChange(
         lessonId = lessonId,
         type = type,

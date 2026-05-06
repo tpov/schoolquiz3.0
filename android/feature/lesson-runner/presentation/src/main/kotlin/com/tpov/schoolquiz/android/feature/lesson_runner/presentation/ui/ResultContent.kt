@@ -138,6 +138,13 @@ fun ResultContent(
                     )
                 }
             }
+            if (state.showRatingPrompt) {
+                RatingPromptSection(
+                    ratingSubmissionState = state.ratingSubmissionState,
+                    onSubmitRating = onSubmitRating,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
         Spacer(modifier = Modifier.weight(1f))
         if (state.top3.isNotEmpty()) {

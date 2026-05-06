@@ -11,6 +11,8 @@ interface QuizzesNavigator {
 
     fun openCourseArchive()
 
+    fun openCourseArena()
+
     fun openSectionList(
         questId: QuestId,
         titles: List<String>,

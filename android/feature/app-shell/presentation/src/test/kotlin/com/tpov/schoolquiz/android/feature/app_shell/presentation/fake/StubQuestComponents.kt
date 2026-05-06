@@ -44,6 +44,7 @@ object StubQuizzesComponent : QuizzesComponent {
 
     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
     override fun openCourseArchive() = Unit
+    override fun openCourseArena() = Unit
     override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
     override fun dismissQuizzes() = Unit
     override fun popToLevel(uiLevel: Int) = Unit

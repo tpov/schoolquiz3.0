@@ -12,6 +12,10 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultInternetTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultLocalTabComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.tab.DefaultShopTabComponent
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.PlaceholderShopComponent
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopComponent
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.PlaceholderProfileComponent
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.PlaceholderQuestCreateComponent
@@ -84,6 +88,8 @@ class DefaultRootComponent(
         PlaceholderQuestCreateComponent(nav)
     },
     reviewQueueFactory: (ComponentContext) -> ReviewQueueComponent = { PlaceholderReviewQueueComponent() },
+    profileFactory: (ComponentContext) -> ProfileComponent = { PlaceholderProfileComponent() },
+    shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
@@ -168,6 +174,14 @@ class DefaultRootComponent(
     val reviewQueueComponent: ReviewQueueComponent =
         reviewQueueFactory(
             childContext("ReviewQueueContent"),
+        )
+    val profileComponent: ProfileComponent =
+        profileFactory(
+            childContext("ProfileContent"),
+        )
+    val shopComponent: ShopComponent =
+        shopFactory(
+            childContext("ShopContent"),
         )
 
     init {

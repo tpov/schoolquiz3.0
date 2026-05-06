@@ -37,7 +37,7 @@ fun initialLocalTabState(stats: UserStats): TabState<LocalConfig> {
 /**
  * Returns the initial [TabState] for the INTERNET tab given [stats].
  *
- * For guest stats: Qualifications (first visible, emptyMap) is the default.
+ * For guest stats: Profile (first visible, emptyMap) is the default.
  * For skill >= 3000: Arena is first visible.
  */
 fun initialInternetTabState(stats: UserStats): TabState<InternetConfig> {

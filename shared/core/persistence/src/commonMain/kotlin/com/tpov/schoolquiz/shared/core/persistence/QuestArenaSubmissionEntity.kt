@@ -17,6 +17,8 @@ data class QuestArenaSubmissionEntity(
     val ownerUid: String,
     val localRevision: Long,
     val requestedAtMs: Long,
+    val lessonIds: List<String>,
+    val targetShelf: String,
     val attemptCount: Int,
     val lastError: String?,
 )

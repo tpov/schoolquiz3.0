@@ -113,7 +113,7 @@ class ArenaReviewWorkflowEndToEndTest {
         val privateSync = QuestPrivateSync(local, server, InMemorySyncStateRepository()) { "owner-1" }
         assertTrue(privateSync.sync().isSuccess)
         val synced = local.syncedPrivateDrafts.single()
-        assertEquals("SYNCED_PRIVATE", synced.draft.status)
+        assertEquals("SYNCED", synced.draft.status)
         assertEquals(listOf("Question easy?", "Question hard?"), synced.questions.map { it.text })
         assertEquals(listOf(125, 125), synced.questions.map { it.languageLevel })
 
@@ -192,7 +192,7 @@ class ArenaReviewWorkflowEndToEndTest {
         assertTrue(privateSync.sync().isSuccess)
 
         val synced = local.syncedPrivateDrafts.single()
-        assertEquals("SYNCED_PRIVATE", synced.draft.status)
+        assertEquals("SYNCED", synced.draft.status)
         assertEquals("Question?", synced.questions.single().text)
         assertEquals(7, synced.questions.single().languageLevel)
     }
@@ -631,7 +631,7 @@ class ArenaReviewWorkflowEndToEndTest {
                         bundle.draft.copy(
                             localRevision = bundle.draft.localRevision + 1,
                             updatedAtMs = maxOf(bundle.draft.updatedAtMs, question.updatedAtMs),
-                            status = "DRAFT",
+                            status = "SAVED",
                         ),
                     questions = questions,
                 )
@@ -794,6 +794,8 @@ class ArenaReviewWorkflowEndToEndTest {
             ownerUid = "owner-1",
             localRevision = 2L,
             requestedAtMs = 10L,
+            lessonIds = listOf("lesson-1"),
+            targetShelf = "arena",
             attemptCount = 0,
             lastError = null,
         )

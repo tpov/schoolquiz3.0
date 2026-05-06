@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.android_services.sync
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.tpov.schoolquiz.shared.core.sync.Syncable
@@ -21,9 +22,14 @@ class SyncWorker(
 
         internal suspend fun performSync(syncables: List<Syncable>): Boolean {
             for (syncable in syncables) {
-                syncable.sync().onFailure { return false }
+                syncable.sync().onFailure { error ->
+                    Log.w(TAG, "Syncable failed: ${syncable.javaClass.name}", error)
+                    return false
+                }
             }
             return true
         }
+
+        private const val TAG = "SchoolQuizSync"
     }
 }

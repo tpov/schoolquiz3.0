@@ -101,6 +101,8 @@ class DefaultQuestListComponentTest {
         title: String = "Quest A",
         lastModifiedAt: Long = 0L,
         visibleOn: Set<String> = setOf("home"),
+        averageRating: Float? = null,
+        averageRatingCount: Int = 0,
         archived: Boolean = false,
     ) = Quest(
         id = QuestId(id),
@@ -109,6 +111,8 @@ class DefaultQuestListComponentTest {
         title = title,
         picturePath = null,
         visibleOn = visibleOn,
+        averageRating = averageRating,
+        averageRatingCount = averageRatingCount,
         version = 1L,
         contentsVersion = 0L,
         lastModifiedAt = lastModifiedAt,
@@ -136,12 +140,28 @@ class DefaultQuestListComponentTest {
         val lesson = LessonId(lessonId)
         fakeSectionRepo.emit(
             listOf(
-                Section(sectionId, QuestId(questId), "Section", order = 0, version = 1, contentsVersion = 1, lastModifiedAt = 1),
+                Section(
+                    id = sectionId,
+                    questId = QuestId(questId),
+                    title = "Section",
+                    order = 0,
+                    version = 1,
+                    contentsVersion = 1,
+                    lastModifiedAt = 1,
+                ),
             ),
         )
         fakeThemeRepo.emit(
             listOf(
-                Theme(ThemeId("theme-$questId"), sectionId, "Theme", order = 0, version = 1, contentsVersion = 1, lastModifiedAt = 1),
+                Theme(
+                    id = ThemeId("theme-$questId"),
+                    sectionId = sectionId,
+                    title = "Theme",
+                    order = 0,
+                    version = 1,
+                    contentsVersion = 1,
+                    lastModifiedAt = 1,
+                ),
             ),
         )
         fakeLessonRepo.emit(
@@ -325,7 +345,7 @@ class DefaultQuestListComponentTest {
     }
 
     @Test
-    fun `courses home shows only downloaded archived courses`() = runTest(testScheduler) {
+    fun `courses home is empty even when archived course is downloaded`() = runTest(testScheduler) {
         val lessonId = seedHierarchyForQuest("q-course")
         val component = buildComponent(catalogId = "courses")
         fakeRepo.emit(
@@ -345,11 +365,7 @@ class DefaultQuestListComponentTest {
         fakeQuestionRepo.emit(listOf(questionFixture(lessonId)))
         advanceUntilIdle()
 
-        val state = component.uiState.value
-        assertIs<QuestListUiState.Loaded>(state)
-        assertEquals(1, state.quests.size)
-        assertEquals(false, state.quests.first().isDownloadable)
-        assertEquals(false, state.quests.first().isDownloadComplete)
+        assertIs<QuestListUiState.Empty>(component.uiState.value)
     }
 
     @Test
@@ -443,5 +459,153 @@ class DefaultQuestListComponentTest {
 
         assertEquals(listOf(QuestId("q-course")), syncedQuestIds)
         assertTrue(fakeNavigation.pushedConfigs.isEmpty())
+    }
+
+    @Test
+    fun `course archive quests are sorted by quest rating descending`() = runTest(testScheduler) {
+        val component = buildComponent(
+            catalogId = "courses",
+            titles = listOf("Архив", "Курсы"),
+            shelf = "archive",
+            mode = QuestListMode.Archive,
+        )
+        fakeRepo.emit(
+            listOf(
+                questFixture(
+                    id = "low",
+                    catalogId = "courses",
+                    title = "Low",
+                    visibleOn = setOf("archive"),
+                    averageRating = 1.7f,
+                    averageRatingCount = 80,
+                    lastModifiedAt = 300,
+                    archived = true,
+                ),
+                questFixture(
+                    id = "top-newer-low-count",
+                    catalogId = "courses",
+                    title = "Top Newer",
+                    visibleOn = setOf("archive"),
+                    averageRating = 2.8f,
+                    averageRatingCount = 5,
+                    lastModifiedAt = 400,
+                    archived = true,
+                ),
+                questFixture(
+                    id = "top-older-high-count",
+                    catalogId = "courses",
+                    title = "Top Older",
+                    visibleOn = setOf("archive"),
+                    averageRating = 2.8f,
+                    averageRatingCount = 900,
+                    lastModifiedAt = 100,
+                    archived = true,
+                ),
+                questFixture(
+                    id = "unrated",
+                    catalogId = "courses",
+                    title = "Unrated",
+                    visibleOn = setOf("archive"),
+                    averageRating = null,
+                    averageRatingCount = 0,
+                    lastModifiedAt = 500,
+                    archived = true,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+        assertEquals(
+            listOf("top-newer-low-count", "top-older-high-count", "low", "unrated"),
+            state.quests.map { it.id.value },
+        )
+    }
+
+    @Test
+    fun `arena quests are sorted by quest rating descending`() = runTest(testScheduler) {
+        val component = buildComponent(
+            catalogId = "courses",
+            titles = listOf("Арена", "Курсы"),
+            shelf = "arena",
+            mode = QuestListMode.Arena,
+        )
+        fakeRepo.emit(
+            listOf(
+                questFixture(
+                    id = "low",
+                    catalogId = "courses",
+                    title = "Low",
+                    visibleOn = setOf("arena"),
+                    averageRating = 1.7f,
+                    averageRatingCount = 80,
+                    lastModifiedAt = 300,
+                ),
+                questFixture(
+                    id = "top-newer-low-count",
+                    catalogId = "courses",
+                    title = "Top Newer",
+                    visibleOn = setOf("arena"),
+                    averageRating = 2.8f,
+                    averageRatingCount = 5,
+                    lastModifiedAt = 400,
+                ),
+                questFixture(
+                    id = "top-older-high-count",
+                    catalogId = "courses",
+                    title = "Top Older",
+                    visibleOn = setOf("arena"),
+                    averageRating = 2.8f,
+                    averageRatingCount = 900,
+                    lastModifiedAt = 100,
+                ),
+                questFixture(
+                    id = "unrated",
+                    catalogId = "courses",
+                    title = "Unrated",
+                    visibleOn = setOf("arena"),
+                    averageRating = null,
+                    averageRatingCount = 0,
+                    lastModifiedAt = 500,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+
+        val state = component.uiState.value
+        assertIs<QuestListUiState.Loaded>(state)
+        assertEquals(
+            listOf("top-newer-low-count", "top-older-high-count", "low", "unrated"),
+            state.quests.map { it.id.value },
+        )
+    }
+
+    @Test
+    fun `arena random quest click opens a local arena quest`() = runTest(testScheduler) {
+        val component = buildComponent(
+            catalogId = "courses",
+            titles = listOf("Арена", "Курсы"),
+            shelf = "arena",
+            mode = QuestListMode.Arena,
+        )
+        fakeRepo.emit(
+            listOf(
+                questFixture(
+                    id = "arena-quest",
+                    catalogId = "courses",
+                    title = "Arena Quest",
+                    visibleOn = setOf("arena"),
+                    averageRating = 2.2f,
+                ),
+            ),
+        )
+        advanceUntilIdle()
+
+        component.onRandomQuestClick()
+
+        val pushed = fakeNavigation.pushedConfigs.last()
+        assertIs<QuizzesConfig.SectionList>(pushed)
+        assertEquals("arena-quest", pushed.questId)
     }
 }

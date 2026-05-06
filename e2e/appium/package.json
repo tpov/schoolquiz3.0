@@ -1,0 +1,23 @@
+{
+  "name": "schoolquiz-appium-e2e",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "doctor": "node ./src/doctor.js",
+    "driver:install": "appium driver install uiautomator2",
+    "driver:list": "appium driver list --installed",
+    "server": "appium --address 127.0.0.1 --port 4723 --base-path /",
+    "test:arena-rating-sync": "node ./src/arena-rating-sync.e2e.js",
+    "test:arena-rating-sync:devices": "node ./src/multi-device-arena-rating-sync.js"
+  },
+  "dependencies": {
+    "@wdio/mcp": "^3.4.1",
+    "appium": "^3.3.1",
+    "appium-mcp": "^1.72.8",
+    "firebase-admin": "^13.8.0",
+    "webdriverio": "^9.27.1"
+  }
+}

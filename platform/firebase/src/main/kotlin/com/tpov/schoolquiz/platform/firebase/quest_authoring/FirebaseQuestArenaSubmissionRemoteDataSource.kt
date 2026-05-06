@@ -36,6 +36,8 @@ class FirebaseQuestArenaSubmissionRemoteDataSource(
             "ownerUid" to ownerUid,
             "localRevision" to localRevision,
             "requestedAtMs" to requestedAtMs,
+            "targetShelf" to targetShelf,
+            "targetLessonIds" to targetLessonIds.toList(),
             "createdAt" to FieldValue.serverTimestamp(),
             "draft" to draft.toFirestoreMap(),
             "sections" to sections.map { it.toFirestoreMap() },

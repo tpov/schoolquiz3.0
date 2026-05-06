@@ -3,6 +3,8 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.data.di
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.provider.DefaultAttemptIdProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.provider.DefaultRandomSeedProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.provider.DefaultRatingIdProvider
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.LessonResultOutboxWriter
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.outbox.RoomLessonResultOutboxWriter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.LessonAttemptRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.LessonRatingRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.AttemptIdProvider
@@ -18,6 +20,26 @@ val lessonRunnerDataModule = module {
     single<RandomSeedProvider> { DefaultRandomSeedProvider() }
     single<RatingIdProvider> { DefaultRatingIdProvider() }
     single<Clock> { Clock.System }
-    single<LessonAttemptRepository> { LessonAttemptRepositoryImpl(attemptDao = get()) }
-    single<LessonRatingRepository> { LessonRatingRepositoryImpl(ratingLocalDao = get()) }
+    single<LessonResultOutboxWriter> {
+        RoomLessonResultOutboxWriter(
+            outboxDao = get(),
+            lessonDao = get(),
+            themeDao = get(),
+            sectionDao = get(),
+            questDao = get(),
+            clock = get(),
+        )
+    }
+    single<LessonAttemptRepository> {
+        LessonAttemptRepositoryImpl(
+            attemptDao = get(),
+            outboxWriter = get(),
+        )
+    }
+    single<LessonRatingRepository> {
+        LessonRatingRepositoryImpl(
+            ratingLocalDao = get(),
+            outboxWriter = get(),
+        )
+    }
 }

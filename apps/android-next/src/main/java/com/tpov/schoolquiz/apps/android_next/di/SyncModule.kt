@@ -14,7 +14,10 @@ import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.sync.ProfileBootstrapSync
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.sync.LessonResultSync
 import com.tpov.schoolquiz.shared.feature.quest.domain.repository.QuestRepository
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestArenaSubmissionSync
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.sync.QuestPrivateSync
@@ -70,8 +73,26 @@ val syncModule =
                 currentUidProvider = { get<AuthRepository>().currentUid() },
             )
         }
+        single<ProfileBootstrapSync> {
+            ProfileBootstrapSync(
+                repository = get<ProfileRepository>(),
+                currentUidProvider = { get<AuthRepository>().currentUid() },
+            )
+        }
+        single<LessonResultSync> {
+            LessonResultSync(
+                outboxDao = get(),
+                remote = get(),
+                nowMs = { System.currentTimeMillis() },
+            )
+        }
         single<List<Syncable>> {
+            val profileSync = get<ProfileBootstrapSync>()
             listOf(
+                profileSync,
+                get<LessonResultSync>(),
+                // Refresh profile-backed local tables after result outbox pushes server rewards.
+                profileSync,
                 get<UserStatsRepository>() as Syncable,
                 get<QuestPrivateSync>(),
                 get<QuestArenaSubmissionSync>(),

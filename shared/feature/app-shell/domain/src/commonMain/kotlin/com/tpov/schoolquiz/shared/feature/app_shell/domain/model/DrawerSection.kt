@@ -75,13 +75,13 @@ sealed interface DrawerSection {
                 get() = mapOf(Role.USER to Title.TEACHINGS.first)
         }
 
-        // Row 7 — emptyMap (always visible)
-        data object Qualifications : InternetSection {
+        // Row 8 — emptyMap (always visible)
+        data object Profile : InternetSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 
-        // Row 8 — emptyMap (always visible)
-        data object Profile : InternetSection {
+        // Row 7 — emptyMap (always visible)
+        data object Qualifications : InternetSection {
             override val requiredRoles: Map<Role, Int> get() = emptyMap()
         }
 

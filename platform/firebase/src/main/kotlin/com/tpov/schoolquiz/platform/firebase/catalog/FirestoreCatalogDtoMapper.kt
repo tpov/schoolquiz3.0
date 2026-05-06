@@ -1,6 +1,9 @@
 package com.tpov.schoolquiz.platform.firebase.catalog
 
 import com.google.firebase.firestore.DocumentSnapshot
+import com.tpov.schoolquiz.platform.firebase.util.booleanField
+import com.tpov.schoolquiz.platform.firebase.util.longField
+import com.tpov.schoolquiz.platform.firebase.util.millisField
 import com.tpov.schoolquiz.shared.core.catalog.data.CatalogDto
 
 fun DocumentSnapshot.toCatalogDto(): CatalogDto? {
@@ -18,10 +21,10 @@ fun DocumentSnapshot.toCatalogDto(): CatalogDto? {
         id = id,
         name = name,
         picturePath = picturePath,
-        version = getLong("version") ?: 1L,
-        contentsVersion = getLong("contentsVersion") ?: 0L,
-        lastModifiedAt = getTimestamp("lastModifiedAt")?.toDate()?.time ?: 0L,
-        archived = getBoolean("archived") ?: false,
+        version = longField("version") ?: 1L,
+        contentsVersion = longField("contentsVersion") ?: 0L,
+        lastModifiedAt = millisField("lastModifiedAt") ?: 0L,
+        archived = booleanField("archived") ?: false,
         iconCategoryKey = getString("iconCategoryKey")?.takeIf { it.isNotBlank() },
         iconNames = iconNames,
     )

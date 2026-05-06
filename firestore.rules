@@ -7,12 +7,23 @@ service cloud.firestore {
       // Privilege fields and qualifications map are server-write only (Cloud Functions / Admin SDK).
       // Owner cannot write 'qualifications' (would allow self-escalation via qualifications.admin).
       // diff().affectedKeys() checks only top-level keys being changed, so legitimate
-      // owner updates (nickname, currentSkill, etc.) pass through.
+      // owner updates pass through except server-owned identity/privilege fields.
+      // nickname is updated only through Cloud Functions so uniqueness claims cannot be bypassed.
       allow write: if request.auth != null
         && request.auth.uid == userId
         && (!request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['admin', 'developer', 'moderator', 'tester', 'sponsor', 'translater',
+            .hasAny(['nickname', 'admin', 'developer', 'moderator', 'tester', 'sponsor', 'translater',
                      'qualifications']));
+    }
+
+    match /nickname_claims/{claimId} {
+      // Server-owned unique nickname registry. Clients use updateUserNickname callable.
+      allow read, write: if false;
+    }
+
+    match /configs/{configId} {
+      // Server-owned runtime configs, including configs/nickname_policy.
+      allow read, write: if false;
     }
 
     match /profiles/{userId} {

@@ -146,6 +146,7 @@ firebase-database-ktx = { module = "com.google.firebase:firebase-database-ktx" }
 firebase-storage-ktx = { module = "com.google.firebase:firebase-storage-ktx" }
 firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
 firebase-functions = { module = "com.google.firebase:firebase-functions", version.ref = "firebase-functions" }
+firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug", version.ref = "appcheck-play-integrity" }
 firebase-appcheck-play-integrity = { module = "com.google.firebase:firebase-appcheck-playintegrity", version.ref = "appcheck-play-integrity" }
 play-services-base = { module = "com.google.android.gms:play-services-base", version.ref = "play-services-base" }
 play-services-basement = { module = "com.google.android.gms:play-services-basement", version.ref = "play-services-basement" }

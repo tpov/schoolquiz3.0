@@ -241,7 +241,7 @@ class ObserveAppShellStateUseCaseTest {
         val fake = FakeUserStatsRepository(guestStats)
         val useCase = ObserveAppShellStateUseCase(fake)
         val initial = AppShellState.default(guestStats)
-        // initial.internetState.activeSection = Qualifications (first visible for guest)
+        // initial.internetState.activeSection = Profile (first visible for guest)
         val collected = mutableListOf<AppShellState>()
 
         val job = launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -256,7 +256,7 @@ class ObserveAppShellStateUseCaseTest {
 
         // userStats updated
         assertEquals(5_000, collected.last().userStats.currentSkill)
-        // BUT navigation state NOT changed — still Qualifications (initial.internetState preserved)
+        // BUT navigation state NOT changed — still Profile (initial.internetState preserved)
         assertEquals(
             initial.internetState.activeSection,
             collected.last().internetState.activeSection,

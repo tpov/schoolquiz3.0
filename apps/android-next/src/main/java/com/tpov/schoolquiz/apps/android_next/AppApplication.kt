@@ -12,6 +12,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.di.appShellPresentationModule
+import com.tpov.schoolquiz.android.feature.economy.presentation.di.economyPresentationModule
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.di.profilePresentationModule
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di.questAuthoringPresentationModule
@@ -31,6 +33,10 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
 import com.tpov.schoolquiz.shared.core.persistence.di.persistenceModule
 import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
+import com.tpov.schoolquiz.shared.feature.economy.data.di.economyDataModule
+import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.di.profileDataModule
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDomainModule
 import com.tpov.schoolquiz.shared.feature.lesson.data.di.lessonDataModule
 import com.tpov.schoolquiz.shared.feature.lesson.domain.di.lessonDomainModule
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDataModule
@@ -73,7 +79,11 @@ class AppApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        initializeFirebaseSecurity(this)
+        initializeFirebaseSecurity(
+            app = this,
+            useDebugAppCheckProvider = BuildConfig.DEBUG,
+            appCheckDebugSecret = BuildConfig.FIREBASE_APP_CHECK_DEBUG_SECRET,
+        )
         val auth = FirebaseAuth.getInstance()
         // Ensure every user has a Firebase identity (anonymous) before any feature
         // tries to read authRepository.observeUid(). Without this, a fresh-install
@@ -110,7 +120,11 @@ class AppApplication : Application(), Configuration.Provider {
                 firebaseLessonModule,
                 firebaseQuestionModule,
                 appShellDataModule { sharedAuthUidFlow },
+                profileDataModule { sharedAuthUidFlow },
+                economyDataModule { sharedAuthUidFlow },
                 appShellPresentationModule,
+                profilePresentationModule,
+                economyPresentationModule,
                 questPresentationModule,
                 questAuthoringPresentationModule,
                 quizzesPresentationModule,
@@ -129,6 +143,8 @@ class AppApplication : Application(), Configuration.Provider {
                 questionDataModule,
                 questionDomainModule,
                 questionSchemaModule,
+                profileDomainModule,
+                economyDomainModule,
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,
