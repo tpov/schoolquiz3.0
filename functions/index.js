@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {calculateTournamentLeaderboard} = require("./tournament-ranking");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -40,6 +41,8 @@ const MAX_STANDARD_HEARTS = 5;
 const MAX_GOLD_HEARTS = 1;
 const GOLD_HEART_COST = 10;
 const GIFT_BOX_STREAK_TARGET_DAYS = 10;
+const MAX_TOURNAMENT_GROUPS_PER_RECALC = 1000;
+const MAX_TOURNAMENT_RESULTS_PER_GROUP = 1000;
 const GIFT_BOX_LOGO_NAMES = [
   "Golden Crown Logo",
   "Diamond Star Logo",
@@ -488,6 +491,131 @@ exports.setPublicQuestShelf = onCall(FUNCTION_OPTIONS, async (request) => {
     };
   });
 });
+
+exports.recalculateTournamentLeaderboard = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const profile = await requireProfile(uid);
+  if (profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL) {
+    throw new HttpsError("permission-denied", "Developer level is required");
+  }
+
+  const tournamentId = firestoreDocumentId(request.data && request.data.tournamentId, "tournamentId");
+  return recalculateTournamentLeaderboard(tournamentId, Date.now());
+});
+
+async function recalculateTournamentLeaderboard(tournamentId, now) {
+  const tournamentRef = db.collection("tournaments").doc(tournamentId);
+  const tournamentSnapshot = await tournamentRef.get();
+  if (!tournamentSnapshot.exists) {
+    throw new HttpsError("not-found", `Tournament ${tournamentId} not found`);
+  }
+  const groups = await readTournamentRankingGroups(tournamentRef);
+  const ranking = calculateTournamentLeaderboard(groups, {minGroupsForStableRank: 7});
+  await writeTournamentLeaderboard(tournamentRef, ranking, now);
+  return {
+    tournamentId,
+    updatedAtMs: now,
+    ...ranking.metadata,
+  };
+}
+
+async function readTournamentRankingGroups(tournamentRef) {
+  const groupsSnapshot = await tournamentRef.collection("groups")
+    .limit(MAX_TOURNAMENT_GROUPS_PER_RECALC)
+    .get();
+  const groups = [];
+  for (const groupDoc of groupsSnapshot.docs) {
+    const groupData = groupDoc.data() || {};
+    const inlineResults = listMaps(groupData.results)
+      .map((item) => tournamentResultData(item, stringValue(item.userId || item.uid || item.playerId)))
+      .filter(Boolean);
+    const resultDocs = await groupDoc.ref.collection("results")
+      .limit(MAX_TOURNAMENT_RESULTS_PER_GROUP)
+      .get();
+    const storedResults = resultDocs.docs
+      .map((doc) => tournamentResultData(doc.data() || {}, doc.id))
+      .filter(Boolean);
+    groups.push({
+      groupId: groupDoc.id,
+      weight: numberValue(groupData.weight, 1),
+      results: inlineResults.concat(storedResults),
+    });
+  }
+  return groups;
+}
+
+function tournamentResultData(data, fallbackUserId) {
+  const userId = stringValue(data.userId || data.uid || data.playerId, fallbackUserId);
+  if (!userId) return null;
+  return clean({
+    userId,
+    percent: nullableNumber(firstDefined(data.percent, data.percentScore, data.completionPercent, data.scorePercent)),
+    correctCount: nullableNumber(firstDefined(data.correctCount, data.correctAnswers)),
+    questionCount: nullableNumber(firstDefined(data.questionCount, data.totalQuestions, data.answeredCount)),
+    weight: nullableNumber(data.weight),
+    completedAtMs: nullableNumber(firstDefined(data.completedAtMs, data.finishedAtMs, data.updatedAtMs)),
+  });
+}
+
+async function writeTournamentLeaderboard(tournamentRef, ranking, now) {
+  const existing = await tournamentRef.collection("leaderboard").get();
+  const nextIds = new Set(ranking.leaderboard.map((entry) => safeDocId(entry.userId)));
+  const operations = [];
+  operations.push({
+    type: "set",
+    ref: tournamentRef.collection("leaderboard_meta").doc("current"),
+    data: clean({
+      ...ranking.metadata,
+      updatedAtMs: now,
+    }),
+  });
+  operations.push({
+    type: "set",
+    ref: tournamentRef,
+    data: clean({
+      leaderboardUpdatedAtMs: now,
+      leaderboardAlgorithmVersion: ranking.metadata.algorithmVersion,
+      leaderboardPlayersCount: ranking.metadata.playersCount,
+      leaderboardIsFullyConnected: ranking.metadata.isFullyConnected,
+    }),
+  });
+  for (const entry of ranking.leaderboard) {
+    operations.push({
+      type: "set",
+      ref: tournamentRef.collection("leaderboard").doc(safeDocId(entry.userId)),
+      data: clean({
+        ...entry,
+        updatedAtMs: now,
+        algorithmVersion: ranking.metadata.algorithmVersion,
+      }),
+    });
+  }
+  for (const doc of existing.docs) {
+    if (!nextIds.has(doc.id)) {
+      operations.push({type: "delete", ref: doc.ref});
+    }
+  }
+  await commitOperations(operations);
+}
+
+async function commitOperations(operations) {
+  let batch = db.batch();
+  let count = 0;
+  for (const operation of operations) {
+    if (operation.type === "delete") {
+      batch.delete(operation.ref);
+    } else {
+      batch.set(operation.ref, operation.data, {merge: true});
+    }
+    count += 1;
+    if (count >= 450) {
+      await batch.commit();
+      batch = db.batch();
+      count = 0;
+    }
+  }
+  if (count > 0) await batch.commit();
+}
 
 async function processArenaRequest(request) {
   if (!request.ownerUid) throw new Error("request.ownerUid must not be blank");
@@ -2151,6 +2279,14 @@ function requireAuthUid(request) {
   return uid;
 }
 
+function firestoreDocumentId(value, fieldName) {
+  const id = stringValue(value).trim();
+  if (!id || id.includes("/")) {
+    throw new HttpsError("invalid-argument", `${fieldName} must be a Firestore document id`);
+  }
+  return id;
+}
+
 function authProfileStatus(request) {
   const provider = request.auth &&
     request.auth.token &&
@@ -2720,6 +2856,10 @@ function numberValue(value, fallback) {
 function nullableNumber(value) {
   if (value === null || value === undefined) return null;
   return numberValue(value, null);
+}
+
+function firstDefined(...values) {
+  return values.find((value) => value !== undefined && value !== null);
 }
 
 function normalizeLanguage(language) {
