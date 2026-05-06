@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -17,11 +18,13 @@ import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -50,61 +53,67 @@ internal fun TournamentEventScreen(
     actions: TournamentEventActions,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(18.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            SchoolQuizDesignCard(
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = schoolQuizDesignDeepSurfaceColor(),
-                borderColor = schoolQuizDesignLightBorderColor(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 18.dp, top = 18.dp, end = 18.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                SchoolQuizDesignCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    containerColor = schoolQuizDesignDeepSurfaceColor(),
+                    borderColor = schoolQuizDesignLightBorderColor(),
                 ) {
-                    Text(
-                        text = model.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                    Text(
-                        text = model.stageLabel,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    TournamentActionButton(
-                        text = "Старт",
-                        icon = Icons.Default.PlayArrow,
-                        primary = true,
-                        onClick = actions.onStartClick,
-                    )
-                    TournamentActionButton(
-                        text = "Лидерборд",
-                        icon = Icons.Default.Leaderboard,
-                        onClick = actions.onLeaderboardClick,
-                    )
-                    TournamentActionButton(
-                        text = "Список уроков",
-                        icon = Icons.Default.Book,
-                        onClick = actions.onLessonsClick,
-                    )
-                    TournamentActionButton(
-                        text = "Список участников",
-                        icon = Icons.Default.People,
-                        onClick = actions.onParticipantsClick,
-                    )
-                    if (actions.canManagePublicShelves) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            text = model.title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                        Text(
+                            text = model.stageLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
+                        )
+                        Spacer(Modifier.height(4.dp))
                         TournamentActionButton(
-                            text = "Добавить урок",
-                            icon = Icons.Default.Add,
-                            onClick = actions.onAddLessonsClick,
+                            text = "Старт",
+                            icon = Icons.Default.PlayArrow,
+                            primary = true,
+                            onClick = actions.onStartClick,
+                        )
+                        TournamentActionButton(
+                            text = "Лидерборд",
+                            icon = Icons.Default.Leaderboard,
+                            onClick = actions.onLeaderboardClick,
+                        )
+                        TournamentActionButton(
+                            text = "Список уроков",
+                            icon = Icons.Default.Book,
+                            onClick = actions.onLessonsClick,
+                        )
+                        TournamentActionButton(
+                            text = "Список участников",
+                            icon = Icons.Default.People,
+                            onClick = actions.onParticipantsClick,
                         )
                     }
                 }
+            }
+        }
+        if (actions.canManagePublicShelves) {
+            FloatingActionButton(
+                onClick = actions.onAddLessonsClick,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(18.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Добавить урок",
+                )
             }
         }
     }
