@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 
+import android.util.Log
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.popToFirst
@@ -160,6 +161,13 @@ class DefaultQuestListComponent(
                         navigation.popToFirst()
                     }
                 }
+                .onFailure { error ->
+                    Log.w(
+                        TAG,
+                        "Failed to set quest ${quest.id.value} public shelf to $targetShelf",
+                        error,
+                    )
+                }
         }
     }
 
@@ -277,3 +285,4 @@ class DefaultQuestListComponent(
 private const val COURSES_CATALOG_ID = "courses"
 private const val ARCHIVE_SHELF = "archive"
 private const val NO_RATING_SORT_VALUE = -1f
+private const val TAG = "QuestListComponent"

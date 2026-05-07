@@ -131,11 +131,6 @@ class DefaultQuizzesComponent(
                 catalogRepository.observeAll().collect { catalogs ->
                     val catalog = catalogs.firstOrNull { it.id.value == id }
                     val resolved = resolveIcons(catalog?.iconNames ?: emptyList())
-                    android.util.Log.d(
-                        "QuizzesIcons",
-                        "catalogId=$id name=${catalog?.name} " +
-                            "rawIconNames=${catalog?.iconNames} resolvedCount=${resolved.size}",
-                    )
                     _currentCatalogIcons.value = resolved
                 }
             }
