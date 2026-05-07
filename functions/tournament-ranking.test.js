@@ -36,6 +36,24 @@ function testSingleGroupKeepsPercentDiff() {
   assert.strictEqual(result.leaderboard[0].userId, "A");
 }
 
+function testStoredResultsWithoutWeightStillCompare() {
+  const result = calculateTournamentLeaderboard([
+    {
+      groupId: "stored-results",
+      results: [
+        {userId: "A", percent: 95, weight: null},
+        {userId: "B", percent: 75, weight: null},
+        {userId: "C", percent: 55, weight: null},
+      ],
+    },
+  ]);
+
+  assert.strictEqual(result.metadata.comparisonCount, 3);
+  assert.strictEqual(entry(result, "A").comparisons, 2);
+  assert.ok(entry(result, "A").ratingPercent > entry(result, "B").ratingPercent);
+  assert.ok(entry(result, "B").ratingPercent > entry(result, "C").ratingPercent);
+}
+
 function testOverlappingGroupsBuildOneTable() {
   const result = calculateTournamentLeaderboard([
     {
@@ -233,6 +251,7 @@ function seededNoise(seedText) {
 }
 
 testSingleGroupKeepsPercentDiff();
+testStoredResultsWithoutWeightStillCompare();
 testOverlappingGroupsBuildOneTable();
 testRepeatedGroupsSmoothBadAttempt();
 testDisconnectedGraphIsReported();

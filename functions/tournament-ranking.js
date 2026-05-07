@@ -128,9 +128,14 @@ function normalizeTournamentResult(result) {
   return {
     userId,
     percent,
-    weight: Math.max(0, finiteNumber(result.weight, 1)),
+    weight: resultWeight(result.weight),
     completedAtMs: finiteNumber(result.completedAtMs || result.finishedAtMs || result.updatedAtMs, 0),
   };
+}
+
+function resultWeight(value) {
+  if (value === null || value === undefined) return 1;
+  return Math.max(0, finiteNumber(value, 1));
 }
 
 function resultPercent(result) {
