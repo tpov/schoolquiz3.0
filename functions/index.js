@@ -5,7 +5,11 @@ const crypto = require("crypto");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
-const {calculateTournamentLeaderboard} = require("./tournament-ranking");
+const {
+  calculateTournamentLeaderboard,
+  tournamentGroupForAttempt,
+  tournamentResultForAttempt,
+} = require("./tournament-ranking");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -43,6 +47,8 @@ const GOLD_HEART_COST = 10;
 const GIFT_BOX_STREAK_TARGET_DAYS = 10;
 const MAX_TOURNAMENT_GROUPS_PER_RECALC = 1000;
 const MAX_TOURNAMENT_RESULTS_PER_GROUP = 1000;
+const TOURNAMENT_LEADERBOARD_LIMIT = 100;
+const TOURNAMENT_PARTICIPANT_LIMIT = 500;
 const GIFT_BOX_LOGO_NAMES = [
   "Golden Crown Logo",
   "Diamond Star Logo",
@@ -235,6 +241,7 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
     return {event, content, ref};
   });
   let reward = {skillPoints: 0, nolics: 0};
+  const touchedTournamentIds = new Set();
   await db.runTransaction(async (transaction) => {
     const existingSnapshots = [];
     for (const item of events) {
@@ -256,6 +263,8 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
         const itemReward = lessonResultReward(item.event);
         delta.skillPoints += itemReward.skillPoints;
         delta.nolics += itemReward.nolics;
+        const tournamentId = writeTournamentAttemptToTransaction(transaction, item.event, item.content, now);
+        if (tournamentId) touchedTournamentIds.add(tournamentId);
       }
     });
     if (delta.skillPoints > 0 || delta.nolics > 0) {
@@ -263,6 +272,9 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
     }
     reward = delta;
   });
+  for (const tournamentId of touchedTournamentIds) {
+    await recalculateTournamentLeaderboard(tournamentId, now);
+  }
   return {accepted: attempts.length, reward};
 });
 
@@ -503,6 +515,47 @@ exports.recalculateTournamentLeaderboard = onCall(FUNCTION_OPTIONS, async (reque
   return recalculateTournamentLeaderboard(tournamentId, Date.now());
 });
 
+exports.fetchTournamentOverview = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireProfile(uid);
+  const tournamentId = tournamentIdValue(request.data && request.data.tournamentId);
+  const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 50), TOURNAMENT_LEADERBOARD_LIMIT));
+  const tournamentRef = db.collection("tournaments").doc(tournamentId);
+  const tournamentSnapshot = await tournamentRef.get();
+  const metadataSnapshot = await tournamentRef.collection("leaderboard_meta").doc("current").get();
+  const leaderboardSnapshot = await tournamentRef.collection("leaderboard")
+    .orderBy("place")
+    .limit(limit)
+    .get();
+  const participantsSnapshot = await tournamentRef.collection("participants")
+    .orderBy("lastAttemptAtMs", "desc")
+    .limit(TOURNAMENT_PARTICIPANT_LIMIT)
+    .get();
+
+  const leaderboard = leaderboardSnapshot.docs.map((doc) => tournamentLeaderboardEntry(doc.data() || {}, doc.id));
+  const participants = participantsSnapshot.docs.map((doc) => tournamentParticipantEntry(doc.data() || {}, doc.id));
+  const userIds = Array.from(new Set(
+    leaderboard.map((entry) => entry.userId)
+      .concat(participants.map((entry) => entry.userId))
+      .concat(uid)
+      .filter(Boolean),
+  ));
+  const profiles = await readPublicUserProfiles(userIds);
+  const enrichedLeaderboard = leaderboard.map((entry) => enrichTournamentLeaderboardEntry(entry, profiles));
+  const enrichedParticipants = participants.map((entry) => enrichTournamentParticipantEntry(entry, profiles));
+  const currentUserEntry = enrichedLeaderboard.find((entry) => entry.userId === uid) || null;
+  const currentUserParticipant = enrichedParticipants.find((entry) => entry.userId === uid) || null;
+
+  return {
+    tournament: tournamentSummary(tournamentId, tournamentSnapshot.exists ? tournamentSnapshot.data() || {} : {}),
+    metadata: metadataSnapshot.exists ? tournamentMetadata(metadataSnapshot.data() || {}) : null,
+    leaderboard: enrichedLeaderboard,
+    participants: enrichedParticipants,
+    currentUserEntry,
+    currentUserParticipant,
+  };
+});
+
 async function recalculateTournamentLeaderboard(tournamentId, now) {
   const tournamentRef = db.collection("tournaments").doc(tournamentId);
   const tournamentSnapshot = await tournamentRef.get();
@@ -555,6 +608,170 @@ function tournamentResultData(data, fallbackUserId) {
     weight: nullableNumber(data.weight),
     completedAtMs: nullableNumber(firstDefined(data.completedAtMs, data.finishedAtMs, data.updatedAtMs)),
   });
+}
+
+function writeTournamentAttemptToTransaction(transaction, event, content, now) {
+  const group = tournamentGroupForAttempt(event);
+  const result = tournamentResultForAttempt(event);
+  if (!group || !result) return null;
+
+  const tournamentRef = db.collection("tournaments").doc(group.tournamentId);
+  const groupRef = tournamentRef.collection("groups").doc(group.groupId);
+  const resultRef = groupRef.collection("results").doc(safeDocId(result.userId));
+  const participantRef = tournamentRef.collection("participants").doc(safeDocId(result.userId));
+
+  transaction.set(
+    tournamentRef,
+    clean({
+      id: group.tournamentId,
+      sourceShelf: group.sourceShelf,
+      title: tournamentTitleForId(group.tournamentId),
+      stageLabel: tournamentStageLabelForId(group.tournamentId),
+      updatedAtMs: now,
+      groupWindowMs: group.groupWindowMs,
+      schemaVersion: 1,
+    }),
+    {merge: true},
+  );
+  transaction.set(
+    groupRef,
+    clean({
+      id: group.groupId,
+      tournamentId: group.tournamentId,
+      sourceShelf: group.sourceShelf,
+      catalogId: event.catalogId,
+      questId: event.questId,
+      lessonId: group.lessonId,
+      difficulty: group.difficulty,
+      windowStartMs: group.windowStartMs,
+      windowEndMs: group.windowEndMs,
+      weight: 1,
+      updatedAtMs: now,
+      schemaVersion: 1,
+    }),
+    {merge: true},
+  );
+  transaction.set(
+    resultRef,
+    clean({
+      ...result,
+      ...content,
+      sourceShelf: group.sourceShelf,
+      updatedAtMs: now,
+      schemaVersion: 1,
+    }),
+    {merge: true},
+  );
+  transaction.set(
+    participantRef,
+    clean({
+      userId: result.userId,
+      sourceShelf: group.sourceShelf,
+      lastAttemptAtMs: result.completedAtMs,
+      lastPercent: result.percent,
+      lastGroupId: group.groupId,
+      attemptCount: admin.firestore.FieldValue.increment(1),
+      updatedAtMs: now,
+      schemaVersion: 1,
+    }),
+    {merge: true},
+  );
+  return group.tournamentId;
+}
+
+function tournamentSummary(tournamentId, data) {
+  return {
+    id: tournamentId,
+    sourceShelf: stringValue(data.sourceShelf, tournamentId),
+    title: stringValue(data.title, tournamentTitleForId(tournamentId)),
+    stageLabel: stringValue(data.stageLabel, tournamentStageLabelForId(tournamentId)),
+    updatedAtMs: numberValue(data.updatedAtMs, 0),
+    leaderboardUpdatedAtMs: numberValue(data.leaderboardUpdatedAtMs, 0),
+  };
+}
+
+function tournamentMetadata(data) {
+  return {
+    algorithmVersion: stringValue(data.algorithmVersion),
+    playersCount: numberValue(data.playersCount, 0),
+    groupsCount: numberValue(data.groupsCount, 0),
+    countedGroups: numberValue(data.countedGroups, 0),
+    comparisonCount: numberValue(data.comparisonCount, 0),
+    isFullyConnected: Boolean(data.isFullyConnected),
+    updatedAtMs: numberValue(data.updatedAtMs, 0),
+  };
+}
+
+function tournamentLeaderboardEntry(data, fallbackId) {
+  return {
+    userId: stringValue(data.userId, fallbackId),
+    place: numberValue(data.place, 0),
+    ratingPercent: numberValue(data.ratingPercent, 0),
+    ratingPoints: numberValue(data.ratingPoints, 0),
+    averagePercent: numberValue(data.averagePercent, 0),
+    groupsPlayed: numberValue(data.groupsPlayed, 0),
+    comparisons: numberValue(data.comparisons, 0),
+    uniqueOpponents: numberValue(data.uniqueOpponents, 0),
+    componentId: numberValue(data.componentId, 0),
+    componentSize: numberValue(data.componentSize, 0),
+    confidence: numberValue(data.confidence, 0),
+    updatedAtMs: numberValue(data.updatedAtMs, 0),
+  };
+}
+
+function tournamentParticipantEntry(data, fallbackId) {
+  return {
+    userId: stringValue(data.userId, fallbackId),
+    attemptCount: numberValue(data.attemptCount, 0),
+    lastAttemptAtMs: numberValue(data.lastAttemptAtMs, 0),
+    lastPercent: numberValue(data.lastPercent, 0),
+    status: stringValue(data.status, "active"),
+    updatedAtMs: numberValue(data.updatedAtMs, 0),
+  };
+}
+
+async function readPublicUserProfiles(userIds) {
+  const result = new Map();
+  for (const userId of userIds) {
+    const snapshot = await db.collection("users").doc(userId).get();
+    const data = snapshot.exists ? snapshot.data() || {} : {};
+    result.set(userId, {
+      userId,
+      nickname: stringValue(data.nickname, fallbackNickname(userId)),
+      avatarUrl: nullableString(data.avatarUrl),
+    });
+  }
+  return result;
+}
+
+function enrichTournamentLeaderboardEntry(entry, profiles) {
+  const profile = profiles.get(entry.userId) || {};
+  return {
+    ...entry,
+    nickname: stringValue(profile.nickname, fallbackNickname(entry.userId)),
+    avatarUrl: nullableString(profile.avatarUrl),
+  };
+}
+
+function enrichTournamentParticipantEntry(entry, profiles) {
+  const profile = profiles.get(entry.userId) || {};
+  return {
+    ...entry,
+    nickname: stringValue(profile.nickname, fallbackNickname(entry.userId)),
+    avatarUrl: nullableString(profile.avatarUrl),
+  };
+}
+
+function fallbackNickname(userId) {
+  return `User${hashHex(userId).slice(0, 6).toUpperCase()}`;
+}
+
+function tournamentTitleForId(tournamentId) {
+  return tournamentId === "tournamentFinal" ? "Чемпионат мира" : "Отборочный турнир";
+}
+
+function tournamentStageLabelForId(tournamentId) {
+  return tournamentId === "tournamentFinal" ? "Сложные вопросы" : "Лёгкие вопросы";
 }
 
 async function writeTournamentLeaderboard(tournamentRef, ranking, now) {
@@ -2817,6 +3034,20 @@ function publicQuestShelfValue(value) {
     throw new HttpsError("invalid-argument", `Unsupported targetShelf ${shelf || "<empty>"}`);
   }
   return shelf;
+}
+
+function tournamentIdValue(value) {
+  const raw = stringValue(value).trim();
+  const normalized = raw.toLowerCase();
+  const tournamentId = normalized === "tournamentfinal" || normalized === "world" || normalized === "worldchampionship"
+    ? "tournamentFinal"
+    : normalized === "qualifier" || normalized === "qualification"
+      ? "tournament"
+      : publicQuestShelfValue(raw);
+  if (tournamentId !== "tournament" && tournamentId !== "tournamentFinal") {
+    throw new HttpsError("invalid-argument", `Unsupported tournamentId ${raw || "<empty>"}`);
+  }
+  return tournamentId;
 }
 
 function listMaps(value) {

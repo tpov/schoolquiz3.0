@@ -121,6 +121,18 @@ service cloud.firestore {
       }
     }
 
+    match /tournaments/{tournamentId} {
+      // Tournament tables are server-written from lesson result events.
+      // Authenticated clients may read public standings and participant lists.
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+
+      match /{document=**} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+      }
+    }
+
     function isAdmin() {
       return request.auth != null && (
         (

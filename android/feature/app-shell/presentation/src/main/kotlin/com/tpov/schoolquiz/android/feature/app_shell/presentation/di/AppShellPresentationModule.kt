@@ -35,6 +35,7 @@ val appShellPresentationModule =
                 navigateUseCase = get(),
                 observeUseCase = get(),
                 retapUseCase = get(),
+                fetchTournamentOverview = get(),
                 userStatsRepository = get(),
                 syncScheduler = get(),
                 myQuestsFactory = { compCtx, nav, onQuestDrillDown ->

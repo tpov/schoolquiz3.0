@@ -8,6 +8,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeSyncScheduler
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserStatsRepository
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
@@ -27,6 +28,10 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.model.TournamentOverview
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.model.TournamentSummary
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.repository.TournamentLeaderboardRepository
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.use_case.FetchTournamentOverviewUseCase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,6 +46,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
@@ -93,18 +99,52 @@ class DefaultRootComponentTest {
     private fun buildComponent(
         fakeRepo: FakeUserStatsRepository = FakeUserStatsRepository(),
         syncScheduler: FakeSyncScheduler = FakeSyncScheduler(),
+        fetchTournamentOverview: FetchTournamentOverviewUseCase = fakeTournamentOverviewUseCase(),
     ) = DefaultRootComponent(
         componentContext = testCtx(),
         initUseCase = InitializeAppShellUseCase(fakeRepo),
         navigateUseCase = NavigateUseCase(),
         observeUseCase = ObserveAppShellStateUseCase(fakeRepo),
         retapUseCase = OnTabRetapUseCase(),
+        fetchTournamentOverview = fetchTournamentOverview,
         userStatsRepository = fakeRepo,
         syncScheduler = syncScheduler,
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
     )
+
+    private fun fakeTournamentOverviewUseCase(
+        onFetch: (String) -> Unit = {},
+    ): FetchTournamentOverviewUseCase =
+        FetchTournamentOverviewUseCase(
+            object : TournamentLeaderboardRepository {
+                override suspend fun fetchOverview(
+                    tournamentId: String,
+                    limit: Int,
+                ): Result<TournamentOverview> {
+                    onFetch(tournamentId)
+                    return Result.success(
+                        TournamentOverview(
+                            tournament =
+                                TournamentSummary(
+                                    id = tournamentId,
+                                    sourceShelf = tournamentId,
+                                    title = "Tournament",
+                                    stageLabel = "Stage",
+                                    updatedAtMs = 1L,
+                                    leaderboardUpdatedAtMs = 1L,
+                                ),
+                            metadata = null,
+                            leaderboard = emptyList(),
+                            participants = emptyList(),
+                            currentUserEntry = null,
+                            currentUserParticipant = null,
+                        ),
+                    )
+                }
+            },
+        )
 
     // -----------------------------------------------------------------------
     // Cold Start FSM (R1)
@@ -446,6 +486,29 @@ class DefaultRootComponentTest {
         assertEquals(stateAfterFirst, stateAfterSecond)
         assertEquals(LocalConfig.QuestCreateRoot, stateAfterSecond.localState.stack.active)
         assertEquals(1, stateAfterSecond.localState.stack.backStack.size)
+    }
+
+    @Test
+    fun `open qualifier leaderboard fetches tournament overview`() = runTest(testDispatcher) {
+        val requestedTournamentIds = mutableListOf<String>()
+        val component =
+            buildComponent(
+                fetchTournamentOverview =
+                    fakeTournamentOverviewUseCase { tournamentId ->
+                        requestedTournamentIds += tournamentId
+                    },
+            )
+
+        component.onDestination(Destination.OpenTournamentLeaderboard(DrawerSection.EventsSection.QualifierTournament))
+
+        val overviewState =
+            withTimeout(5_000L) {
+                component.tournamentOverviewState.first {
+                    it["tournament"] is TournamentOverviewLoadState.Content
+                }
+            }
+        assertEquals(listOf("tournament"), requestedTournamentIds)
+        assertTrue(overviewState["tournament"] is TournamentOverviewLoadState.Content)
     }
 
     // -----------------------------------------------------------------------

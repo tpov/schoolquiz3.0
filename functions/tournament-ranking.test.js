@@ -1,7 +1,11 @@
 "use strict";
 
 const assert = require("assert");
-const {calculateTournamentLeaderboard} = require("./tournament-ranking");
+const {
+  calculateTournamentLeaderboard,
+  tournamentGroupForAttempt,
+  tournamentResultForAttempt,
+} = require("./tournament-ranking");
 
 function entry(result, userId) {
   const found = result.leaderboard.find((item) => item.userId === userId);
@@ -148,6 +152,64 @@ function testNoisySevenRoundSimulationKeepsStrongPlayersNearTop() {
   );
 }
 
+function testTournamentAttemptUsesHourlyLessonGroup() {
+  const baseAttempt = {
+    sourceShelf: "tournament",
+    lessonId: "lesson-1",
+    difficulty: "EASY",
+    completedAtMs: Date.parse("2026-05-07T10:15:00.000Z"),
+  };
+
+  const first = tournamentGroupForAttempt(baseAttempt);
+  const sameHour = tournamentGroupForAttempt({
+    ...baseAttempt,
+    completedAtMs: Date.parse("2026-05-07T10:45:00.000Z"),
+  });
+  const nextHour = tournamentGroupForAttempt({
+    ...baseAttempt,
+    completedAtMs: Date.parse("2026-05-07T11:00:00.000Z"),
+  });
+
+  assert.strictEqual(first.tournamentId, "tournament");
+  assert.strictEqual(first.groupId, sameHour.groupId);
+  assert.notStrictEqual(first.groupId, nextHour.groupId);
+}
+
+function testTournamentAttemptIgnoresNonTournamentShelf() {
+  assert.strictEqual(
+    tournamentGroupForAttempt({
+      sourceShelf: "arena",
+      lessonId: "lesson-1",
+      completedAtMs: Date.parse("2026-05-07T10:15:00.000Z"),
+    }),
+    null,
+  );
+}
+
+function testTournamentResultKeepsPercentAndAttemptIdentity() {
+  const result = tournamentResultForAttempt({
+    userId: "user-1",
+    attemptId: "attempt-1",
+    percentScore: 87,
+    completedAtMs: 1234,
+    lessonId: "lesson-1",
+    questId: "quest-1",
+    catalogId: "school",
+    difficulty: "hard",
+  });
+
+  assert.deepStrictEqual(result, {
+    userId: "user-1",
+    attemptId: "attempt-1",
+    percent: 87,
+    completedAtMs: 1234,
+    lessonId: "lesson-1",
+    questId: "quest-1",
+    catalogId: "school",
+    difficulty: "HARD",
+  });
+}
+
 function seededShuffle(values, seed) {
   const result = values.slice();
   let state = seed;
@@ -175,5 +237,8 @@ testOverlappingGroupsBuildOneTable();
 testRepeatedGroupsSmoothBadAttempt();
 testDisconnectedGraphIsReported();
 testNoisySevenRoundSimulationKeepsStrongPlayersNearTop();
+testTournamentAttemptUsesHourlyLessonGroup();
+testTournamentAttemptIgnoresNonTournamentShelf();
+testTournamentResultKeepsPercentAndAttemptIdentity();
 
 console.log("tournament-ranking tests passed");

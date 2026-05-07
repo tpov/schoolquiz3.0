@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":android:feature:quest-authoring:presentation"))
     implementation(project(":android:feature:quizzes-screen:presentation"))
     implementation(project(":shared:feature:quest:domain"))
+    implementation(project(":shared:feature:internet:leaderboard:domain"))
     implementation(project(":shared:core:foundation"))
     implementation(project(":shared:core:catalog:domain"))
     implementation(project(":shared:feature:qualification:domain"))

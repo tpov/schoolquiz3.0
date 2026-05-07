@@ -28,6 +28,9 @@ import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
 
+private const val MIN_PERCENT_VALUE = 0
+private const val MAX_PERCENT_VALUE = 100
+
 internal data class TournamentLeaderboardUi(
     val title: String,
     val stageLabel: String,
@@ -35,6 +38,8 @@ internal data class TournamentLeaderboardUi(
     val currentUserNickname: String,
     val currentUserPercent: Int?,
     val standings: List<TournamentStandingUi>,
+    val isLoading: Boolean,
+    val errorMessage: String?,
 )
 
 internal data class TournamentStandingUi(
@@ -47,6 +52,8 @@ internal data class TournamentParticipantsUi(
     val title: String,
     val stageLabel: String,
     val participants: List<TournamentParticipantUi>,
+    val isLoading: Boolean,
+    val errorMessage: String?,
 )
 
 internal data class TournamentParticipantUi(
@@ -88,6 +95,19 @@ internal fun TournamentLeaderboardScreen(
                 subtitle = "обновляется после серверной синхронизации",
             )
         }
+        if (model.isLoading) {
+            item {
+                TournamentLoadingCard()
+            }
+        }
+        model.errorMessage?.let { message ->
+            item {
+                TournamentEmptyCard(
+                    title = "Не удалось обновить таблицу",
+                    subtitle = message,
+                )
+            }
+        }
         if (model.standings.isEmpty()) {
             item {
                 TournamentEmptyCard(
@@ -126,8 +146,21 @@ internal fun TournamentParticipantsScreen(
             TournamentMetricCard(
                 title = "Участников",
                 value = model.participants.size.toString(),
-                subtitle = "локально видимый список",
+                subtitle = "серверный список",
             )
+        }
+        if (model.isLoading) {
+            item {
+                TournamentLoadingCard()
+            }
+        }
+        model.errorMessage?.let { message ->
+            item {
+                TournamentEmptyCard(
+                    title = "Не удалось обновить участников",
+                    subtitle = message,
+                )
+            }
         }
         itemsIndexed(model.participants) { _, participant ->
             TournamentParticipantRow(participant = participant)
@@ -176,6 +209,29 @@ private fun TournamentHeaderCard(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
                 )
             }
+        }
+    }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun TournamentLoadingCard() {
+    SchoolQuizDesignCard(
+        modifier = Modifier.fillMaxWidth(),
+        containerColor = schoolQuizDesignDeepSurfaceColor(),
+        borderColor = schoolQuizDesignLightBorderColor(),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = "Обновляем данные",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.SemiBold,
+            )
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -285,7 +341,9 @@ private fun TournamentStandingRow(
                 )
             }
             LinearProgressIndicator(
-                progress = { standing.percent.coerceIn(0, 100) / 100f },
+                progress = {
+                    standing.percent.coerceIn(MIN_PERCENT_VALUE, MAX_PERCENT_VALUE) / MAX_PERCENT_VALUE.toFloat()
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(

@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
+import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.EventsConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.InternetConfig
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
@@ -46,6 +47,9 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAp
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.model.TournamentOverview
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.repository.TournamentLeaderboardRepository
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.use_case.FetchTournamentOverviewUseCase
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapProgress
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapResult
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.use_case.ActivateDevModeUseCase
@@ -62,6 +66,39 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+sealed interface TournamentOverviewLoadState {
+    val overview: TournamentOverview?
+
+    data object Idle : TournamentOverviewLoadState {
+        override val overview: TournamentOverview? = null
+    }
+
+    data class Loading(
+        override val overview: TournamentOverview?,
+    ) : TournamentOverviewLoadState
+
+    data class Content(
+        override val overview: TournamentOverview,
+    ) : TournamentOverviewLoadState
+
+    data class Error(
+        val message: String,
+        override val overview: TournamentOverview?,
+    ) : TournamentOverviewLoadState
+}
+
+private val noOpFetchTournamentOverviewUseCase =
+    FetchTournamentOverviewUseCase(
+        object : TournamentLeaderboardRepository {
+            override suspend fun fetchOverview(
+                tournamentId: String,
+                limit: Int,
+            ): Result<TournamentOverview> =
+                Result.failure(IllegalStateException("Tournament leaderboard repository is not bound"))
+        },
+    )
 
 /**
  * Decompose implementation of [RootComponent].
@@ -80,6 +117,7 @@ class DefaultRootComponent(
     private val navigateUseCase: NavigateUseCase,
     private val observeUseCase: ObserveAppShellStateUseCase,
     private val retapUseCase: OnTabRetapUseCase,
+    private val fetchTournamentOverview: FetchTournamentOverviewUseCase = noOpFetchTournamentOverviewUseCase,
     private val userStatsRepository: UserStatsRepository,
     private val syncScheduler: SyncScheduler,
     myQuestsFactory: (ComponentContext, Navigator, (QuestDisplayItem) -> Unit) -> MyQuestsComponent,
@@ -93,6 +131,8 @@ class DefaultRootComponent(
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
+    private val _tournamentOverviewState =
+        MutableStateFlow<Map<String, TournamentOverviewLoadState>>(emptyMap())
     private val tapProgressState = MutableStateFlow(TapProgress.initial)
 
     private val activateDevModeUseCase =
@@ -101,6 +141,7 @@ class DefaultRootComponent(
             onDevModeActivated = { userStatsRepository.setLocalDeveloperLevel(QualificationLevel.LEVEL_1.points) },
         )
     override val appShellState: Flow<AppShellState> = _appShellState.asStateFlow()
+    val tournamentOverviewState = _tournamentOverviewState.asStateFlow()
 
     @Volatile private var initDone = false
 
@@ -254,6 +295,7 @@ class DefaultRootComponent(
         val current = _appShellState.value
         val result = navigateUseCase(current, destination)
         applyResult(current, result)
+        maybeRefreshTournamentOverview(destination)
         if (result.events.isNotEmpty()) {
             scope.launch { result.events.forEach { _events.send(it) } }
         }
@@ -303,6 +345,49 @@ class DefaultRootComponent(
         }
     }
 
+    private fun maybeRefreshTournamentOverview(destination: Destination) {
+        when (destination) {
+            is Destination.OpenTournamentLeaderboard -> refreshTournamentOverview(destination.event)
+            is Destination.OpenTournamentParticipants -> refreshTournamentOverview(destination.event)
+            else -> Unit
+        }
+    }
+
+    private fun refreshTournamentOverview(event: DrawerSection.EventsSection) {
+        val tournamentId = tournamentIdFor(event) ?: return
+        val previous = _tournamentOverviewState.value[tournamentId]
+        if (previous is TournamentOverviewLoadState.Loading) return
+        _tournamentOverviewState.update {
+            it + (tournamentId to TournamentOverviewLoadState.Loading(previous?.overview))
+        }
+        scope.launch {
+            val result =
+                withContext(Dispatchers.IO) {
+                    fetchTournamentOverview(tournamentId)
+                }
+            _tournamentOverviewState.update { current ->
+                val next =
+                    result.fold(
+                        onSuccess = { TournamentOverviewLoadState.Content(it) },
+                        onFailure = {
+                            TournamentOverviewLoadState.Error(
+                                message = it.message ?: "Не удалось загрузить турнир",
+                                overview = previous?.overview,
+                            )
+                        },
+                    )
+                current + (tournamentId to next)
+            }
+        }
+    }
+
+    private fun tournamentIdFor(event: DrawerSection.EventsSection): String? =
+        when (event) {
+            DrawerSection.EventsSection.QualifierTournament -> QUALIFIER_TOURNAMENT_ID
+            DrawerSection.EventsSection.WorldChampionship -> WORLD_CHAMPIONSHIP_ID
+            else -> null
+        }
+
     private fun applyResult(
         old: AppShellState,
         result: TransitionResult,
@@ -346,5 +431,7 @@ class DefaultRootComponent(
         private const val TAG = "DefaultRootComponent"
         private const val OBSERVER_RECONNECT_DELAY_MILLIS = 1_000L
         private const val OBSERVER_RETRY_DELAY_MILLIS = 5_000L
+        private const val QUALIFIER_TOURNAMENT_ID = "tournament"
+        private const val WORLD_CHAMPIONSHIP_ID = "tournamentFinal"
     }
 }

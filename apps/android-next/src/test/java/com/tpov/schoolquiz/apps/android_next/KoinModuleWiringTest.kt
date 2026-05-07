@@ -69,6 +69,10 @@ import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.GiftBoxRepository
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.di.leaderboardDataModule
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentOverviewDto
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentSummaryDto
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDomainModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
@@ -166,6 +170,33 @@ class KoinModuleWiringTest : KoinTest {
         single<SyncScheduler> {
             object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
+            }
+        }
+    }
+
+    private val testTournamentLeaderboardRemoteModule = module {
+        single<TournamentLeaderboardRemoteDataSource> {
+            object : TournamentLeaderboardRemoteDataSource {
+                override suspend fun fetchOverview(
+                    tournamentId: String,
+                    limit: Int,
+                ): TournamentOverviewDto =
+                    TournamentOverviewDto(
+                        tournament =
+                            TournamentSummaryDto(
+                                id = tournamentId,
+                                sourceShelf = tournamentId,
+                                title = "Test tournament",
+                                stageLabel = "Test stage",
+                                updatedAtMs = 0L,
+                                leaderboardUpdatedAtMs = 0L,
+                            ),
+                        metadata = null,
+                        leaderboard = emptyList(),
+                        participants = emptyList(),
+                        currentUserEntry = null,
+                        currentUserParticipant = null,
+                    )
             }
         }
     }
@@ -374,8 +405,10 @@ class KoinModuleWiringTest : KoinTest {
                 testDataSourceModule,
                 testDaoModule,
                 testSyncSchedulerModule,
+                testTournamentLeaderboardRemoteModule,
                 testRepositoryStubsModule,
                 appShellDataModule(),
+                leaderboardDataModule,
                 questDomainModule,
                 questAuthoringDomainModule,
                 catalogDomainModule,

@@ -57,6 +57,8 @@ dependencies {
     implementation(project(":shared:feature:quest-authoring:domain"))
     implementation(project(":shared:feature:internet:profile:data"))
     implementation(project(":shared:feature:internet:profile:domain"))
+    implementation(project(":shared:feature:internet:leaderboard:data"))
+    implementation(project(":shared:feature:internet:leaderboard:domain"))
     implementation(project(":android:feature:internet:profile:presentation"))
     implementation(project(":shared:feature:economy:data"))
     implementation(project(":shared:feature:economy:domain"))

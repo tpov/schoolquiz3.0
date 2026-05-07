@@ -4,7 +4,9 @@ const ALGORITHM_VERSION = "pairwise-percent-least-squares-v1";
 const DEFAULT_RATING_BASE = 1000;
 const DEFAULT_RATING_SCALE = 10;
 const DEFAULT_MIN_GROUPS_FOR_STABLE_RANK = 7;
+const DEFAULT_GROUP_WINDOW_MS = 60 * 60 * 1000;
 const EPSILON = 1e-9;
+const TOURNAMENT_SHELF_IDS = new Set(["tournament", "tournamentFinal"]);
 
 function calculateTournamentLeaderboard(groups, options = {}) {
   const normalizedGroups = normalizeTournamentGroups(groups);
@@ -275,6 +277,77 @@ function compareLeaderboardEntries(left, right) {
     left.userId.localeCompare(right.userId);
 }
 
+function isTournamentShelf(sourceShelf) {
+  return TOURNAMENT_SHELF_IDS.has(normalizeTournamentShelf(sourceShelf));
+}
+
+function tournamentIdForShelf(sourceShelf) {
+  const shelf = normalizeTournamentShelf(sourceShelf);
+  return TOURNAMENT_SHELF_IDS.has(shelf) ? shelf : null;
+}
+
+function tournamentGroupForAttempt(attempt, options = {}) {
+  const tournamentId = tournamentIdForShelf(attempt && attempt.sourceShelf);
+  if (!tournamentId) return null;
+  const lessonId = stringValue(attempt.lessonId);
+  if (!lessonId) return null;
+  const groupWindowMs = Math.max(1, Math.trunc(finiteNumber(options.groupWindowMs, DEFAULT_GROUP_WINDOW_MS)));
+  const completedAtMs = Math.max(0, finiteNumber(attempt.completedAtMs, 0));
+  const windowStartMs = Math.floor(completedAtMs / groupWindowMs) * groupWindowMs;
+  const windowEndMs = windowStartMs + groupWindowMs;
+  const difficulty = stringValue(attempt.difficulty, "EASY").toUpperCase();
+  const groupId = [
+    hourGroupPrefix(windowStartMs),
+    safeGroupToken(lessonId),
+    safeGroupToken(difficulty),
+  ].join("_");
+  return {
+    tournamentId,
+    sourceShelf: tournamentId,
+    groupId,
+    groupWindowMs,
+    windowStartMs,
+    windowEndMs,
+    lessonId,
+    difficulty,
+  };
+}
+
+function tournamentResultForAttempt(attempt) {
+  if (!attempt || typeof attempt !== "object") return null;
+  const userId = stringValue(attempt.userId || attempt.uid || attempt.playerId);
+  const attemptId = stringValue(attempt.attemptId);
+  if (!userId || !attemptId) return null;
+  const percent = finiteNumber(attempt.percentScore, null);
+  if (percent === null) return null;
+  return {
+    userId,
+    attemptId,
+    percent: clamp(percent, 0, 100),
+    completedAtMs: Math.max(0, finiteNumber(attempt.completedAtMs, 0)),
+    lessonId: stringValue(attempt.lessonId),
+    questId: stringValue(attempt.questId),
+    catalogId: stringValue(attempt.catalogId),
+    difficulty: stringValue(attempt.difficulty, "EASY").toUpperCase(),
+  };
+}
+
+function normalizeTournamentShelf(sourceShelf) {
+  const raw = stringValue(sourceShelf).trim();
+  if (raw.toLowerCase() === "tournamentfinal") return "tournamentFinal";
+  return raw.toLowerCase() === "tournament" ? "tournament" : raw;
+}
+
+function hourGroupPrefix(timeMs) {
+  return new Date(timeMs).toISOString().slice(0, 13).replace(/[-T]/g, "");
+}
+
+function safeGroupToken(value) {
+  return stringValue(value)
+    .replace(/[^A-Za-z0-9_.-]/g, "_")
+    .slice(0, 80) || "unknown";
+}
+
 function firstFiniteNumber(...values) {
   for (const value of values) {
     const number = finiteNumber(value, null);
@@ -308,4 +381,9 @@ function stringValue(value, fallback = "") {
 module.exports = {
   ALGORITHM_VERSION,
   calculateTournamentLeaderboard,
+  DEFAULT_GROUP_WINDOW_MS,
+  isTournamentShelf,
+  tournamentGroupForAttempt,
+  tournamentIdForShelf,
+  tournamentResultForAttempt,
 };

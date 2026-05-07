@@ -35,6 +35,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.di.questionSchemaModule
 import com.tpov.schoolquiz.shared.feature.app_shell.data.di.appShellDataModule
 import com.tpov.schoolquiz.shared.feature.economy.data.di.economyDataModule
 import com.tpov.schoolquiz.shared.feature.economy.domain.di.economyDomainModule
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.di.leaderboardDataModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.di.profileDataModule
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDomainModule
 import com.tpov.schoolquiz.shared.feature.lesson.data.di.lessonDataModule
@@ -121,6 +122,7 @@ class AppApplication : Application(), Configuration.Provider {
                 firebaseQuestionModule,
                 appShellDataModule { sharedAuthUidFlow },
                 profileDataModule { sharedAuthUidFlow },
+                leaderboardDataModule,
                 economyDataModule { sharedAuthUidFlow },
                 appShellPresentationModule,
                 profilePresentationModule,

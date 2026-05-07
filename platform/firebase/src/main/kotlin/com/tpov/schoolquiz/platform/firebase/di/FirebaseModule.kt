@@ -13,11 +13,13 @@ import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivat
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseCatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseLessonContentSyncChangeRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.tournament.FirebaseTournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
@@ -64,5 +66,8 @@ val firebaseModule =
         }
         single<ReviewAssignmentRemoteDataSource> {
             FirebaseReviewAssignmentRemoteDataSource(functions = get())
+        }
+        single<TournamentLeaderboardRemoteDataSource> {
+            FirebaseTournamentLeaderboardRemoteDataSource(functions = get())
         }
     }

@@ -48,6 +48,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignChromeSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.InternetScreenComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.LocalScreenComponent
@@ -81,6 +82,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.state.AppShellState
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 private const val TAB_CROSSFADE_DURATION_MS = 300
 private const val MAIN_INDICATOR_ALPHA = 0.14f
@@ -88,6 +90,11 @@ private const val CLEAN_INDICATOR_ALPHA = 0.08f
 private const val HOME_SHELF = "home"
 private const val QUALIFIER_TOURNAMENT_SHELF = "tournament"
 private const val WORLD_CHAMPIONSHIP_SHELF = "tournamentFinal"
+
+private data class AppShellUiAccess(
+    val canSeeDesignCatalog: Boolean,
+    val canManagePublicShelves: Boolean,
+)
 
 /**
  * Root shell Composable.
@@ -121,6 +128,9 @@ fun AppShellScreen(
 ) {
     val state by rootComponent.appShellState.collectAsStateWithLifecycle(
         initialValue = AppShellState.fallback(UserStats.guest()),
+    )
+    val tournamentOverviewState by rootComponent.tournamentOverviewState.collectAsStateWithLifecycle(
+        initialValue = emptyMap(),
     )
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
@@ -189,6 +199,11 @@ fun AppShellScreen(
         visibleFooterActions(isDebugBuild, state.userStats)
             .contains(DrawerFooterAction.DesignCatalog)
     val canManagePublicShelves = state.userStats.qualification.developer > QualificationLevel.LEVEL_1.points
+    val uiAccess =
+        AppShellUiAccess(
+            canSeeDesignCatalog = canSeeDesignCatalog,
+            canManagePublicShelves = canManagePublicShelves,
+        )
 
     CompositionLocalProvider(LocalScrollToTopRegistry provides registry) {
         ModalNavigationDrawer(
@@ -271,11 +286,10 @@ fun AppShellScreen(
                 ) {
                     AppShellContent(
                         rootComponent = rootComponent,
-                        activeTab = state.activeTab,
+                        state = state,
                         paddingValues = paddingValues,
-                        canSeeDesignCatalog = canSeeDesignCatalog,
-                        canManagePublicShelves = canManagePublicShelves,
-                        userStats = state.userStats,
+                        uiAccess = uiAccess,
+                        tournamentOverviewState = tournamentOverviewState,
                         selectedDesignStyle = selectedDesignStyle,
                         onDesignStyleSelected = onDesignStyleSelected,
                     )
@@ -289,7 +303,7 @@ fun AppShellScreen(
                         Box(modifier = overlayModifier) {
                             QuizzesScreen(
                                 component = rootComponent.quizzesComponent,
-                                canManagePublicShelves = canManagePublicShelves,
+                                canManagePublicShelves = uiAccess.canManagePublicShelves,
                             )
                         }
                     }
@@ -303,16 +317,15 @@ fun AppShellScreen(
 @Composable
 private fun AppShellContent(
     rootComponent: DefaultRootComponent,
-    activeTab: Tab,
+    state: AppShellState,
     paddingValues: PaddingValues,
-    canSeeDesignCatalog: Boolean,
-    canManagePublicShelves: Boolean,
-    userStats: UserStats,
+    uiAccess: AppShellUiAccess,
+    tournamentOverviewState: Map<String, TournamentOverviewLoadState>,
     selectedDesignStyle: SchoolQuizDesignStyle,
     onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
     Crossfade(
-        targetState = activeTab,
+        targetState = state.activeTab,
         animationSpec = tween(TAB_CROSSFADE_DURATION_MS),
         label = "tab_crossfade",
     ) { tab ->
@@ -326,8 +339,8 @@ private fun AppShellContent(
                         rootComponent = rootComponent,
                         screen = child.instance,
                         paddingValues = paddingValues,
-                        canSeeDesignCatalog = canSeeDesignCatalog,
-                        canManagePublicShelves = canManagePublicShelves,
+                        canSeeDesignCatalog = uiAccess.canSeeDesignCatalog,
+                        canManagePublicShelves = uiAccess.canManagePublicShelves,
                         selectedDesignStyle = selectedDesignStyle,
                         onDesignStyleSelected = onDesignStyleSelected,
                     )
@@ -348,8 +361,9 @@ private fun AppShellContent(
                         rootComponent = rootComponent,
                         screen = child.instance,
                         paddingValues = paddingValues,
-                        canManagePublicShelves = canManagePublicShelves,
-                        userStats = userStats,
+                        canManagePublicShelves = uiAccess.canManagePublicShelves,
+                        userStats = state.userStats,
+                        tournamentOverviewState = tournamentOverviewState,
                     )
                 }
             Tab.SHOP ->
@@ -541,6 +555,7 @@ private fun EventsTabContent(
     paddingValues: PaddingValues,
     canManagePublicShelves: Boolean,
     userStats: UserStats,
+    tournamentOverviewState: Map<String, TournamentOverviewLoadState>,
 ) {
     when (screen) {
         is EventsScreenComponent.Placeholder ->
@@ -557,12 +572,20 @@ private fun EventsTabContent(
                     )
                 EventsConfig.QualifierTournamentLeaderboardRoot ->
                     TournamentLeaderboardScreen(
-                        model = qualifierLeaderboardModel(userStats),
+                        model =
+                            qualifierLeaderboardModel(
+                                userStats = userStats,
+                                loadState = tournamentOverviewState[QUALIFIER_TOURNAMENT_SHELF],
+                            ),
                         modifier = Modifier.padding(paddingValues),
                     )
                 EventsConfig.QualifierTournamentParticipantsRoot ->
                     TournamentParticipantsScreen(
-                        model = qualifierParticipantsModel(userStats),
+                        model =
+                            qualifierParticipantsModel(
+                                userStats = userStats,
+                                loadState = tournamentOverviewState[QUALIFIER_TOURNAMENT_SHELF],
+                            ),
                         modifier = Modifier.padding(paddingValues),
                     )
                 EventsConfig.WorldChampionshipRoot ->
@@ -577,12 +600,20 @@ private fun EventsTabContent(
                     )
                 EventsConfig.WorldChampionshipLeaderboardRoot ->
                     TournamentLeaderboardScreen(
-                        model = worldLeaderboardModel(userStats),
+                        model =
+                            worldLeaderboardModel(
+                                userStats = userStats,
+                                loadState = tournamentOverviewState[WORLD_CHAMPIONSHIP_SHELF],
+                            ),
                         modifier = Modifier.padding(paddingValues),
                     )
                 EventsConfig.WorldChampionshipParticipantsRoot ->
                     TournamentParticipantsScreen(
-                        model = worldParticipantsModel(userStats),
+                        model =
+                            worldParticipantsModel(
+                                userStats = userStats,
+                                loadState = tournamentOverviewState[WORLD_CHAMPIONSHIP_SHELF],
+                            ),
                         modifier = Modifier.padding(paddingValues),
                     )
                 else ->
@@ -643,53 +674,124 @@ private fun TournamentEventContent(
     )
 }
 
-private fun qualifierLeaderboardModel(userStats: UserStats): TournamentLeaderboardUi =
-    TournamentLeaderboardUi(
+private fun qualifierLeaderboardModel(
+    userStats: UserStats,
+    loadState: TournamentOverviewLoadState?,
+): TournamentLeaderboardUi =
+    tournamentLeaderboardModel(
         title = "Отборочный турнир",
         stageLabel = "Лёгкие вопросы",
         qualificationRule = "Топ-32",
-        currentUserNickname = userStats.nickname,
-        currentUserPercent = null,
-        standings = emptyList(),
+        userStats = userStats,
+        loadState = loadState,
     )
 
-private fun worldLeaderboardModel(userStats: UserStats): TournamentLeaderboardUi =
-    TournamentLeaderboardUi(
+private fun worldLeaderboardModel(
+    userStats: UserStats,
+    loadState: TournamentOverviewLoadState?,
+): TournamentLeaderboardUi =
+    tournamentLeaderboardModel(
         title = "Чемпионат мира",
         stageLabel = "Сложные вопросы",
         qualificationRule = "Финальная таблица",
-        currentUserNickname = userStats.nickname,
-        currentUserPercent = null,
-        standings = emptyList(),
+        userStats = userStats,
+        loadState = loadState,
     )
 
-private fun qualifierParticipantsModel(userStats: UserStats): TournamentParticipantsUi =
-    TournamentParticipantsUi(
+private fun tournamentLeaderboardModel(
+    title: String,
+    stageLabel: String,
+    qualificationRule: String,
+    userStats: UserStats,
+    loadState: TournamentOverviewLoadState?,
+): TournamentLeaderboardUi {
+    val overview = loadState?.overview
+    val participantsByUser = overview?.participants.orEmpty().associateBy { it.userId }
+    return TournamentLeaderboardUi(
+        title = title,
+        stageLabel = stageLabel,
+        qualificationRule = qualificationRule,
+        currentUserNickname = userStats.nickname,
+        currentUserPercent =
+            overview?.currentUserEntry?.averagePercent?.roundToInt()
+                ?: overview?.currentUserParticipant?.lastPercent,
+        standings =
+            overview?.leaderboard.orEmpty().map { standing ->
+                TournamentStandingUi(
+                    nickname = standing.nickname,
+                    percent = standing.averagePercent.roundToInt(),
+                    attempts = participantsByUser[standing.userId]?.attemptCount ?: standing.groupsPlayed,
+                )
+            },
+        isLoading = loadState is TournamentOverviewLoadState.Loading,
+        errorMessage = (loadState as? TournamentOverviewLoadState.Error)?.message,
+    )
+}
+
+private fun qualifierParticipantsModel(
+    userStats: UserStats,
+    loadState: TournamentOverviewLoadState?,
+): TournamentParticipantsUi =
+    tournamentParticipantsModel(
         title = "Отборочный турнир",
         stageLabel = "Лёгкие вопросы",
-        participants =
-            listOf(
-                TournamentParticipantUi(
-                    nickname = userStats.nickname,
-                    status = "доступ открыт",
-                    attempts = 0,
-                ),
-            ),
+        userStats = userStats,
+        fallbackStatus = "доступ открыт",
+        loadState = loadState,
     )
 
-private fun worldParticipantsModel(userStats: UserStats): TournamentParticipantsUi =
-    TournamentParticipantsUi(
+private fun worldParticipantsModel(
+    userStats: UserStats,
+    loadState: TournamentOverviewLoadState?,
+): TournamentParticipantsUi =
+    tournamentParticipantsModel(
         title = "Чемпионат мира",
         stageLabel = "Сложные вопросы",
-        participants =
+        userStats = userStats,
+        fallbackStatus = "ожидает отбора",
+        loadState = loadState,
+    )
+
+private fun tournamentParticipantsModel(
+    title: String,
+    stageLabel: String,
+    userStats: UserStats,
+    fallbackStatus: String,
+    loadState: TournamentOverviewLoadState?,
+): TournamentParticipantsUi {
+    val overview = loadState?.overview
+    val remoteParticipants =
+        overview?.participants.orEmpty().map { participant ->
+            TournamentParticipantUi(
+                nickname = participant.nickname,
+                status = participant.status.displayTournamentParticipantStatus(),
+                attempts = participant.attemptCount,
+            )
+        }
+    val participants =
+        remoteParticipants.ifEmpty {
             listOf(
                 TournamentParticipantUi(
                     nickname = userStats.nickname,
-                    status = "ожидает отбора",
+                    status = fallbackStatus,
                     attempts = 0,
                 ),
-            ),
+            )
+        }
+    return TournamentParticipantsUi(
+        title = title,
+        stageLabel = stageLabel,
+        participants = participants,
+        isLoading = loadState is TournamentOverviewLoadState.Loading,
+        errorMessage = (loadState as? TournamentOverviewLoadState.Error)?.message,
     )
+}
+
+private fun String.displayTournamentParticipantStatus(): String =
+    when (this) {
+        "active" -> "участвует"
+        else -> this
+    }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
