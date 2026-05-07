@@ -81,7 +81,7 @@ internal fun TournamentEventScreen(
                         )
                         Spacer(Modifier.height(4.dp))
                         TournamentActionButton(
-                            text = "Старт",
+                            text = "Начать турнир",
                             icon = Icons.Default.PlayArrow,
                             primary = true,
                             onClick = actions.onStartClick,

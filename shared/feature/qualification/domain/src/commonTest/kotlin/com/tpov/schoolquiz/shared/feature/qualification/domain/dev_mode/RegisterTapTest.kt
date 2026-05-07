@@ -54,16 +54,16 @@ class RegisterTapTest {
 
     // ── DM-08 / Scenario 3 ────────────────────────────────────────────────────
     // GIVEN TapProgress(9, t0) WHEN registerTap(now=t0+100ms, currentDeveloperLevel=100)
-    // THEN returns AlreadyDev(TapProgress(0, null))
+    // THEN returns Activated(TapProgress(0, null)) so local level 100 can upgrade to >100.
     @Test
-    fun `scenario 3 tenth tap within threshold and level=100 returns AlreadyDev with reset progress`() {
+    fun `scenario 3 tenth tap within threshold and level=100 returns Activated with reset progress`() {
         val result = registerTap(
             progress = TapProgress(count = 9, lastTapAtMillis = t0),
             nowMillis = t0 + 100L,
             currentDeveloperLevel = 100,
         )
 
-        assertIs<TapResult.AlreadyDev>(result)
+        assertIs<TapResult.Activated>(result)
         assertEquals(TapProgress(count = 0, lastTapAtMillis = null), result.newProgress)
     }
 
@@ -154,15 +154,15 @@ class RegisterTapTest {
 
     // ── DM-09 / Scenario 9 ────────────────────────────────────────────────────
     // GIVEN post-Activated state TapProgress(0, null)
-    // WHEN registerTap(now, currentDeveloperLevel=100) (now a developer)
+    // WHEN registerTap(now, currentDeveloperLevel=101) (now a developer)
     // THEN returns NoChange(TapProgress(1, now))
     @Test
-    fun `scenario 9 tap after activation with developer level=100 restarts sequence as NoChange`() {
+    fun `scenario 9 tap after activation with developer level=101 restarts sequence as NoChange`() {
         val nowMillis = t0 + 5000L
         val result = registerTap(
             progress = TapProgress(count = 0, lastTapAtMillis = null),
             nowMillis = nowMillis,
-            currentDeveloperLevel = 100,
+            currentDeveloperLevel = 101,
         )
 
         assertIs<TapResult.NoChange>(result)
@@ -259,11 +259,22 @@ class RegisterTapTest {
 
     // ── DM-08 boundary ────────────────────────────────────────────────────────
     @Test
-    fun `state matrix count=9 within threshold level at LEVEL_1 produces AlreadyDev`() {
+    fun `state matrix count=9 within threshold level at LEVEL_1 produces Activated`() {
         val result = registerTap(
             progress = TapProgress(count = 9, lastTapAtMillis = 0L),
             nowMillis = 100L,
             currentDeveloperLevel = QualificationLevel.LEVEL_1.points, // 100
+        )
+        assertIs<TapResult.Activated>(result)
+        assertEquals(0, result.newProgress.count)
+    }
+
+    @Test
+    fun `state matrix count=9 within threshold level above LEVEL_1 produces AlreadyDev`() {
+        val result = registerTap(
+            progress = TapProgress(count = 9, lastTapAtMillis = 0L),
+            nowMillis = 100L,
+            currentDeveloperLevel = QualificationLevel.LEVEL_1.points + 1, // 101
         )
         assertIs<TapResult.AlreadyDev>(result)
         assertEquals(0, result.newProgress.count)

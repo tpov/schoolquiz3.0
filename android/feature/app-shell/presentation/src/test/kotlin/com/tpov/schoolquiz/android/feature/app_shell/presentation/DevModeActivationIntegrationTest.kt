@@ -95,7 +95,7 @@ class DevModeActivationIntegrationTest {
     // DM-phase7-01
     // GIVEN DefaultRootComponent with FakeUserStatsRepository (developer=0)
     // WHEN onVersionTap(nowMillis) × 10 with taps < 500ms apart
-    // THEN setLocalDeveloperLevelCalls==1 + lastSetDeveloperLevel==100 + DevModeActivated emitted
+    // THEN setLocalDeveloperLevelCalls==1 + lastSetDeveloperLevel==101 + DevModeActivated emitted
     // -----------------------------------------------------------------------
     @Test
     fun `DM-phase7-01 ten rapid taps activate dev mode and emit DevModeActivated`() = runTest(testDispatcher) {
@@ -111,20 +111,20 @@ class DevModeActivationIntegrationTest {
 
         job.cancel()
         assertEquals(1, fakeRepo.setLocalDeveloperLevelCalls)
-        assertEquals(100, fakeRepo.lastSetDeveloperLevel)
+        assertEquals(101, fakeRepo.lastSetDeveloperLevel)
         assertTrue(collectedEvents.any { it == RootEvent.DevModeActivated })
     }
 
     // -----------------------------------------------------------------------
     // DM-phase7-02
-    // GIVEN DefaultRootComponent with FakeUserStatsRepository(developer=100) (already dev)
+    // GIVEN DefaultRootComponent with FakeUserStatsRepository(developer=101) (already dev)
     // WHEN onVersionTap() × 10 (count reaches 9, AlreadyDev guard fires)
     // THEN setLocalDeveloperLevelCalls==0 + DevModeAlreadyActive emitted (no repository write)
     // -----------------------------------------------------------------------
     @Test
-    fun `DM-phase7-02 when developer already 100 ten taps emit DevModeAlreadyActive without write`() = runTest(testDispatcher) {
+    fun `DM-phase7-02 when developer already 101 ten taps emit DevModeAlreadyActive without write`() = runTest(testDispatcher) {
         val devStats = UserStats.guest().copy(
-            qualification = Qualification.zero().copy(developer = 100),
+            qualification = Qualification.zero().copy(developer = 101),
         )
         val fakeRepo = FakeUserStatsRepository(initialStats = devStats)
         val component = buildComponent(fakeRepo)
@@ -196,6 +196,6 @@ class DevModeActivationIntegrationTest {
         // Final tap: count=9 → Activated
         component.onVersionTap(slowTapTime + 9 * 50L)
         assertEquals(1, fakeRepo.setLocalDeveloperLevelCalls)
-        assertEquals(100, fakeRepo.lastSetDeveloperLevel)
+        assertEquals(101, fakeRepo.lastSetDeveloperLevel)
     }
 }

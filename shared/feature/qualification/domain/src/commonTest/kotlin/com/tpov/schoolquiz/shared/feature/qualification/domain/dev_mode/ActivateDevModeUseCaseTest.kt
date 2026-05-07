@@ -60,14 +60,14 @@ class ActivateDevModeUseCaseTest {
     }
 
     // ── DM-13 ─────────────────────────────────────────────────────────────────
-    // GIVEN developerLevelToReturn=100 (AlreadyDev guard)
+    // GIVEN developerLevelToReturn=101 (AlreadyDev guard)
     // WHEN 10th tap
     // THEN onDevModeActivated NOT called
     @Test
-    fun `DM-13 given developerLevel=100 when 10th tap then onDevModeActivated not called`() = runTest {
+    fun `DM-13 given developerLevel=101 when 10th tap then onDevModeActivated not called`() = runTest {
         var onDevModeActivatedCallCount = 0
         val useCase = ActivateDevModeUseCase(
-            readCurrentDeveloperLevel = { 100 },
+            readCurrentDeveloperLevel = { 101 },
             onDevModeActivated = { onDevModeActivatedCallCount++ },
         )
 
@@ -101,7 +101,7 @@ class ActivateDevModeUseCaseTest {
     @Test
     fun `DM-14 invoke returns TapResult matching registerTap output for AlreadyDev`() = runTest {
         val useCase = ActivateDevModeUseCase(
-            readCurrentDeveloperLevel = { 100 },
+            readCurrentDeveloperLevel = { 101 },
             onDevModeActivated = { },
         )
 

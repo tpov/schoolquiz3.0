@@ -1,36 +1,41 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.arkivanov.decompose.Child
 import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.decompose.router.stack.ChildStack
+import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.TournamentEventActions
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.TournamentEventScreen
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.TournamentEventUi
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.UnderConstructionScreen
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
-import com.arkivanov.decompose.Child
-import com.arkivanov.decompose.router.stack.ChildStack
-import com.arkivanov.decompose.value.MutableValue
-import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
-import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
@@ -38,13 +43,13 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
-import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.ObserveAppShellStateUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUseCase
+import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -117,6 +122,62 @@ class AppShellScreenTest {
         }
         composeTestRule.waitForIdle()
         assertTrue(drawerSeen)
+    }
+
+    @Test
+    fun tournament_event_screen_renders_start_button_and_developer_fab() {
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                TournamentEventScreen(
+                    model =
+                        TournamentEventUi(
+                            title = "Отборочный турнир",
+                            stageLabel = "Лёгкие вопросы",
+                        ),
+                    actions =
+                        TournamentEventActions(
+                            canManagePublicShelves = true,
+                            onStartClick = {},
+                            onLeaderboardClick = {},
+                            onLessonsClick = {},
+                            onParticipantsClick = {},
+                            onAddLessonsClick = {},
+                        ),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Начать турнир").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Добавить урок").assertIsDisplayed()
+    }
+
+    @Test
+    fun tournament_event_screen_hides_fab_for_non_developer() {
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                TournamentEventScreen(
+                    model =
+                        TournamentEventUi(
+                            title = "Отборочный турнир",
+                            stageLabel = "Лёгкие вопросы",
+                        ),
+                    actions =
+                        TournamentEventActions(
+                            canManagePublicShelves = false,
+                            onStartClick = {},
+                            onLeaderboardClick = {},
+                            onLessonsClick = {},
+                            onParticipantsClick = {},
+                            onAddLessonsClick = {},
+                        ),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Начать турнир").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Добавить урок").assertDoesNotExist()
     }
 
     // Spec: hamburger_click_sends_open_drawer_to_domain (cross-phase review fix)

@@ -12,8 +12,9 @@ fun registerTap(
     resetThresholdMillis: Long = 500L,
     targetCount: Int = 10,
 ): TapResult {
-    val isFirstTap = progress.lastTapAtMillis == null || progress.count == 0
-    val elapsed = if (isFirstTap) 0L else nowMillis - progress.lastTapAtMillis!!
+    val lastTapAtMillis = progress.lastTapAtMillis
+    val isFirstTap = lastTapAtMillis == null || progress.count == 0
+    val elapsed = lastTapAtMillis?.let { nowMillis - it } ?: 0L
 
     val timedOut = !isFirstTap && elapsed > resetThresholdMillis
 
@@ -26,7 +27,7 @@ fun registerTap(
             newProgress = TapProgress(count = progress.count + 1, lastTapAtMillis = nowMillis),
         )
 
-        currentDeveloperLevel >= required.points -> TapResult.AlreadyDev(
+        currentDeveloperLevel > required.points -> TapResult.AlreadyDev(
             newProgress = TapProgress(count = 0, lastTapAtMillis = null),
         )
 

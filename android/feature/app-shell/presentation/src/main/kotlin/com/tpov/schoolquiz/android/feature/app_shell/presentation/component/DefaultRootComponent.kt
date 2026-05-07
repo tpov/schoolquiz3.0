@@ -68,6 +68,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private val PUBLIC_SHELF_MANAGER_DEVELOPER_LEVEL = QualificationLevel.LEVEL_1.points + 1
+
 sealed interface TournamentOverviewLoadState {
     val overview: TournamentOverview?
 
@@ -138,7 +140,7 @@ class DefaultRootComponent(
     private val activateDevModeUseCase =
         ActivateDevModeUseCase(
             readCurrentDeveloperLevel = { _appShellState.value.userStats.qualification.developer },
-            onDevModeActivated = { userStatsRepository.setLocalDeveloperLevel(QualificationLevel.LEVEL_1.points) },
+            onDevModeActivated = { userStatsRepository.setLocalDeveloperLevel(PUBLIC_SHELF_MANAGER_DEVELOPER_LEVEL) },
         )
     override val appShellState: Flow<AppShellState> = _appShellState.asStateFlow()
     val tournamentOverviewState = _tournamentOverviewState.asStateFlow()
