@@ -27,8 +27,10 @@ import androidx.room.TypeConverters
         ReviewAssignmentEntity::class,
         ReviewAssignmentQuestionEntity::class,
         UserProfileEntity::class,
+        QuestionAnswerEntity::class,
+        QuestionRepetitionEntity::class,
     ],
-    version = 17,
+    version = 1,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
@@ -48,4 +50,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun questArenaSubmissionDao(): QuestArenaSubmissionDao
     abstract fun reviewAssignmentDao(): ReviewAssignmentDao
     abstract fun userProfileDao(): UserProfileDao
+    abstract fun questionAnswerDao(): QuestionAnswerDao
+    abstract fun questionRepetitionDao(): QuestionRepetitionDao
 }

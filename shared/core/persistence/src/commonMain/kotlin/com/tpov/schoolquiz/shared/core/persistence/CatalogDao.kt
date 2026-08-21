@@ -1,10 +1,9 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -16,7 +15,10 @@ interface CatalogDao {
     @Query("SELECT * FROM catalogs WHERE id = :id")
     suspend fun findById(id: String): CatalogEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // Upsert, not INSERT OR REPLACE: SQLite implements REPLACE as delete + insert, and
+    // deleting this row cascades through quests → sections → themes → lessons → questions.
+    // A metadata-only update would wipe the downloaded subtree without restoring it.
+    @Upsert
     suspend fun insertOrReplace(entity: CatalogEntity)
 
     @Transaction
@@ -30,7 +32,7 @@ interface CatalogDao {
     @Query("DELETE FROM catalogs WHERE id = :id")
     suspend fun deleteById(id: String)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertAll(entities: List<CatalogEntity>)
 
     @Query("DELETE FROM catalogs")

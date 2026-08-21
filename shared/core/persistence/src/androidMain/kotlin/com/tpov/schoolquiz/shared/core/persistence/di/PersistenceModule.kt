@@ -6,6 +6,8 @@ import com.tpov.schoolquiz.shared.core.persistence.CatalogDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonResultSyncOutboxDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionDao
@@ -19,20 +21,6 @@ import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
 import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
 import com.tpov.schoolquiz.shared.core.persistence.UserProfileDao
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_3_4
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_4_5
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_5_6
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_6_7
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_7_8
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_8_9
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_9_10
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_10_11
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_11_12
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_12_13
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_13_14
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_14_15
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_15_16
-import com.tpov.schoolquiz.shared.core.persistence.migrations.MIGRATION_16_17
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -43,22 +31,6 @@ val persistenceModule = module {
             AppDatabase::class.java,
             "schoolquiz.db",
         )
-            .addMigrations(
-                MIGRATION_3_4,
-                MIGRATION_4_5,
-                MIGRATION_5_6,
-                MIGRATION_6_7,
-                MIGRATION_7_8,
-                MIGRATION_8_9,
-                MIGRATION_9_10,
-                MIGRATION_10_11,
-                MIGRATION_11_12,
-                MIGRATION_12_13,
-                MIGRATION_13_14,
-                MIGRATION_14_15,
-                MIGRATION_15_16,
-                MIGRATION_16_17,
-            )
             .addTypeConverter(StringSetConverter())
             .addTypeConverter(TopParticipantListConverter())
             .build()
@@ -78,4 +50,6 @@ val persistenceModule = module {
     single<QuestArenaSubmissionDao> { get<AppDatabase>().questArenaSubmissionDao() }
     single<ReviewAssignmentDao> { get<AppDatabase>().reviewAssignmentDao() }
     single<UserProfileDao> { get<AppDatabase>().userProfileDao() }
+    single<QuestionAnswerDao> { get<AppDatabase>().questionAnswerDao() }
+    single<QuestionRepetitionDao> { get<AppDatabase>().questionRepetitionDao() }
 }

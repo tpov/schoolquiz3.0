@@ -29,4 +29,6 @@ data class UserProfileEntity(
     val premiumUntilMs: Long,
     val trophies: Long,
     val ownedLogos: List<String>,
+    val lifePoints: Int = 0,
+    val lifePointsUpdatedAtMs: Long = 0,
 )

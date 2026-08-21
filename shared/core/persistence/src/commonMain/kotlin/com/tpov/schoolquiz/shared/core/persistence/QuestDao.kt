@@ -1,10 +1,9 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -74,7 +73,11 @@ interface QuestDao {
     @Query("SELECT COUNT(*) FROM catalogs WHERE id = :id")
     suspend fun catalogCount(id: String): Int
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // Upsert, not INSERT OR REPLACE: SQLite implements REPLACE as delete + insert, and deleting
+    // the quest row cascades through sections → themes → lessons → questions. A metadata-only
+    // update (title, picture) would wipe the whole downloaded subtree, and the sync list only
+    // re-fetches the quest itself, so the content would not come back.
+    @Upsert
     suspend fun insertOrReplace(entity: QuestEntity)
 
     @Transaction

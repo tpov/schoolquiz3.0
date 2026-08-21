@@ -1,10 +1,9 @@
 package com.tpov.schoolquiz.shared.core.persistence
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,7 +18,10 @@ interface LessonDao {
     @Query("SELECT COUNT(*) FROM themes WHERE id = :id")
     suspend fun themeCount(id: String): Int
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // Upsert, not INSERT OR REPLACE: SQLite implements REPLACE as delete + insert, and
+    // deleting this row cascades through questions.
+    // A metadata-only update would wipe the downloaded subtree without restoring it.
+    @Upsert
     suspend fun insertOrReplace(entity: LessonEntity)
 
     @Transaction

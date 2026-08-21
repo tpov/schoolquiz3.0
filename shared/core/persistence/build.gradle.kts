@@ -34,6 +34,13 @@ kotlin {
             implementation(libs.androidx.test.runner)
             implementation(libs.kotlinx.coroutines.test)
         }
+        jvmTest.dependencies {
+            // Room runs on the JVM through the bundled SQLite driver, so DAO behaviour that
+            // depends on real SQL semantics (foreign keys, cascades) can be covered without a device.
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
 
