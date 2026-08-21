@@ -5,8 +5,8 @@
     "node": "22"
   },
   "scripts": {
-    "lint": "node --check index.js",
-    "test": "node tournament-ranking.test.js",
+    "lint": "node --check index.js && node --check result-verification.js && node --check life-points.js && node --check lesson-statistics.js",
+    "test": "node tournament-ranking.test.js && node result-verification.test.js && node life-points.test.js && node lesson-statistics.test.js",
     "deploy": "firebase deploy --only functions"
   },
   "dependencies": {

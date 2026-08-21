@@ -10,6 +10,16 @@ const {
   tournamentGroupForAttempt,
   tournamentResultForAttempt,
 } = require("./tournament-ranking");
+const {
+  recomputePercentScore,
+  isWellFormedCodeAnswer,
+} = require("./result-verification");
+const {
+  LESSON_ATTEMPT_LIFE_COST,
+  maxLifePoints,
+  regenerateLifePoints,
+  spendLifePoints,
+} = require("./life-points");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -235,20 +245,53 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
     const content = contentKeysForEvent(event);
     const ref = db
       .collection(scopedCollection("result_events", event.scope))
-      .doc(eventBucketId(event.completedAtMs, event.attemptId))
+      .doc(eventBucketId(event.attemptId))
       .collection("events")
       .doc(safeDocId(event.attemptId));
     return {event, content, ref};
   });
   let reward = {skillPoints: 0, nolics: 0};
+  let remainingLifePoints = 0;
   const touchedTournamentIds = new Set();
   await db.runTransaction(async (transaction) => {
+    // Firestore requires every read before the first write.
+    const userRef = db.collection("users").doc(uid);
+    const userSnapshot = await transaction.get(userRef);
     const existingSnapshots = [];
     for (const item of events) {
       existingSnapshots.push(await transaction.get(item.ref));
     }
+
+    // Life points gate how much activity is paid for. Regeneration is derived from the elapsed
+    // time here, so nothing has to run while the user is away. Accounts created before this
+    // field existed start from a full tank rather than from zero.
+    const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    const lifeCeiling = maxLifePoints(
+      Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(userData.standardHearts, MAX_STANDARD_HEARTS)),
+    );
+    let life = regenerateLifePoints(
+      numberValue(userData.lifePoints, lifeCeiling),
+      numberValue(userData.lifePointsUpdatedAtMs, now),
+      now,
+      lifeCeiling,
+    );
+
     const delta = {skillPoints: 0, nolics: 0};
     events.forEach((item, index) => {
+      // An attempt is paid for only when it is new, its percentScore follows from its own
+      // codeAnswer, and the player still has the life points it costs. The game is offline-first,
+      // so a legitimate attempt can arrive with an empty tank — it is stored either way, and the
+      // flag records whether it was charged.
+      const isNew = !existingSnapshots[index].exists;
+      let lifeCharged = false;
+      if (isNew && item.event.scoreVerified) {
+        const charged = spendLifePoints(life.points, LESSON_ATTEMPT_LIFE_COST, lifeCeiling);
+        if (charged.affordable) {
+          life = {points: charged.points, updatedAtMs: life.updatedAtMs};
+          lifeCharged = true;
+        }
+      }
+
       transaction.set(
         item.ref,
         clean({
@@ -256,10 +299,12 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
           ...item.content,
           receivedAtMs: now,
           schemaVersion: 1,
+          lifeCharged,
         }),
         {merge: true},
       );
-      if (!existingSnapshots[index].exists) {
+
+      if (lifeCharged) {
         const itemReward = lessonResultReward(item.event);
         delta.skillPoints += itemReward.skillPoints;
         delta.nolics += itemReward.nolics;
@@ -267,15 +312,22 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
         if (tournamentId) touchedTournamentIds.add(tournamentId);
       }
     });
+
     if (delta.skillPoints > 0 || delta.nolics > 0) {
       writeUserProgressDelta(transaction, uid, delta, now);
     }
+    transaction.set(
+      userRef,
+      {uid, lifePoints: life.points, lifePointsUpdatedAtMs: life.updatedAtMs, updatedAtMs: now},
+      {merge: true},
+    );
     reward = delta;
+    remainingLifePoints = life.points;
   });
   for (const tournamentId of touchedTournamentIds) {
     await recalculateTournamentLeaderboard(tournamentId, now);
   }
-  return {accepted: attempts.length, reward};
+  return {accepted: attempts.length, reward, lifePoints: remainingLifePoints};
 });
 
 exports.submitQuestRatingEvents = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -292,7 +344,7 @@ exports.submitQuestRatingEvents = onCall(FUNCTION_OPTIONS, async (request) => {
   for (const item of ratings) {
     const event = normalizeQuestRatingEvent(item, uid);
     const content = contentKeysForEvent(event);
-    const bucketId = eventBucketId(event.ratedAtMs, event.ratingId);
+    const bucketId = eventBucketId(event.ratingId);
     const eventRef = db
       .collection(scopedCollection("rating_events", event.scope))
       .doc(bucketId)
@@ -2015,6 +2067,27 @@ function normalizeRequest(data, fallbackSubmissionId) {
   };
 }
 
+/**
+ * Per-question answers that came with an attempt.
+ *
+ * Kept permissive on purpose: a malformed row is dropped rather than failing the whole attempt,
+ * because these answers feed statistics, not rewards — losing one is far better than rejecting a
+ * legitimately played lesson.
+ */
+function normalizeLessonAnswers(value) {
+  return listMaps(value)
+    .map((item) => ({
+      questionId: stringValue(item.questionId),
+      codeAnswerIndex: Math.max(0, numberValue(item.codeAnswerIndex, 0)),
+      score: Math.max(0, Math.min(9, numberValue(item.score, 0))),
+      answerPayload: stringValue(item.answerPayload),
+      answeredAtMs: nonNegativeEventTime(item.answeredAtMs),
+      durationMs: Math.max(0, numberValue(item.durationMs, 0)),
+      wasTimeout: Boolean(item.wasTimeout),
+    }))
+    .filter((item) => item.questionId !== "");
+}
+
 function normalizeLessonResultAttemptEvent(data, authUid) {
   const userId = stringValue(data.userId, authUid);
   if (userId !== authUid) {
@@ -2027,12 +2100,28 @@ function normalizeLessonResultAttemptEvent(data, authUid) {
   if (percentScore === null || percentScore < 0 || percentScore > 100) {
     throw new HttpsError("invalid-argument", "percentScore must be in 0..100");
   }
+  const codeAnswer = stringValue(data.codeAnswer);
+  if (!isWellFormedCodeAnswer(codeAnswer)) {
+    throw new HttpsError("invalid-argument", "codeAnswer must contain digits only");
+  }
+  const difficulty = stringValue(data.difficulty, "EASY").toUpperCase();
+  if (difficulty !== "EASY" && difficulty !== "HARD") {
+    throw new HttpsError("invalid-argument", "difficulty must be EASY or HARD");
+  }
+  // The client always derives percentScore from codeAnswer (CompleteAttemptUseCase and
+  // AbortAttemptUseCase are the only two paths), so an honest attempt always matches.
+  // A mismatch means the payload was crafted: keep the event for analysis, pay nothing.
+  const expectedPercentScore = recomputePercentScore(codeAnswer);
+  const answers = normalizeLessonAnswers(data.answers);
   return {
+    answers,
     ...event,
     attemptId,
-    difficulty: stringValue(data.difficulty, "EASY"),
-    codeAnswer: stringValue(data.codeAnswer),
+    difficulty,
+    codeAnswer,
     percentScore,
+    expectedPercentScore,
+    scoreVerified: expectedPercentScore === percentScore,
     completedAtMs: nonNegativeEventTime(data.completedAtMs),
     createdAtMs: nonNegativeEventTime(data.createdAtMs),
   };
@@ -2751,6 +2840,9 @@ function profileResponse(result) {
     nolics: numberValue(user.pointsNolics, 0),
     standardHearts: numberValue(user.standardHearts, 5),
     goldHearts: numberValue(user.goldHearts, 0),
+    // Life points are reported already regenerated, so the client can show the real balance
+    // without repeating the clock arithmetic. maxLifePoints lets it render the gauge.
+    ...lifePointsSnapshot(user, Date.now()),
     boxCount: numberValue(user.boxCount, 0),
     boxStreakDays: numberValue(user.boxStreakDays, 0),
     nextBoxAtMs: numberValue(user.nextBoxAtMs, 0),
@@ -2765,6 +2857,28 @@ function profileResponse(result) {
       adminLevel: numberValue(profile.adminLevel, 0),
       developerLevel: numberValue(profile.developerLevel, 0),
     },
+  };
+}
+
+/**
+ * Current life balance for a stored user document, brought up to date at `nowMs`.
+ * Read-only: it never writes back, so the value is regenerated again on the next read.
+ */
+function lifePointsSnapshot(user, nowMs) {
+  const ceiling = maxLifePoints(
+    Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS)),
+  );
+  const life = regenerateLifePoints(
+    numberValue(user.lifePoints, ceiling),
+    numberValue(user.lifePointsUpdatedAtMs, nowMs),
+    nowMs,
+    ceiling,
+  );
+  return {
+    lifePoints: life.points,
+    maxLifePoints: ceiling,
+    lifePointsUpdatedAtMs: life.updatedAtMs,
+    lessonAttemptLifeCost: LESSON_ATTEMPT_LIFE_COST,
   };
 }
 
@@ -2996,9 +3110,14 @@ function lessonContentKey(scope, ownerUid, catalogId, questId, lessonId) {
   return hashHex([normalizeScope(scope), ownerUid || "", catalogId, questId, lessonId].join("\u0000"));
 }
 
-function eventBucketId(timeMs, stableId) {
-  const date = new Date(nonNegativeEventTime(timeMs)).toISOString().slice(0, 10).replace(/-/g, "");
-  return `${date}_${hashHex(stableId).slice(0, 2)}`;
+/**
+ * Shard key for event buckets. It must depend on the stable id ONLY: it used to include the
+ * client-supplied date, so the same attemptId replayed with another completedAtMs landed in a
+ * different bucket, looked new, and was rewarded again. These collections are write-only —
+ * nothing reads them back by date — so hashing the id alone is safe and keeps dedup global.
+ */
+function eventBucketId(stableId) {
+  return hashHex(stableId).slice(0, 2);
 }
 
 function hashHex(value) {
