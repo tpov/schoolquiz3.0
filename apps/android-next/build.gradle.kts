@@ -12,7 +12,10 @@ android {
     namespace = "com.tpov.schoolquiz.apps.android_next"
 
     defaultConfig {
-        applicationId = "com.tpov.schoolquiz.next"
+        // Matches the app registered in Firebase (school-quiz-89336951) and the one already
+        // published on Play. The former "com.tpov.schoolquiz.next" had no Firebase client, so
+        // processGoogleServices could not resolve a configuration and the APK never built.
+        applicationId = "com.tpov.schoolquiz"
         versionCode = 1
         versionName = "0.1.0"
     }
