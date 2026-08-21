@@ -98,7 +98,6 @@ include(":platform:crypto")
 include(":platform:telegram")
 
 // server
-include(":server:functions")
 include(":server:workers:sync")
 include(":server:workers:leaderboard")
 include(":server:workers:rewards")
