@@ -59,6 +59,9 @@ class FirebaseProfileRemoteDataSource(
             nolics = long(NOLICS).coerceAtLeast(0L),
             standardHearts = long(STANDARD_HEARTS).toInt().coerceAtLeast(0),
             goldHearts = long(GOLD_HEARTS).toInt().coerceAtLeast(0),
+            // Already regenerated server-side, so the client shows it as-is.
+            lifePoints = long(LIFE_POINTS).toInt().coerceAtLeast(0),
+            lifePointsUpdatedAtMs = long(LIFE_POINTS_UPDATED_AT_MS).coerceAtLeast(0L),
             qualification =
                 ProfileQualification(
                     sponsorLevel = qualification.long(SPONSOR_LEVEL).toInt().coerceAtLeast(0),
@@ -112,6 +115,8 @@ class FirebaseProfileRemoteDataSource(
         const val NOLICS = "nolics"
         const val STANDARD_HEARTS = "standardHearts"
         const val GOLD_HEARTS = "goldHearts"
+        const val LIFE_POINTS = "lifePoints"
+        const val LIFE_POINTS_UPDATED_AT_MS = "lifePointsUpdatedAtMs"
         const val BOX_COUNT = "boxCount"
         const val BOX_STREAK_DAYS = "boxStreakDays"
         const val NEXT_BOX_AT_MS = "nextBoxAtMs"

@@ -34,6 +34,8 @@ fun UserProfileEntity.toDomain(): UserProfile =
         premiumUntilMs = premiumUntilMs,
         trophies = trophies,
         ownedLogos = ownedLogos,
+        lifePoints = lifePoints,
+        lifePointsUpdatedAtMs = lifePointsUpdatedAtMs,
     )
 
 fun UserProfile.toEntity(): UserProfileEntity =
@@ -62,6 +64,8 @@ fun UserProfile.toEntity(): UserProfileEntity =
         premiumUntilMs = premiumUntilMs,
         trophies = trophies,
         ownedLogos = ownedLogos,
+        lifePoints = lifePoints,
+        lifePointsUpdatedAtMs = lifePointsUpdatedAtMs,
     )
 
 private fun String.toProfileStatus(): ProfileStatus =

@@ -20,7 +20,20 @@ data class UserProfile(
     val premiumUntilMs: Long = 0L,
     val trophies: Long = 0L,
     val ownedLogos: List<String> = emptyList(),
+    /**
+     * Activity budget. A heart is a slot worth [LIFE_POINTS_PER_HEART] points, and playing costs
+     * points rather than whole hearts — the model inherited from the legacy app. The server is the
+     * authority: it regenerates and charges these points, the client only mirrors them.
+     */
+    val lifePoints: Int = standardHearts * LIFE_POINTS_PER_HEART,
+    val lifePointsUpdatedAtMs: Long = 0L,
 ) {
+    /** Ceiling: every owned heart slot holds [LIFE_POINTS_PER_HEART] points. */
+    val maxLifePoints: Int get() = standardHearts * LIFE_POINTS_PER_HEART
+
+    /** Whether the player can still pay for a lesson attempt. */
+    val canAffordLessonAttempt: Boolean get() = lifePoints >= LESSON_ATTEMPT_LIFE_COST
+
     init {
         require(uid.isNotBlank() || status == ProfileStatus.OFFLINE) {
             "uid must be present for online profiles"
@@ -36,9 +49,17 @@ data class UserProfile(
         require(nextBoxAtMs >= 0) { "nextBoxAtMs must be non-negative" }
         require(premiumUntilMs >= 0) { "premiumUntilMs must be non-negative" }
         require(trophies >= 0) { "trophies must be non-negative" }
+        require(lifePoints >= 0) { "lifePoints must be non-negative" }
+        require(lifePointsUpdatedAtMs >= 0) { "lifePointsUpdatedAtMs must be non-negative" }
     }
 
     companion object {
+        /** One heart holds this many life points. Mirrors LIFE_POINTS_PER_HEART in functions/life-points.js. */
+        const val LIFE_POINTS_PER_HEART = 100
+
+        /** Cost of one lesson attempt, from the legacy price list. */
+        const val LESSON_ATTEMPT_LIFE_COST = 33
+
         fun offline(): UserProfile =
             UserProfile(
                 uid = "",
