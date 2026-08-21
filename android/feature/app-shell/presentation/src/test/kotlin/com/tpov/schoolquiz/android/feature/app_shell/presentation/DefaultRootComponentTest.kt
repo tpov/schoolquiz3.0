@@ -112,6 +112,10 @@ class DefaultRootComponentTest {
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
+        // Keep the IO hop on the test scheduler. With the real Dispatchers.IO the scheduler goes
+        // idle, runTest's virtual clock jumps ahead, and withTimeout fires before the background
+        // thread answers — the tournament overview test then failed only on a loaded machine.
+        ioContext = testDispatcher,
     )
 
     private fun fakeTournamentOverviewUseCase(

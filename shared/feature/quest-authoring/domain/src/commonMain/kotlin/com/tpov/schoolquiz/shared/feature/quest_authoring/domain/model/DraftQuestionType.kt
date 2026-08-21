@@ -5,4 +5,5 @@ enum class DraftQuestionType {
     MULTIPLE_CHOICE,
     ORDERING,
     FILL_BLANK,
+    SURVEY,
 }

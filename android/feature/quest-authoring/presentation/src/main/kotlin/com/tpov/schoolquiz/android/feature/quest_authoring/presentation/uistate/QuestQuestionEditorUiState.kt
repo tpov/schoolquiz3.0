@@ -82,6 +82,9 @@ data class QuestQuestionEditorUiState(
                             orderingItems.count { it.isNotBlank() } >= MIN_OPTIONS
                     DraftQuestionType.FILL_BLANK ->
                         fillBlankCanSave()
+                    DraftQuestionType.SURVEY ->
+                        // No correct answer to require — a survey only needs something to pick.
+                        text.isNotBlank() && nonBlankOptionIndexes().size >= MIN_OPTIONS
                 }
 
     private fun nonBlankOptionIndexes(): Set<Int> =

@@ -17,6 +17,21 @@ data class LessonResultAttemptEvent(
     val percentScore: Int,
     val completedAtMs: Long,
     val createdAtMs: Long,
+    /**
+     * The answers this attempt is made of. Sent with the attempt rather than through a queue
+     * of their own: they are written in the same transaction, so they can never disagree.
+     */
+    val answers: List<LessonAnswerEvent> = emptyList(),
+)
+
+data class LessonAnswerEvent(
+    val questionId: String,
+    val codeAnswerIndex: Int,
+    val score: Int,
+    val answerPayload: String,
+    val answeredAtMs: Long,
+    val durationMs: Long,
+    val wasTimeout: Boolean,
 )
 
 data class QuestRatingEvent(

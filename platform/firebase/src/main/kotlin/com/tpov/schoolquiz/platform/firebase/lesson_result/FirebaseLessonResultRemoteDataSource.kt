@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.platform.firebase.lesson_result
 
 import com.google.firebase.functions.FirebaseFunctions
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonAnswerEvent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultAttemptEvent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestRatingEvent
@@ -43,6 +44,18 @@ class FirebaseLessonResultRemoteDataSource(
             PERCENT_SCORE to percentScore,
             COMPLETED_AT_MS to completedAtMs,
             CREATED_AT_MS to createdAtMs,
+            ANSWERS to answers.map { it.toCallableMap() },
+        )
+
+    private fun LessonAnswerEvent.toCallableMap(): Map<String, Any?> =
+        mapOf(
+            QUESTION_ID to questionId,
+            CODE_ANSWER_INDEX to codeAnswerIndex,
+            SCORE to score,
+            ANSWER_PAYLOAD to answerPayload,
+            ANSWERED_AT_MS to answeredAtMs,
+            DURATION_MS to durationMs,
+            WAS_TIMEOUT to wasTimeout,
         )
 
     private fun QuestRatingEvent.toCallableMap(): Map<String, Any?> =
@@ -85,6 +98,14 @@ class FirebaseLessonResultRemoteDataSource(
         const val PERCENT_SCORE = "percentScore"
         const val COMPLETED_AT_MS = "completedAtMs"
         const val CREATED_AT_MS = "createdAtMs"
+        const val ANSWERS = "answers"
+        const val QUESTION_ID = "questionId"
+        const val CODE_ANSWER_INDEX = "codeAnswerIndex"
+        const val SCORE = "score"
+        const val ANSWER_PAYLOAD = "answerPayload"
+        const val ANSWERED_AT_MS = "answeredAtMs"
+        const val DURATION_MS = "durationMs"
+        const val WAS_TIMEOUT = "wasTimeout"
         const val RATING = "rating"
         const val RATED_AT_MS = "ratedAtMs"
     }

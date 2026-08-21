@@ -144,6 +144,7 @@ fun makeReadyState(
     deadlineMs: Long = 9_000_000L,
     seed: Long = 12345L,
     isPaused: Boolean = false,
+    questionStartedAtMs: Long = 0L,
 ) = RunnerState.Ready(
     userId = userId,
     lessonId = LessonId(lessonId),
@@ -157,6 +158,7 @@ fun makeReadyState(
     seed = seed,
     currentDraftAnswer = null,
     isPaused = isPaused,
+    questionStartedAtMs = questionStartedAtMs,
 )
 
 // ── Attempt builder ───────────────────────────────────────────────────────────

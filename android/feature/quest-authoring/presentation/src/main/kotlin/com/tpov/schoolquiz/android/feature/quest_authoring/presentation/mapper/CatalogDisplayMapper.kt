@@ -8,4 +8,5 @@ fun Catalog.toAuthoringDisplayItem(): CatalogDisplayItem =
         id = id,
         name = name,
         pictureUrl = pictureUrl,
+        questType = questType,
     )

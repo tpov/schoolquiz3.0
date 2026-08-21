@@ -2,11 +2,13 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Score
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Stars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerDuration
@@ -23,7 +25,12 @@ import kotlin.random.Random
  * When the last question is answered, returns Ready with indexInPool == playOrder.size (sentinel).
  * Component checks this sentinel and calls CompleteAttemptUseCase.
  */
-fun submitAnswer(state: RunnerState.Ready, answer: UserAnswer, nowMs: Long): RunnerState.Ready {
+fun submitAnswer(
+    state: RunnerState.Ready,
+    answer: UserAnswer,
+    nowMs: Long,
+    wasTimeout: Boolean = false,
+): RunnerState.Ready {
     val currentQuestion = state.playOrder[state.indexInPool]
     val score = evaluateAnswer(currentQuestion.content, answer)
 
@@ -34,17 +41,41 @@ fun submitAnswer(state: RunnerState.Ready, answer: UserAnswer, nowMs: Long): Run
     val nextIndex = state.indexInPool + 1
     val newDeadlineMs = if (nextIndex < state.playOrder.size) {
         val nextQuestion = state.playOrder[nextIndex]
-        val duration = computeTimer(nextQuestion.content, state.mode, TimerCoefficients.Default)
+        val duration = computeTimer(
+            content = nextQuestion.content,
+            mode = state.mode,
+            coefficients = TimerCoefficients.Default,
+            sessionMode = state.sessionMode,
+        )
         nowMs + duration.seconds * 1000L
     } else {
         state.deadlineMs
     }
+
+    // The digit alone cannot answer "which option did they pick" or "how long did it take", so the
+    // whole answer is recorded here and persisted with the attempt. A zero/absent start timestamp
+    // means the duration is unknown, which is truer than reporting a bogus one.
+    val answered = AnsweredQuestion(
+        questionId = currentQuestion.sourceId,
+        codeAnswerIndex = currentQuestion.codeAnswerIndex,
+        score = score,
+        answer = answer,
+        answeredAtMs = nowMs,
+        durationMs = if (state.questionStartedAtMs > 0L) {
+            (nowMs - state.questionStartedAtMs).coerceAtLeast(0L)
+        } else {
+            0L
+        },
+        wasTimeout = wasTimeout,
+    )
 
     return state.copy(
         indexInPool = nextIndex,
         codeAnswer = newCodeAnswer,
         deadlineMs = newDeadlineMs,
         currentDraftAnswer = null,
+        questionStartedAtMs = nowMs,
+        answers = state.answers + answered,
     )
 }
 
@@ -55,7 +86,7 @@ fun submitAnswer(state: RunnerState.Ready, answer: UserAnswer, nowMs: Long): Run
 fun autoAnswerOnTimeout(state: RunnerState.Ready, randomSeed: Long, nowMs: Long): RunnerState.Ready {
     val currentQuestion = state.playOrder[state.indexInPool]
     val answer = generateTimeoutAnswer(currentQuestion.content, state.currentDraftAnswer, randomSeed)
-    return submitAnswer(state, answer, nowMs)
+    return submitAnswer(state, answer, nowMs, wasTimeout = true)
 }
 
 /**
@@ -95,6 +126,13 @@ fun evaluateAnswer(content: QuestionContent, answer: UserAnswer): Score {
                 c != null && c in validCandidates && c == blank.correctCandidateId
             }
             scoreDigit(filledCorrect, content.blanks.size)
+        }
+        content is QuestionContent.Survey && answer is UserAnswer.SurveyAnswer -> {
+            // A survey has no right answer, so it is scored on participation alone: responding at
+            // all counts as full marks. Grading it any lower would drag down percentScore, stars
+            // and the hard-mode unlock for a question that was never a test.
+            val validIds = content.options.map { it.id }.toSet()
+            if (answer.selected.any { it in validIds }) Score(9) else Score(1)
         }
         else -> Score(1)
     }
@@ -138,12 +176,14 @@ fun computeTimer(
     content: QuestionContent,
     mode: Difficulty,
     coefficients: TimerCoefficients,
+    sessionMode: SessionMode = SessionMode.LEARNING,
 ): TimerDuration {
     val charsCount = computeCharsCount(content)
-    val k = when (mode) {
+    val base = when (mode) {
         Difficulty.EASY -> coefficients.kEasy
         Difficulty.HARD -> coefficients.kHard
     }
+    val k = if (sessionMode == SessionMode.EXAM) base * coefficients.examFactor else base
     val seconds = maxOf(5, (charsCount * k + 0.5).toInt())
     return TimerDuration(seconds)
 }
@@ -208,6 +248,7 @@ private fun computeCharsCount(content: QuestionContent): Int {
         is QuestionContent.MultipleChoice -> content.options.sumOf { it.text.length }
         is QuestionContent.Ordering -> content.items.sumOf { it.text.length }
         is QuestionContent.FillBlank -> content.candidates.sumOf { it.text.length }
+        is QuestionContent.Survey -> content.options.sumOf { it.text.length }
     }
     return content.text.length + optionChars + imageBonus
 }
@@ -227,6 +268,10 @@ private fun generateRandomAnswer(content: QuestionContent, seed: Long): UserAnsw
         is QuestionContent.Ordering -> {
             UserAnswer.OrderingAnswer(content.items.shuffled(random).map { it.id })
         }
+        is QuestionContent.Survey -> {
+            // A survey has no right answer, so a random pick is as valid as any other.
+            UserAnswer.SurveyAnswer(setOf(content.options.random(random).id))
+        }
         is QuestionContent.FillBlank -> {
             val filled = content.blanks.associate { blank ->
                 blank.id to content.candidates.random(random).id
@@ -243,6 +288,14 @@ internal fun generateTimeoutAnswer(
 ): UserAnswer {
     val randomAnswer = generateRandomAnswer(content, seed)
     return when {
+        // A survey records what the respondent actually picked, or nothing at all. Inventing a
+        // random opinion on timeout would poison the very distribution the survey exists to collect.
+        content is QuestionContent.Survey ->
+            UserAnswer.SurveyAnswer(
+                (draft as? UserAnswerDraft.SurveyDraft)?.selected.orEmpty()
+                    .intersect(content.options.map { it.id }.toSet()),
+            )
+
         content is QuestionContent.SingleChoice &&
             draft is UserAnswerDraft.SingleChoiceDraft &&
             draft.selected != null ->

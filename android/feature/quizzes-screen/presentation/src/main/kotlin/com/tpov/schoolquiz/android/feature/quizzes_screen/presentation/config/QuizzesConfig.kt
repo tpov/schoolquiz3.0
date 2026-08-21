@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config
 
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -24,6 +26,8 @@ sealed class QuizzesConfig {
         val mode: QuestListMode = QuestListMode.Home,
         val selectionTargetShelf: String? = null,
         val forcedLessonMode: Difficulty? = null,
+        /** Type of the catalog being listed; defaulted so older saved state still restores. */
+        val questType: QuestType = QuestType.REGULAR,
     ) : QuizzesConfig()
 
     @Serializable
@@ -52,6 +56,8 @@ sealed class QuizzesConfig {
         val lessonId: String,
         val mode: Difficulty,
         val titles: List<String>,
+        /** Defaulted so state saved before exams existed still restores. */
+        val sessionMode: SessionMode = SessionMode.LEARNING,
     ) : QuizzesConfig()
 }
 

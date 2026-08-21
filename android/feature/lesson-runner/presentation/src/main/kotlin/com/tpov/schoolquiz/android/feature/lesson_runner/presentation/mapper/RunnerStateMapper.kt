@@ -35,6 +35,7 @@ fun RunnerState.Ready.toQuestionUiState(): RunnerUiState.Question {
         deadlineMs = deadlineMs,
         isPaused = isPaused,
         isHard = mode == Difficulty.HARD,
+        revealCorrect = sessionMode.revealsCorrectAnswer(mode),
         showExitConfirmDialog = false,
         currentDraft = currentDraftAnswer,
     )
@@ -58,6 +59,22 @@ fun QuestionContent.toQuestionUiState(
                         .shuffledForDisplay(shuffleSeed, SINGLE_CHOICE_SHUFFLE_SALT),
                 selectedOptionId = selectedId,
                 correctOptionId = correctOptionId.raw,
+            )
+        }
+        is QuestionContent.Survey -> {
+            val selectedIds =
+                (draft as? UserAnswerDraft.SurveyDraft)?.selected?.map { it.raw }?.toSet() ?: emptySet()
+            QuestionUiState.Survey(
+                questionText = text,
+                hasImage = imageUrl != null,
+                info = info?.trim()?.takeIf { it.isNotEmpty() },
+                imageUrl = imageUrl?.takeIf { it.startsWith("https://") },
+                options =
+                    options
+                        .map { OptionUi(id = it.id.raw, text = it.text) }
+                        .shuffledForDisplay(shuffleSeed, SINGLE_CHOICE_SHUFFLE_SALT),
+                selectedIds = selectedIds,
+                allowMultiple = allowMultiple,
             )
         }
         is QuestionContent.MultipleChoice -> {
@@ -145,6 +162,7 @@ fun UserAnswerDraft.toUserAnswer(): UserAnswer =
         is UserAnswerDraft.MultipleChoiceDraft -> UserAnswer.MultipleChoiceAnswer(selected)
         is UserAnswerDraft.OrderingDraft -> UserAnswer.OrderingAnswer(order)
         is UserAnswerDraft.FillBlankDraft -> UserAnswer.FillBlankAnswer(filled)
+        is UserAnswerDraft.SurveyDraft -> UserAnswer.SurveyAnswer(selected)
     }
 
 fun InitFailureReason.toUiReason(): RunnerUiState.InitFailureReason =

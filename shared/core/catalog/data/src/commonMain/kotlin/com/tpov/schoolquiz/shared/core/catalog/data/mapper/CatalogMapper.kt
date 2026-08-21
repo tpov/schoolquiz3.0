@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.shared.core.catalog.data.mapper
 
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.persistence.CatalogEntity
 
 fun CatalogEntity.toDomain(): Catalog = Catalog(
@@ -15,6 +16,7 @@ fun CatalogEntity.toDomain(): Catalog = Catalog(
     archived = archived,
     iconCategoryKey = iconCategoryKey,
     iconNames = iconNames,
+    questType = QuestType.fromStorage(questType),
 )
 
 fun Catalog.toEntity(): CatalogEntity = CatalogEntity(
@@ -28,4 +30,5 @@ fun Catalog.toEntity(): CatalogEntity = CatalogEntity(
     archived = archived,
     iconCategoryKey = iconCategoryKey,
     iconNames = iconNames,
+    questType = questType.name,
 )

@@ -1,5 +1,6 @@
 plugins {
     id("schoolquiz.kmp.library")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -11,6 +12,8 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
+            // UserAnswer is serialized so the chosen answer can be stored with the attempt.
+            implementation(libs.kotlinx.serialization.json)
             implementation(libs.koin.core)
             implementation(project(":shared:core:leaderboard"))
             implementation(project(":shared:core:question-schema"))

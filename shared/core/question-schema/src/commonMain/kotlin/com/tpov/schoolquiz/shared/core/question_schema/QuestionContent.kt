@@ -31,6 +31,37 @@ sealed interface QuestionContent {
     data class Candidate(val id: CandidateId, val text: String)
 
     /**
+     * Survey question: options with no right answer.
+     *
+     * A separate type rather than a flag on the scored ones. Every other format requires a correct
+     * answer as an invariant, and relaxing that would weaken the validation each of them relies on
+     * — while leaving the author wondering which option to mark "correct" in a survey.
+     *
+     * The result of a survey is the distribution of the answers, so nothing here is graded.
+     *
+     * Invariant: options.size in 2..8.
+     */
+    @Serializable
+    @SerialName("Survey")
+    data class Survey(
+        override val id: String,
+        override val difficulty: Difficulty,
+        override val text: String,
+        override val imageUrl: String?,
+        val options: List<Option>,
+        /** Whether a respondent may pick more than one option. */
+        val allowMultiple: Boolean = false,
+        override val info: String? = null,
+    ) : QuestionContent {
+        init {
+            require(id.isNotBlank()) { "Survey.id must not be blank" }
+            require(text.isNotBlank()) { "Survey.text must not be blank" }
+            require(options.size in 2..8) { "Survey.options.size must be in 2..8, got ${options.size}" }
+            require(options.map { it.id }.toSet().size == options.size) { "Survey.options must have unique ids" }
+        }
+    }
+
+    /**
      * Single-choice question. Exactly one correct answer.
      * Invariant: options.size in 2..8.
      */

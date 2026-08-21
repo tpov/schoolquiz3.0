@@ -2,11 +2,13 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 
 /**
@@ -45,6 +47,12 @@ sealed interface RunnerState {
         val seed: Long,
         val currentDraftAnswer: UserAnswerDraft?,
         val isPaused: Boolean,
+        /** Practice or exam; independent of [mode], which is the question difficulty. */
+        val sessionMode: SessionMode = SessionMode.LEARNING,
+        /** When the current question appeared; used to measure how long the answer took. */
+        val questionStartedAtMs: Long = 0L,
+        /** Answers recorded so far, persisted together with the attempt when the lesson ends. */
+        val answers: List<AnsweredQuestion> = emptyList(),
     ) : RunnerState
 
     /** Terminal success: attempt saved, optional rating prompt shown. */

@@ -18,6 +18,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
@@ -174,6 +175,7 @@ class DefaultQuizzesComponent(
         navigation.pushNew(
             QuizzesConfig.QuestList(
                 catalogId = COURSES_CATALOG_ID,
+                questType = QuestType.COURSE,
                 titles = listOf("Архив", "Курсы"),
                 shelf = ARCHIVE_SHELF,
                 mode = QuestListMode.Archive,
@@ -185,6 +187,7 @@ class DefaultQuizzesComponent(
         navigation.pushNew(
             QuizzesConfig.QuestList(
                 catalogId = COURSES_CATALOG_ID,
+                questType = QuestType.COURSE,
                 titles = listOf("Арена", "Курсы"),
                 shelf = ARENA_SHELF,
                 mode = QuestListMode.Arena,
@@ -320,7 +323,7 @@ class DefaultQuizzesComponent(
                 )
             is QuizzesConfig.LessonRunner ->
                 QuizzesChild.LessonRunner(
-                    lessonRunnerFactory.create(ctx, LessonId(config.lessonId), config.mode),
+                    lessonRunnerFactory.create(ctx, LessonId(config.lessonId), config.mode, config.sessionMode),
                 )
         }
 

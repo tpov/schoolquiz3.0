@@ -16,6 +16,15 @@ interface LessonResultOutboxWriter {
 
     suspend fun enqueueRating(rating: LessonRating)
 
+    /**
+     * Builds the queue row without writing it, so the caller can store it in the same transaction
+     * as the attempt itself. Enqueueing separately used to leave a saved attempt that never
+     * reached the server while the UI reported a save failure.
+     *
+     * Returns null when there is nothing to queue (no-op writer).
+     */
+    suspend fun buildAttemptRow(attempt: Attempt): LessonResultAttemptOutboxEntity? = null
+
     companion object {
         val NoOp: LessonResultOutboxWriter =
             object : LessonResultOutboxWriter {
@@ -36,26 +45,28 @@ class RoomLessonResultOutboxWriter(
 ) : LessonResultOutboxWriter {
 
     override suspend fun enqueueAttempt(attempt: Attempt) {
+        outboxDao.upsertAttempt(buildAttemptRow(attempt))
+    }
+
+    override suspend fun buildAttemptRow(attempt: Attempt): LessonResultAttemptOutboxEntity {
         val context = resolveContentContext(attempt.lessonId.value)
-        outboxDao.upsertAttempt(
-            LessonResultAttemptOutboxEntity(
-                attemptId = attempt.id.value,
-                userId = attempt.userId,
-                scope = context.scope,
-                ownerUid = context.ownerUid,
-                catalogId = context.catalogId,
-                questId = context.questId,
-                sectionId = context.sectionId,
-                themeId = context.themeId,
-                lessonId = context.lessonId,
-                lessonVersion = attempt.lessonVersion,
-                sourceShelf = context.sourceShelf,
-                difficulty = attempt.mode.name,
-                codeAnswer = attempt.codeAnswer.raw,
-                percentScore = attempt.percentScore.raw,
-                completedAtMs = attempt.completedAt,
-                createdAtMs = clock.now().toEpochMilliseconds(),
-            ),
+        return LessonResultAttemptOutboxEntity(
+            attemptId = attempt.id.value,
+            userId = attempt.userId,
+            scope = context.scope,
+            ownerUid = context.ownerUid,
+            catalogId = context.catalogId,
+            questId = context.questId,
+            sectionId = context.sectionId,
+            themeId = context.themeId,
+            lessonId = context.lessonId,
+            lessonVersion = attempt.lessonVersion,
+            sourceShelf = context.sourceShelf,
+            difficulty = attempt.mode.name,
+            codeAnswer = attempt.codeAnswer.raw,
+            percentScore = attempt.percentScore.raw,
+            completedAtMs = attempt.completedAt,
+            createdAtMs = clock.now().toEpochMilliseconds(),
         )
     }
 

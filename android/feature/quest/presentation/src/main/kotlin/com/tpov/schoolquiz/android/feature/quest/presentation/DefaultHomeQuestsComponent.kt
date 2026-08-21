@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.core.designsystem.model.toDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.OpenGiftBoxUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-private const val COURSES_CATALOG_ID = "courses"
 
 /**
  * Default implementation of [HomeQuestsComponent].
@@ -53,7 +53,8 @@ class DefaultHomeQuestsComponent(
             HomeQuestsUiState(
                 catalogs =
                     catalogs
-                        .filterNot { it.id.value == COURSES_CATALOG_ID }
+                        // Courses have their own entry point, so they are not listed here.
+                        .filterNot { it.questType == QuestType.COURSE }
                         .map { it.toDisplayItem() },
                 giftBoxCount = profile.boxCount,
                 giftBoxStreakDays = profile.boxStreakDays,

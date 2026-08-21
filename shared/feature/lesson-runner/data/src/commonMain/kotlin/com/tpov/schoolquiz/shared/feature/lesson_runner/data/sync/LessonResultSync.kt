@@ -2,8 +2,10 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.data.sync
 
 import com.tpov.schoolquiz.shared.core.persistence.LessonResultAttemptOutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.LessonResultSyncOutboxDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestRatingOutboxEntity
 import com.tpov.schoolquiz.shared.core.sync.Syncable
+import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonAnswerEvent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultAttemptEvent
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.QuestRatingEvent
@@ -14,6 +16,7 @@ class LessonResultSync(
     private val remote: LessonResultRemoteDataSource,
     private val nowMs: () -> Long,
     private val batchSize: Int = DEFAULT_BATCH_SIZE,
+    private val answerDao: QuestionAnswerDao? = null,
 ) : Syncable {
 
     override suspend fun sync(): Result<Unit> {
@@ -33,7 +36,7 @@ class LessonResultSync(
         if (pending.isEmpty()) return
         val ids = pending.map { it.attemptId }
         try {
-            remote.submitAttempts(pending.map { it.toRemoteEvent() })
+            remote.submitAttempts(pending.map { it.toRemoteEvent(answersFor(it.attemptId)) })
             outboxDao.markAttemptsSent(ids, nowMs())
         } catch (e: CancellationException) {
             throw e
@@ -58,7 +61,23 @@ class LessonResultSync(
         }
     }
 
-    private fun LessonResultAttemptOutboxEntity.toRemoteEvent(): LessonResultAttemptEvent =
+    /** Answers live in their own table, written with the attempt; read them back at send time. */
+    private suspend fun answersFor(attemptId: String): List<LessonAnswerEvent> =
+        answerDao?.findByAttempt(attemptId).orEmpty().map { row ->
+            LessonAnswerEvent(
+                questionId = row.questionId,
+                codeAnswerIndex = row.codeAnswerIndex,
+                score = row.score,
+                answerPayload = row.answerPayload,
+                answeredAtMs = row.answeredAtMs,
+                durationMs = row.durationMs,
+                wasTimeout = row.wasTimeout == 1,
+            )
+        }
+
+    private fun LessonResultAttemptOutboxEntity.toRemoteEvent(
+        answers: List<LessonAnswerEvent>,
+    ): LessonResultAttemptEvent =
         LessonResultAttemptEvent(
             attemptId = attemptId,
             userId = userId,
@@ -76,6 +95,7 @@ class LessonResultSync(
             percentScore = percentScore,
             completedAtMs = completedAtMs,
             createdAtMs = createdAtMs,
+            answers = answers,
         )
 
     private fun QuestRatingOutboxEntity.toRemoteEvent(): QuestRatingEvent =

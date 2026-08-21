@@ -67,6 +67,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 private val PUBLIC_SHELF_MANAGER_DEVELOPER_LEVEL = QualificationLevel.LEVEL_1.points + 1
 
@@ -131,6 +132,11 @@ class DefaultRootComponent(
     profileFactory: (ComponentContext) -> ProfileComponent = { PlaceholderProfileComponent() },
     shopFactory: (ComponentContext) -> ShopComponent = { PlaceholderShopComponent() },
     quizzesFactory: (ComponentContext) -> QuizzesComponent,
+    // Injectable so tests stay on the test scheduler. A hardcoded Dispatchers.IO escapes
+    // runTest's virtual clock: the scheduler goes idle, virtual time jumps ahead, and a
+    // withTimeout expires before the real IO thread answers — which made the tournament
+    // overview test fail only under load.
+    private val ioContext: CoroutineContext = Dispatchers.IO,
 ) : RootComponent, ComponentContext by componentContext {
     private val _appShellState = MutableStateFlow(AppShellState.fallback(UserStats.guest()))
     private val _tournamentOverviewState =
@@ -364,7 +370,7 @@ class DefaultRootComponent(
         }
         scope.launch {
             val result =
-                withContext(Dispatchers.IO) {
+                withContext(ioContext) {
                     fetchTournamentOverview(tournamentId)
                 }
             _tournamentOverviewState.update { current ->

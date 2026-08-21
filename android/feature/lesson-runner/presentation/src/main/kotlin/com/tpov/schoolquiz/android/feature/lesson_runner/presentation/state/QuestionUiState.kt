@@ -25,6 +25,17 @@ sealed interface QuestionUiState {
         override val info: String? = null,
     ) : QuestionUiState
 
+    /** Survey: options with no correct answer, so nothing is ever marked right or wrong. */
+    data class Survey(
+        override val questionText: String,
+        override val hasImage: Boolean,
+        val imageUrl: String?,
+        val options: List<OptionUi>,
+        val selectedIds: Set<String>,
+        val allowMultiple: Boolean,
+        override val info: String? = null,
+    ) : QuestionUiState
+
     data class Ordering(
         override val questionText: String,
         override val hasImage: Boolean,

@@ -10,4 +10,6 @@ data class CatalogDto(
     val archived: Boolean,
     val iconCategoryKey: String? = null,
     val iconNames: List<String> = emptyList(),
+    /** Stored as a string so an unknown value from a newer client degrades instead of failing. */
+    val questType: String = "REGULAR",
 )

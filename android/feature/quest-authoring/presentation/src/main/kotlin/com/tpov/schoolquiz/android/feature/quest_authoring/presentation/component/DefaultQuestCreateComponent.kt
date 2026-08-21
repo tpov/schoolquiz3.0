@@ -21,6 +21,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.SectionPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ThemePathItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.core.question_schema.BlankId
 import com.tpov.schoolquiz.shared.core.question_schema.CandidateId
@@ -75,11 +76,11 @@ import kotlinx.serialization.json.Json
 
 private const val MIN_EDITOR_ROWS = 2
 private const val MAX_EDITOR_ROWS = 8
+private const val MIN_MULTIPLE_CORRECT = 2
 private const val MIN_FILL_BLANK_ANSWERS = 1
 private const val MAX_FILL_BLANK_ANSWERS = 3
 private const val MAX_FILL_BLANK_CANDIDATES = 10
 private const val MIN_FILL_BLANK_CANDIDATES = 5
-private const val FIRST_GENERATED_DISTRACTOR_INDEX = 1
 private val STRUCTURE_SHELVES = listOf("home", "archive", "arena")
 
 @Suppress("LargeClass", "LongParameterList", "TooManyFunctions")
@@ -1062,26 +1063,59 @@ class DefaultQuestCreateComponent(
             val info = editor.info.cleanNullable()
             val questionId = editor.selectedQuestionId?.value ?: "draft-question-${editor.activeIndex + 1}"
             when (editor.type) {
-                DraftQuestionType.SINGLE_CHOICE ->
+                DraftQuestionType.SINGLE_CHOICE -> {
+                    val options = editor.optionTexts.toOptions("opt")
+                    val correctOptionId = OptionId("opt-${editor.correctSingleIndex}")
+                    // Пустой вариант считается удалённым (toOptions его отбрасывает), поэтому
+                    // ссылка на него — не техническая ошибка схемы, а незаполненное поле.
+                    require(correctOptionId in options.map { it.id }) {
+                        "Отметьте правильным один из заполненных вариантов"
+                    }
                     QuestionContent.SingleChoice(
                         id = questionId,
                         difficulty = editor.difficulty,
                         text = editor.text.trim(),
                         imageUrl = imagePath,
-                        options = editor.optionTexts.toOptions("opt"),
-                        correctOptionId = OptionId("opt-${editor.correctSingleIndex}"),
+                        options = options,
+                        correctOptionId = correctOptionId,
                         info = info,
                     )
-                DraftQuestionType.MULTIPLE_CHOICE ->
+                }
+                DraftQuestionType.SURVEY -> {
+                    val options = editor.optionTexts.toOptions("opt")
+                    QuestionContent.Survey(
+                        id = questionId,
+                        difficulty = editor.difficulty,
+                        text = editor.text.trim(),
+                        imageUrl = imagePath,
+                        options = options,
+                        // Several correct marks in a survey simply mean several answers are allowed.
+                        allowMultiple = editor.correctMultipleIndexes.size > 1,
+                        info = info,
+                    )
+                }
+                DraftQuestionType.MULTIPLE_CHOICE -> {
+                    val options = editor.optionTexts.toOptions("opt")
+                    val optionIds = options.map { it.id }.toSet()
+                    // Отметки на очищенных вариантах отбрасываем вместе с самими вариантами,
+                    // иначе correctOptionIds ссылается на несуществующий вариант.
+                    val correctOptionIds =
+                        editor.correctMultipleIndexes
+                            .map { OptionId("opt-$it") }
+                            .filterTo(mutableSetOf()) { it in optionIds }
+                    require(correctOptionIds.size >= MIN_MULTIPLE_CORRECT) {
+                        "Отметьте правильными минимум два заполненных варианта"
+                    }
                     QuestionContent.MultipleChoice(
                         id = questionId,
                         difficulty = editor.difficulty,
                         text = editor.text.trim(),
                         imageUrl = imagePath,
-                        options = editor.optionTexts.toOptions("opt"),
-                        correctOptionIds = editor.correctMultipleIndexes.map { OptionId("opt-$it") }.toSet(),
+                        options = options,
+                        correctOptionIds = correctOptionIds,
                         info = info,
                     )
+                }
                 DraftQuestionType.ORDERING ->
                     QuestionContent.Ordering(
                         id = questionId,
@@ -1221,6 +1255,17 @@ class DefaultQuestCreateComponent(
                     correctSingleIndex = correctIndex,
                 )
             }
+            is QuestionContent.Survey ->
+                copy(
+                    type = DraftQuestionType.SURVEY,
+                    difficulty = content.difficulty,
+                    text = content.text,
+                    imagePath = content.imageUrl.orEmpty(),
+                    info = content.info.orEmpty(),
+                    optionTexts = content.options.map { it.text }.ensureEditorRows(),
+                    correctSingleIndex = 0,
+                    correctMultipleIndexes = emptySet(),
+                )
             is QuestionContent.MultipleChoice -> {
                 val correctIndexes =
                     content.correctOptionIds.mapNotNull { correctId ->
@@ -1352,6 +1397,7 @@ private val DraftQuestionType.title: String
             DraftQuestionType.MULTIPLE_CHOICE -> "Несколько ответов"
             DraftQuestionType.ORDERING -> "Порядок"
             DraftQuestionType.FILL_BLANK -> "Пропуск"
+            DraftQuestionType.SURVEY -> "Опрос"
         }
 
 private fun String.cleanNullable(): String? = trim().takeIf { it.isNotEmpty() }
@@ -1431,12 +1477,19 @@ private fun Throwable?.arenaSubmissionErrorMessage(): String =
         else -> this?.message ?: "Не удалось поставить квест в очередь арены"
     }
 
+/**
+ * Where a finished quest is published — derived from the catalog's type rather than from its id.
+ * Comparing against the literal "courses" tied this decision to one particular catalog and had to
+ * be kept in sync by hand with the quest list and the seed scripts.
+ */
 private fun QuestCreateUiState.targetShelf(): String =
-    if (selectedCatalogId?.value == "courses") {
-        QUEST_ARCHIVE_TARGET_SHELF
-    } else {
-        QUEST_ARENA_TARGET_SHELF
+    when (selectedCatalogType()) {
+        QuestType.COURSE -> QUEST_ARCHIVE_TARGET_SHELF
+        QuestType.REGULAR, QuestType.SURVEY -> QUEST_ARENA_TARGET_SHELF
     }
+
+private fun QuestCreateUiState.selectedCatalogType(): QuestType =
+    catalogs.firstOrNull { it.id == selectedCatalogId }?.questType ?: QuestType.REGULAR
 
 private fun QuestArenaTargetNode.submissionTitle(targetShelf: String): String {
     val destination =
@@ -1502,6 +1555,7 @@ private fun QuestQuestionEditorUiState.autosaveValidationMessage(): String =
         DraftQuestionType.MULTIPLE_CHOICE -> "Нужны вопрос, два варианта и минимум два правильных ответа"
         DraftQuestionType.ORDERING -> "Нужны вопрос и минимум два элемента"
         DraftQuestionType.FILL_BLANK -> "Нужны 1-3 пропуска через **текст** или правильные ответы в тексте"
+        DraftQuestionType.SURVEY -> "Нужны вопрос и минимум два варианта"
     }
 
 private fun QuestQuestionEditorUiState.withSyncedFillBlankText(value: String): QuestQuestionEditorUiState {
@@ -1535,20 +1589,24 @@ private fun List<FillBlankAnswerSpec>.toCandidateTexts(distractors: List<String>
             .filter { it.isNotBlank() }
             .filterNot { distractor -> correctAnswers.any { it.equals(distractor, ignoreCase = true) } }
             .distinctBy { it.lowercase() }
+    val provided = correctAnswers.size + normalizedDistractors.size
     val targetSize =
-        if (correctAnswers.size + normalizedDistractors.size <= MIN_FILL_BLANK_CANDIDATES) {
+        if (provided <= MIN_FILL_BLANK_CANDIDATES) {
             MIN_FILL_BLANK_CANDIDATES
         } else {
             MAX_FILL_BLANK_CANDIDATES
         }
-    val generatedDistractors =
-        generateSequence(FIRST_GENERATED_DISTRACTOR_INDEX) { it + 1 }
-            .map { "extra-$it" }
-            .filterNot { generated -> correctAnswers.any { it.equals(generated, ignoreCase = true) } }
-            .filterNot { generated -> normalizedDistractors.any { it.equals(generated, ignoreCase = true) } }
-            .take((targetSize - correctAnswers.size - normalizedDistractors.size).coerceAtLeast(0))
-            .toList()
-    return correctAnswers + normalizedDistractors + generatedDistractors
+    // Раньше недостающие варианты добивались строками "extra-1", "extra-2"… и попадали
+    // в опубликованный вопрос как настоящие ответы. Просим автора дозаполнить сам.
+    require(provided == targetSize) {
+        val missing = targetSize - provided
+        if (missing > 0) {
+            "Нужно $targetSize вариантов (ответы и дистракторы), сейчас $provided — добавьте ещё $missing"
+        } else {
+            "Нужно $targetSize вариантов (ответы и дистракторы), сейчас $provided — уберите ${-missing}"
+        }
+    }
+    return correctAnswers + normalizedDistractors
 }
 
 private fun List<Section>.toSectionPathItems(): List<SectionPathItem> =

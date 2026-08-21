@@ -141,5 +141,12 @@ class CatalogSyncListOrchestrator(
     }
 }
 
+/**
+ * Deliberately an id, not [QuestType.COURSE].
+ *
+ * This catalog is synced even when the local catalog list is still empty — that is the whole
+ * point, it bootstraps courses on a fresh install. The type lives on the catalog record, which
+ * is exactly the data that does not exist yet at that moment, so it cannot drive this decision.
+ */
 private const val ON_DEMAND_COURSES_CATALOG_ID = "courses"
 private const val ARCHIVE_SHELF = "archive"

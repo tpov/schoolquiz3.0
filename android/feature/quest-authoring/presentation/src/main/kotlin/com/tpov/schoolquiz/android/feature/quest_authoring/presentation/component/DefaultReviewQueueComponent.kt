@@ -458,6 +458,12 @@ class DefaultReviewQueueComponent(
                     options = options.map { it.copy(text = segments.translated("option:${it.id.raw}", it.text)) },
                     info = segments.translatedInfo(info),
                 )
+            is QuestionContent.Survey ->
+                copy(
+                    text = segments.translated("text", text),
+                    options = options.map { it.copy(text = segments.translated("option:${it.id.raw}", it.text)) },
+                    info = segments.translatedInfo(info),
+                )
             is QuestionContent.Ordering ->
                 copy(
                     text = segments.translated("text", text),
@@ -488,6 +494,15 @@ class DefaultReviewQueueComponent(
         val segments = mutableListOf(ReviewSegmentDraft("text", "Текст", content.text))
         when (content) {
             is QuestionContent.SingleChoice ->
+                segments +=
+                    content.options.map {
+                        ReviewSegmentDraft(
+                            key = "option:${it.id.raw}",
+                            label = "Вариант ${it.id.raw}",
+                            text = it.text,
+                        )
+                    }
+            is QuestionContent.Survey ->
                 segments +=
                     content.options.map {
                         ReviewSegmentDraft(

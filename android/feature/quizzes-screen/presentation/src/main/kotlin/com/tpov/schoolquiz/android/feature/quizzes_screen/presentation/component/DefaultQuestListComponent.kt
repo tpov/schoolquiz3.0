@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Qu
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper.toQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
@@ -60,7 +61,7 @@ class DefaultQuestListComponent(
     override val mode: QuestListMode = config.mode
     override val selectionTargetShelf: String? = config.selectionTargetShelf
     private val forcedLessonMode = config.forcedLessonMode
-    private val isCoursesCatalog = catalogId.value == COURSES_CATALOG_ID
+    private val isCoursesCatalog = config.questType == QuestType.COURSE
     private val sourceShelf =
         when {
             mode == QuestListMode.Archive -> ARCHIVE_SHELF
@@ -282,7 +283,6 @@ class DefaultQuestListComponent(
         }
 }
 
-private const val COURSES_CATALOG_ID = "courses"
 private const val ARCHIVE_SHELF = "archive"
 private const val NO_RATING_SORT_VALUE = -1f
 private const val TAG = "QuestListComponent"

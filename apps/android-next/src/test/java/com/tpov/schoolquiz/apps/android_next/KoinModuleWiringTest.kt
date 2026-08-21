@@ -47,6 +47,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUs
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
@@ -54,6 +55,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
+import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonResultSyncOutboxDao
@@ -315,7 +317,7 @@ class KoinModuleWiringTest : KoinTest {
             }
         }
         single<LessonRunnerComponentFactory> {
-            LessonRunnerComponentFactory { _, _, _ -> error("Not wired in KoinModuleWiringTest") }
+            LessonRunnerComponentFactory { _, _, _, _ -> error("Not wired in KoinModuleWiringTest") }
         }
     }
 
@@ -602,6 +604,8 @@ class KoinModuleWiringTest : KoinTest {
 
     private val testLessonAttemptDaoStub = module {
         single<LessonAttemptDao> { mock(LessonAttemptDao::class.java) }
+        // The attempt repository now advances the repetition schedule alongside the attempt.
+        single<QuestionRepetitionDao> { mock(QuestionRepetitionDao::class.java) }
     }
 
     private val testLessonRatingLocalDaoStub = module {
@@ -720,7 +724,7 @@ class KoinModuleWiringTest : KoinTest {
 
         try {
             val component = getKoin().get<LessonRunnerRootComponent> {
-                parametersOf(ctx, LessonId("l1"), Difficulty.EASY)
+                parametersOf(ctx, LessonId("l1"), Difficulty.EASY, SessionMode.LEARNING)
             }
             assertNotNull(component)
             assertTrue(component is DefaultLessonRunnerRootComponent)

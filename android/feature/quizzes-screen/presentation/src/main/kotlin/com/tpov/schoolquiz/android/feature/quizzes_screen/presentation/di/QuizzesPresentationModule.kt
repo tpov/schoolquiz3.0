@@ -10,7 +10,13 @@ import org.koin.dsl.module
 val quizzesPresentationModule =
     module {
         factory<QuizzesComponent> { (ctx: ComponentContext) ->
+            // Оркестратор регистрируется в syncModule и в приложении есть всегда; отсутствует он
+            // только в тестах проводки. Раньше на этот случай подставлялась заглушка,
+            // возвращавшая success, — и квест помечался «скачан», хотя не скачивалось ничего.
             val contentSync = runCatching { get<LessonContentSyncOrchestrator>() }.getOrNull()
+            val missingSync: () -> Result<Unit> = {
+                Result.failure(IllegalStateException("LessonContentSyncOrchestrator is not registered"))
+            }
             DefaultQuizzesComponent(
                 componentContext = ctx,
                 questRepository = get(),
@@ -23,8 +29,8 @@ val quizzesPresentationModule =
                 catalogRepository = get(),
                 setPublicQuestShelf = get(),
                 lessonRunnerFactory = get<LessonRunnerComponentFactory>(),
-                questContentSync = contentSync?.let { it::syncQuestContent } ?: { Result.success(Unit) },
-                lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { Result.success(Unit) },
+                questContentSync = contentSync?.let { it::syncQuestContent } ?: { missingSync() },
+                lessonContentSync = contentSync?.let { it::syncLessonContent } ?: { missingSync() },
             )
         }
     }

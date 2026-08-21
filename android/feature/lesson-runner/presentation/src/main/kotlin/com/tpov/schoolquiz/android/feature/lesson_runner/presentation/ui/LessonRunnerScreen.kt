@@ -238,6 +238,7 @@ private fun QuestionStateContent(
                             qState = state.questionUiState,
                             currentDraft = state.currentDraft,
                             seed = state.indexInPool.toLong() xor state.deadlineMs,
+                            revealCorrect = state.revealCorrect,
                         )
                     if (timeoutFeedback != null) {
                         feedback = timeoutFeedback
@@ -253,6 +254,7 @@ private fun QuestionStateContent(
                 qState = state.questionUiState,
                 currentDraft = state.currentDraft,
                 feedback = feedback,
+                revealCorrect = state.revealCorrect,
                 component = component,
                 onFeedback = { feedback = it },
             )
@@ -306,10 +308,40 @@ private fun QuestionTypeContent(
     qState: QuestionUiState,
     currentDraft: UserAnswerDraft?,
     feedback: AnswerFeedback?,
+    revealCorrect: Boolean,
     component: LessonRunnerRootComponent,
     onFeedback: (AnswerFeedback) -> Unit,
 ) {
     when (qState) {
+        is QuestionUiState.Survey ->
+            SurveyContent(
+                state = qState,
+                onOptionToggled = { optionId ->
+                    val current = (component.uiState.value as? RunnerUiState.Question)
+                        ?.currentDraft as? UserAnswerDraft.SurveyDraft
+                    val selected = current?.selected.orEmpty()
+                    val id = OptionId(optionId)
+                    val next =
+                        when {
+                            !qState.allowMultiple -> setOf(id)
+                            id in selected -> selected - id
+                            else -> selected + id
+                        }
+                    component.onDraftChanged(UserAnswerDraft.SurveyDraft(next))
+                },
+                onSubmit = {
+                    val draft = (component.uiState.value as? RunnerUiState.Question)
+                        ?.currentDraft as? UserAnswerDraft.SurveyDraft
+                        ?: UserAnswerDraft.SurveyDraft(emptySet())
+                    onFeedback(
+                        AnswerFeedback.Survey(
+                            answer = draft,
+                            selectedIds = draft.selected.map { it.raw }.toSet(),
+                        ),
+                    )
+                },
+                feedback = feedback as? AnswerFeedback.Survey,
+            )
         is QuestionUiState.SingleChoice ->
             SingleChoiceContent(
                 state = qState,
@@ -321,6 +353,7 @@ private fun QuestionTypeContent(
                             answer = draft,
                             selectedId = optionId,
                             correctId = qState.correctOptionId,
+revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -347,6 +380,7 @@ private fun QuestionTypeContent(
                             answer = draft,
                             selectedIds = currentSelected,
                             correctIds = qState.correctIds,
+revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -405,6 +439,7 @@ private fun QuestionTypeContent(
                             answer = draft,
                             orderIds = currentItems.map { it.id },
                             correctOrderIds = qState.correctOrderIds,
+revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -467,6 +502,7 @@ private fun QuestionTypeContent(
                                     blank.index to candidateId
                                 }.toMap(),
                             correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
+revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -481,13 +517,21 @@ private fun buildTimeoutFeedback(
     qState: QuestionUiState,
     currentDraft: UserAnswerDraft?,
     seed: Long,
+    revealCorrect: Boolean,
 ): AnswerFeedback? {
     val random = Random(seed)
     return when (qState) {
-        is QuestionUiState.SingleChoice -> buildSingleChoiceTimeoutFeedback(qState, currentDraft, random)
-        is QuestionUiState.MultipleChoice -> buildMultipleChoiceTimeoutFeedback(qState, currentDraft, random)
-        is QuestionUiState.Ordering -> buildOrderingTimeoutFeedback(qState, currentDraft, random)
-        is QuestionUiState.FillBlank -> buildFillBlankTimeoutFeedback(qState, currentDraft, random)
+        is QuestionUiState.Survey ->
+            AnswerFeedback.Survey(
+                answer = currentDraft as? UserAnswerDraft.SurveyDraft
+                    ?: UserAnswerDraft.SurveyDraft(emptySet()),
+                selectedIds = (currentDraft as? UserAnswerDraft.SurveyDraft)
+                    ?.selected?.map { it.raw }?.toSet().orEmpty(),
+            )
+        is QuestionUiState.SingleChoice -> buildSingleChoiceTimeoutFeedback(qState, currentDraft, random, revealCorrect)
+        is QuestionUiState.MultipleChoice -> buildMultipleChoiceTimeoutFeedback(qState, currentDraft, random, revealCorrect)
+        is QuestionUiState.Ordering -> buildOrderingTimeoutFeedback(qState, currentDraft, random, revealCorrect)
+        is QuestionUiState.FillBlank -> buildFillBlankTimeoutFeedback(qState, currentDraft, random, revealCorrect)
     }
 }
 
@@ -495,6 +539,7 @@ private fun buildSingleChoiceTimeoutFeedback(
     qState: QuestionUiState.SingleChoice,
     currentDraft: UserAnswerDraft?,
     random: Random,
+    revealCorrect: Boolean,
 ): AnswerFeedback.SingleChoice? {
     val selectedId =
         (currentDraft as? UserAnswerDraft.SingleChoiceDraft)?.selected?.raw
@@ -505,6 +550,7 @@ private fun buildSingleChoiceTimeoutFeedback(
         answer = draft,
         selectedId = selectedId,
         correctId = qState.correctOptionId,
+revealCorrect = revealCorrect,
     )
 }
 
@@ -512,6 +558,7 @@ private fun buildMultipleChoiceTimeoutFeedback(
     qState: QuestionUiState.MultipleChoice,
     currentDraft: UserAnswerDraft?,
     random: Random,
+    revealCorrect: Boolean,
 ): AnswerFeedback.MultipleChoice? {
     val validIds = qState.options.map { it.id }.toSet()
     if (validIds.isEmpty()) return null
@@ -535,6 +582,7 @@ private fun buildMultipleChoiceTimeoutFeedback(
         answer = draft,
         selectedIds = selectedIds,
         correctIds = qState.correctIds,
+revealCorrect = revealCorrect,
     )
 }
 
@@ -542,6 +590,7 @@ private fun buildOrderingTimeoutFeedback(
     qState: QuestionUiState.Ordering,
     currentDraft: UserAnswerDraft?,
     random: Random,
+    revealCorrect: Boolean,
 ): AnswerFeedback.Ordering? {
     val validIds = qState.items.map { it.id }
     if (validIds.isEmpty()) return null
@@ -561,6 +610,7 @@ private fun buildOrderingTimeoutFeedback(
         answer = draft,
         orderIds = orderIds,
         correctOrderIds = qState.correctOrderIds,
+revealCorrect = revealCorrect,
     )
 }
 
@@ -568,6 +618,7 @@ private fun buildFillBlankTimeoutFeedback(
     qState: QuestionUiState.FillBlank,
     currentDraft: UserAnswerDraft?,
     random: Random,
+    revealCorrect: Boolean,
 ): AnswerFeedback.FillBlank? {
     val blankParts = qState.templateParts.filterIsInstance<TemplatePart.Blank>()
     val candidateIds = qState.candidates.map { it.id }
@@ -597,6 +648,7 @@ private fun buildFillBlankTimeoutFeedback(
                 blank.index to filledByBlankId.getValue(blank.blankId)
             },
         correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
+revealCorrect = revealCorrect,
     )
 }
 

@@ -8,6 +8,8 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model
 data class TimerCoefficients(
     val kEasy: Double,
     val kHard: Double,
+    /** Exams are tighter than practice: the allowance is scaled by this factor. */
+    val examFactor: Double = 0.75,
 ) {
     companion object {
         val Default = TimerCoefficients(kEasy = 0.36, kHard = 0.24)

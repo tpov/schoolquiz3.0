@@ -9,4 +9,5 @@ fun QuestionContent.toDraftQuestionType(): DraftQuestionType =
         is QuestionContent.MultipleChoice -> DraftQuestionType.MULTIPLE_CHOICE
         is QuestionContent.Ordering -> DraftQuestionType.ORDERING
         is QuestionContent.FillBlank -> DraftQuestionType.FILL_BLANK
+        is QuestionContent.Survey -> DraftQuestionType.SURVEY
     }

@@ -85,6 +85,7 @@ fun OrderingContent(
             val tone =
                 when {
                     feedback == null -> AnswerFeedbackTone.Neutral
+                    !feedback.revealCorrect -> AnswerFeedbackTone.Neutral
                     feedback.correctOrderIds.getOrNull(index) == item.id -> AnswerFeedbackTone.Correct
                     else -> AnswerFeedbackTone.Wrong
                 }

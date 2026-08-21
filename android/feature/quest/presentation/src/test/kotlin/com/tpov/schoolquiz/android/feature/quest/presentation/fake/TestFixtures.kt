@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.quest.presentation.fake
 
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.Quest
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 
@@ -41,6 +42,7 @@ fun buildCatalog(
     pictureUrl: String? = null,
     archived: Boolean = false,
     version: Long = 1L,
+    questType: QuestType = QuestType.REGULAR,
 ) = Catalog(
     id = CatalogId(id),
     name = name,
@@ -50,4 +52,5 @@ fun buildCatalog(
     contentsVersion = 0L,
     lastModifiedAt = 0L,
     archived = archived,
+    questType = questType,
 )

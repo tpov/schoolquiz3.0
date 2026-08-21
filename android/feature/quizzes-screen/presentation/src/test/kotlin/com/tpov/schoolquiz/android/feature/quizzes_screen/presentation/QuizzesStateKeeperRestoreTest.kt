@@ -90,7 +90,7 @@ class QuizzesStateKeeperRestoreTest {
             questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
-            lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
+            lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
             mainContext = Dispatchers.Unconfined,
         )
     }

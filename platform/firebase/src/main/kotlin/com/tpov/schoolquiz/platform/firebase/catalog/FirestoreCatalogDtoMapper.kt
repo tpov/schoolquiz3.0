@@ -27,6 +27,8 @@ fun DocumentSnapshot.toCatalogDto(): CatalogDto? {
             archived = booleanField("archived") ?: false,
             iconCategoryKey = getString("iconCategoryKey")?.takeIf { it.isNotBlank() },
             iconNames = iconNames,
+            // Absent for catalogs seeded before types existed; treated as REGULAR downstream.
+            questType = getString("questType")?.takeIf { it.isNotBlank() } ?: "REGULAR",
         )
     } else {
         null

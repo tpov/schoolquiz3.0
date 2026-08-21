@@ -39,6 +39,7 @@ fun MultipleChoiceContent(
             val tone =
                 when {
                     feedback == null -> AnswerFeedbackTone.Neutral
+                    !feedback.revealCorrect -> AnswerFeedbackTone.Neutral
                     option.id in feedback.correctIds -> AnswerFeedbackTone.Correct
                     feedback.correctIds.isNotEmpty() -> AnswerFeedbackTone.Wrong
                     option.id in feedback.selectedIds -> AnswerFeedbackTone.Wrong

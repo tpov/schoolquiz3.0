@@ -30,6 +30,7 @@ fun SingleChoiceContent(
             val tone =
                 when {
                     feedback == null -> AnswerFeedbackTone.Neutral
+                    !feedback.revealCorrect -> AnswerFeedbackTone.Neutral
                     option.id == feedback.correctId -> AnswerFeedbackTone.Correct
                     feedback.correctId == null && option.id == feedback.selectedId -> AnswerFeedbackTone.Wrong
                     feedback.correctId != null -> AnswerFeedbackTone.Wrong

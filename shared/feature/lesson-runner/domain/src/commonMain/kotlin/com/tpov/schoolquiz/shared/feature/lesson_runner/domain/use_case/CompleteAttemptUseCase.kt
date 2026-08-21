@@ -40,7 +40,7 @@ class CompleteAttemptUseCase(
             percentScore = percentScore,
         )
 
-        val saveResult = attemptRepository.save(attempt)
+        val saveResult = attemptRepository.save(attempt, state.answers)
         if (saveResult.isFailure) {
             val error = saveResult.exceptionOrNull()
                 ?.let { SaveError.IoFailure(it) }

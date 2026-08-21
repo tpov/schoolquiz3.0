@@ -11,6 +11,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsC
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxOpening
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
@@ -120,11 +121,11 @@ class DefaultHomeQuestsComponentTest {
     }
 
     @Test
-    fun `courses catalog is not shown in home`() = runTest {
+    fun `course catalogs are not shown in home`() = runTest {
         val catalogRepo = FakeCatalogRepository()
         catalogRepo.emit(listOf(
             buildCatalog(id = "school", name = "Школа"),
-            buildCatalog(id = "courses", name = "Курсы"),
+            buildCatalog(id = "courses", name = "Курсы", questType = QuestType.COURSE),
         ))
 
         val component = buildComponent(catalogRepo = catalogRepo)

@@ -61,6 +61,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.FillBla
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.MultipleChoiceContent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.OrderingContent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.QuestionImage
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.SurveyContent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.SingleChoiceContent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FILL_BLANK_RUNTIME_MARKER
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankAnswerSpec
@@ -304,6 +305,16 @@ private fun GenerationSurface(
         },
     ) {
         when (state.type) {
+            DraftQuestionType.SURVEY ->
+                ChoiceGenerationEditor(
+                    state = state,
+                    multiple = true,
+                    onOptionTextChanged = onOptionTextChanged,
+                    onOptionAdded = onOptionAdded,
+                    onOptionRemoved = onOptionRemoved,
+                    onSingleCorrectSelected = onSingleCorrectSelected,
+                    onMultipleCorrectToggled = onMultipleCorrectToggled,
+                )
             DraftQuestionType.SINGLE_CHOICE ->
                 ChoiceGenerationEditor(
                     state = state,
@@ -995,6 +1006,12 @@ private fun RuntimePreview(
 ) {
     Box(modifier = modifier) {
         when (previewState) {
+            is QuestionUiState.Survey ->
+                SurveyContent(
+                    state = previewState,
+                    onOptionToggled = {},
+                    onSubmit = {},
+                )
             is QuestionUiState.SingleChoice ->
                 SingleChoiceContent(
                     state = previewState,
@@ -1235,6 +1252,7 @@ private val DraftQuestionType.displayTitle: String
             DraftQuestionType.MULTIPLE_CHOICE -> "Несколько ответов"
             DraftQuestionType.ORDERING -> "Порядок"
             DraftQuestionType.FILL_BLANK -> "Пропуск"
+            DraftQuestionType.SURVEY -> "Опрос"
         }
 
 private const val BLANK_MARKER_COLOR_ARGB = 0xFFFFC107
@@ -1261,6 +1279,7 @@ private fun QuestQuestionEditorUiState.validationMessage(): String? =
             DraftQuestionType.MULTIPLE_CHOICE -> "Нужны вопрос, два варианта и минимум два правильных ответа"
             DraftQuestionType.ORDERING -> "Нужны вопрос и минимум два элемента"
             DraftQuestionType.FILL_BLANK -> "Нужны 1-3 пропуска через **текст** или правильные ответы в тексте"
+            DraftQuestionType.SURVEY -> "Нужны вопрос и минимум два варианта"
         }
     }
 
@@ -1280,6 +1299,22 @@ private fun QuestQuestionEditorUiState.isEmptyNewQuestion(): Boolean =
 
 private fun QuestQuestionEditorUiState.toPreviewState(): QuestionUiState? =
     when (type) {
+        DraftQuestionType.SURVEY -> {
+            val options = optionTexts.toOptionUi("opt")
+            if (text.isBlank() || options.isEmpty()) {
+                null
+            } else {
+                QuestionUiState.Survey(
+                    questionText = text,
+                    hasImage = imagePath.isNotBlank(),
+                    imageUrl = imagePath.takeIf { it.startsWith("https://") },
+                    options = options,
+                    selectedIds = emptySet(),
+                    allowMultiple = correctMultipleIndexes.size > 1,
+                    info = info.takeIf { it.isNotBlank() },
+                )
+            }
+        }
         DraftQuestionType.SINGLE_CHOICE -> {
             val options = optionTexts.toOptionUi("opt")
             if (text.isBlank() || options.isEmpty()) {

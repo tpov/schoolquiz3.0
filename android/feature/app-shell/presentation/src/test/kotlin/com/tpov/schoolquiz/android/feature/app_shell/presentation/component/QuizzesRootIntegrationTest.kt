@@ -315,7 +315,7 @@ class QuizzesRootIntegrationTest {
                     override suspend fun getById(id: CatalogId): Catalog? = null
                 },
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
-                lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _ -> error("Not expected") },
+                lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },
                 mainContext = testDispatcher,
             )
         },

@@ -84,6 +84,7 @@ val syncModule =
                 outboxDao = get(),
                 remote = get(),
                 nowMs = { System.currentTimeMillis() },
+                answerDao = get(),
             )
         }
         single<List<Syncable>> {

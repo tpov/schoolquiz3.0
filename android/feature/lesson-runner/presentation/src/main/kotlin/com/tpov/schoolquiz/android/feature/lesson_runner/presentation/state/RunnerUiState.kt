@@ -19,6 +19,8 @@ sealed interface RunnerUiState {
         val deadlineMs: Long,
         val isPaused: Boolean,
         val isHard: Boolean,
+        /** Whether the right answer may be shown after answering (practice on easy only). */
+        val revealCorrect: Boolean = true,
         val showExitConfirmDialog: Boolean,
         val currentDraft: UserAnswerDraft? = null,
     ) : RunnerUiState

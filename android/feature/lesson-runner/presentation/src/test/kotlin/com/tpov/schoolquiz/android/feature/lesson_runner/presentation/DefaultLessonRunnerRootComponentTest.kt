@@ -23,6 +23,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
@@ -101,7 +102,7 @@ class DefaultLessonRunnerRootComponentTest {
     private fun buildComponent(
         lessonId: LessonId = LessonId("lesson1"),
         mode: Difficulty = Difficulty.EASY,
-        startAttemptUseCase: suspend (LessonId, Difficulty) -> RunnerState = fakeStart::invoke,
+        startAttemptUseCase: suspend (LessonId, Difficulty, SessionMode) -> RunnerState = fakeStart::invoke,
         completeAttemptUseCase: suspend (RunnerState.Ready) -> RunnerState = fakeComplete::invoke,
         abortAttemptUseCase: suspend (RunnerState.Ready) -> RunnerState = fakeAbort::invoke,
         submitRatingUseCase: suspend (String, LessonId, Int) -> Result<Unit> = fakeSubmitRating::invoke,

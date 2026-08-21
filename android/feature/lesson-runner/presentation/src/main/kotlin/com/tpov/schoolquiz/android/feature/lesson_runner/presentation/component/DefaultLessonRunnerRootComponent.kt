@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Runn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState.RatingSubmissionState
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.autoAnswerOnTimeout
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeBestStars
@@ -41,6 +42,7 @@ class DefaultLessonRunnerRootComponent(
     componentContext: ComponentContext,
     private val lessonId: LessonId,
     private val mode: Difficulty,
+    private val sessionMode: SessionMode = SessionMode.LEARNING,
     private val useCases: LessonRunnerUseCases,
     private val lessonRepository: LessonRepository,
     private val attemptRepository: LessonAttemptRepository,
@@ -220,7 +222,7 @@ class DefaultLessonRunnerRootComponent(
     }
 
     private suspend fun triggerStart() {
-        val result = useCases.startAttempt(lessonId, mode)
+        val result = useCases.startAttempt(lessonId, mode, sessionMode)
         stateHolder.domainState = result
         stateHolder.uiState.value =
             when (result) {

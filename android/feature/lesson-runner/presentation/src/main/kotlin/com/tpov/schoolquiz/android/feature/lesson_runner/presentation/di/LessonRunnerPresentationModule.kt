@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.StartLessonAttemptUseCase
@@ -16,11 +17,12 @@ import org.koin.dsl.module
 
 val lessonRunnerPresentationModule =
     module {
-        factory { (ctx: ComponentContext, lessonId: LessonId, mode: Difficulty) ->
+        factory { (ctx: ComponentContext, lessonId: LessonId, mode: Difficulty, sessionMode: SessionMode) ->
             DefaultLessonRunnerRootComponent(
                 componentContext = ctx,
                 lessonId = lessonId,
                 mode = mode,
+                sessionMode = sessionMode,
                 useCases =
                     LessonRunnerUseCases(
                         startAttempt = get<StartLessonAttemptUseCase>()::invoke,
@@ -35,8 +37,8 @@ val lessonRunnerPresentationModule =
         }
 
         single<LessonRunnerComponentFactory> {
-            LessonRunnerComponentFactory { ctx, lessonId, mode ->
-                get { parametersOf(ctx, lessonId, mode) }
+            LessonRunnerComponentFactory { ctx, lessonId, mode, sessionMode ->
+                get { parametersOf(ctx, lessonId, mode, sessionMode) }
             }
         }
     }

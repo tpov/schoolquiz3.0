@@ -66,6 +66,8 @@ data class Catalog(
      * client's whitelist registry are silently skipped at resolve time.
      */
     val iconNames: List<String> = emptyList(),
+    /** What kind of quests this catalog holds; drives the editor, scoring and the runner. */
+    val questType: QuestType = QuestType.REGULAR,
 ) {
     init {
         require(name.isNotBlank()) { "Catalog.name must not be blank" }

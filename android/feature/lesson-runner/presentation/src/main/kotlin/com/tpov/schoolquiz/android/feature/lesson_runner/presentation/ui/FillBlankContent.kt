@@ -107,6 +107,7 @@ fun FillBlankContent(
                             val tone =
                                 when {
                                     feedbackCandidateId == null -> AnswerFeedbackTone.Neutral
+                                    feedback?.revealCorrect == false -> AnswerFeedbackTone.Neutral
                                     feedbackCandidateId == state.correctCandidateIdsByBlankIndex[part.index] ->
                                         AnswerFeedbackTone.Correct
                                     else -> AnswerFeedbackTone.Wrong

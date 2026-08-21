@@ -34,6 +34,7 @@ val lessonRunnerDataModule = module {
         LessonAttemptRepositoryImpl(
             attemptDao = get(),
             outboxWriter = get(),
+            repetitionDao = get(),
         )
     }
     single<LessonRatingRepository> {

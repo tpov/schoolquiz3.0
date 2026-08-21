@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.selectSubse
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RunnerQuestion
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.question.domain.model.Question
@@ -34,7 +35,11 @@ class StartLessonAttemptUseCase(
     private val randomSeedProvider: () -> Long,
     private val timerCoefficients: TimerCoefficients = TimerCoefficients.Default,
 ) {
-    suspend operator fun invoke(lessonId: LessonId, mode: Difficulty): RunnerState {
+    suspend operator fun invoke(
+        lessonId: LessonId,
+        mode: Difficulty,
+        sessionMode: SessionMode = SessionMode.LEARNING,
+    ): RunnerState {
         val userId = authRepository.currentUid()
             ?: return RunnerState.InitFailed(InitFailureReason.AuthRequired)
 
@@ -89,7 +94,7 @@ class StartLessonAttemptUseCase(
         val initialCodeAnswer = CodeAnswer("0".repeat(eligibleSize))
 
         val nowMs = clock.now().toEpochMilliseconds()
-        val firstDuration = computeTimer(playOrder.first().content, mode, timerCoefficients)
+        val firstDuration = computeTimer(playOrder.first().content, mode, timerCoefficients, sessionMode)
         val deadlineMs = nowMs + firstDuration.seconds * 1000L
 
         return RunnerState.Ready(
@@ -105,6 +110,8 @@ class StartLessonAttemptUseCase(
             seed = seed,
             currentDraftAnswer = null,
             isPaused = false,
+            sessionMode = sessionMode,
+            questionStartedAtMs = nowMs,
         )
     }
 
