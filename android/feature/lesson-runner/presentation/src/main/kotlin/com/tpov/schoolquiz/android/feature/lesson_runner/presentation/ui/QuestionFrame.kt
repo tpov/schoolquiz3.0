@@ -21,12 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +34,7 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.glowEasy
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
 import kotlinx.coroutines.delay
 
 private const val FEEDBACK_FLIP_DURATION_MS = 420
@@ -47,8 +43,6 @@ private const val FEEDBACK_FLIP_FULL_ROTATION = 180f
 private const val FEEDBACK_CAMERA_DISTANCE_FACTOR = 18f
 private const val SELECTED_OPTION_CONTAINER_ALPHA = 0.16f
 private const val FEEDBACK_OPTION_CONTAINER_ALPHA = 0.18f
-private const val PRIMARY_ACTION_CONTAINER_ALPHA = 0.12f
-private const val PRIMARY_ACTION_DISABLED_CONTAINER_ALPHA = 0.06f
 
 internal data class FeedbackFlipState(
     val rotation: Float,
@@ -153,6 +147,14 @@ internal fun QuestionFrame(
     }
 }
 
+/**
+ * The single primary action of the question screen.
+ *
+ * NOIR sets the rules here and they are easy to break by habit: the label is monospace uppercase
+ * with wide tracking, never the display face, and there is exactly one filled action per screen.
+ * The check icon is gone — the button already says what it does, and the specification counts a
+ * decorative glyph against nothing but the eye.
+ */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 internal fun RunnerPrimaryAction(
@@ -161,48 +163,12 @@ internal fun RunnerPrimaryAction(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val baseSurface = runnerDeepSurfaceColor()
-    val containerColor =
-        MaterialTheme.colorScheme.primary
-            .copy(alpha = PRIMARY_ACTION_CONTAINER_ALPHA)
-            .compositeOver(baseSurface)
-    val disabledContainerColor =
-        MaterialTheme.colorScheme.onSurface
-            .copy(alpha = PRIMARY_ACTION_DISABLED_CONTAINER_ALPHA)
-            .compositeOver(baseSurface)
-    OutlinedButton(
+    NoirButton(
+        text = text,
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().heightIn(min = 54.dp),
+        modifier = modifier,
         enabled = enabled,
-        shape = MaterialTheme.shapes.medium,
-        border =
-            BorderStroke(
-                width = 1.dp,
-                color =
-                    if (enabled) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.86f)
-                    } else {
-                        runnerNeutralBorderColor()
-                    },
-            ),
-        colors =
-            ButtonDefaults.outlinedButtonColors(
-                containerColor = containerColor,
-                contentColor = MaterialTheme.colorScheme.primary,
-                disabledContainerColor = disabledContainerColor,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),
-            ),
-    ) {
-        Icon(
-            imageVector = Icons.Default.Check,
-            contentDescription = null,
-        )
-        Text(
-            text = text,
-            modifier = Modifier.padding(start = 8.dp),
-            style = MaterialTheme.typography.titleMedium,
-        )
-    }
+    )
 }
 
 @Suppress("FunctionNaming", "LongParameterList", "CyclomaticComplexMethod", "ktlint:standard:function-naming")

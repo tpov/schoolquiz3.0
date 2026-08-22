@@ -38,6 +38,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirMode
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.rememberNoirState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
@@ -125,22 +128,32 @@ fun LessonRunnerScreen(
         } else {
             null
         }
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { innerPadding ->
-        RunnerDesignBackground(
-            isHard = isHard,
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
-            accentColor = backgroundAccent,
-        ) {
-            FloatingIconsLayer(
-                modifier = Modifier.fillMaxSize(),
-                icons = floatingIcons,
-            )
-            RunnerStateContent(state = state, component = component)
+    // NOIR lives inside the existing theme rather than replacing it, so the rest of the app is
+    // untouched while screens move over one at a time. It is provided here rather than at the app
+    // root because the root files are mid-edit, and because the runner is the one place that knows
+    // which mode the round is being played in.
+    val noirState = rememberNoirState()
+    LaunchedEffect(isHard) {
+        noirState.mode = if (isHard) NoirMode.Hard else NoirMode.Easy
+    }
+    NoirTheme(state = noirState) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            contentWindowInsets = WindowInsets(0),
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = MaterialTheme.colorScheme.background,
+        ) { innerPadding ->
+            RunnerDesignBackground(
+                isHard = isHard,
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                accentColor = backgroundAccent,
+            ) {
+                FloatingIconsLayer(
+                    modifier = Modifier.fillMaxSize(),
+                    icons = floatingIcons,
+                )
+                RunnerStateContent(state = state, component = component)
+            }
         }
     }
 }
@@ -317,8 +330,9 @@ private fun QuestionTypeContent(
             SurveyContent(
                 state = qState,
                 onOptionToggled = { optionId ->
-                    val current = (component.uiState.value as? RunnerUiState.Question)
-                        ?.currentDraft as? UserAnswerDraft.SurveyDraft
+                    val current =
+                        (component.uiState.value as? RunnerUiState.Question)
+                            ?.currentDraft as? UserAnswerDraft.SurveyDraft
                     val selected = current?.selected.orEmpty()
                     val id = OptionId(optionId)
                     val next =
@@ -330,9 +344,10 @@ private fun QuestionTypeContent(
                     component.onDraftChanged(UserAnswerDraft.SurveyDraft(next))
                 },
                 onSubmit = {
-                    val draft = (component.uiState.value as? RunnerUiState.Question)
-                        ?.currentDraft as? UserAnswerDraft.SurveyDraft
-                        ?: UserAnswerDraft.SurveyDraft(emptySet())
+                    val draft =
+                        (component.uiState.value as? RunnerUiState.Question)
+                            ?.currentDraft as? UserAnswerDraft.SurveyDraft
+                            ?: UserAnswerDraft.SurveyDraft(emptySet())
                     onFeedback(
                         AnswerFeedback.Survey(
                             answer = draft,
@@ -353,7 +368,7 @@ private fun QuestionTypeContent(
                             answer = draft,
                             selectedId = optionId,
                             correctId = qState.correctOptionId,
-revealCorrect = revealCorrect,
+                            revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -380,7 +395,7 @@ revealCorrect = revealCorrect,
                             answer = draft,
                             selectedIds = currentSelected,
                             correctIds = qState.correctIds,
-revealCorrect = revealCorrect,
+                            revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -439,7 +454,7 @@ revealCorrect = revealCorrect,
                             answer = draft,
                             orderIds = currentItems.map { it.id },
                             correctOrderIds = qState.correctOrderIds,
-revealCorrect = revealCorrect,
+                            revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -502,7 +517,7 @@ revealCorrect = revealCorrect,
                                     blank.index to candidateId
                                 }.toMap(),
                             correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
-revealCorrect = revealCorrect,
+                            revealCorrect = revealCorrect,
                         ),
                     )
                 },
@@ -523,13 +538,21 @@ private fun buildTimeoutFeedback(
     return when (qState) {
         is QuestionUiState.Survey ->
             AnswerFeedback.Survey(
-                answer = currentDraft as? UserAnswerDraft.SurveyDraft
-                    ?: UserAnswerDraft.SurveyDraft(emptySet()),
-                selectedIds = (currentDraft as? UserAnswerDraft.SurveyDraft)
-                    ?.selected?.map { it.raw }?.toSet().orEmpty(),
+                answer =
+                    currentDraft as? UserAnswerDraft.SurveyDraft
+                        ?: UserAnswerDraft.SurveyDraft(emptySet()),
+                selectedIds =
+                    (currentDraft as? UserAnswerDraft.SurveyDraft)
+                        ?.selected?.map { it.raw }?.toSet().orEmpty(),
             )
         is QuestionUiState.SingleChoice -> buildSingleChoiceTimeoutFeedback(qState, currentDraft, random, revealCorrect)
-        is QuestionUiState.MultipleChoice -> buildMultipleChoiceTimeoutFeedback(qState, currentDraft, random, revealCorrect)
+        is QuestionUiState.MultipleChoice ->
+            buildMultipleChoiceTimeoutFeedback(
+                qState,
+                currentDraft,
+                random,
+                revealCorrect,
+            )
         is QuestionUiState.Ordering -> buildOrderingTimeoutFeedback(qState, currentDraft, random, revealCorrect)
         is QuestionUiState.FillBlank -> buildFillBlankTimeoutFeedback(qState, currentDraft, random, revealCorrect)
     }
@@ -550,7 +573,7 @@ private fun buildSingleChoiceTimeoutFeedback(
         answer = draft,
         selectedId = selectedId,
         correctId = qState.correctOptionId,
-revealCorrect = revealCorrect,
+        revealCorrect = revealCorrect,
     )
 }
 
@@ -582,7 +605,7 @@ private fun buildMultipleChoiceTimeoutFeedback(
         answer = draft,
         selectedIds = selectedIds,
         correctIds = qState.correctIds,
-revealCorrect = revealCorrect,
+        revealCorrect = revealCorrect,
     )
 }
 
@@ -610,7 +633,7 @@ private fun buildOrderingTimeoutFeedback(
         answer = draft,
         orderIds = orderIds,
         correctOrderIds = qState.correctOrderIds,
-revealCorrect = revealCorrect,
+        revealCorrect = revealCorrect,
     )
 }
 
@@ -648,7 +671,7 @@ private fun buildFillBlankTimeoutFeedback(
                 blank.index to filledByBlankId.getValue(blank.blankId)
             },
         correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
-revealCorrect = revealCorrect,
+        revealCorrect = revealCorrect,
     )
 }
 

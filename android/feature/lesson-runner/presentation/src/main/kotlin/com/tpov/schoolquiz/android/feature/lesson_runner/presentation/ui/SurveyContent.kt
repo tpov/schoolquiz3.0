@@ -58,7 +58,7 @@ fun SurveyContent(
     }
 }
 
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
 @Preview
 @Composable
 private fun SurveyContentPreview() {
