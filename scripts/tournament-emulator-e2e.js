@@ -117,6 +117,23 @@ async function assertFunctionFails(name, token, data, code) {
   assert.strictEqual(json.error.status, code, `${name} returned wrong error: ${JSON.stringify(json)}`);
 }
 
+/**
+ * Builds a codeAnswer whose server-side recomputation equals `percent` exactly.
+ *
+ * The server now pays out only when percentScore agrees with what codeAnswer implies, so a fixture
+ * that sends a bare percent stopped being a realistic client — a real one always derives one from
+ * the other. A hundred digits keeps the arithmetic exact: each 9 contributes 100 and each 1
+ * contributes 0, so floor(100k/100) lands on k for any whole percent.
+ */
+function codeAnswerForPercent(percent) {
+  const whole = wholePercent(percent);
+  return "9".repeat(whole) + "1".repeat(100 - whole);
+}
+
+function wholePercent(percent) {
+  return Math.max(0, Math.min(100, Math.round(percent)));
+}
+
 function attempt({
   uid,
   attemptId,
@@ -138,7 +155,8 @@ function attempt({
     lessonVersion: 1,
     sourceShelf,
     difficulty,
-    percentScore: percent,
+    codeAnswer: codeAnswerForPercent(percent),
+    percentScore: wholePercent(percent),
     completedAtMs,
     createdAtMs: completedAtMs - 1000,
   };
