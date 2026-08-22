@@ -153,6 +153,9 @@ async function seed() {
     await store.doc("tournaments/tournament").set({id: "tournament"});
     await store.doc("tournaments/tournament/groups/g-1").set({id: "g-1"});
     await store.doc("nickname_claims/claim-1").set({uid: "author"});
+    await store.doc("nickname_listings/lot-1").set({
+      canonical: "продаётся", nickname: "Продаётся", price: 5, sellerUid: "author",
+    });
     await store.doc("configs/nickname_policy").set({minLength: 3});
   });
 }
@@ -366,6 +369,22 @@ async function testCatalogsAndTournaments() {
     db("player").doc("tournaments/tournament").update({hacked: true}));
 }
 
+async function testNicknameListings() {
+  // The shop window is public to anybody signed in, and writable by nobody: a sale has to move the
+  // title, the gold and the listing together, which a client could only do one write at a time.
+  await allow("listings: вошедший читает витрину", () =>
+    db("player").doc("nickname_listings/lot-1").get());
+  await deny("listings: гость не читает", () => db("guest").doc("nickname_listings/lot-1").get());
+  await deny("listings: продавец не правит свой лот", () =>
+    db("author").doc("nickname_listings/lot-1").update({price: 1}));
+  await deny("listings: покупатель не создаёт лот", () =>
+    db("player").doc("nickname_listings/lot-2").set({sellerUid: "player", price: 1}));
+  await deny("listings: админ не правит витрину", () =>
+    db("admin").doc("nickname_listings/lot-1").update({price: 1}));
+  await deny("listings: продавец не удаляет лот напрямую", () =>
+    db("author").doc("nickname_listings/lot-1").delete());
+}
+
 async function testServerOnlyCollections() {
   await deny("nickname_claims: админ не читает", () => db("admin").doc("nickname_claims/claim-1").get());
   await deny("nickname_claims: игрок не пишет", () =>
@@ -398,6 +417,7 @@ async function main() {
   await testReviewRequests();
   await testVerificationRequests();
   await testCatalogsAndTournaments();
+  await testNicknameListings();
   await testServerOnlyCollections();
 
   await testEnv.cleanup();

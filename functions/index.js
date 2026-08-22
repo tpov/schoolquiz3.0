@@ -10,6 +10,8 @@ const {
   describeNickname,
   sanitizeNickname,
   canonicalNickname,
+  nicknamePricing,
+  splitSalePrice,
 } = require("./nicknames.js");
 const {
   VerificationError,
@@ -83,6 +85,7 @@ const GIFT_BOX_LOGO_NAMES = [
   "Royal Shield Logo",
 ];
 const NICKNAME_CLAIMS_COLLECTION = "nickname_claims";
+const NICKNAME_LISTINGS_COLLECTION = "nickname_listings";
 const NICKNAME_POLICY_DOC = "configs/nickname_policy";
 const NICKNAME_GENERATION_ATTEMPTS = 20;
 const PUBLIC_QUEST_SHELVES = new Set(["home", "arena", "tournament", "tournamentFinal"]);
@@ -440,6 +443,9 @@ exports.updateUserNickname = onCall(FUNCTION_OPTIONS, async (request) => {
   if (!nickname) {
     throw new HttpsError("invalid-argument", "Nickname must contain 3..24 supported characters");
   }
+  // Wearing a name you own is free; taking a new one may cost gold. This call never charges — it
+  // refuses and points at claimNickname, so money only ever moves on a call that says "buy".
+  await refuseIfPurchaseRequired(uid, nickname);
   const result = await upsertUserProfile(uid, {
     nickname,
     knownLanguages: normalizeLanguages(request.data && request.data.knownLanguages),
@@ -599,6 +605,222 @@ exports.checkNicknameAvailability = onCall(FUNCTION_OPTIONS, async (request) => 
     available: isOwn,
     reason: isOwn ? "yours" : "taken",
   };
+});
+
+/**
+ * Names are held, not rented. An account can own several and exactly one of them is active; the
+ * registry document is the title deed, and `users/{uid}.nickname` merely points at whichever is
+ * being worn. The first self-chosen name is free, every further one costs gold, and names can
+ * change hands through the shop.
+ */
+
+exports.fetchOwnedNicknames = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const [claims, userSnapshot, listings] = await Promise.all([
+    db.collection(NICKNAME_CLAIMS_COLLECTION).where("uid", "==", uid).get(),
+    db.collection("users").doc(uid).get(),
+    db.collection(NICKNAME_LISTINGS_COLLECTION).where("sellerUid", "==", uid).get(),
+  ]);
+  const activeCanonical = canonicalNickname((userSnapshot.data() || {}).nickname);
+  const listedByCanonical = new Map(
+    listings.docs.map((doc) => [stringValue((doc.data() || {}).canonical), doc.data() || {}]),
+  );
+  return {
+    nicknames: claims.docs.map((doc) => {
+      const data = doc.data() || {};
+      const canonical = stringValue(data.canonical);
+      const listing = listedByCanonical.get(canonical);
+      return {
+        nickname: stringValue(data.nickname),
+        active: canonical === activeCanonical,
+        generated: Boolean(data.generated),
+        listedPrice: listing ? numberValue(listing.price, 0) : null,
+      };
+    }),
+  };
+});
+
+exports.claimNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const policy = await readNicknamePolicy();
+  const described = describeNickname(stringValue(request.data && request.data.nickname), policy);
+  if (!described.ok) {
+    throw new HttpsError("invalid-argument", `Nickname rejected: ${described.reason}`);
+  }
+
+  const claimRef = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(described.canonical));
+  const userRef = db.collection("users").doc(uid);
+  const profileRef = db.collection("profiles").doc(uid);
+  const now = Date.now();
+  let charged = 0;
+
+  await db.runTransaction(async (transaction) => {
+    const claim = await transaction.get(claimRef);
+    const userSnapshot = await transaction.get(userRef);
+    if (claim.exists && stringValue((claim.data() || {}).uid) !== uid) {
+      throw new HttpsError("already-exists", "Nickname is already taken");
+    }
+    const user = userSnapshot.exists ? userSnapshot.data() || {} : {};
+
+    // The handed-out name does not spend the allowance: everybody gets one name of their choosing.
+    const price = (await hasChosenNickname(uid)) ? policy.extraNicknamePrice : 0;
+    const gold = numberValue(user.gold, 0);
+    if (gold < price) throw new HttpsError("failed-precondition", "Not enough gold");
+    charged = price;
+
+    transaction.set(claimRef, {
+      uid,
+      nickname: described.nickname,
+      canonical: described.canonical,
+      generated: false,
+      createdAtMs: numberValue((claim.data() || {}).createdAtMs, now),
+      updatedAtMs: now,
+    }, {merge: true});
+    transaction.set(userRef, {
+      uid, nickname: described.nickname, gold: gold - price, updatedAtMs: now,
+    }, {merge: true});
+    transaction.set(profileRef, {uid, nickname: described.nickname}, {merge: true});
+  });
+  return {nickname: described.nickname, charged};
+});
+
+exports.setActiveNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
+  if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
+
+  const claimRef = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(canonical));
+  const claim = await claimRef.get();
+  if (!claim.exists || stringValue((claim.data() || {}).uid) !== uid) {
+    throw new HttpsError("permission-denied", "You do not own this nickname");
+  }
+  const nickname = stringValue((claim.data() || {}).nickname);
+  const now = Date.now();
+  const batch = db.batch();
+  batch.set(db.collection("users").doc(uid), {uid, nickname, updatedAtMs: now}, {merge: true});
+  batch.set(db.collection("profiles").doc(uid), {uid, nickname}, {merge: true});
+  await batch.commit();
+  return {nickname};
+});
+
+exports.fetchNicknameListings = onCall(FUNCTION_OPTIONS, async (request) => {
+  requireAuthUid(request);
+  const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 50), 100));
+  const snapshot = await db.collection(NICKNAME_LISTINGS_COLLECTION).limit(limit).get();
+  return {
+    listings: snapshot.docs.map((doc) => {
+      const data = doc.data() || {};
+      // The seller is shown by the name they wear, never by uid.
+      return {
+        nickname: stringValue(data.nickname),
+        price: numberValue(data.price, 0),
+        sellerNickname: stringValue(data.sellerNickname),
+        listedAtMs: numberValue(data.listedAtMs, 0),
+      };
+    }),
+  };
+});
+
+exports.listNicknameForSale = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  await requireVerifiedAccount(uid);
+  const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
+  if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
+  const price = Math.floor(numberValue(request.data && request.data.price, 0));
+  if (price <= 0) throw new HttpsError("invalid-argument", "price must be positive");
+
+  const claimRef = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(canonical));
+  const listingRef = db.collection(NICKNAME_LISTINGS_COLLECTION).doc(nicknameClaimId(canonical));
+  const userRef = db.collection("users").doc(uid);
+  const now = Date.now();
+
+  await db.runTransaction(async (transaction) => {
+    const claim = await transaction.get(claimRef);
+    const userSnapshot = await transaction.get(userRef);
+    if (!claim.exists || stringValue((claim.data() || {}).uid) !== uid) {
+      throw new HttpsError("permission-denied", "You do not own this nickname");
+    }
+    const user = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    // Selling the name you are wearing would leave you nameless the moment somebody bought it.
+    if (canonicalNickname(user.nickname) === canonical) {
+      throw new HttpsError("failed-precondition", "Switch to another nickname before selling this one");
+    }
+    transaction.set(listingRef, {
+      canonical,
+      nickname: stringValue((claim.data() || {}).nickname),
+      price,
+      sellerUid: uid,
+      sellerNickname: stringValue(user.nickname),
+      listedAtMs: now,
+    });
+  });
+  return {nickname: stringValue((await claimRef.get()).data().nickname), price};
+});
+
+exports.cancelNicknameListing = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
+  if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
+  const listingRef = db.collection(NICKNAME_LISTINGS_COLLECTION).doc(nicknameClaimId(canonical));
+  await db.runTransaction(async (transaction) => {
+    const listing = await transaction.get(listingRef);
+    if (!listing.exists) throw new HttpsError("not-found", "Listing not found");
+    if (stringValue((listing.data() || {}).sellerUid) !== uid) {
+      throw new HttpsError("permission-denied", "Not your listing");
+    }
+    transaction.delete(listingRef);
+  });
+  return {cancelled: true};
+});
+
+exports.buyListedNickname = onCall(FUNCTION_OPTIONS, async (request) => {
+  const buyerUid = requireAuthUid(request);
+  await requireVerifiedAccount(buyerUid);
+  const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
+  if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
+
+  const policy = await readNicknamePolicy();
+  const listingRef = db.collection(NICKNAME_LISTINGS_COLLECTION).doc(nicknameClaimId(canonical));
+  const claimRef = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(canonical));
+  const buyerRef = db.collection("users").doc(buyerUid);
+  const now = Date.now();
+  let receipt = null;
+
+  await db.runTransaction(async (transaction) => {
+    const listing = await transaction.get(listingRef);
+    if (!listing.exists) throw new HttpsError("not-found", "Listing not found");
+    const data = listing.data() || {};
+    const sellerUid = stringValue(data.sellerUid);
+    if (sellerUid === buyerUid) throw new HttpsError("failed-precondition", "This is your own listing");
+
+    const sellerRef = db.collection("users").doc(sellerUid);
+    const claim = await transaction.get(claimRef);
+    const buyerSnapshot = await transaction.get(buyerRef);
+    const sellerSnapshot = await transaction.get(sellerRef);
+    // The listing is a promise about the registry; if they disagree, the registry wins.
+    if (!claim.exists || stringValue((claim.data() || {}).uid) !== sellerUid) {
+      throw new HttpsError("failed-precondition", "Listing no longer matches the registry");
+    }
+
+    const split = splitSalePrice(numberValue(data.price, 0), policy.saleCommissionPercent);
+    const buyerGold = numberValue((buyerSnapshot.data() || {}).gold, 0);
+    if (buyerGold < split.total) throw new HttpsError("failed-precondition", "Not enough gold");
+    const sellerGold = numberValue((sellerSnapshot.data() || {}).gold, 0);
+
+    // Title, payment and the listing all move together: a partial trade would either take the gold
+    // without handing over the name, or hand it over unpaid.
+    transaction.set(claimRef, {uid: buyerUid, updatedAtMs: now}, {merge: true});
+    transaction.set(buyerRef, {gold: buyerGold - split.total, updatedAtMs: now}, {merge: true});
+    // The commission is credited to nobody. It leaves circulation, which is the point of it.
+    transaction.set(sellerRef, {gold: sellerGold + split.sellerGets, updatedAtMs: now}, {merge: true});
+    transaction.delete(listingRef);
+    receipt = {
+      nickname: stringValue(data.nickname),
+      paid: split.total,
+      commission: split.commission,
+    };
+  });
+  return receipt;
 });
 
 exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -2178,6 +2400,38 @@ async function requireProfile(uid) {
   };
 }
 
+/**
+ * Whether the one free self-chosen name has been spent.
+ *
+ * Filtered in memory rather than with a second where clause: pairing uid with generated would need
+ * a composite index, which works in the emulator and fails on the first production call. Nobody
+ * holds enough names for the difference to matter.
+ */
+async function hasChosenNickname(uid) {
+  const claims = await db.collection(NICKNAME_CLAIMS_COLLECTION).where("uid", "==", uid).get();
+  return claims.docs.some((doc) => (doc.data() || {}).generated !== true);
+}
+
+async function refuseIfPurchaseRequired(uid, nickname) {
+  const canonical = canonicalNickname(nickname);
+  if (!canonical) return;
+  const claim = await db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(canonical)).get();
+  // Already yours, or already somebody else's — either way nothing is being bought here, and the
+  // upsert decides. Only an unclaimed name can turn into a purchase.
+  if (claim.exists) return;
+  if (await hasChosenNickname(uid)) {
+    throw new HttpsError("failed-precondition", "purchase-required");
+  }
+}
+
+/** Trading with other players is open only to accounts a human has checked. */
+async function requireVerifiedAccount(uid) {
+  const snapshot = await db.collection("users").doc(uid).get();
+  if (!hasTrophy((snapshot.data() || {}).trophies, TROPHY_VERIFIED)) {
+    throw new HttpsError("permission-denied", "Account must be verified to trade nicknames");
+  }
+}
+
 /** Verification is decided by admins, and by developers through their blanket access. */
 async function requireVerifier(uid) {
   const profile = await requireProfile(uid);
@@ -2813,6 +3067,7 @@ async function upsertUserProfile(uid, options) {
       requestedNickname,
       currentNickname: stringValue(existingUser.nickname || existingProfile.nickname),
       allowGeneratedFallback: !options.allowNicknameUpgrade,
+      systemAssigned: !options.allowNicknameUpgrade,
       policy: nicknamePolicy,
       now: options.now,
     });
@@ -2878,15 +3133,13 @@ async function upsertUserProfile(uid, options) {
       adminLevel: qualification.adminLevel,
       developerLevel: qualification.developerLevel,
     };
-    if (nicknameClaim.releaseRef) {
-      transaction.delete(nicknameClaim.releaseRef);
-    }
     transaction.set(
       nicknameClaim.ref,
       {
         uid,
         nickname,
         canonical: nicknameClaim.canonical,
+        generated: Boolean(nicknameClaim.generated),
         createdAtMs: numberValue((nicknameClaim.snapshot.data() || {}).createdAtMs, updatedAtMs),
         updatedAtMs,
       },
@@ -2901,10 +3154,11 @@ async function upsertUserProfile(uid, options) {
 async function readNicknamePolicy() {
   const snapshot = await db.doc(NICKNAME_POLICY_DOC).get();
   if (!snapshot.exists) {
-    return {blockedWords: [], blockedSymbols: []};
+    return {blockedWords: [], blockedSymbols: [], ...nicknamePricing(null)};
   }
   const data = snapshot.data() || {};
   return {
+    ...nicknamePricing(data),
     blockedWords: stringArray(data.blockedWords)
       .map(canonicalNickname)
       .filter(Boolean),
@@ -2934,16 +3188,18 @@ async function resolveNicknameClaim(transaction, options) {
     const snapshot = await transaction.get(ref);
     const ownerUid = snapshot.exists ? stringValue((snapshot.data() || {}).uid) : "";
     if (!snapshot.exists || ownerUid === options.uid) {
-      const releaseRef = await nicknameReleaseRef(transaction, {
-        uid: options.uid,
-        currentNickname: options.currentNickname,
-        nextCanonical: validated.canonical,
-      });
+      // Switching away from a name no longer surrenders it: one account holds many names and only
+      // one of them is active.
+      //
+      // "Generated" means the system handed the name over rather than the person choosing it, and
+      // that is decided by which path we came in on, not by which candidate won. Every automatic
+      // path — first sign-in, opening a box — carries a name along without anybody picking it, so
+      // those must not spend the one free choice everybody gets.
       return {
         ...validated,
         ref,
         snapshot,
-        releaseRef,
+        generated: Boolean(options.systemAssigned) || candidate !== options.requestedNickname,
       };
     }
 
@@ -2956,14 +3212,6 @@ async function resolveNicknameClaim(transaction, options) {
   throw new HttpsError("already-exists", "Could not allocate a unique nickname");
 }
 
-async function nicknameReleaseRef(transaction, options) {
-  const currentCanonical = canonicalNickname(options.currentNickname);
-  if (!currentCanonical || currentCanonical === options.nextCanonical) return null;
-  const ref = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(currentCanonical));
-  const snapshot = await transaction.get(ref);
-  const ownerUid = snapshot.exists ? stringValue((snapshot.data() || {}).uid) : "";
-  return ownerUid === options.uid ? ref : null;
-}
 
 /** The saving path's view of the shared rules: same verdict, raised instead of returned. */
 function validateNicknameOrThrow(value, policy) {

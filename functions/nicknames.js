@@ -80,6 +80,38 @@ function sanitizeNickname(value, fallback) {
   return nickname;
 }
 
+const DEFAULT_EXTRA_NICKNAME_PRICE = 2;
+const DEFAULT_SALE_COMMISSION_PERCENT = 10;
+
+/** Pricing knobs live in configs/nickname_policy: the gold economy is not calibrated yet. */
+function nicknamePricing(policy) {
+  const source = policy || {};
+  const price = Number(source.extraNicknamePrice);
+  const commission = Number(source.saleCommissionPercent);
+  return {
+    extraNicknamePrice: Number.isFinite(price) && price >= 0
+      ? Math.floor(price)
+      : DEFAULT_EXTRA_NICKNAME_PRICE,
+    saleCommissionPercent: Number.isFinite(commission) && commission >= 0 && commission <= 100
+      ? Math.floor(commission)
+      : DEFAULT_SALE_COMMISSION_PERCENT,
+  };
+}
+
+/**
+ * Splits what a buyer pays into the house's cut and the seller's share.
+ *
+ * The remainder goes to the seller rather than being rounded separately, so the two halves always
+ * add back up to the price exactly. Rounding each independently would mint or destroy a coin on
+ * every other sale — invisible per trade and impossible to reconcile in aggregate.
+ */
+function splitSalePrice(price, commissionPercent) {
+  const total = Math.max(0, Math.floor(Number(price) || 0));
+  const percent = Math.min(100, Math.max(0, Math.floor(Number(commissionPercent) || 0)));
+  const commission = Math.floor((total * percent) / 100);
+  return {total, commission, sellerGets: total - commission};
+}
+
 module.exports = {
   MIN_LENGTH,
   MAX_LENGTH,
@@ -88,7 +120,11 @@ module.exports = {
   REASON_UNSUPPORTED,
   REASON_BLOCKED_SYMBOL,
   REASON_BLOCKED_WORD,
+  DEFAULT_EXTRA_NICKNAME_PRICE,
+  DEFAULT_SALE_COMMISSION_PERCENT,
   describeNickname,
   sanitizeNickname,
   canonicalNickname,
+  nicknamePricing,
+  splitSalePrice,
 };

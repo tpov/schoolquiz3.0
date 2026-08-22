@@ -26,6 +26,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /nickname_listings/{listingId} {
+      // The shop window: anybody signed in may browse it, and nobody writes to it. Listing,
+      // cancelling and buying all run through callables, because a sale has to move the title, the
+      // gold and the listing together — three writes a client could otherwise do one at a time.
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     match /nickname_claims/{claimId} {
       // Server-owned unique nickname registry. Clients use updateUserNickname callable.
       allow read, write: if false;

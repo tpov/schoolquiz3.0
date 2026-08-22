@@ -49,6 +49,9 @@ const ACTORS = {
   collector: {},
   applicant: {},
   applicantTwo: {},
+  trader: {},
+  buyer: {},
+  squatter: {},
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -705,6 +708,165 @@ async function testNicknameAvailability() {
   });
 }
 
+// ─── Владение никами и витрина NFT ─────────────────────────────────────────────────────────────
+
+/**
+ * A name is held, not rented: switching away from one no longer surrenders it. One account owns
+ * several and wears exactly one. The first self-chosen name is free, further ones cost gold, and
+ * names change hands through the shop — between verified accounts only.
+ */
+
+async function goldOf(uid) {
+  return numberOr((await db.collection("users").doc(uid).get()).data(), "gold");
+}
+
+function numberOr(data, field) {
+  return Number((data || {})[field] || 0);
+}
+
+async function ownerOf(nickname) {
+  const snapshot = await db.collection("nickname_claims").where("canonical", "==", nickname.toLowerCase()).get();
+  return snapshot.empty ? null : (snapshot.docs[0].data() || {}).uid;
+}
+
+async function verify(uid) {
+  await db.collection("users").doc(uid).set(
+    {trophies: ["verified"], gold: 100}, {merge: true},
+  );
+}
+
+async function testNicknameOwnership() {
+  await db.doc("configs/nickname_policy").set({
+    blockedWords: ["дурак"],
+    blockedSymbols: ["@"],
+    extraNicknamePrice: 2,
+    saleCommissionPercent: 10,
+  });
+
+  await scenario("первое выбранное имя достаётся бесплатно", async () => {
+    await db.collection("users").doc("trader").set({gold: 10}, {merge: true});
+    const result = await call("claimNickname", "trader", {nickname: "ПервыйНик"});
+    assert.strictEqual(result.charged, 0);
+    assert.strictEqual(await goldOf("trader"), 10, "за первое имя списали золото");
+  });
+
+  await scenario("второе имя стоит золота", async () => {
+    const result = await call("claimNickname", "trader", {nickname: "ВторойНик"});
+    assert.strictEqual(result.charged, 2);
+    assert.strictEqual(await goldOf("trader"), 8);
+  });
+
+  await scenario("переключение активного не отбирает прежнее имя", async () => {
+    // This is the behaviour that changed: a name used to be surrendered the moment you switched.
+    await call("setActiveNickname", "trader", {nickname: "ПервыйНик"});
+    assert.strictEqual(await ownerOf("первыйник"), "trader");
+    assert.strictEqual(await ownerOf("второйник"), "trader", "прежнее имя освободилось");
+    const owned = await call("fetchOwnedNicknames", "trader", {});
+    assert.strictEqual(owned.nicknames.filter((n) => !n.generated).length, 2);
+    assert.strictEqual(owned.nicknames.find((n) => n.active).nickname, "ПервыйНик");
+  });
+
+  await scenario("на чужое и несуществующее имя переключиться нельзя", async () => {
+    await callFails("setActiveNickname", "buyer", {nickname: "ПервыйНик"}, "PERMISSION_DENIED");
+    await callFails("setActiveNickname", "trader", {nickname: "НетТакого"}, "PERMISSION_DENIED");
+  });
+
+  await scenario("смена ника не списывает золото молча, а требует покупки", async () => {
+    const before = await goldOf("trader");
+    await callFails("updateUserNickname", "trader", {nickname: "ТретийНик"}, "FAILED_PRECONDITION");
+    assert.strictEqual(await goldOf("trader"), before, "золото ушло без явной покупки");
+  });
+
+  await scenario("без золота имя не купить", async () => {
+    await db.collection("users").doc("squatter").set({gold: 0}, {merge: true});
+    await call("claimNickname", "squatter", {nickname: "БесплатныйСквоттер"});
+    await callFails("claimNickname", "squatter", {nickname: "ЕщёОдин"}, "FAILED_PRECONDITION");
+    assert.strictEqual(await ownerOf("ещёодин"), null, "имя закрепилось без оплаты");
+  });
+}
+
+async function testNicknameMarket() {
+  await scenario("неподтверждённый продавать не может", async () => {
+    await callFails(
+      "listNicknameForSale", "trader", {nickname: "ВторойНик", price: 5}, "PERMISSION_DENIED",
+    );
+  });
+
+  await scenario("активное имя выставить нельзя", async () => {
+    await verify("trader");
+    await callFails(
+      "listNicknameForSale", "trader", {nickname: "ПервыйНик", price: 5}, "FAILED_PRECONDITION",
+    );
+  });
+
+  await scenario("чужое имя выставить нельзя", async () => {
+    await verify("buyer");
+    await callFails(
+      "listNicknameForSale", "buyer", {nickname: "ВторойНик", price: 5}, "PERMISSION_DENIED",
+    );
+  });
+
+  await scenario("своё неактивное имя выставляется", async () => {
+    await call("listNicknameForSale", "trader", {nickname: "ВторойНик", price: 10});
+    const listings = await call("fetchNicknameListings", "buyer", {});
+    const lot = listings.listings.find((entry) => entry.nickname === "ВторойНик");
+    assert.ok(lot, "лот не появился на витрине");
+    assert.strictEqual(lot.price, 10);
+    // A seller is shown by the name they wear, never by uid.
+    assert.ok(!JSON.stringify(lot).includes("trader"), `в лоте просочился uid: ${JSON.stringify(lot)}`);
+  });
+
+  await scenario("неподтверждённый купить не может", async () => {
+    await db.collection("users").doc("squatter").set({gold: 100}, {merge: true});
+    await callFails("buyListedNickname", "squatter", {nickname: "ВторойНик"}, "PERMISSION_DENIED");
+  });
+
+  await scenario("свой собственный лот не купить", async () => {
+    await callFails("buyListedNickname", "trader", {nickname: "ВторойНик"}, "FAILED_PRECONDITION");
+  });
+
+  await scenario("при нехватке золота сделка не проходит и ничего не меняется", async () => {
+    await db.collection("users").doc("buyer").set({gold: 3}, {merge: true});
+    await callFails("buyListedNickname", "buyer", {nickname: "ВторойНик"}, "FAILED_PRECONDITION");
+    assert.strictEqual(await ownerOf("второйник"), "trader", "имя ушло без оплаты");
+    assert.strictEqual(await goldOf("buyer"), 3);
+  });
+
+  await scenario("покупка переносит имя, списывает и платит за вычетом комиссии", async () => {
+    await db.collection("users").doc("buyer").set({gold: 50}, {merge: true});
+    const sellerBefore = await goldOf("trader");
+
+    const receipt = await call("buyListedNickname", "buyer", {nickname: "ВторойНик"});
+    assert.deepStrictEqual(
+      {paid: receipt.paid, commission: receipt.commission}, {paid: 10, commission: 1},
+    );
+    assert.strictEqual(await ownerOf("второйник"), "buyer", "имя не перешло");
+    assert.strictEqual(await goldOf("buyer"), 40, "с покупателя списали не ту сумму");
+    // The commission leaves circulation rather than landing in somebody's pocket.
+    assert.strictEqual(await goldOf("trader"), sellerBefore + 9, "продавцу пришло не то");
+  });
+
+  await scenario("проданный лот исчезает с витрины", async () => {
+    const listings = await call("fetchNicknameListings", "buyer", {});
+    assert.ok(!listings.listings.some((entry) => entry.nickname === "ВторойНик"));
+    await callFails("buyListedNickname", "buyer", {nickname: "ВторойНик"}, "NOT_FOUND");
+  });
+
+  await scenario("снятый лот купить нельзя", async () => {
+    await call("claimNickname", "trader", {nickname: "НаПродажу"});
+    await call("setActiveNickname", "trader", {nickname: "ПервыйНик"});
+    await call("listNicknameForSale", "trader", {nickname: "НаПродажу", price: 4});
+    await call("cancelNicknameListing", "trader", {nickname: "НаПродажу"});
+    await callFails("buyListedNickname", "buyer", {nickname: "НаПродажу"}, "NOT_FOUND");
+    assert.strictEqual(await ownerOf("напродажу"), "trader");
+  });
+
+  await scenario("чужой лот снять нельзя", async () => {
+    await call("listNicknameForSale", "trader", {nickname: "НаПродажу", price: 4});
+    await callFails("cancelNicknameListing", "buyer", {nickname: "НаПродажу"}, "PERMISSION_DENIED");
+  });
+}
+
 async function main() {
   await seedActors();
   await testSubmission();
@@ -715,6 +877,8 @@ async function main() {
   await testGiftBoxes();
   await testVerification();
   await testNicknameAvailability();
+  await testNicknameOwnership();
+  await testNicknameMarket();
   console.log(`review pipeline e2e: ${passed.length} сценариев прошло`);
 }
 
