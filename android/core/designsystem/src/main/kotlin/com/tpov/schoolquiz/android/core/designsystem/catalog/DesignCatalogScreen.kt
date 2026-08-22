@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.core.designsystem.catalog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,20 @@ import com.tpov.schoolquiz.android.core.designsystem.components.BrandPrimaryButt
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandProgressBar
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandSecondaryButton
 import com.tpov.schoolquiz.android.core.designsystem.components.CategoryIcon
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChipTone
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroupHeader
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirProgressBar
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirRow
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirRowIcon
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSwitch
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 
 /**
  * Design System catalog screen.
@@ -73,6 +88,64 @@ fun DesignCatalogScreen(modifier: Modifier = Modifier) {
 
         SectionLabel("CategoryIcon")
         CategoryIcon(icon = Icons.Default.Home, contentDescription = "Home")
+
+        NoirShowcase()
+    }
+}
+
+/**
+ * NOIR components, shown next to the ones above so the two systems can be compared without
+ * launching the whole app. Both are live at once by design: NoirTheme only supplies
+ * CompositionLocals, so it nests inside SchoolQuizTheme and nothing already built has to move.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun NoirShowcase() {
+    NoirTheme {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "NOIR",
+                style = NoirType.appbar,
+                color = NoirT1,
+            )
+
+            SectionLabel("NoirGroup — hairline instead of a floating card")
+            NoirGroup {
+                NoirGroupHeader(label = "Настройки")
+                NoirRow(
+                    leading = { NoirRowIcon(NoirIcons.Sliders) },
+                    trailing = { NoirSwitch(checked = true, onCheckedChange = {}) },
+                ) {
+                    Text("Переключатель, а не галочка", style = NoirType.rowTitle)
+                    Text("On/off — это switch", style = NoirType.rowSub)
+                }
+                NoirRow(
+                    showDivider = false,
+                    leading = { NoirRowIcon(NoirIcons.Clock) },
+                    trailing = { Text("12:30", style = NoirType.num) },
+                ) {
+                    Text("Числа моноширинные", style = NoirType.rowTitle)
+                }
+            }
+
+            SectionLabel("NoirButton — mono uppercase, one primary per screen")
+            NoirButton(text = "Основное действие", onClick = {})
+            NoirButton(text = "Второстепенное", onClick = {}, style = NoirButtonStyle.Ghost)
+            NoirButton(text = "Pro", onClick = {}, style = NoirButtonStyle.Gold)
+            NoirButton(text = "Недоступно", onClick = {}, enabled = false)
+
+            SectionLabel("NoirChip")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NoirChip(text = "Обычный")
+                NoirChip(text = "Акцент", tone = NoirChipTone.Accent)
+                NoirChip(text = "Pro", tone = NoirChipTone.Gold)
+                NoirChip(text = "Ошибка", tone = NoirChipTone.Danger)
+            }
+
+            SectionLabel("NoirProgressBar")
+            NoirProgressBar(fraction = 0.7f, modifier = Modifier.fillMaxWidth())
+        }
     }
 }
 
