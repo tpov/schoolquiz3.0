@@ -46,7 +46,10 @@ const ACTORS = {
   // isReviewer() and every function gate use `> 100`, never `>= 100`. This account sits exactly on
   // the line and must be treated as an ordinary user.
   developerEdge: {developerLevel: QUALIFIED},
+  collector: {},
 };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const passed = [];
 
@@ -419,6 +422,98 @@ async function testResults() {
   });
 }
 
+// ─── Коробки и ежедневная серия ────────────────────────────────────────────────────────────────
+
+/**
+ * The daily streak is the one place where gold could be inflated, because "a day passed" is the
+ * kind of fact a device could otherwise assert for itself. It cannot here: nextBoxAtMs is stored
+ * server-side and compared against the server clock, and no callable accepts a timestamp. These
+ * scenarios hold that shut.
+ */
+
+async function setBoxState(uid, state) {
+  await db.collection("users").doc(uid).set(state, {merge: true});
+}
+
+async function boxStateOf(uid) {
+  const data = (await db.collection("users").doc(uid).get()).data() || {};
+  return {boxCount: data.boxCount || 0, boxStreakDays: data.boxStreakDays || 0};
+}
+
+async function testGiftBoxes() {
+  await scenario("серия не растёт, пока не прошли сутки", async () => {
+    await setBoxState("collector", {
+      boxCount: 0, boxStreakDays: 3, nextBoxAtMs: Date.now() + DAY_MS,
+    });
+    await call("ensureUserProfile", "collector", {});
+    assert.deepStrictEqual(await boxStateOf("collector"), {boxCount: 0, boxStreakDays: 3});
+  });
+
+  await scenario("сутки спустя серия растёт, но коробки ещё нет", async () => {
+    await setBoxState("collector", {
+      boxCount: 0, boxStreakDays: 3, nextBoxAtMs: Date.now() - 1000,
+    });
+    await call("ensureUserProfile", "collector", {});
+    assert.deepStrictEqual(await boxStateOf("collector"), {boxCount: 0, boxStreakDays: 4});
+  });
+
+  await scenario("на десятом заходе выдаётся коробка", async () => {
+    await setBoxState("collector", {
+      boxCount: 0, boxStreakDays: 9, nextBoxAtMs: Date.now() - 1000,
+    });
+    await call("ensureUserProfile", "collector", {});
+    assert.deepStrictEqual(await boxStateOf("collector"), {boxCount: 1, boxStreakDays: 10});
+  });
+
+  await scenario("больше одной коробки в день не выдаётся", async () => {
+    // The previous scenario left nextBoxAtMs a day out. Calling again changes nothing.
+    await call("ensureUserProfile", "collector", {});
+    await call("ensureUserProfile", "collector", {});
+    assert.deepStrictEqual(await boxStateOf("collector"), {boxCount: 1, boxStreakDays: 10});
+  });
+
+  await scenario("подсунутое клиентом время и счётчики игнорируются", async () => {
+    // A tampered client can send whatever it likes in the payload; none of it is read.
+    await setBoxState("collector", {
+      boxCount: 0, boxStreakDays: 9, nextBoxAtMs: Date.now() + DAY_MS,
+    });
+    await call("ensureUserProfile", "collector", {
+      now: Date.now() + 400 * DAY_MS,
+      nextBoxAtMs: 0,
+      boxCount: 99,
+      boxStreakDays: 99,
+    });
+    assert.deepStrictEqual(await boxStateOf("collector"), {boxCount: 0, boxStreakDays: 9});
+  });
+
+  await scenario("пропуск дней серию не обнуляет", async () => {
+    // Current behaviour, pinned rather than endorsed: the streak counts ten separate days at least
+    // a day apart, not ten consecutive ones. Coming back after a year continues where it stopped.
+    // If "серия заходов" is meant to break on a missed day, this is the place to change it.
+    await setBoxState("collector", {
+      boxCount: 0, boxStreakDays: 5, nextBoxAtMs: Date.now() - 400 * DAY_MS,
+    });
+    await call("ensureUserProfile", "collector", {});
+    assert.deepStrictEqual(await boxStateOf("collector"), {boxCount: 0, boxStreakDays: 6});
+  });
+
+  await scenario("коробку нельзя открыть, когда её нет", async () => {
+    await setBoxState("collector", {
+      boxCount: 0, boxStreakDays: 10, nextBoxAtMs: Date.now() + DAY_MS,
+    });
+    await callFails("openGiftBox", "collector", {}, "FAILED_PRECONDITION");
+  });
+
+  await scenario("открытие списывает ровно одну коробку", async () => {
+    await setBoxState("collector", {
+      boxCount: 2, boxStreakDays: 10, nextBoxAtMs: Date.now() + DAY_MS,
+    });
+    const reward = await call("openGiftBox", "collector", {});
+    assert.ok(reward, "открытие не вернуло награду");
+    assert.strictEqual((await boxStateOf("collector")).boxCount, 1);
+  });
+}
+
 async function main() {
   await seedActors();
   await testSubmission();
@@ -426,6 +521,7 @@ async function main() {
   await testReviewStages();
   await testPublication();
   await testResults();
+  await testGiftBoxes();
   console.log(`review pipeline e2e: ${passed.length} сценариев прошло`);
 }
 
