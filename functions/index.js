@@ -5,6 +5,14 @@ const crypto = require("crypto");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {trophyList, pickGiftBoxTrophy, hasTrophy, TROPHY_VERIFIED} = require("./trophies.js");
+const {
+  VerificationError,
+  DECISION_APPROVED,
+  normalizeVerificationDetails,
+  canSubmitRequest,
+  normalizeDecision,
+} = require("./verification.js");
 const {
   calculateTournamentLeaderboard,
   tournamentGroupForAttempt,
@@ -437,6 +445,123 @@ exports.updateUserNickname = onCall(FUNCTION_OPTIONS, async (request) => {
   return profileResponse(result);
 });
 
+/**
+ * Verification is a human decision, not a computed one: an admin or developer reads what somebody
+ * says about themselves, reaches them on telegram, and decides. These three calls carry that
+ * conversation — filing, listing, deciding — and nothing about it is derivable from play.
+ */
+exports.submitVerificationRequest = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  // An anonymous account is a container for statistics, not a person anybody could verify. The
+  // ladder runs anonymous -> registered -> validated, and this is the step that needs a real login.
+  if (authProfileStatus(request) !== "REGISTERED") {
+    throw new HttpsError("failed-precondition", "Sign in before requesting verification");
+  }
+  const now = Date.now();
+  const details = translateVerificationError(() => normalizeVerificationDetails(request.data, now));
+
+  const requestRef = db.collection("verification_requests").doc(uid);
+  const userRef = db.collection("users").doc(uid);
+  await db.runTransaction(async (transaction) => {
+    const existingRequest = await transaction.get(requestRef);
+    const userSnapshot = await transaction.get(userRef);
+    const user = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    const gate = canSubmitRequest(
+      existingRequest.exists ? existingRequest.data() : null,
+      hasTrophy(user.trophies, TROPHY_VERIFIED),
+    );
+    if (!gate.allowed) throw new HttpsError("failed-precondition", gate.reason);
+
+    // Kept on the user document too, so the owner can see and correct what they submitted. Only
+    // they can read it there; the copy in the request is what reviewers see.
+    transaction.set(userRef, {uid, ...details, updatedAtMs: now}, {merge: true});
+    transaction.set(requestRef, {
+      ownerUid: uid,
+      ...details,
+      status: "PENDING",
+      processed: false,
+      submittedAtMs: now,
+      decidedAtMs: null,
+      decidedByUid: null,
+      rejectionReason: null,
+    });
+  });
+  return {status: "PENDING", submittedAtMs: now};
+});
+
+exports.fetchVerificationRequests = onCall(FUNCTION_OPTIONS, async (request) => {
+  await requireVerifier(requireAuthUid(request));
+  const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 20), 100));
+  const snapshot = await db
+    .collection("verification_requests")
+    .where("processed", "==", false)
+    .limit(limit)
+    .get();
+  return {
+    requests: snapshot.docs.map((doc) => {
+      const data = doc.data() || {};
+      return {
+        uid: doc.id,
+        realName: stringValue(data.realName),
+        birthday: stringValue(data.birthday),
+        city: stringValue(data.city),
+        telegram: stringValue(data.telegram),
+        submittedAtMs: numberValue(data.submittedAtMs, 0),
+      };
+    }),
+  };
+});
+
+exports.decideVerification = onCall(FUNCTION_OPTIONS, async (request) => {
+  const reviewerUid = requireAuthUid(request);
+  await requireVerifier(reviewerUid);
+  const targetUid = stringValue(request.data && request.data.uid);
+  if (!targetUid) throw new HttpsError("invalid-argument", "uid is required");
+  // Being trusted to check other people is not being trusted to wave yourself through.
+  if (targetUid === reviewerUid) {
+    throw new HttpsError("permission-denied", "Cannot decide your own verification");
+  }
+  const decision = translateVerificationError(() =>
+    normalizeDecision(request.data && request.data.decision));
+  const reason = nullableString(request.data && request.data.reason);
+  const now = Date.now();
+
+  const requestRef = db.collection("verification_requests").doc(targetUid);
+  const userRef = db.collection("users").doc(targetUid);
+  const profileRef = db.collection("profiles").doc(targetUid);
+  await db.runTransaction(async (transaction) => {
+    const existingRequest = await transaction.get(requestRef);
+    if (!existingRequest.exists) {
+      throw new HttpsError("not-found", `No verification request for ${targetUid}`);
+    }
+    const data = existingRequest.data() || {};
+    if (data.processed === true) {
+      throw new HttpsError("failed-precondition", "Verification request is already decided");
+    }
+
+    transaction.set(requestRef, {
+      status: decision,
+      processed: true,
+      decidedAtMs: now,
+      decidedByUid: reviewerUid,
+      rejectionReason: decision === DECISION_APPROVED ? null : reason,
+    }, {merge: true});
+
+    if (decision === DECISION_APPROVED) {
+      transaction.set(userRef, {
+        uid: targetUid,
+        trophies: admin.firestore.FieldValue.arrayUnion(TROPHY_VERIFIED),
+        verifiedAtMs: now,
+        verifiedByUid: reviewerUid,
+        status: "VALIDATED",
+        updatedAtMs: now,
+      }, {merge: true});
+      transaction.set(profileRef, {uid: targetUid, status: "VALIDATED"}, {merge: true});
+    }
+  });
+  return {uid: targetUid, decision, decidedAtMs: now};
+});
+
 exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const itemId = stringValue(request.data && request.data.itemId);
@@ -483,7 +608,7 @@ exports.openGiftBox = onCall(FUNCTION_OPTIONS, async (request) => {
     allowNicknameUpgrade: false,
   });
 
-  const reward = generateGiftBoxReward();
+  let reward = null;
   await db.runTransaction(async (transaction) => {
     const userRef = db.collection("users").doc(uid);
     const userSnapshot = await transaction.get(userRef);
@@ -492,6 +617,9 @@ exports.openGiftBox = onCall(FUNCTION_OPTIONS, async (request) => {
     if (boxState.boxCount <= 0) {
       throw new HttpsError("failed-precondition", "No gift boxes available");
     }
+    // Chosen here rather than before the transaction: only inside it do we know which badges the
+    // player already holds, and a duplicate would be a reward worth nothing.
+    reward = generateGiftBoxReward(existingUser.trophies);
     transaction.set(
       userRef,
       clean({
@@ -2011,6 +2139,27 @@ async function requireProfile(uid) {
   };
 }
 
+/** Verification is decided by admins, and by developers through their blanket access. */
+async function requireVerifier(uid) {
+  const profile = await requireProfile(uid);
+  if (
+    profile.adminLevel < QUALIFIED_LEVEL &&
+    profile.developerLevel <= DEVELOPER_ALL_ACCESS_LEVEL
+  ) {
+    throw new HttpsError("permission-denied", "Admin or developer level is required");
+  }
+  return profile;
+}
+
+function translateVerificationError(body) {
+  try {
+    return body();
+  } catch (error) {
+    if (error instanceof VerificationError) throw new HttpsError("invalid-argument", error.message);
+    throw error;
+  }
+}
+
 async function addReviewerReputation(uid, points) {
   if (points === 0) return;
   const ref = db.collection("profiles").doc(uid);
@@ -2173,7 +2322,7 @@ function writeUserProgressDelta(transaction, uid, delta, now) {
   );
 }
 
-function generateGiftBoxReward() {
+function generateGiftBoxReward(ownedTrophies) {
   const firstRoll = Math.random();
   const secondRoll = Math.random();
 
@@ -2222,8 +2371,10 @@ function generateGiftBoxReward() {
         itemName: GIFT_BOX_LOGO_NAMES[randomIntInclusive(0, GIFT_BOX_LOGO_NAMES.length - 1)],
       };
     case 1: {
-      const trophyAmount = randomIntInclusive(0, 1);
-      if (trophyAmount === 0) {
+      const trophyName = randomIntInclusive(0, 1) === 0 ? null : pickGiftBoxTrophy(ownedTrophies);
+      // Either the roll went the other way or the collection is already complete. A box that
+      // grants a badge somebody holds grants nothing, so it pays in gold instead.
+      if (!trophyName) {
         return {
           type: "addGold",
           amount: randomIntInclusive(10, 20),
@@ -2231,7 +2382,8 @@ function generateGiftBoxReward() {
       }
       return {
         type: "trophy",
-        amount: trophyAmount,
+        amount: 1,
+        itemName: trophyName,
       };
     }
     case 2:
@@ -2282,10 +2434,10 @@ function giftBoxRewardUpdate(existingUser, reward, now) {
       const itemName = stringValue(reward.itemName);
       return itemName ? {ownedLogos: admin.firestore.FieldValue.arrayUnion(itemName)} : {};
     }
-    case "trophy":
-      return {
-        trophies: admin.firestore.FieldValue.increment(amount),
-      };
+    case "trophy": {
+      const trophyName = stringValue(reward.itemName);
+      return trophyName ? {trophies: admin.firestore.FieldValue.arrayUnion(trophyName)} : {};
+    }
     default:
       return {};
   }
@@ -2611,7 +2763,7 @@ async function upsertUserProfile(uid, options) {
     const existingUser = userSnapshot.exists ? userSnapshot.data() || {} : {};
     const existingProfile = profileSnapshot.exists ? profileSnapshot.data() || {} : {};
     const qualification = readQualification(existingProfile, existingUser);
-    const status = profileStatus(existingProfile.status || existingUser.status, options.authStatus, qualification);
+    const status = profileStatus(options.authStatus, hasTrophy(existingUser.trophies, TROPHY_VERIFIED));
     const shouldReplaceNickname =
       options.allowNicknameUpgrade ||
       !userSnapshot.exists ||
@@ -2655,7 +2807,7 @@ async function upsertUserProfile(uid, options) {
       nextBoxAtMs: boxState.nextBoxAtMs,
       premiumUntilMs,
       hasPremium: premiumUntilMs > options.now || Boolean(existingUser.hasPremium),
-      trophies: nonNegativeNumber(existingUser.trophies, 0),
+      trophies: trophyList(existingUser.trophies),
       ownedLogos: stringArray(existingUser.ownedLogos),
       sponsor: qualification.sponsorLevel,
       tester: qualification.testerLevel,
@@ -2815,10 +2967,17 @@ function nonNegativeNumber(primary, fallback) {
   return Math.max(0, numberValue(primary, numberValue(fallback, 0)));
 }
 
-function profileStatus(existingStatus, authStatus, qualification) {
-  if (existingStatus === "VALIDATED") return "VALIDATED";
-  const hasQualification = Object.values(qualification).some((value) => value > 0);
-  if (hasQualification) return "VALIDATED";
+/**
+ * VALIDATED means a person was checked by another person — nothing else.
+ *
+ * It used to be granted to anyone holding a qualification, so a tester counted as verified without
+ * anyone having looked at them, while somebody who passed a real check had no way to be marked. The
+ * status is also no longer sticky: deriving it from the tick every time means it cannot outlive the
+ * fact it stands for. Accounts that were validated by qualification alone lose the label and can
+ * apply like everybody else.
+ */
+function profileStatus(authStatus, isVerified) {
+  if (isVerified) return "VALIDATED";
   return authStatus === "REGISTERED" ? "REGISTERED" : "ANONYMOUS";
 }
 
@@ -2847,7 +3006,7 @@ function profileResponse(result) {
     boxStreakDays: numberValue(user.boxStreakDays, 0),
     nextBoxAtMs: numberValue(user.nextBoxAtMs, 0),
     premiumUntilMs: numberValue(user.premiumUntilMs, 0),
-    trophies: numberValue(user.trophies, 0),
+    trophies: trophyList(user.trophies),
     ownedLogos: stringArray(user.ownedLogos),
     qualification: {
       sponsorLevel: numberValue(profile.sponsorLevel, 0),

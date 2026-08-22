@@ -261,7 +261,7 @@ private fun MetricStrip(
             MetricPill(
                 icon = Icons.Default.EmojiEvents,
                 label = "Трофеи",
-                value = profile.trophies.toString(),
+                value = profile.trophies.size.toString(),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -571,7 +571,7 @@ private fun AwardsCard(
                 AwardTile(
                     icon = Icons.Default.EmojiEvents,
                     label = "Трофеи",
-                    value = profile.trophies.toString(),
+                    value = profile.trophies.size.toString(),
                     modifier = Modifier.weight(1f),
                 )
                 AwardTile(
@@ -826,7 +826,7 @@ private fun UserProfile.dashboardMetrics(): ProfileDashboardMetrics {
     val experiencePercent = experiencePercentileEstimate(skillPoints)
     val economyPercent = normalizedLogPercent(nolics + gold * 1_000L, 100_000L)
     val heartsPercent = (((standardHearts + goldHearts * 2).coerceAtMost(7)) / 7f * 100f).roundToInt()
-    val rewardPercent = normalizedLogPercent(trophies * 24L + boxCount * 8L + ownedLogos.size * 16L, 720L)
+    val rewardPercent = normalizedLogPercent(trophies.size * 24L + boxCount * 8L + ownedLogos.size * 16L, 720L)
     val collectionPercent = ((ownedLogos.size.coerceAtMost(12) / 12f) * 100f).roundToInt()
     val premiumPercent = if (premiumUntilMs > 0L) 100 else boxStreakDays.percentOf(GIFT_BOX_STREAK_TARGET)
     val qualificationValues =
@@ -971,7 +971,7 @@ private fun ProfileViewPreview() {
                         boxCount = 2,
                         boxStreakDays = 7,
                         premiumUntilMs = 1_000L,
-                        trophies = 6L,
+                        trophies = setOf("verified", "collector", "night_owl"),
                         ownedLogos = listOf("gold", "diamond", "phoenix"),
                     ),
             ),

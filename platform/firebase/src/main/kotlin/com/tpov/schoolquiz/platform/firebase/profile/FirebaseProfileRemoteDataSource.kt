@@ -75,7 +75,7 @@ class FirebaseProfileRemoteDataSource(
             boxStreakDays = long(BOX_STREAK_DAYS).toInt().coerceAtLeast(0),
             nextBoxAtMs = long(NEXT_BOX_AT_MS).coerceAtLeast(0L),
             premiumUntilMs = long(PREMIUM_UNTIL_MS).coerceAtLeast(0L),
-            trophies = long(TROPHIES).coerceAtLeast(0L),
+            trophies = stringList(TROPHIES).toSet(),
             ownedLogos = stringList(OWNED_LOGOS),
         )
     }

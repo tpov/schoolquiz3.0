@@ -17,6 +17,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /verification_requests/{userId} {
+      // Personal details somebody submitted so a human can check who they are. Reviewers need to
+      // read them, the owner needs to see what they sent, and nobody writes here directly: filing
+      // goes through submitVerificationRequest, which validates the details, and the outcome
+      // through decideVerification. Leaving create open would let the status be self-awarded.
+      allow read: if request.auth != null && (request.auth.uid == userId || isVerifier());
+      allow write: if false;
+    }
+
     match /nickname_claims/{claimId} {
       // Server-owned unique nickname registry. Clients use updateUserNickname callable.
       allow read, write: if false;
@@ -145,6 +154,17 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.qualifications.admin >= 100
         )
       );
+    }
+
+    // Verification is a judgement about a person, not about content, so it sits with admins —
+    // and with developers through their blanket access — rather than with every reviewer.
+    function isVerifier() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.adminLevel >= 100
+          || get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.developerLevel > 100
+        );
     }
 
     function isReviewer() {

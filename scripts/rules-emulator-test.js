@@ -141,6 +141,15 @@ async function seed() {
     await store.doc("admin/review/lessons/les-1").set({id: "les-1"});
     await store.doc("private/author/catalogs/cat-1").set({id: "cat-1"});
     await store.doc("quest_review_requests/req-1").set({ownerUid: "author", processed: false});
+    await store.doc("verification_requests/author").set({
+      ownerUid: "author",
+      realName: "Олег",
+      birthday: "1990-05-07",
+      city: "Киев",
+      telegram: "tpov_dev",
+      status: "PENDING",
+      processed: false,
+    });
     await store.doc("tournaments/tournament").set({id: "tournament"});
     await store.doc("tournaments/tournament/groups/g-1").set({id: "g-1"});
     await store.doc("nickname_claims/claim-1").set({uid: "author"});
@@ -300,6 +309,44 @@ async function testReviewRequests() {
     db("author").doc("quest_review_requests/req-1").delete());
 }
 
+/**
+ * Verification requests carry a real name, a birthday, a city and a way to reach somebody. They are
+ * read by two parties and written by none: filing and deciding both run through callables, so no
+ * client can award itself the status or edit details a reviewer is already reading.
+ */
+async function testVerificationRequests() {
+  await allow("verification: владелец читает свою заявку", () =>
+    db("author").doc("verification_requests/author").get());
+  await allow("verification: админ читает чужую", () =>
+    db("admin").doc("verification_requests/author").get());
+  await allow("verification: разработчик 101 читает чужую", () =>
+    db("developer").doc("verification_requests/author").get());
+
+  await deny("verification: разработчик ровно 100 не читает", () =>
+    db("developerEdge").doc("verification_requests/author").get());
+  // Being a reviewer of content is not being a reviewer of people: personal data stays with those
+  // who decide on it.
+  await deny("verification: тестер не читает", () =>
+    db("tester").doc("verification_requests/author").get());
+  await deny("verification: переводчик не читает", () =>
+    db("translatorA").doc("verification_requests/author").get());
+  await deny("verification: модератор не читает", () =>
+    db("moderator").doc("verification_requests/author").get());
+  await deny("verification: посторонний не читает", () =>
+    db("outsider").doc("verification_requests/author").get());
+  await deny("verification: гость не читает", () =>
+    db("guest").doc("verification_requests/author").get());
+
+  await deny("verification: владелец не подаёт заявку напрямую", () =>
+    db("player").doc("verification_requests/player").set({ownerUid: "player", processed: false}));
+  await deny("verification: владелец не правит свою заявку", () =>
+    db("author").doc("verification_requests/author").update({status: "APPROVED"}));
+  await deny("verification: админ не правит заявку напрямую", () =>
+    db("admin").doc("verification_requests/author").update({status: "APPROVED"}));
+  await deny("verification: владелец не удаляет свою заявку", () =>
+    db("author").doc("verification_requests/author").delete());
+}
+
 async function testCatalogsAndTournaments() {
   await allow("catalogs: читает даже гость", () => db("guest").doc("catalogs/cat-1").get());
   await deny("catalogs: игрок не пишет", () =>
@@ -349,6 +396,7 @@ async function main() {
   await testNestedContent();
   await testReviewHierarchy();
   await testReviewRequests();
+  await testVerificationRequests();
   await testCatalogsAndTournaments();
   await testServerOnlyCollections();
 

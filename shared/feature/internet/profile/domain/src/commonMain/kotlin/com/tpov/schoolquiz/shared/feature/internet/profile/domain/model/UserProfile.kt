@@ -18,7 +18,8 @@ data class UserProfile(
     val boxStreakDays: Int = 0,
     val nextBoxAtMs: Long = 0L,
     val premiumUntilMs: Long = 0L,
-    val trophies: Long = 0L,
+    /** Named badges the player holds; see TROPHY_VERIFIED in functions/trophies.js. */
+    val trophies: Set<String> = emptySet(),
     val ownedLogos: List<String> = emptyList(),
     /**
      * Activity budget. A heart is a slot worth [LIFE_POINTS_PER_HEART] points, and playing costs
@@ -48,7 +49,6 @@ data class UserProfile(
         require(boxStreakDays >= 0) { "boxStreakDays must be non-negative" }
         require(nextBoxAtMs >= 0) { "nextBoxAtMs must be non-negative" }
         require(premiumUntilMs >= 0) { "premiumUntilMs must be non-negative" }
-        require(trophies >= 0) { "trophies must be non-negative" }
         require(lifePoints >= 0) { "lifePoints must be non-negative" }
         require(lifePointsUpdatedAtMs >= 0) { "lifePointsUpdatedAtMs must be non-negative" }
     }

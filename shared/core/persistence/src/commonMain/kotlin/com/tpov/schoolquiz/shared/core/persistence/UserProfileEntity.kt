@@ -27,7 +27,7 @@ data class UserProfileEntity(
     val boxStreakDays: Int,
     val nextBoxAtMs: Long,
     val premiumUntilMs: Long,
-    val trophies: Long,
+    val trophies: List<String>,
     val ownedLogos: List<String>,
     val lifePoints: Int = 0,
     val lifePointsUpdatedAtMs: Long = 0,

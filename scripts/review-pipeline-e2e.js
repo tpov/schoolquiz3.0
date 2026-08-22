@@ -47,6 +47,8 @@ const ACTORS = {
   // the line and must be treated as an ordinary user.
   developerEdge: {developerLevel: QUALIFIED},
   collector: {},
+  applicant: {},
+  applicantTwo: {},
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -66,18 +68,22 @@ async function scenario(label, body) {
   console.log(`  ✓ ${label}`);
 }
 
-function call(name, uid, data) {
+/**
+ * Signed in with Google unless told otherwise. The provider used to be irrelevant, but verification
+ * distinguishes an anonymous container for statistics from an account belonging to somebody.
+ */
+function call(name, uid, data, provider = "google.com") {
   const handler = callableHandlers[name];
   assert.ok(handler && typeof handler.run === "function", `Missing callable handler ${name}`);
   return handler.run({
-    auth: uid ? {uid, token: {firebase: {sign_in_provider: "anonymous"}}} : undefined,
+    auth: uid ? {uid, token: {firebase: {sign_in_provider: provider}}} : undefined,
     data: data || {},
   });
 }
 
-async function callFails(name, uid, data, expectedCode) {
+async function callFails(name, uid, data, expectedCode, provider) {
   try {
-    await call(name, uid, data);
+    await call(name, uid, data, provider);
   } catch (error) {
     const code = String((error && error.code) || "").toUpperCase().replace(/-/g, "_");
     assert.strictEqual(code, expectedCode, `${name}: ожидался ${expectedCode}, получен ${code}`);
@@ -514,6 +520,120 @@ async function testGiftBoxes() {
   });
 }
 
+// ─── Подтверждение аккаунта ────────────────────────────────────────────────────────────────────
+
+/**
+ * The ladder is anonymous -> registered -> validated. The last step is the only one a machine
+ * cannot take: a person reads what somebody says about themselves, reaches them on telegram, and
+ * decides. These scenarios cover who may file, who may decide, and what the decision changes.
+ */
+
+const DETAILS = {realName: "Олег", birthday: "1990-05-07", city: "Киев", telegram: "@tpov_dev"};
+
+async function userDoc(uid) {
+  return (await db.collection("users").doc(uid).get()).data() || {};
+}
+
+async function testVerification() {
+  await scenario("анонимный аккаунт заявку подать не может", async () => {
+    await callFails(
+      "submitVerificationRequest", "applicant", DETAILS, "FAILED_PRECONDITION", "anonymous",
+    );
+  });
+
+  await scenario("данные проверяются: непохожий телеграм и несуществующая дата", async () => {
+    await callFails(
+      "submitVerificationRequest", "applicant", {...DETAILS, telegram: "abc"}, "INVALID_ARGUMENT",
+    );
+    await callFails(
+      "submitVerificationRequest", "applicant", {...DETAILS, birthday: "2026-02-31"}, "INVALID_ARGUMENT",
+    );
+  });
+
+  await scenario("вошедший через Google подаёт заявку", async () => {
+    const result = await call("submitVerificationRequest", "applicant", DETAILS);
+    assert.strictEqual(result.status, "PENDING");
+    const stored = (await db.collection("verification_requests").doc("applicant").get()).data();
+    // The @ is stripped so a reviewer always sees one form.
+    assert.strictEqual(stored.telegram, "tpov_dev");
+    assert.strictEqual(stored.processed, false);
+  });
+
+  await scenario("вторую заявку поверх ожидающей подать нельзя", async () => {
+    await callFails("submitVerificationRequest", "applicant", DETAILS, "FAILED_PRECONDITION");
+  });
+
+  await scenario("заявку видят админ и разработчик", async () => {
+    for (const uid of ["admin", "developer"]) {
+      const result = await call("fetchVerificationRequests", uid, {});
+      const uids = result.requests.map((entry) => entry.uid);
+      assert.ok(uids.includes("applicant"), `${uid} не увидел заявку: ${uids}`);
+    }
+  });
+
+  await scenario("проверяющие по содержанию к персональным данным не допускаются", async () => {
+    for (const uid of ["tester", "translatorA", "moderator", "player", "developerEdge"]) {
+      await callFails("fetchVerificationRequests", uid, {}, "PERMISSION_DENIED");
+    }
+  });
+
+  await scenario("решение выносит только админ или разработчик", async () => {
+    await callFails(
+      "decideVerification", "tester", {uid: "applicant", decision: "APPROVED"}, "PERMISSION_DENIED",
+    );
+  });
+
+  await scenario("сам себя подтвердить нельзя", async () => {
+    await call("submitVerificationRequest", "admin", DETAILS);
+    await callFails(
+      "decideVerification", "admin", {uid: "admin", decision: "APPROVED"}, "PERMISSION_DENIED",
+    );
+  });
+
+  await scenario("подтверждение выдаёт галочку и переводит статус", async () => {
+    await call("decideVerification", "admin", {uid: "applicant", decision: "APPROVED"});
+    const user = await userDoc("applicant");
+    assert.ok(user.trophies.includes("verified"), `галочки нет: ${JSON.stringify(user.trophies)}`);
+    assert.strictEqual(user.verifiedByUid, "admin");
+    const profile = (await db.collection("profiles").doc("applicant").get()).data();
+    assert.strictEqual(profile.status, "VALIDATED");
+  });
+
+  await scenario("подтверждённый заявку больше не подаёт", async () => {
+    await callFails("submitVerificationRequest", "applicant", DETAILS, "FAILED_PRECONDITION");
+  });
+
+  await scenario("решённую заявку второй раз не решить", async () => {
+    await callFails(
+      "decideVerification", "developer", {uid: "applicant", decision: "REJECTED"},
+      "FAILED_PRECONDITION",
+    );
+  });
+
+  await scenario("отказ статуса не меняет и допускает повторную подачу", async () => {
+    await call("submitVerificationRequest", "applicantTwo", DETAILS);
+    await call("decideVerification", "developer", {
+      uid: "applicantTwo", decision: "REJECTED", reason: "Телеграм не отвечает",
+    });
+
+    const user = await userDoc("applicantTwo");
+    assert.ok(!(user.trophies || []).includes("verified"), "отказ выдал галочку");
+    const stored = (await db.collection("verification_requests").doc("applicantTwo").get()).data();
+    assert.strictEqual(stored.rejectionReason, "Телеграм не отвечает");
+
+    // A rejection is meant to be answered, not to be a dead end.
+    const retry = await call("submitVerificationRequest", "applicantTwo", DETAILS);
+    assert.strictEqual(retry.status, "PENDING");
+  });
+
+  await scenario("квалификация сама по себе больше не делает аккаунт подтверждённым", async () => {
+    // This used to be automatic: any qualification meant VALIDATED, so a tester counted as checked
+    // without anyone having looked at them.
+    const result = await call("ensureUserProfile", "tester", {});
+    assert.notStrictEqual(result.status, "VALIDATED", "тестер снова стал подтверждённым сам собой");
+  });
+}
+
 async function main() {
   await seedActors();
   await testSubmission();
@@ -522,6 +642,7 @@ async function main() {
   await testPublication();
   await testResults();
   await testGiftBoxes();
+  await testVerification();
   console.log(`review pipeline e2e: ${passed.length} сценариев прошло`);
 }
 

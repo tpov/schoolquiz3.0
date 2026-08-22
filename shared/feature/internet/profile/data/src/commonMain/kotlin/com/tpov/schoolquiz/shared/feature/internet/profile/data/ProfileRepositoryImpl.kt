@@ -99,7 +99,7 @@ class ProfileRepositoryImpl(
             boxStreakDays = 0,
             nextBoxAtMs = 0L,
             premiumUntilMs = 0L,
-            trophies = 0L,
+            trophies = emptySet(),
             ownedLogos = emptyList(),
         )
     }
