@@ -634,6 +634,77 @@ async function testVerification() {
   });
 }
 
+// ─── Занятость ника ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Uniqueness was already enforced when saving; what was missing is telling somebody while they
+ * type. The check is a hint and not a reservation, and it must never say who holds a taken name.
+ */
+
+async function availability(uid, nickname, provider) {
+  return call("checkNicknameAvailability", uid, {nickname}, provider);
+}
+
+async function testNicknameAvailability() {
+  await db.doc("configs/nickname_policy").set({
+    blockedWords: ["дурак"],
+    blockedSymbols: ["@"],
+  });
+
+  await scenario("свободное имя показывается свободным", async () => {
+    const result = await availability("player", "СовсемНовыйНик");
+    assert.strictEqual(result.available, true);
+    assert.strictEqual(result.reason, null);
+  });
+
+  await scenario("занятое чужим показывается занятым и без владельца", async () => {
+    await call("updateUserNickname", "author", {nickname: "ЗанятоеИмя"});
+    const result = await availability("player", "ЗанятоеИмя");
+    assert.strictEqual(result.available, false);
+    assert.strictEqual(result.reason, "taken");
+    // Returning the owner would make this a nickname-to-account directory.
+    assert.ok(
+      !JSON.stringify(result).includes("author"),
+      `в ответе просочился владелец: ${JSON.stringify(result)}`,
+    );
+  });
+
+  await scenario("собственное имя занятым не выглядит", async () => {
+    const result = await availability("author", "ЗанятоеИмя");
+    assert.strictEqual(result.available, true);
+    assert.strictEqual(result.reason, "yours");
+  });
+
+  await scenario("регистр и полноширинные знаки занятость не обходят", async () => {
+    for (const variant of ["занятоеимя", "ЗАНЯТОЕИМЯ", "  ЗанятоеИмя  "]) {
+      const result = await availability("player", variant);
+      assert.strictEqual(result.available, false, `${variant} прошло как свободное`);
+    }
+    await call("updateUserNickname", "collector", {nickname: "abcdef"});
+    const wide = await availability("player", "ａｂｃｄｅｆ");
+    assert.strictEqual(wide.available, false, "полноширинный двойник прошёл как свободный");
+  });
+
+  await scenario("правила ника отвечают кодом, а не отказом", async () => {
+    assert.strictEqual((await availability("player", "ab")).reason, "too-short");
+    assert.strictEqual((await availability("player", "x".repeat(25))).reason, "too-long");
+    assert.strictEqual((await availability("player", "большой дурак")).reason, "blocked-word");
+    assert.strictEqual((await availability("player", "me@you")).reason, "blocked-symbol");
+  });
+
+  await scenario("без входа проверить нельзя", async () => {
+    await callFails("checkNicknameAvailability", null, {nickname: "ЧтоУгодно"}, "UNAUTHENTICATED");
+  });
+
+  await scenario("подсказка не бронирует имя", async () => {
+    // Free a moment ago, claimed by somebody else before the save — the save must still refuse.
+    const before = await availability("player", "Гонка");
+    assert.strictEqual(before.available, true);
+    await call("updateUserNickname", "applicant", {nickname: "Гонка"});
+    await callFails("updateUserNickname", "player", {nickname: "Гонка"}, "ALREADY_EXISTS");
+  });
+}
+
 async function main() {
   await seedActors();
   await testSubmission();
@@ -643,6 +714,7 @@ async function main() {
   await testResults();
   await testGiftBoxes();
   await testVerification();
+  await testNicknameAvailability();
   console.log(`review pipeline e2e: ${passed.length} сценариев прошло`);
 }
 

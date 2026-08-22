@@ -7,6 +7,11 @@ const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {trophyList, pickGiftBoxTrophy, hasTrophy, TROPHY_VERIFIED} = require("./trophies.js");
 const {
+  describeNickname,
+  sanitizeNickname,
+  canonicalNickname,
+} = require("./nicknames.js");
+const {
   VerificationError,
   DECISION_APPROVED,
   normalizeVerificationDetails,
@@ -560,6 +565,40 @@ exports.decideVerification = onCall(FUNCTION_OPTIONS, async (request) => {
     }
   });
   return {uid: targetUid, decision, decidedAtMs: now};
+});
+
+/**
+ * Tells somebody whether a name is free while they are still typing it.
+ *
+ * Deliberately says nothing about who holds a taken name. Returning the owner would turn this into
+ * a directory: run a dictionary through it and you have a map of every player. Sign-in is required
+ * for the same reason — an open endpoint would be that directory for anybody at all.
+ *
+ * The answer is a hint, never a reservation. Somebody else can claim the name between this call and
+ * the save, so the save still decides.
+ */
+exports.checkNicknameAvailability = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const policy = await readNicknamePolicy();
+  const described = describeNickname(stringValue(request.data && request.data.nickname), policy);
+  if (!described.ok) {
+    return {nickname: "", available: false, reason: described.reason};
+  }
+
+  const claim = await db
+    .collection(NICKNAME_CLAIMS_COLLECTION)
+    .doc(nicknameClaimId(described.canonical))
+    .get();
+  if (!claim.exists) {
+    return {nickname: described.nickname, available: true, reason: null};
+  }
+  // Your own name must not read as taken, or changing anything else on the form would look blocked.
+  const isOwn = stringValue((claim.data() || {}).uid) === uid;
+  return {
+    nickname: described.nickname,
+    available: isOwn,
+    reason: isOwn ? "yours" : "taken",
+  };
 });
 
 exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -2926,31 +2965,21 @@ async function nicknameReleaseRef(transaction, options) {
   return ownerUid === options.uid ? ref : null;
 }
 
+/** The saving path's view of the shared rules: same verdict, raised instead of returned. */
 function validateNicknameOrThrow(value, policy) {
-  const nickname = sanitizeNickname(value, null);
-  if (!nickname) {
-    throw new HttpsError("invalid-argument", "Nickname must contain 3..24 supported characters");
-  }
-  const canonical = canonicalNickname(nickname);
-  const normalizedNickname = nickname.normalize("NFKC");
-  const blockedSymbol = policy.blockedSymbols.find((symbol) => symbol && normalizedNickname.includes(symbol));
-  if (blockedSymbol) {
-    throw new HttpsError("invalid-argument", "Nickname contains a blocked symbol");
-  }
-
-  const compactCanonical = canonical.replace(/\s+/g, "");
-  const blockedWord = policy.blockedWords.find((word) => {
-    const compactWord = word.replace(/\s+/g, "");
-    return word && (canonical.includes(word) || (compactWord && compactCanonical.includes(compactWord)));
-  });
-  if (blockedWord) {
-    throw new HttpsError("invalid-argument", "Nickname contains a blocked word");
-  }
-  return {
-    nickname,
-    canonical,
-  };
+  const described = describeNickname(value, policy);
+  if (described.ok) return {nickname: described.nickname, canonical: described.canonical};
+  throw new HttpsError("invalid-argument", NICKNAME_REASON_MESSAGES[described.reason] ||
+    "Nickname is not allowed");
 }
+
+const NICKNAME_REASON_MESSAGES = {
+  "too-short": "Nickname must contain 3..24 supported characters",
+  "too-long": "Nickname must contain 3..24 supported characters",
+  "unsupported-characters": "Nickname must contain 3..24 supported characters",
+  "blocked-symbol": "Nickname contains a blocked symbol",
+  "blocked-word": "Nickname contains a blocked word",
+};
 
 function readQualification(profile, user) {
   return {
@@ -3128,22 +3157,7 @@ function generatedNickname(uid, attempt = 0) {
   return `User${suffix || "000000"}${attemptSuffix}`;
 }
 
-function sanitizeNickname(value, fallback) {
-  const text = stringValue(value, fallback || "")
-    .trim()
-    .replace(/\s+/g, " ");
-  if (text.length < 3 || text.length > 24) return fallback;
-  if (/[\u0000-\u001F/\\]/.test(text)) return fallback;
-  return text;
-}
 
-function canonicalNickname(value) {
-  return stringValue(value)
-    .normalize("NFKC")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toLowerCase();
-}
 
 function nicknameClaimId(canonicalNicknameValue) {
   return hashHex(canonicalNicknameValue);
