@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":shared:feature:internet:profile:domain"))
+    implementation(project(":android:core:designsystem"))
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)

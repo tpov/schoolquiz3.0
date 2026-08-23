@@ -35,8 +35,6 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.WorkspacePremium
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,6 +61,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
@@ -156,15 +157,11 @@ private fun ProfileDashboardCard(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            ),
-    ) {
+    // Was a filled block of primaryContainer, which on black reads as a coloured panel stuck to the
+    // screen rather than a card lying on it. Glass keeps the lift without the paint.
+    NoirGlassCard(modifier = modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             DashboardHeader(
@@ -439,7 +436,7 @@ private fun RadarChartPanel(
         )
         ProfileRadarChart(metrics = metrics)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            ChartLegendItem("Игрок", MaterialTheme.colorScheme.tertiary)
+            ChartLegendItem("Игрок", LocalNoirAccent.current)
             ChartLegendItem("Квалиф.", MaterialTheme.colorScheme.primary)
         }
     }
@@ -449,7 +446,7 @@ private fun RadarChartPanel(
 private fun ProfileRadarChart(metrics: ProfileDashboardMetrics) {
     val gridColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.18f)
     val axisColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.28f)
-    val playerColor = MaterialTheme.colorScheme.tertiary
+    val playerColor = LocalNoirAccent.current
     val qualificationColor = MaterialTheme.colorScheme.primary
     Canvas(
         modifier =
@@ -517,7 +514,7 @@ private fun NicknameCard(
     onSaveNickname: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    NoirGlassCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -555,7 +552,7 @@ private fun AwardsCard(
     profile: UserProfile,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    NoirGlassCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -610,7 +607,7 @@ private fun AwardTile(
         modifier =
             modifier
                 .height(58.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.56f), RoundedCornerShape(8.dp))
+                .background(NoirS2, RoundedCornerShape(8.dp))
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -641,7 +638,7 @@ private fun ProfileBreakdownCard(
     metrics: ProfileDashboardMetrics,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    NoirGlassCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -656,7 +653,7 @@ private fun ProfileBreakdownCard(
             MetricBar(
                 label = "Экономика · ${formatCompact(profile.nolics)} nolics",
                 value = metrics.economyPercent / 100f,
-                color = MaterialTheme.colorScheme.tertiary,
+                color = LocalNoirAccent.current,
             )
             MetricBar(
                 label = "Жизни · ${profile.standardHearts}+${profile.goldHearts}",
@@ -744,7 +741,7 @@ private fun MetricBar(
                 Modifier
                     .fillMaxWidth()
                     .height(8.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(100.dp)),
+                    .background(NoirS2, RoundedCornerShape(100.dp)),
         ) {
             Box(
                 modifier =
