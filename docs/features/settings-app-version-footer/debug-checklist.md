@@ -1,0 +1,7 @@
+- [x] Read SCH-2 task comments and current run state.
+- [x] Load debug workflow guidance and project context.
+- [x] Gather Phase 1 documentation context and existing worker reports.
+- [x] Reproduce/confirm the current build-gate symptom with a targeted Gradle command.
+- [x] Classify the problem and decide whether Deep Debug is required.
+- [x] Write a durable Phase 1 debug report for the next workflow node.
+- [x] Hand off to the appropriate debug transition.

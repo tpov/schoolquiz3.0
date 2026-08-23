@@ -1,0 +1,5 @@
+- [x] Read SCH-2 task context, Phase 1 debug report, worker report, and run ledger.
+- [x] Synthesize confirmed root cause and proposed recovery into a Fix Spec.
+- [ ] Ask the user how to apply the Fix Spec.
+- [ ] Apply the user's routing decision to Fix Spec/README metadata.
+- [ ] Complete the workflow node with the matching transition.

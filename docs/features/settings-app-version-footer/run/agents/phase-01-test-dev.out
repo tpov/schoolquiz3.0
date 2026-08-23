@@ -1,0 +1,47 @@
+Updated after review.
+
+## What I changed
+
+Only test file changed by me:
+
+- [AppShellScreenTest.kt](/Volumes/EXTERNAL/schoolquiz3.0/android/feature/app-shell/presentation/src/androidTest/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/AppShellScreenTest.kt):197
+
+Note: workspace also has parallel/frontend production edits in:
+
+- `AppShellScreen.kt`
+- `DesignSettingsScreen.kt`
+- `MainActivity.kt`
+
+Those are not my edits; my write scope stayed in `AppShellScreenTest.kt`.
+
+## Tests added/updated
+
+| Scenario | Test method | Coverage |
+|---|---|---|
+| `settings_footer_exact_label` | `settings_footer_displays_exact_version_label` | Asserts exact `v0.1.0 (1)` |
+| `settings_footer_display_only_semantics` | `settings_footer_is_display_only_without_click_or_long_click_semantics` | Asserts no `OnClick` / `OnLongClick` semantics on footer |
+| `settings_footer_pinned_visible_bottom_bounds` | `settings_footer_is_pinned_to_visible_bottom_not_short_list_tail` | Asserts footer near bottom and below 70% viewport; last style option still visible |
+| `app_shell_required_version_code_stale_call_site_compile` | Existing `hamburger_click_sends_open_drawer_to_domain` call site updated | Passes `appVersionCode = 1` |
+| `drawer_version_behavior_unchanged_guard` | `drawer_footer_version_label_remains_name_only_after_settings_version_code_wiring` | Separate SCH-2 test now asserts drawer shows `vtest`, not `vtest (1)` |
+| `debug_release_visibility_guard` | Static/code-review guard | Settings branch passes version params directly; no debug gate around `LocalConfig.SettingsRoot` |
+
+## Verification / static checks run
+
+- `git diff --check -- AppShellScreenTest.kt` — PASS.
+- Verified app-shell module already has:
+  - `implementation(project(":android:feature:local:settings:presentation"))`
+  - so direct `DesignSettingsScreen` import in app-shell androidTest is covered by existing module wiring; no dependency/scaffold edit needed.
+- Avoided risky `Dp * Float` operator by using `.value` float comparisons in bounds assertions.
+- Interaction grep result:
+  - `DesignSettingsScreen.kt` only has existing `clickable` on design-style option row.
+  - No `combinedClickable`, `pointerInput`, `onLongClick`, settings `onVersionTap`, or Koin injection in settings UI path.
+  - `onVersionTap` remains only in app-shell drawer wiring.
+- Debug visibility inspection:
+  - `canSeeDesignCatalog` gate applies only to `DesignCatalogRoot`.
+  - `LocalConfig.SettingsRoot` branch directly calls `DesignSettingsScreen(appVersionName, appVersionCode)` without `isDebugBuild`, `BuildConfig.DEBUG`, or `canSeeDesignCatalog`.
+
+## Not run
+
+Did not run Gradle/build gate or `assembleDebugAndroidTest`, per instruction that frontend-dev owns build gate/review launch.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "f8ade241-9fb4-43ae-86d4-043e4b0967e9" "follow-up"`.

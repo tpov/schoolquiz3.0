@@ -30,7 +30,9 @@ import androidx.room.TypeConverters
         QuestionAnswerEntity::class,
         QuestionRepetitionEntity::class,
     ],
-    version = 1,
+    // Bumped whenever the schema changes. Destructive fallback only fires on a version change —
+    // leaving the number alone makes Room compare identity hashes and crash instead.
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)

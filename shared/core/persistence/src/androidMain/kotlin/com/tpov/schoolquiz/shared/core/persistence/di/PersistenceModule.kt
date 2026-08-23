@@ -21,6 +21,7 @@ import com.tpov.schoolquiz.shared.core.persistence.ThemeDao
 import com.tpov.schoolquiz.shared.core.persistence.TopParticipantListConverter
 import com.tpov.schoolquiz.shared.core.persistence.UserProfileDao
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -33,6 +34,7 @@ val persistenceModule = module {
         )
             .addTypeConverter(StringSetConverter())
             .addTypeConverter(TopParticipantListConverter())
+            .addMigrations(Migration1to2)
             .build()
     }
     single<UserStatsDao> { get<AppDatabase>().userStatsDao() }

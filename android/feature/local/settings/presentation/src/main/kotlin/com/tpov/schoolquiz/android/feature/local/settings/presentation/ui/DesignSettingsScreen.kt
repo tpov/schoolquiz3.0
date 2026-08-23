@@ -48,6 +48,8 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 fun DesignSettingsScreen(
     selectedStyle: SchoolQuizDesignStyle,
     onStyleSelected: (SchoolQuizDesignStyle) -> Unit,
+    appVersionName: String,
+    appVersionCode: Int,
     modifier: Modifier = Modifier,
 ) {
     SchoolQuizDesignBackground(
@@ -57,7 +59,13 @@ fun DesignSettingsScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp),
+            contentPadding =
+                PaddingValues(
+                    start = 16.dp,
+                    top = 18.dp,
+                    end = 16.dp,
+                    bottom = 72.dp,
+                ),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
@@ -74,7 +82,31 @@ fun DesignSettingsScreen(
                 )
             }
         }
+        SettingsVersionFooter(
+            versionName = appVersionName,
+            versionCode = appVersionCode,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 18.dp),
+        )
     }
+}
+
+@Composable
+private fun SettingsVersionFooter(
+    versionName: String,
+    versionCode: Int,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = "v$versionName ($versionCode)",
+        modifier = modifier,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f),
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable
@@ -302,6 +334,8 @@ private fun DesignSettingsScreenPreview() {
         DesignSettingsScreen(
             selectedStyle = SchoolQuizDesignStyle.Clean,
             onStyleSelected = {},
+            appVersionName = "0.1.0",
+            appVersionCode = 1,
         )
     }
 }

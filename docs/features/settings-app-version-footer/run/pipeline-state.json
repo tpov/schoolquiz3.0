@@ -1,0 +1,54 @@
+{
+  "feature": "settings-app-version-footer",
+  "ticket": "SCH-2",
+  "status": "blocked",
+  "activePhase": "phase-01",
+  "reviewOwner": {
+    "role": "frontend-dev",
+    "label": "frontend-dev-1",
+    "sessionId": "d7e686ba-2560-4243-9c43-3e1c3cc26968"
+  },
+  "completedPhases": [],
+  "blockedPhases": [
+    "phase-01"
+  ],
+  "spawnedAgents": [
+    {
+      "role": "frontend-dev",
+      "label": "frontend-dev-1",
+      "sessionId": "d7e686ba-2560-4243-9c43-3e1c3cc26968",
+      "phase": "phase-01",
+      "scope": "production implementation, build gate, reviewer launch after build PASS"
+    },
+    {
+      "role": "test-dev",
+      "label": "test-dev-1",
+      "sessionId": "f8ade241-9fb4-43ae-86d4-043e4b0967e9",
+      "phase": "phase-01",
+      "scope": "AppShellScreenTest androidTest updates"
+    },
+    {
+      "role": "test-dev",
+      "label": "test-dev-2",
+      "sessionId": "db15e7d3-b9c5-4f00-8422-312da1bf80c6",
+      "phase": "phase-01",
+      "scope": "review-owner spawned test-dev follow-up"
+    },
+    {
+      "role": "diagnostics",
+      "label": "diagnostics-1",
+      "sessionId": "d643d7fb-6f35-48e8-b6b7-e0387ccfb4a3",
+      "phase": "phase-01",
+      "scope": "build failure diagnosis / environment-repo hygiene blockers"
+    }
+  ],
+  "lastGreenCommand": "git diff --check; test deletion gate; grep guards for version call sites, BuildConfig boundary, debug gating, onVersionTap, settings interaction primitives, and Koin access",
+  "openBlockers": [
+    {
+      "phase": "phase-01",
+      "kind": "build_environment",
+      "summary": "Gradle build gate failed before reviewer launch. Frontend-dev reports invalid local.properties sdk.dir, missing apps/android-next/google-services.json, and recurring AppleDouble ._* sidecars corrupting Android/Kotlin intermediates on the external workspace."
+    }
+  ],
+  "nextAction": "debug build-environment blockers, then re-run phase-01 build gate and let frontend-dev launch mandatory reviewers after PASS"
+}

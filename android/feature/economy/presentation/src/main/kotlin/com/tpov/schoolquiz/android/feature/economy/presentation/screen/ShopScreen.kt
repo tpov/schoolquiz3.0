@@ -17,12 +17,14 @@ private const val MESSAGE_AUTO_DISMISS_MS = 3_000L
 @Composable
 fun ShopScreen(
     component: ShopComponent,
+    onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsStateWithLifecycle(component.state.value)
     ShopView(
         state = state,
         onEvent = component::obtainEvent,
+        onOpenDrawer = onOpenDrawer,
         modifier = modifier,
     )
     LaunchedEffect(state.message) {

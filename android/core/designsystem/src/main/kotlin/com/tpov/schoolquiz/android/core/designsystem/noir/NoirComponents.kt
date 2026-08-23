@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
@@ -59,6 +60,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -97,6 +99,10 @@ fun NoirAppBar(
     Row(
         modifier
             .fillMaxWidth()
+            // Android 15 and up enforce edge-to-edge for apps targeting SDK 35, so a bar that does
+            // not inset itself is drawn beneath the clock and the cutout. Material's TopAppBar did
+            // this for us; this one has to do it for itself.
+            .statusBarsPadding()
             .padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -114,6 +120,72 @@ fun NoirAppBar(
         Text(title.uppercase(), style = NoirType.appbar)
         Spacer(Modifier.weight(1f))
         trailing()
+    }
+}
+
+// ─── Screen ground ─────────────────────────────────────────────────────────
+
+/** How far the mode tint rises out of the black at mid-screen. */
+const val NOIR_BACKGROUND_ACCENT_ALPHA = 0.08f
+
+/**
+ * The ground every screen sits on: black at both edges, the mode colour surfacing in the middle.
+ *
+ * It carries which mode you are in without a label — gold in the shop, the round's colour while
+ * playing. Kept to 8% because it has to lose every contest with the content in front of it; the
+ * moment it competes it stops being a ground.
+ */
+@Composable
+fun Modifier.noirScreenGround(accent: Color = LocalNoirAccent.current): Modifier =
+    this.background(
+        Brush.verticalGradient(
+            0f to NoirBg,
+            0.5f to accent.copy(alpha = NOIR_BACKGROUND_ACCENT_ALPHA).compositeOver(NoirBg),
+            1f to NoirBg,
+        ),
+    )
+
+/** A balance, as a pill: the icon carries the currency, the number stays white. */
+@Composable
+fun NoirBalancePill(
+    icon: ImageVector,
+    value: String,
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier
+            .clip(NoirShapePill)
+            .background(NoirS1)
+            .border(1.dp, Color(0x12FFFFFF), NoirShapePill)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(13.dp))
+        Text(value, style = NoirType.num.copy(fontSize = 12.5.sp, fontWeight = FontWeight.Bold))
+    }
+}
+
+/**
+ * A section rule: a mono kicker, a hairline that runs to the count on the right.
+ *
+ * Used where a group needs naming without a heavy header — the beta shelf below the shop, for one.
+ */
+@Composable
+fun NoirSectionRule(
+    label: String,
+    modifier: Modifier = Modifier,
+    trailing: String? = null,
+) {
+    Row(
+        modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(label.uppercase(), style = NoirType.kicker)
+        Box(Modifier.weight(1f).height(1.dp).background(NoirHair))
+        if (trailing != null) Text(trailing, style = NoirType.kicker)
     }
 }
 

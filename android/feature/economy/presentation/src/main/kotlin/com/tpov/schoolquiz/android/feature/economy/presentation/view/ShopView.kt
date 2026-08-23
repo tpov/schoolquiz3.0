@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -63,6 +62,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBalancePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopTab
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
@@ -104,6 +109,7 @@ private val LegacyAvatarBackground = Color(0xFF333339)
 fun ShopView(
     state: ShopViewState,
     onEvent: (ShopViewEvent) -> Unit,
+    onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (state.selectedTab == ShopTab.REFERRALS) {
@@ -115,39 +121,60 @@ fun ShopView(
         return
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    // The ground is drawn once by the shell, which already owns the mode gradient. Painting a
+    // second one here mixed two glows and muddied both.
+    Column(modifier.fillMaxSize()) {
+        ShopHeader(state, onOpenDrawer)
+        if (state.message != null) {
+            Text(
+                text = state.message,
+                style = NoirType.rowSub,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+        }
+        NoirShopStore(
+            state = state,
+            onPurchase = { id ->
+                if (id == ShopItemId.REFERRAL_PROGRAM) {
+                    onEvent(ShopViewEvent.SelectTab(ShopTab.REFERRALS))
+                } else {
+                    onEvent(ShopViewEvent.Purchase(id))
+                }
+            },
+        )
+    }
+}
+
+/** Title and both balances. The icon carries the currency; the numbers stay white. */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ShopHeader(
+    state: ShopViewState,
+    onOpenDrawer: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, end = 16.dp, top = 13.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (state.isLoading || state.message != null) {
-            item {
-                ShopStatusCard(
-                    isLoading = state.isLoading,
-                    message = state.message,
-                )
-            }
-        }
-        if (state.items.isEmpty()) {
-            item { EmptyShopCard("Позиции магазина не найдены") }
-        } else {
-            items(
-                items = state.items,
-                key = { it.id.wireName },
-            ) { item ->
-                ShopItemCard(
-                    item = item,
-                    processing = state.processingItemId == item.id,
-                    onAction = {
-                        if (item.id == ShopItemId.REFERRAL_PROGRAM) {
-                            onEvent(ShopViewEvent.SelectTab(ShopTab.REFERRALS))
-                        } else {
-                            onEvent(ShopViewEvent.Purchase(item.id))
-                        }
-                    },
-                )
-            }
-        }
+        NoirIconButton(
+            icon = NoirIcons.Menu,
+            contentDescription = "Open menu",
+            onClick = onOpenDrawer,
+        )
+        Text("Магазин".uppercase(), style = NoirType.appbar, modifier = Modifier.weight(1f))
+        NoirBalancePill(
+            icon = NoirIcons.Nolic,
+            value = state.balance.nolics.toString(),
+            tint = LocalNoirAccent.current,
+        )
+        NoirBalancePill(
+            icon = NoirIcons.GoldStack,
+            value = state.balance.gold.toString(),
+            tint = NoirGold,
+        )
     }
 }
 

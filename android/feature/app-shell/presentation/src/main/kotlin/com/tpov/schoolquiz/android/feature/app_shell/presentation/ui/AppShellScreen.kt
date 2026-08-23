@@ -45,6 +45,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBottomNav
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirNavItem
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSkin
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
@@ -226,7 +227,9 @@ fun AppShellScreen(
         ) {
             Scaffold(
                 topBar = {
-                    if (!isImmersiveScreenActive) {
+                    // The shop carries its own bar: it has to hold both balances beside the title,
+                    // which the shared one knows nothing about. Two bars would stack.
+                    if (!isImmersiveScreenActive && !state.isShopActive) {
                         NoirAppBar(
                             title = state.activeSection?.displayName ?: state.activeTab.displayName,
                             leading =
@@ -235,7 +238,7 @@ fun AppShellScreen(
                                 } else {
                                     {
                                         NoirIconButton(
-                                            icon = NoirIcons.Sliders,
+                                            icon = NoirIcons.Menu,
                                             contentDescription = "Open menu",
                                             onClick = {
                                                 rootComponent.navigator.goTo(Destination.OpenDrawer)
@@ -273,7 +276,10 @@ fun AppShellScreen(
             ) { paddingValues ->
                 SchoolQuizDesignBackground(
                     isHard = false,
-                    accentColor = MaterialTheme.colorScheme.primary,
+                    // One ground for every tab. The mode gradient belongs to the round being
+                    // played, not to which tab you are on — tinting per tab made the shop read as
+                    // a different app.
+                    accentColor = NoirAzure,
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     AppShellContent(
@@ -806,6 +812,7 @@ private fun ShopTabContent(
         is ShopScreenComponent.Placeholder ->
             ShopScreen(
                 component = rootComponent.shopComponent,
+                onOpenDrawer = { rootComponent.navigator.goTo(Destination.OpenDrawer) },
                 modifier = Modifier.padding(paddingValues),
             )
     }
@@ -825,3 +832,6 @@ private val Tab.noirIcon: androidx.compose.ui.graphics.vector.ImageVector
             Tab.EVENTS -> NoirIcons.Calendar
             Tab.SHOP -> NoirIcons.Bag
         }
+
+/** The default skin's accent, used for the ground on every tab but the shop. */
+private val NoirAzure = NoirSkin.Azure.accent

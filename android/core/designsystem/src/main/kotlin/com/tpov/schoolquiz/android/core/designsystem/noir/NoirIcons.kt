@@ -270,6 +270,22 @@ object NoirIcons {
             arcTo(7f, 2.6f, 0f, false, false, 19f, 12f)
         }
 
+    /**
+     * Open the drawer.
+     *
+     * Three plain lines. Sliders were used at first and read as filters or settings — the dots on
+     * them promise adjustment, not navigation.
+     */
+    val Menu: ImageVector =
+        stroke {
+            moveTo(4f, 7f)
+            lineTo(20f, 7f)
+            moveTo(4f, 12f)
+            lineTo(20f, 12f)
+            moveTo(4f, 17f)
+            lineTo(20f, 17f)
+        }
+
     /** Events — a calendar. */
     val Calendar: ImageVector =
         stroke {
