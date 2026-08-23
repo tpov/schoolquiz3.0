@@ -14,6 +14,7 @@ val economyPresentationModule =
                 getCatalog = get(),
                 purchaseItem = get(),
                 getReferralProgram = get(),
+                nicknames = get(),
             )
         }
     }
