@@ -36,6 +36,11 @@ fun UserProfileEntity.toDomain(): UserProfile =
         ownedLogos = ownedLogos,
         lifePoints = lifePoints,
         lifePointsUpdatedAtMs = lifePointsUpdatedAtMs,
+        realName = realName,
+        birthday = birthday,
+        city = city,
+        telegram = telegram,
+        verifiedAtMs = verifiedAtMs,
     )
 
 fun UserProfile.toEntity(): UserProfileEntity =
@@ -66,6 +71,11 @@ fun UserProfile.toEntity(): UserProfileEntity =
         ownedLogos = ownedLogos,
         lifePoints = lifePoints,
         lifePointsUpdatedAtMs = lifePointsUpdatedAtMs,
+        realName = realName,
+        birthday = birthday,
+        city = city,
+        telegram = telegram,
+        verifiedAtMs = verifiedAtMs,
     )
 
 private fun String.toProfileStatus(): ProfileStatus =

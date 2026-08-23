@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSo
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.verification.FirebaseVerificationRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
@@ -23,6 +24,7 @@ import com.tpov.schoolquiz.shared.feature.economy.data.remote.GiftBoxRemoteDataS
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.data.remote.TournamentLeaderboardRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.NicknameRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.VerificationRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.remote.LessonResultRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.quest_authoring.data.remote.QuestPrivateRemoteDataSource
@@ -44,6 +46,13 @@ val firebaseModule =
         }
         single<NicknameRemoteDataSource> {
             FirebaseNicknameRemoteDataSource(functions = get())
+        }
+        single<VerificationRemoteDataSource> {
+            FirebaseVerificationRemoteDataSource(
+                functions = get(),
+                firestore = get(),
+                auth = FirebaseAuth.getInstance(),
+            )
         }
         single<EconomyRemoteDataSource> {
             FirebaseEconomyRemoteDataSource(functions = get())

@@ -28,7 +28,27 @@ data class UserProfile(
      */
     val lifePoints: Int = standardHearts * LIFE_POINTS_PER_HEART,
     val lifePointsUpdatedAtMs: Long = 0L,
+    /**
+     * What a person says about themselves so a human can check who they are.
+     *
+     * Personal data, and kept deliberately small — a name, a birthday, a city and a way to reach
+     * them. It lives on the account document, which only its owner can read.
+     */
+    val realName: String? = null,
+    val birthday: String? = null,
+    val city: String? = null,
+    val telegram: String? = null,
+    /** When an admin or developer confirmed the identity. Zero means nobody has. */
+    val verifiedAtMs: Long = 0L,
 ) {
+    /**
+     * The tick.
+     *
+     * Read from the trophy rather than from [status]: the badge is what the decision actually
+     * grants, and deriving the mark from it means the two can never disagree.
+     */
+    val isVerified: Boolean get() = TROPHY_VERIFIED in trophies
+
     /** Ceiling: every owned heart slot holds [LIFE_POINTS_PER_HEART] points. */
     val maxLifePoints: Int get() = standardHearts * LIFE_POINTS_PER_HEART
 
@@ -59,6 +79,9 @@ data class UserProfile(
 
         /** Cost of one lesson attempt, from the legacy price list. */
         const val LESSON_ATTEMPT_LIFE_COST = 33
+
+        /** Mirrors TROPHY_VERIFIED in functions/trophies.js. */
+        const val TROPHY_VERIFIED = "verified"
 
         fun offline(): UserProfile =
             UserProfile(

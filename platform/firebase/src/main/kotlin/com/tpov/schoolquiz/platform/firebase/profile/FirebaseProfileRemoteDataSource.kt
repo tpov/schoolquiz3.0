@@ -76,6 +76,11 @@ class FirebaseProfileRemoteDataSource(
             nextBoxAtMs = long(NEXT_BOX_AT_MS).coerceAtLeast(0L),
             premiumUntilMs = long(PREMIUM_UNTIL_MS).coerceAtLeast(0L),
             trophies = stringList(TROPHIES).toSet(),
+            realName = string(REAL_NAME),
+            birthday = string(BIRTHDAY),
+            city = string(CITY),
+            telegram = string(TELEGRAM),
+            verifiedAtMs = long(VERIFIED_AT_MS).coerceAtLeast(0L),
             ownedLogos = stringList(OWNED_LOGOS),
         )
     }
@@ -122,6 +127,11 @@ class FirebaseProfileRemoteDataSource(
         const val NEXT_BOX_AT_MS = "nextBoxAtMs"
         const val PREMIUM_UNTIL_MS = "premiumUntilMs"
         const val TROPHIES = "trophies"
+        const val REAL_NAME = "realName"
+        const val BIRTHDAY = "birthday"
+        const val CITY = "city"
+        const val TELEGRAM = "telegram"
+        const val VERIFIED_AT_MS = "verifiedAtMs"
         const val OWNED_LOGOS = "ownedLogos"
         const val QUALIFICATION = "qualification"
         const val SPONSOR_LEVEL = "sponsorLevel"

@@ -31,4 +31,9 @@ data class UserProfileEntity(
     val ownedLogos: List<String>,
     val lifePoints: Int = 0,
     val lifePointsUpdatedAtMs: Long = 0,
+    val realName: String? = null,
+    val birthday: String? = null,
+    val city: String? = null,
+    val telegram: String? = null,
+    val verifiedAtMs: Long = 0,
 )

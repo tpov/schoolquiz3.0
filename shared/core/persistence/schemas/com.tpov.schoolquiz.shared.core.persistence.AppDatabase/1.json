@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "fd26c634b8360936405ea21e77272d94",
+    "identityHash": "7f980aefc2cf4f08dd06c57aa7a3ed6f",
     "entities": [
       {
         "tableName": "user_stats",
@@ -2005,7 +2005,7 @@
       },
       {
         "tableName": "user_profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` TEXT NOT NULL, `nickname` TEXT NOT NULL, `status` TEXT NOT NULL, `avatarUrl` TEXT, `knownLanguages` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL, `skillPoints` INTEGER NOT NULL, `gold` INTEGER NOT NULL, `nolics` INTEGER NOT NULL, `standardHearts` INTEGER NOT NULL, `goldHearts` INTEGER NOT NULL, `sponsorLevel` INTEGER NOT NULL, `testerLevel` INTEGER NOT NULL, `translatorLevel` INTEGER NOT NULL, `moderatorLevel` INTEGER NOT NULL, `adminLevel` INTEGER NOT NULL, `developerLevel` INTEGER NOT NULL, `boxCount` INTEGER NOT NULL, `boxStreakDays` INTEGER NOT NULL, `nextBoxAtMs` INTEGER NOT NULL, `premiumUntilMs` INTEGER NOT NULL, `trophies` TEXT NOT NULL, `ownedLogos` TEXT NOT NULL, `lifePoints` INTEGER NOT NULL, `lifePointsUpdatedAtMs` INTEGER NOT NULL, PRIMARY KEY(`uid`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` TEXT NOT NULL, `nickname` TEXT NOT NULL, `status` TEXT NOT NULL, `avatarUrl` TEXT, `knownLanguages` TEXT NOT NULL, `createdAtMs` INTEGER NOT NULL, `updatedAtMs` INTEGER NOT NULL, `skillPoints` INTEGER NOT NULL, `gold` INTEGER NOT NULL, `nolics` INTEGER NOT NULL, `standardHearts` INTEGER NOT NULL, `goldHearts` INTEGER NOT NULL, `sponsorLevel` INTEGER NOT NULL, `testerLevel` INTEGER NOT NULL, `translatorLevel` INTEGER NOT NULL, `moderatorLevel` INTEGER NOT NULL, `adminLevel` INTEGER NOT NULL, `developerLevel` INTEGER NOT NULL, `boxCount` INTEGER NOT NULL, `boxStreakDays` INTEGER NOT NULL, `nextBoxAtMs` INTEGER NOT NULL, `premiumUntilMs` INTEGER NOT NULL, `trophies` TEXT NOT NULL, `ownedLogos` TEXT NOT NULL, `lifePoints` INTEGER NOT NULL, `lifePointsUpdatedAtMs` INTEGER NOT NULL, `realName` TEXT, `birthday` TEXT, `city` TEXT, `telegram` TEXT, `verifiedAtMs` INTEGER NOT NULL, PRIMARY KEY(`uid`))",
         "fields": [
           {
             "fieldPath": "uid",
@@ -2159,6 +2159,32 @@
           {
             "fieldPath": "lifePointsUpdatedAtMs",
             "columnName": "lifePointsUpdatedAtMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "realName",
+            "columnName": "realName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "birthday",
+            "columnName": "birthday",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "city",
+            "columnName": "city",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "telegram",
+            "columnName": "telegram",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "verifiedAtMs",
+            "columnName": "verifiedAtMs",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -2361,7 +2387,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fd26c634b8360936405ea21e77272d94')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7f980aefc2cf4f08dd06c57aa7a3ed6f')"
     ]
   }
 }

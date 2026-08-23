@@ -3103,6 +3103,11 @@ async function upsertUserProfile(uid, options) {
       hasPremium: premiumUntilMs > options.now || Boolean(existingUser.hasPremium),
       trophies: trophyList(existingUser.trophies),
       ownedLogos: stringArray(existingUser.ownedLogos),
+      realName: nullableString(existingUser.realName),
+      birthday: nullableString(existingUser.birthday),
+      city: nullableString(existingUser.city),
+      telegram: nullableString(existingUser.telegram),
+      verifiedAtMs: numberValue(existingUser.verifiedAtMs, 0),
       sponsor: qualification.sponsorLevel,
       tester: qualification.testerLevel,
       translater: qualification.translatorLevel,
@@ -3284,6 +3289,13 @@ function profileResponse(result) {
     nextBoxAtMs: numberValue(user.nextBoxAtMs, 0),
     premiumUntilMs: numberValue(user.premiumUntilMs, 0),
     trophies: trophyList(user.trophies),
+    // What somebody submitted about themselves, readable only by them, plus when they were
+    // confirmed. The tick itself is a trophy; this is the date behind it.
+    realName: nullableString(user.realName),
+    birthday: nullableString(user.birthday),
+    city: nullableString(user.city),
+    telegram: nullableString(user.telegram),
+    verifiedAtMs: numberValue(user.verifiedAtMs, 0),
     ownedLogos: stringArray(user.ownedLogos),
     qualification: {
       sponsorLevel: numberValue(profile.sponsorLevel, 0),
