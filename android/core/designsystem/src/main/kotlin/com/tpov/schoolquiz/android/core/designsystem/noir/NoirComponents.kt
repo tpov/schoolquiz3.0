@@ -62,7 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-// ─── Апбар ──────────────────────────────────────────────────────────────────
+// ─── App bar ────────────────────────────────────────────────────────────────
 
 /** Icon button at 44dp — the minimum touch target, kept visible rather than implied. */
 @Composable
@@ -90,6 +90,7 @@ fun NoirAppBar(
     title: String,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    leading: (@Composable () -> Unit)? = null,
     trailing: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
@@ -98,7 +99,12 @@ fun NoirAppBar(
             .padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (onBack != null) {
+        // A screen either goes back or opens something; `leading` covers the second case, which is
+        // what a root screen with a drawer needs.
+        if (leading != null) {
+            leading()
+            Spacer(Modifier.width(4.dp))
+        } else if (onBack != null) {
             NoirIconButton(NoirIcons.Back, contentDescription = "Назад", onClick = onBack)
             Spacer(Modifier.width(4.dp))
         } else {
@@ -110,10 +116,10 @@ fun NoirAppBar(
     }
 }
 
-// ─── Група: hairline-блок, не «книжкова» картка ─────────────────────────────
+// ─── Group: a hairline block, not a floating card ───────────────────────────
 
 /**
- * Базовий контейнер системи. Поверхня [NoirS1], hairline-контур, верхня
+ * The base container. Surface [NoirS1], a hairline outline and
  * a light top edge. Shadow does nothing on black, so elevation is carried by the surface itself.
  * For Pro or seasonal blocks pass `Modifier.fxGold()` or `.fxViolet()` with `hairline = false`,
  * since those effects draw their own outline.
@@ -232,7 +238,7 @@ fun NoirRowIcon(
     }
 }
 
-// ─── Тумблер ────────────────────────────────────────────────────────────────
+// ─── Switch ─────────────────────────────────────────────────────────────────
 
 /** Track 48×28, thumb 22. On: the skin accent with an ink thumb. */
 @Composable
@@ -388,7 +394,7 @@ fun NoirButton(
     }
 }
 
-// ─── Чипи та статуси ────────────────────────────────────────────────────────
+// ─── Chips and statuses ─────────────────────────────────────────────────────
 
 enum class NoirChipTone { Neutral, Accent, Gold, Violet, Ok, Danger, Off }
 
@@ -445,9 +451,9 @@ fun NoirChip(
     }
 }
 
-// ─── Прогрес ────────────────────────────────────────────────────────────────
+// ─── Progress ───────────────────────────────────────────────────────────────
 
-/** Тонкий заповнений прогрес-бар (не контур). */
+/** A thin filled bar, not an outlined one. */
 @Composable
 fun NoirProgressBar(
     fraction: Float,
@@ -473,17 +479,19 @@ fun NoirProgressBar(
 
 // ─── Bottom navigation ──────────────────────────────────────────────────────
 
-enum class NoirTab(val label: String, val icon: ImageVector) {
-    Home("Главная", NoirIcons.Home),
-    Shop("Магазин", NoirIcons.Bag),
-    Friends("Друзья", NoirIcons.Users),
-    Profile("Профиль", NoirIcons.Sliders),
-}
+/**
+ * One destination in the bottom bar.
+ *
+ * The component used to hold its own list of tabs, which meant the design system decided what an
+ * app navigates to. It does not: the app passes its own.
+ */
+data class NoirNavItem(val label: String, val icon: ImageVector)
 
 @Composable
 fun NoirBottomNav(
-    selected: NoirTab,
-    onSelect: (NoirTab) -> Unit,
+    items: List<NoirNavItem>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -500,8 +508,8 @@ fun NoirBottomNav(
             .navigationBarsPadding()
             .padding(horizontal = 6.dp, vertical = 6.dp),
     ) {
-        NoirTab.values().forEach { tab ->
-            val active = tab == selected
+        items.forEachIndexed { index, tab ->
+            val active = index == selectedIndex
             val color by animateColorAsState(
                 targetValue = if (active) LocalNoirAccent.current else NoirT3,
                 animationSpec = tween(120),
@@ -511,7 +519,7 @@ fun NoirBottomNav(
                 Modifier
                     .weight(1f)
                     .clip(NoirShapeMd)
-                    .clickable(role = Role.Tab) { onSelect(tab) }
+                    .clickable(role = Role.Tab) { onSelect(index) }
                     .defaultMinSize(minHeight = 52.dp)
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -592,7 +600,7 @@ fun NoirToastHost(
     }
 }
 
-// ─── Скелетон: стан завантаження ────────────────────────────────────────────
+// ─── Skeleton: the loading state ────────────────────────────────────────────
 
 /** Shimmer rows for the loading state. Honours the system animator scale, so it stops when
  *  animations are turned off. */

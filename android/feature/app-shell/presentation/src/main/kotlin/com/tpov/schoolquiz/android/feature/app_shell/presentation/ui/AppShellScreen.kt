@@ -8,15 +8,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
@@ -24,8 +20,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -45,8 +39,12 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.catalog.DesignCatalogScreen
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignBackground
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
-import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignChromeSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAppBar
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBottomNav
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirNavItem
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
@@ -106,6 +104,7 @@ private data class AppShellUiAccess(
  *
  * @param appVersionName Version string from app layer (BuildConfig.VERSION_NAME).
  *        Library modules cannot access BuildConfig.VERSION_NAME directly (H8 fix).
+ * @param appVersionCode Version code from app layer (BuildConfig.VERSION_CODE).
  * @param isDebugBuild Passed from app layer (BuildConfig.DEBUG). Controls DesignCatalogScreen
  *        visibility (AC 8). Library modules cannot access BuildConfig directly.
  */
@@ -121,6 +120,7 @@ private data class AppShellUiAccess(
 fun AppShellScreen(
     rootComponent: DefaultRootComponent,
     appVersionName: String,
+    appVersionCode: Int,
     isDebugBuild: Boolean = false,
     selectedDesignStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.Main,
     onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit = {},
@@ -227,53 +227,45 @@ fun AppShellScreen(
             Scaffold(
                 topBar = {
                     if (!isImmersiveScreenActive) {
-                        TopAppBar(
-                            title = {
-                                Text(state.activeSection?.displayName ?: state.activeTab.displayName)
-                            },
-                            navigationIcon = {
-                                if (!state.isShopActive) {
-                                    IconButton(onClick = { rootComponent.navigator.goTo(Destination.OpenDrawer) }) {
-                                        Icon(Icons.Default.Menu, contentDescription = "Open menu")
+                        NoirAppBar(
+                            title = state.activeSection?.displayName ?: state.activeTab.displayName,
+                            leading =
+                                if (state.isShopActive) {
+                                    null
+                                } else {
+                                    {
+                                        NoirIconButton(
+                                            icon = NoirIcons.Sliders,
+                                            contentDescription = "Open menu",
+                                            onClick = {
+                                                rootComponent.navigator.goTo(Destination.OpenDrawer)
+                                            },
+                                        )
                                     }
-                                }
-                            },
-                            colors =
-                                TopAppBarDefaults.topAppBarColors(
-                                    containerColor = schoolQuizDesignChromeSurfaceColor(),
-                                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                                    navigationIconContentColor = MaterialTheme.colorScheme.primary,
-                                ),
+                                },
                         )
                     }
                 },
                 bottomBar = {
                     if (!isImmersiveScreenActive) {
-                        NavigationBar(
-                            containerColor = schoolQuizDesignChromeSurfaceColor(),
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ) {
-                            Tab.entries.forEach { tab ->
-                                BrandNavBarItem(
-                                    tab = tab,
-                                    selected = state.activeTab == tab,
-                                    badge = null,
-                                    onClick = {
-                                        if (tab == state.activeTab) {
-                                            val outcome = rootComponent.onActiveTabRetap(tab)
-                                            if (outcome == RetapOutcome.NO_OP) {
-                                                coroutineScope.launch {
-                                                    registry.current(tab)?.scrollToTop()
-                                                }
-                                            }
-                                        } else {
-                                            rootComponent.quizzesComponent.dismissQuizzes()
-                                            rootComponent.navigator.goTo(Destination.SwitchTab(tab))
+                        NoirBottomNav(
+                            items = Tab.entries.map { NoirNavItem(it.displayName, it.noirIcon) },
+                            selectedIndex = Tab.entries.indexOf(state.activeTab),
+                            onSelect = { index ->
+                                val tab = Tab.entries[index]
+                                if (tab == state.activeTab) {
+                                    val outcome = rootComponent.onActiveTabRetap(tab)
+                                    if (outcome == RetapOutcome.NO_OP) {
+                                        coroutineScope.launch {
+                                            registry.current(tab)?.scrollToTop()
                                         }
-                                    },
-                                )
-                            }
-                        }
+                                    }
+                                } else {
+                                    rootComponent.quizzesComponent.dismissQuizzes()
+                                    rootComponent.navigator.goTo(Destination.SwitchTab(tab))
+                                }
+                            },
+                        )
                     }
                 },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -287,6 +279,8 @@ fun AppShellScreen(
                     AppShellContent(
                         rootComponent = rootComponent,
                         state = state,
+                        appVersionName = appVersionName,
+                        appVersionCode = appVersionCode,
                         paddingValues = paddingValues,
                         uiAccess = uiAccess,
                         tournamentOverviewState = tournamentOverviewState,
@@ -318,6 +312,8 @@ fun AppShellScreen(
 private fun AppShellContent(
     rootComponent: DefaultRootComponent,
     state: AppShellState,
+    appVersionName: String,
+    appVersionCode: Int,
     paddingValues: PaddingValues,
     uiAccess: AppShellUiAccess,
     tournamentOverviewState: Map<String, TournamentOverviewLoadState>,
@@ -338,6 +334,8 @@ private fun AppShellContent(
                     LocalTabContent(
                         rootComponent = rootComponent,
                         screen = child.instance,
+                        appVersionName = appVersionName,
+                        appVersionCode = appVersionCode,
                         paddingValues = paddingValues,
                         canSeeDesignCatalog = uiAccess.canSeeDesignCatalog,
                         canManagePublicShelves = uiAccess.canManagePublicShelves,
@@ -422,6 +420,8 @@ private fun RowScope.BrandNavBarItem(
 private fun LocalTabContent(
     rootComponent: DefaultRootComponent,
     screen: LocalScreenComponent,
+    appVersionName: String,
+    appVersionCode: Int,
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
     canManagePublicShelves: Boolean,
@@ -462,6 +462,8 @@ private fun LocalTabContent(
                     DesignSettingsScreen(
                         selectedStyle = selectedDesignStyle,
                         onStyleSelected = onDesignStyleSelected,
+                        appVersionName = appVersionName,
+                        appVersionCode = appVersionCode,
                         modifier = Modifier.padding(paddingValues),
                     )
                 is LocalConfig.EmptyRoot ->
@@ -808,3 +810,18 @@ private fun ShopTabContent(
             )
     }
 }
+
+/**
+ * Bottom-bar icons, from the NOIR set rather than Material's.
+ *
+ * Events gets a calendar that had to be drawn for it: the set had a bell and a clock, and both say
+ * the wrong thing — one is notifications, the other is time.
+ */
+private val Tab.noirIcon: androidx.compose.ui.graphics.vector.ImageVector
+    get() =
+        when (this) {
+            Tab.LOCAL -> NoirIcons.Home
+            Tab.INTERNET -> NoirIcons.Globe
+            Tab.EVENTS -> NoirIcons.Calendar
+            Tab.SHOP -> NoirIcons.Bag
+        }

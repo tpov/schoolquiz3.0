@@ -86,7 +86,7 @@ object NoirIcons {
             close()
         }
 
-    /** Кредит — коло з плюсом. */
+    /** Credit — a circle with a plus. */
     val Coin: ImageVector =
         stroke {
             circle(12f, 12f, 8f)
@@ -157,7 +157,7 @@ object NoirIcons {
             lineTo(15f, 12f)
         }
 
-    /** Чистий чорний (OLED) — сонце. */
+    /** Pure black, the OLED skin — a sun. */
     val Sun: ImageVector =
         stroke {
             circle(12f, 12f, 4f)
@@ -193,6 +193,22 @@ object NoirIcons {
             close()
             moveTo(10f, 21f)
             lineTo(14f, 21f)
+        }
+
+    /** Events — a calendar. */
+    val Calendar: ImageVector =
+        stroke {
+            moveTo(4f, 6f)
+            lineTo(20f, 6f)
+            lineTo(20f, 20f)
+            lineTo(4f, 20f)
+            close()
+            moveTo(4f, 10f)
+            lineTo(20f, 10f)
+            moveTo(8f, 3f)
+            lineTo(8f, 7f)
+            moveTo(16f, 3f)
+            lineTo(16f, 7f)
         }
 
     val Clock: ImageVector =

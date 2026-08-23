@@ -9,10 +9,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.arkivanov.decompose.Child
@@ -24,6 +30,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
@@ -33,6 +40,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.TournamentE
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.UnderConstructionScreen
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
+import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.DesignSettingsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
@@ -180,6 +188,85 @@ class AppShellScreenTest {
         composeTestRule.onNodeWithContentDescription("Добавить урок").assertDoesNotExist()
     }
 
+    // SCH-2: settings_footer_exact_label
+    // GIVEN settings UI receives appVersionName="0.1.0" and appVersionCode=1
+    // WHEN the settings screen is rendered
+    // THEN the footer displays exactly "v0.1.0 (1)".
+    @Test
+    fun settings_footer_displays_exact_version_label() {
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                DesignSettingsScreen(
+                    selectedStyle = SchoolQuizDesignStyle.Clean,
+                    onStyleSelected = {},
+                    appVersionName = "0.1.0",
+                    appVersionCode = 1,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("v0.1.0 (1)").assertIsDisplayed()
+    }
+
+    // SCH-2: settings_footer_display_only_semantics
+    // GIVEN the settings footer is displayed
+    // WHEN its semantics are inspected
+    // THEN it has no click or long-click action.
+    @Test
+    fun settings_footer_is_display_only_without_click_or_long_click_semantics() {
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                DesignSettingsScreen(
+                    selectedStyle = SchoolQuizDesignStyle.Clean,
+                    onStyleSelected = {},
+                    appVersionName = "0.1.0",
+                    appVersionCode = 1,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText("v0.1.0 (1)")
+            .assert(SemanticsMatcher("no OnClick action") { node ->
+                !node.config.contains(SemanticsActions.OnClick)
+            })
+            .assert(SemanticsMatcher("no OnLongClick action") { node ->
+                !node.config.contains(SemanticsActions.OnLongClick)
+            })
+    }
+
+    // SCH-2: settings_footer_pinned_visible_bottom_bounds
+    // GIVEN the settings screen is rendered in the visible viewport
+    // WHEN root and footer bounds are measured
+    // THEN footer is pinned near the visible bottom and not rendered directly after the short list.
+    @Test
+    fun settings_footer_is_pinned_to_visible_bottom_not_short_list_tail() {
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                DesignSettingsScreen(
+                    selectedStyle = SchoolQuizDesignStyle.Clean,
+                    onStyleSelected = {},
+                    appVersionName = "0.1.0",
+                    appVersionCode = 1,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        val rootBounds = composeTestRule.onRoot().getUnclippedBoundsInRoot()
+        val footerBounds =
+            composeTestRule
+                .onNodeWithText("v0.1.0 (1)")
+                .assertIsDisplayed()
+                .getUnclippedBoundsInRoot()
+
+        assertTrue((rootBounds.bottom - footerBounds.bottom).value <= 32f)
+        assertTrue((footerBounds.top - rootBounds.top).value > rootBounds.height.value * 0.70f)
+        composeTestRule.onNodeWithText("Чистый").assertIsDisplayed()
+    }
+
     // Spec: hamburger_click_sends_open_drawer_to_domain (cross-phase review fix)
     // Fix: hamburger onClick calls navigator.goTo(Destination.OpenDrawer) directly instead of
     // drawerState.open() + snapshotFlow (avoids !state.isDrawerOpen condition race).
@@ -190,6 +277,59 @@ class AppShellScreenTest {
     fun hamburger_click_sends_open_drawer_to_domain() {
         val lifecycle = LifecycleRegistry()
         lifecycle.resume()
+        val component = createRootComponent(lifecycle)
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                AppShellScreen(
+                    rootComponent = component,
+                    appVersionName = "test",
+                    appVersionCode = 1,
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription("Open menu").performClick()
+        composeTestRule.waitForIdle()
+
+        assertTrue(runBlocking { component.appShellState.first() }.isDrawerOpen)
+
+        lifecycle.stop()
+        lifecycle.destroy()
+    }
+
+    // SCH-2: drawer_version_behavior_unchanged_guard
+    // GIVEN drawer footer behavior predates SCH-2
+    // WHEN AppShellScreen receives both settings version fields and the drawer is opened
+    // THEN drawer footer keeps the existing name-only version label.
+    @Test
+    fun drawer_footer_version_label_remains_name_only_after_settings_version_code_wiring() {
+        val lifecycle = LifecycleRegistry()
+        lifecycle.resume()
+        val component = createRootComponent(lifecycle)
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                AppShellScreen(
+                    rootComponent = component,
+                    appVersionName = "test",
+                    appVersionCode = 1,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription("Open menu").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("vtest").assertIsDisplayed()
+        composeTestRule.onNodeWithText("vtest (1)").assertDoesNotExist()
+
+        lifecycle.stop()
+        lifecycle.destroy()
+    }
+
+    private fun createRootComponent(lifecycle: LifecycleRegistry): DefaultRootComponent {
         val componentCtx = DefaultComponentContext(lifecycle)
         val repo = object : UserStatsRepository {
             private val _stats = MutableStateFlow(UserStats.guest())
@@ -198,7 +338,7 @@ class AppShellScreenTest {
             override suspend fun setLocalDeveloperLevel(value: Int) = Unit
             override suspend fun refreshProfile(): Result<Unit> = Result.success(Unit)
         }
-        val component = DefaultRootComponent(
+        return DefaultRootComponent(
             componentContext = componentCtx,
             initUseCase = InitializeAppShellUseCase(repo),
             navigateUseCase = NavigateUseCase(),
@@ -250,23 +390,5 @@ class AppShellScreenTest {
                 }
             },
         )
-
-        composeTestRule.setContent {
-            SchoolQuizTheme {
-                AppShellScreen(
-                    rootComponent = component,
-                    appVersionName = "test",
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithContentDescription("Open menu").performClick()
-        composeTestRule.waitForIdle()
-
-        assertTrue(runBlocking { component.appShellState.first() }.isDrawerOpen)
-
-        lifecycle.stop()
-        lifecycle.destroy()
     }
 }

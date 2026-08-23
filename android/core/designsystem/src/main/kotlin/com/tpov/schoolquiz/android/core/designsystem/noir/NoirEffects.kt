@@ -33,7 +33,7 @@ import androidx.compose.ui.util.lerp
  * A 17% radial over pure black with darkened edges, coloured by [noirGlow] — arena takes the
  * accent, easy is success, hard is danger. Switching mode animates over 320ms.
  *
- * Використання: першим елементом у Box екрана гри, `Modifier.matchParentSize()`.
+ * Usage: place it first inside the game screen's Box, with `Modifier.matchParentSize()`.
  */
 @Composable
 fun NoirGlowBed(modifier: Modifier = Modifier) {
