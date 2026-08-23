@@ -195,6 +195,81 @@ object NoirIcons {
             lineTo(14f, 21f)
         }
 
+    /** Locked — the beta rows in the shop. */
+    val Lock: ImageVector =
+        stroke {
+            moveTo(5f, 11f)
+            lineTo(19f, 11f)
+            lineTo(19f, 21f)
+            lineTo(5f, 21f)
+            close()
+            moveTo(8f, 11f)
+            lineTo(8f, 8f)
+            arcTo(4f, 4f, 0f, false, true, 16f, 8f)
+            lineTo(16f, 11f)
+        }
+
+    /** Add — a slot to buy. */
+    val Plus: ImageVector =
+        stroke {
+            moveTo(12f, 5f)
+            lineTo(12f, 19f)
+            moveTo(5f, 12f)
+            lineTo(19f, 12f)
+        }
+
+    /** Watch — an ad to sit through. */
+    val Play: ImageVector =
+        stroke {
+            moveTo(8f, 5f)
+            lineTo(19f, 12f)
+            lineTo(8f, 19f)
+            close()
+        }
+
+    /** A golden life. A gem, because the plain heart is already the ordinary one. */
+    val Gem: ImageVector =
+        stroke {
+            moveTo(12f, 4f)
+            lineTo(20f, 10f)
+            lineTo(12f, 20f)
+            lineTo(4f, 10f)
+            close()
+            moveTo(4f, 10f)
+            lineTo(20f, 10f)
+            moveTo(12f, 4f)
+            lineTo(8f, 10f)
+            lineTo(12f, 20f)
+        }
+
+    /**
+     * Nolics — a ringed dot.
+     *
+     * The two currencies must be told apart at a glance and at 14dp, so they differ in shape and
+     * not only in colour: colour alone fails for anyone who cannot separate blue from gold.
+     */
+    val Nolic: ImageVector =
+        strokeAndFill(
+            stroke = {
+                circle(12f, 12f, 7.4f)
+            },
+            fill = {
+                circle(12f, 12f, 2.6f)
+            },
+        )
+
+    /** Gold — a stack of coins. */
+    val GoldStack: ImageVector =
+        stroke {
+            ellipse(12f, 7.5f, 7f, 2.6f)
+            moveTo(5f, 7.5f)
+            lineTo(5f, 16.5f)
+            arcTo(7f, 2.6f, 0f, false, false, 19f, 16.5f)
+            lineTo(19f, 7.5f)
+            moveTo(5f, 12f)
+            arcTo(7f, 2.6f, 0f, false, false, 19f, 12f)
+        }
+
     /** Events — a calendar. */
     val Calendar: ImageVector =
         stroke {
@@ -281,6 +356,33 @@ private fun PathBuilder.circle(
     cy: Float,
     r: Float,
 ) = ellipse(cx, cy, r, r)
+
+/**
+ * An icon that is partly outlined and partly solid.
+ *
+ * Needed only where a shape reads wrong as pure outline — the nolic's centre is a dot, and an
+ * outlined dot at 14dp is a smudge.
+ */
+private fun strokeAndFill(
+    stroke: PathBuilder.() -> Unit,
+    fill: PathBuilder.() -> Unit,
+): ImageVector =
+    ImageVector.Builder(
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).addPath(
+        pathData = PathData(stroke),
+        fill = null,
+        stroke = SolidColor(Color.White),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+    ).addPath(
+        pathData = PathData(fill),
+        fill = SolidColor(Color.White),
+    ).build()
 
 private fun stroke(block: PathBuilder.() -> Unit): ImageVector =
     ImageVector.Builder(

@@ -53,6 +53,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -113,6 +114,67 @@ fun NoirAppBar(
         Text(title.uppercase(), style = NoirType.appbar)
         Spacer(Modifier.weight(1f))
         trailing()
+    }
+}
+
+// ─── Glass card ────────────────────────────────────────────────────────────
+
+/** Matte glass: a white wash so faint it reads as a lit surface rather than a lighter grey. */
+val NoirGlassFill = Color(0x09FFFFFF)
+val NoirGlassStroke = Color(0x17FFFFFF)
+
+/**
+ * The card the screens are built from.
+ *
+ * Distinct from [NoirGroup], and both are needed. A group draws structure with hairlines and holds
+ * rows; this is a single object that has to lift off the black on its own — a shop item, a result,
+ * a lesson to continue. On a pure black ground the lift cannot come from shadow, so it comes from a
+ * wash of white behind a slightly brighter edge.
+ */
+@Composable
+fun NoirGlassCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = NoirShapeLg,
+    onClick: (() -> Unit)? = null,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .background(NoirGlassFill)
+            .border(1.dp, NoirGlassStroke, shape)
+            // 82dp is the specified minimum, and it also clears the 44dp touch target twice over.
+            .defaultMinSize(minHeight = 82.dp)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        content = content,
+    )
+}
+
+/**
+ * The 34dp tile an item leads with.
+ *
+ * Tinted by role rather than filled: the tint carries the meaning and the icon stays monoline, so a
+ * row of them does not turn into a row of coloured blocks.
+ */
+@Composable
+fun NoirItemTile(
+    icon: ImageVector,
+    tint: Color = LocalNoirAccent.current,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .size(34.dp)
+            .clip(NoirShapeMd)
+            .background(tint.copy(alpha = 0.09f))
+            .border(1.dp, tint.copy(alpha = 0.22f), NoirShapeMd),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
     }
 }
 
