@@ -1,11 +1,11 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,15 +14,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
-import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignChip
-import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
-import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
-import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignModeAccent
-import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChipTone
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import java.util.Locale
 
+/**
+ * One lesson: its number, its title, the mode it will be played in, and how it was rated.
+ *
+ * A 64dp row rather than a card. A list of twenty cards on black is twenty floating rectangles;
+ * hairline rows read as one list, which is what it is.
+ *
+ * The mode chip is the only thing here that is not a label — tapping it flips the next run between
+ * easy and hard, and it only appears once hard has been unlocked.
+ */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun LessonItemCard(
@@ -31,71 +39,56 @@ fun LessonItemCard(
     onHardCheckChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val designStyle = currentSchoolQuizDesignStyle()
-    val isClean = designStyle == SchoolQuizDesignStyle.Clean
-    BrandCard(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick),
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .height(if (isClean) 72.dp else 64.dp)
-                    .padding(
-                        horizontal = if (isClean) 16.dp else 12.dp,
-                        vertical = if (isClean) 12.dp else 8.dp,
-                    ),
-        ) {
-            if (item.orderLabel != null) {
-                Text(
-                    text = item.orderLabel,
-                    style = if (isClean) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isClean) 0.5f else 0.62f),
-                    modifier = Modifier.padding(end = if (isClean) 10.dp else 8.dp),
-                )
-            }
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
+        if (item.orderLabel != null) {
+            Text(item.orderLabel, style = NoirType.num.copy(color = NoirT3))
+        }
+        Text(
+            text = item.title,
+            style = NoirType.rowTitle,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (item.hardUnlocked) {
+            NoirChip(
+                text = if (item.isHardChecked) "Hard" else "Easy",
+                tone = if (item.isHardChecked) NoirChipTone.Danger else NoirChipTone.Accent,
+                modifier = Modifier.clickable { onHardCheckChanged(!item.isHardChecked) },
             )
-            if (item.hardUnlocked) {
-                SchoolQuizDesignChip(
-                    text = if (item.isHardChecked) "Сложный" else "Легкий",
-                    color = schoolQuizDesignModeAccent(isHard = item.isHardChecked),
-                    modifier =
-                        Modifier
-                            .padding(start = 8.dp)
-                            .clickable { onHardCheckChanged(!item.isHardChecked) },
-                )
-            }
-            StarRating(
-                rating = item.averageRating,
-                modifier = Modifier.padding(start = 8.dp),
-                size = if (isClean) 24.dp else 28.dp,
-                tint = MaterialTheme.colorScheme.secondary,
-            )
-            if (item.averageRating != null) {
-                Text(
-                    text = String.format(Locale.US, "%.1f", item.averageRating),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.padding(start = 2.dp),
-                )
-                if (item.ratingCount > 0) {
-                    Text(
-                        text = "(${item.ratingCount})",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 2.dp),
-                    )
-                }
-            }
+        }
+        LessonRating(item)
+    }
+}
+
+/**
+ * The rating, in gold and in figures.
+ *
+ * A lesson nobody has rated says so instead of showing an empty row of stars — zero stars and no
+ * votes look identical, and they mean opposite things.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun LessonRating(item: LessonItemUi) {
+    if (item.averageRating == null) {
+        Text("no ratings", style = NoirType.kicker)
+        return
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = String.format(Locale.US, "%.1f", item.averageRating),
+            style = NoirType.num.copy(color = NoirGold),
+        )
+        if (item.ratingCount > 0) {
+            Text("(${item.ratingCount})", style = NoirType.kicker)
         }
     }
 }

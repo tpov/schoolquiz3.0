@@ -41,8 +41,7 @@ class FirebaseNicknameRemoteDataSource(
         call(SET_ACTIVE, mapOf(NICKNAME to nickname))
     }
 
-    override suspend fun claim(nickname: String): Long =
-        call(CLAIM, mapOf(NICKNAME to nickname)).number(CHARGED) ?: 0L
+    override suspend fun claim(nickname: String): Long = call(CLAIM, mapOf(NICKNAME to nickname)).number(CHARGED) ?: 0L
 
     override suspend fun listings(limit: Int): List<NicknameListing> =
         call(FETCH_LISTINGS, mapOf(LIMIT to limit)).list(LISTINGS).map { entry ->
@@ -54,7 +53,10 @@ class FirebaseNicknameRemoteDataSource(
             )
         }
 
-    override suspend fun listForSale(nickname: String, price: Long) {
+    override suspend fun listForSale(
+        nickname: String,
+        price: Long,
+    ) {
         call(LIST_FOR_SALE, mapOf(NICKNAME to nickname, PRICE to price))
     }
 
@@ -62,14 +64,14 @@ class FirebaseNicknameRemoteDataSource(
         call(CANCEL_LISTING, mapOf(NICKNAME to nickname))
     }
 
-    override suspend fun buy(nickname: String): Long =
-        call(BUY, mapOf(NICKNAME to nickname)).number(COMMISSION) ?: 0L
+    override suspend fun buy(nickname: String): Long = call(BUY, mapOf(NICKNAME to nickname)).number(COMMISSION) ?: 0L
 
-    private suspend fun call(name: String, payload: Map<String, Any>): Map<*, *> =
-        functions.getHttpsCallable(name).call(payload).await().data as? Map<*, *> ?: emptyMap<Any, Any>()
+    private suspend fun call(
+        name: String,
+        payload: Map<String, Any>,
+    ): Map<*, *> = functions.getHttpsCallable(name).call(payload).await().data as? Map<*, *> ?: emptyMap<Any, Any>()
 
-    private fun Map<*, *>.string(field: String): String? =
-        this[field]?.toString()?.takeIf { it.isNotBlank() }
+    private fun Map<*, *>.string(field: String): String? = this[field]?.toString()?.takeIf { it.isNotBlank() }
 
     /** Callables hand numbers back as Int or Double depending on size; both mean the same thing. */
     private fun Map<*, *>.number(field: String): Long? = (this[field] as? Number)?.toLong()

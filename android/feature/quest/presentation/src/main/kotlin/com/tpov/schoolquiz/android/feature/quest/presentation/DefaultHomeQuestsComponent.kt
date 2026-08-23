@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-
 /**
  * Default implementation of [HomeQuestsComponent].
  *

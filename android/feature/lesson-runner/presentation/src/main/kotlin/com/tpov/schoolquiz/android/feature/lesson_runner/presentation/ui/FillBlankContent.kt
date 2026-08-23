@@ -31,7 +31,6 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Temp
 
 private const val CONSUMED_ALPHA = 0.4f
 private const val FEEDBACK_FLIP_FULL_ROTATION = 180f
-private const val FEEDBACK_CAMERA_DISTANCE_FACTOR = 18f
 private const val FEEDBACK_STAGGER_MS = 90
 private const val FILLED_BLANK_CONTAINER_ALPHA = 0.2f
 private const val FEEDBACK_BLANK_CONTAINER_ALPHA = 0.18f

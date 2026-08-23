@@ -9,13 +9,13 @@ import com.tpov.schoolquiz.platform.firebase.economy.FirebaseGiftBoxRemoteDataSo
 import com.tpov.schoolquiz.platform.firebase.lesson_result.FirebaseLessonResultRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.nickname.FirebaseNicknameRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.profile.FirebaseProfileRemoteDataSource
-import com.tpov.schoolquiz.platform.firebase.verification.FirebaseVerificationRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestArenaSubmissionRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseQuestPrivateRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.quest_authoring.FirebaseReviewAssignmentRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseCatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.sync.FirebaseLessonContentSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.platform.firebase.tournament.FirebaseTournamentLeaderboardRemoteDataSource
+import com.tpov.schoolquiz.platform.firebase.verification.FirebaseVerificationRemoteDataSource
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncChangeRemoteDataSource
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncChangeRemoteDataSource

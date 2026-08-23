@@ -1,22 +1,25 @@
 package com.tpov.schoolquiz.android.core.designsystem.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,6 +29,10 @@ import coil3.request.crossfade
 import com.tpov.schoolquiz.android.core.designsystem.R
 import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 
 /**
@@ -65,6 +72,13 @@ fun CatalogGrid(
     }
 }
 
+/**
+ * A catalog tile: the picture is the card, the name sits on it.
+ *
+ * The scrim under the text is not decoration. Catalog art is user-supplied and often light, and
+ * white on a bright photograph is unreadable — without it the name disappears on exactly the images
+ * somebody chose because they looked good.
+ */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun CatalogGridItem(
@@ -72,41 +86,43 @@ fun CatalogGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isClean = currentSchoolQuizDesignStyle() == SchoolQuizDesignStyle.Clean
-    BrandCard(
-        modifier =
-            modifier
-                .clickable(onClick = onClick),
+    val context = LocalContext.current
+    val safeUrl = item.pictureUrl?.takeIf { it.startsWith("https://") }
+    val imageData = safeUrl ?: item.picturePath.toCatalogPictureResId()
+    Box(
+        modifier
+            .aspectRatio(1f)
+            .clip(NoirShapeLg)
+            .background(NoirS1)
+            .border(1.dp, NoirGlassStroke, NoirShapeLg)
+            .clickable(onClick = onClick),
     ) {
-        Column {
-            val context = LocalContext.current
-            val safeUrl = item.pictureUrl?.takeIf { it.startsWith("https://") }
-            val imageData = safeUrl ?: item.picturePath.toCatalogPictureResId()
-            AsyncImage(
-                model =
-                    ImageRequest.Builder(context)
-                        .data(imageData)
-                        .crossfade(true)
-                        .build(),
-                contentDescription = item.name,
-                contentScale = ContentScale.Crop,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f),
-            )
-            Text(
-                text = item.name,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier =
-                    Modifier.padding(
-                        horizontal = if (isClean) 12.dp else 8.dp,
-                        vertical = if (isClean) 10.dp else 4.dp,
+        AsyncImage(
+            model = ImageRequest.Builder(context).data(imageData).crossfade(true).build(),
+            contentDescription = item.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize(),
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        SCRIM_START to Color.Transparent,
+                        1f to Color.Black.copy(alpha = SCRIM_STRENGTH),
                     ),
-            )
-        }
+                ),
+        )
+        Text(
+            text = item.name,
+            style = NoirType.rowTitle,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+        )
     }
 }
 
@@ -119,3 +135,9 @@ private fun String?.toCatalogPictureResId(): Int? =
         "catalog-pictures/surveys.jpg" -> R.drawable.catalog_surveys
         else -> null
     }
+
+/** Where the scrim starts, as a fraction of the tile. Above this the picture is untouched. */
+private const val SCRIM_START = 0.45f
+
+/** Dark enough to hold white text over a bright photograph. */
+private const val SCRIM_STRENGTH = 0.78f

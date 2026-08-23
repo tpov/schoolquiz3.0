@@ -2,58 +2,55 @@
 
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
 
 private const val PERFECT_SCORE = 100
-private const val RESULT_PROGRESS_ANIMATION_MS = 900
 private const val HARD_REWARD_MULTIPLIER = 2
 private const val NOLICS_PERCENT_STEP = 10
 
-@Suppress("FunctionNaming", "LongMethod", "UnusedParameter", "ktlint:standard:function-naming")
+/**
+ * The end of an attempt.
+ *
+ * One glass card holds the score, the personal best it is measured against, and the four figures
+ * that changed. Below it the leaderboard, and at the foot two words instead of two buttons —
+ * running again and moving on are both ordinary, and neither deserves a filled slab.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun ResultContent(
     state: RunnerUiState.Result,
@@ -61,97 +58,131 @@ fun ResultContent(
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val subtitle =
-        when {
-            state.mode == Difficulty.EASY && state.percentScore.raw == PERFECT_SCORE && state.hardUnlocked ->
-                "Поздравляем! Сложные вопросы доступны"
-            state.mode == Difficulty.HARD && state.percentScore.raw == PERFECT_SCORE ->
-                "100% сложные! Вы прошли урок полностью"
-            else -> "Урок завершён"
-        }
     val isHard = state.mode == Difficulty.HARD
-    val accent = runnerModeAccent(isHard)
+    val modeLabel = if (isHard) "hard" else "easy"
     val earnedExperience = resultExperienceReward(state.percentScore.raw, state.mode)
     val earnedNolics = resultNolicsReward(state.percentScore.raw, state.mode)
 
     Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(start = 16.dp, top = 76.dp, end = 16.dp, bottom = 38.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ResultSummaryCard(
-            modifier = Modifier.fillMaxWidth(),
-            isHard = isHard,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = "${state.percentScore.raw}%",
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 72.sp),
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
-                    textAlign = TextAlign.Center,
-                )
-                ResultScoreProgress(
-                    currentPercent = state.percentScore.raw,
-                    userBestPercent = state.userBestPercentScore,
-                    leader = state.top3.firstOrNull(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            ResultMetrics(state = state, accent = accent)
-            ResultRewardsRow(
-                experience = earnedExperience,
-                nolics = earnedNolics,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (state.saveWarning) {
-                RunnerDesignCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    accentColor = MaterialTheme.colorScheme.error,
-                    elevated = true,
-                ) {
+        Text("Урок пройден · $modeLabel".uppercase(), style = NoirType.kicker)
+
+        NoirGlassCard {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = "Результат не сохранён",
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
+                        text = state.percentScore.raw.toString(),
+                        style = NoirType.num.copy(fontSize = 56.sp, fontWeight = FontWeight.Bold),
                     )
+                    Text("%", style = NoirType.num.copy(fontSize = 22.sp, color = NoirT3))
+                }
+                BestMarkScale(
+                    current = state.percentScore.raw,
+                    best = state.userBestPercentScore,
+                    isHard = isHard,
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    ResultFigure("Attempt", state.userAttemptCount.toString())
+                    ResultFigure("Average", "${state.userAveragePercentScore}%")
+                    ResultFigure("XP", "+$earnedExperience")
+                    ResultFigure("Nolics", "+$earnedNolics")
                 }
             }
-            if (state.showRatingPrompt) {
-                RatingPromptSection(
-                    ratingSubmissionState = state.ratingSubmissionState,
-                    onSubmitRating = onSubmitRating,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
         }
-        Spacer(modifier = Modifier.weight(1f))
+
+        if (state.saveWarning) {
+            Text(
+                "Результат не сохранён — уйдёт при следующей синхронизации",
+                style = NoirType.rowSub.copy(color = NoirDanger),
+            )
+        }
+
+        if (state.showRatingPrompt) {
+            RatingPromptSection(
+                ratingSubmissionState = state.ratingSubmissionState,
+                onSubmitRating = onSubmitRating,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
         if (state.top3.isNotEmpty()) {
             Top3Section(top3 = state.top3)
-            Spacer(modifier = Modifier.height(32.dp))
         }
-        RunnerResultAction(text = "Завершить", onClick = onFinish)
+
+        Spacer(Modifier.height(4.dp))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Ещё раз",
+                style = NoirType.button.copy(color = NoirT3),
+                modifier = Modifier.clickable(onClick = onFinish),
+            )
+            Text(
+                "Дальше →",
+                style = NoirType.button.copy(color = LocalNoirAccent.current),
+                modifier = Modifier.clickable(onClick = onFinish),
+            )
+        }
+    }
+}
+
+/**
+ * This attempt against your own best.
+ *
+ * The mark is the number worth beating, and it is the player's own — a leaderboard says who is
+ * ahead, this says whether today went better than last time.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun BestMarkScale(
+    current: Int,
+    best: Int,
+    isHard: Boolean,
+) {
+    val accent = if (isHard) NoirDanger else LocalNoirAccent.current
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(NoirShapePill)
+                .background(NoirOutline),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(current.coerceIn(0, 100) / 100f)
+                    .height(6.dp)
+                    .clip(NoirShapePill)
+                    .background(accent),
+            )
+        }
+        Text("Ваш лучший $best%", style = NoirType.kicker)
+    }
+}
+
+/** A figure and what it counts. Mono, so a column of them lines up. */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ResultFigure(
+    label: String,
+    value: String,
+) {
+    Column(horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(label.uppercase(), style = NoirType.kicker)
+        Text(value, style = NoirType.num.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold))
     }
 }
 
@@ -169,327 +200,6 @@ private fun resultNolicsReward(
 ): Int {
     val multiplier = if (mode == Difficulty.HARD) HARD_REWARD_MULTIPLIER else 1
     return (percent.coerceIn(0, PERFECT_SCORE) / NOLICS_PERCENT_STEP) * multiplier
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultSummaryCard(
-    isHard: Boolean,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = runnerCenterGlowColor(isHard = isHard),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)),
-        tonalElevation = 0.dp,
-        shadowElevation = 2.dp,
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 22.dp)) {
-            content()
-        }
-    }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultRewardsRow(
-    experience: Int,
-    nolics: Int,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ResultRewardItem(
-            label = "Опыт",
-            value = "+$experience XP",
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.weight(1f),
-        )
-        ResultRewardItem(
-            label = "Нолики",
-            value = "+$nolics ◎",
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultRewardItem(
-    label: String,
-    value: String,
-    color: Color,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = runnerDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(1.dp, runnerLightBorderColor()),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                color = color,
-            )
-        }
-    }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultScoreProgress(
-    currentPercent: Int,
-    userBestPercent: Int,
-    leader: TopParticipant?,
-    modifier: Modifier = Modifier,
-) {
-    val currentProgress = (currentPercent / PERFECT_SCORE.toFloat()).coerceIn(0f, 1f)
-    val userBestProgress = (userBestPercent / PERFECT_SCORE.toFloat()).coerceIn(0f, 1f)
-    val leaderProgress = ((leader?.percent ?: 0) / PERFECT_SCORE.toFloat()).coerceIn(0f, 1f)
-    val animatedProgress = remember { Animatable(0f) }
-
-    LaunchedEffect(currentProgress) {
-        animatedProgress.snapTo(0f)
-        animatedProgress.animateTo(
-            targetValue = currentProgress,
-            animationSpec =
-                tween(
-                    durationMillis = RESULT_PROGRESS_ANIMATION_MS,
-                    easing = FastOutSlowInEasing,
-                ),
-        )
-    }
-
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        BoxWithConstraints(
-            modifier = Modifier.fillMaxWidth().height(44.dp),
-        ) {
-            val markerSize = 26.dp
-            val markerWidth = 3.dp
-            val userLineOffset =
-                ((maxWidth * userBestProgress) - markerWidth / 2).coerceIn(0.dp, maxWidth - markerWidth)
-            val leaderLineOffset =
-                ((maxWidth * leaderProgress) - markerWidth / 2).coerceIn(0.dp, maxWidth - markerWidth)
-            val userMarkerOffset =
-                ((maxWidth * userBestProgress) - markerSize / 2).coerceIn(0.dp, maxWidth - markerSize)
-            val leaderMarkerOffset =
-                ((maxWidth * leaderProgress) - markerSize / 2).coerceIn(0.dp, maxWidth - markerSize)
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .fillMaxWidth()
-                        .height(12.dp)
-                        .background(runnerNeutralBorderColor(), MaterialTheme.shapes.small),
-            )
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .width(maxWidth * animatedProgress.value)
-                        .height(12.dp)
-                        .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small),
-            )
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .offset(x = userLineOffset)
-                        .width(markerWidth)
-                        .height(28.dp)
-                        .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.extraSmall),
-            )
-            leader?.let { participant ->
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomStart)
-                            .offset(x = leaderLineOffset)
-                            .width(markerWidth)
-                            .height(28.dp)
-                            .background(MaterialTheme.colorScheme.secondary, MaterialTheme.shapes.extraSmall),
-                )
-                ResultProgressMarker(
-                    color = MaterialTheme.colorScheme.secondary,
-                    avatarUrl = participant.avatarUrl,
-                    modifier = Modifier.align(Alignment.TopStart).offset(x = leaderMarkerOffset),
-                )
-            }
-            ResultProgressMarker(
-                color = MaterialTheme.colorScheme.primary,
-                avatarUrl = null,
-                modifier = Modifier.align(Alignment.TopStart).offset(x = userMarkerOffset),
-            )
-        }
-    }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultProgressMarker(
-    color: Color,
-    avatarUrl: String?,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier.size(26.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        contentColor = color,
-        border = BorderStroke(1.dp, color),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (avatarUrl == null) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(17.dp),
-                    tint = color,
-                )
-            } else {
-                ParticipantAvatar(
-                    avatarUrl = avatarUrl,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
-    }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultMetrics(
-    state: RunnerUiState.Result,
-    accent: Color,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            ResultMetricCard(
-                label = "Попыток",
-                value = state.userAttemptCount.toString(),
-                accent = accent,
-                modifier = Modifier.weight(1f),
-            )
-            ResultMetricCard(
-                label = "Мой средний",
-                value = "${state.userAveragePercentScore}%",
-                accent = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f),
-            )
-            ResultMetricCard(
-                label = "Средний всех",
-                value = "—",
-                accent = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultMetricCard(
-    label: String,
-    value: String,
-    accent: Color,
-    modifier: Modifier = Modifier,
-) {
-    RunnerDesignCard(
-        modifier = modifier.fillMaxWidth(),
-        accentColor = accent,
-        containerColor = runnerDeepSurfaceColor(),
-        borderColor = runnerLightBorderColor(),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                color = accent,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun RunnerResultAction(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .heightIn(min = 54.dp)
-                .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        color = runnerDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.primary,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.86f)),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 15.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = text,
-                modifier = Modifier.padding(start = 8.dp),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-    }
 }
 
 @Suppress("FunctionNaming", "UnusedPrivateMember", "MagicNumber", "ktlint:standard:function-naming")

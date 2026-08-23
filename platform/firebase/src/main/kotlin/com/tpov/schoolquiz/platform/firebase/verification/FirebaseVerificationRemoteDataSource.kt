@@ -38,9 +38,12 @@ class FirebaseVerificationRemoteDataSource(
     }
 
     override suspend fun own(): OwnVerification {
-        val uid = auth.currentUser?.uid ?: return OwnVerification(VerificationState.NONE)
-        val snapshot = firestore.collection(REQUESTS).document(uid).get().await()
-        if (!snapshot.exists()) return OwnVerification(VerificationState.NONE)
+        val uid = auth.currentUser?.uid
+        val snapshot = uid?.let { firestore.collection(REQUESTS).document(it).get().await() }
+        if (snapshot == null || !snapshot.exists()) {
+            // No account, or nothing submitted — the same thing from the screen's point of view.
+            return OwnVerification(VerificationState.NONE)
+        }
 
         val status = snapshot.getString(STATUS).orEmpty().uppercase()
         val state =
@@ -81,7 +84,11 @@ class FirebaseVerificationRemoteDataSource(
         }
     }
 
-    override suspend fun decide(uid: String, decision: VerificationDecision, reason: String?) {
+    override suspend fun decide(
+        uid: String,
+        decision: VerificationDecision,
+        reason: String?,
+    ) {
         functions
             .getHttpsCallable(DECIDE)
             .call(

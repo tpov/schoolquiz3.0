@@ -37,12 +37,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.OndemandVideo
 import androidx.compose.material.icons.filled.VolunteerActivism
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,7 +54,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
@@ -101,7 +95,6 @@ private val LegacyRewardBackground = Color(0xFF3A3000)
 private val LegacyHighlightText = Color(0xFFFFC107)
 private val LegacyWhite80 = Color(0xCCFFFFFF)
 private val LegacyTextSecondary = Color(0xFFB8B8B8)
-private val LegacyProgressBackground = Color(0xFF333339)
 private val LegacyItemBackground = Color(0xFF181818)
 private val LegacyAvatarBackground = Color(0xFF333339)
 
@@ -178,99 +171,7 @@ private fun ShopHeader(
     }
 }
 
-@Composable
-private fun ShopStatusCard(
-    isLoading: Boolean,
-    message: String?,
-) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-            }
-            Text(
-                text = message ?: "Загрузка магазина",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ShopItemCard(
-    item: ShopCatalogItem,
-    processing: Boolean,
-    onAction: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = ShopCardShape,
-        color = item.cardColor(),
-        contentColor = Color.White,
-        border = BorderStroke(1.dp, LegacyBorderColor),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 84.dp)
-                    .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = item.icon(),
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = item.iconColor(),
-            )
-            Text(
-                text = item.title,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Button(
-                onClick = onAction,
-                enabled = !processing,
-                modifier = Modifier.widthIn(min = item.buttonMinWidth()),
-                shape = ShopButtonShape,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = item.buttonColor(),
-                        contentColor = Color.White,
-                        disabledContainerColor = item.buttonColor().copy(alpha = 0.52f),
-                        disabledContentColor = Color.White.copy(alpha = 0.7f),
-                    ),
-                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp),
-            ) {
-                if (processing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White,
-                    )
-                } else {
-                    Text(
-                        text = item.actionLabel(),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-        }
-    }
-}
-
+/** Title and both balances. The icon carries the currency; the numbers stay white. */
 @Composable
 private fun ReferralProgramView(
     referralProgram: ReferralProgram,
@@ -747,18 +648,6 @@ private fun LegacyCircleIconButton(
     }
 }
 
-@Composable
-private fun EmptyShopCard(text: String) {
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
 private data class ReferralUserDisplay(
     val id: String,
     val nickname: String,
@@ -809,45 +698,6 @@ private fun ReferralProgram.displayUsers(): List<ReferralUserDisplay> {
 }
 
 private fun ReferralProgram.seasonBonusBoxes(): Int = invitedUsers.sumOf { it.seasonBoxes / 100 }
-
-private fun ShopCatalogItem.actionLabel(): String =
-    when (id) {
-        ShopItemId.DONATE_GOOGLE_PLAY -> "GooglePlay"
-        ShopItemId.REFERRAL_PROGRAM -> "Open"
-        ShopItemId.AD_REWARD_BOX -> "Watch"
-        else -> "Buy"
-    }
-
-private fun ShopCatalogItem.buttonMinWidth(): Dp =
-    when (id) {
-        ShopItemId.DONATE_GOOGLE_PLAY -> 120.dp
-        ShopItemId.REFERRAL_PROGRAM -> 92.dp
-        ShopItemId.AD_REWARD_BOX -> 92.dp
-        else -> 82.dp
-    }
-
-private fun ShopCatalogItem.cardColor(): Color =
-    when (id) {
-        ShopItemId.GOLD_HEART -> LegacyGoldCardColor
-        ShopItemId.DONATE_GOOGLE_PLAY -> LegacyDonateCardColor
-        ShopItemId.REFERRAL_PROGRAM -> LegacyReferralCardColor
-        else -> LegacyShopCardColor
-    }
-
-private fun ShopCatalogItem.buttonColor(): Color =
-    when (id) {
-        ShopItemId.GOLD_HEART -> LegacyGold
-        ShopItemId.DONATE_GOOGLE_PLAY -> LegacyGooglePlay
-        ShopItemId.REFERRAL_PROGRAM -> LegacySecondaryButton
-        else -> LegacyAccent
-    }
-
-private fun ShopCatalogItem.iconColor(): Color =
-    when (id) {
-        ShopItemId.STANDARD_HEART_SLOT -> LegacyHeart
-        ShopItemId.GOLD_HEART -> LegacyGold
-        else -> Color.White.copy(alpha = 0.72f)
-    }
 
 private fun ShopCatalogItem.icon(): ImageVector =
     when (id) {

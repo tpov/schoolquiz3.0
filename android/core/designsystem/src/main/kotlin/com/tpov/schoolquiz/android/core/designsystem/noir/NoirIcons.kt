@@ -286,6 +286,27 @@ object NoirIcons {
             lineTo(20f, 17f)
         }
 
+    /**
+     * Rating. A five-pointed star, and the only shape that means rating here.
+     *
+     * The stat row used to borrow the "text size" glyph, which is a letter A — it read as typography
+     * settings sitting in a list of counters.
+     */
+    val Star: ImageVector =
+        stroke {
+            moveTo(12f, 3.5f)
+            lineTo(14.6f, 9.1f)
+            lineTo(20.5f, 9.9f)
+            lineTo(16.2f, 14.1f)
+            lineTo(17.3f, 20.2f)
+            lineTo(12f, 17.3f)
+            lineTo(6.7f, 20.2f)
+            lineTo(7.8f, 14.1f)
+            lineTo(3.5f, 9.9f)
+            lineTo(9.4f, 9.1f)
+            close()
+        }
+
     /** Events — a calendar. */
     val Calendar: ImageVector =
         stroke {

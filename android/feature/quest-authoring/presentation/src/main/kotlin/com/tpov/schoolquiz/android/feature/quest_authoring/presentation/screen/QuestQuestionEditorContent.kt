@@ -61,8 +61,8 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.FillBla
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.MultipleChoiceContent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.OrderingContent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.QuestionImage
-import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.SurveyContent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.SingleChoiceContent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.SurveyContent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FILL_BLANK_RUNTIME_MARKER
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankAnswerSpec
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankVisualSegment

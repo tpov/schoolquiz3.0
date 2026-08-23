@@ -43,7 +43,6 @@ import kotlin.math.roundToInt
 private const val DISABLED_ALPHA = 0.3f
 private const val DROP_TARGET_ALPHA = 0.4f
 private const val FEEDBACK_FLIP_FULL_ROTATION = 180f
-private const val FEEDBACK_CAMERA_DISTANCE_FACTOR = 18f
 private const val FEEDBACK_STAGGER_MS = 90
 private const val FEEDBACK_CONTAINER_ALPHA = 0.16f
 

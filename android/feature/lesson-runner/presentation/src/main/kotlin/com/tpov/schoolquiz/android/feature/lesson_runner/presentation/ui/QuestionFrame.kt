@@ -4,7 +4,7 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,16 +13,14 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,19 +28,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import com.tpov.schoolquiz.android.core.designsystem.glowEasy
+import androidx.compose.ui.unit.sp
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import kotlinx.coroutines.delay
 
 private const val FEEDBACK_FLIP_DURATION_MS = 420
 private const val FEEDBACK_FLIP_HALF_ROTATION = 90f
 private const val FEEDBACK_FLIP_FULL_ROTATION = 180f
-private const val FEEDBACK_CAMERA_DISTANCE_FACTOR = 18f
-private const val SELECTED_OPTION_CONTAINER_ALPHA = 0.16f
-private const val FEEDBACK_OPTION_CONTAINER_ALPHA = 0.18f
 
 internal data class FeedbackFlipState(
     val rotation: Float,
@@ -98,23 +98,18 @@ internal fun QuestionFrame(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (!questionText.isNullOrBlank()) {
-                RunnerDesignCard(
+                // No card around the question. It is the screen, and a border around the screen's
+                // subject only competes with it; the mode glow behind already does the framing.
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    elevated = true,
-                    borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        Text(
-                            text = questionText,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        if (imageUrl != null) {
-                            QuestionImage(url = imageUrl, modifier = Modifier.fillMaxWidth())
-                        }
+                    Text(
+                        text = questionText,
+                        style = NoirType.question,
+                    )
+                    if (imageUrl != null) {
+                        QuestionImage(url = imageUrl, modifier = Modifier.fillMaxWidth())
                     }
                 }
             } else if (imageUrl != null) {
@@ -171,7 +166,17 @@ internal fun RunnerPrimaryAction(
     )
 }
 
-@Suppress("FunctionNaming", "LongParameterList", "CyclomaticComplexMethod", "ktlint:standard:function-naming")
+/**
+ * One answer: full width, separated by a hairline, no fill.
+ *
+ * Filled options turn a question into a menu of buttons and make the reading harder, which is the
+ * opposite of what the screen is for. The flip on reveal keeps the row in place while it changes
+ * meaning, so the eye does not have to find it again.
+ *
+ * A correct answer nobody chose is muted rather than lit. Blazing it rewards the mistake with the
+ * brightest thing on screen.
+ */
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 internal fun AnswerOptionSurface(
     text: String,
@@ -192,80 +197,55 @@ internal fun AnswerOptionSurface(
             feedbackDelayMillis = feedbackDelayMillis,
         )
     val displayTone = if (flip.showBack) feedbackTone else AnswerFeedbackTone.Neutral
-    val surface = runnerAnswerSurfaceColor()
-    val correctColor = MaterialTheme.colorScheme.glowEasy
-    val wrongColor = MaterialTheme.colorScheme.error
-    val defaultBorderColor = runnerLightBorderColor()
-    val selectedColor =
-        MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_OPTION_CONTAINER_ALPHA).compositeOver(surface)
-    val defaultColor = surface
-    val borderColor =
+    val accent = LocalNoirAccent.current
+    val toneColor =
         when (displayTone) {
-            AnswerFeedbackTone.Correct -> correctColor
-            AnswerFeedbackTone.Wrong -> wrongColor
-            AnswerFeedbackTone.Neutral ->
-                if (selected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    defaultBorderColor
-                }
+            AnswerFeedbackTone.Correct -> NoirSuccess
+            AnswerFeedbackTone.Wrong -> NoirDanger
+            AnswerFeedbackTone.Neutral -> if (selected) accent else NoirT2
         }
-    val contentColor =
-        when (displayTone) {
-            AnswerFeedbackTone.Correct -> MaterialTheme.colorScheme.onSurface
-            AnswerFeedbackTone.Wrong -> MaterialTheme.colorScheme.onSurface
-            AnswerFeedbackTone.Neutral -> MaterialTheme.colorScheme.onSurface
+    // The chosen row keeps a whisper of fill so it is findable after the reveal; everything else
+    // stays on the ground.
+    val fill =
+        when {
+            displayTone == AnswerFeedbackTone.Correct -> NoirSuccess.copy(alpha = 0.10f)
+            displayTone == AnswerFeedbackTone.Wrong -> NoirDanger.copy(alpha = 0.10f)
+            selected -> accent.copy(alpha = 0.08f)
+            else -> Color.Transparent
         }
-    val containerColor =
-        when (displayTone) {
-            AnswerFeedbackTone.Correct ->
-                correctColor.copy(alpha = FEEDBACK_OPTION_CONTAINER_ALPHA).compositeOver(surface)
-            AnswerFeedbackTone.Wrong ->
-                wrongColor.copy(alpha = FEEDBACK_OPTION_CONTAINER_ALPHA).compositeOver(surface)
-            AnswerFeedbackTone.Neutral -> if (selected) selectedColor else defaultColor
-        }
-
-    Surface(
-        modifier =
-            modifier
+    Column(modifier.fillMaxWidth()) {
+        Row(
+            Modifier
                 .fillMaxWidth()
                 .graphicsLayer {
-                    rotationY = flip.rotation
-                    cameraDistance = FEEDBACK_CAMERA_DISTANCE_FACTOR * density
-                },
-        shape = MaterialTheme.shapes.small,
-        color = containerColor,
-        contentColor = contentColor,
-        border = BorderStroke(width = if (selected || flip.showBack) 2.dp else 1.5.dp, color = borderColor),
-        tonalElevation = if (selected || flip.showBack) 2.dp else 0.dp,
-        shadowElevation = if (selected || flip.showBack) 2.dp else 0.dp,
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 58.dp)
-                    .graphicsLayer {
-                        rotationY = if (flip.showBack) FEEDBACK_FLIP_FULL_ROTATION else 0f
-                    }
-                    .clickable(enabled = enabled, onClick = onClick)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                    rotationX = flip.rotation
+                    cameraDistance = FLIP_CAMERA_DISTANCE
+                }
+                .background(fill)
+                .clickable(enabled = enabled, onClick = onClick)
+                .defaultMinSize(minHeight = 56.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (leading != null) {
-                leading()
-                Spacer(modifier = Modifier.width(12.dp))
-            }
+            leading?.invoke(this)
             Text(
                 text = text,
+                style = NoirType.rowTitle.copy(color = toneColor, fontSize = 15.sp),
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.Unspecified,
             )
-            if (trailing != null) {
-                Spacer(modifier = Modifier.width(12.dp))
-                trailing()
-            }
+            trailing?.invoke(this)
         }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(NoirHair))
     }
 }
+
+private const val FLIP_CAMERA_DISTANCE = 16f
+
+/**
+ * Camera distance for the reveal flip, shared by every question type.
+ *
+ * Internal rather than private: fill-in-the-blank and ordering flip their own rows and must turn
+ * through the same perspective, or the same gesture reads as two different animations.
+ */
+internal const val FEEDBACK_CAMERA_DISTANCE_FACTOR = 16f
