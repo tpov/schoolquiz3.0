@@ -56,7 +56,6 @@ class DefaultProfileComponent(
             }
         }
         onRefresh()
-        refreshNicknames()
     }
 
     override fun onSelectNickname(nickname: String) {
@@ -88,17 +87,41 @@ class DefaultProfileComponent(
      * and showing that same blank shelf when the request never landed would be a lie.
      */
     private fun refreshNicknames() {
-        scope.launch {
-            _state.update { it.copy(isLoadingNicknames = true) }
-            val result = runCatching { nicknames.owned() }
-            _state.update { current ->
-                current.copy(
-                    ownedNicknames = result.getOrDefault(current.ownedNicknames),
-                    isLoadingNicknames = false,
-                    nicknamesUnreachable = result.isFailure,
-                )
-            }
+        scope.launch { loadNicknames() }
+    }
+
+    private suspend fun loadNicknames() {
+        _state.update { it.copy(isLoadingNicknames = true) }
+        val result = runCatching { nicknames.owned() }
+        _state.update { current ->
+            current.copy(
+                ownedNicknames = result.getOrDefault(current.ownedNicknames),
+                isLoadingNicknames = false,
+                nicknamesUnreachable = result.isFailure,
+            )
         }
+    }
+
+    /**
+     * Bootstrap the account, then read its names — in that order, never at the same time.
+     *
+     * Registering this account's name in the registry is something the bootstrap call does. Asking
+     * for the list first is a race the fresh account always loses: on a first launch, or right
+     * after signing in as somebody else, the answer comes back empty and the screen says there are
+     * no names, which reads as "everything you had is gone".
+     */
+    private suspend fun syncAccountThenNicknames(announce: Boolean) {
+        val result = ensureCurrentProfile()
+        _state.update { current ->
+            result.fold(
+                onSuccess = { profile ->
+                    current.withProfile(profile)
+                        .copy(isLoading = false, message = if (announce) "Профиль синхронизирован" else current.message)
+                },
+                onFailure = { error -> current.copy(isLoading = false, message = error.readableMessage()) },
+            )
+        }
+        loadNicknames()
     }
 
     override fun onStartRename() {
@@ -164,30 +187,14 @@ class DefaultProfileComponent(
     }
 
     override fun onScreenShown() {
-        refreshNicknames()
-        scope.launch {
-            // Same pull as onRefresh, without the banner: only a failure is worth interrupting for.
-            ensureCurrentProfile().onSuccess { profile ->
-                _state.update { it.withProfile(profile) }
-            }
-        }
+        // Same pull as onRefresh, without the banner: only a failure is worth interrupting for.
+        scope.launch { syncAccountThenNicknames(announce = false) }
     }
 
     override fun onRefresh() {
-        refreshNicknames()
         scope.launch {
             _state.update { it.copy(isLoading = true, message = null) }
-            val result = ensureCurrentProfile()
-            _state.update { current ->
-                result.fold(
-                    onSuccess = { profile ->
-                        current.withProfile(profile).copy(isLoading = false, message = "Профиль синхронизирован")
-                    },
-                    onFailure = { error ->
-                        current.copy(isLoading = false, message = error.readableMessage())
-                    },
-                )
-            }
+            syncAccountThenNicknames(announce = true)
         }
     }
 
