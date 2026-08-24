@@ -147,7 +147,7 @@ private fun ClaimNicknameCard(
     val verdict = nicknames.draftAvailability
     val accent = LocalNoirAccent.current
     NicknamePanel {
-        Text("ЗАНЯТЬ СВОБОДНОЕ ИМЯ", style = NoirType.kicker.copy(fontSize = 9.sp))
+        Text("СОЗДАТЬ ИМЯ", style = NoirType.kicker.copy(fontSize = 9.sp))
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -167,8 +167,11 @@ private fun ClaimNicknameCard(
                         .border(1.dp, NoirOutline, NoirShapeMd)
                         .padding(horizontal = 12.dp, vertical = 11.dp),
             )
+            if (verdict?.available == true && verdict.price > 0) {
+                GoldAmount(verdict.price)
+            }
             NicknameAction(
-                label = "Занять",
+                label = "Создать",
                 enabled = state.nicknames.canClaimDraft,
                 onClick = onClaim,
             )
@@ -177,14 +180,16 @@ private fun ClaimNicknameCard(
         // as answers arrive and are replaced.
         val (note, tone) =
             when {
-                nicknames.draft.isBlank() -> "Свободное имя стоит золота — первое бесплатно" to NoirT3
+                nicknames.draft.isBlank() -> null to NoirT3
                 nicknames.isCheckingAvailability -> "Проверяем…" to NoirTOff
                 nicknames.availabilityUnreachable -> "Не удалось проверить — нет связи с сервером" to NoirDanger
                 verdict == null -> "Проверяем…" to NoirTOff
                 verdict.available -> "Свободно" to NoirSuccess
                 else -> verdict.reason.wording() to NoirDanger
             }
-        Text(note, style = NoirType.rowSub.copy(fontSize = 11.sp, color = tone))
+        if (note != null) {
+            Text(note, style = NoirType.rowSub.copy(fontSize = 11.sp, color = tone))
+        }
     }
 }
 
@@ -228,25 +233,18 @@ private fun OwnedNicknameRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text =
-                        when {
-                            owned.active -> "АКТИВНОЕ"
-                            owned.isForSale -> "ПРОДАЁТСЯ ЗА ${owned.listedPrice}"
-                            owned.generated -> "ВЫДАНО ПРИ РЕГИСТРАЦИИ"
-                            else -> "СВОБОДНО ДЛЯ ПРОДАЖИ"
-                        },
-                    style =
-                        NoirType.kicker.copy(
-                            fontSize = 9.sp,
-                            color =
-                                when {
-                                    owned.active -> accent
-                                    owned.isForSale -> NoirGold
-                                    else -> NoirT3
-                                },
-                        ),
-                )
+                // Only states worth acting on get a line, and a name in neither state gets none:
+                // how it was obtained changes nothing a person can do with it, and an empty caption
+                // still takes up a row.
+                val state =
+                    when {
+                        owned.active -> "АКТИВНОЕ" to accent
+                        owned.isForSale -> "ПРОДАЁТСЯ ЗА ${owned.listedPrice}" to NoirGold
+                        else -> null
+                    }
+                if (state != null) {
+                    Text(state.first, style = NoirType.kicker.copy(fontSize = 9.sp, color = state.second))
+                }
             }
             if (owned.active) {
                 Icon(NoirIcons.Check, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))

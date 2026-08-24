@@ -601,15 +601,19 @@ exports.checkNicknameAvailability = onCall(FUNCTION_OPTIONS, async (request) => 
   const policy = await readNicknamePolicy();
   const described = describeNickname(stringValue(request.data && request.data.nickname), policy);
   if (!described.ok) {
-    return {nickname: "", available: false, reason: described.reason};
+    return {nickname: "", available: false, reason: described.reason, price: 0};
   }
 
   const claim = await db
     .collection(NICKNAME_CLAIMS_COLLECTION)
     .doc(nicknameClaimId(described.canonical))
     .get();
+  // What this name would actually cost, answered here rather than guessed on the phone: the price
+  // and the free allowance both live in policy, and a client that derives them shows the wrong
+  // number the moment either is changed.
+  const price = (await hasChosenNickname(uid)) ? nicknamePricing(policy).extraNicknamePrice : 0;
   if (!claim.exists) {
-    return {nickname: described.nickname, available: true, reason: null};
+    return {nickname: described.nickname, available: true, reason: null, price};
   }
   // Your own name must not read as taken, or changing anything else on the form would look blocked.
   const isOwn = stringValue((claim.data() || {}).uid) === uid;
@@ -617,6 +621,7 @@ exports.checkNicknameAvailability = onCall(FUNCTION_OPTIONS, async (request) => 
     nickname: described.nickname,
     available: isOwn,
     reason: isOwn ? "yours" : "taken",
+    price: 0,
   };
 });
 
@@ -3210,11 +3215,20 @@ async function resolveNicknameClaim(transaction, options) {
       // that is decided by which path we came in on, not by which candidate won. Every automatic
       // path — first sign-in, opening a box — carries a name along without anybody picking it, so
       // those must not spend the one free choice everybody gets.
+      // A name is stamped once, when it is first taken, and never again.
+      //
+      // Bootstrapping the account re-resolves whichever name is being worn, and it arrives on the
+      // system-assigned path — so re-deriving the flag here would relabel a name the player chose
+      // as one handed to them. That is not cosmetic: the flag is what decides whether the one free
+      // choice has been spent, so a name that keeps being relabelled makes every further name free.
+      const alreadyOurs = snapshot.exists && ownerUid === options.uid;
       return {
         ...validated,
         ref,
         snapshot,
-        generated: Boolean(options.systemAssigned) || candidate !== options.requestedNickname,
+        generated: alreadyOurs
+          ? Boolean((snapshot.data() || {}).generated)
+          : Boolean(options.systemAssigned) || candidate !== options.requestedNickname,
       };
     }
 

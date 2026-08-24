@@ -24,6 +24,7 @@ class FirebaseNicknameRemoteDataSource(
             nickname = data.string(NICKNAME) ?: "",
             available = data[AVAILABLE] as? Boolean ?: false,
             reason = NicknameRejection.fromCode(data.string(REASON)),
+            price = data.number(PRICE) ?: 0L,
         )
     }
 

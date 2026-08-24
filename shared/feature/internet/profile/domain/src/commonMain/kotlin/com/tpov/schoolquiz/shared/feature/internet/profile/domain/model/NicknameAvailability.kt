@@ -10,6 +10,13 @@ data class NicknameAvailability(
     val nickname: String,
     val available: Boolean,
     val reason: NicknameRejection?,
+    /**
+     * Gold this name would cost, as the server reckons it. Zero while the free choice is unspent.
+     *
+     * Answered by the server rather than worked out here: the price and the allowance both live in
+     * policy, and a client that derives them shows the wrong number the moment either changes.
+     */
+    val price: Long = 0L,
 )
 
 /** Why a name was refused. Stable codes, so the wording stays a UI decision. */
