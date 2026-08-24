@@ -368,6 +368,48 @@ object NoirIcons {
             circle(8.5f, 12f, 1.5f)
             circle(15.5f, 17f, 1.5f)
         }
+
+    /**
+     * A badge earned, as opposed to [Star], which is a rating.
+     *
+     * The trophy shelf needs a shape that reads as "one of a set you collect"; a star in that grid
+     * would say the player had rated something eight times.
+     */
+    val Trophy: ImageVector =
+        stroke {
+            moveTo(7.5f, 4f)
+            lineTo(16.5f, 4f)
+            lineTo(16.5f, 9f)
+            curveTo(16.5f, 11.5f, 14.5f, 13.5f, 12f, 13.5f)
+            curveTo(9.5f, 13.5f, 7.5f, 11.5f, 7.5f, 9f)
+            close()
+            moveTo(7.5f, 5.6f)
+            lineTo(5f, 5.6f)
+            curveTo(5f, 8.6f, 6f, 10.1f, 7.9f, 10.7f)
+            moveTo(16.5f, 5.6f)
+            lineTo(19f, 5.6f)
+            curveTo(19f, 8.6f, 18f, 10.1f, 16.1f, 10.7f)
+            moveTo(12f, 13.5f)
+            lineTo(12f, 16.8f)
+            moveTo(9.8f, 16.8f)
+            lineTo(14.2f, 16.8f)
+            lineTo(15.2f, 20.4f)
+            lineTo(8.8f, 20.4f)
+            close()
+        }
+
+    /** Rename. Only ever shown beside a name that is actually editable. */
+    val Pencil: ImageVector =
+        stroke {
+            moveTo(4f, 20f)
+            lineTo(4f, 16.2f)
+            lineTo(15.6f, 4.6f)
+            lineTo(19.4f, 8.4f)
+            lineTo(7.8f, 20f)
+            close()
+            moveTo(13.4f, 6.8f)
+            lineTo(17.2f, 10.6f)
+        }
 }
 
 /*

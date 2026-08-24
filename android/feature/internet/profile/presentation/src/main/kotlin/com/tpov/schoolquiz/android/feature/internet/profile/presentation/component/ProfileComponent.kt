@@ -6,11 +6,30 @@ import kotlinx.coroutines.flow.StateFlow
 interface ProfileComponent {
     val state: StateFlow<ProfileUiState>
 
+    /**
+     * The screen came back into view.
+     *
+     * Names can change from somewhere else — the shop sells and buys them — so what was fetched
+     * when this component was built is not what the account holds by the time somebody returns.
+     * Quiet on purpose: it says nothing on success, because arriving at a screen is not an action
+     * that deserves a receipt.
+     */
+    fun onScreenShown()
+
+    /** Opens the name field. Renaming is deliberate, so it takes a tap to get into. */
+    fun onStartRename()
+
+    /** Leaves the field and puts back the name that is actually in force. */
+    fun onCancelRename()
+
     fun onNicknameChange(value: String)
 
     fun onSaveNickname()
 
     fun onRefresh()
+
+    /** Wears one of the names already owned. */
+    fun onSelectNickname(nickname: String)
 
     fun onMessageShown()
 }

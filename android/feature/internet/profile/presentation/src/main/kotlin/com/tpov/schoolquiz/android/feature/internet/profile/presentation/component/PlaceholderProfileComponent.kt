@@ -7,11 +7,19 @@ import kotlinx.coroutines.flow.StateFlow
 class PlaceholderProfileComponent : ProfileComponent {
     override val state: StateFlow<ProfileUiState> = MutableStateFlow(ProfileUiState())
 
+    override fun onScreenShown() = Unit
+
+    override fun onStartRename() = Unit
+
+    override fun onCancelRename() = Unit
+
     override fun onNicknameChange(value: String) = Unit
 
     override fun onSaveNickname() = Unit
 
     override fun onRefresh() = Unit
+
+    override fun onSelectNickname(nickname: String) = Unit
 
     override fun onMessageShown() = Unit
 }

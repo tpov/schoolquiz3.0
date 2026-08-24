@@ -4,8 +4,10 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.EnsureCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveDailyActivityUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.UpdateProfileNicknameUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +23,8 @@ class DefaultProfileComponent(
     private val observeCurrentProfile: ObserveCurrentProfileUseCase,
     private val ensureCurrentProfile: EnsureCurrentProfileUseCase,
     private val updateProfileNickname: UpdateProfileNicknameUseCase,
+    private val observeDailyActivity: ObserveDailyActivityUseCase,
+    private val nicknames: NicknameRepository,
 ) : ProfileComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + Dispatchers.Main.immediate)
@@ -33,7 +37,7 @@ class DefaultProfileComponent(
         scope.launch {
             observeCurrentProfile().collect { profile ->
                 _state.update { current ->
-                    val keepEditing = current.nicknameInput != current.profile.nickname && current.canEditNickname
+                    val keepEditing = current.isEditingNickname && current.canEditNickname
                     current.copy(
                         profile = profile,
                         nicknameInput = if (keepEditing) current.nicknameInput else profile.nickname,
@@ -42,7 +46,65 @@ class DefaultProfileComponent(
                 }
             }
         }
+        scope.launch {
+            observeDailyActivity().collect { activity ->
+                _state.update { it.copy(dailyActivity = activity) }
+            }
+        }
         onRefresh()
+        refreshNicknames()
+    }
+
+    override fun onSelectNickname(nickname: String) {
+        if (_state.value.switchingNickname != null) return
+        scope.launch {
+            _state.update { it.copy(switchingNickname = nickname, message = null) }
+            val outcome = runCatching { nicknames.setActive(nickname) }
+            _state.update {
+                it.copy(
+                    switchingNickname = null,
+                    message =
+                        outcome.fold(
+                            onSuccess = { "Активное имя — $nickname" },
+                            onFailure = { error -> error.readableMessage() },
+                        ),
+                )
+            }
+            // The worn name lives on the profile document, so the account has to be re-read for
+            // the header to agree with the shelf below it.
+            if (outcome.isSuccess) ensureCurrentProfile()
+            refreshNicknames()
+        }
+    }
+
+    /**
+     * Reloads the shelf of owned names.
+     *
+     * A failure is recorded separately from an empty result: an account really can own nothing,
+     * and showing that same blank shelf when the request never landed would be a lie.
+     */
+    private fun refreshNicknames() {
+        scope.launch {
+            _state.update { it.copy(isLoadingNicknames = true) }
+            val result = runCatching { nicknames.owned() }
+            _state.update { current ->
+                current.copy(
+                    ownedNicknames = result.getOrDefault(current.ownedNicknames),
+                    isLoadingNicknames = false,
+                    nicknamesUnreachable = result.isFailure,
+                )
+            }
+        }
+    }
+
+    override fun onStartRename() {
+        _state.update { current ->
+            if (!current.canEditNickname) current else current.copy(isEditingNickname = true)
+        }
+    }
+
+    override fun onCancelRename() {
+        _state.update { it.copy(isEditingNickname = false, nicknameInput = it.profile.nickname) }
     }
 
     override fun onNicknameChange(value: String) {
@@ -57,7 +119,8 @@ class DefaultProfileComponent(
             _state.update { current ->
                 result.fold(
                     onSuccess = { profile ->
-                        current.withProfile(profile).copy(isSaving = false, message = "Ник обновлён")
+                        current.withProfile(profile)
+                            .copy(isSaving = false, isEditingNickname = false, message = "Ник обновлён")
                     },
                     onFailure = { error ->
                         current.copy(isSaving = false, message = error.readableMessage())
@@ -67,7 +130,18 @@ class DefaultProfileComponent(
         }
     }
 
+    override fun onScreenShown() {
+        refreshNicknames()
+        scope.launch {
+            // Same pull as onRefresh, without the banner: only a failure is worth interrupting for.
+            ensureCurrentProfile().onSuccess { profile ->
+                _state.update { it.withProfile(profile) }
+            }
+        }
+    }
+
     override fun onRefresh() {
+        refreshNicknames()
         scope.launch {
             _state.update { it.copy(isLoading = true, message = null) }
             val result = ensureCurrentProfile()

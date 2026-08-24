@@ -13,6 +13,8 @@ val profilePresentationModule =
                 observeCurrentProfile = get(),
                 ensureCurrentProfile = get(),
                 updateProfileNickname = get(),
+                observeDailyActivity = get(),
+                nicknames = get(),
             )
         }
     }
