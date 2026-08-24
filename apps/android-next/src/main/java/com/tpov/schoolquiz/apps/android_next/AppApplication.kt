@@ -18,6 +18,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonR
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di.questAuthoringPresentationModule
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
+import com.tpov.schoolquiz.apps.android_next.di.authModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
 import com.tpov.schoolquiz.platform.firebase.di.firebaseCatalogModule
@@ -114,6 +115,7 @@ class AppApplication : Application(), Configuration.Provider {
             modules(
                 persistenceModule,
                 firebaseModule,
+                authModule,
                 firebaseCatalogModule,
                 firebaseQuestModule,
                 firebaseSectionModule,

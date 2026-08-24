@@ -767,3 +767,42 @@ private fun radarPoint(
         y = center.y + (sin(angle) * radius * value).toFloat(),
     )
 }
+
+/**
+ * The one offer an anonymous account gets.
+ *
+ * Says what is gained rather than what is required: signing in is what unlocks verification and
+ * trading, and it keeps everything already earned — which is the part somebody hesitating over
+ * this button actually wants to know.
+ */
+@Composable
+internal fun ProfileGoogleUpgrade(
+    busy: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalNoirAccent.current
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(NoirShapeLg)
+            .background(accent.copy(alpha = 0.06f))
+            .border(1.dp, accent.copy(alpha = 0.32f), NoirShapeLg)
+            .then(if (busy) Modifier else Modifier.clickable(onClick = onClick))
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "ВОЙТИ ЧЕРЕЗ GOOGLE",
+                style = NoirType.kicker.copy(fontSize = 10.sp, color = if (busy) NoirTOff else accent),
+                modifier = Modifier.weight(1f),
+            )
+            if (busy) Text("…", style = NoirType.kicker.copy(color = NoirTOff))
+        }
+        Text(
+            "Прогресс гостя сохранится. Регистрация открывает подтверждение аккаунта и торговлю именами.",
+            style = NoirType.rowSub.copy(fontSize = 11.sp, color = NoirT3),
+        )
+    }
+}

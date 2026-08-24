@@ -1,10 +1,19 @@
 package com.tpov.schoolquiz.android.feature.internet.profile.presentation.component
 
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.AccountChooserHost
 import kotlinx.coroutines.flow.StateFlow
 
 interface ProfileComponent {
     val state: StateFlow<ProfileUiState>
+
+    /**
+     * Attaches a Google identity to this account.
+     *
+     * Takes the host because the account chooser is a system sheet and needs a live screen to
+     * appear over; nothing else about it belongs to the caller.
+     */
+    fun onLinkGoogle(host: AccountChooserHost)
 
     /**
      * The screen came back into view.

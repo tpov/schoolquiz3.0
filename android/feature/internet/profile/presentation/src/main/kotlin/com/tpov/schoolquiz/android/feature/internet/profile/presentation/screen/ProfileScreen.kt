@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.android.feature.internet.profile.presentation.screen
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,6 +23,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.PlatformAccountChooserHost
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
@@ -29,19 +32,42 @@ import kotlin.math.roundToInt
 
 private const val MESSAGE_AUTO_DISMISS_MS = 3_000L
 
+/**
+ * Everything the profile screen can do, in one place.
+ *
+ * Bundled because the list only grows — renaming, wearing a name, signing in — and a composable
+ * that takes nine callbacks stops being readable at the call site long before the compiler minds.
+ */
+data class ProfileActions(
+    val onNicknameChange: (String) -> Unit = {},
+    val onStartRename: () -> Unit = {},
+    val onCancelRename: () -> Unit = {},
+    val onSaveNickname: () -> Unit = {},
+    val onSelectNickname: (String) -> Unit = {},
+    val onLinkGoogle: () -> Unit = {},
+)
+
 @Composable
 fun ProfileScreen(
     component: ProfileComponent,
     modifier: Modifier = Modifier,
 ) {
     val state by component.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     ProfileView(
         state = state,
-        onNicknameChange = component::onNicknameChange,
-        onStartRename = component::onStartRename,
-        onCancelRename = component::onCancelRename,
-        onSaveNickname = component::onSaveNickname,
-        onSelectNickname = component::onSelectNickname,
+        actions =
+            ProfileActions(
+                onNicknameChange = component::onNicknameChange,
+                onStartRename = component::onStartRename,
+                onCancelRename = component::onCancelRename,
+                onSaveNickname = component::onSaveNickname,
+                onSelectNickname = component::onSelectNickname,
+                onLinkGoogle = {
+                    // The account sheet is a system dialog and needs the Activity it appears over.
+                    (context as? Activity)?.let { component.onLinkGoogle(PlatformAccountChooserHost(it)) }
+                },
+            ),
         modifier = modifier,
     )
     // Fires every time the tab is opened, because the tab's content leaves composition when
@@ -68,11 +94,7 @@ fun ProfileScreen(
 @Composable
 fun ProfileView(
     state: ProfileUiState,
-    onNicknameChange: (String) -> Unit,
-    onStartRename: () -> Unit,
-    onCancelRename: () -> Unit,
-    onSaveNickname: () -> Unit,
-    onSelectNickname: (String) -> Unit,
+    actions: ProfileActions,
     modifier: Modifier = Modifier,
 ) {
     val metrics = remember(state.profile) { state.profile.dashboardMetrics() }
@@ -85,10 +107,10 @@ fun ProfileView(
     ) {
         ProfileIdentityRow(
             state = state,
-            onNicknameChange = onNicknameChange,
-            onStartRename = onStartRename,
-            onCancelRename = onCancelRename,
-            onSaveNickname = onSaveNickname,
+            onNicknameChange = actions.onNicknameChange,
+            onStartRename = actions.onStartRename,
+            onCancelRename = actions.onCancelRename,
+            onSaveNickname = actions.onSaveNickname,
         )
 
         ProfileLeagueBand(
@@ -107,7 +129,11 @@ fun ProfileView(
             topRole = metrics.topRole,
         )
 
-        ProfileNicknameShelf(state = state, onSelect = onSelectNickname)
+        ProfileNicknameShelf(state = state, onSelect = actions.onSelectNickname)
+
+        if (state.canLinkGoogle || state.isLinkingGoogle) {
+            ProfileGoogleUpgrade(busy = state.isLinkingGoogle, onClick = actions.onLinkGoogle)
+        }
 
         ProfileTrophyShelf(profile = state.profile)
 
@@ -237,11 +263,7 @@ private fun ProfileViewPreview() {
                             OwnedNickname("UserHN42E2", active = false, generated = true),
                         ),
                 ),
-            onNicknameChange = {},
-            onStartRename = {},
-            onCancelRename = {},
-            onSaveNickname = {},
-            onSelectNickname = {},
+            actions = ProfileActions(),
         )
     }
 }

@@ -26,6 +26,10 @@ androidx-work = "2.9.1"
 androidx-room = "2.7.0"
 androidx-sqlite = "2.5.0"
 androidx-activity = "1.9.2"
+# Credential Manager is how Android asks for a Google account now; the old GoogleSignInClient
+# is deprecated and its one-tap dialog is gone on new releases.
+androidx-credentials = "1.3.0"
+googleid = "1.1.1"
 androidx-activity-compose = "1.9.2"
 androidx-fragment = "1.8.3"
 
@@ -75,6 +79,9 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidx-credentials" }
+androidx-credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidx-credentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 
 # AndroidX core
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }

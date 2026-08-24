@@ -15,6 +15,7 @@ val profilePresentationModule =
                 updateProfileNickname = get(),
                 observeDailyActivity = get(),
                 nicknames = get(),
+                linkGoogleAccount = get(),
             )
         }
     }

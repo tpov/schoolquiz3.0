@@ -3,9 +3,12 @@ package com.tpov.schoolquiz.android.feature.internet.profile.presentation.compon
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.AccountChooserHost
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.GoogleLinkOutcome
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.EnsureCurrentProfileUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.LinkGoogleAccountUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveDailyActivityUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.UpdateProfileNicknameUseCase
@@ -25,6 +28,7 @@ class DefaultProfileComponent(
     private val updateProfileNickname: UpdateProfileNicknameUseCase,
     private val observeDailyActivity: ObserveDailyActivityUseCase,
     private val nicknames: NicknameRepository,
+    private val linkGoogleAccount: LinkGoogleAccountUseCase,
 ) : ProfileComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + Dispatchers.Main.immediate)
@@ -127,6 +131,35 @@ class DefaultProfileComponent(
                     },
                 )
             }
+        }
+    }
+
+    override fun onLinkGoogle(host: AccountChooserHost) {
+        if (_state.value.isLinkingGoogle) return
+        scope.launch {
+            _state.update { it.copy(isLinkingGoogle = true, message = null) }
+            val result = linkGoogleAccount(host)
+            _state.update { current ->
+                current.copy(
+                    isLinkingGoogle = false,
+                    message =
+                        result.fold(
+                            onSuccess = { outcome ->
+                                when (outcome) {
+                                    GoogleLinkOutcome.LINKED -> "Аккаунт привязан, прогресс сохранён"
+                                    // Said plainly. The alternative is somebody discovering on
+                                    // their own that everything they had is no longer here.
+                                    GoogleLinkOutcome.SWITCHED ->
+                                        "Вход выполнен в существующий аккаунт — прогресс гостя остался на нём"
+                                }
+                            },
+                            onFailure = { error -> error.readableMessage() },
+                        ),
+                )
+            }
+            // Whichever way it went, the uid may have changed and everything on screen is about
+            // the account behind it.
+            onScreenShown()
         }
     }
 

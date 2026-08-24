@@ -33,7 +33,18 @@ data class ProfileUiState(
     val nicknamesUnreachable: Boolean = false,
     /** The name a switch is in flight for, so only that row shows as busy. */
     val switchingNickname: String? = null,
+    /** True while the Google account sheet is up or the link is in flight. */
+    val isLinkingGoogle: Boolean = false,
 ) {
+    /**
+     * Whether upgrading the account is on offer.
+     *
+     * Only an anonymous account has anything to gain: a registered one is already linked, and an
+     * offline one has no account to link to.
+     */
+    val canLinkGoogle: Boolean
+        get() = profile.status == ProfileStatus.ANONYMOUS && !isLinkingGoogle
+
     val canEditNickname: Boolean
         get() = profile.status != ProfileStatus.VALIDATED && profile.status != ProfileStatus.OFFLINE
 
