@@ -49,11 +49,50 @@ data class NicknameShopState(
      * moves, and a field that says "проверяем…" forever is the worst of both.
      */
     val availabilityUnreachable: Boolean = false,
+    /** What is typed into the window's search box. */
+    val listingQuery: String = "",
+    val listingSort: NicknameListingSort = NicknameListingSort.DATE,
+    /** Newest, dearest and Z-first are all "descending"; the same flag serves all three. */
+    val listingDescending: Boolean = true,
 ) {
+    /**
+     * The window as it should be drawn: searched, then sorted.
+     *
+     * Done here rather than on the server. The window is capped at fifty lots, which is a list a
+     * phone sorts instantly, and paying a round trip per keystroke to reorder fifty rows would be
+     * slower and would break the moment the connection did.
+     */
+    val visibleListings: List<NicknameListing>
+        get() {
+            val needle = listingQuery.trim()
+            val found =
+                if (needle.isEmpty()) {
+                    listings
+                } else {
+                    listings.filter { it.nickname.contains(needle, ignoreCase = true) }
+                }
+            val ordered =
+                when (listingSort) {
+                    // Case-insensitive, or every capitalised name would sort ahead of every
+                    // lowercase one and the alphabet would read as two alphabets.
+                    NicknameListingSort.NAME -> found.sortedBy { it.nickname.lowercase() }
+                    NicknameListingSort.PRICE -> found.sortedBy { it.price }
+                    NicknameListingSort.DATE -> found.sortedBy { it.listedAtMs }
+                }
+            return if (listingDescending) ordered.reversed() else ordered
+        }
+
     /** Only worth showing when it still describes what is on screen. */
     val draftAvailability: NicknameAvailability?
         get() = availability?.takeIf { it.nickname.equals(draft.trim(), ignoreCase = true) }
 
     val canClaimDraft: Boolean
         get() = draftAvailability?.available == true && processingNickname == null
+}
+
+/** How the window is ordered. */
+enum class NicknameListingSort {
+    NAME,
+    PRICE,
+    DATE,
 }

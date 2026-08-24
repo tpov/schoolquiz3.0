@@ -2429,9 +2429,27 @@ async function requireProfile(uid) {
  * a composite index, which works in the emulator and fails on the first production call. Nobody
  * holds enough names for the difference to matter.
  */
+/**
+ * Whether the one free name has been spent.
+ *
+ * The flag is the answer, except where it is not. Bootstrapping used to re-stamp whichever name was
+ * being worn as system-assigned on every launch, so accounts from before that fix carry chosen
+ * names flagged as generated, and trusting the flag alone would hand them a free name for ever.
+ *
+ * A name is also treated as chosen when it is not one this account could have been handed. That
+ * repairs the old records where they are read instead of migrating them, and it cannot mislabel a
+ * genuine hand-out, because those are exactly the names the generator produces.
+ */
 async function hasChosenNickname(uid) {
   const claims = await db.collection(NICKNAME_CLAIMS_COLLECTION).where("uid", "==", uid).get();
-  return claims.docs.some((doc) => (doc.data() || {}).generated !== true);
+  const handedOut = new Set(
+    generatedNicknameCandidates(uid, "").map((name) => canonicalNickname(name)).filter(Boolean),
+  );
+  return claims.docs.some((doc) => {
+    const data = doc.data() || {};
+    if (data.generated !== true) return true;
+    return !handedOut.has(stringValue(data.canonical));
+  });
 }
 
 async function refuseIfPurchaseRequired(uid, nickname) {

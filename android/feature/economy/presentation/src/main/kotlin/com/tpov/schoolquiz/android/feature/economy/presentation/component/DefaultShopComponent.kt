@@ -68,6 +68,25 @@ class DefaultShopComponent(
             is ShopViewEvent.NicknameDraftChanged ->
                 _state.update { it.copy(nicknames = it.nicknames.copy(draft = event.value)) }
             is ShopViewEvent.CheckNicknameAvailability -> checkAvailability(event.nickname)
+            is ShopViewEvent.ListingQueryChanged ->
+                _state.update { it.copy(nicknames = it.nicknames.copy(listingQuery = event.value)) }
+            is ShopViewEvent.ListingSortPicked ->
+                _state.update { current ->
+                    val names = current.nicknames
+                    current.copy(
+                        nicknames =
+                            if (names.listingSort == event.sort) {
+                                names.copy(listingDescending = !names.listingDescending)
+                            } else {
+                                // A fresh column starts the way people expect to read it: names
+                                // from A, prices from cheapest, dates from newest.
+                                names.copy(
+                                    listingSort = event.sort,
+                                    listingDescending = event.sort == NicknameListingSort.DATE,
+                                )
+                            },
+                    )
+                }
             is ShopViewEvent.ClaimNickname ->
                 runNicknameAction(event.nickname) {
                     val charged = nicknames.claim(event.nickname)

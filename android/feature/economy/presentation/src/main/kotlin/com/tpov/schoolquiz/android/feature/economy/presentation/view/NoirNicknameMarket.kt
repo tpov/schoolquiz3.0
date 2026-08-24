@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
@@ -46,11 +47,14 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSectionRule
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameListingSort
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameShopState
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
@@ -115,12 +119,33 @@ fun NoirNicknameMarket(
             }
         }
 
-        item { NoirSectionRule(label = "Витрина", trailing = "${nicknames.listings.size}") }
+        item {
+            NoirSectionRule(
+                label = "Витрина",
+                trailing = "${nicknames.visibleListings.size} / ${nicknames.listings.size}",
+            )
+        }
 
-        if (nicknames.listings.isEmpty()) {
-            item { EmptyNote(if (nicknames.isLoading) "Загрузка…" else "Никто ничего не продаёт") }
+        item {
+            ListingControls(
+                state = nicknames,
+                onQuery = { onEvent(ShopViewEvent.ListingQueryChanged(it)) },
+                onSort = { onEvent(ShopViewEvent.ListingSortPicked(it)) },
+            )
+        }
+
+        if (nicknames.visibleListings.isEmpty()) {
+            item {
+                EmptyNote(
+                    when {
+                        nicknames.isLoading -> "Загрузка…"
+                        nicknames.listings.isEmpty() -> "Никто ничего не продаёт"
+                        else -> "Ничего не найдено"
+                    },
+                )
+            }
         } else {
-            items(nicknames.listings, key = { "listing-${it.nickname}" }) { listing ->
+            items(nicknames.visibleListings, key = { "listing-${it.nickname}" }) { listing ->
                 ListingRow(
                     listing = listing,
                     busy = nicknames.processingNickname == listing.nickname,
@@ -167,8 +192,14 @@ private fun ClaimNicknameCard(
                         .border(1.dp, NoirOutline, NoirShapeMd)
                         .padding(horizontal = 12.dp, vertical = 11.dp),
             )
-            if (verdict?.available == true && verdict.price > 0) {
-                GoldAmount(verdict.price)
+            if (verdict?.available == true) {
+                // Free is a price too, and the silence where a number should be reads as a screen
+                // that has not finished loading.
+                if (verdict.price > 0) {
+                    GoldAmount(verdict.price)
+                } else {
+                    Text("БЕСПЛАТНО", style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirSuccess))
+                }
             }
             NicknameAction(
                 label = "Создать",
@@ -419,4 +450,79 @@ private fun GoldAmount(
             modifier = Modifier.size(14.dp),
         )
     }
+}
+
+/**
+ * Search over the window, and the three ways to order it.
+ *
+ * Tapping the chosen order again reverses it, rather than each order carrying its own arrow: with
+ * three columns that would be six controls for what is really two decisions.
+ */
+@Composable
+private fun ListingControls(
+    state: NicknameShopState,
+    onQuery: (String) -> Unit,
+    onSort: (NicknameListingSort) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalNoirAccent.current
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .clip(NoirShapeMd)
+                .background(NoirS1)
+                .border(1.dp, NoirOutline, NoirShapeMd)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        ) {
+            BasicTextField(
+                value = state.listingQuery,
+                onValueChange = onQuery,
+                singleLine = true,
+                textStyle = NoirType.rowSub.copy(fontSize = 13.sp, color = NoirT1),
+                cursorBrush = SolidColor(accent),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (state.listingQuery.isEmpty()) {
+                Text("Поиск по имени", style = NoirType.rowSub.copy(fontSize = 13.sp, color = NoirTOff))
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            SortChip("А–Я", NicknameListingSort.NAME, state, onSort)
+            SortChip("Цена", NicknameListingSort.PRICE, state, onSort)
+            SortChip("Дата", NicknameListingSort.DATE, state, onSort)
+        }
+    }
+}
+
+@Composable
+private fun SortChip(
+    label: String,
+    sort: NicknameListingSort,
+    state: NicknameShopState,
+    onSort: (NicknameListingSort) -> Unit,
+) {
+    val accent = LocalNoirAccent.current
+    val active = state.listingSort == sort
+    // The arrow appears only on the chosen column: on the others it would promise a direction
+    // nothing is currently sorted by.
+    val arrow =
+        if (!active) {
+            ""
+        } else if (state.listingDescending) {
+            " ↓"
+        } else {
+            " ↑"
+        }
+    Text(
+        text = label.uppercase() + arrow,
+        style = NoirType.kicker.copy(fontSize = 9.sp, color = if (active) accent else NoirT3),
+        modifier =
+            Modifier
+                .clip(NoirShapePill)
+                .background(if (active) accent.copy(alpha = 0.10f) else NoirGlassFill)
+                .border(1.dp, if (active) accent.copy(alpha = 0.30f) else NoirHair, NoirShapePill)
+                .clickable { onSort(sort) }
+                .padding(horizontal = 12.dp, vertical = 9.dp),
+    )
 }

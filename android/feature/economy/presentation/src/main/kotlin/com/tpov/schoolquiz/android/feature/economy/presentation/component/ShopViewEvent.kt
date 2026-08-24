@@ -17,6 +17,11 @@ sealed interface ShopViewEvent {
 
     data class CheckNicknameAvailability(val nickname: String) : ShopViewEvent
 
+    data class ListingQueryChanged(val value: String) : ShopViewEvent
+
+    /** Picking the sort that is already picked reverses it. */
+    data class ListingSortPicked(val sort: NicknameListingSort) : ShopViewEvent
+
     data class ClaimNickname(val nickname: String) : ShopViewEvent
 
     data class SetActiveNickname(val nickname: String) : ShopViewEvent
