@@ -46,4 +46,11 @@ class FakeLessonAttemptDao : LessonAttemptDao {
 
     override fun observeAllByUser(userId: String): Flow<List<LessonAttemptEntity>> =
         _flow.map { list -> list.filter { it.userId == userId } }
+
+    override fun observeCompletionsSince(userId: String, sinceMs: Long): Flow<List<Long>> =
+        _flow.map { list ->
+            list.filter { it.userId == userId && it.completedAt >= sinceMs }
+                .map { it.completedAt }
+                .sorted()
+        }
 }

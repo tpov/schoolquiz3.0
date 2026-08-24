@@ -50,4 +50,19 @@ interface LessonAttemptDao {
 
     @Query("SELECT * FROM lesson_attempts WHERE user_id = :userId")
     fun observeAllByUser(userId: String): Flow<List<LessonAttemptEntity>>
+
+    /**
+     * When this player finished lessons, oldest first.
+     *
+     * Only the timestamps. The activity chart counts days, and reading whole rows to count them
+     * would carry every answer code and score along for nothing.
+     */
+    @Query(
+        "SELECT completed_at FROM lesson_attempts " +
+            "WHERE user_id = :userId AND completed_at >= :sinceMs ORDER BY completed_at",
+    )
+    fun observeCompletionsSince(
+        userId: String,
+        sinceMs: Long,
+    ): Flow<List<Long>>
 }
