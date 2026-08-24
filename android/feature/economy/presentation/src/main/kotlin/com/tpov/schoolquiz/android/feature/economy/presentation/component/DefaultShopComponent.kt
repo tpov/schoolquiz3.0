@@ -8,7 +8,6 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalog
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
-import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +24,6 @@ class DefaultShopComponent(
     private val purchaseItem: PurchaseShopItemUseCase,
     private val getReferralProgram: GetReferralProgramUseCase,
     private val nicknames: NicknameRepository,
-    private val observeCurrentProfile: ObserveCurrentProfileUseCase,
 ) : ShopComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + Dispatchers.Main.immediate)
@@ -42,11 +40,6 @@ class DefaultShopComponent(
         lifecycle.doOnDestroy { componentJob.cancel() }
         scope.launch {
             _state.update { it.copy(referralProgram = getReferralProgram.execute()) }
-        }
-        scope.launch {
-            observeCurrentProfile().collect { profile ->
-                _state.update { it.copy(nicknames = it.nicknames.copy(canTrade = profile.isVerified)) }
-            }
         }
         scope.launch {
             observeBalance.execute().collect { balance ->

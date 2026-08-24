@@ -49,15 +49,6 @@ data class NicknameShopState(
      * moves, and a field that says "проверяем…" forever is the worst of both.
      */
     val availabilityUnreachable: Boolean = false,
-    /**
-     * Whether this account may buy and sell names at all.
-     *
-     * Mirrors requireVerifiedAccount() in functions/index.js, which gates listNicknameForSale and
-     * buyListedNickname on the verification trophy. The rule is repeated here so the screen can say
-     * so up front — the server is still the one that decides, but learning a rule by being refused
-     * is the worst way to learn it.
-     */
-    val canTrade: Boolean = false,
 ) {
     /** Only worth showing when it still describes what is on screen. */
     val draftAvailability: NicknameAvailability?

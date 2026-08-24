@@ -712,6 +712,12 @@ exports.setActiveNickname = onCall(FUNCTION_OPTIONS, async (request) => {
   const batch = db.batch();
   batch.set(db.collection("users").doc(uid), {uid, nickname, updatedAtMs: now}, {merge: true});
   batch.set(db.collection("profiles").doc(uid), {uid, nickname}, {merge: true});
+  // Wearing a name takes it off the shelf.
+  //
+  // Listing already refuses the name you wear, but nothing stopped you listing a spare and then
+  // putting it on — leaving it worn and for sale at once. The next buyer would take the name off
+  // somebody's face, and the account would be left pointing at a name it no longer owns.
+  batch.delete(db.collection(NICKNAME_LISTINGS_COLLECTION).doc(nicknameClaimId(canonical)));
   await batch.commit();
   return {nickname};
 });
@@ -736,7 +742,6 @@ exports.fetchNicknameListings = onCall(FUNCTION_OPTIONS, async (request) => {
 
 exports.listNicknameForSale = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
-  await requireVerifiedAccount(uid);
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
   if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
   const price = Math.floor(numberValue(request.data && request.data.price, 0));
@@ -788,7 +793,6 @@ exports.cancelNicknameListing = onCall(FUNCTION_OPTIONS, async (request) => {
 
 exports.buyListedNickname = onCall(FUNCTION_OPTIONS, async (request) => {
   const buyerUid = requireAuthUid(request);
-  await requireVerifiedAccount(buyerUid);
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
   if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
 
@@ -2437,13 +2441,6 @@ async function refuseIfPurchaseRequired(uid, nickname) {
   }
 }
 
-/** Trading with other players is open only to accounts a human has checked. */
-async function requireVerifiedAccount(uid) {
-  const snapshot = await db.collection("users").doc(uid).get();
-  if (!hasTrophy((snapshot.data() || {}).trophies, TROPHY_VERIFIED)) {
-    throw new HttpsError("permission-denied", "Account must be verified to trade nicknames");
-  }
-}
 
 /** Verification is decided by admins, and by developers through their blanket access. */
 async function requireVerifier(uid) {

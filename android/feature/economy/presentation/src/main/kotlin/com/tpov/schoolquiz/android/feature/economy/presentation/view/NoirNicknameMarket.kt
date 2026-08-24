@@ -99,26 +99,15 @@ fun NoirNicknameMarket(
 
         item { NoirSectionRule(label = "Мои имена", trailing = "${nicknames.owned.size}") }
 
-        if (!nicknames.canTrade) {
-            // Said once, at the top, rather than eight times as a disabled button per row.
-            item {
-                Text(
-                    "Покупать и продавать имена могут только подтверждённые аккаунты. " +
-                        "Подтверждение запрашивается в профиле.",
-                    style = NoirType.rowSub.copy(fontSize = 11.sp, color = NoirT3),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                )
-            }
-        }
-
         if (nicknames.owned.isEmpty()) {
             item { EmptyNote(if (nicknames.isLoading) "Загрузка…" else "Пока ни одного") }
         } else {
-            items(nicknames.owned, key = { it.nickname }) { owned ->
+            // Keys are namespaced per section: a listed name appears in both lists at once, and one
+            // LazyColumn cannot hold the same key twice.
+            items(nicknames.owned, key = { "owned-${it.nickname}" }) { owned ->
                 OwnedNicknameRow(
                     owned = owned,
                     busy = nicknames.processingNickname == owned.nickname,
-                    canTrade = nicknames.canTrade,
                     onSetActive = { onEvent(ShopViewEvent.SetActiveNickname(owned.nickname)) },
                     onList = { price -> onEvent(ShopViewEvent.ListNicknameForSale(owned.nickname, price)) },
                     onCancel = { onEvent(ShopViewEvent.CancelNicknameListing(owned.nickname)) },
@@ -131,12 +120,14 @@ fun NoirNicknameMarket(
         if (nicknames.listings.isEmpty()) {
             item { EmptyNote(if (nicknames.isLoading) "Загрузка…" else "Никто ничего не продаёт") }
         } else {
-            items(nicknames.listings, key = { it.nickname }) { listing ->
+            items(nicknames.listings, key = { "listing-${it.nickname}" }) { listing ->
                 ListingRow(
                     listing = listing,
                     busy = nicknames.processingNickname == listing.nickname,
                     affordable = state.balance.gold >= listing.price,
-                    canTrade = nicknames.canTrade,
+                    // Your own lot is worth seeing on the shelf, but buying it back is not a
+                    // trade — the server refuses it, and offering the tap only earns an error.
+                    own = nicknames.owned.any { it.nickname == listing.nickname },
                     onBuy = { onEvent(ShopViewEvent.BuyNickname(listing.nickname)) },
                 )
             }
@@ -216,7 +207,6 @@ private fun NicknameRejection?.wording(): String =
 private fun OwnedNicknameRow(
     owned: OwnedNickname,
     busy: Boolean,
-    canTrade: Boolean,
     onSetActive: () -> Unit,
     onList: (Long) -> Unit,
     onCancel: () -> Unit,
@@ -266,11 +256,14 @@ private fun OwnedNicknameRow(
         }
 
         when {
-            // The name being worn cannot be sold — the server refuses it, and offering the action
-            // here would only produce an error the person could have been spared. The same goes for
-            // an unverified account, which cannot trade at all.
-            owned.active || !canTrade -> Unit
+            // Taking a lot down is always offered, even for the name being worn. Wearing one now
+            // cancels its lot, but accounts that reached that state earlier would otherwise have
+            // no way out of it: the name is on sale, and the only control that could stop it was
+            // hidden precisely because the name is active.
             owned.isForSale -> NicknameAction("Снять с продажи", enabled = !busy, muted = true, onClick = onCancel)
+            // Selling the name you wear is refused by the server, and offering it here would only
+            // produce an error the person could have been spared.
+            owned.active -> Unit
             pricing ->
                 Row(
                     Modifier.fillMaxWidth(),
@@ -292,7 +285,12 @@ private fun OwnedNicknameRow(
                                 .border(1.dp, NoirOutline, NoirShapeMd)
                                 .padding(horizontal = 12.dp, vertical = 9.dp),
                     )
-                    Text("ЗОЛОТА", style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirGold))
+                    Icon(
+                        NoirIcons.GoldStack,
+                        contentDescription = "золота",
+                        tint = NoirGold,
+                        modifier = Modifier.size(15.dp),
+                    )
                     Box(Modifier.weight(1f))
                     NicknameAction(
                         label = "Выставить",
@@ -316,7 +314,7 @@ private fun ListingRow(
     listing: NicknameListing,
     busy: Boolean,
     affordable: Boolean,
-    canTrade: Boolean,
+    own: Boolean,
     onBuy: () -> Unit,
 ) {
     NicknamePanel {
@@ -339,13 +337,12 @@ private fun ListingRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                "${listing.price}",
-                style = NoirType.num.copy(fontSize = 14.sp, color = NoirGold),
-            )
+            GoldAmount(listing.price)
             // Priced out rather than hidden: seeing what a name costs is the point of a window,
             // and the price is worth knowing before the account can act on it.
-            if (canTrade) {
+            if (own) {
+                Text("ВАШ ЛОТ", style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirTOff))
+            } else {
                 NicknameAction("Купить", enabled = !busy && affordable, onClick = onBuy)
             }
         }
@@ -403,4 +400,25 @@ private fun EmptyNote(text: String) {
         style = NoirType.rowSub.copy(fontSize = 12.sp, color = NoirTOff),
         modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
     )
+}
+
+/** A price always shows its coin: a bare number on this screen could be gold, nolics or a count. */
+@Composable
+private fun GoldAmount(
+    amount: Long,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text("$amount", style = NoirType.num.copy(fontSize = 14.sp, color = NoirGold))
+        Icon(
+            NoirIcons.GoldStack,
+            contentDescription = null,
+            tint = NoirGold,
+            modifier = Modifier.size(14.dp),
+        )
+    }
 }

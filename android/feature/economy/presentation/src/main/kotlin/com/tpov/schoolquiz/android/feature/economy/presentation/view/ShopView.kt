@@ -58,6 +58,7 @@ import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopTab
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import java.util.Locale
@@ -101,7 +102,10 @@ fun ShopView(
         // Its own screen, reached from the shop row — the same shape as Referrals. A tab strip
         // above the store would say the shop has two halves, and it has one with doors in it.
         Column(modifier.fillMaxSize()) {
-            NicknameMarketHeader(onBack = { onEvent(ShopViewEvent.SelectTab(ShopTab.STORE)) })
+            NicknameMarketHeader(
+                balance = state.balance,
+                onBack = { onEvent(ShopViewEvent.SelectTab(ShopTab.STORE)) },
+            )
             if (state.message != null) {
                 Text(
                     text = state.message,
@@ -138,10 +142,18 @@ fun ShopView(
     }
 }
 
-/** Back and a title, matching the app bar the store carries. */
+/**
+ * Back, a title and both balances — the same bar the store carries.
+ *
+ * The balances belong here more than anywhere: this is the one screen where every price is in gold
+ * and the answer to "can I afford it" is the reason somebody looks up.
+ */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
-private fun NicknameMarketHeader(onBack: () -> Unit) {
+private fun NicknameMarketHeader(
+    balance: EconomyResourceBalance,
+    onBack: () -> Unit,
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -151,6 +163,16 @@ private fun NicknameMarketHeader(onBack: () -> Unit) {
     ) {
         NoirIconButton(icon = NoirIcons.Back, contentDescription = "Назад", onClick = onBack)
         Text("NFT", style = NoirType.appbar, modifier = Modifier.weight(1f))
+        NoirBalancePill(
+            icon = NoirIcons.Nolic,
+            value = balance.nolics.toString(),
+            tint = LocalNoirAccent.current,
+        )
+        NoirBalancePill(
+            icon = NoirIcons.GoldStack,
+            value = balance.gold.toString(),
+            tint = NoirGold,
+        )
     }
 }
 
