@@ -41,8 +41,21 @@ const db = admin.firestore();
 db.settings({ignoreUndefinedProperties: true});
 
 const REGION = "us-central1";
+/**
+ * Every function is capped at a handful of instances.
+ *
+ * Not a performance choice — a quota one. Cloud Run bills a project against the sum of
+ * maxInstances x cpu across every service in a region, and the default cap of 100 instances times
+ * 28 functions asks for far more CPU than a project is granted. The result is not a slow app but a
+ * dead one: deploys fail, and the functions that do deploy answer 429 "no available instance".
+ *
+ * One instance still serves 80 concurrent requests, which is far beyond anything this app will
+ * see at this stage, and it is the smallest ask that can fit a project's starting quota. Raise it
+ * once the region's CPU quota has actually been granted.
+ */
 const FUNCTION_OPTIONS = {
   region: REGION,
+  maxInstances: 1,
   labels: {"schoolquiz-runtime": "node22"},
 };
 const QUALIFIED_LEVEL = 100;
