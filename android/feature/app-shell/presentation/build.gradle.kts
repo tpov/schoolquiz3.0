@@ -10,6 +10,8 @@ dependencies {
     implementation(project(":shared:feature:app-shell:domain"))
     implementation(project(":android:feature:local:settings:presentation"))
     implementation(project(":android:feature:internet:profile:presentation"))
+    // The settings screen renders account details straight off UserProfile.
+    implementation(project(":shared:feature:internet:profile:domain"))
     implementation(project(":android:feature:economy:presentation"))
     implementation(project(":android:feature:quest:presentation"))
     implementation(project(":android:feature:quest-authoring:presentation"))

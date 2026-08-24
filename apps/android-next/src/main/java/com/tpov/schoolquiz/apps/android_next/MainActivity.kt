@@ -41,12 +41,8 @@ class MainActivity : AppCompatActivity() {
                 AppShellScreen(
                     rootComponent = rootComponent,
                     appVersionName = BuildConfig.VERSION_NAME,
+                    appVersionCode = BuildConfig.VERSION_CODE,
                     isDebugBuild = BuildConfig.DEBUG,
-                    selectedDesignStyle = selectedDesignStyle,
-                    onDesignStyleSelected = { style ->
-                        selectedDesignStyle = style
-                        preferences.edit().putString(DESIGN_STYLE_KEY, style.name).apply()
-                    },
                 )
             }
         }

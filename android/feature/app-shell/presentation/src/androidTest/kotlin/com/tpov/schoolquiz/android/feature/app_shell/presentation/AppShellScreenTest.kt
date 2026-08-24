@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -40,7 +39,8 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.TournamentE
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.UnderConstructionScreen
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.LocalScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
-import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.DesignSettingsScreen
+import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.NoirSettingsScreen
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
@@ -69,6 +69,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import androidx.compose.ui.unit.height
 
 /**
  * Compile-level instrumented tests for phase-05 AppShellScreen composables.
@@ -196,11 +197,11 @@ class AppShellScreenTest {
     fun settings_footer_displays_exact_version_label() {
         composeTestRule.setContent {
             SchoolQuizTheme {
-                DesignSettingsScreen(
-                    selectedStyle = SchoolQuizDesignStyle.Clean,
-                    onStyleSelected = {},
+                NoirSettingsScreen(
+                    profile = UserProfile.offline(),
                     appVersionName = "0.1.0",
                     appVersionCode = 1,
+                    onSyncNow = {},
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -217,11 +218,11 @@ class AppShellScreenTest {
     fun settings_footer_is_display_only_without_click_or_long_click_semantics() {
         composeTestRule.setContent {
             SchoolQuizTheme {
-                DesignSettingsScreen(
-                    selectedStyle = SchoolQuizDesignStyle.Clean,
-                    onStyleSelected = {},
+                NoirSettingsScreen(
+                    profile = UserProfile.offline(),
                     appVersionName = "0.1.0",
                     appVersionCode = 1,
+                    onSyncNow = {},
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -245,11 +246,11 @@ class AppShellScreenTest {
     fun settings_footer_is_pinned_to_visible_bottom_not_short_list_tail() {
         composeTestRule.setContent {
             SchoolQuizTheme {
-                DesignSettingsScreen(
-                    selectedStyle = SchoolQuizDesignStyle.Clean,
-                    onStyleSelected = {},
+                NoirSettingsScreen(
+                    profile = UserProfile.offline(),
                     appVersionName = "0.1.0",
                     appVersionCode = 1,
+                    onSyncNow = {},
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -264,7 +265,6 @@ class AppShellScreenTest {
 
         assertTrue((rootBounds.bottom - footerBounds.bottom).value <= 32f)
         assertTrue((footerBounds.top - rootBounds.top).value > rootBounds.height.value * 0.70f)
-        composeTestRule.onNodeWithText("Чистый").assertIsDisplayed()
     }
 
     // Spec: hamburger_click_sends_open_drawer_to_domain (cross-phase review fix)

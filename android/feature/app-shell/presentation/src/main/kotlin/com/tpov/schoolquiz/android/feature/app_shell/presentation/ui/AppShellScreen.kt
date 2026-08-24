@@ -5,21 +5,16 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,8 +33,6 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.catalog.DesignCatalogScreen
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignBackground
-import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
-import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAppBar
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBottomNav
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
@@ -59,7 +52,7 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.Loca
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.scroll.ScrollToTopRegistry
 import com.tpov.schoolquiz.android.feature.economy.presentation.screen.ShopScreen
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.screen.ProfileScreen
-import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.DesignSettingsScreen
+import com.tpov.schoolquiz.android.feature.local.settings.presentation.ui.NoirSettingsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.HomeQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest.presentation.ui.MyQuestsScreen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.QuestCreateScreen
@@ -68,7 +61,6 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
-import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.BadgeContent
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
@@ -84,8 +76,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private const val TAB_CROSSFADE_DURATION_MS = 300
-private const val MAIN_INDICATOR_ALPHA = 0.14f
-private const val CLEAN_INDICATOR_ALPHA = 0.08f
 private const val HOME_SHELF = "home"
 private const val QUALIFIER_TOURNAMENT_SHELF = "tournament"
 private const val WORLD_CHAMPIONSHIP_SHELF = "tournamentFinal"
@@ -123,8 +113,6 @@ fun AppShellScreen(
     appVersionName: String,
     appVersionCode: Int,
     isDebugBuild: Boolean = false,
-    selectedDesignStyle: SchoolQuizDesignStyle = SchoolQuizDesignStyle.Main,
-    onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by rootComponent.appShellState.collectAsStateWithLifecycle(
@@ -290,8 +278,6 @@ fun AppShellScreen(
                         paddingValues = paddingValues,
                         uiAccess = uiAccess,
                         tournamentOverviewState = tournamentOverviewState,
-                        selectedDesignStyle = selectedDesignStyle,
-                        onDesignStyleSelected = onDesignStyleSelected,
                     )
                     if (quizzesStack.active.instance !is QuizzesChild.Idle) {
                         val overlayModifier =
@@ -323,8 +309,6 @@ private fun AppShellContent(
     paddingValues: PaddingValues,
     uiAccess: AppShellUiAccess,
     tournamentOverviewState: Map<String, TournamentOverviewLoadState>,
-    selectedDesignStyle: SchoolQuizDesignStyle,
-    onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
     Crossfade(
         targetState = state.activeTab,
@@ -345,8 +329,6 @@ private fun AppShellContent(
                         paddingValues = paddingValues,
                         canSeeDesignCatalog = uiAccess.canSeeDesignCatalog,
                         canManagePublicShelves = uiAccess.canManagePublicShelves,
-                        selectedDesignStyle = selectedDesignStyle,
-                        onDesignStyleSelected = onDesignStyleSelected,
                     )
                 }
             Tab.INTERNET ->
@@ -381,46 +363,6 @@ private fun AppShellContent(
     }
 }
 
-/**
- * NavBar item wrapper with nullable badge surface (AC 20).
- * MVP: badge always null (spec BR #15). RowScope extension needed by NavigationBarItem.
- */
-@Suppress(
-    "FunctionNaming",
-    "ktlint:standard:function-naming",
-    "UnusedParameter",
-)
-@Composable
-private fun RowScope.BrandNavBarItem(
-    tab: Tab,
-    selected: Boolean,
-    onClick: () -> Unit,
-    badge: BadgeContent? = null,
-    modifier: Modifier = Modifier,
-) {
-    val designStyle = currentSchoolQuizDesignStyle()
-    val indicatorAlpha =
-        when (designStyle) {
-            SchoolQuizDesignStyle.Main -> MAIN_INDICATOR_ALPHA
-            SchoolQuizDesignStyle.Clean -> CLEAN_INDICATOR_ALPHA
-        }
-    NavigationBarItem(
-        selected = selected,
-        onClick = onClick,
-        icon = { Icon(tab.icon, contentDescription = tab.displayName) },
-        label = { Text(tab.displayName) },
-        modifier = modifier,
-        colors =
-            NavigationBarItemDefaults.colors(
-                selectedIconColor = MaterialTheme.colorScheme.primary,
-                selectedTextColor = MaterialTheme.colorScheme.primary,
-                unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
-                unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
-                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = indicatorAlpha),
-            ),
-    )
-}
-
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun LocalTabContent(
@@ -431,8 +373,6 @@ private fun LocalTabContent(
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
     canManagePublicShelves: Boolean,
-    selectedDesignStyle: SchoolQuizDesignStyle,
-    onDesignStyleSelected: (SchoolQuizDesignStyle) -> Unit,
 ) {
     when (screen) {
         is LocalScreenComponent.Placeholder -> {
@@ -464,14 +404,19 @@ private fun LocalTabContent(
                         component = rootComponent.questCreateComponent,
                         modifier = Modifier.padding(paddingValues),
                     )
-                is LocalConfig.SettingsRoot ->
-                    DesignSettingsScreen(
-                        selectedStyle = selectedDesignStyle,
-                        onStyleSelected = onDesignStyleSelected,
+                is LocalConfig.SettingsRoot -> {
+                    // Reads the profile the Internet tab already keeps: the personal details on
+                    // this screen live on the account, and a second reader of the same document
+                    // would be one more thing to keep in step.
+                    val profileState by rootComponent.profileComponent.state.collectAsStateWithLifecycle()
+                    NoirSettingsScreen(
+                        profile = profileState.profile,
                         appVersionName = appVersionName,
                         appVersionCode = appVersionCode,
+                        onSyncNow = { rootComponent.onSyncNow() },
                         modifier = Modifier.padding(paddingValues),
                     )
+                }
                 is LocalConfig.EmptyRoot ->
                     UnderConstructionScreen(screen.config.displayName, modifier = Modifier.padding(paddingValues))
             }

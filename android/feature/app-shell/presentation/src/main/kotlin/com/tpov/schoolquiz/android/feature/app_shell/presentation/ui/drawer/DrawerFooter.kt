@@ -106,15 +106,13 @@ fun DrawerFooter(
 }
 
 /**
- * Drawer item wrapper with nullable badge surface (AC 20).
- * MVP: badge always null (spec BR #15). Exposes badge param in public API for future use.
- */
-
-/**
  * One row of the drawer.
  *
  * Selection is carried by the accent on the label and a hairline block behind it, not by a filled
  * pill: on black a filled row competes with the content it is meant to lead to.
+ *
+ * [badge] is always null for now (spec BR #15) but stays in the signature: the surface is what the
+ * unread counters will hang off, and adding it later would touch every call site.
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
