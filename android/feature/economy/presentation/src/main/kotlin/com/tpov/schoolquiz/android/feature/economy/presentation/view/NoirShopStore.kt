@@ -184,6 +184,7 @@ private val DISPLAY_ORDER =
         ShopItemId.AD_REWARD_BOX,
         ShopItemId.DONATE_GOOGLE_PLAY,
         ShopItemId.REFERRAL_PROGRAM,
+        ShopItemId.NICKNAME_MARKET,
     )
 
 private data class BetaItem(val title: String, val icon: ImageVector)
@@ -205,6 +206,7 @@ private val ShopCatalogItem.icon: ImageVector
             ShopItemId.AD_REWARD_BOX -> NoirIcons.Box
             ShopItemId.DONATE_GOOGLE_PLAY -> NoirIcons.Heart
             ShopItemId.REFERRAL_PROGRAM -> NoirIcons.Users
+            ShopItemId.NICKNAME_MARKET -> NoirIcons.Gem
         }
 
 /**
@@ -227,6 +229,7 @@ private val ShopCatalogItem.actionLabel: String
             ShopItemId.AD_REWARD_BOX -> "Watch →"
             ShopItemId.DONATE_GOOGLE_PLAY -> "Donate ↗"
             ShopItemId.REFERRAL_PROGRAM -> "Open →"
+            ShopItemId.NICKNAME_MARKET -> "Open →"
             else -> "Buy →"
         }
 

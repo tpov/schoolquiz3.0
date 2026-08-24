@@ -1,0 +1,406 @@
+@file:Suppress("MagicNumber", "FunctionNaming", "ktlint:standard:function-naming")
+
+package com.tpov.schoolquiz.android.feature.economy.presentation.view
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSectionRule
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameRejection
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
+import kotlinx.coroutines.delay
+
+/** How long the typing has to settle before the name goes to the server. */
+private const val AVAILABILITY_DEBOUNCE_MS = 450L
+
+/**
+ * The NFT tab: names an account holds, and the window where they change hands.
+ *
+ * Three blocks in the order somebody works through them — take a name, manage the ones you have,
+ * browse what others are selling. Every action is a word rather than a button: the shop already
+ * spends its emphasis on the store tab, and a column of filled buttons here would compete with it.
+ */
+@Composable
+fun NoirNicknameMarket(
+    state: ShopViewState,
+    onEvent: (ShopViewEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val nicknames = state.nicknames
+    val draft = nicknames.draft
+
+    // The check follows the typing rather than every keystroke: a request per letter would spend a
+    // callable on text nobody has finished writing.
+    LaunchedEffect(draft) {
+        delay(AVAILABILITY_DEBOUNCE_MS)
+        onEvent(ShopViewEvent.CheckNicknameAvailability(draft))
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        item {
+            ClaimNicknameCard(
+                state = state,
+                onDraftChange = { onEvent(ShopViewEvent.NicknameDraftChanged(it)) },
+                onClaim = { onEvent(ShopViewEvent.ClaimNickname(draft.trim())) },
+            )
+        }
+
+        item { NoirSectionRule(label = "Мои имена", trailing = "${nicknames.owned.size}") }
+
+        if (!nicknames.canTrade) {
+            // Said once, at the top, rather than eight times as a disabled button per row.
+            item {
+                Text(
+                    "Покупать и продавать имена могут только подтверждённые аккаунты. " +
+                        "Подтверждение запрашивается в профиле.",
+                    style = NoirType.rowSub.copy(fontSize = 11.sp, color = NoirT3),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                )
+            }
+        }
+
+        if (nicknames.owned.isEmpty()) {
+            item { EmptyNote(if (nicknames.isLoading) "Загрузка…" else "Пока ни одного") }
+        } else {
+            items(nicknames.owned, key = { it.nickname }) { owned ->
+                OwnedNicknameRow(
+                    owned = owned,
+                    busy = nicknames.processingNickname == owned.nickname,
+                    canTrade = nicknames.canTrade,
+                    onSetActive = { onEvent(ShopViewEvent.SetActiveNickname(owned.nickname)) },
+                    onList = { price -> onEvent(ShopViewEvent.ListNicknameForSale(owned.nickname, price)) },
+                    onCancel = { onEvent(ShopViewEvent.CancelNicknameListing(owned.nickname)) },
+                )
+            }
+        }
+
+        item { NoirSectionRule(label = "Витрина", trailing = "${nicknames.listings.size}") }
+
+        if (nicknames.listings.isEmpty()) {
+            item { EmptyNote(if (nicknames.isLoading) "Загрузка…" else "Никто ничего не продаёт") }
+        } else {
+            items(nicknames.listings, key = { it.nickname }) { listing ->
+                ListingRow(
+                    listing = listing,
+                    busy = nicknames.processingNickname == listing.nickname,
+                    affordable = state.balance.gold >= listing.price,
+                    canTrade = nicknames.canTrade,
+                    onBuy = { onEvent(ShopViewEvent.BuyNickname(listing.nickname)) },
+                )
+            }
+        }
+    }
+}
+
+// ─── Claim ──────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ClaimNicknameCard(
+    state: ShopViewState,
+    onDraftChange: (String) -> Unit,
+    onClaim: () -> Unit,
+) {
+    val nicknames = state.nicknames
+    val verdict = nicknames.draftAvailability
+    val accent = LocalNoirAccent.current
+    NicknamePanel {
+        Text("ЗАНЯТЬ СВОБОДНОЕ ИМЯ", style = NoirType.kicker.copy(fontSize = 9.sp))
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            BasicTextField(
+                value = nicknames.draft,
+                onValueChange = onDraftChange,
+                singleLine = true,
+                textStyle = NoirType.rowTitle,
+                cursorBrush = SolidColor(accent),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .clip(NoirShapeMd)
+                        .background(NoirS1)
+                        .border(1.dp, NoirOutline, NoirShapeMd)
+                        .padding(horizontal = 12.dp, vertical = 11.dp),
+            )
+            NicknameAction(
+                label = "Занять",
+                enabled = state.nicknames.canClaimDraft,
+                onClick = onClaim,
+            )
+        }
+        // The verdict sits under the field and always occupies a line, so the layout does not jump
+        // as answers arrive and are replaced.
+        val (note, tone) =
+            when {
+                nicknames.draft.isBlank() -> "Свободное имя стоит золота — первое бесплатно" to NoirT3
+                nicknames.isCheckingAvailability -> "Проверяем…" to NoirTOff
+                nicknames.availabilityUnreachable -> "Не удалось проверить — нет связи с сервером" to NoirDanger
+                verdict == null -> "Проверяем…" to NoirTOff
+                verdict.available -> "Свободно" to NoirSuccess
+                else -> verdict.reason.wording() to NoirDanger
+            }
+        Text(note, style = NoirType.rowSub.copy(fontSize = 11.sp, color = tone))
+    }
+}
+
+/** Codes come from the server; the wording is ours, so it can change without a deploy. */
+private fun NicknameRejection?.wording(): String =
+    when (this) {
+        NicknameRejection.TOO_SHORT -> "Слишком коротко"
+        NicknameRejection.TOO_LONG -> "Слишком длинно"
+        NicknameRejection.UNSUPPORTED_CHARACTERS -> "Недопустимые символы"
+        NicknameRejection.BLOCKED_SYMBOL -> "Такой символ нельзя"
+        NicknameRejection.BLOCKED_WORD -> "Такое слово нельзя"
+        NicknameRejection.TAKEN -> "Уже занято"
+        NicknameRejection.YOURS -> "Это имя уже ваше"
+        null -> "Нельзя занять"
+    }
+
+// ─── Owned ──────────────────────────────────────────────────────────────────
+
+@Composable
+private fun OwnedNicknameRow(
+    owned: OwnedNickname,
+    busy: Boolean,
+    canTrade: Boolean,
+    onSetActive: () -> Unit,
+    onList: (Long) -> Unit,
+    onCancel: () -> Unit,
+) {
+    var priceDraft by remember(owned.nickname) { mutableStateOf("") }
+    var pricing by remember(owned.nickname) { mutableStateOf(false) }
+    val accent = LocalNoirAccent.current
+
+    NicknamePanel {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    owned.nickname,
+                    style = NoirType.rowTitle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text =
+                        when {
+                            owned.active -> "АКТИВНОЕ"
+                            owned.isForSale -> "ПРОДАЁТСЯ ЗА ${owned.listedPrice}"
+                            owned.generated -> "ВЫДАНО ПРИ РЕГИСТРАЦИИ"
+                            else -> "СВОБОДНО ДЛЯ ПРОДАЖИ"
+                        },
+                    style =
+                        NoirType.kicker.copy(
+                            fontSize = 9.sp,
+                            color =
+                                when {
+                                    owned.active -> accent
+                                    owned.isForSale -> NoirGold
+                                    else -> NoirT3
+                                },
+                        ),
+                )
+            }
+            if (owned.active) {
+                Icon(NoirIcons.Check, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+            } else {
+                NicknameAction("Надеть", enabled = !busy, onClick = onSetActive)
+            }
+        }
+
+        when {
+            // The name being worn cannot be sold — the server refuses it, and offering the action
+            // here would only produce an error the person could have been spared. The same goes for
+            // an unverified account, which cannot trade at all.
+            owned.active || !canTrade -> Unit
+            owned.isForSale -> NicknameAction("Снять с продажи", enabled = !busy, muted = true, onClick = onCancel)
+            pricing ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    BasicTextField(
+                        value = priceDraft,
+                        onValueChange = { input -> priceDraft = input.filter { it.isDigit() }.take(9) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        textStyle = NoirType.num.copy(fontSize = 14.sp, color = NoirT1),
+                        cursorBrush = SolidColor(accent),
+                        modifier =
+                            Modifier
+                                .width(120.dp)
+                                .clip(NoirShapeMd)
+                                .background(NoirS1)
+                                .border(1.dp, NoirOutline, NoirShapeMd)
+                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                    )
+                    Text("ЗОЛОТА", style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirGold))
+                    Box(Modifier.weight(1f))
+                    NicknameAction(
+                        label = "Выставить",
+                        enabled = !busy && (priceDraft.toLongOrNull() ?: 0L) > 0L,
+                        onClick = {
+                            priceDraft.toLongOrNull()?.takeIf { it > 0L }?.let(onList)
+                            pricing = false
+                        },
+                    )
+                }
+
+            else -> NicknameAction("Продать", enabled = !busy, muted = true, onClick = { pricing = true })
+        }
+    }
+}
+
+// ─── Listings ───────────────────────────────────────────────────────────────
+
+@Composable
+private fun ListingRow(
+    listing: NicknameListing,
+    busy: Boolean,
+    affordable: Boolean,
+    canTrade: Boolean,
+    onBuy: () -> Unit,
+) {
+    NicknamePanel {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    listing.nickname,
+                    style = NoirType.rowTitle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    "ПРОДАЁТ ${listing.sellerNickname.uppercase()}",
+                    style = NoirType.kicker.copy(fontSize = 9.sp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                "${listing.price}",
+                style = NoirType.num.copy(fontSize = 14.sp, color = NoirGold),
+            )
+            // Priced out rather than hidden: seeing what a name costs is the point of a window,
+            // and the price is worth knowing before the account can act on it.
+            if (canTrade) {
+                NicknameAction("Купить", enabled = !busy && affordable, onClick = onBuy)
+            }
+        }
+    }
+}
+
+// ─── Shell ──────────────────────────────────────────────────────────────────
+
+@Composable
+private fun NicknameAction(
+    label: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    muted: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = label.uppercase(),
+        style =
+            NoirType.kicker.copy(
+                fontSize = 10.sp,
+                color =
+                    when {
+                        !enabled -> NoirTOff
+                        muted -> NoirT3
+                        else -> LocalNoirAccent.current
+                    },
+            ),
+        modifier =
+            modifier
+                .clip(NoirShapeMd)
+                .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
+                .padding(horizontal = 8.dp, vertical = 13.dp),
+    )
+}
+
+@Composable
+private fun NicknamePanel(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(NoirShapeMd)
+            .background(NoirGlassStroke.copy(alpha = 0.04f))
+            .border(1.dp, NoirHair, NoirShapeMd)
+            .padding(horizontal = 14.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun EmptyNote(text: String) {
+    Text(
+        text,
+        style = NoirType.rowSub.copy(fontSize = 12.sp, color = NoirTOff),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+    )
+}

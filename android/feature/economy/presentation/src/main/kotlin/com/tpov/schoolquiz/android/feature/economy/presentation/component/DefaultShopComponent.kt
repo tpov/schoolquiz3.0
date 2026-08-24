@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalog
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class DefaultShopComponent(
     private val purchaseItem: PurchaseShopItemUseCase,
     private val getReferralProgram: GetReferralProgramUseCase,
     private val nicknames: NicknameRepository,
+    private val observeCurrentProfile: ObserveCurrentProfileUseCase,
 ) : ShopComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + Dispatchers.Main.immediate)
@@ -40,6 +42,11 @@ class DefaultShopComponent(
         lifecycle.doOnDestroy { componentJob.cancel() }
         scope.launch {
             _state.update { it.copy(referralProgram = getReferralProgram.execute()) }
+        }
+        scope.launch {
+            observeCurrentProfile().collect { profile ->
+                _state.update { it.copy(nicknames = it.nicknames.copy(canTrade = profile.isVerified)) }
+            }
         }
         scope.launch {
             observeBalance.execute().collect { balance ->
@@ -65,9 +72,22 @@ class DefaultShopComponent(
             is ShopViewEvent.Purchase -> purchase(event.itemId)
             ShopViewEvent.MessageShown -> _state.update { it.copy(message = null) }
             ShopViewEvent.RefreshNicknames -> refreshNicknames()
+            is ShopViewEvent.NicknameDraftChanged ->
+                _state.update { it.copy(nicknames = it.nicknames.copy(draft = event.value)) }
+            is ShopViewEvent.CheckNicknameAvailability -> checkAvailability(event.nickname)
             is ShopViewEvent.ClaimNickname ->
                 runNicknameAction(event.nickname) {
                     val charged = nicknames.claim(event.nickname)
+                    _state.update {
+                        it.copy(
+                            nicknames =
+                                it.nicknames.copy(
+                                    draft = "",
+                                    availability = null,
+                                    availabilityUnreachable = false,
+                                ),
+                        )
+                    }
                     if (charged > 0) "Имя куплено за $charged" else "Имя занято за вами"
                 }
             is ShopViewEvent.SetActiveNickname ->
@@ -90,6 +110,50 @@ class DefaultShopComponent(
                     val commission = nicknames.buy(event.nickname)
                     "Имя куплено, комиссия $commission"
                 }
+        }
+    }
+
+    /**
+     * Asks whether a name is free.
+     *
+     * The reply is stored with the name it is about rather than as a bare yes/no, so a slow answer
+     * about an older draft cannot end up labelling whatever is in the field by then.
+     */
+    private fun checkAvailability(nickname: String) {
+        val trimmed = nickname.trim()
+        if (trimmed.isEmpty()) {
+            _state.update {
+                it.copy(
+                    nicknames =
+                        it.nicknames.copy(
+                            availability = null,
+                            isCheckingAvailability = false,
+                            availabilityUnreachable = false,
+                        ),
+                )
+            }
+            return
+        }
+        scope.launch {
+            _state.update {
+                it.copy(
+                    nicknames =
+                        it.nicknames.copy(isCheckingAvailability = true, availabilityUnreachable = false),
+                )
+            }
+            val result = runCatching { nicknames.checkAvailability(trimmed) }
+            _state.update { current ->
+                current.copy(
+                    nicknames =
+                        current.nicknames.copy(
+                            availability = result.getOrNull() ?: current.nicknames.availability,
+                            isCheckingAvailability = false,
+                            availabilityUnreachable = result.isFailure,
+                        ),
+                    // A failed check is not a refusal; say so rather than leaving a silent field.
+                    message = result.exceptionOrNull()?.readableMessage() ?: current.message,
+                )
+            }
         }
     }
 

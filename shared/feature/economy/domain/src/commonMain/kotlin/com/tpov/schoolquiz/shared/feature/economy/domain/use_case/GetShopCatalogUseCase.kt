@@ -15,6 +15,7 @@ class GetShopCatalogUseCase {
             quizSlot(),
             donateGooglePlay(),
             referralProgram(),
+            nicknameMarket(),
             adRewardBox(),
         )
 
@@ -83,6 +84,17 @@ class GetShopCatalogUseCase {
             title = "Referrals",
             description = "",
             category = ShopItemCategory.COMMUNITY,
+            price = ShopPrice(0L, ShopCurrency.FREE),
+            isAvailable = true,
+        )
+
+    private fun nicknameMarket(): ShopCatalogItem =
+        ShopCatalogItem(
+            id = ShopItemId.NICKNAME_MARKET,
+            title = "NFT",
+            description = "",
+            category = ShopItemCategory.COMMUNITY,
+            // Free to open. Names inside cost gold, but the entry itself is a door, not a purchase.
             price = ShopPrice(0L, ShopCurrency.FREE),
             isAvailable = true,
         )

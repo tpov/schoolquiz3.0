@@ -30,13 +30,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Diamond
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.OndemandVideo
-import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -67,30 +59,21 @@ import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopTa
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
-import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import java.util.Locale
 
 private const val REFERRAL_TARGET_BOXES = 100
 private const val REFERRAL_MIN_SLOTS = 6
 private const val REFERRAL_REWARD_BOXES = 50
-private val ShopCardShape = RoundedCornerShape(16.dp)
-private val ShopButtonShape = RoundedCornerShape(8.dp)
 private val ReferralCardShape = RoundedCornerShape(16.dp)
 private val ReferralItemShape = RoundedCornerShape(16.dp)
 private val LegacyShopCardColor = Color(0xFF242429)
 private val LegacyGoldCardColor = Color(0xFF3A2F0A)
-private val LegacyDonateCardColor = Color(0xFF2A1B3D)
 private val LegacyReferralCardColor = Color(0xFF242429)
-private val LegacyBorderColor = Color.White.copy(alpha = 0.2f)
 private val LegacyReferralBackground = Color.Black
 private val LegacyAccent = Color(0xFF4285F4)
 private val LegacyAccentBack = Color(0x1A0288D1)
-private val LegacyGold = Color(0xFFFFD700)
 private val LegacyAppGold = Color(0xFFD4AF37)
-private val LegacyGooglePlay = Color(0xFF4CAF50)
-private val LegacySecondaryButton = Color(0xFF555555)
-private val LegacyHeart = Color(0xFFFF5252)
 private val LegacyRewardBackground = Color(0xFF3A3000)
 private val LegacyHighlightText = Color(0xFFFFC107)
 private val LegacyWhite80 = Color(0xCCFFFFFF)
@@ -114,6 +97,23 @@ fun ShopView(
         return
     }
 
+    if (state.selectedTab == ShopTab.NICKNAMES) {
+        // Its own screen, reached from the shop row — the same shape as Referrals. A tab strip
+        // above the store would say the shop has two halves, and it has one with doors in it.
+        Column(modifier.fillMaxSize()) {
+            NicknameMarketHeader(onBack = { onEvent(ShopViewEvent.SelectTab(ShopTab.STORE)) })
+            if (state.message != null) {
+                Text(
+                    text = state.message,
+                    style = NoirType.rowSub,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
+            NoirNicknameMarket(state = state, onEvent = onEvent)
+        }
+        return
+    }
+
     // The ground is drawn once by the shell, which already owns the mode gradient. Painting a
     // second one here mixed two glows and muddied both.
     Column(modifier.fillMaxSize()) {
@@ -128,13 +128,29 @@ fun ShopView(
         NoirShopStore(
             state = state,
             onPurchase = { id ->
-                if (id == ShopItemId.REFERRAL_PROGRAM) {
-                    onEvent(ShopViewEvent.SelectTab(ShopTab.REFERRALS))
-                } else {
-                    onEvent(ShopViewEvent.Purchase(id))
+                when (id) {
+                    ShopItemId.REFERRAL_PROGRAM -> onEvent(ShopViewEvent.SelectTab(ShopTab.REFERRALS))
+                    ShopItemId.NICKNAME_MARKET -> onEvent(ShopViewEvent.SelectTab(ShopTab.NICKNAMES))
+                    else -> onEvent(ShopViewEvent.Purchase(id))
                 }
             },
         )
+    }
+}
+
+/** Back and a title, matching the app bar the store carries. */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun NicknameMarketHeader(onBack: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, end = 16.dp, top = 13.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        NoirIconButton(icon = NoirIcons.Back, contentDescription = "Назад", onClick = onBack)
+        Text("NFT", style = NoirType.appbar, modifier = Modifier.weight(1f))
     }
 }
 
@@ -698,13 +714,3 @@ private fun ReferralProgram.displayUsers(): List<ReferralUserDisplay> {
 }
 
 private fun ReferralProgram.seasonBonusBoxes(): Int = invitedUsers.sumOf { it.seasonBoxes / 100 }
-
-private fun ShopCatalogItem.icon(): ImageVector =
-    when (id) {
-        ShopItemId.STANDARD_HEART_SLOT -> Icons.Default.Favorite
-        ShopItemId.GOLD_HEART -> Icons.Default.Diamond
-        ShopItemId.QUIZ_SLOT -> Icons.Default.AddCircle
-        ShopItemId.DONATE_GOOGLE_PLAY -> Icons.Default.VolunteerActivism
-        ShopItemId.REFERRAL_PROGRAM -> Icons.Default.Groups
-        ShopItemId.AD_REWARD_BOX -> Icons.Default.OndemandVideo
-    }

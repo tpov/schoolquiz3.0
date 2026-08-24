@@ -12,6 +12,11 @@ sealed interface ShopViewEvent {
     /** Pulls both the owned names and the shop window; they change from other accounts. */
     data object RefreshNicknames : ShopViewEvent
 
+    /** Typing in the claim field. The check is fired by the view once the typing settles. */
+    data class NicknameDraftChanged(val value: String) : ShopViewEvent
+
+    data class CheckNicknameAvailability(val nickname: String) : ShopViewEvent
+
     data class ClaimNickname(val nickname: String) : ShopViewEvent
 
     data class SetActiveNickname(val nickname: String) : ShopViewEvent
