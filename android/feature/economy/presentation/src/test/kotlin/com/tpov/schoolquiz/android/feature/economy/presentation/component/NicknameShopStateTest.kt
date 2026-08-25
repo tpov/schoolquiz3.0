@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.economy.presentation.component
 
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -81,6 +82,34 @@ class NicknameShopStateTest {
         val state = NicknameShopState(listings = listings, listingQuery = "нетакого")
 
         assertEquals(emptyList<NicknameListing>(), state.visibleListings)
+    }
+
+    /** The name being worn answers "who am I right now", so it never has to be hunted for. */
+    @Test
+    fun wornNameComesFirst() {
+        val state =
+            NicknameShopState(
+                owned =
+                    listOf(
+                        OwnedNickname(nickname = "spare", active = false, generated = false),
+                        OwnedNickname(nickname = "worn", active = true, generated = false),
+                        OwnedNickname(nickname = "another", active = false, generated = true),
+                    ),
+            )
+
+        assertEquals(listOf("worn", "spare", "another"), state.ownedWornFirst.map { it.nickname })
+    }
+
+    /** Sorting is stable: with nothing worn, the server's order survives untouched. */
+    @Test
+    fun keepsServerOrderWhenNothingIsWorn() {
+        val owned =
+            listOf(
+                OwnedNickname(nickname = "one", active = false, generated = false),
+                OwnedNickname(nickname = "two", active = false, generated = false),
+            )
+
+        assertEquals(owned, NicknameShopState(owned = owned).ownedWornFirst)
     }
 
     private fun listing(

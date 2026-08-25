@@ -67,6 +67,16 @@ data class NicknameShopState(
     val armed: String? = null,
 ) {
     /**
+     * The names you hold, worn one first.
+     *
+     * A stable sort, so everything else keeps the order the server sent. The worn name is the one
+     * being asked about — it is the answer to "who am I right now" — and it should not have to be
+     * hunted for down a list.
+     */
+    val ownedWornFirst: List<OwnedNickname>
+        get() = owned.sortedByDescending { it.active }
+
+    /**
      * The window as it should be drawn: searched, then sorted.
      *
      * Done here rather than on the server. The window is capped at fifty lots, which is a list a

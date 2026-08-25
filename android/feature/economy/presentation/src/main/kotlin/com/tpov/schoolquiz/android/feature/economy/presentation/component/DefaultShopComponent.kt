@@ -213,8 +213,13 @@ class DefaultShopComponent(
 
     private suspend fun loadLogos() {
         val result = runCatching { logos.catalog() }
-        result.onSuccess { catalog ->
-            _state.update { it.copy(nicknames = it.nicknames.copy(logos = catalog)) }
+        _state.update { current ->
+            current.copy(
+                nicknames = current.nicknames.copy(logos = result.getOrDefault(current.nicknames.logos)),
+                // A shelf that says "загрузка…" for ever is the one outcome worth interrupting for:
+                // swallowing the failure leaves nothing to distinguish it from a slow network.
+                message = result.exceptionOrNull()?.readableMessage() ?: current.message,
+            )
         }
     }
 
@@ -227,6 +232,7 @@ class DefaultShopComponent(
             _state.update { it.copy(nicknames = it.nicknames.copy(isLoading = true)) }
             val owned = runCatching { nicknames.owned() }
             val listings = runCatching { nicknames.listings() }
+            loadLogos()
             _state.update { current ->
                 current.copy(
                     nicknames =
