@@ -25,6 +25,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
@@ -38,7 +42,7 @@ fun Top3Section(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = runnerGroupSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = NoirT1,
         border = BorderStroke(1.dp, runnerLightBorderColor()),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
@@ -50,8 +54,8 @@ fun Top3Section(
             Text(
                 text = "Лучшие участники",
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = NoirType.groupTitle,
+                color = NoirT1,
                 textAlign = TextAlign.Center,
             )
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -72,9 +76,9 @@ private fun TopParticipantCard(
 ) {
     val rankColor =
         if (index == 0) {
-            MaterialTheme.colorScheme.secondary
+            NoirViolet
         } else {
-            MaterialTheme.colorScheme.primary
+            LocalNoirAccent.current
         }
     RunnerDesignCard(
         modifier = modifier.fillMaxWidth(),
@@ -94,7 +98,7 @@ private fun TopParticipantCard(
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(28.dp)) {
                     Text(
                         text = "${index + 1}",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = NoirType.button,
                     )
                 }
             }
@@ -109,8 +113,8 @@ private fun TopParticipantCard(
                 modifier = Modifier.weight(1f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (index == 0) rankColor else MaterialTheme.colorScheme.onSurface,
+                style = NoirType.rowTitle,
+                color = if (index == 0) rankColor else NoirT1,
             )
             ParticipantPercent(
                 percent = participant.percent,
@@ -140,7 +144,7 @@ private fun ParticipantPercent(
         Text(
             text = "$percent%",
             modifier = modifier,
-            style = MaterialTheme.typography.titleMedium,
+            style = NoirType.groupTitle,
             color = color,
         )
     }

@@ -24,7 +24,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.glowEasy
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.TemplatePart
@@ -81,7 +88,7 @@ fun FillBlankContent(
     ) {
         RunnerDesignCard(
             modifier = Modifier.fillMaxWidth(),
-            accentColor = MaterialTheme.colorScheme.primary,
+            accentColor = LocalNoirAccent.current,
         ) {
             FlowRow(
                 modifier = Modifier.padding(14.dp),
@@ -93,8 +100,8 @@ fun FillBlankContent(
                         is TemplatePart.Text -> {
                             Text(
                                 text = part.content,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                style = NoirType.rowTitle,
+                                color = NoirT1,
                                 modifier = Modifier.padding(vertical = 8.dp),
                             )
                         }
@@ -127,23 +134,23 @@ fun FillBlankContent(
                             val surface = runnerAnswerSurfaceColor()
                             val blankBorderColor =
                                 when (displayTone) {
-                                    AnswerFeedbackTone.Correct -> MaterialTheme.colorScheme.glowEasy
-                                    AnswerFeedbackTone.Wrong -> MaterialTheme.colorScheme.error
+                                    AnswerFeedbackTone.Correct -> NoirSuccess
+                                    AnswerFeedbackTone.Wrong -> NoirDanger
                                     AnswerFeedbackTone.Neutral -> runnerLightBorderColor()
                                 }
                             val blankContainerColor =
                                 when {
                                     displayTone == AnswerFeedbackTone.Correct ->
-                                        MaterialTheme.colorScheme.glowEasy
+                                        NoirSuccess
                                             .copy(alpha = FEEDBACK_BLANK_CONTAINER_ALPHA)
                                             .compositeOver(surface)
                                     displayTone == AnswerFeedbackTone.Wrong ->
-                                        MaterialTheme.colorScheme.error
+                                        NoirDanger
                                             .copy(alpha = FEEDBACK_BLANK_CONTAINER_ALPHA)
                                             .compositeOver(surface)
-                                    isActive -> MaterialTheme.colorScheme.primary
+                                    isActive -> LocalNoirAccent.current
                                     filledText != null ->
-                                        MaterialTheme.colorScheme.primary
+                                        LocalNoirAccent.current
                                             .copy(alpha = FILLED_BLANK_CONTAINER_ALPHA)
                                             .compositeOver(surface)
                                     else -> surface
@@ -172,9 +179,9 @@ fun FillBlankContent(
                                         containerColor = blankContainerColor,
                                         contentColor =
                                             if (isActive && displayTone == AnswerFeedbackTone.Neutral) {
-                                                MaterialTheme.colorScheme.onPrimary
+                                                NoirInk
                                             } else {
-                                                MaterialTheme.colorScheme.onSurface
+                                                NoirT1
                                             },
                                     ),
                             ) {
@@ -199,8 +206,8 @@ fun FillBlankContent(
         if (candidates.isNotEmpty()) {
             Text(
                 text = "Варианты",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = NoirType.button,
+                color = NoirT3,
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -220,8 +227,8 @@ fun FillBlankContent(
                         modifier = Modifier.alpha(if (isUsed) CONSUMED_ALPHA else 1f),
                         colors =
                             ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondary,
-                                contentColor = MaterialTheme.colorScheme.onSecondary,
+                                containerColor = NoirViolet,
+                                contentColor = NoirInk,
                             ),
                     ) {
                         Text(text = candidate.text)

@@ -4,12 +4,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.glowHard
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -17,7 +16,7 @@ fun CrossButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    RunnerIconBadge(color = MaterialTheme.colorScheme.glowHard, modifier = modifier) {
+    RunnerIconBadge(color = NoirDanger, modifier = modifier) {
         IconButton(onClick = onClick) {
             Icon(
                 imageVector = Icons.Default.Close,

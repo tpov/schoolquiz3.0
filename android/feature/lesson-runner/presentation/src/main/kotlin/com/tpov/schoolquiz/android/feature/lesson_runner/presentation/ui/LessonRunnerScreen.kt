@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -38,8 +37,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirMode
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.rememberNoirState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
@@ -124,7 +126,7 @@ fun LessonRunnerScreen(
         }
     val backgroundAccent =
         if (state is RunnerUiState.Result) {
-            MaterialTheme.colorScheme.primary
+            LocalNoirAccent.current
         } else {
             null
         }
@@ -141,7 +143,7 @@ fun LessonRunnerScreen(
             modifier = modifier.fillMaxSize(),
             contentWindowInsets = WindowInsets(0),
             snackbarHost = { SnackbarHost(snackbarHostState) },
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = NoirBg,
         ) { innerPadding ->
             RunnerDesignBackground(
                 isHard = isHard,
@@ -197,7 +199,7 @@ private fun InitFailedContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = reason.displayMessage(), style = MaterialTheme.typography.bodyLarge)
+        Text(text = reason.displayMessage(), style = NoirType.rowTitle)
         TextButton(onClick = onBack) { Text("Назад") }
     }
 }

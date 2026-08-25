@@ -35,7 +35,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.glowEasy
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 import kotlin.math.roundToInt
@@ -99,16 +103,16 @@ fun OrderingContent(
             val surface = runnerAnswerSurfaceColor()
             val borderColor =
                 when (displayTone) {
-                    AnswerFeedbackTone.Correct -> MaterialTheme.colorScheme.glowEasy
-                    AnswerFeedbackTone.Wrong -> MaterialTheme.colorScheme.error
+                    AnswerFeedbackTone.Correct -> NoirSuccess
+                    AnswerFeedbackTone.Wrong -> NoirDanger
                     AnswerFeedbackTone.Neutral -> runnerLightBorderColor()
                 }
             val containerColor =
                 when (displayTone) {
                     AnswerFeedbackTone.Correct ->
-                        MaterialTheme.colorScheme.glowEasy.copy(alpha = FEEDBACK_CONTAINER_ALPHA).compositeOver(surface)
+                        NoirSuccess.copy(alpha = FEEDBACK_CONTAINER_ALPHA).compositeOver(surface)
                     AnswerFeedbackTone.Wrong ->
-                        MaterialTheme.colorScheme.error.copy(alpha = FEEDBACK_CONTAINER_ALPHA).compositeOver(surface)
+                        NoirDanger.copy(alpha = FEEDBACK_CONTAINER_ALPHA).compositeOver(surface)
                     AnswerFeedbackTone.Neutral -> surface
                 }
             Surface(
@@ -175,13 +179,13 @@ fun OrderingContent(
                     Icon(
                         imageVector = Icons.Default.DragHandle,
                         contentDescription = "Перетащить",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = NoirT3,
                     )
                     Text(
                         text = item.text,
                         modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = NoirType.rowTitle,
+                        color = NoirT1,
                     )
                     IconButton(
                         onClick = { onMoveUp(index) },

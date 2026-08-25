@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -116,7 +115,7 @@ internal fun QuestionFrame(
                 RunnerDesignCard(
                     modifier = Modifier.fillMaxWidth(),
                     elevated = true,
-                    borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.86f),
+                    borderColor = LocalNoirAccent.current.copy(alpha = 0.86f),
                 ) {
                     QuestionImage(
                         url = imageUrl,

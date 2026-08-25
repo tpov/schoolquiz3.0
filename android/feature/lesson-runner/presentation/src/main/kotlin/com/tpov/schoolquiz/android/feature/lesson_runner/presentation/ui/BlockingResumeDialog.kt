@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -46,7 +46,7 @@ fun BlockingResumeDialog(
             ) {
                 Text(
                     text = "Продолжить прохождение?",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = NoirType.question,
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(onClick = onContinue) {

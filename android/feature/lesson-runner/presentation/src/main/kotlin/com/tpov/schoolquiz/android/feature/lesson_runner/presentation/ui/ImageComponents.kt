@@ -8,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,6 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -34,7 +35,7 @@ fun QuestionImage(
         modifier =
             modifier
                 .heightIn(min = 150.dp, max = 280.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(NoirS2),
     )
 }
 
@@ -57,7 +58,7 @@ fun ParticipantAvatar(
             imageVector = Icons.Default.AccountCircle,
             contentDescription = null,
             modifier = modifier,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = NoirT3,
         )
     }
 }

@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 
 @Composable
 internal fun QuestionInfoButton(
@@ -39,7 +41,7 @@ internal fun QuestionInfoButton(
         modifier = modifier,
         shape = CircleShape,
         color = runnerDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.primary,
+        contentColor = LocalNoirAccent.current,
         border = BorderStroke(1.dp, runnerLightBorderColor()),
         tonalElevation = 0.dp,
         shadowElevation = 2.dp,
@@ -87,8 +89,8 @@ internal fun QuestionInfoDialog(
                 ) {
                     Text(
                         text = "Инфо",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
+                        style = NoirType.groupTitle,
+                        color = LocalNoirAccent.current,
                     )
                     Text(
                         text = info,
@@ -97,8 +99,8 @@ internal fun QuestionInfoDialog(
                                 .fillMaxWidth()
                                 .heightIn(max = 360.dp)
                                 .verticalScroll(rememberScrollState()),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = NoirType.rowTitle,
+                        color = NoirT1,
                     )
                     RunnerPrimaryAction(
                         text = "Понятно",

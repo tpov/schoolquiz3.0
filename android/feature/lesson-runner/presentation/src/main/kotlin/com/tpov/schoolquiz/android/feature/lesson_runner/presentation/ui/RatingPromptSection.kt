@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState.RatingSubmissionState
 
 private const val MAX_RATING = 3
@@ -50,7 +52,7 @@ fun RatingPromptSection(
 
     RunnerDesignCard(
         modifier = modifier.fillMaxWidth(),
-        accentColor = MaterialTheme.colorScheme.secondary,
+        accentColor = NoirViolet,
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(14.dp),
@@ -59,7 +61,7 @@ fun RatingPromptSection(
         ) {
             Text(
                 text = "Оцените урок",
-                style = MaterialTheme.typography.titleMedium,
+                style = NoirType.groupTitle,
             )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -85,9 +87,9 @@ fun RatingPromptSection(
                             contentDescription = "$i звезды",
                             tint =
                                 if (i <= selectedRating) {
-                                    MaterialTheme.colorScheme.secondary
+                                    NoirViolet
                                 } else {
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.32f)
+                                    NoirViolet.copy(alpha = 0.32f)
                                 },
                         )
                     }
@@ -96,8 +98,8 @@ fun RatingPromptSection(
             if (ratingSubmissionState == RatingSubmissionState.Failed) {
                 Text(
                     text = "Не удалось сохранить оценку",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+                    style = NoirType.rowSub,
+                    color = NoirDanger,
                 )
             }
         }
