@@ -30,6 +30,7 @@ const {
 } = require("./tournament-ranking");
 const {
   recomputePercentScore,
+  attemptActivityCounts,
   isWellFormedCodeAnswer,
 } = require("./result-verification");
 const {
@@ -309,6 +310,9 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
     );
 
     const delta = {skillPoints: 0, nolics: 0};
+    // The activity ratings the profile radar draws. Counted from the same attempts that pay, so a
+    // replayed or unpaid submission cannot inflate them either.
+    const ratings = {questions: 0, correct: 0, quizzes: 0};
     events.forEach((item, index) => {
       // An attempt is paid for only when it is new, its percentScore follows from its own
       // codeAnswer, and the player still has the life points it costs. The game is offline-first,
@@ -340,6 +344,10 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
         const itemReward = lessonResultReward(item.event);
         delta.skillPoints += itemReward.skillPoints;
         delta.nolics += itemReward.nolics;
+        const counts = attemptActivityCounts(item.event.codeAnswer);
+        ratings.questions += counts.questions;
+        ratings.correct += counts.correct;
+        ratings.quizzes += 1;
         const tournamentId = writeTournamentAttemptToTransaction(transaction, item.event, item.content, now);
         if (tournamentId) touchedTournamentIds.add(tournamentId);
       }
@@ -347,6 +355,9 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
 
     if (delta.skillPoints > 0 || delta.nolics > 0) {
       writeUserProgressDelta(transaction, uid, delta, now);
+    }
+    if (ratings.quizzes > 0) {
+      writeActivityRatingsDelta(transaction, uid, ratings, now);
     }
     transaction.set(
       userRef,
@@ -2711,6 +2722,27 @@ function lessonResultReward(event) {
   };
 }
 
+/**
+ * The six activity ratings, as the legacy profile kept them.
+ *
+ * Three of them have a source in this app — questions put, questions got right, lessons finished.
+ * The other three counted time in a quiz, time in chat and sms points, and nothing here measures
+ * any of that yet; they stay absent rather than being written as invented zeroes.
+ */
+function writeActivityRatingsDelta(transaction, uid, ratings, now) {
+  transaction.set(
+    db.collection("users").doc(uid),
+    clean({
+      uid,
+      updatedAtMs: now,
+      ratingCountQuestions: admin.firestore.FieldValue.increment(ratings.questions),
+      ratingCountTrueQuestion: admin.firestore.FieldValue.increment(ratings.correct),
+      ratingQuiz: admin.firestore.FieldValue.increment(ratings.quizzes),
+    }),
+    {merge: true},
+  );
+}
+
 function writeUserProgressDelta(transaction, uid, delta, now) {
   const userRef = db.collection("users").doc(uid);
   transaction.set(
@@ -3215,6 +3247,12 @@ async function upsertUserProfile(uid, options) {
       hasPremium: premiumUntilMs > options.now || Boolean(existingUser.hasPremium),
       trophies: trophyList(existingUser.trophies),
       ownedLogos: stringArray(existingUser.ownedLogos),
+      ratingCountQuestions: numberValue(existingUser.ratingCountQuestions, 0),
+      ratingCountTrueQuestion: numberValue(existingUser.ratingCountTrueQuestion, 0),
+      ratingTimeInQuiz: numberValue(existingUser.ratingTimeInQuiz, 0),
+      ratingTimeInChat: numberValue(existingUser.ratingTimeInChat, 0),
+      ratingSmsPoints: numberValue(existingUser.ratingSmsPoints, 0),
+      ratingQuiz: numberValue(existingUser.ratingQuiz, 0),
       realName: nullableString(existingUser.realName),
       birthday: nullableString(existingUser.birthday),
       city: nullableString(existingUser.city),

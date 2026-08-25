@@ -79,4 +79,25 @@ testPerfectAndFailedRuns();
 testFabricatedScoreDoesNotMatchItsCodeAnswer();
 testWellFormedCodeAnswer();
 
+
+// ── activity ratings ────────────────────────────────────────────────────────
+{
+  const {attemptActivityCounts} = require("./result-verification.js");
+
+  // '0' is a question never put to the player, so it counts as neither asked nor answered.
+  assert.deepStrictEqual(attemptActivityCounts("000"), {questions: 0, correct: 0});
+  assert.deepStrictEqual(attemptActivityCounts(""), {questions: 0, correct: 0});
+
+  // Only '9' is full marks; every other shown digit was asked but not fully answered.
+  assert.deepStrictEqual(attemptActivityCounts("999"), {questions: 3, correct: 3});
+  assert.deepStrictEqual(attemptActivityCounts("123456789"), {questions: 9, correct: 1});
+  assert.deepStrictEqual(attemptActivityCounts("909"), {questions: 2, correct: 2});
+
+  // Correct can never exceed asked, whatever the payload says.
+  for (const code of ["", "0", "9", "10293847566", "5555555555"]) {
+    const counts = attemptActivityCounts(code);
+    assert.ok(counts.correct <= counts.questions);
+  }
+}
+
 console.log("result-verification tests passed");

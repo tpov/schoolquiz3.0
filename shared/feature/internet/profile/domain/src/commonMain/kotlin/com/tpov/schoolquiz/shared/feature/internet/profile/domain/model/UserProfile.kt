@@ -13,6 +13,7 @@ data class UserProfile(
     val nolics: Long,
     val standardHearts: Int,
     val goldHearts: Int,
+    val activityRatings: ProfileActivityRatings = ProfileActivityRatings(),
     val qualification: ProfileQualification,
     val boxCount: Int = 0,
     val boxStreakDays: Int = 0,

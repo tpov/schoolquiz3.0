@@ -52,17 +52,38 @@ interface LessonAttemptDao {
     fun observeAllByUser(userId: String): Flow<List<LessonAttemptEntity>>
 
     /**
-     * When this player finished lessons, oldest first.
+     * What this player earned and when, oldest first.
      *
-     * Only the timestamps. The activity chart counts days, and reading whole rows to count them
-     * would carry every answer code and score along for nothing.
+     * Three columns, not whole rows: the activity chart adds up experience per day, and the answer
+     * codes would come along for nothing.
      */
     @Query(
-        "SELECT completed_at FROM lesson_attempts " +
+        "SELECT completed_at AS completedAt, percent_score AS percentScore, is_hard AS isHard " +
+            "FROM lesson_attempts " +
             "WHERE user_id = :userId AND completed_at >= :sinceMs ORDER BY completed_at",
     )
-    fun observeCompletionsSince(
+    fun observeEarningsSince(
         userId: String,
         sinceMs: Long,
-    ): Flow<List<Long>>
+    ): Flow<List<LessonAttemptEarning>>
+}
+
+/**
+ * One finished attempt, reduced to what the activity chart needs.
+ *
+ * The experience is worked out here rather than stored, because the server computes it the same
+ * way from the same two numbers — duplicating the figure would let the two drift apart.
+ */
+data class LessonAttemptEarning(
+    val completedAt: Long,
+    val percentScore: Int,
+    val isHard: Int,
+) {
+    /** Mirrors `lessonResultReward` on the server: the score, doubled when the lesson was hard. */
+    val experience: Int
+        get() = percentScore.coerceIn(0, 100) * if (isHard != 0) HARD_LESSON_MULTIPLIER else 1
+
+    private companion object {
+        const val HARD_LESSON_MULTIPLIER = 2
+    }
 }

@@ -30,7 +30,24 @@ function isWellFormedCodeAnswer(codeAnswer) {
   return /^[0-9]*$/.test(String(codeAnswer));
 }
 
+/**
+ * What one attempt adds to the activity ratings.
+ *
+ * Read off the same digits the score is: anything but '0' is a question that was actually put to
+ * the player, and '9' is the only digit that means they got it fully right. Counting them here
+ * rather than trusting a client-sent tally keeps the ratings as hard to forge as the score.
+ */
+function attemptActivityCounts(codeAnswer) {
+  const digits = String(codeAnswer).split("");
+  const shown = digits.filter((char) => char !== "0");
+  return {
+    questions: shown.length,
+    correct: shown.filter((char) => char === "9").length,
+  };
+}
+
 module.exports = {
   recomputePercentScore,
   isWellFormedCodeAnswer,
+  attemptActivityCounts,
 };

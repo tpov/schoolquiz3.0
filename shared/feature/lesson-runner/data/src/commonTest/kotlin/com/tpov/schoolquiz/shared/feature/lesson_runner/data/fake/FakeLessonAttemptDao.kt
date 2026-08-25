@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake
 
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
+import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEarning
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEntity
 import com.tpov.schoolquiz.shared.core.persistence.LessonResultAttemptOutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
@@ -47,10 +48,10 @@ class FakeLessonAttemptDao : LessonAttemptDao {
     override fun observeAllByUser(userId: String): Flow<List<LessonAttemptEntity>> =
         _flow.map { list -> list.filter { it.userId == userId } }
 
-    override fun observeCompletionsSince(userId: String, sinceMs: Long): Flow<List<Long>> =
+    override fun observeEarningsSince(userId: String, sinceMs: Long): Flow<List<LessonAttemptEarning>> =
         _flow.map { list ->
             list.filter { it.userId == userId && it.completedAt >= sinceMs }
-                .map { it.completedAt }
-                .sorted()
+                .sortedBy { it.completedAt }
+                .map { LessonAttemptEarning(it.completedAt, it.percentScore, it.isHard) }
         }
 }

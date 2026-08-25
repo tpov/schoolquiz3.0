@@ -17,7 +17,11 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * Counts finished attempts into calendar days.
+ * Adds up experience earned into calendar days.
+ *
+ * Experience rather than a count of attempts: two lessons scraped through and one answered
+ * perfectly are not the same day's work, and the league on the same card is measured in XP — a
+ * chart beside it counting something else invites the reader to compare two different things.
  *
  * Days, not fixed 24-hour blocks. A player who finishes at 23:50 and again at 00:10 has played on
  * two days by every reckoning they would use themselves, and bucketing by elapsed hours would show
@@ -43,14 +47,14 @@ class ActivityRepositoryImpl(
                 // before the rows reach us.
                 val firstDay = today.minus(window - 1, DateTimeUnit.DAY)
                 val sinceMs = firstDay.atStartOfDayIn(zone).toEpochMilliseconds()
-                attemptDao.observeCompletionsSince(uid, sinceMs).map { completions ->
+                attemptDao.observeEarningsSince(uid, sinceMs).map { earnings ->
                     val buckets = MutableList(window) { 0 }
-                    completions.forEach { completedAt ->
-                        val date = Instant.fromEpochMilliseconds(completedAt).toLocalDateTime(zone).date
+                    earnings.forEach { earning ->
+                        val date = Instant.fromEpochMilliseconds(earning.completedAt).toLocalDateTime(zone).date
                         val index = firstDay.daysUntil(date)
                         // A clock moved backwards can leave an attempt dated after today; it is
                         // still real activity, so it lands on the last day rather than vanishing.
-                        if (index >= 0) buckets[index.coerceAtMost(window - 1)]++
+                        if (index >= 0) buckets[index.coerceAtMost(window - 1)] += earning.experience
                     }
                     buckets
                 }

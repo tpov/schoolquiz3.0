@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.platform.firebase.profile
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileBootstrapRequest
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileActivityRatings
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
@@ -62,6 +63,15 @@ class FirebaseProfileRemoteDataSource(
             // Already regenerated server-side, so the client shows it as-is.
             lifePoints = long(LIFE_POINTS).toInt().coerceAtLeast(0),
             lifePointsUpdatedAtMs = long(LIFE_POINTS_UPDATED_AT_MS).coerceAtLeast(0L),
+            activityRatings =
+                ProfileActivityRatings(
+                    questionsAsked = long(RATING_QUESTIONS).toInt().coerceAtLeast(0),
+                    questionsRight = long(RATING_QUESTIONS_RIGHT).toInt().coerceAtLeast(0),
+                    timeInQuiz = long(RATING_TIME_IN_QUIZ).toInt().coerceAtLeast(0),
+                    timeInChat = long(RATING_TIME_IN_CHAT).toInt().coerceAtLeast(0),
+                    smsPoints = long(RATING_SMS_POINTS).toInt().coerceAtLeast(0),
+                    quizzes = long(RATING_QUIZ).toInt().coerceAtLeast(0),
+                ),
             qualification =
                 ProfileQualification(
                     sponsorLevel = qualification.long(SPONSOR_LEVEL).toInt().coerceAtLeast(0),
@@ -127,6 +137,12 @@ class FirebaseProfileRemoteDataSource(
         const val NEXT_BOX_AT_MS = "nextBoxAtMs"
         const val PREMIUM_UNTIL_MS = "premiumUntilMs"
         const val TROPHIES = "trophies"
+        const val RATING_QUESTIONS = "ratingCountQuestions"
+        const val RATING_QUESTIONS_RIGHT = "ratingCountTrueQuestion"
+        const val RATING_TIME_IN_QUIZ = "ratingTimeInQuiz"
+        const val RATING_TIME_IN_CHAT = "ratingTimeInChat"
+        const val RATING_SMS_POINTS = "ratingSmsPoints"
+        const val RATING_QUIZ = "ratingQuiz"
         const val REAL_NAME = "realName"
         const val BIRTHDAY = "birthday"
         const val CITY = "city"

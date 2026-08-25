@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.internet.profile.data
 
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
+import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEarning
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptEntity
 import com.tpov.schoolquiz.shared.core.persistence.LessonResultAttemptOutboxEntity
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerEntity
@@ -32,8 +33,8 @@ class ActivityRepositoryImplTest {
         val activity = repository(dao).observeDailyActivity(days = 14).first()
 
         assertEquals(14, activity.size)
-        assertEquals(1, activity.last())
-        assertEquals(2, activity[12])
+        assertEquals(100, activity.last())
+        assertEquals(200, activity[12])
         assertEquals(0, activity.first())
     }
 
@@ -47,7 +48,7 @@ class ActivityRepositoryImplTest {
 
         // Two days played, two gaps between them — a chart that dropped the gaps would draw the
         // same shape as playing four days running.
-        assertEquals(listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1), activity)
+        assertEquals(listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 100), activity)
     }
 
     @Test
@@ -69,7 +70,7 @@ class ActivityRepositoryImplTest {
 
         val activity = repository(dao).observeDailyActivity(days = 14).first()
 
-        assertEquals(1, activity.last())
+        assertEquals(100, activity.last())
     }
 
     @Test
@@ -96,8 +97,8 @@ class ActivityRepositoryImplTest {
 
         val activity = repository(dao).observeDailyActivity(days = 14).first()
 
-        assertEquals(1, activity[12])
-        assertEquals(1, activity[13])
+        assertEquals(100, activity[12])
+        assertEquals(100, activity[13])
     }
 
     /** A clock nudged backwards must not make finished work disappear from the chart. */
@@ -108,7 +109,35 @@ class ActivityRepositoryImplTest {
 
         val activity = repository(dao).observeDailyActivity(days = 14).first()
 
-        assertEquals(1, activity.last())
+        assertEquals(100, activity.last())
+    }
+
+    /**
+     * The chart measures experience, not attendance.
+     *
+     * Half a lesson answered right is half the experience, and a hard lesson pays double — the
+     * same rule the server applies, so the bar and the league on the same card agree.
+     */
+    @Test
+    fun observeDailyActivity_addsExperienceRatherThanCountingAttempts() = runTest {
+        val dao = FakeAttemptDao()
+        dao.add("uid-1", NOW, percentScore = 40)
+        dao.add("uid-1", NOW, percentScore = 30, isHard = 1)
+
+        val activity = repository(dao).observeDailyActivity(days = 14).first()
+
+        assertEquals(40 + 60, activity.last())
+    }
+
+    /** A day spent failing everything is still a day that shows nothing: zero earned is zero drawn. */
+    @Test
+    fun observeDailyActivity_countsAScorelessAttemptAsNothing() = runTest {
+        val dao = FakeAttemptDao()
+        dao.add("uid-1", NOW, percentScore = 0)
+
+        val activity = repository(dao).observeDailyActivity(days = 14).first()
+
+        assertEquals(0, activity.last())
     }
 
     @Test
@@ -135,6 +164,8 @@ private class FakeAttemptDao : LessonAttemptDao {
     fun add(
         userId: String,
         completedAt: Long,
+        percentScore: Int = 100,
+        isHard: Int = 0,
     ) {
         rows.value =
             rows.value +
@@ -143,9 +174,9 @@ private class FakeAttemptDao : LessonAttemptDao {
                     userId = userId,
                     lessonId = "lesson",
                     lessonVersion = 1L,
-                    isHard = 0,
+                    isHard = isHard,
                     codeAnswer = "1",
-                    percentScore = 100,
+                    percentScore = percentScore,
                     completedAt = completedAt,
                 )
     }
@@ -165,13 +196,13 @@ private class FakeAttemptDao : LessonAttemptDao {
 
     override fun observeAllByUser(userId: String): Flow<List<LessonAttemptEntity>> = rows
 
-    override fun observeCompletionsSince(
+    override fun observeEarningsSince(
         userId: String,
         sinceMs: Long,
-    ): Flow<List<Long>> =
+    ): Flow<List<LessonAttemptEarning>> =
         rows.map { list ->
             list.filter { it.userId == userId && it.completedAt >= sinceMs }
-                .map { it.completedAt }
-                .sorted()
+                .sortedBy { it.completedAt }
+                .map { LessonAttemptEarning(it.completedAt, it.percentScore, it.isHard) }
         }
 }
