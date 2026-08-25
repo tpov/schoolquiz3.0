@@ -23,6 +23,15 @@ interface LessonRepository {
     /**
      * Returns a single lesson from the local cache, or null if absent.
      */
+    /**
+     * Titles of the lessons taught before [id] in its own theme, in teaching order.
+     *
+     * Phrased as titles rather than lessons, and keyed by the lesson rather than its theme, so a
+     * caller that only wants to name a prerequisite never has to hold a ThemeId — which would drag
+     * the catalogue's types into modules that deliberately do not carry them.
+     */
+    suspend fun titlesTaughtBefore(id: LessonId): List<String> = emptyList()
+
     suspend fun getById(id: LessonId): Lesson?
 
     /**

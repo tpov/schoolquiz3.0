@@ -10,6 +10,7 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.StartLessonAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.SubmitLessonRatingUseCase
 import org.koin.core.parameter.parametersOf
@@ -32,6 +33,7 @@ val lessonRunnerPresentationModule =
                     ),
                 lessonRepository = get(),
                 attemptRepository = get(),
+                getResultAdvice = GetResultAdviceUseCase(lessonRepository = get()),
                 clock = get(),
             ) as LessonRunnerRootComponent
         }

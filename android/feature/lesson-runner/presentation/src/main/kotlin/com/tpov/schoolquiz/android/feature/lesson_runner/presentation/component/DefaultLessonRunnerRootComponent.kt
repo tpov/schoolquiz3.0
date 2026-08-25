@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoeffi
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +47,7 @@ class DefaultLessonRunnerRootComponent(
     private val useCases: LessonRunnerUseCases,
     private val lessonRepository: LessonRepository,
     private val attemptRepository: LessonAttemptRepository,
+    private val getResultAdvice: GetResultAdviceUseCase,
     private val clock: Clock,
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonRunnerRootComponent {
@@ -299,6 +301,7 @@ class DefaultLessonRunnerRootComponent(
             userAttemptCount = userAttemptCount,
             userAveragePercentScore = userAveragePercentScore,
             userBestPercentScore = userBestPercentScore,
+            advice = getResultAdvice(attempt),
             showRatingPrompt = showRatingPrompt,
             saveWarning = saveWarning,
         )

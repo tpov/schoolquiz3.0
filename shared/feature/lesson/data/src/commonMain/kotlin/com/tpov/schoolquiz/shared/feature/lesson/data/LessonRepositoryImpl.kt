@@ -8,12 +8,21 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonReposit
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class LessonRepositoryImpl(
     private val local: LessonLocalDataSource,
     private val remote: LessonRemoteDataSource,
 ) : LessonRepository {
+
+    override suspend fun titlesTaughtBefore(id: LessonId): List<String> {
+        val lesson = getById(id) ?: return emptyList()
+        return observeByTheme(lesson.themeId)
+            .first()
+            .filter { it.order < lesson.order && !it.archived }
+            .map { it.title }
+    }
 
     override fun observeByTheme(themeId: ThemeId): Flow<List<Lesson>> =
         local.observeByTheme(themeId.value).map { list -> list.map { it.toDomain() } }

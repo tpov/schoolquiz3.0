@@ -23,6 +23,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.OptionId
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
@@ -122,6 +123,7 @@ class DefaultLessonRunnerRootComponentTest {
             ),
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
+            getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
             mainContext = Dispatchers.Unconfined,
         )

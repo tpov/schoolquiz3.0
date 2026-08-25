@@ -3,6 +3,7 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,13 +31,20 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.weakAnswersWording
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
 
 private const val PERFECT_SCORE = 100
@@ -119,6 +127,8 @@ fun ResultContent(
             Top3Section(top3 = state.top3)
         }
 
+        state.advice?.let { AdviceSection(advice = it) }
+
         Spacer(Modifier.height(4.dp))
         Row(
             Modifier.fillMaxWidth(),
@@ -134,6 +144,40 @@ fun ResultContent(
                 "Дальше →",
                 style = NoirType.button.copy(color = LocalNoirAccent.current),
                 modifier = Modifier.clickable(onClick = onFinish),
+            )
+        }
+    }
+}
+
+/**
+ * Where the points went, and what to read to get them next time.
+ *
+ * A percentage tells somebody how it went and nothing about what to do about it. Naming the count
+ * of weak answers turns the score into something specific, and the prerequisite lesson turns it
+ * into a next step — which is the difference between a result screen and a verdict.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun AdviceSection(advice: ResultAdvice) {
+    val accent = LocalNoirAccent.current
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(NoirShapeLg)
+            .background(NoirGlassFill)
+            .border(1.dp, NoirGlassStroke, NoirShapeLg)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Text("ЧТОБЫ НАБРАТЬ БОЛЬШЕ", style = NoirType.kicker.copy(color = NoirTOff))
+        Text(
+            text = weakAnswersWording(advice.weakAnswers),
+            style = NoirType.rowSub.copy(color = NoirT2),
+        )
+        advice.suggestedLessonTitle?.let { title ->
+            Text(
+                text = "Основу даёт урок «$title»",
+                style = NoirType.rowSub.copy(color = accent),
             )
         }
     }
