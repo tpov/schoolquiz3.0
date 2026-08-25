@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.NicknameR
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameAvailability
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameRejection
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameTier
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
 import kotlinx.coroutines.tasks.await
 
@@ -25,6 +26,8 @@ class FirebaseNicknameRemoteDataSource(
             available = data[AVAILABLE] as? Boolean ?: false,
             reason = NicknameRejection.fromCode(data.string(REASON)),
             price = data.number(PRICE) ?: 0L,
+            tier = NicknameTier.fromCode(data.string(TIER)),
+            holder = data.string(HOLDER),
         )
     }
 
@@ -101,6 +104,8 @@ class FirebaseNicknameRemoteDataSource(
         const val LISTED_AT_MS = "listedAtMs"
         const val SELLER_NICKNAME = "sellerNickname"
         const val PRICE = "price"
+        const val TIER = "tier"
+        const val HOLDER = "holder"
         const val LIMIT = "limit"
         const val CHARGED = "charged"
         const val COMMISSION = "commission"

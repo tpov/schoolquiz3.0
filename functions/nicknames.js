@@ -112,7 +112,44 @@ function splitSalePrice(price, commissionPercent) {
   return {total, commission, sellerGets: total - commission};
 }
 
+/**
+ * What an unclaimed name costs.
+ *
+ * Short names are the scarce thing — there is exactly one four-letter name for every four-letter
+ * string, and everybody reaches for the same handful — so those carry a price nothing waives. Long
+ * names are plentiful, and the first one an account picks for itself is free: charging somebody to
+ * stop being UserH9A4W2 would be charging them to finish signing up.
+ *
+ * A name that has been paid for once is not paid for again; this is the price of taking a new one.
+ */
+const NICKNAME_PRICE_SHORT = 10;
+const NICKNAME_PRICE_ORDINARY = 1;
+const NICKNAME_SHORT_MAX_LENGTH = 4;
+const NICKNAME_FREE_MIN_LENGTH = 6;
+
+function nicknameAskingPrice(nickname, hasChosenAlready) {
+  const length = String(nickname || "").trim().length;
+  if (length === 0) return 0;
+  if (length <= NICKNAME_SHORT_MAX_LENGTH) return NICKNAME_PRICE_SHORT;
+  if (length >= NICKNAME_FREE_MIN_LENGTH && !hasChosenAlready) return 0;
+  return NICKNAME_PRICE_ORDINARY;
+}
+
+/** Rarity, which here is only a word for how short a name is. */
+function nicknameTier(nickname) {
+  const length = String(nickname || "").trim().length;
+  if (length <= NICKNAME_SHORT_MAX_LENGTH) return "legendary";
+  if (length <= 6) return "rare";
+  return "common";
+}
+
+/** A lot has to be worth something: gold moves, so zero would be a giveaway dressed as a sale. */
+const MIN_LISTING_PRICE = 1;
+
 module.exports = {
+  MIN_LISTING_PRICE,
+  nicknameAskingPrice,
+  nicknameTier,
   MIN_LENGTH,
   MAX_LENGTH,
   REASON_TOO_SHORT,

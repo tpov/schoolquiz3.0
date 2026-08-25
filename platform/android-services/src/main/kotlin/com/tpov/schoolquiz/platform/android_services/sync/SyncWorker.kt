@@ -20,14 +20,26 @@ class SyncWorker(
         const val WORK_NAME_BOOTSTRAP = "bootstrap_sync"
         val PERIODIC_INTERVAL = 1L to TimeUnit.DAYS
 
+        /**
+         * Runs every syncable, in order, and reports whether they all succeeded.
+         *
+         * Deliberately not fail-fast any more. The steps are independent: the catalog is public
+         * content that has nothing to do with an account, and it used to be last in the list — so
+         * one refused profile call left the app showing no quests at all, which reads as a broken
+         * app rather than a profile that did not refresh.
+         *
+         * Order is still honoured, because some steps are meant to run after others: the profile
+         * is refreshed again after results are pushed, to pick up the rewards the server granted.
+         */
         internal suspend fun performSync(syncables: List<Syncable>): Boolean {
+            var allSucceeded = true
             for (syncable in syncables) {
                 syncable.sync().onFailure { error ->
                     Log.w(TAG, "Syncable failed: ${syncable.javaClass.name}", error)
-                    return false
+                    allSucceeded = false
                 }
             }
-            return true
+            return allSucceeded
         }
 
         private const val TAG = "SchoolQuizSync"

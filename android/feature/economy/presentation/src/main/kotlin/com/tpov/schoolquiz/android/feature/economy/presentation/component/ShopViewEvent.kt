@@ -17,6 +17,13 @@ sealed interface ShopViewEvent {
 
     data class CheckNicknameAvailability(val nickname: String) : ShopViewEvent
 
+    data class MarketTabPicked(val tab: NicknameMarketTab) : ShopViewEvent
+
+    /** First tap arms, second tap spends. Passing null disarms. */
+    data class ArmPurchase(val key: String?) : ShopViewEvent
+
+    data class BuyLogo(val logo: String) : ShopViewEvent
+
     data class ListingQueryChanged(val value: String) : ShopViewEvent
 
     /** Picking the sort that is already picked reverses it. */

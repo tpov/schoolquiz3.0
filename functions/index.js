@@ -10,6 +10,9 @@ const {
   describeNickname,
   sanitizeNickname,
   canonicalNickname,
+  MIN_LISTING_PRICE,
+  nicknameAskingPrice,
+  nicknameTier,
   nicknamePricing,
   splitSalePrice,
 } = require("./nicknames.js");
@@ -601,27 +604,38 @@ exports.checkNicknameAvailability = onCall(FUNCTION_OPTIONS, async (request) => 
   const policy = await readNicknamePolicy();
   const described = describeNickname(stringValue(request.data && request.data.nickname), policy);
   if (!described.ok) {
-    return {nickname: "", available: false, reason: described.reason, price: 0};
+    return {nickname: "", available: false, reason: described.reason, price: 0, tier: null, holder: null};
   }
 
   const claim = await db
     .collection(NICKNAME_CLAIMS_COLLECTION)
     .doc(nicknameClaimId(described.canonical))
     .get();
-  // What this name would actually cost, answered here rather than guessed on the phone: the price
-  // and the free allowance both live in policy, and a client that derives them shows the wrong
-  // number the moment either is changed.
-  const price = (await hasChosenNickname(uid)) ? nicknamePricing(policy).extraNicknamePrice : 0;
+  // What this name would actually cost, answered here rather than guessed on the phone: the ladder
+  // lives on the server, and a client that derives it shows the wrong number the moment it moves.
+  const price = nicknameAskingPrice(described.nickname, await hasChosenNickname(uid));
+  const tier = nicknameTier(described.nickname);
   if (!claim.exists) {
-    return {nickname: described.nickname, available: true, reason: null, price};
+    return {nickname: described.nickname, available: true, reason: null, price, tier, holder: null};
   }
   // Your own name must not read as taken, or changing anything else on the form would look blocked.
-  const isOwn = stringValue((claim.data() || {}).uid) === uid;
+  const claimData = claim.data() || {};
+  const holderUid = stringValue(claimData.uid);
+  const isOwn = holderUid === uid;
+  // Who holds it, by the name they wear — a taken name stays on screen with its owner's tag rather
+  // than vanishing, so the market reads as inhabited instead of empty.
+  let holder = null;
+  if (!isOwn && holderUid) {
+    const holderSnapshot = await db.collection("users").doc(holderUid).get();
+    holder = nullableString((holderSnapshot.data() || {}).nickname);
+  }
   return {
     nickname: described.nickname,
     available: isOwn,
     reason: isOwn ? "yours" : "taken",
     price: 0,
+    tier,
+    holder,
   };
 });
 
@@ -680,8 +694,9 @@ exports.claimNickname = onCall(FUNCTION_OPTIONS, async (request) => {
     }
     const user = userSnapshot.exists ? userSnapshot.data() || {} : {};
 
-    // The handed-out name does not spend the allowance: everybody gets one name of their choosing.
-    const price = (await hasChosenNickname(uid)) ? policy.extraNicknamePrice : 0;
+    // Short names always cost; a first long one is free. The name handed out at registration is
+    // free either way — that one is given, not chosen — and does not spend the allowance.
+    const price = nicknameAskingPrice(described.nickname, await hasChosenNickname(uid));
     const gold = numberValue(user.gold, 0);
     if (gold < price) throw new HttpsError("failed-precondition", "Not enough gold");
     charged = price;
@@ -700,6 +715,68 @@ exports.claimNickname = onCall(FUNCTION_OPTIONS, async (request) => {
     transaction.set(profileRef, {uid, nickname: described.nickname}, {merge: true});
   });
   return {nickname: described.nickname, charged};
+});
+
+/**
+ * The eight logos, and what each costs.
+ *
+ * Priced in three steps rather than eight, because the difference a player cares about is how rare
+ * a logo looks next to the others, not a unique number per glyph. Boxes hand these out for nothing;
+ * this is the way to get one you were not given.
+ */
+const LOGO_PRICES = {
+  "Golden Crown Logo": 1500,
+  "Diamond Star Logo": 1500,
+  "Phoenix Wings Logo": 3000,
+  "Dragon Scale Logo": 3000,
+  "Crystal Orb Logo": 400,
+  "Thunder Bolt Logo": 600,
+  "Mystic Eye Logo": 600,
+  "Royal Shield Logo": 400,
+};
+
+exports.fetchLogoCatalog = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const snapshot = await db.collection("users").doc(uid).get();
+  const owned = new Set(stringArray((snapshot.data() || {}).ownedLogos));
+  return {
+    logos: GIFT_BOX_LOGO_NAMES.map((name) => ({
+      name,
+      price: numberValue(LOGO_PRICES[name], 0),
+      owned: owned.has(name),
+    })),
+  };
+});
+
+exports.buyLogo = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const name = stringValue(request.data && request.data.logo);
+  const price = LOGO_PRICES[name];
+  if (!price) throw new HttpsError("invalid-argument", "Unknown logo");
+
+  const userRef = db.collection("users").doc(uid);
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(userRef);
+    const user = snapshot.exists ? snapshot.data() || {} : {};
+    // Paying twice for a logo already owned is the one outcome worth a hard refusal: the gold is
+    // gone and nothing changes on screen, which reads as the purchase having failed.
+    if (stringArray(user.ownedLogos).includes(name)) {
+      throw new HttpsError("already-exists", "Logo already owned");
+    }
+    const gold = numberValue(user.gold, 0);
+    if (gold < price) throw new HttpsError("failed-precondition", "Not enough gold");
+    transaction.set(
+      userRef,
+      {
+        uid,
+        gold: gold - price,
+        ownedLogos: admin.firestore.FieldValue.arrayUnion(name),
+        updatedAtMs: Date.now(),
+      },
+      {merge: true},
+    );
+  });
+  return {logo: name, charged: price};
 });
 
 exports.setActiveNickname = onCall(FUNCTION_OPTIONS, async (request) => {
@@ -750,7 +827,9 @@ exports.listNicknameForSale = onCall(FUNCTION_OPTIONS, async (request) => {
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));
   if (!canonical) throw new HttpsError("invalid-argument", "nickname is required");
   const price = Math.floor(numberValue(request.data && request.data.price, 0));
-  if (price <= 0) throw new HttpsError("invalid-argument", "price must be positive");
+  if (price < MIN_LISTING_PRICE) {
+    throw new HttpsError("invalid-argument", `price must be at least ${MIN_LISTING_PRICE}`);
+  }
 
   const claimRef = db.collection(NICKNAME_CLAIMS_COLLECTION).doc(nicknameClaimId(canonical));
   const listingRef = db.collection(NICKNAME_LISTINGS_COLLECTION).doc(nicknameClaimId(canonical));

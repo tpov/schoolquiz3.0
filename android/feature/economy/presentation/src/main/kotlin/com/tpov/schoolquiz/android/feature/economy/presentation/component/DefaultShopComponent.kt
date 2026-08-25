@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetReferralPro
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomyBalanceUseCase
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.LogoRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ class DefaultShopComponent(
     private val observeBalance: ObserveEconomyBalanceUseCase,
     private val getCatalog: GetShopCatalogUseCase,
     private val purchaseItem: PurchaseShopItemUseCase,
+    private val logos: LogoRepository,
     private val getReferralProgram: GetReferralProgramUseCase,
     private val nicknames: NicknameRepository,
 ) : ShopComponent, ComponentContext by componentContext {
@@ -68,25 +70,7 @@ class DefaultShopComponent(
             is ShopViewEvent.NicknameDraftChanged ->
                 _state.update { it.copy(nicknames = it.nicknames.copy(draft = event.value)) }
             is ShopViewEvent.CheckNicknameAvailability -> checkAvailability(event.nickname)
-            is ShopViewEvent.ListingQueryChanged ->
-                _state.update { it.copy(nicknames = it.nicknames.copy(listingQuery = event.value)) }
-            is ShopViewEvent.ListingSortPicked ->
-                _state.update { current ->
-                    val names = current.nicknames
-                    current.copy(
-                        nicknames =
-                            if (names.listingSort == event.sort) {
-                                names.copy(listingDescending = !names.listingDescending)
-                            } else {
-                                // A fresh column starts the way people expect to read it: names
-                                // from A, prices from cheapest, dates from newest.
-                                names.copy(
-                                    listingSort = event.sort,
-                                    listingDescending = event.sort == NicknameListingSort.DATE,
-                                )
-                            },
-                    )
-                }
+            is ShopViewEvent.BuyLogo -> buyLogo(event.logo)
             is ShopViewEvent.ClaimNickname ->
                 runNicknameAction(event.nickname) {
                     val charged = nicknames.claim(event.nickname)
@@ -122,6 +106,7 @@ class DefaultShopComponent(
                     val commission = nicknames.buy(event.nickname)
                     "Имя куплено, комиссия $commission"
                 }
+            else -> browse(event)
         }
     }
 
@@ -167,6 +152,74 @@ class DefaultShopComponent(
                 )
             }
         }
+    }
+
+    /**
+     * Events that only rearrange what is on screen — tabs, search, sort, arming a purchase.
+     *
+     * Split from the main dispatch because they share nothing with it: none of them call the
+     * server, and together they were half the branches in one function.
+     */
+    private fun browse(event: ShopViewEvent) {
+        when (event) {
+            is ShopViewEvent.MarketTabPicked ->
+                _state.update {
+                    // Arming does not survive a shelf change: the confirm sitting on a name would
+                    // otherwise still be live behind the logos.
+                    it.copy(nicknames = it.nicknames.copy(marketTab = event.tab, armed = null))
+                }
+            is ShopViewEvent.ArmPurchase ->
+                _state.update { it.copy(nicknames = it.nicknames.copy(armed = event.key)) }
+            is ShopViewEvent.ListingQueryChanged ->
+                _state.update { it.copy(nicknames = it.nicknames.copy(listingQuery = event.value)) }
+            is ShopViewEvent.ListingSortPicked ->
+                _state.update { current ->
+                    val names = current.nicknames
+                    current.copy(
+                        nicknames =
+                            if (names.listingSort == event.sort) {
+                                names.copy(listingDescending = !names.listingDescending)
+                            } else {
+                                // A fresh column starts the way people expect to read it: names
+                                // from A, prices from cheapest, dates from newest.
+                                names.copy(
+                                    listingSort = event.sort,
+                                    listingDescending = event.sort == NicknameListingSort.DATE,
+                                )
+                            },
+                    )
+                }
+            else -> Unit
+        }
+    }
+
+    private fun buyLogo(logo: String) {
+        scope.launch {
+            _state.update { it.copy(nicknames = it.nicknames.copy(processingNickname = logo, armed = null)) }
+            val result = runCatching { logos.buy(logo) }
+            _state.update { current ->
+                current.copy(
+                    nicknames = current.nicknames.copy(processingNickname = null),
+                    message =
+                        result.fold(
+                            onSuccess = { charged -> "Логотип ваш · −$charged" },
+                            onFailure = { error -> error.readableMessage() },
+                        ),
+                )
+            }
+            if (result.isSuccess) refreshLogos()
+        }
+    }
+
+    private suspend fun loadLogos() {
+        val result = runCatching { logos.catalog() }
+        result.onSuccess { catalog ->
+            _state.update { it.copy(nicknames = it.nicknames.copy(logos = catalog)) }
+        }
+    }
+
+    private fun refreshLogos() {
+        scope.launch { loadLogos() }
     }
 
     private fun refreshNicknames() {

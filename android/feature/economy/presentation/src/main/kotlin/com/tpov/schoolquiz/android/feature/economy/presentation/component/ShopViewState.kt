@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameAvailability
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileLogo
 
 data class ShopViewState(
     val balance: EconomyResourceBalance = EconomyResourceBalance.guest(),
@@ -54,6 +55,16 @@ data class NicknameShopState(
     val listingSort: NicknameListingSort = NicknameListingSort.DATE,
     /** Newest, dearest and Z-first are all "descending"; the same flag serves all three. */
     val listingDescending: Boolean = true,
+    /** Which shelf the market is showing. */
+    val marketTab: NicknameMarketTab = NicknameMarketTab.NAMES,
+    val logos: List<ProfileLogo> = emptyList(),
+    /**
+     * What a second tap would buy.
+     *
+     * Spending gold asks twice, and this holds what the first tap armed — a name or a logo. One
+     * field rather than two because only ever one thing is armed, and two could disagree.
+     */
+    val armed: String? = null,
 ) {
     /**
      * The window as it should be drawn: searched, then sorted.
@@ -88,6 +99,12 @@ data class NicknameShopState(
 
     val canClaimDraft: Boolean
         get() = draftAvailability?.available == true && processingNickname == null
+}
+
+/** The two shelves the market sells from. */
+enum class NicknameMarketTab {
+    NAMES,
+    LOGOS,
 }
 
 /** How the window is ordered. */

@@ -46,12 +46,15 @@ class SyncWorkerTest {
         assertEquals(1, fake2.syncCalls)
     }
 
-    // Spec scenario 2:
-    // GIVEN first Syncable fails Result.failure(IOException())
-    // WHEN doWork()
-    // THEN Result.retry() + second Syncable NOT called (fail-fast)
+    /**
+     * A failing step no longer cancels the ones behind it.
+     *
+     * This replaces the original fail-fast rule. The steps do not depend on each other, and the
+     * catalog sync sits last — so under fail-fast a refused profile call left the app with no
+     * quests, which the owner read as "sync is broken" rather than "the profile did not refresh".
+     */
     @Test
-    fun `when first syncable fails then doWork returns retry and second not called`() = runTest {
+    fun `when first syncable fails then doWork returns retry and the rest still run`() = runTest {
         val fake1 = FakeSyncable(Result.failure(java.io.IOException("network error")))
         val fake2 = FakeSyncable(Result.success(Unit))
         val worker = SyncWorker(context, workerParams, listOf(fake1, fake2))
@@ -60,7 +63,21 @@ class SyncWorkerTest {
 
         assertEquals(ListenableWorker.Result.retry().javaClass, result.javaClass)
         assertEquals(1, fake1.syncCalls)
-        assertEquals(0, fake2.syncCalls)
+        assertEquals(1, fake2.syncCalls)
+    }
+
+    /** Retry is still asked for when a step fails somewhere in the middle. */
+    @Test
+    fun `when a later syncable fails then doWork still returns retry`() = runTest {
+        val fake1 = FakeSyncable(Result.success(Unit))
+        val fake2 = FakeSyncable(Result.failure(java.io.IOException("network error")))
+        val fake3 = FakeSyncable(Result.success(Unit))
+        val worker = SyncWorker(context, workerParams, listOf(fake1, fake2, fake3))
+
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.retry().javaClass, result.javaClass)
+        assertEquals(1, fake3.syncCalls)
     }
 
     // Spec scenario 3:

@@ -242,6 +242,35 @@ object NoirIcons {
             lineTo(12f, 20f)
         }
 
+    /** A bolt, for the Thunder Bolt emblem — the one glyph the set had no relative of. */
+    val Bolt: ImageVector =
+        stroke {
+            moveTo(13.6f, 3.5f)
+            lineTo(6.5f, 13.4f)
+            lineTo(10.8f, 13.4f)
+            lineTo(10f, 20.5f)
+            lineTo(17.3f, 10.3f)
+            lineTo(12.9f, 10.3f)
+            close()
+        }
+
+    /** An eye, for the Mystic Eye emblem. Lid and pupil, nothing else — it is drawn at 22dp. */
+    val Eye: ImageVector =
+        stroke {
+            moveTo(2.8f, 12f)
+            curveTo(2.8f, 12f, 6.4f, 6.4f, 12f, 6.4f)
+            curveTo(17.6f, 6.4f, 21.2f, 12f, 21.2f, 12f)
+            curveTo(21.2f, 12f, 17.6f, 17.6f, 12f, 17.6f)
+            curveTo(6.4f, 17.6f, 2.8f, 12f, 2.8f, 12f)
+            close()
+            moveTo(12f, 9.4f)
+            curveTo(10.6f, 9.4f, 9.4f, 10.6f, 9.4f, 12f)
+            curveTo(9.4f, 13.4f, 10.6f, 14.6f, 12f, 14.6f)
+            curveTo(13.4f, 14.6f, 14.6f, 13.4f, 14.6f, 12f)
+            curveTo(14.6f, 10.6f, 13.4f, 9.4f, 12f, 9.4f)
+            close()
+        }
+
     /**
      * Nolics — a ringed dot.
      *

@@ -8,15 +8,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -37,9 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
@@ -54,6 +54,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameListingSort
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameMarketTab
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameShopState
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
@@ -66,53 +67,77 @@ import kotlinx.coroutines.delay
 private const val AVAILABILITY_DEBOUNCE_MS = 450L
 
 /**
- * The NFT tab: names an account holds, and the window where they change hands.
+ * The NFT tab: two shelves, names and logos, and one search box over both.
  *
- * Three blocks in the order somebody works through them — take a name, manage the ones you have,
- * browse what others are selling. Every action is a word rather than a button: the shop already
- * spends its emphasis on the store tab, and a column of filled buttons here would compete with it.
+ * Rows, not cards. A name carries itself and the price says the rest — shorter names cost more, so
+ * no rarity label has to be printed. The only quiet line under a name is who holds it.
+ *
+ * Search doubles as the availability check: type something nobody holds and the market answers
+ * with a row offering to mint it. Taken names stay on screen, dimmed, with their holder's tag —
+ * hiding them would make a busy market look deserted.
+ *
+ * Spending gold always asks twice. The price turns into "Купить", and only the second tap moves
+ * anything.
  */
 @Composable
 fun NoirNicknameMarket(
     state: ShopViewState,
     onEvent: (ShopViewEvent) -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val nicknames = state.nicknames
-    val draft = nicknames.draft
+    val query = nicknames.listingQuery
 
-    // The check follows the typing rather than every keystroke: a request per letter would spend a
-    // callable on text nobody has finished writing.
-    LaunchedEffect(draft) {
+    // One field feeds both jobs, so what is typed is also what gets checked for availability.
+    LaunchedEffect(query) {
+        val candidate = query.trim()
+        if (candidate.isEmpty()) return@LaunchedEffect
         delay(AVAILABILITY_DEBOUNCE_MS)
-        onEvent(ShopViewEvent.CheckNicknameAvailability(draft))
+        onEvent(ShopViewEvent.CheckNicknameAvailability(candidate))
     }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier.fillMaxSize(),
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         item {
-            ClaimNicknameCard(
-                state = state,
-                onDraftChange = { onEvent(ShopViewEvent.NicknameDraftChanged(it)) },
-                onClaim = { onEvent(ShopViewEvent.ClaimNickname(draft.trim())) },
+            MarketTabs(
+                state = nicknames,
+                onPick = { onEvent(ShopViewEvent.MarketTabPicked(it)) },
             )
         }
 
-        item { NoirSectionRule(label = "Мои имена", trailing = "${nicknames.owned.size}") }
+        if (nicknames.marketTab == NicknameMarketTab.LOGOS) {
+            logoShelf(state = state, onEvent = onEvent)
+            return@LazyColumn
+        }
+
+        item {
+            MarketSearch(
+                query = query,
+                onQuery = { onEvent(ShopViewEvent.ListingQueryChanged(it)) },
+            )
+        }
+
+        searchAnswer(state = nicknames, query = query, onEvent = onEvent)
+
+        item {
+            NoirSectionRule(
+                label = "Ваши имена",
+                trailing = "${nicknames.owned.count { it.isForSale }} из ${nicknames.owned.size} продаётся",
+            )
+        }
 
         if (nicknames.owned.isEmpty()) {
-            item { EmptyNote(if (nicknames.isLoading) "Загрузка…" else "Пока ни одного") }
+            item { MarketNote(if (nicknames.isLoading) "Загрузка…" else "Пока ни одного") }
         } else {
-            // Keys are namespaced per section: a listed name appears in both lists at once, and one
-            // LazyColumn cannot hold the same key twice.
             items(nicknames.owned, key = { "owned-${it.nickname}" }) { owned ->
                 OwnedNicknameRow(
                     owned = owned,
                     busy = nicknames.processingNickname == owned.nickname,
-                    onSetActive = { onEvent(ShopViewEvent.SetActiveNickname(owned.nickname)) },
+                    onWear = { onEvent(ShopViewEvent.SetActiveNickname(owned.nickname)) },
                     onList = { price -> onEvent(ShopViewEvent.ListNicknameForSale(owned.nickname, price)) },
                     onCancel = { onEvent(ShopViewEvent.CancelNicknameListing(owned.nickname)) },
                 )
@@ -122,21 +147,20 @@ fun NoirNicknameMarket(
         item {
             NoirSectionRule(
                 label = "Витрина",
-                trailing = "${nicknames.visibleListings.size} / ${nicknames.listings.size}",
+                trailing = "${nicknames.visibleListings.size} из ${nicknames.listings.size}",
             )
         }
 
         item {
             ListingControls(
                 state = nicknames,
-                onQuery = { onEvent(ShopViewEvent.ListingQueryChanged(it)) },
                 onSort = { onEvent(ShopViewEvent.ListingSortPicked(it)) },
             )
         }
 
         if (nicknames.visibleListings.isEmpty()) {
             item {
-                EmptyNote(
+                MarketNote(
                     when {
                         nicknames.isLoading -> "Загрузка…"
                         nicknames.listings.isEmpty() -> "Никто ничего не продаёт"
@@ -146,13 +170,14 @@ fun NoirNicknameMarket(
             }
         } else {
             items(nicknames.visibleListings, key = { "listing-${it.nickname}" }) { listing ->
+                val key = "name:${listing.nickname}"
                 ListingRow(
                     listing = listing,
                     busy = nicknames.processingNickname == listing.nickname,
                     affordable = state.balance.gold >= listing.price,
-                    // Your own lot is worth seeing on the shelf, but buying it back is not a
-                    // trade — the server refuses it, and offering the tap only earns an error.
                     own = nicknames.owned.any { it.nickname == listing.nickname },
+                    armed = nicknames.armed == key,
+                    onArm = { onEvent(ShopViewEvent.ArmPurchase(if (nicknames.armed == key) null else key)) },
                     onBuy = { onEvent(ShopViewEvent.BuyNickname(listing.nickname)) },
                 )
             }
@@ -160,300 +185,444 @@ fun NoirNicknameMarket(
     }
 }
 
-// ─── Claim ──────────────────────────────────────────────────────────────────
+/**
+ * What the search box has to say about what was typed.
+ *
+ * Sits where the results would start, because it is the answer to the question: nobody holds this
+ * and here is the price, or somebody does and here is who.
+ */
+private fun LazyListScope.searchAnswer(
+    state: NicknameShopState,
+    query: String,
+    onEvent: (ShopViewEvent) -> Unit,
+) {
+    if (query.isBlank()) return
+    val verdict = state.draftAvailability
+    if (verdict == null) {
+        if (state.isCheckingAvailability) item { MarketNote("Проверяем…") }
+        return
+    }
+    val holder = verdict.holder
+    val reason = verdict.reason
+    when {
+        verdict.available ->
+            item {
+                MintRow(
+                    nickname = verdict.nickname,
+                    price = verdict.price,
+                    busy = state.processingNickname == verdict.nickname,
+                    onMint = { onEvent(ShopViewEvent.ClaimNickname(verdict.nickname)) },
+                )
+            }
+        holder != null -> item { HeldRow(nickname = verdict.nickname, holder = holder) }
+        reason != null -> item { MarketNote(reason.wording()) }
+        else -> Unit
+    }
+}
+
+/** The two shelves, and how much is on each. */
+@Composable
+private fun MarketTabs(
+    state: NicknameShopState,
+    onPick: (NicknameMarketTab) -> Unit,
+) {
+    val onNames = state.marketTab == NicknameMarketTab.NAMES
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MarketTab("Имена", onNames) { onPick(NicknameMarketTab.NAMES) }
+        MarketTab("Логотипы", !onNames) { onPick(NicknameMarketTab.LOGOS) }
+        Spacer(Modifier.weight(1f))
+        Text(
+            text =
+                if (onNames) {
+                    "${state.listings.size} в продаже"
+                } else {
+                    "${state.logos.count { it.owned }} из ${state.logos.size}"
+                },
+            style = NoirType.kicker.copy(color = NoirT3),
+        )
+    }
+}
 
 @Composable
-private fun ClaimNicknameCard(
-    state: ShopViewState,
-    onDraftChange: (String) -> Unit,
-    onClaim: () -> Unit,
+private fun MarketTab(
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
 ) {
-    val nicknames = state.nicknames
-    val verdict = nicknames.draftAvailability
     val accent = LocalNoirAccent.current
-    NicknamePanel {
-        Text("СОЗДАТЬ ИМЯ", style = NoirType.kicker.copy(fontSize = 9.sp))
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            BasicTextField(
-                value = nicknames.draft,
-                onValueChange = onDraftChange,
-                singleLine = true,
-                textStyle = NoirType.rowTitle,
-                cursorBrush = SolidColor(accent),
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .clip(NoirShapeMd)
-                        .background(NoirS1)
-                        .border(1.dp, NoirOutline, NoirShapeMd)
-                        .padding(horizontal = 12.dp, vertical = 11.dp),
-            )
-            if (verdict?.available == true) {
-                // Free is a price too, and the silence where a number should be reads as a screen
-                // that has not finished loading.
-                if (verdict.price > 0) {
-                    GoldAmount(verdict.price)
-                } else {
-                    Text("БЕСПЛАТНО", style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirSuccess))
-                }
-            }
-            NicknameAction(
-                label = "Создать",
-                enabled = state.nicknames.canClaimDraft,
-                onClick = onClaim,
-            )
-        }
-        // The verdict sits under the field and always occupies a line, so the layout does not jump
-        // as answers arrive and are replaced.
-        val (note, tone) =
-            when {
-                nicknames.draft.isBlank() -> null to NoirT3
-                nicknames.isCheckingAvailability -> "Проверяем…" to NoirTOff
-                nicknames.availabilityUnreachable -> "Не удалось проверить — нет связи с сервером" to NoirDanger
-                verdict == null -> "Проверяем…" to NoirTOff
-                verdict.available -> "Свободно" to NoirSuccess
-                else -> verdict.reason.wording() to NoirDanger
-            }
-        if (note != null) {
-            Text(note, style = NoirType.rowSub.copy(fontSize = 11.sp, color = tone))
+    Text(
+        text = label.uppercase(),
+        style = NoirType.chip.copy(color = if (active) accent else NoirT3),
+        modifier =
+            Modifier
+                .clip(NoirShapePill)
+                .background(if (active) accent.copy(alpha = 0.10f) else NoirGlassFill)
+                .border(1.dp, if (active) accent.copy(alpha = 0.30f) else NoirHair, NoirShapePill)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 9.dp),
+    )
+}
+
+/** One box for both jobs: it searches the window and asks whether a name is free. */
+@Composable
+private fun MarketSearch(
+    query: String,
+    onQuery: (String) -> Unit,
+) {
+    val accent = LocalNoirAccent.current
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(NoirShapeMd)
+            .background(NoirS1)
+            .border(1.dp, NoirOutline, NoirShapeMd)
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+    ) {
+        BasicTextField(
+            value = query,
+            onValueChange = onQuery,
+            singleLine = true,
+            textStyle = NoirType.rowTitle.copy(color = NoirT1),
+            cursorBrush = SolidColor(accent),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (query.isEmpty()) {
+            Text("Найти или занять имя", style = NoirType.rowSub.copy(color = NoirTOff))
         }
     }
 }
 
-/** Codes come from the server; the wording is ours, so it can change without a deploy. */
-private fun NicknameRejection?.wording(): String =
-    when (this) {
-        NicknameRejection.TOO_SHORT -> "Слишком коротко"
-        NicknameRejection.TOO_LONG -> "Слишком длинно"
-        NicknameRejection.UNSUPPORTED_CHARACTERS -> "Недопустимые символы"
-        NicknameRejection.BLOCKED_SYMBOL -> "Такой символ нельзя"
-        NicknameRejection.BLOCKED_WORD -> "Такое слово нельзя"
-        NicknameRejection.TAKEN -> "Уже занято"
-        NicknameRejection.YOURS -> "Это имя уже ваше"
-        null -> "Нельзя занять"
+/** Nobody holds it — so the market offers to make it. */
+@Composable
+private fun MintRow(
+    nickname: String,
+    price: Long,
+    busy: Boolean,
+    onMint: () -> Unit,
+) {
+    MarketRow(
+        name = nickname,
+        meta = if (price == 0L) "свободно · первое имя бесплатно" else "свободно",
+        accentName = true,
+    ) {
+        if (price > 0) GoldAmount(price)
+        NicknameAction("Занять", enabled = !busy, onClick = onMint)
     }
+}
 
-// ─── Owned ──────────────────────────────────────────────────────────────────
+/** Taken, and by whom. Shown rather than hidden so the market reads as inhabited. */
+@Composable
+private fun HeldRow(
+    nickname: String,
+    holder: String,
+) {
+    MarketRow(name = nickname, meta = "у $holder", dim = true) {}
+}
 
+/** The shared shape of every row on this screen: a name, a quiet line, and whatever can be done. */
+@Composable
+private fun MarketRow(
+    name: String,
+    meta: String?,
+    modifier: Modifier = Modifier,
+    dim: Boolean = false,
+    accentName: Boolean = false,
+    metaTone: androidx.compose.ui.graphics.Color? = null,
+    trailing: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                text = name,
+                style =
+                    NoirType.rowTitle.copy(
+                        color =
+                            when {
+                                dim -> NoirTOff
+                                accentName -> LocalNoirAccent.current
+                                else -> NoirT1
+                            },
+                    ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (meta != null) {
+                Text(meta, style = NoirType.rowSub.copy(color = metaTone ?: if (dim) NoirOutline else NoirT3))
+            }
+        }
+        trailing()
+    }
+}
+
+/**
+ * A name you hold.
+ *
+ * Tapping the row wears it. Wearing is the common act and deserves the whole row rather than a
+ * word at the end; selling is the rarer one and stays a word.
+ */
 @Composable
 private fun OwnedNicknameRow(
     owned: OwnedNickname,
     busy: Boolean,
-    onSetActive: () -> Unit,
+    onWear: () -> Unit,
     onList: (Long) -> Unit,
     onCancel: () -> Unit,
 ) {
-    var priceDraft by remember(owned.nickname) { mutableStateOf("") }
     var pricing by remember(owned.nickname) { mutableStateOf(false) }
-    val accent = LocalNoirAccent.current
+    var priceDraft by remember(owned.nickname) { mutableStateOf("") }
 
-    NicknamePanel {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .then(if (!owned.active && !busy) Modifier.clickable(onClick = onWear) else Modifier),
+    ) {
+        MarketRow(
+            name = owned.nickname,
+            meta =
+                when {
+                    owned.active -> "надето"
+                    owned.isForSale -> "продаётся за ${owned.listedPrice}"
+                    else -> null
+                },
+            metaTone = if (owned.isForSale) NoirSuccess else LocalNoirAccent.current,
         ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    owned.nickname,
-                    style = NoirType.rowTitle,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                // Only states worth acting on get a line, and a name in neither state gets none:
-                // how it was obtained changes nothing a person can do with it, and an empty caption
-                // still takes up a row.
-                val state =
-                    when {
-                        owned.active -> "АКТИВНОЕ" to accent
-                        owned.isForSale -> "ПРОДАЁТСЯ ЗА ${owned.listedPrice}" to NoirGold
-                        else -> null
-                    }
-                if (state != null) {
-                    Text(state.first, style = NoirType.kicker.copy(fontSize = 9.sp, color = state.second))
-                }
-            }
-            if (owned.active) {
-                Icon(NoirIcons.Check, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
-            } else {
-                NicknameAction("Надеть", enabled = !busy, onClick = onSetActive)
+            when {
+                // Taking a lot down is offered even for the worn name: wearing one cancels its lot
+                // now, but an account that reached that state earlier needs a way out of it.
+                owned.isForSale -> NicknameAction("Снять", enabled = !busy, muted = true, onClick = onCancel)
+                owned.active -> Unit
+                pricing -> Unit
+                else -> NicknameAction("Продать", enabled = !busy, muted = true) { pricing = true }
             }
         }
 
-        when {
-            // Taking a lot down is always offered, even for the name being worn. Wearing one now
-            // cancels its lot, but accounts that reached that state earlier would otherwise have
-            // no way out of it: the name is on sale, and the only control that could stop it was
-            // hidden precisely because the name is active.
-            owned.isForSale -> NicknameAction("Снять с продажи", enabled = !busy, muted = true, onClick = onCancel)
-            // Selling the name you wear is refused by the server, and offering it here would only
-            // produce an error the person could have been spared.
-            owned.active -> Unit
-            pricing ->
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+        if (pricing && !owned.isForSale && !owned.active) {
+            Row(
+                Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(
+                    Modifier
+                        .width(110.dp)
+                        .clip(NoirShapeMd)
+                        .background(NoirS1)
+                        .border(1.dp, NoirOutline, NoirShapeMd)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                 ) {
                     BasicTextField(
                         value = priceDraft,
-                        onValueChange = { input -> priceDraft = input.filter { it.isDigit() }.take(9) },
+                        onValueChange = { priceDraft = it.filter(Char::isDigit).take(9) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        textStyle = NoirType.num.copy(fontSize = 14.sp, color = NoirT1),
-                        cursorBrush = SolidColor(accent),
-                        modifier =
-                            Modifier
-                                .width(120.dp)
-                                .clip(NoirShapeMd)
-                                .background(NoirS1)
-                                .border(1.dp, NoirOutline, NoirShapeMd)
-                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                        textStyle = NoirType.num.copy(fontSize = 16.sp, color = NoirGold),
+                        cursorBrush = SolidColor(NoirGold),
                     )
-                    Icon(
-                        NoirIcons.GoldStack,
-                        contentDescription = "золота",
-                        tint = NoirGold,
-                        modifier = Modifier.size(15.dp),
-                    )
-                    Box(Modifier.weight(1f))
-                    NicknameAction(
-                        label = "Выставить",
-                        enabled = !busy && (priceDraft.toLongOrNull() ?: 0L) > 0L,
-                        onClick = {
-                            priceDraft.toLongOrNull()?.takeIf { it > 0L }?.let(onList)
-                            pricing = false
-                        },
-                    )
+                    if (priceDraft.isEmpty()) {
+                        Text("1", style = NoirType.num.copy(fontSize = 16.sp, color = NoirTOff))
+                    }
                 }
-
-            else -> NicknameAction("Продать", enabled = !busy, muted = true, onClick = { pricing = true })
+                Icon(
+                    NoirIcons.GoldStack,
+                    contentDescription = "золота",
+                    tint = NoirGold,
+                    modifier = Modifier.size(15.dp),
+                )
+                Spacer(Modifier.weight(1f))
+                val price = priceDraft.toLongOrNull() ?: 0L
+                NicknameAction("Выставить", enabled = !busy && price >= 1L) {
+                    onList(price)
+                    pricing = false
+                }
+            }
         }
     }
 }
 
-// ─── Listings ───────────────────────────────────────────────────────────────
-
+/** Somebody else's lot. The price is the button: tap once to arm it, again to spend. */
 @Composable
 private fun ListingRow(
     listing: NicknameListing,
     busy: Boolean,
     affordable: Boolean,
     own: Boolean,
+    armed: Boolean,
+    onArm: () -> Unit,
     onBuy: () -> Unit,
 ) {
-    NicknamePanel {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    listing.nickname,
-                    style = NoirType.rowTitle,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    "ПРОДАЁТ ${listing.sellerNickname.uppercase()}",
-                    style = NoirType.kicker.copy(fontSize = 9.sp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            GoldAmount(listing.price)
-            // Priced out rather than hidden: seeing what a name costs is the point of a window,
-            // and the price is worth knowing before the account can act on it.
-            if (own) {
-                Text("ВАШ ЛОТ", style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirTOff))
-            } else {
-                NicknameAction("Купить", enabled = !busy && affordable, onClick = onBuy)
+    MarketRow(name = listing.nickname, meta = "продаёт ${listing.sellerNickname}") {
+        when {
+            own -> Text("ваш лот", style = NoirType.kicker.copy(color = NoirTOff))
+            !affordable -> GoldAmount(listing.price, tone = NoirOutline)
+            armed -> NicknameAction("Купить", enabled = !busy, onClick = onBuy)
+            else -> {
+                Box(Modifier.clip(NoirShapePill).clickable(enabled = !busy, onClick = onArm)) {
+                    GoldAmount(listing.price)
+                }
             }
         }
     }
 }
 
-// ─── Shell ──────────────────────────────────────────────────────────────────
-
-@Composable
-private fun NicknameAction(
-    label: String,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-    muted: Boolean = false,
-    onClick: () -> Unit,
+/** The eight emblems. A tile is the glyph, its price, and whether it is already yours. */
+private fun LazyListScope.logoShelf(
+    state: ShopViewState,
+    onEvent: (ShopViewEvent) -> Unit,
 ) {
-    Text(
-        text = label.uppercase(),
-        style =
-            NoirType.kicker.copy(
-                fontSize = 10.sp,
-                color =
-                    when {
-                        !enabled -> NoirTOff
-                        muted -> NoirT3
-                        else -> LocalNoirAccent.current
-                    },
-            ),
-        modifier =
-            modifier
-                .clip(NoirShapeMd)
-                .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(horizontal = 8.dp, vertical = 13.dp),
-    )
-}
-
-@Composable
-private fun NicknamePanel(content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(NoirShapeMd)
-            .background(NoirGlassStroke.copy(alpha = 0.04f))
-            .border(1.dp, NoirHair, NoirShapeMd)
-            .padding(horizontal = 14.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        content = content,
-    )
-}
-
-@Composable
-private fun EmptyNote(text: String) {
-    Text(
-        text,
-        style = NoirType.rowSub.copy(fontSize = 12.sp, color = NoirTOff),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
-    )
-}
-
-/** A price always shows its coin: a bare number on this screen could be gold, nolics or a count. */
-@Composable
-private fun GoldAmount(
-    amount: Long,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text("$amount", style = NoirType.num.copy(fontSize = 14.sp, color = NoirGold))
-        Icon(
-            NoirIcons.GoldStack,
-            contentDescription = null,
-            tint = NoirGold,
-            modifier = Modifier.size(14.dp),
+    val nicknames = state.nicknames
+    if (nicknames.logos.isEmpty()) {
+        item { MarketNote("Загрузка…") }
+        return
+    }
+    items(nicknames.logos, key = { "logo-${it.name}" }) { logo ->
+        val key = "logo:${logo.name}"
+        val armed = nicknames.armed == key
+        val affordable = state.balance.gold >= logo.price
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = logoGlyph(logo.name),
+                contentDescription = null,
+                tint = if (logo.owned) LocalNoirAccent.current else NoirT3,
+                modifier = Modifier.size(22.dp),
+            )
+            Text(
+                text = logo.name.removeSuffix(" Logo"),
+                style = NoirType.rowTitle.copy(color = if (logo.owned) NoirT1 else NoirT3),
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            when {
+                logo.owned -> Text("ваш", style = NoirType.kicker.copy(color = LocalNoirAccent.current))
+                !affordable -> GoldAmount(logo.price, tone = NoirOutline)
+                armed ->
+                    NicknameAction(
+                        "Купить",
+                        enabled = nicknames.processingNickname != logo.name,
+                    ) { onEvent(ShopViewEvent.BuyLogo(logo.name)) }
+                else ->
+                    Box(
+                        Modifier.clip(NoirShapePill).clickable {
+                            onEvent(ShopViewEvent.ArmPurchase(key))
+                        },
+                    ) {
+                        GoldAmount(logo.price)
+                    }
+            }
+        }
+    }
+    item {
+        Text(
+            "Логотип заменяет рамку аватара везде, где встречается имя — таблицы, результаты, меню. " +
+                "Выпавшие из коробок ничего не стоят.",
+            style = NoirType.rowSub.copy(color = NoirTOff),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         )
     }
 }
 
 /**
- * Search over the window, and the three ways to order it.
+ * Which glyph stands for which emblem.
+ *
+ * By name, because the name is all the server sends — there is no id behind a logo, since a gift
+ * box hands over the name itself.
+ */
+private fun logoGlyph(name: String) =
+    when {
+        name.startsWith("Golden Crown") -> NoirIcons.Trophy
+        name.startsWith("Diamond Star") -> NoirIcons.Star
+        name.startsWith("Phoenix Wings") -> NoirIcons.Sun
+        name.startsWith("Dragon Scale") -> NoirIcons.Gem
+        name.startsWith("Crystal Orb") -> NoirIcons.Globe
+        name.startsWith("Thunder Bolt") -> NoirIcons.Bolt
+        name.startsWith("Mystic Eye") -> NoirIcons.Eye
+        else -> NoirIcons.Lock
+    }
+
+private fun NicknameRejection?.wording(): String =
+    when (this) {
+        NicknameRejection.TOO_SHORT -> "Слишком короткое"
+        NicknameRejection.TOO_LONG -> "Слишком длинное"
+        NicknameRejection.UNSUPPORTED_CHARACTERS -> "Есть недопустимые символы"
+        NicknameRejection.BLOCKED_SYMBOL -> "Есть запрещённый символ"
+        NicknameRejection.BLOCKED_WORD -> "Такое имя запрещено"
+        NicknameRejection.TAKEN -> "Уже занято"
+        NicknameRejection.YOURS -> "Это ваше имя"
+        null -> ""
+    }
+
+@Composable
+private fun NicknameAction(
+    label: String,
+    enabled: Boolean,
+    muted: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val accent = LocalNoirAccent.current
+    Text(
+        text = label.uppercase(),
+        style =
+            NoirType.button.copy(
+                color =
+                    when {
+                        !enabled -> NoirTOff
+                        muted -> NoirT3
+                        else -> accent
+                    },
+            ),
+        modifier =
+            Modifier
+                .clip(NoirShapePill)
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+    )
+}
+
+@Composable
+private fun MarketNote(text: String) {
+    Text(
+        text,
+        style = NoirType.rowSub.copy(color = NoirTOff),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+    )
+}
+
+/** A price always shows its coin: a bare number here could be gold, nolics or a count. */
+@Composable
+private fun GoldAmount(
+    amount: Long,
+    modifier: Modifier = Modifier,
+    tone: androidx.compose.ui.graphics.Color = NoirGold,
+) {
+    Row(
+        modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text("$amount", style = NoirType.num.copy(fontSize = 16.sp, color = tone))
+        Icon(NoirIcons.GoldStack, contentDescription = null, tint = tone, modifier = Modifier.size(14.dp))
+    }
+}
+
+/**
+ * The three ways to order the window.
  *
  * Tapping the chosen order again reverses it, rather than each order carrying its own arrow: with
  * three columns that would be six controls for what is really two decisions.
@@ -461,37 +630,16 @@ private fun GoldAmount(
 @Composable
 private fun ListingControls(
     state: NicknameShopState,
-    onQuery: (String) -> Unit,
     onSort: (NicknameListingSort) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = LocalNoirAccent.current
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .clip(NoirShapeMd)
-                .background(NoirS1)
-                .border(1.dp, NoirOutline, NoirShapeMd)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        ) {
-            BasicTextField(
-                value = state.listingQuery,
-                onValueChange = onQuery,
-                singleLine = true,
-                textStyle = NoirType.rowSub.copy(fontSize = 13.sp, color = NoirT1),
-                cursorBrush = SolidColor(accent),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (state.listingQuery.isEmpty()) {
-                Text("Поиск по имени", style = NoirType.rowSub.copy(fontSize = 13.sp, color = NoirTOff))
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            SortChip("А–Я", NicknameListingSort.NAME, state, onSort)
-            SortChip("Цена", NicknameListingSort.PRICE, state, onSort)
-            SortChip("Дата", NicknameListingSort.DATE, state, onSort)
-        }
+    Row(
+        modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        SortChip("А–Я", NicknameListingSort.NAME, state, onSort)
+        SortChip("Цена", NicknameListingSort.PRICE, state, onSort)
+        SortChip("Дата", NicknameListingSort.DATE, state, onSort)
     }
 }
 
@@ -516,7 +664,7 @@ private fun SortChip(
         }
     Text(
         text = label.uppercase() + arrow,
-        style = NoirType.kicker.copy(fontSize = 9.sp, color = if (active) accent else NoirT3),
+        style = NoirType.chip.copy(color = if (active) accent else NoirT3),
         modifier =
             Modifier
                 .clip(NoirShapePill)

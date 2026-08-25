@@ -17,7 +17,33 @@ data class NicknameAvailability(
      * policy, and a client that derives them shows the wrong number the moment either changes.
      */
     val price: Long = 0L,
+    /** How short the name is, as the shop labels it. */
+    val tier: NicknameTier = NicknameTier.COMMON,
+    /**
+     * The name worn by whoever holds this one, when somebody else does.
+     *
+     * A taken name is shown rather than hidden — a market where every taken name vanishes reads as
+     * empty, when in fact it is the opposite.
+     */
+    val holder: String? = null,
 )
+
+/** Rarity, which here is only a word for how short a name is. */
+enum class NicknameTier {
+    LEGENDARY,
+    RARE,
+    COMMON,
+    ;
+
+    companion object {
+        fun fromCode(code: String?): NicknameTier =
+            when (code?.lowercase()) {
+                "legendary" -> LEGENDARY
+                "rare" -> RARE
+                else -> COMMON
+            }
+    }
+}
 
 /** Why a name was refused. Stable codes, so the wording stays a UI decision. */
 enum class NicknameRejection {

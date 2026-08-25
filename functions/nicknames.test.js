@@ -110,4 +110,38 @@ assert.deepStrictEqual(splitSalePrice(100, 10), {total: 100, commission: 10, sel
 assert.deepStrictEqual(splitSalePrice(7, 10), {total: 7, commission: 0, sellerGets: 7});
 assert.deepStrictEqual(splitSalePrice(-5, 10), {total: 0, commission: 0, sellerGets: 0});
 
+
+// ── prices ──────────────────────────────────────────────────────────────────
+{
+  const {nicknameAskingPrice, splitSalePrice, MIN_LISTING_PRICE} = require("./nicknames.js");
+
+  // Short names are the scarce ones and never come free, not even as an account's first.
+  assert.strictEqual(nicknameAskingPrice("abc", false), 10);
+  assert.strictEqual(nicknameAskingPrice("abcd", false), 10);
+  assert.strictEqual(nicknameAskingPrice("abcd", true), 10);
+
+  // Five is the awkward middle: plentiful enough to be cheap, short enough not to be given away.
+  assert.strictEqual(nicknameAskingPrice("abcde", false), 1);
+
+  // A first long name is free — charging to stop being UserH9A4W2 would charge for signing up.
+  assert.strictEqual(nicknameAskingPrice("abcdef", false), 0);
+  assert.strictEqual(nicknameAskingPrice("abcdef", true), 1);
+
+  assert.strictEqual(nicknameAskingPrice("", false), 0);
+  assert.strictEqual(MIN_LISTING_PRICE, 1);
+
+  // The house takes nothing it cannot round to a coin, so cheap lots pay their seller in full.
+  assert.strictEqual(splitSalePrice(1, 10).commission, 0);
+  assert.strictEqual(splitSalePrice(9, 10).commission, 0);
+  assert.strictEqual(splitSalePrice(10, 10).commission, 1);
+  assert.strictEqual(splitSalePrice(25, 10).commission, 2);
+  assert.strictEqual(splitSalePrice(100, 10).commission, 10);
+
+  // Both halves always add back to the price: rounding each apart would mint or burn a coin.
+  for (const price of [1, 7, 10, 13, 99, 1234]) {
+    const split = splitSalePrice(price, 10);
+    assert.strictEqual(split.commission + split.sellerGets, price);
+  }
+}
+
 console.log("nicknames tests passed");

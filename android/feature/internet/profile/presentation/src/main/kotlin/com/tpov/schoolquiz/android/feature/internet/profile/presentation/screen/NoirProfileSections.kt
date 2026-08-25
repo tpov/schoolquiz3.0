@@ -194,7 +194,7 @@ private fun NoirTextAction(
     Text(
         text = label.uppercase(),
         style =
-            NoirType.kicker.copy(
+            NoirType.button.copy(
                 color =
                     when {
                         !enabled -> NoirTOff
@@ -275,12 +275,12 @@ internal fun ProfileLeagueBand(
                             } else {
                                 "Высшая лига"
                             },
-                        style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirT3),
+                        style = NoirType.kicker.copy(color = NoirT3),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    Text("$skillPoints XP", style = NoirType.kicker.copy(fontSize = 9.sp))
+                    Text("$skillPoints XP", style = NoirType.kicker)
                 }
             }
             // Bleeds to the card's edge on purpose: it is a texture behind the panel, not a chart
@@ -309,7 +309,7 @@ private fun ActivitySparkline(
         Box(modifier, contentAlignment = Alignment.Center) {
             Text(
                 "НЕТ АКТИВНОСТИ",
-                style = NoirType.kicker.copy(fontSize = 8.sp, color = NoirTOff),
+                style = NoirType.kicker.copy(color = NoirTOff),
                 textAlign = TextAlign.Center,
             )
         }
@@ -354,7 +354,7 @@ private fun ActivitySparkline(
         }
         Text(
             "Активность",
-            style = NoirType.kicker.copy(fontSize = 8.sp, color = LocalNoirAccent.current),
+            style = NoirType.kicker.copy(color = LocalNoirAccent.current),
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 10.dp, bottom = 7.dp),
         )
     }
@@ -378,10 +378,10 @@ internal fun ProfileQualificationCard(
 ) {
     NoirPanel(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("КВАЛИФИКАЦИИ", style = NoirType.kicker.copy(fontSize = 9.sp))
+            Text("Квалификации", style = NoirType.groupTitle)
             Text(
                 "СРЕДН. $averagePercent%",
-                style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirSuccess),
+                style = NoirType.kicker.copy(color = NoirSuccess),
             )
         }
 
@@ -403,13 +403,12 @@ internal fun ProfileQualificationCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text("$rolesHeld", style = NoirType.num.copy(fontSize = 15.sp, color = NoirT1))
-                Text("ИЗ 6 КВАЛИФИКАЦИЙ", style = NoirType.kicker.copy(fontSize = 9.sp))
+                Text("ИЗ 6 КВАЛИФИКАЦИЙ", style = NoirType.kicker)
             }
             Text(
                 text = topRole?.uppercase() ?: "НЕТ",
                 style =
                     NoirType.kicker.copy(
-                        fontSize = 9.sp,
                         color = if (topRole != null) LocalNoirAccent.current else NoirTOff,
                     ),
             )
@@ -462,7 +461,7 @@ private fun BoxScope.RadarAxisLabel(
     ) {
         Text(
             role.uppercase(),
-            style = NoirType.kicker.copy(fontSize = 8.sp, color = if (dim) NoirOutline else NoirT3),
+            style = NoirType.chip.copy(color = if (dim) NoirOutline else NoirT3),
             textAlign = TextAlign.Center,
             maxLines = 1,
         )
@@ -470,7 +469,7 @@ private fun BoxScope.RadarAxisLabel(
             "$level",
             style =
                 NoirType.num.copy(
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     color = if (dim) NoirOutline else NoirSuccess,
                 ),
             textAlign = TextAlign.Center,
@@ -494,10 +493,10 @@ internal fun ProfileNicknameShelf(
 ) {
     NoirPanel(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("МОИ ИМЕНА · NFT", style = NoirType.kicker.copy(fontSize = 9.sp))
+            Text("Мои имена", style = NoirType.groupTitle)
             Text(
                 text = if (state.nicknamesUnreachable) "—" else "${state.ownedNicknames.size}",
-                style = NoirType.kicker.copy(fontSize = 9.sp, color = LocalNoirAccent.current),
+                style = NoirType.kicker.copy(color = LocalNoirAccent.current),
             )
         }
 
@@ -551,7 +550,7 @@ private fun NicknameRow(
             if (owned.isForSale) {
                 Text(
                     "ПРОДАЁТСЯ ЗА ${owned.listedPrice}",
-                    style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirGold),
+                    style = NoirType.kicker.copy(color = NoirGold),
                 )
             }
         }
@@ -564,8 +563,8 @@ private fun NicknameRow(
                     modifier = Modifier.size(16.dp),
                 )
 
-            busy -> Text("…", style = NoirType.kicker.copy(fontSize = 10.sp, color = NoirTOff))
-            else -> Text("НАДЕТЬ", style = NoirType.kicker.copy(fontSize = 9.sp, color = accent))
+            busy -> Text("…", style = NoirType.kicker.copy(color = NoirTOff))
+            else -> Text("НАДЕТЬ", style = NoirType.kicker.copy(color = accent))
         }
     }
 }
@@ -595,10 +594,10 @@ internal fun ProfileTrophyShelf(
     val earned = GIFT_BOX_TROPHIES.count { it in held }
     NoirPanel(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("ТРОФЕИ", style = NoirType.kicker.copy(fontSize = 9.sp))
+            Text("Трофеи", style = NoirType.groupTitle)
             Text(
                 "$earned ИЗ ${GIFT_BOX_TROPHIES.size}",
-                style = NoirType.kicker.copy(fontSize = 9.sp, color = NoirGold),
+                style = NoirType.kicker.copy(color = NoirGold),
             )
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -668,7 +667,7 @@ private fun FooterRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(label.uppercase(), style = NoirType.kicker.copy(fontSize = 10.sp))
+            Text(label.uppercase(), style = NoirType.kicker)
             Text(value, style = NoirType.num.copy(fontSize = 12.sp, color = NoirT1))
         }
     }
@@ -708,7 +707,7 @@ internal fun ProfileToast(
             .border(1.dp, NoirGlassStroke, NoirShapeMd)
             .padding(horizontal = 16.dp, vertical = 13.dp),
     ) {
-        Text(message.uppercase(), style = NoirType.kicker.copy(fontSize = 10.sp, color = NoirT1))
+        Text(message.uppercase(), style = NoirType.kicker.copy(color = NoirT1))
     }
 }
 
@@ -795,7 +794,7 @@ internal fun ProfileGoogleUpgrade(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "ВОЙТИ ЧЕРЕЗ GOOGLE",
-                style = NoirType.kicker.copy(fontSize = 10.sp, color = if (busy) NoirTOff else accent),
+                style = NoirType.button.copy(color = if (busy) NoirTOff else accent),
                 modifier = Modifier.weight(1f),
             )
             if (busy) Text("…", style = NoirType.kicker.copy(color = NoirTOff))
