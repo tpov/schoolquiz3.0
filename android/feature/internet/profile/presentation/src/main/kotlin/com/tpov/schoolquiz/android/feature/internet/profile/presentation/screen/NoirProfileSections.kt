@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
@@ -237,7 +241,14 @@ internal fun ProfileLeagueBand(
             .background(accent.copy(alpha = 0.06f))
             .border(1.dp, accent.copy(alpha = 0.32f), NoirShapeLg),
     ) {
-        Row(Modifier.fillMaxWidth().height(96.dp)) {
+        // Tall enough for whatever the words need, never shorter than the band is meant to be.
+        // A fixed height cropped the milestone line the moment a league name ran long.
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .defaultMinSize(minHeight = 96.dp),
+        ) {
             Column(
                 Modifier.weight(1.6f).padding(start = 16.dp, end = 8.dp, top = 15.dp, bottom = 15.dp),
                 verticalArrangement = Arrangement.Center,
@@ -287,7 +298,7 @@ internal fun ProfileLeagueBand(
             // somebody is meant to read values off.
             ActivitySparkline(
                 activity = activity,
-                modifier = Modifier.weight(1f).fillMaxSize(),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
     }
@@ -371,6 +382,7 @@ private fun ActivitySparkline(
 @Composable
 internal fun ProfileQualificationCard(
     values: List<Float>,
+    activity: List<Float>,
     averagePercent: Int,
     rolesHeld: Int,
     topRole: String?,
@@ -378,23 +390,35 @@ internal fun ProfileQualificationCard(
 ) {
     NoirPanel(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Квалификации", style = NoirType.groupTitle)
+            Text("Квалификации · Активность", style = NoirType.groupTitle)
             Text(
                 "СРЕДН. $averagePercent%",
-                style = NoirType.kicker.copy(color = NoirSuccess),
+                style = NoirType.kicker.copy(color = NoirDanger),
             )
         }
 
         Box(Modifier.fillMaxWidth().height(212.dp), contentAlignment = Alignment.Center) {
-            QualificationRadar(values)
-            RadarAxisLabel(QUALIFICATION_AXES[0], values[0], Alignment.TopCenter)
-            RadarAxisLabel(QUALIFICATION_AXES[1], values[1], Alignment.TopEnd)
-            RadarAxisLabel(QUALIFICATION_AXES[2], values[2], Alignment.BottomEnd)
-            RadarAxisLabel(QUALIFICATION_AXES[3], values[3], Alignment.BottomCenter)
-            RadarAxisLabel(QUALIFICATION_AXES[4], values[4], Alignment.BottomStart)
-            RadarAxisLabel(QUALIFICATION_AXES[5], values[5], Alignment.TopStart)
+            QualificationRadar(values = values, activity = activity)
+            val corners =
+                listOf(
+                    Alignment.TopCenter,
+                    Alignment.TopEnd,
+                    Alignment.BottomEnd,
+                    Alignment.BottomCenter,
+                    Alignment.BottomStart,
+                    Alignment.TopStart,
+                )
+            corners.forEachIndexed { index, corner ->
+                RadarAxisLabel(
+                    role = QUALIFICATION_AXES[index],
+                    value = values[index],
+                    activity = activity.getOrElse(index) { 0f },
+                    alignment = corner,
+                )
+            }
         }
 
+        RadarLegend()
         Box(Modifier.fillMaxWidth().height(1.dp).background(NoirHair))
         Row(
             Modifier.fillMaxWidth().padding(top = 9.dp),
@@ -416,8 +440,17 @@ internal fun ProfileQualificationCard(
     }
 }
 
+/**
+ * Two shapes on one web: what the account is qualified for, and how much of it it actually does.
+ *
+ * The pair is the point — a high qualification with no activity behind it looks different from one
+ * being used, and that comparison is only legible when both are drawn on the same axes.
+ */
 @Composable
-private fun QualificationRadar(values: List<Float>) {
+private fun QualificationRadar(
+    values: List<Float>,
+    activity: List<Float>,
+) {
     Canvas(
         Modifier
             .size(178.dp)
@@ -442,7 +475,10 @@ private fun QualificationRadar(values: List<Float>) {
                 strokeWidth = 1.dp.toPx(),
             )
         }
-        drawRadarPolygon(values = values, center = center, radius = radius, color = NoirSuccess)
+        // Activity underneath, qualification over it: the level is the subject, the activity is
+        // the context, and the reading is how far the green falls short of the red.
+        drawRadarPolygon(values = activity, center = center, radius = radius, color = NoirSuccess)
+        drawRadarPolygon(values = values, center = center, radius = radius, color = NoirDanger)
     }
 }
 
@@ -451,10 +487,12 @@ private fun QualificationRadar(values: List<Float>) {
 private fun BoxScope.RadarAxisLabel(
     role: String,
     value: Float,
+    activity: Float,
     alignment: Alignment,
 ) {
     val level = (value * 100).toInt()
-    val dim = level == 0
+    val act = (activity * 100).toInt()
+    val dim = level == 0 && act == 0
     Column(
         modifier = Modifier.align(alignment).width(64.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -465,15 +503,39 @@ private fun BoxScope.RadarAxisLabel(
             textAlign = TextAlign.Center,
             maxLines = 1,
         )
-        Text(
-            "$level",
-            style =
-                NoirType.num.copy(
-                    fontSize = 12.sp,
-                    color = if (dim) NoirOutline else NoirSuccess,
-                ),
-            textAlign = TextAlign.Center,
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            Text(
+                "$level",
+                style = NoirType.num.copy(fontSize = 12.sp, color = if (level == 0) NoirOutline else NoirDanger),
+            )
+            Text(
+                "$act",
+                style = NoirType.num.copy(fontSize = 12.sp, color = if (act == 0) NoirOutline else NoirSuccess),
+            )
+        }
+    }
+}
+
+/** Which colour means what, said once under the web rather than guessed from the shapes. */
+@Composable
+private fun RadarLegend() {
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        LegendEntry("Квалификация", NoirDanger)
+        LegendEntry("Активность", NoirSuccess)
+    }
+}
+
+@Composable
+private fun LegendEntry(
+    label: String,
+    tone: Color,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.size(8.dp).clip(NoirShapePill).background(tone))
+        Text(label.uppercase(), style = NoirType.kicker.copy(color = NoirT3))
     }
 }
 
@@ -735,6 +797,18 @@ private fun DrawScope.drawRadarPolygon(
     radius: Float,
     color: Color,
 ) {
+    // Nothing held collapses every corner onto the centre, and a polygon with no area draws
+    // nothing at all — an empty web that reads as a chart which failed to load. A ring at the
+    // centre says the measurement was taken and the answer is zero.
+    if (values.none { it > 0f }) {
+        drawCircle(
+            color = color.copy(alpha = 0.5f),
+            radius = 3.5.dp.toPx(),
+            center = center,
+            style = Stroke(width = 1.6.dp.toPx()),
+        )
+        return
+    }
     val points =
         values.mapIndexed { index, value ->
             radarPoint(center, radius, index, values.size, value.coerceIn(0f, 1f))

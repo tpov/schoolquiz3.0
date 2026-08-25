@@ -124,6 +124,7 @@ fun ProfileView(
 
         ProfileQualificationCard(
             values = metrics.qualificationValues,
+            activity = metrics.qualificationActivity,
             averagePercent = metrics.qualificationPercent,
             rolesHeld = metrics.rolesHeld,
             topRole = metrics.topRole,
@@ -145,6 +146,14 @@ fun ProfileView(
 
 private data class ProfileDashboardMetrics(
     val qualificationValues: List<Float>,
+    /**
+     * How much each role is actually being used, on the same axes as the levels.
+     *
+     * Nothing measures this yet — neither the profile nor the server carries a per-role figure —
+     * so it reads as zero until one exists. Drawn all the same, because a legend promising two
+     * shapes and showing one is worse than a shape sitting at the floor.
+     */
+    val qualificationActivity: List<Float>,
     val qualificationPercent: Int,
     val rolesHeld: Int,
     val topRole: String?,
@@ -171,6 +180,7 @@ private fun UserProfile.dashboardMetrics(): ProfileDashboardMetrics {
     val league = leagueForSkill(skillPoints)
     return ProfileDashboardMetrics(
         qualificationValues = values,
+        qualificationActivity = List(values.size) { 0f },
         qualificationPercent = (values.average() * 100).roundToInt().coerceIn(0, 100),
         rolesHeld = levels.count { it > 0 },
         // The role the account is furthest along in; ties go to the earlier one, which is the
