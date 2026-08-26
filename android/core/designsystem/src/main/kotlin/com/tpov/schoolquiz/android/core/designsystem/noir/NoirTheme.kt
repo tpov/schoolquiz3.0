@@ -33,8 +33,15 @@ import androidx.compose.ui.unit.sp
 
 // ─── Colour tokens ─────────────────────────────────────────────────────────────────────────────
 
+/*
+ * Canonical values come from noir-design-system/tokens/noir.tokens.json via the
+ * generateNoirTokens task (NoirColorTokens); edit the JSON, never these files by hand.
+ * The names below stay the public API — surface shorthand, role names — so screens read intent
+ * rather than raw palette paths.
+ */
+
 /** Pure OLED black. The brand choice, and not the usual #121212. */
-val NoirBg = Color(0xFF000000)
+val NoirBg = NoirColorTokens.colorBg
 
 /**
  * A step off pure black — the drawer ground, badges sitting on art, anything that must read as
@@ -43,16 +50,16 @@ val NoirBg = Color(0xFF000000)
 val NoirBgDeep = Color(0xFF08080A)
 
 /** Surface 1 — a card sitting on the black. */
-val NoirS1 = Color(0xFF1E1E24)
+val NoirS1 = NoirColorTokens.colorSurface1
 
 /** Surface 2 — bars, input fields, chips. */
-val NoirS2 = Color(0xFF26262E)
+val NoirS2 = NoirColorTokens.colorSurface2
 
 /** Surface 3 — a raised card. */
-val NoirS3 = Color(0xFF2E2E36)
+val NoirS3 = NoirColorTokens.colorSurface3
 
 /** Surface 4 — dialogs and sheets, the highest level. */
-val NoirS4 = Color(0xFF383840)
+val NoirS4 = NoirColorTokens.colorSurface4
 
 /**
  * Hairline outline.
@@ -60,40 +67,40 @@ val NoirS4 = Color(0xFF383840)
  * Replaces ADR-0010's #2C2C2C, which sat at roughly 1.1:1 against the surface — a border nobody
  * could see. Structure on black has to come from lines, so the line has to be visible.
  */
-val NoirOutline = Color(0xFF44444E)
+val NoirOutline = NoirColorTokens.colorOutline
 
 /** Focus and hover outline. */
-val NoirOutline2 = Color(0xFF5E5E6A)
+val NoirOutline2 = NoirColorTokens.colorOutlineStrong
 
 /** Internal divider: 6.5% white. Shadows are invisible on black, so lines do that work. */
 val NoirHair = Color(0x10FFFFFF)
 
 /** Headings and numbers. */
-val NoirT1 = Color(0xFFFFFFFF)
+val NoirT1 = NoirColorTokens.colorText1
 
 /** Body text. */
-val NoirT2 = Color(0xFFB8B8B8)
+val NoirT2 = NoirColorTokens.colorText2
 
 /** Secondary text. Replaces #888888, which failed AA at about 3.5:1; this clears 4.5:1. */
-val NoirT3 = Color(0xFF9C9CA6)
+val NoirT3 = NoirColorTokens.colorText3
 
 /** Disabled and placeholder only — the single state allowed to fall below the contrast floor. */
-val NoirTOff = Color(0xFF6E6E78)
+val NoirTOff = NoirColorTokens.colorTextDisabled
 
 /** Text and icons drawn on top of a filled accent. */
-val NoirInk = Color(0xFF05090F)
+val NoirInk = NoirColorTokens.colorInkOnAccent
 
 /** Role: Pro and premium. Fixed across skins. */
-val NoirGold = Color(0xFFFFD700)
+val NoirGold = NoirColorTokens.statusGold
 
 /** Role: limited and seasonal. Fixed across skins. */
-val NoirViolet = Color(0xFF9680F2)
+val NoirViolet = NoirColorTokens.statusViolet
 
 /** Success, and the easy mode. Lightness aligned with the rest of the family. */
-val NoirSuccess = Color(0xFF5CC97A)
+val NoirSuccess = NoirColorTokens.statusSuccess
 
 /** Error, destructive actions, and the hard mode. */
-val NoirDanger = Color(0xFFF0564B)
+val NoirDanger = NoirColorTokens.statusDanger
 
 // ─── Skins ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -104,9 +111,9 @@ val NoirDanger = Color(0xFFF0564B)
  * somebody else's blue. Amending ADR-0010 is part of adopting this.
  */
 enum class NoirSkin(val label: String, val accent: Color) {
-    Azure("Азур", Color(0xFF0599EF)),
-    Amethyst("Аметист", Color(0xFF9680F2)),
-    Teal("Бирюза", Color(0xFF00AFAF)),
+    Azure("Азур", NoirColorTokens.accentAzure),
+    Amethyst("Аметист", NoirColorTokens.accentAmethyst),
+    Teal("Бирюза", NoirColorTokens.accentTeal),
 }
 
 /** Round mode. Drives the glow behind the question screen. */
