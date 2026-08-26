@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
@@ -42,7 +43,7 @@ fun LessonListScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = breadcrumbTitles(component.titles),
+            titles = breadcrumbTitles(component.breadcrumbs),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier
@@ -96,7 +97,13 @@ private fun LessonListScreenLoadingPreview() {
             component =
                 object : LessonListComponent {
                     override val uiState: Value<LessonListUiState> = MutableValue(LessonListUiState.Loading)
-                    override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
+                    override val breadcrumbs =
+                        listOf(
+                            BreadcrumbRoot.Catalogs,
+                            BreadcrumbRoot.Dynamic("Квест 1"),
+                            BreadcrumbRoot.Dynamic("Секция 1"),
+                            BreadcrumbRoot.Dynamic("Тема 1"),
+                        )
 
                     override fun onLessonClick(lesson: LessonItemUi) = Unit
 
@@ -141,7 +148,13 @@ private fun LessonListScreenLoadedPreview() {
                                 ),
                             ),
                         )
-                    override val titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1")
+                    override val breadcrumbs =
+                        listOf(
+                            BreadcrumbRoot.Catalogs,
+                            BreadcrumbRoot.Dynamic("Квест 1"),
+                            BreadcrumbRoot.Dynamic("Секция 1"),
+                            BreadcrumbRoot.Dynamic("Тема 1"),
+                        )
 
                     override fun onLessonClick(lesson: LessonItemUi) = Unit
 

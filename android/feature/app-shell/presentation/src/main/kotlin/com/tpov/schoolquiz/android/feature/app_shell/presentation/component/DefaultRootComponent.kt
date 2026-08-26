@@ -23,6 +23,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.componen
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.ReviewQueueComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
@@ -212,7 +213,14 @@ class DefaultRootComponent(
                 val catalogName =
                     homeQuestsComponent.state.value.catalogs
                         .find { it.id == quest.catalogId }?.name.orEmpty()
-                quizzesComponent.openSectionList(quest.id, listOf(catalogName, quest.title))
+                quizzesComponent.openSectionList(
+                    quest.id,
+                    listOf(
+                        // Blank catalog name is forwarded as-is; the screen renders a localized fallback.
+                        BreadcrumbRoot.Dynamic(catalogName),
+                        BreadcrumbRoot.Dynamic(quest.title),
+                    ),
+                )
             },
         )
     val questCreateComponent: QuestCreateComponent =

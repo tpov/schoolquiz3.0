@@ -31,7 +31,7 @@ fun PublicQuestCatalogPickerScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = breadcrumbTitles(component.titles),
+            titles = breadcrumbTitles(component.breadcrumbs),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier

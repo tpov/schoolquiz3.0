@@ -5,6 +5,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
@@ -52,9 +53,12 @@ class DefaultSectionListComponentTest {
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
+    private fun dynamicCrumbs(vararg titles: String): List<BreadcrumbRoot> =
+        titles.map { BreadcrumbRoot.Dynamic(it) }
+
     private fun buildComponent(
         questId: String = "q-1",
-        titles: List<String> = listOf("Math", "Quest 1"),
+        breadcrumbs: List<BreadcrumbRoot> = dynamicCrumbs("Math", "Quest 1"),
     ): DefaultSectionListComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -63,7 +67,7 @@ class DefaultSectionListComponentTest {
             componentContext = ctx,
             navigation = fakeNavigation,
             sectionRepository = fakeRepo,
-            config = QuizzesConfig.SectionList(questId = questId, titles = titles),
+            config = QuizzesConfig.SectionList(questId = questId, breadcrumbs = breadcrumbs),
             coroutineContext = dispatcher,
         )
     }
@@ -157,11 +161,11 @@ class DefaultSectionListComponentTest {
 
     /**
      * Spec: SL-U-04 — onSectionClick pushes ThemeList with correct sectionId.
-     * Breadcrumb titles must include section.title as last element.
+     * Breadcrumbs must include section.title as the last (dynamic) element.
      */
     @Test
     fun `onSectionClick pushes ThemeList with correct sectionId`() = runTest(testScheduler) {
-        val component = buildComponent(questId = "q-1", titles = listOf("Math", "Quest 1"))
+        val component = buildComponent(questId = "q-1", breadcrumbs = dynamicCrumbs("Math", "Quest 1"))
         val sectionItem = sectionItemFixture(id = "s-1", title = "Section A")
 
         component.onSectionClick(sectionItem)
@@ -169,23 +173,26 @@ class DefaultSectionListComponentTest {
         val pushed = fakeNavigation.pushedConfigs.last()
         assertIs<QuizzesConfig.ThemeList>(pushed)
         assertEquals("s-1", pushed.sectionId)
-        assertTrue("Section A" in pushed.titles, "titles must include section.title")
+        assertTrue(
+            BreadcrumbRoot.Dynamic("Section A") in pushed.breadcrumbs,
+            "breadcrumbs must include section.title",
+        )
     }
 
     // ── SL-U-05 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: SL-U-05 — breadcrumb titles snapshot at push time includes all parent titles + section.title.
+     * Spec: SL-U-05 — breadcrumb snapshot at push time includes all parent crumbs + section.title.
      */
     @Test
-    fun `breadcrumb titles snapshot at push time`() = runTest(testScheduler) {
-        val component = buildComponent(titles = listOf("Math", "Quest 1"))
+    fun `breadcrumb snapshot at push time`() = runTest(testScheduler) {
+        val component = buildComponent(breadcrumbs = dynamicCrumbs("Math", "Quest 1"))
         val sectionItem = sectionItemFixture(title = "Section A")
 
         component.onSectionClick(sectionItem)
 
         val pushed = fakeNavigation.pushedConfigs.last() as QuizzesConfig.ThemeList
-        assertEquals(listOf("Math", "Quest 1", "Section A"), pushed.titles)
+        assertEquals(dynamicCrumbs("Math", "Quest 1", "Section A"), pushed.breadcrumbs)
     }
 
     // ── SL-U-06 ──────────────────────────────────────────────────────────────
@@ -215,12 +222,12 @@ class DefaultSectionListComponentTest {
     // ── SL-U-07 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: SL-U-07 — AC#23: sync renames section → already-pushed ThemeList config.titles
+     * Spec: SL-U-07 — AC#23: sync renames section → already-pushed ThemeList config.breadcrumbs
      * remain frozen (ADR-QS-10). The navigation stack retains the snapshot taken at push time.
      */
     @Test
-    fun `when sync renames section breadcrumb titles remain frozen`() = runTest(testScheduler) {
-        val component = buildComponent(questId = "q-1", titles = listOf("Math", "Quest 1"))
+    fun `when sync renames section breadcrumbs remain frozen`() = runTest(testScheduler) {
+        val component = buildComponent(questId = "q-1", breadcrumbs = dynamicCrumbs("Math", "Quest 1"))
 
         fakeRepo.emit(listOf(sectionFixture(id = "s-1", questId = "q-1", title = "Original Section")))
         advanceUntilIdle()
@@ -228,18 +235,18 @@ class DefaultSectionListComponentTest {
         component.onSectionClick(sectionItemFixture(id = "s-1", title = "Original Section"))
         val pushedAtClickTime = fakeNavigation.pushedConfigs.last() as QuizzesConfig.ThemeList
         assertEquals(
-            listOf("Math", "Quest 1", "Original Section"),
-            pushedAtClickTime.titles,
+            dynamicCrumbs("Math", "Quest 1", "Original Section"),
+            pushedAtClickTime.breadcrumbs,
         )
 
         fakeRepo.emit(listOf(sectionFixture(id = "s-1", questId = "q-1", title = "RENAMED Section")))
         advanceUntilIdle()
 
-        // already-pushed config is immutable — titles frozen at push time
+        // already-pushed config is immutable — breadcrumbs frozen at push time
         assertEquals(
-            listOf("Math", "Quest 1", "Original Section"),
-            pushedAtClickTime.titles,
-            "pushed config.titles must remain frozen after repository re-emits renamed section",
+            dynamicCrumbs("Math", "Quest 1", "Original Section"),
+            pushedAtClickTime.breadcrumbs,
+            "pushed config.breadcrumbs must remain frozen after repository re-emits renamed section",
         )
     }
 }

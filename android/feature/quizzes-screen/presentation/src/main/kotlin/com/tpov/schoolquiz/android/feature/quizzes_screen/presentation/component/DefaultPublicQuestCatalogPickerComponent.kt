@@ -5,6 +5,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.core.designsystem.model.toDisplayItem
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.PublicQuestCatalogPickerUiState
@@ -29,7 +30,7 @@ class DefaultPublicQuestCatalogPickerComponent(
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + coroutineContext)
 
-    override val titles: List<String> = config.titles
+    override val breadcrumbs: List<BreadcrumbRoot> = config.breadcrumbs
 
     override val state =
         catalogRepository.observeAll()
@@ -64,7 +65,7 @@ class DefaultPublicQuestCatalogPickerComponent(
             QuizzesConfig.QuestList(
                 catalogId = id.value,
                 // Blank names are forwarded as-is; the screen resolves them to a localized fallback.
-                titles = titles + name,
+                breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(name),
                 shelf = if (selectionTargetShelf == null) config.targetShelf else ARENA_SHELF,
                 mode = QuestListMode.Arena,
                 selectionTargetShelf = selectionTargetShelf,

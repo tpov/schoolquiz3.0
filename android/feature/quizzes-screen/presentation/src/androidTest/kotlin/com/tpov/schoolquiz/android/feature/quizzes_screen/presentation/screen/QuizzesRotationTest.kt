@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuizzesComponent
 import org.junit.Rule
@@ -82,13 +83,13 @@ class QuizzesRotationTest {
         val configAfter = fakeComponent.childStack.value.active.configuration
         assertIs<QuizzesConfig.QuestList>(configAfter)
         kotlin.test.assertEquals(configBefore.catalogId, configAfter.catalogId)
-        kotlin.test.assertEquals(configBefore.titles, configAfter.titles)
+        kotlin.test.assertEquals(configBefore.breadcrumbs, configAfter.breadcrumbs)
     }
 
-    // ROT-UI-01 variant: titles preserved after recreate
+    // ROT-UI-01 variant: breadcrumbs preserved after recreate
     // GIVEN QuestList with catalogName="Математика"
     // WHEN recreate()
-    // THEN titles still contain "Математика"
+    // THEN breadcrumbs still contain Dynamic("Математика")
     @Test
     fun rotUi01_variant_titlesPreservedInActiveConfigAfterRecreate() {
         val fakeComponent = FakeQuizzesComponent()
@@ -106,8 +107,8 @@ class QuizzesRotationTest {
         val configAfter = fakeComponent.childStack.value.active.configuration
         assertIs<QuizzesConfig.QuestList>(configAfter)
         kotlin.test.assertTrue(
-            configAfter.titles.contains("Математика"),
-            "Expected titles to contain 'Математика' after recreate, got: ${configAfter.titles}",
+            BreadcrumbRoot.Dynamic("Математика") in configAfter.breadcrumbs,
+            "Expected breadcrumbs to contain 'Математика' after recreate, got: ${configAfter.breadcrumbs}",
         )
         kotlin.test.assertEquals(
             "cat-math",

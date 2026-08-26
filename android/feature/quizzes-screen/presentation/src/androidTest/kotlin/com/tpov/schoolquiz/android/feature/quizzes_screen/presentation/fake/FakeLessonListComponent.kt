@@ -3,12 +3,13 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
 
 class FakeLessonListComponent(
     initialState: LessonListUiState,
-    override val titles: List<String> = emptyList(),
+    override val breadcrumbs: List<BreadcrumbRoot> = emptyList(),
 ) : LessonListComponent {
 
     private val _uiState = MutableValue(initialState)

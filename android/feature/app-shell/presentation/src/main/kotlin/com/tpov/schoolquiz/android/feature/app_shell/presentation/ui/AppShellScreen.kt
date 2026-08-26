@@ -492,7 +492,6 @@ private fun HomeQuestsContent(
     paddingValues: PaddingValues,
     canManagePublicShelves: Boolean,
 ) {
-    val homeQuestsTitle = stringResource(R.string.section_home_quests)
     HomeQuestsScreen(
         component = rootComponent.homeQuestsComponent,
         modifier = Modifier.padding(paddingValues),
@@ -500,7 +499,6 @@ private fun HomeQuestsContent(
         onAddPublicQuestClick = {
             rootComponent.quizzesComponent.openPublicQuestCatalogPicker(
                 targetShelf = HOME_SHELF,
-                title = homeQuestsTitle,
             )
         },
     )
@@ -655,7 +653,6 @@ private fun TournamentEventContent(
     val openTournamentLessons = {
         rootComponent.quizzesComponent.openPublicQuestShelfCatalog(
             targetShelf = targetShelf,
-            title = title,
             forcedHardMode = forcedHardMode,
         )
     }
@@ -679,7 +676,6 @@ private fun TournamentEventContent(
                 onAddLessonsClick = {
                     rootComponent.quizzesComponent.openPublicQuestCatalogPicker(
                         targetShelf = targetShelf,
-                        title = title,
                     )
                 },
             ),

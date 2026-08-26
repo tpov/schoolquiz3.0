@@ -5,6 +5,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
@@ -66,14 +67,15 @@ class DefaultLessonListComponentPhase06Test {
 
     private fun buildComponent(
         themeId: String = "t-1",
-        titles: List<String> = listOf("Math", "Quest 1", "Section A", "Theme A"),
+        breadcrumbs: List<BreadcrumbRoot> =
+            listOf("Math", "Quest 1", "Section A", "Theme A").map { BreadcrumbRoot.Dynamic(it) },
     ): DefaultLessonListComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
         val ctx = DefaultComponentContext(lifecycle = lifecycle)
         return DefaultLessonListComponent(
             componentContext = ctx,
-            config = QuizzesConfig.LessonList(themeId = themeId, titles = titles),
+            config = QuizzesConfig.LessonList(themeId = themeId, breadcrumbs = breadcrumbs),
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
             authRepository = fakeAuthRepo,

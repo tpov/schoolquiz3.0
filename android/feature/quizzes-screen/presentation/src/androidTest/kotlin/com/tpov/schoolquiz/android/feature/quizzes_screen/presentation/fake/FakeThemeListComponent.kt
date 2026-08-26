@@ -3,12 +3,13 @@ package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ThemeListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
 
 class FakeThemeListComponent(
     initialState: HierarchyListUiState,
-    override val titles: List<String> = emptyList(),
+    override val breadcrumbs: List<BreadcrumbRoot> = emptyList(),
 ) : ThemeListComponent {
 
     private val _uiState = MutableValue(initialState)

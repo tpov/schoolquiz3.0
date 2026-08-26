@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.navigation
 
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 
@@ -13,20 +14,16 @@ interface QuizzesNavigator {
 
     fun openCourseArena()
 
-    fun openPublicQuestCatalogPicker(
-        targetShelf: String,
-        title: String,
-    )
+    fun openPublicQuestCatalogPicker(targetShelf: String)
 
     fun openPublicQuestShelfCatalog(
         targetShelf: String,
-        title: String,
         forcedHardMode: Boolean? = null,
     )
 
     fun openSectionList(
         questId: QuestId,
-        titles: List<String>,
+        breadcrumbs: List<BreadcrumbRoot>,
     )
 
     fun dismissQuizzes()

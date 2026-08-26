@@ -16,6 +16,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.statekeeper.SerializableContainer
 import com.tpov.schoolquiz.android.core.designsystem.components.resolveIcons
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -156,28 +157,36 @@ class DefaultQuizzesComponent(
 
     private fun catalogNameFromConfig(config: QuizzesConfig): String? =
         when (config) {
-            is QuizzesConfig.PublicQuestCatalogPicker -> config.titles.lastOrNull()
-            is QuizzesConfig.QuestList -> config.titles.getOrNull(1)
-            is QuizzesConfig.SectionList -> config.titles.getOrNull(1)
-            is QuizzesConfig.ThemeList -> config.titles.getOrNull(1)
-            is QuizzesConfig.LessonList -> config.titles.getOrNull(1)
-            is QuizzesConfig.LessonRunner -> config.titles.getOrNull(1)
             QuizzesConfig.Idle -> null
+            is QuizzesConfig.PublicQuestCatalogPicker -> null
+            is QuizzesConfig.QuestList -> config.breadcrumbs.firstDynamicTitle()
+            is QuizzesConfig.SectionList -> config.breadcrumbs.firstDynamicTitle()
+            is QuizzesConfig.ThemeList -> config.breadcrumbs.firstDynamicTitle()
+            is QuizzesConfig.LessonList -> config.breadcrumbs.firstDynamicTitle()
+            is QuizzesConfig.LessonRunner -> config.breadcrumbs.firstDynamicTitle()
         }
+
+    private fun List<BreadcrumbRoot>.firstDynamicTitle(): String? =
+        filterIsInstance<BreadcrumbRoot.Dynamic>().firstOrNull()?.title?.takeIf { it.isNotBlank() }
 
     override fun openQuestList(
         catalogId: CatalogId,
         catalogName: String,
     ) {
-        navigation.pushNew(QuizzesConfig.QuestList(catalogId.value, listOf("Каталоги", catalogName)))
+        navigation.pushNew(
+            QuizzesConfig.QuestList(
+                catalogId.value,
+                listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic(catalogName)),
+            ),
+        )
     }
 
     override fun openCourseArchive() {
         navigation.pushNew(
             QuizzesConfig.QuestList(
                 catalogId = COURSES_CATALOG_ID,
+                breadcrumbs = listOf(BreadcrumbRoot.Archive, BreadcrumbRoot.Courses),
                 questType = QuestType.COURSE,
-                titles = listOf("Архив", "Курсы"),
                 shelf = ARCHIVE_SHELF,
                 mode = QuestListMode.Archive,
             ),
@@ -188,65 +197,72 @@ class DefaultQuizzesComponent(
         navigation.pushNew(
             QuizzesConfig.QuestList(
                 catalogId = COURSES_CATALOG_ID,
+                breadcrumbs = listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses),
                 questType = QuestType.COURSE,
-                titles = listOf("Арена", "Курсы"),
                 shelf = ARENA_SHELF,
                 mode = QuestListMode.Arena,
             ),
         )
     }
 
-    override fun openPublicQuestCatalogPicker(
-        targetShelf: String,
-        title: String,
-    ) {
+    override fun openPublicQuestCatalogPicker(targetShelf: String) {
         navigation.pushNew(
             QuizzesConfig.PublicQuestCatalogPicker(
                 targetShelf = targetShelf,
-                titles = listOf(title, "Каталоги"),
+                breadcrumbs = pickerBreadcrumbs(targetShelf),
             ),
         )
     }
 
     override fun openPublicQuestShelfCatalog(
         targetShelf: String,
-        title: String,
         forcedHardMode: Boolean?,
     ) {
         navigation.pushNew(
             QuizzesConfig.PublicQuestCatalogPicker(
                 targetShelf = targetShelf,
-                titles = listOf(title, "Каталоги"),
+                breadcrumbs = pickerBreadcrumbs(targetShelf),
                 selectionTargetShelf = null,
                 forcedLessonMode = forcedHardMode?.let { if (it) Difficulty.HARD else Difficulty.EASY },
             ),
         )
     }
 
+    /** Entry-point crumb is derived from the target shelf so no display text crosses the contract. */
+    private fun pickerBreadcrumbs(targetShelf: String): List<BreadcrumbRoot> =
+        listOf(
+            when (targetShelf) {
+                TOURNAMENT_SHELF -> BreadcrumbRoot.QualifierTournament
+                TOURNAMENT_FINAL_SHELF -> BreadcrumbRoot.WorldChampionship
+                else -> BreadcrumbRoot.HomeQuests
+            },
+            BreadcrumbRoot.Catalogs,
+        )
+
     override fun openSectionList(
         questId: QuestId,
-        titles: List<String>,
+        breadcrumbs: List<BreadcrumbRoot>,
     ) {
-        navigation.pushNew(QuizzesConfig.SectionList(questId.value, titles))
+        navigation.pushNew(QuizzesConfig.SectionList(questId.value, breadcrumbs))
     }
 
     override fun popToLevel(uiLevel: Int) {
         if (uiLevel < 0) return
         val active = childStack.value.active
-        val titlesSize =
+        val breadcrumbsSize =
             when (val cfg = active.configuration) {
                 is QuizzesConfig.Idle -> 0
-                is QuizzesConfig.PublicQuestCatalogPicker -> cfg.titles.size
-                is QuizzesConfig.QuestList -> cfg.titles.size
-                is QuizzesConfig.SectionList -> cfg.titles.size
-                is QuizzesConfig.ThemeList -> cfg.titles.size
-                is QuizzesConfig.LessonList -> cfg.titles.size
-                is QuizzesConfig.LessonRunner -> cfg.titles.size
+                is QuizzesConfig.PublicQuestCatalogPicker -> cfg.breadcrumbs.size
+                is QuizzesConfig.QuestList -> cfg.breadcrumbs.size
+                is QuizzesConfig.SectionList -> cfg.breadcrumbs.size
+                is QuizzesConfig.ThemeList -> cfg.breadcrumbs.size
+                is QuizzesConfig.LessonList -> cfg.breadcrumbs.size
+                is QuizzesConfig.LessonRunner -> cfg.breadcrumbs.size
             }
         // In MyQuests entry path, SectionList is pushed directly (no QuestList in stack).
-        // titles may contain virtual "decoration" segments that have no stack entry.
-        // virtualCount = how many leading titles have no corresponding stack entry.
-        val virtualCount = (titlesSize + 1 - childStack.value.items.size).coerceAtLeast(0)
+        // breadcrumbs may contain virtual "decoration" segments that have no stack entry.
+        // virtualCount = how many leading breadcrumbs have no corresponding stack entry.
+        val virtualCount = (breadcrumbsSize + 1 - childStack.value.items.size).coerceAtLeast(0)
         val adjustedLevel = uiLevel - virtualCount
         if (adjustedLevel < 0) {
             if (isArchiveNavigationPath(active.configuration)) {
@@ -340,15 +356,16 @@ class DefaultQuizzesComponent(
             QuizzesConfig.Idle -> false
             is QuizzesConfig.PublicQuestCatalogPicker -> false
             is QuizzesConfig.QuestList -> config.mode == QuestListMode.Archive
-            is QuizzesConfig.SectionList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
-            is QuizzesConfig.ThemeList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
-            is QuizzesConfig.LessonList -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
-            is QuizzesConfig.LessonRunner -> config.titles.firstOrNull() == ARCHIVE_ENTRY_TITLE
+            is QuizzesConfig.SectionList -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive
+            is QuizzesConfig.ThemeList -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive
+            is QuizzesConfig.LessonList -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive
+            is QuizzesConfig.LessonRunner -> config.breadcrumbs.firstOrNull() == BreadcrumbRoot.Archive
         }
 }
 
 private const val COURSES_CATALOG_ID = "courses"
 private const val ARCHIVE_SHELF = "archive"
 private const val ARENA_SHELF = "arena"
-private const val ARCHIVE_ENTRY_TITLE = "Архив"
+private const val TOURNAMENT_SHELF = "tournament"
+private const val TOURNAMENT_FINAL_SHELF = "tournamentFinal"
 private const val QUEST_LIST_STACK_INDEX = 1

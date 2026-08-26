@@ -4,11 +4,12 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 
 class FakeQuestListComponent(
     initialState: QuestListUiState,
-    override val titles: List<String> = emptyList(),
+    override val breadcrumbs: List<BreadcrumbRoot> = emptyList(),
 ) : QuestListComponent {
 
     private val _uiState = MutableValue(initialState)

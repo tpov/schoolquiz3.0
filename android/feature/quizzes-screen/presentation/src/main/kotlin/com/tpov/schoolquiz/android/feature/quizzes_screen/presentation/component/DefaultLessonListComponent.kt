@@ -6,6 +6,7 @@ import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
@@ -47,7 +48,7 @@ class DefaultLessonListComponent(
     private val scope = CoroutineScope(componentJob + coroutineContext)
 
     private val themeId = ThemeId(config.themeId)
-    override val titles: List<String> = config.titles
+    override val breadcrumbs: List<BreadcrumbRoot> = config.breadcrumbs
     private val forcedLessonMode = config.forcedLessonMode
 
     private val _uiState = MutableValue<LessonListUiState>(LessonListUiState.Loading)
@@ -101,7 +102,7 @@ class DefaultLessonListComponent(
                 QuizzesConfig.LessonRunner(
                     lessonId = lesson.id,
                     mode = mode,
-                    titles = titles + lesson.title,
+                    breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(lesson.title),
                 ),
             )
         }

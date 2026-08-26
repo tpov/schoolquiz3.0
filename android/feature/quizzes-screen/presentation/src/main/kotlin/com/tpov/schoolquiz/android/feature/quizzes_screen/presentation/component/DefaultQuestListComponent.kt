@@ -9,6 +9,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper.toQuestDisplayItem
@@ -57,7 +58,7 @@ class DefaultQuestListComponent(
     private val scope = CoroutineScope(componentJob + coroutineContext)
 
     private val catalogId = CatalogId(config.catalogId)
-    override val titles: List<String> = config.titles
+    override val breadcrumbs: List<BreadcrumbRoot> = config.breadcrumbs
     override val mode: QuestListMode = config.mode
     override val selectionTargetShelf: String? = config.selectionTargetShelf
     private val forcedLessonMode = config.forcedLessonMode
@@ -111,7 +112,7 @@ class DefaultQuestListComponent(
         navigation.pushNew(
             QuizzesConfig.SectionList(
                 questId = quest.id.value,
-                titles = titles + listOf(quest.title),
+                breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(quest.title),
                 forcedLessonMode = forcedLessonMode,
             ),
         )

@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
@@ -118,13 +119,14 @@ class SectionListScreenTest {
         assertEquals("s-1", fake.onSectionClickCalled?.id)
     }
 
-    // Edge case: BreadcrumbBar with multiple titles renders all
+    // Edge case: BreadcrumbBar with multiple segments renders all (dynamic titles resolved as-is)
     @Test
-    fun breadcrumbWithMultipleTitlesRendersAllSegments() {
+    fun breadcrumbWithMultipleSegmentsRendersAll() {
         val fake = FakeSectionListComponent(
             initialState = HierarchyListUiState.Loading,
-            titles = listOf("Математика", "Квест 1"),
+            breadcrumbs = listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Квест 1")),
         )
+        val catalogsLabel = stringRes(R.string.quizzes_breadcrumb_catalogs)
 
         composeTestRule.setContent {
             SchoolQuizTheme {
@@ -132,7 +134,7 @@ class SectionListScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Математика").assertIsDisplayed()
+        composeTestRule.onNodeWithText(catalogsLabel).assertIsDisplayed()
         composeTestRule.onNodeWithText("Квест 1").assertIsDisplayed()
     }
 }

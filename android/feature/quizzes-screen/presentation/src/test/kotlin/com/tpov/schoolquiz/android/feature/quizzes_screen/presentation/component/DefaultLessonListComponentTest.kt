@@ -5,6 +5,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
@@ -55,9 +56,12 @@ class DefaultLessonListComponentTest {
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
+    private fun dynamicCrumbs(vararg titles: String): List<BreadcrumbRoot> =
+        titles.map { BreadcrumbRoot.Dynamic(it) }
+
     private fun buildComponent(
         themeId: String = "t-1",
-        titles: List<String> = listOf("Math", "Quest 1", "Section A", "Theme A"),
+        breadcrumbs: List<BreadcrumbRoot> = dynamicCrumbs("Math", "Quest 1", "Section A", "Theme A"),
     ): DefaultLessonListComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -68,7 +72,7 @@ class DefaultLessonListComponentTest {
             lessonRepository = fakeRepo,
             attemptRepository = fakeAttemptRepo,
             authRepository = fakeAuthRepo,
-            config = QuizzesConfig.LessonList(themeId = themeId, titles = titles),
+            config = QuizzesConfig.LessonList(themeId = themeId, breadcrumbs = breadcrumbs),
             coroutineContext = dispatcher,
         )
     }
@@ -181,11 +185,11 @@ class DefaultLessonListComponentTest {
 
     /**
      * Spec: LL-U-04 — onLessonClick with hardUnlocked=false pushes LessonRunner with EASY mode.
-     * titles appended with lesson title.
+     * Breadcrumbs appended with the dynamic lesson title.
      */
     @Test
     fun `onLessonClick pushes LessonRunner with EASY mode when hardUnlocked is false`() = runTest(testScheduler) {
-        val component = buildComponent(themeId = "t-1", titles = listOf("Math", "Quest 1", "Section A", "Theme A"))
+        val component = buildComponent(themeId = "t-1")
         val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = false, isHardChecked = false)
 
         component.onLessonClick(lessonItem)
@@ -195,7 +199,7 @@ class DefaultLessonListComponentTest {
         assertIs<QuizzesConfig.LessonRunner>(pushed)
         assertEquals("l-1", pushed.lessonId)
         assertEquals(Difficulty.EASY, pushed.mode, "mode must be EASY when hardUnlocked=false")
-        assertEquals(true, "Lesson A" in pushed.titles, "titles must include lesson title")
+        assertEquals(true, BreadcrumbRoot.Dynamic("Lesson A") in pushed.breadcrumbs, "breadcrumbs must include lesson title")
     }
 
     /**
@@ -204,7 +208,7 @@ class DefaultLessonListComponentTest {
     @Test
     fun `onLessonClick pushes LessonRunner with HARD mode when hardUnlocked and isHardChecked`() =
         runTest(testScheduler) {
-        val component = buildComponent(titles = listOf("Math", "Quest 1", "Section A", "Theme A"))
+        val component = buildComponent()
         val lessonItem = lessonItemFixture(id = "l-1", title = "Lesson A", hardUnlocked = true, isHardChecked = true)
 
         component.onLessonClick(lessonItem)

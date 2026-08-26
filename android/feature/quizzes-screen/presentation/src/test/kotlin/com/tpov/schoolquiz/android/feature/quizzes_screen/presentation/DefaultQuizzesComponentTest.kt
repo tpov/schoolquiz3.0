@@ -12,6 +12,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeBackDispatcher
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
@@ -191,7 +192,10 @@ class DefaultQuizzesComponentTest {
         val component = buildComponent()
 
         component.openQuestList(CatalogId("cat-1"), "Math")
-        component.openSectionList(QuestId("q-1"), listOf("Math", "Quest 1"))
+        component.openSectionList(
+            QuestId("q-1"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1")),
+        )
         assertEquals(3, component.stackSize(), "stack must have 3 items before dismiss")
 
         component.dismissQuizzes()
@@ -286,7 +290,10 @@ class DefaultQuizzesComponentTest {
     fun `popToLevel(0) with 3-item stack navigates active to QuestList`() {
         val component = buildComponent()
         component.openQuestList(CatalogId("cat-1"), "Math")
-        component.openSectionList(QuestId("q-1"), listOf("Math", "Quest 1"))
+        component.openSectionList(
+            QuestId("q-1"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1")),
+        )
         assertEquals(3, component.stackSize(), "stack must have 3 items before popToLevel")
 
         component.popToLevel(0)
@@ -309,8 +316,14 @@ class DefaultQuizzesComponentTest {
     fun `popToLevel(1) with 4-item stack navigates active to first SectionList`() {
         val component = buildComponent()
         component.openQuestList(CatalogId("cat-1"), "Math")
-        component.openSectionList(QuestId("q-1"), listOf("Math", "Quest 1"))
-        component.openSectionList(QuestId("q-2"), listOf("Math", "Quest 2"))
+        component.openSectionList(
+            QuestId("q-1"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1")),
+        )
+        component.openSectionList(
+            QuestId("q-2"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 2")),
+        )
         assertEquals(4, component.stackSize(), "stack must have 4 items before popToLevel")
 
         component.popToLevel(1)
@@ -357,7 +370,10 @@ class DefaultQuizzesComponentTest {
     fun `archive path breadcrumb from details returns to archive quest list`() {
         val component = buildComponent()
         component.openCourseArchive()
-        component.openSectionList(QuestId("quest-sample"), listOf("Архив", "Курсы", "Основы Kotlin"))
+        component.openSectionList(
+            QuestId("quest-sample"),
+            listOf(BreadcrumbRoot.Archive, BreadcrumbRoot.Courses, BreadcrumbRoot.Dynamic("Основы Kotlin")),
+        )
         assertEquals(3, component.stackSize())
 
         component.popToLevel(0)
@@ -372,7 +388,7 @@ class DefaultQuizzesComponentTest {
     fun `openPublicQuestCatalogPicker opens mutable catalog picker`() {
         val component = buildComponent()
 
-        component.openPublicQuestCatalogPicker(targetShelf = "tournament", title = "Отборочный турнир")
+        component.openPublicQuestCatalogPicker(targetShelf = "tournament")
 
         val config = assertIs<QuizzesConfig.PublicQuestCatalogPicker>(
             component.childStack.value.active.configuration,
@@ -387,7 +403,6 @@ class DefaultQuizzesComponentTest {
 
         component.openPublicQuestShelfCatalog(
             targetShelf = "tournamentFinal",
-            title = "Чемпионат мира",
             forcedHardMode = true,
         )
 

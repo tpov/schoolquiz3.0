@@ -10,6 +10,7 @@ import com.arkivanov.essenty.statekeeper.StateKeeperDispatcher
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerComponentFactory
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
@@ -47,7 +48,7 @@ import kotlin.test.assertTrue
  * Design: docs/features/quizzes-screen/04-testing.md §12
  * Phase: 03
  *
- * PD-01..05 — stack restore, titles preserved, active config, backCallback, Idle anchor.
+ * PD-01..05 — stack restore, breadcrumbs preserved, active config, backCallback, Idle anchor.
  *
  * No Dispatchers.setMain: DefaultQuizzesComponent has SupervisorJob but no CoroutineScope;
  * all Decompose navigation and Value.subscribe calls are synchronous on the calling thread.
@@ -111,7 +112,10 @@ class QuizzesStateKeeperRestoreTest {
         val original = buildComponent(stateHolder)
 
         original.openQuestList(CatalogId("cat-1"), "Math")
-        original.openSectionList(QuestId("q-1"), listOf("Math", "Quest 1"))
+        original.openSectionList(
+            QuestId("q-1"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1")),
+        )
         assertEquals(3, original.stackSize(), "stack must be 3 before save")
 
         val savedState = stateHolder.save()
@@ -122,27 +126,28 @@ class QuizzesStateKeeperRestoreTest {
         assertEquals(3, restored.stackSize(), "restored stack must have 3 items")
     }
 
-    // ── PD-02 — Titles preserved ──────────────────────────────────────────────
+    // ── PD-02 — Breadcrumbs preserved ─────────────────────────────────────────
 
     /**
-     * Spec: PD-02 — titles from SectionList config are preserved after restoration.
+     * Spec: PD-02 — breadcrumbs from SectionList config are preserved after restoration.
      * Breadcrumb data must survive process death exactly as originally set.
      */
     @Test
-    fun `titles preserved after restoration`() {
-        val originalTitles = listOf("Math", "Quest 1")
+    fun `breadcrumbs preserved after restoration`() {
+        val originalBreadcrumbs =
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1"))
         val stateHolder = StateKeeperDispatcher(null)
         val original = buildComponent(stateHolder)
 
         original.openQuestList(CatalogId("cat-1"), "Math")
-        original.openSectionList(QuestId("q-1"), originalTitles)
+        original.openSectionList(QuestId("q-1"), originalBreadcrumbs)
 
         val savedState = stateHolder.save()
         val restored = buildComponent(StateKeeperDispatcher(savedState))
 
         val activeConfig = restored.childStack.value.active.configuration
         assertIs<QuizzesConfig.SectionList>(activeConfig)
-        assertEquals(originalTitles, activeConfig.titles, "titles must be preserved after restore")
+        assertEquals(originalBreadcrumbs, activeConfig.breadcrumbs, "breadcrumbs must be preserved after restore")
     }
 
     // ── PD-03 — Active config is SectionList ─────────────────────────────────
@@ -157,7 +162,10 @@ class QuizzesStateKeeperRestoreTest {
         val original = buildComponent(stateHolder)
 
         original.openQuestList(CatalogId("cat-1"), "Math")
-        original.openSectionList(QuestId("q-1"), listOf("Math", "Quest 1"))
+        original.openSectionList(
+            QuestId("q-1"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1")),
+        )
 
         val savedState = stateHolder.save()
         val restored = buildComponent(StateKeeperDispatcher(savedState))
@@ -179,7 +187,10 @@ class QuizzesStateKeeperRestoreTest {
         val stateHolder = StateKeeperDispatcher(null)
         val original = buildComponent(stateHolder)
         original.openQuestList(CatalogId("cat-1"), "Math")
-        original.openSectionList(QuestId("q-1"), listOf("Math", "Quest 1"))
+        original.openSectionList(
+            QuestId("q-1"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1")),
+        )
 
         val savedState = stateHolder.save()
         val backDispatcher = BackDispatcher()
@@ -202,7 +213,10 @@ class QuizzesStateKeeperRestoreTest {
         val stateHolder = StateKeeperDispatcher(null)
         val original = buildComponent(stateHolder)
         original.openQuestList(CatalogId("cat-1"), "Math")
-        original.openSectionList(QuestId("q-1"), listOf("Math", "Quest 1"))
+        original.openSectionList(
+            QuestId("q-1"),
+            listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Quest 1")),
+        )
 
         val savedState = stateHolder.save()
         val restored = buildComponent(StateKeeperDispatcher(savedState))

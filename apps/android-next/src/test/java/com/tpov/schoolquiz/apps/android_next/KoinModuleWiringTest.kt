@@ -20,6 +20,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsUiState
 import com.tpov.schoolquiz.android.feature.quest.presentation.di.questPresentationModule
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
 import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
@@ -500,13 +501,12 @@ override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
                     override fun openCourseArena() = Unit
                     override fun openCourseArchive() = Unit
-                    override fun openPublicQuestCatalogPicker(targetShelf: String, title: String) = Unit
+                    override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
                     override fun openPublicQuestShelfCatalog(
                         targetShelf: String,
-                        title: String,
                         forcedHardMode: Boolean?,
                     ) = Unit
-                    override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
+                    override fun openSectionList(questId: QuestId, breadcrumbs: List<BreadcrumbRoot>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit
                     override fun popCurrentChild() = Unit
@@ -592,13 +592,12 @@ override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
                     override fun openQuestList(catalogId: CatalogId, catalogName: String) = Unit
                     override fun openCourseArena() = Unit
                     override fun openCourseArchive() = Unit
-                    override fun openPublicQuestCatalogPicker(targetShelf: String, title: String) = Unit
+                    override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
                     override fun openPublicQuestShelfCatalog(
                         targetShelf: String,
-                        title: String,
                         forcedHardMode: Boolean?,
                     ) = Unit
-                    override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
+                    override fun openSectionList(questId: QuestId, breadcrumbs: List<BreadcrumbRoot>) = Unit
                     override fun dismissQuizzes() = Unit
                     override fun popToLevel(uiLevel: Int) = Unit
                     override fun popCurrentChild() = Unit

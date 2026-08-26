@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ThemeListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
@@ -43,7 +44,7 @@ fun ThemeListScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = breadcrumbTitles(component.titles),
+            titles = breadcrumbTitles(component.breadcrumbs),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier
@@ -98,7 +99,12 @@ private fun ThemeListScreenLoadingPreview() {
             component =
                 object : ThemeListComponent {
                     override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
-                    override val titles = listOf("Математика", "Квест 1", "Секция 1")
+                    override val breadcrumbs =
+                        listOf(
+                            BreadcrumbRoot.Catalogs,
+                            BreadcrumbRoot.Dynamic("Квест 1"),
+                            BreadcrumbRoot.Dynamic("Секция 1"),
+                        )
 
                     override fun onThemeClick(theme: HierarchyItemUi) = Unit
                 },
@@ -117,7 +123,12 @@ private fun ThemeListScreenEmptyPreview() {
                 object : ThemeListComponent {
                     override val uiState: Value<HierarchyListUiState> =
                         MutableValue(HierarchyListUiState.Empty(HierarchyLevel.THEMES))
-                    override val titles = listOf("Математика", "Квест 1", "Секция 1")
+                    override val breadcrumbs =
+                        listOf(
+                            BreadcrumbRoot.Catalogs,
+                            BreadcrumbRoot.Dynamic("Квест 1"),
+                            BreadcrumbRoot.Dynamic("Секция 1"),
+                        )
 
                     override fun onThemeClick(theme: HierarchyItemUi) = Unit
                 },

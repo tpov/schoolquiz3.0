@@ -1,12 +1,13 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 
 import com.arkivanov.decompose.value.Value
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
 
 interface SectionListComponent {
     val uiState: Value<HierarchyListUiState>
-    val titles: List<String>
+    val breadcrumbs: List<BreadcrumbRoot>
 
     fun onSectionClick(section: HierarchyItemUi)
 }

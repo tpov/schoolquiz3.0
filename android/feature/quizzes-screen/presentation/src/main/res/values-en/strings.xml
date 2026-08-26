@@ -12,6 +12,15 @@
     <string name="quizzes_empty_catalogs">No catalogs</string>
     <string name="quizzes_no_catalog">No catalog</string>
 
+    <!-- Breadcrumb roots -->
+    <string name="quizzes_breadcrumb_catalogs">Catalogs</string>
+    <string name="quizzes_breadcrumb_archive">Archive</string>
+    <string name="quizzes_breadcrumb_courses">Courses</string>
+    <string name="quizzes_breadcrumb_arena">Arena</string>
+    <string name="quizzes_breadcrumb_home_quests">Home quests</string>
+    <string name="quizzes_breadcrumb_qualifier_tournament">Qualifying tournament</string>
+    <string name="quizzes_breadcrumb_world_championship">World championship</string>
+
     <!-- Lesson item -->
     <string name="quizzes_chip_easy">Easy</string>
     <string name="quizzes_chip_hard">Hard</string>

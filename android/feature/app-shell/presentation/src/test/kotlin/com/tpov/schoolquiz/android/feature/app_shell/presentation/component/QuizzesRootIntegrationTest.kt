@@ -30,6 +30,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
@@ -142,7 +143,7 @@ class QuizzesRootIntegrationTest {
     /** Minimal QuestListComponent stub for constructing QuizzesChild.QuestList in test stacks. */
     private class StubQuestListComponent : QuestListComponent {
         override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Loading)
-        override val titles: List<String> = emptyList()
+        override val breadcrumbs: List<BreadcrumbRoot> = emptyList()
         override fun onQuestClick(quest: QuestDisplayItem) = Unit
         override fun onQuestDownloadClick(quest: QuestDisplayItem) = Unit
         override fun onShareClick(quest: QuestDisplayItem) = Unit
@@ -152,7 +153,7 @@ class QuizzesRootIntegrationTest {
     private class CapturedQuizzesComponent : QuizzesComponent {
 
         data class OpenQuestListArgs(val catalogId: CatalogId, val catalogName: String)
-        data class OpenSectionListArgs(val questId: QuestId, val titles: List<String>)
+        data class OpenSectionListArgs(val questId: QuestId, val breadcrumbs: List<BreadcrumbRoot>)
 
         var openQuestListArgs: OpenQuestListArgs? = null
         var openSectionListArgs: OpenSectionListArgs? = null
@@ -172,15 +173,14 @@ class QuizzesRootIntegrationTest {
 
         override fun openCourseArchive() = Unit
         override fun openCourseArena() = Unit
-        override fun openPublicQuestCatalogPicker(targetShelf: String, title: String) = Unit
+        override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
         override fun openPublicQuestShelfCatalog(
             targetShelf: String,
-            title: String,
             forcedHardMode: Boolean?,
         ) = Unit
 
-        override fun openSectionList(questId: QuestId, titles: List<String>) {
-            openSectionListArgs = OpenSectionListArgs(questId, titles)
+        override fun openSectionList(questId: QuestId, breadcrumbs: List<BreadcrumbRoot>) {
+            openSectionListArgs = OpenSectionListArgs(questId, breadcrumbs)
         }
 
         override fun dismissQuizzes() {
@@ -198,7 +198,11 @@ class QuizzesRootIntegrationTest {
         )
 
         private fun questListStack(catalogId: CatalogId, catalogName: String): ChildStack<QuizzesConfig, QuizzesChild> {
-            val config = QuizzesConfig.QuestList(catalogId.value, listOf(catalogName))
+            val config =
+                QuizzesConfig.QuestList(
+                    catalogId.value,
+                    listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic(catalogName)),
+                )
             return ChildStack(
                 active = Child.Created(configuration = config, instance = QuizzesChild.QuestList(StubQuestListComponent())),
                 backStack = emptyList(),
@@ -369,7 +373,8 @@ class QuizzesRootIntegrationTest {
     // GIVEN homeQuestsComponent has catalog CatalogId("cat-1") → name="Mathematics"
     // GIVEN quest.catalogId = CatalogId("cat-1"), quest.title = "Quest A"
     // WHEN myQuestsComponent.onQuestClick(quest)
-    // THEN openSectionList(quest.id, titles) where titles[0]=="Mathematics" and titles[1]=="Quest A"
+    // THEN openSectionList(quest.id, breadcrumbs) where breadcrumbs[0]==Dynamic("Mathematics")
+    //      and breadcrumbs[1]==Dynamic("Quest A")
 
     @Test
     fun `WIRE-03 catalogName in openSectionList resolved from homeQuestsComponent state catalogs`() = runTest {
@@ -388,14 +393,20 @@ class QuizzesRootIntegrationTest {
 
         root.myQuestsComponent.onQuestClick(quest)
 
-        val titles = captured.openSectionListArgs?.titles
-        assertEquals("Mathematics", titles?.getOrNull(0),
-            "first title must be catalog name resolved from homeQuestsComponent state")
-        assertEquals("Quest A", titles?.getOrNull(1),
-            "second title must be quest title")
+        val breadcrumbs = captured.openSectionListArgs?.breadcrumbs
+        assertEquals(
+            BreadcrumbRoot.Dynamic("Mathematics"),
+            breadcrumbs?.getOrNull(0),
+            "first breadcrumb must be dynamic catalog name resolved from homeQuestsComponent state",
+        )
+        assertEquals(
+            BreadcrumbRoot.Dynamic("Quest A"),
+            breadcrumbs?.getOrNull(1),
+            "second breadcrumb must be dynamic quest title",
+        )
     }
 
-    // ── WIRE-03 fallback — catalogs empty → titles[0] is blank (no crash) ─────────
+    // ── WIRE-03 fallback — catalogs empty → breadcrumbs[0] is blank Dynamic (no crash) ─────────
     // Spec: 04-testing.md §10 WIRE-03 edge case
     // DefaultRootComponent passes an empty catalog name when the catalog is not found;
     // the UI layer renders the localized placeholder for blank names.
@@ -417,11 +428,17 @@ class QuizzesRootIntegrationTest {
 
         root.myQuestsComponent.onQuestClick(quest)
 
-        val titles = captured.openSectionListArgs?.titles
-        assertEquals("", titles?.getOrNull(0),
-            "fallback catalogName must be blank when catalog is not found")
-        assertEquals("Quest B", titles?.getOrNull(1),
-            "quest title must still be included in titles")
+        val breadcrumbs = captured.openSectionListArgs?.breadcrumbs
+        assertEquals(
+            BreadcrumbRoot.Dynamic(""),
+            breadcrumbs?.getOrNull(0),
+            "fallback catalog crumb must be a blank Dynamic when catalog is not found",
+        )
+        assertEquals(
+            BreadcrumbRoot.Dynamic("Quest B"),
+            breadcrumbs?.getOrNull(1),
+            "quest title must still be included in breadcrumbs",
+        )
     }
 
     // ── WIRE-04 — dismissQuizzes hides overlay ────────────────────────────────

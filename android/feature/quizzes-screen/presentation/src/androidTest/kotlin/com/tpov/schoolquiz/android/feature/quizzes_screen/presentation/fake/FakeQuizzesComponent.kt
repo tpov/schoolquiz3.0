@@ -6,6 +6,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,8 +31,16 @@ class FakeQuizzesComponent : QuizzesComponent {
     var popCurrentChildCalled: Int = 0
 
     fun setQuestListActive(catalogId: String = "cat-1", catalogName: String = "Математика") {
-        val config = QuizzesConfig.QuestList(catalogId, listOf(catalogName))
-        val fakeQuestList = FakeQuestListComponent(QuestListUiState.Loading, listOf(catalogName))
+        val config =
+            QuizzesConfig.QuestList(
+                catalogId,
+                listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic(catalogName)),
+            )
+        val fakeQuestList =
+            FakeQuestListComponent(
+                QuestListUiState.Loading,
+                listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic(catalogName)),
+            )
         _childStack.value = ChildStack(
             active = Child.Created(configuration = config, instance = QuizzesChild.QuestList(fakeQuestList)),
             backStack = emptyList(),
@@ -59,18 +68,14 @@ class FakeQuizzesComponent : QuizzesComponent {
         setQuestListActive("courses", "Курсы")
     }
 
-    override fun openPublicQuestCatalogPicker(
-        targetShelf: String,
-        title: String,
-    ) = Unit
+    override fun openPublicQuestCatalogPicker(targetShelf: String) = Unit
 
     override fun openPublicQuestShelfCatalog(
         targetShelf: String,
-        title: String,
         forcedHardMode: Boolean?,
     ) = Unit
 
-    override fun openSectionList(questId: QuestId, titles: List<String>) = Unit
+    override fun openSectionList(questId: QuestId, breadcrumbs: List<BreadcrumbRoot>) = Unit
 
     override fun dismissQuizzes() {
         _childStack.value = idleStack()

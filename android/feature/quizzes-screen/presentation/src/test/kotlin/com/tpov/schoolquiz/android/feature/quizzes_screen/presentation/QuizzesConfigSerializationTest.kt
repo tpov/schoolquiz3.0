@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation
 
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
@@ -50,14 +51,14 @@ class QuizzesConfigSerializationTest {
     // ── SER-02 — QuizzesConfig.QuestList ─────────────────────────────────────
 
     /**
-     * Spec: SER-02 — QuestList(catalogId, titles) preserves all fields.
-     * titles[0] = catalogName (no separate catalogName field per §10).
+     * Spec: SER-02 — QuestList(catalogId, breadcrumbs) preserves all fields.
+     * breadcrumbs[1] = dynamic catalogName (no separate catalogName field per §10).
      */
     @Test
     fun `QuizzesConfig QuestList round-trip`() {
         val original = QuizzesConfig.QuestList(
             catalogId = "cat-1",
-            titles = listOf("Математика"),
+            breadcrumbs = listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Математика")),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
@@ -67,7 +68,7 @@ class QuizzesConfigSerializationTest {
     fun `QuizzesConfig PublicQuestCatalogPicker round-trip`() {
         val original = QuizzesConfig.PublicQuestCatalogPicker(
             targetShelf = "tournamentFinal",
-            titles = listOf("Чемпионат мира", "Каталоги"),
+            breadcrumbs = listOf(BreadcrumbRoot.WorldChampionship, BreadcrumbRoot.Catalogs),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
@@ -77,7 +78,7 @@ class QuizzesConfigSerializationTest {
     fun `QuizzesConfig read-only PublicQuestCatalogPicker round-trip`() {
         val original = QuizzesConfig.PublicQuestCatalogPicker(
             targetShelf = "tournament",
-            titles = listOf("Отборочный турнир", "Каталоги"),
+            breadcrumbs = listOf(BreadcrumbRoot.QualifierTournament, BreadcrumbRoot.Catalogs),
             selectionTargetShelf = null,
         )
         val decoded = roundTrip(original)
@@ -87,13 +88,13 @@ class QuizzesConfigSerializationTest {
     // ── SER-03 — QuizzesConfig.SectionList ───────────────────────────────────
 
     /**
-     * Spec: SER-03 — SectionList(questId, titles) with 2-element titles list.
+     * Spec: SER-03 — SectionList(questId, breadcrumbs) with a 2-element breadcrumb list.
      */
     @Test
     fun `QuizzesConfig SectionList round-trip`() {
         val original = QuizzesConfig.SectionList(
             questId = "q-1",
-            titles = listOf("Математика", "Квест 1"),
+            breadcrumbs = listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Квест 1")),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
@@ -102,13 +103,18 @@ class QuizzesConfigSerializationTest {
     // ── SER-04 — QuizzesConfig.ThemeList ─────────────────────────────────────
 
     /**
-     * Spec: SER-04 — ThemeList(sectionId, titles) with 3-element titles list.
+     * Spec: SER-04 — ThemeList(sectionId, breadcrumbs) with a 3-element breadcrumb list.
      */
     @Test
     fun `QuizzesConfig ThemeList round-trip`() {
         val original = QuizzesConfig.ThemeList(
             sectionId = "s-1",
-            titles = listOf("Математика", "Квест 1", "Секция 1"),
+            breadcrumbs =
+                listOf(
+                    BreadcrumbRoot.Catalogs,
+                    BreadcrumbRoot.Dynamic("Квест 1"),
+                    BreadcrumbRoot.Dynamic("Секция 1"),
+                ),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
@@ -117,13 +123,19 @@ class QuizzesConfigSerializationTest {
     // ── SER-05 — QuizzesConfig.LessonList ────────────────────────────────────
 
     /**
-     * Spec: SER-05 — LessonList(themeId, titles) with 4-element titles list.
+     * Spec: SER-05 — LessonList(themeId, breadcrumbs) with a 4-element breadcrumb list.
      */
     @Test
     fun `QuizzesConfig LessonList round-trip`() {
         val original = QuizzesConfig.LessonList(
             themeId = "t-1",
-            titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1"),
+            breadcrumbs =
+                listOf(
+                    BreadcrumbRoot.Catalogs,
+                    BreadcrumbRoot.Dynamic("Квест 1"),
+                    BreadcrumbRoot.Dynamic("Секция 1"),
+                    BreadcrumbRoot.Dynamic("Тема 1"),
+                ),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
@@ -132,7 +144,7 @@ class QuizzesConfigSerializationTest {
     // ── SER-06 — QuizzesConfig.LessonRunner ──────────────────────────────────
 
     /**
-     * Spec: SER-06 — LessonRunner preserves lessonId, mode, and titles.
+     * Spec: SER-06 — LessonRunner preserves lessonId, mode, and breadcrumbs.
      * mode: Difficulty is @Serializable (Phase-01). lessonId is raw String (not LessonId).
      * Also covers: Ser-02 (tests.md §Ser-02) — LessonRunner EASY mode round-trip.
      */
@@ -141,7 +153,14 @@ class QuizzesConfigSerializationTest {
         val original = QuizzesConfig.LessonRunner(
             lessonId = "l-1",
             mode = com.tpov.schoolquiz.shared.core.question_schema.Difficulty.EASY,
-            titles = listOf("Математика", "Квест 1", "Секция 1", "Тема 1", "Урок 1"),
+            breadcrumbs =
+                listOf(
+                    BreadcrumbRoot.Catalogs,
+                    BreadcrumbRoot.Dynamic("Квест 1"),
+                    BreadcrumbRoot.Dynamic("Секция 1"),
+                    BreadcrumbRoot.Dynamic("Тема 1"),
+                    BreadcrumbRoot.Dynamic("Урок 1"),
+                ),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
@@ -161,7 +180,12 @@ class QuizzesConfigSerializationTest {
         val original = QuizzesConfig.LessonRunner(
             lessonId = "l1",
             mode = com.tpov.schoolquiz.shared.core.question_schema.Difficulty.HARD,
-            titles = listOf("Cat", "Quest", "Lesson"),
+            breadcrumbs =
+                listOf(
+                    BreadcrumbRoot.Catalogs,
+                    BreadcrumbRoot.Dynamic("Quest"),
+                    BreadcrumbRoot.Dynamic("Lesson"),
+                ),
         )
         val decoded = roundTrip(original)
         assertEquals(original, decoded)
@@ -183,8 +207,8 @@ class QuizzesConfigSerializationTest {
     fun `stack Idle QuestList SectionList round-trip`() {
         val stack = listOf(
             QuizzesConfig.Idle,
-            QuizzesConfig.QuestList("cat-1", listOf("Математика")),
-            QuizzesConfig.SectionList("q-1", listOf("Математика", "Квест 1")),
+            QuizzesConfig.QuestList("cat-1", listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Математика"))),
+            QuizzesConfig.SectionList("q-1", listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Квест 1"))),
         )
         val decoded = stackRoundTrip(stack)
         assertEquals(stack, decoded)
@@ -194,35 +218,39 @@ class QuizzesConfigSerializationTest {
         assertIs<QuizzesConfig.SectionList>(decoded[2])
     }
 
-    // ── SER-08 — Cyrillic titles ──────────────────────────────────────────────
+    // ── SER-08 — Cyrillic dynamic breadcrumbs ─────────────────────────────────
 
     /**
-     * Spec: SER-08 — Cyrillic characters in titles survive JSON encoding.
+     * Spec: SER-08 — Cyrillic characters in dynamic breadcrumbs survive JSON encoding.
      * Verifies no encoding corruption (e.g., incorrect charset or escaped chars).
      */
     @Test
-    fun `titles with Cyrillic survive round-trip`() {
+    fun `dynamic breadcrumbs with Cyrillic survive round-trip`() {
         val original = QuizzesConfig.SectionList(
             questId = "q-cyrillic",
-            titles = listOf("Алгебра и начала анализа", "Производная функции"),
+            breadcrumbs =
+                listOf(
+                    BreadcrumbRoot.Dynamic("Алгебра и начала анализа"),
+                    BreadcrumbRoot.Dynamic("Производная функции"),
+                ),
         )
         val decoded = roundTrip(original) as QuizzesConfig.SectionList
-        assertEquals(original.titles, decoded.titles)
+        assertEquals(original.breadcrumbs, decoded.breadcrumbs)
     }
 
-    // ── SER-09 — Empty titles list ────────────────────────────────────────────
+    // ── SER-09 — Empty breadcrumbs list ───────────────────────────────────────
 
     /**
-     * Spec: SER-09 — empty titles list survives round-trip without becoming null.
+     * Spec: SER-09 — empty breadcrumbs list survives round-trip without becoming null.
      */
     @Test
-    fun `empty titles list survives round-trip`() {
+    fun `empty breadcrumbs list survives round-trip`() {
         val original = QuizzesConfig.QuestList(
             catalogId = "cat-empty",
-            titles = emptyList(),
+            breadcrumbs = emptyList(),
         )
         val decoded = roundTrip(original) as QuizzesConfig.QuestList
-        assertEquals(emptyList(), decoded.titles)
+        assertEquals(emptyList(), decoded.breadcrumbs)
     }
 
     // ── SER-10 — Missing required field ──────────────────────────────────────

@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.SectionListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
@@ -43,7 +44,7 @@ fun SectionListScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = breadcrumbTitles(component.titles),
+            titles = breadcrumbTitles(component.breadcrumbs),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier
@@ -98,7 +99,8 @@ private fun SectionListScreenLoadingPreview() {
             component =
                 object : SectionListComponent {
                     override val uiState: Value<HierarchyListUiState> = MutableValue(HierarchyListUiState.Loading)
-                    override val titles = listOf("Математика", "Квест 1")
+                    override val breadcrumbs =
+                        listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Квест 1"))
 
                     override fun onSectionClick(section: HierarchyItemUi) = Unit
                 },
@@ -129,7 +131,8 @@ private fun SectionListScreenLoadedPreview() {
                                 ),
                             ),
                         )
-                    override val titles = listOf("Математика", "Квест 1")
+                    override val breadcrumbs =
+                        listOf(BreadcrumbRoot.Catalogs, BreadcrumbRoot.Dynamic("Квест 1"))
 
                     override fun onSectionClick(section: HierarchyItemUi) = Unit
                 },

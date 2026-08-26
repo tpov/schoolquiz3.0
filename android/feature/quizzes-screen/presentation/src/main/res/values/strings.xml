@@ -12,6 +12,15 @@
     <string name="quizzes_empty_catalogs">Нет каталогов</string>
     <string name="quizzes_no_catalog">Без каталога</string>
 
+    <!-- Breadcrumb roots -->
+    <string name="quizzes_breadcrumb_catalogs">Каталоги</string>
+    <string name="quizzes_breadcrumb_archive">Архив</string>
+    <string name="quizzes_breadcrumb_courses">Курсы</string>
+    <string name="quizzes_breadcrumb_arena">Арена</string>
+    <string name="quizzes_breadcrumb_home_quests">Домашние квесты</string>
+    <string name="quizzes_breadcrumb_qualifier_tournament">Отборочный турнир</string>
+    <string name="quizzes_breadcrumb_world_championship">Чемпионат мира</string>
+
     <!-- Lesson item -->
     <string name="quizzes_chip_easy">Easy</string>
     <string name="quizzes_chip_hard">Hard</string>

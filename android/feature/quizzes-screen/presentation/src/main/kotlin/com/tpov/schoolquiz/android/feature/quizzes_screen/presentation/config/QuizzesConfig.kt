@@ -13,7 +13,7 @@ sealed class QuizzesConfig {
     @Serializable
     data class PublicQuestCatalogPicker(
         val targetShelf: String,
-        val titles: List<String>,
+        val breadcrumbs: List<BreadcrumbRoot>,
         val selectionTargetShelf: String? = targetShelf,
         val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
@@ -21,7 +21,7 @@ sealed class QuizzesConfig {
     @Serializable
     data class QuestList(
         val catalogId: String,
-        val titles: List<String>,
+        val breadcrumbs: List<BreadcrumbRoot>,
         val shelf: String = "home",
         val mode: QuestListMode = QuestListMode.Home,
         val selectionTargetShelf: String? = null,
@@ -33,21 +33,21 @@ sealed class QuizzesConfig {
     @Serializable
     data class SectionList(
         val questId: String,
-        val titles: List<String>,
+        val breadcrumbs: List<BreadcrumbRoot>,
         val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
     @Serializable
     data class ThemeList(
         val sectionId: String,
-        val titles: List<String>,
+        val breadcrumbs: List<BreadcrumbRoot>,
         val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
     @Serializable
     data class LessonList(
         val themeId: String,
-        val titles: List<String>,
+        val breadcrumbs: List<BreadcrumbRoot>,
         val forcedLessonMode: Difficulty? = null,
     ) : QuizzesConfig()
 
@@ -55,7 +55,7 @@ sealed class QuizzesConfig {
     data class LessonRunner(
         val lessonId: String,
         val mode: Difficulty,
-        val titles: List<String>,
+        val breadcrumbs: List<BreadcrumbRoot>,
         /** Defaulted so state saved before exams existed still restores. */
         val sessionMode: SessionMode = SessionMode.LEARNING,
     ) : QuizzesConfig()

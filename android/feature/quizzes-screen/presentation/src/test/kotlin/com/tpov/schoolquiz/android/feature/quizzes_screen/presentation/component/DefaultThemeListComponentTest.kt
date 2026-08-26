@@ -5,6 +5,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeThemeRepository
@@ -51,9 +52,12 @@ class DefaultThemeListComponentTest {
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
+    private fun dynamicCrumbs(vararg titles: String): List<BreadcrumbRoot> =
+        titles.map { BreadcrumbRoot.Dynamic(it) }
+
     private fun buildComponent(
         sectionId: String = "s-1",
-        titles: List<String> = listOf("Math", "Quest 1", "Section A"),
+        breadcrumbs: List<BreadcrumbRoot> = dynamicCrumbs("Math", "Quest 1", "Section A"),
     ): DefaultThemeListComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -62,7 +66,7 @@ class DefaultThemeListComponentTest {
             componentContext = ctx,
             navigation = fakeNavigation,
             themeRepository = fakeRepo,
-            config = QuizzesConfig.ThemeList(sectionId = sectionId, titles = titles),
+            config = QuizzesConfig.ThemeList(sectionId = sectionId, breadcrumbs = breadcrumbs),
             coroutineContext = dispatcher,
         )
     }
@@ -147,12 +151,12 @@ class DefaultThemeListComponentTest {
     // ── TH-U-04 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: TH-U-04 — onThemeClick pushes LessonList with correct themeId and accumulated titles.
-     * Breadcrumb: parentTitles + [theme.title].
+     * Spec: TH-U-04 — onThemeClick pushes LessonList with correct themeId and accumulated crumbs.
+     * Breadcrumbs: parentCrumbs + [theme.title].
      */
     @Test
     fun `onThemeClick pushes LessonList with correct themeId`() = runTest(testScheduler) {
-        val component = buildComponent(sectionId = "s-1", titles = listOf("Math", "Quest 1", "Section A"))
+        val component = buildComponent(sectionId = "s-1")
         val themeItem = themeItemFixture(id = "t-1", title = "Theme A")
 
         component.onThemeClick(themeItem)
@@ -160,7 +164,10 @@ class DefaultThemeListComponentTest {
         val pushed = fakeNavigation.pushedConfigs.last()
         assertIs<QuizzesConfig.LessonList>(pushed)
         assertEquals("t-1", pushed.themeId)
-        assertTrue("Theme A" in pushed.titles, "titles must include theme.title")
-        assertEquals(listOf("Math", "Quest 1", "Section A", "Theme A"), pushed.titles)
+        assertTrue(
+            BreadcrumbRoot.Dynamic("Theme A") in pushed.breadcrumbs,
+            "breadcrumbs must include theme.title",
+        )
+        assertEquals(dynamicCrumbs("Math", "Quest 1", "Section A", "Theme A"), pushed.breadcrumbs)
     }
 }

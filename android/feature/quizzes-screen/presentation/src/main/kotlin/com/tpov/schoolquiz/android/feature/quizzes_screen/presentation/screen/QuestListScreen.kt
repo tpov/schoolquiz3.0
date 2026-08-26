@@ -50,6 +50,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCar
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -93,7 +94,7 @@ fun QuestListScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = breadcrumbTitles(component.titles),
+            titles = breadcrumbTitles(component.breadcrumbs),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier
@@ -279,7 +280,7 @@ private fun QuestListScreenLoadingPreview() {
             component =
                 object : QuestListComponent {
                     override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Loading)
-                    override val titles = listOf("Математика")
+                    override val breadcrumbs = listOf(BreadcrumbRoot.Catalogs)
 
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
 
@@ -301,7 +302,7 @@ private fun QuestListScreenEmptyPreview() {
             component =
                 object : QuestListComponent {
                     override val uiState: Value<QuestListUiState> = MutableValue(QuestListUiState.Empty)
-                    override val titles = listOf("Математика")
+                    override val breadcrumbs = listOf(BreadcrumbRoot.Catalogs)
 
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
 
@@ -349,7 +350,7 @@ private fun QuestListScreenLoadedPreview() {
                                     ),
                             ),
                         )
-                    override val titles = listOf("Математика")
+                    override val breadcrumbs = listOf(BreadcrumbRoot.Catalogs)
 
                     override fun onQuestClick(quest: QuestDisplayItem) = Unit
 

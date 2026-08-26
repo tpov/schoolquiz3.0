@@ -6,6 +6,7 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
@@ -70,9 +71,12 @@ class DefaultQuestListComponentTest {
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
+    private fun dynamicCrumbs(vararg titles: String): List<BreadcrumbRoot> =
+        titles.map { BreadcrumbRoot.Dynamic(it) }
+
     private fun buildComponent(
         catalogId: String = "cat-1",
-        titles: List<String> = listOf("Mathematics"),
+        breadcrumbs: List<BreadcrumbRoot> = dynamicCrumbs("Catalogs", "Mathematics"),
         shelf: String = "home",
         mode: QuestListMode = QuestListMode.Home,
         selectionTargetShelf: String? = null,
@@ -96,7 +100,7 @@ class DefaultQuestListComponentTest {
             config =
                 QuizzesConfig.QuestList(
                     catalogId = catalogId,
-                    titles = titles,
+                    breadcrumbs = breadcrumbs,
                     shelf = shelf,
                     mode = mode,
                     selectionTargetShelf = selectionTargetShelf,
@@ -245,11 +249,11 @@ class DefaultQuestListComponentTest {
 
     /**
      * Spec: QL-U-05 — onQuestClick pushes SectionList with correct questId.
-     * Breadcrumb titles must include quest.title appended at the end.
+     * Breadcrumbs must include the dynamic quest.title appended at the end.
      */
     @Test
     fun `onQuestClick pushes SectionList with correct config`() = runTest(testScheduler) {
-        val component = buildComponent(catalogId = "cat-1", titles = listOf("Mathematics"))
+        val component = buildComponent(catalogId = "cat-1")
         val questItem = questDisplayItemFixture(id = "q-1", title = "Quest A")
 
         component.onQuestClick(questItem)
@@ -257,7 +261,10 @@ class DefaultQuestListComponentTest {
         val pushed = fakeNavigation.pushedConfigs.last()
         assertIs<QuizzesConfig.SectionList>(pushed)
         assertEquals("q-1", pushed.questId)
-        assertTrue("Quest A" in pushed.titles, "titles must include quest.title")
+        assertTrue(
+            BreadcrumbRoot.Dynamic("Quest A") in pushed.breadcrumbs,
+            "breadcrumbs must include quest.title",
+        )
     }
 
     @Test
@@ -275,53 +282,53 @@ class DefaultQuestListComponentTest {
     // ── QL-U-06 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: QL-U-06 — onQuestClick breadcrumb titles include quest.title as last element.
-     * Component was created with titles=["Math"]; click appends quest.title.
+     * Spec: QL-U-06 — onQuestClick breadcrumbs include quest.title as last element.
+     * Component was created with a dynamic "Math" crumb; click appends quest.title.
      */
     @Test
-    fun `onQuestClick breadcrumb titles include quest title as last element`() = runTest(testScheduler) {
-        val component = buildComponent(titles = listOf("Math"))
+    fun `onQuestClick breadcrumbs include quest title as last element`() = runTest(testScheduler) {
+        val component = buildComponent(breadcrumbs = dynamicCrumbs("Math"))
         val quest = questDisplayItemFixture(title = "Quest B")
 
         component.onQuestClick(quest)
 
         val pushed = fakeNavigation.pushedConfigs.last() as QuizzesConfig.SectionList
-        assertEquals("Quest B", pushed.titles.last())
+        assertEquals(BreadcrumbRoot.Dynamic("Quest B"), pushed.breadcrumbs.last())
     }
 
     // ── QL-U-07 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: QL-U-07 — breadcrumb titles[0] in pushed SectionList config equals original catalogName.
-     * titles[0] must be the catalog name passed at component creation time.
+     * Spec: QL-U-07 — breadcrumbs[1] in pushed SectionList config equals original catalogName.
+     * The dynamic catalog crumb must be the one passed at component creation time.
      */
     @Test
-    fun `onQuestClick breadcrumb titles index 0 equals original catalogName`() = runTest(testScheduler) {
-        val component = buildComponent(titles = listOf("Mathematics"))
+    fun `onQuestClick breadcrumbs keep original catalogName`() = runTest(testScheduler) {
+        val component = buildComponent(breadcrumbs = dynamicCrumbs("Catalogs", "Mathematics"))
 
         component.onQuestClick(questDisplayItemFixture())
 
         val pushed = fakeNavigation.pushedConfigs.last() as QuizzesConfig.SectionList
-        assertEquals("Mathematics", pushed.titles[0])
+        assertEquals(BreadcrumbRoot.Dynamic("Mathematics"), pushed.breadcrumbs[1])
     }
 
     // ── QL-U-10 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: QL-U-10 — ADR-QS-10 frozen titles. Repository renaming a quest does NOT change
-     * component.titles which was frozen at component creation time.
+     * Spec: QL-U-10 — ADR-QS-10 frozen breadcrumbs. Repository renaming a quest does NOT change
+     * component.breadcrumbs which were frozen at component creation time.
      */
     @Test
-    fun `titles in QuestList config unchanged after repository emits renamed quest`() = runTest(testScheduler) {
-        val component = buildComponent(titles = listOf("Original Name"))
+    fun `breadcrumbs in QuestList config unchanged after repository emits renamed quest`() = runTest(testScheduler) {
+        val component = buildComponent(breadcrumbs = dynamicCrumbs("Original Name"))
 
         fakeRepo.emit(listOf(questFixture(title = "Renamed Quest")))
         advanceUntilIdle()
 
         assertEquals(
-            listOf("Original Name"),
-            component.titles,
-            "titles must remain frozen at component creation time",
+            dynamicCrumbs("Original Name"),
+            component.breadcrumbs,
+            "breadcrumbs must remain frozen at component creation time",
         )
     }
 
@@ -395,7 +402,7 @@ class DefaultQuestListComponentTest {
         val lessonId = seedHierarchyForQuest("q-course")
         val component = buildComponent(
             catalogId = "courses",
-            titles = listOf("Архив", "Курсы"),
+            breadcrumbs = listOf(BreadcrumbRoot.Archive, BreadcrumbRoot.Courses),
             shelf = "archive",
             mode = QuestListMode.Archive,
         )
@@ -424,7 +431,7 @@ class DefaultQuestListComponentTest {
         seedHierarchyForQuest("q-course")
         val component = buildComponent(
             catalogId = "courses",
-            titles = listOf("Архив", "Курсы"),
+            breadcrumbs = listOf(BreadcrumbRoot.Archive, BreadcrumbRoot.Courses),
             shelf = "archive",
             mode = QuestListMode.Archive,
         )
@@ -457,7 +464,7 @@ class DefaultQuestListComponentTest {
         seedHierarchyForQuest("q-course")
         val component = buildComponent(
             catalogId = "courses",
-            titles = listOf("Архив", "Курсы"),
+            breadcrumbs = listOf(BreadcrumbRoot.Archive, BreadcrumbRoot.Courses),
             shelf = "archive",
             mode = QuestListMode.Archive,
         )
@@ -487,7 +494,7 @@ class DefaultQuestListComponentTest {
     fun `course archive quests are sorted by quest rating descending`() = runTest(testScheduler) {
         val component = buildComponent(
             catalogId = "courses",
-            titles = listOf("Архив", "Курсы"),
+            breadcrumbs = listOf(BreadcrumbRoot.Archive, BreadcrumbRoot.Courses),
             shelf = "archive",
             mode = QuestListMode.Archive,
         )
@@ -549,7 +556,7 @@ class DefaultQuestListComponentTest {
     fun `arena quests are sorted by quest rating descending`() = runTest(testScheduler) {
         val component = buildComponent(
             catalogId = "courses",
-            titles = listOf("Арена", "Курсы"),
+            breadcrumbs = listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses),
             shelf = "arena",
             mode = QuestListMode.Arena,
         )
@@ -607,7 +614,7 @@ class DefaultQuestListComponentTest {
     fun `arena random quest click opens a local arena quest`() = runTest(testScheduler) {
         val component = buildComponent(
             catalogId = "courses",
-            titles = listOf("Арена", "Курсы"),
+            breadcrumbs = listOf(BreadcrumbRoot.Arena, BreadcrumbRoot.Courses),
             shelf = "arena",
             mode = QuestListMode.Arena,
         )

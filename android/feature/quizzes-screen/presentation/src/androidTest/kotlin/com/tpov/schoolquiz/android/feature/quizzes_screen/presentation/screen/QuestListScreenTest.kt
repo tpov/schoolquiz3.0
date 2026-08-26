@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -121,14 +122,14 @@ class QuestListScreenTest {
     }
 
     // QLS-UI-05
-    // GIVEN fake component with titles=["Math"]
+    // GIVEN fake component with a dynamic "Math" breadcrumb
     // WHEN screen rendered
     // THEN "Math" is visible in BreadcrumbBar area
     @Test
-    fun qlsUi05_breadcrumbRendersComponentTitles() {
+    fun qlsUi05_breadcrumbRendersComponentBreadcrumbs() {
         val fake = FakeQuestListComponent(
             initialState = QuestListUiState.Loading,
-            titles = listOf("Math"),
+            breadcrumbs = listOf(BreadcrumbRoot.Dynamic("Math")),
         )
 
         composeTestRule.setContent {
