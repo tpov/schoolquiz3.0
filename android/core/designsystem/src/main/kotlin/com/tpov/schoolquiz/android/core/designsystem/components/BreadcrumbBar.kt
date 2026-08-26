@@ -19,6 +19,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.currentSchoolQuizDesignStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 
 /**
  * Horizontal breadcrumb navigation bar. Displays a path of titles separated by "›".
@@ -67,9 +71,10 @@ fun BreadcrumbBar(
 
             if (index > 0) {
                 Text(
-                    text = " › ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "›",
+                    style = NoirType.kicker,
+                    color = NoirTOff,
+                    modifier = Modifier.padding(horizontal = 6.dp),
                 )
             }
 
@@ -78,14 +83,14 @@ fun BreadcrumbBar(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style =
-                    MaterialTheme.typography.bodyMedium.copy(
+                    NoirType.kicker.copy(
                         fontWeight = if (isLast) FontWeight.Bold else FontWeight.Normal,
                     ),
                 color =
                     if (isLast) {
-                        MaterialTheme.colorScheme.onSurface
+                        NoirT1
                     } else {
-                        MaterialTheme.colorScheme.primary
+                        LocalNoirAccent.current
                     },
                 modifier = if (isLast) Modifier else Modifier.clickable { onSegmentClick(index) },
             )

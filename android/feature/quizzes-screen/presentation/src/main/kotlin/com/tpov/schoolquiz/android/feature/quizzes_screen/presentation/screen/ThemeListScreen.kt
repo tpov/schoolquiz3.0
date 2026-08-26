@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +25,8 @@ import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ThemeListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
@@ -54,7 +55,10 @@ fun ThemeListScreen(
         when (val state = uiState) {
             is HierarchyListUiState.Loading ->
                 Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = LocalNoirAccent.current,
+                    )
                 }
             is HierarchyListUiState.Empty ->
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -68,7 +72,7 @@ fun ThemeListScreen(
                                 },
                             ),
                         modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = NoirType.groupTitle,
                     )
                 }
             is HierarchyListUiState.Loaded ->

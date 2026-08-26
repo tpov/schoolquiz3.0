@@ -41,8 +41,11 @@ val appShellPresentationModule =
                 myQuestsFactory = { compCtx, nav, onQuestDrillDown ->
                     koin.get(MyQuestsComponent::class, parameters = { parametersOf(compCtx, nav, onQuestDrillDown) })
                 },
-                homeQuestsFactory = { compCtx, onCatalogDrillDown ->
-                    koin.get(HomeQuestsComponent::class, parameters = { parametersOf(compCtx, onCatalogDrillDown) })
+                homeQuestsFactory = { compCtx, onCatalogDrillDown, onResumeLesson ->
+                    koin.get(
+                        HomeQuestsComponent::class,
+                        parameters = { parametersOf(compCtx, onCatalogDrillDown, onResumeLesson) },
+                    )
                 },
                 questCreateFactory = { compCtx, nav ->
                     runCatching<QuestCreateComponent> {

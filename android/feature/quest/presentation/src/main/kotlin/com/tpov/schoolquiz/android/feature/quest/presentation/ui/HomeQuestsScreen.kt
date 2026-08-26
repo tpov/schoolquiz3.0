@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -55,17 +57,23 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.components.CatalogGrid
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBgDeep
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.quest.presentation.ContinueLessonUi
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeGiftBoxFailure
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeGiftBoxOpeningState
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
+import com.tpov.schoolquiz.android.feature.quest.presentation.LessonSegmentUi
 import com.tpov.schoolquiz.android.feature.quest.presentation.R
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
@@ -90,6 +98,7 @@ fun HomeQuestsScreen(
     HomeQuestsContent(
         state = state,
         onCatalogClick = component::onCatalogClick,
+        onContinueClick = component::onContinueClick,
         onGiftBoxFabClick = component::onGiftBoxFabClick,
         onGiftBoxDismiss = component::onGiftBoxDismiss,
         canManagePublicShelves = canManagePublicShelves,
@@ -102,6 +111,7 @@ fun HomeQuestsScreen(
 private fun HomeQuestsContent(
     state: HomeQuestsUiState,
     onCatalogClick: (CatalogId, String) -> Unit,
+    onContinueClick: () -> Unit,
     onGiftBoxFabClick: () -> Unit,
     onGiftBoxDismiss: () -> Unit,
     canManagePublicShelves: Boolean,
@@ -117,6 +127,19 @@ private fun HomeQuestsContent(
                     items = state.catalogs,
                     onCatalogClick = onCatalogClick,
                     modifier = Modifier.fillMaxSize(),
+                    header =
+                        state.continueLesson?.let { lesson ->
+                            {
+                                ContinueLessonCard(
+                                    lesson = lesson,
+                                    onClick = onContinueClick,
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 4.dp, bottom = 4.dp),
+                                )
+                            }
+                        },
                 )
         }
 
@@ -149,6 +172,96 @@ private fun HomeQuestsContent(
         }
     }
 }
+
+/**
+ * The lesson the player was last mid-way through, on a glass plate above the catalogs.
+ *
+ * The card is one tap target, exactly like the canvas: kicker, counter, chevron, title, path and
+ * segment progress are all inside the clickable surface.
+ */
+@Composable
+private fun ContinueLessonCard(
+    lesson: ContinueLessonUi,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalNoirAccent.current
+    NoirGlassCard(modifier = modifier.clickable(onClick = onClick)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.quest_continue).uppercase(),
+                    style = NoirType.kicker.copy(color = accent),
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text =
+                        stringResource(
+                            R.string.quest_continue_progress,
+                            lesson.completedCount,
+                            lesson.lessonSegments.size,
+                        ),
+                    style = NoirType.num.copy(fontSize = 10.5.sp, color = NoirTOff),
+                )
+                Icon(
+                    imageVector = NoirIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Text(
+                text = lesson.title,
+                style = NoirType.question.copy(fontSize = 18.sp, lineHeight = 22.sp),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (lesson.path.isNotBlank()) {
+                Text(
+                    text = lesson.path,
+                    style = NoirType.rowSub.copy(color = NoirTOff),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            SectionLessonSegments(segments = lesson.lessonSegments)
+        }
+    }
+}
+
+/** How many of the section's lessons are already done — the counter beside the kicker. */
+private val ContinueLessonUi.completedCount: Int
+    get() = lessonSegments.count { it.completed }
+
+/**
+ * Segment strip for the continue card: one slot per lesson of the section, in teaching order.
+ *
+ * Filled means the lesson is done, the faint one marks the lesson being continued, and the dark
+ * slots are still ahead — the same language the runner uses for questions.
+ */
+@Composable
+private fun SectionLessonSegments(segments: List<LessonSegmentUi>) {
+    val accent = LocalNoirAccent.current
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        segments.forEach { segment ->
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(
+                        when {
+                            segment.completed -> accent
+                            segment.isCurrent -> accent.copy(alpha = 0.55f)
+                            else -> NoirContinueSegmentOff
+                        },
+                    ),
+            )
+        }
+    }
+}
+
+private val NoirContinueSegmentOff = Color(0xFF2E2E36)
 
 @Composable
 private fun LoadingContent(modifier: Modifier = Modifier) {

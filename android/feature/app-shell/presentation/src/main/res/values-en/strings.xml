@@ -44,6 +44,7 @@
 
     <!-- Shell -->
     <string name="cd_open_menu">Open menu</string>
+    <string name="cd_sync_now">Sync now</string>
     <string name="snackbar_dev_mode_on">Developer mode enabled</string>
     <string name="snackbar_dev_mode_already">Already in developer mode</string>
     <string name="snackbar_sync_started">Sync started</string>

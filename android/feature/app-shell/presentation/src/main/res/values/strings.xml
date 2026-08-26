@@ -47,6 +47,7 @@
 
     <!-- Shell -->
     <string name="cd_open_menu">Открыть меню</string>
+    <string name="cd_sync_now">Синхронизировать</string>
     <string name="snackbar_dev_mode_on">Режим разработчика включён</string>
     <string name="snackbar_dev_mode_already">Уже в режиме разработчика</string>
     <string name="snackbar_sync_started">Синхронизация запущена</string>

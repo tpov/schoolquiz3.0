@@ -25,6 +25,10 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepos
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestAuthoringRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeThemeRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSectionRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.DefaultQuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
@@ -224,13 +228,20 @@ class QuizzesRootIntegrationTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = fakeRepo,
         syncScheduler = FakeSyncScheduler(),
-        homeQuestsFactory = { ctx, onCatalogDrillDown ->
+        homeQuestsFactory = { ctx, onCatalogDrillDown, _ ->
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
                 observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
                 observeProfile = ObserveCurrentProfileUseCase(OfflineProfileRepository()),
                 openGiftBoxUseCase = OpenGiftBoxUseCase(NoGiftBoxRepository),
                 onCatalogDrillDown = onCatalogDrillDown,
+                onResumeLesson = {},
+                attemptRepository = FakeLessonAttemptRepository(),
+                lessonRepository = FakeLessonRepository(),
+                themeRepository = FakeThemeRepository(),
+                sectionRepository = FakeSectionRepository(),
+                questRepository = FakeQuestRepository(),
+                authRepository = FakeAuthRepository(),
                 mainContext = testDispatcher,
             )
         },
@@ -263,7 +274,7 @@ class QuizzesRootIntegrationTest {
         retapUseCase = OnTabRetapUseCase(),
         userStatsRepository = FakeUserStatsRepository(),
         syncScheduler = FakeSyncScheduler(),
-        homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+        homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
         quizzesFactory = { ctx ->
             val questRepository =

@@ -87,7 +87,7 @@ class DevModeActivationIntegrationTest {
         userStatsRepository = fakeRepo,
         syncScheduler = FakeSyncScheduler(),
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
-        homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+        homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
     )
 

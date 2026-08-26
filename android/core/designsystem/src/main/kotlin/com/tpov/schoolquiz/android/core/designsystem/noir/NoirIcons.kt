@@ -111,6 +111,18 @@ object NoirIcons {
             lineTo(12f, 19f)
         }
 
+    /** Fetch to device — an arrow dropping into a tray. */
+    val Download: ImageVector =
+        stroke {
+            moveTo(12f, 3f)
+            lineTo(12f, 15f)
+            moveTo(7f, 10f)
+            lineTo(12f, 15f)
+            lineTo(17f, 10f)
+            moveTo(4f, 19f)
+            lineTo(20f, 19f)
+        }
+
     val Users: ImageVector =
         stroke {
             circle(9f, 9f, 3f)

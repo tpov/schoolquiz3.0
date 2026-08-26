@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,9 +24,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignCard
-import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
-import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 
 private const val MIN_PERCENT_VALUE = 0
@@ -180,11 +182,7 @@ private fun TournamentHeaderCard(
     subtitle: String,
     detail: String,
 ) {
-    SchoolQuizDesignCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = schoolQuizDesignDeepSurfaceColor(),
-        borderColor = schoolQuizDesignLightBorderColor(),
-    ) {
+    NoirGroup {
         Row(
             modifier = Modifier.padding(18.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -193,24 +191,24 @@ private fun TournamentHeaderCard(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = LocalNoirAccent.current,
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    style = NoirType.groupTitle,
+                    color = NoirT1,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.76f),
+                    style = NoirType.rowSub,
+                    color = NoirT2,
                 )
                 Text(
                     text = detail,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
+                    style = NoirType.kicker,
+                    color = NoirT3,
                 )
             }
         }
@@ -220,22 +218,18 @@ private fun TournamentHeaderCard(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun TournamentLoadingCard() {
-    SchoolQuizDesignCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = schoolQuizDesignDeepSurfaceColor(),
-        borderColor = schoolQuizDesignLightBorderColor(),
-    ) {
+    NoirGroup {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
                 text = stringResource(R.string.tournament_loading),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onBackground,
+                style = NoirType.rowTitle,
+                color = NoirT1,
                 fontWeight = FontWeight.SemiBold,
             )
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = LocalNoirAccent.current)
         }
     }
 }
@@ -247,30 +241,26 @@ private fun TournamentMetricCard(
     value: String,
     subtitle: String,
 ) {
-    SchoolQuizDesignCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = schoolQuizDesignDeepSurfaceColor(),
-        borderColor = schoolQuizDesignLightBorderColor(),
-    ) {
+    NoirGroup {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f),
+                style = NoirType.kicker,
+                color = NoirT3,
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+                style = NoirType.rowTitle,
+                color = NoirT1,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
+                style = NoirType.kicker,
+                color = NoirT3,
             )
         }
     }
@@ -282,11 +272,7 @@ private fun TournamentEmptyCard(
     title: String,
     subtitle: String,
 ) {
-    SchoolQuizDesignCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = schoolQuizDesignDeepSurfaceColor(),
-        borderColor = schoolQuizDesignLightBorderColor(),
-    ) {
+    NoirGroup {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -294,18 +280,18 @@ private fun TournamentEmptyCard(
             Icon(
                 imageVector = Icons.Default.Timeline,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = LocalNoirAccent.current,
             )
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+                style = NoirType.rowTitle,
+                color = NoirT1,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f),
+                style = NoirType.rowSub,
+                color = NoirT3,
             )
         }
     }
@@ -317,11 +303,7 @@ private fun TournamentStandingRow(
     rank: Int,
     standing: TournamentStandingUi,
 ) {
-    SchoolQuizDesignCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = schoolQuizDesignDeepSurfaceColor(),
-        borderColor = schoolQuizDesignLightBorderColor(),
-    ) {
+    NoirGroup {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -333,18 +315,19 @@ private fun TournamentStandingRow(
             ) {
                 Text(
                     text = "$rank. ${standing.nickname}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    style = NoirType.rowTitle,
+                    color = NoirT1,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
                     text = "${standing.percent}%",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = NoirType.rowTitle,
+                    color = LocalNoirAccent.current,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
             LinearProgressIndicator(
+                color = LocalNoirAccent.current,
                 progress = {
                     standing.percent.coerceIn(MIN_PERCENT_VALUE, MAX_PERCENT_VALUE) / MAX_PERCENT_VALUE.toFloat()
                 },
@@ -352,8 +335,8 @@ private fun TournamentStandingRow(
             )
             Text(
                 text = stringResource(R.string.tournament_attempts_count, standing.attempts),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
+                style = NoirType.kicker,
+                color = NoirT3,
             )
         }
     }
@@ -362,11 +345,7 @@ private fun TournamentStandingRow(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun TournamentParticipantRow(participant: TournamentParticipantUi) {
-    SchoolQuizDesignCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = schoolQuizDesignDeepSurfaceColor(),
-        borderColor = schoolQuizDesignLightBorderColor(),
-    ) {
+    NoirGroup {
         Row(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -375,24 +354,24 @@ private fun TournamentParticipantRow(participant: TournamentParticipantUi) {
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = LocalNoirAccent.current,
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = participant.nickname,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    style = NoirType.rowTitle,
+                    color = NoirT1,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
                     text = participant.status,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
+                    style = NoirType.rowSub,
+                    color = NoirT2,
                 )
                 Text(
                     text = stringResource(R.string.tournament_attempts_count, participant.attempts),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
+                    style = NoirType.kicker,
+                    color = NoirT3,
                 )
             }
         }

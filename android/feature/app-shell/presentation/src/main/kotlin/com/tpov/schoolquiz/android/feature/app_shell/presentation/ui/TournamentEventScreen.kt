@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,29 +11,34 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignCard
-import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
-import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
+import androidx.compose.ui.unit.sp
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButtonStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 
 internal data class TournamentEventUi(
@@ -62,24 +69,20 @@ internal fun TournamentEventScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                SchoolQuizDesignCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    containerColor = schoolQuizDesignDeepSurfaceColor(),
-                    borderColor = schoolQuizDesignLightBorderColor(),
-                ) {
+                NoirGroup {
                     Column(
                         modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(
                             text = model.title,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            style = NoirType.appbar.copy(fontSize = 20.sp),
+                            color = NoirT1,
                         )
                         Text(
                             text = model.stageLabel,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
+                            style = NoirType.rowSub,
+                            color = NoirT3,
                         )
                         Spacer(Modifier.height(4.dp))
                         TournamentActionButton(
@@ -108,13 +111,22 @@ internal fun TournamentEventScreen(
             }
         }
         if (actions.canManagePublicShelves) {
-            FloatingActionButton(
-                onClick = actions.onAddLessonsClick,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(18.dp),
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(18.dp)
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(LocalNoirAccent.current)
+                        .clickable(onClick = actions.onAddLessonsClick),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.cd_add_lesson),
+                    tint = NoirInk,
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
@@ -136,16 +148,17 @@ private fun TournamentActionButton(
         Text(text)
     }
     if (primary) {
-        Button(
+        NoirButton(
+            text = text,
             onClick = onClick,
             modifier = modifier.fillMaxWidth(),
-            content = { content() },
         )
     } else {
-        OutlinedButton(
+        NoirButton(
+            text = text,
             onClick = onClick,
             modifier = modifier.fillMaxWidth(),
-            content = { content() },
+            style = NoirButtonStyle.Ghost,
         )
     }
 }

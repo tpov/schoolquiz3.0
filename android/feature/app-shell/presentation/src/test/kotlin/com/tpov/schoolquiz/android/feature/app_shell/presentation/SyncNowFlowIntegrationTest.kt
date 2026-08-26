@@ -78,7 +78,7 @@ class SyncNowFlowIntegrationTest {
         userStatsRepository = fakeRepo,
         syncScheduler = fakeSyncScheduler,
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
-        homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+        homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
     )
 

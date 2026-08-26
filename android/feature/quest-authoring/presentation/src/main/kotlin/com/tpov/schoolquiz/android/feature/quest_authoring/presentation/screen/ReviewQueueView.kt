@@ -41,6 +41,11 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentDetailUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentListItemUiState
@@ -98,10 +103,10 @@ fun ReviewQueueView(
             )
         }
         state.errorMessage?.let {
-            Text(text = it.resolveText(), color = MaterialTheme.colorScheme.error)
+            Text(text = it.resolveText(), color = NoirDanger)
         }
         state.successMessage?.let {
-            Text(text = it.resolveText(), color = MaterialTheme.colorScheme.primary)
+            Text(text = it.resolveText(), color = LocalNoirAccent.current)
         }
     }
 }
@@ -122,7 +127,7 @@ private fun ReviewQueueListHeader(
         Column {
             Text(
                 text = stringResource(R.string.qa_review_title),
-                style = MaterialTheme.typography.titleLarge,
+                style = NoirType.groupTitle,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
@@ -132,8 +137,8 @@ private fun ReviewQueueListHeader(
                         state.assignments.size,
                         state.assignments.size,
                     ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = NoirType.rowSub,
+                color = NoirT3,
             )
         }
         Column(horizontalAlignment = Alignment.End) {
@@ -174,7 +179,7 @@ private fun ReviewQueueList(
         state.assignments.isEmpty() ->
             Text(
                 text = stringResource(R.string.qa_review_empty),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = NoirT3,
                 modifier = modifier,
             )
         else ->
@@ -201,18 +206,18 @@ private fun ReviewAssignmentCard(
     Card(
         onClick = onClick,
         shape = MaterialTheme.shapes.small,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = NoirS1),
         modifier = Modifier.fillMaxWidth().testTag("review-assignment-${item.id}"),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = item.title, style = MaterialTheme.typography.titleMedium)
+            Text(text = item.title, style = NoirType.groupTitle)
             Text(
                 text = item.languages.label(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = NoirType.rowSub,
+                color = NoirT3,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 item.kinds.forEach { kind ->
@@ -248,8 +253,8 @@ private fun ReviewScores(item: ReviewAssignmentListItemUiState) {
     if (scores.isNotEmpty()) {
         Text(
             text = scores.joinToString(separator = " · "),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = NoirType.kicker,
+            color = NoirT3,
         )
     }
 }
@@ -276,11 +281,11 @@ private fun ReviewDetail(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.qa_cd_back))
             }
             Column {
-                Text(text = detail.title, style = MaterialTheme.typography.titleLarge)
+                Text(text = detail.title, style = NoirType.groupTitle)
                 Text(
                     text = detail.kind.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = NoirType.rowSub,
+                    color = NoirT3,
                 )
             }
         }
@@ -343,9 +348,9 @@ private fun ScorePicker(
                     contentDescription = null,
                     tint =
                         if (selectedScore != null && score <= selectedScore) {
-                            MaterialTheme.colorScheme.primary
+                            LocalNoirAccent.current
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            NoirT3
                         },
                 )
                 Text(score.toString())
@@ -368,9 +373,9 @@ private fun ReviewQuestionBlock(
     ) {
         Text(
             text = stringResource(R.string.qa_review_question_title, question.order + 1),
-            style = MaterialTheme.typography.titleMedium,
+            style = NoirType.groupTitle,
         )
-        Text(text = question.text, style = MaterialTheme.typography.bodyMedium)
+        Text(text = question.text, style = NoirType.rowSub)
         if (question.segments.isNotEmpty()) {
             question.segments.forEach { segment ->
                 ReviewSegmentRow(
@@ -396,10 +401,10 @@ private fun ReviewSegmentRow(
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = segment.labelText(),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = NoirType.kicker,
+            color = NoirT3,
         )
-        Text(text = segment.sourceText, style = MaterialTheme.typography.bodyMedium)
+        Text(text = segment.sourceText, style = NoirType.rowSub)
         if (kind == ReviewQueueKindUi.TRANSLATION) {
             OutlinedTextField(
                 value = segment.translatedText,
@@ -417,12 +422,12 @@ private fun ReviewSegmentRow(
                 }
             Text(
                 text = translatedText,
-                style = MaterialTheme.typography.bodyMedium,
+                style = NoirType.rowSub,
                 color =
                     if (segment.translatedText.isBlank()) {
-                        MaterialTheme.colorScheme.error
+                        NoirDanger
                     } else {
-                        MaterialTheme.colorScheme.primary
+                        LocalNoirAccent.current
                     },
             )
             Row(verticalAlignment = Alignment.CenterVertically) {

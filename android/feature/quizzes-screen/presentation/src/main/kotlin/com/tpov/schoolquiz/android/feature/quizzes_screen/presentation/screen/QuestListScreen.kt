@@ -48,6 +48,9 @@ import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyDownloadStatus
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
@@ -104,14 +107,17 @@ fun QuestListScreen(
         when (val state = uiState) {
             is QuestListUiState.Loading ->
                 Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = LocalNoirAccent.current,
+                    )
                 }
             is QuestListUiState.Empty ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     Text(
                         text = stringResource(R.string.quizzes_empty_quests),
                         modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = NoirType.groupTitle,
                     )
                 }
             is QuestListUiState.Loaded ->
@@ -205,7 +211,7 @@ private fun QuestListItem(
             orderLabel = orderLabel,
             rating = quest.averageRating,
             ratingCount = quest.averageRatingCount,
-            ratingTint = if (useArenaRatingStyle) MaterialTheme.colorScheme.secondary else null,
+            ratingTint = if (useArenaRatingStyle) NoirViolet else null,
             onClick = actions.onClick,
             onLongClick = actions.onLongClick,
             downloadStatus = quest.downloadStatus,

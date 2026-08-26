@@ -111,7 +111,7 @@ class DefaultRootComponentTest {
         userStatsRepository = fakeRepo,
         syncScheduler = syncScheduler,
         myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
-        homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+        homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
         quizzesFactory = { _ -> StubQuizzesComponent },
         // Keep the IO hop on the test scheduler. With the real Dispatchers.IO the scheduler goes
         // idle, runTest's virtual clock jumps ahead, and withTimeout fires before the background
@@ -196,7 +196,7 @@ class DefaultRootComponentTest {
             userStatsRepository = errorRepo,
             syncScheduler = FakeSyncScheduler(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
-            homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+            homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },
         )
 
@@ -434,7 +434,7 @@ class DefaultRootComponentTest {
             userStatsRepository = fakeRepo,
             syncScheduler = FakeSyncScheduler(),
             myQuestsFactory = { _, _, _ -> StubMyQuestsComponent },
-            homeQuestsFactory = { _, _ -> StubHomeQuestsComponent },
+            homeQuestsFactory = { _, _, _ -> StubHomeQuestsComponent },
             quizzesFactory = { _ -> StubQuizzesComponent },
         )
 

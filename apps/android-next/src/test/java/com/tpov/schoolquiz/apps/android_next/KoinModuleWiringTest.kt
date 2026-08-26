@@ -176,7 +176,7 @@ class KoinModuleWiringTest : KoinTest {
                 override fun enqueueManualSync() = Unit
 
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
-override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+                override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             }
         }
     }
@@ -468,12 +468,13 @@ override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
                 override fun enqueueManualSync() = Unit
 
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
-override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+                override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
-            homeQuestsFactory = { _, _ ->
+            homeQuestsFactory = { _, _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
                     override fun onCatalogClick(id: CatalogId, name: String) = Unit
+                    override fun onContinueClick() = Unit
                 }
             },
             myQuestsFactory = { _, _, _ ->
@@ -559,12 +560,13 @@ override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
                 override fun enqueueManualSync() = Unit
 
                 override fun applyFrequency(frequency: SyncFrequency) = Unit
-override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
+                override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
-            homeQuestsFactory = { _, _ ->
+            homeQuestsFactory = { _, _, _ ->
                 object : HomeQuestsComponent {
                     override val state = MutableStateFlow(HomeQuestsUiState())
                     override fun onCatalogClick(id: CatalogId, name: String) = Unit
+                    override fun onContinueClick() = Unit
                 }
             },
             myQuestsFactory = { _, _, _ ->

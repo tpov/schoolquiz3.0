@@ -56,6 +56,12 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignNeutralBorderColor
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.TemplatePart
@@ -205,7 +211,7 @@ private fun EditorTopPanel(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = schoolQuizDesignDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = NoirT1,
         border = BorderStroke(1.dp, schoolQuizDesignNeutralBorderColor()),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
@@ -227,7 +233,7 @@ private fun EditorTopPanel(
                 }
                 Text(
                     text = stringResource(R.string.qa_editor_question_number, state.displayQuestionNumber),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = NoirType.groupTitle,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
@@ -381,9 +387,9 @@ private fun RunnerLikeFrame(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = schoolQuizDesignCardShape(),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.24f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.52f)),
+        color = NoirS1.copy(alpha = 0.24f),
+        contentColor = NoirT1,
+        border = BorderStroke(1.dp, LocalNoirAccent.current.copy(alpha = 0.52f)),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {
@@ -398,14 +404,14 @@ private fun RunnerLikeFrame(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = NoirType.groupTitle,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = NoirType.kicker,
+                    color = LocalNoirAccent.current,
                 )
             }
             HorizontalDivider(color = schoolQuizDesignLightBorderColor())
@@ -430,8 +436,8 @@ private fun EditableQuestionCard(
         modifier = Modifier.fillMaxWidth(),
         shape = schoolQuizDesignCardShape(),
         color = schoolQuizDesignDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.86f)),
+        contentColor = NoirT1,
+        border = BorderStroke(1.dp, LocalNoirAccent.current.copy(alpha = 0.86f)),
         tonalElevation = 0.dp,
         shadowElevation = 2.dp,
     ) {
@@ -467,8 +473,8 @@ private fun FillBlankQuestionCard(
         modifier = Modifier.fillMaxWidth(),
         shape = schoolQuizDesignCardShape(),
         color = schoolQuizDesignDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.86f)),
+        contentColor = NoirT1,
+        border = BorderStroke(1.dp, LocalNoirAccent.current.copy(alpha = 0.86f)),
         tonalElevation = 0.dp,
         shadowElevation = 2.dp,
     ) {
@@ -508,8 +514,8 @@ private fun FillBlankTransformedPreview(state: QuestQuestionEditorUiState) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.52f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        color = NoirS1.copy(alpha = 0.52f),
+        contentColor = NoirT1,
         border = BorderStroke(1.dp, schoolQuizDesignLightBorderColor()),
     ) {
         FlowRow(
@@ -523,7 +529,7 @@ private fun FillBlankTransformedPreview(state: QuestQuestionEditorUiState) {
                     Surface(
                         shape = MaterialTheme.shapes.small,
                         color = frameColor.copy(alpha = 0.16f),
-                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        contentColor = NoirT1,
                         border =
                             BorderStroke(
                                 width = 1.5.dp,
@@ -532,19 +538,19 @@ private fun FillBlankTransformedPreview(state: QuestQuestionEditorUiState) {
                     ) {
                         Text(
                             text = segment.text,
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = NoirType.rowSub,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         )
                     }
                 } else {
                     Text(
                         text = segment.text,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = NoirType.rowSub,
                         color =
                             if (segment.isProtected) {
                                 ProtectedMarkerColor
                             } else {
-                                MaterialTheme.colorScheme.onSurface
+                                NoirT1
                             },
                         modifier = Modifier.padding(vertical = 6.dp),
                     )
@@ -614,17 +620,17 @@ private fun AnswerRow(
         shape = MaterialTheme.shapes.small,
         color =
             if (selected) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                LocalNoirAccent.current.copy(alpha = 0.16f)
             } else {
                 schoolQuizDesignDeepSurfaceColor()
             },
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = NoirT1,
         border =
             BorderStroke(
                 width = if (selected) 2.dp else 1.5.dp,
                 color =
                     if (selected) {
-                        MaterialTheme.colorScheme.primary
+                        LocalNoirAccent.current
                     } else {
                         schoolQuizDesignLightBorderColor()
                     },
@@ -698,8 +704,8 @@ private fun OrderedItemRow(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = schoolQuizDesignCardShape(),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.52f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        color = NoirS1.copy(alpha = 0.52f),
+        contentColor = NoirT1,
         border = BorderStroke(1.dp, schoolQuizDesignLightBorderColor()),
     ) {
         Row(
@@ -710,14 +716,14 @@ private fun OrderedItemRow(
             Surface(
                 modifier = Modifier.size(34.dp),
                 shape = schoolQuizDesignCardShape(),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
-                contentColor = MaterialTheme.colorScheme.primary,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.56f)),
+                color = LocalNoirAccent.current.copy(alpha = 0.14f),
+                contentColor = LocalNoirAccent.current,
+                border = BorderStroke(1.dp, LocalNoirAccent.current.copy(alpha = 0.56f)),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = (index + 1).toString(),
-                        style = MaterialTheme.typography.titleSmall,
+                        style = NoirType.rowTitle,
                     )
                 }
             }
@@ -801,8 +807,8 @@ private fun FillBlankAnswerSection(
     EditorPanel {
         Text(
             text = stringResource(R.string.qa_editor_correct_answers_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
+            style = NoirType.rowTitle,
+            color = LocalNoirAccent.current,
         )
         answers.forEachIndexed { index, answer ->
             FillBlankAnswerRow(
@@ -836,7 +842,7 @@ private fun FillBlankAnswerRow(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.small,
         color = schoolQuizDesignDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = NoirT1,
         border = BorderStroke(1.dp, schoolQuizDesignLightBorderColor()),
     ) {
         Column(
@@ -869,7 +875,7 @@ private fun FillBlankAnswerRow(
                 )
                 Text(
                     text = stringResource(R.string.qa_editor_do_not_translate),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = NoirType.rowSub,
                 )
             }
         }
@@ -888,8 +894,8 @@ private fun FillBlankDistractorSection(
     EditorPanel {
         Text(
             text = stringResource(R.string.qa_editor_distractors_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
+            style = NoirType.rowTitle,
+            color = LocalNoirAccent.current,
         )
         distractors.forEachIndexed { index, value ->
             Row(
@@ -929,7 +935,7 @@ private fun MarkerButton(
         modifier = modifier.heightIn(min = 48.dp),
         shape = MaterialTheme.shapes.small,
         color = color.copy(alpha = 0.14f),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = NoirT1,
         border = BorderStroke(1.5.dp, color),
         onClick = onClick,
     ) {
@@ -939,7 +945,7 @@ private fun MarkerButton(
         ) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyMedium,
+                style = NoirType.rowSub,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -981,12 +987,12 @@ private fun RemoveRowButton(
     ) {
         Text(
             text = "-",
-            style = MaterialTheme.typography.titleLarge,
+            style = NoirType.groupTitle,
             color =
                 if (enabled) {
-                    MaterialTheme.colorScheme.error
+                    NoirDanger
                 } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    NoirT3
                 },
         )
     }
@@ -1073,7 +1079,7 @@ private fun EditorBottomBar(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = schoolQuizDesignDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = NoirT1,
         border = BorderStroke(1.dp, schoolQuizDesignNeutralBorderColor()),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
@@ -1200,7 +1206,7 @@ private fun FeedbackLine(state: QuestQuestionEditorUiState) {
             Icon(
                 imageVector = Icons.Filled.CheckCircle,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = LocalNoirAccent.current,
                 modifier = Modifier.size(18.dp),
             )
         }
@@ -1208,11 +1214,11 @@ private fun FeedbackLine(state: QuestQuestionEditorUiState) {
             text = message,
             color =
                 if (isError) {
-                    MaterialTheme.colorScheme.error
+                    NoirDanger
                 } else {
-                    MaterialTheme.colorScheme.primary
+                    LocalNoirAccent.current
                 },
-            style = MaterialTheme.typography.bodyMedium,
+            style = NoirType.rowSub,
         )
     }
 }
@@ -1224,7 +1230,7 @@ private fun EditorPanel(content: @Composable () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = schoolQuizDesignCardShape(),
         color = schoolQuizDesignDeepSurfaceColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = NoirT1,
         border = BorderStroke(1.dp, schoolQuizDesignNeutralBorderColor()),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
@@ -1258,11 +1264,11 @@ private fun EditorTextField(
         shape = schoolQuizDesignCardShape(),
         colors =
             OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedTextColor = NoirT1,
+                unfocusedTextColor = NoirT1,
                 focusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
                 unfocusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedBorderColor = LocalNoirAccent.current,
                 unfocusedBorderColor = schoolQuizDesignLightBorderColor(),
                 disabledBorderColor = schoolQuizDesignNeutralBorderColor(),
             ),

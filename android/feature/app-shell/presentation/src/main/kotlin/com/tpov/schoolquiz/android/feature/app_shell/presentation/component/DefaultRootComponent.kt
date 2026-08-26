@@ -51,6 +51,7 @@ import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.OnTabRetapUs
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.model.TournamentOverview
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.repository.TournamentLeaderboardRepository
 import com.tpov.schoolquiz.shared.feature.internet.leaderboard.domain.use_case.FetchTournamentOverviewUseCase
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapProgress
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.model.TapResult
 import com.tpov.schoolquiz.shared.feature.qualification.domain.dev_mode.use_case.ActivateDevModeUseCase
@@ -125,7 +126,7 @@ class DefaultRootComponent(
     private val userStatsRepository: UserStatsRepository,
     private val syncScheduler: SyncScheduler,
     myQuestsFactory: (ComponentContext, Navigator, (QuestDisplayItem) -> Unit) -> MyQuestsComponent,
-    homeQuestsFactory: (ComponentContext, (CatalogId, String) -> Unit) -> HomeQuestsComponent,
+    homeQuestsFactory: (ComponentContext, (CatalogId, String) -> Unit, (LessonId) -> Unit) -> HomeQuestsComponent,
     questCreateFactory: (ComponentContext, Navigator) -> QuestCreateComponent = { _, nav ->
         PlaceholderQuestCreateComponent(nav)
     },
@@ -204,6 +205,7 @@ class DefaultRootComponent(
         homeQuestsFactory(
             childContext("HomeQuestsContent"),
             { catId: CatalogId, name: String -> quizzesComponent.openQuestList(catId, name) },
+            { lessonId: LessonId -> quizzesComponent.openLessonRunner(lessonId.value) },
         )
     val myQuestsComponent: MyQuestsComponent =
         myQuestsFactory(

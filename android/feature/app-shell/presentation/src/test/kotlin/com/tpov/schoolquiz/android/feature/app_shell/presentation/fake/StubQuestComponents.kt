@@ -30,6 +30,7 @@ object StubMyQuestsComponent : MyQuestsComponent {
 object StubHomeQuestsComponent : HomeQuestsComponent {
     override val state: StateFlow<HomeQuestsUiState> = MutableStateFlow(HomeQuestsUiState())
     override fun onCatalogClick(id: CatalogId, name: String) = Unit
+    override fun onContinueClick() = Unit
 }
 
 object StubQuizzesComponent : QuizzesComponent {

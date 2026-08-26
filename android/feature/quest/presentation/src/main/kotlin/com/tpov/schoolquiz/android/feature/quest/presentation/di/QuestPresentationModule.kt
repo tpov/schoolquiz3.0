@@ -8,6 +8,7 @@ import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponen
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.navigation.Navigator
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import org.koin.dsl.module
 
 val questPresentationModule =
@@ -24,13 +25,27 @@ val questPresentationModule =
                 onQuestDrillDown = onQuestDrillDown,
             )
         }
-        factory<HomeQuestsComponent> { (ctx: ComponentContext, onCatalogDrillDown: (CatalogId, String) -> Unit) ->
+        factory<HomeQuestsComponent> {
+                (
+                    ctx: ComponentContext, onCatalogDrillDown: (
+                        CatalogId,
+                        String,
+                    ) -> Unit, onResumeLesson: (LessonId) -> Unit,
+                ),
+            ->
             DefaultHomeQuestsComponent(
                 componentContext = ctx,
                 observeCatalogs = get(),
                 observeProfile = get(),
                 openGiftBoxUseCase = get(),
                 onCatalogDrillDown = onCatalogDrillDown,
+                onResumeLesson = onResumeLesson,
+                attemptRepository = get(),
+                lessonRepository = get(),
+                themeRepository = get(),
+                sectionRepository = get(),
+                questRepository = get(),
+                authRepository = get(),
             )
         }
     }

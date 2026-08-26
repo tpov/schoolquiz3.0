@@ -26,7 +26,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -51,6 +50,10 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
@@ -208,7 +211,7 @@ private fun QuestCreateContent(
             }
             Text(
                 text = stringResource(R.string.qa_create_title),
-                style = MaterialTheme.typography.titleLarge,
+                style = NoirType.groupTitle,
                 modifier =
                     Modifier
                         .weight(1f)
@@ -300,15 +303,15 @@ private fun QuestCreateContent(
         state.errorMessage?.let { message ->
             Text(
                 text = message.resolveText(),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
+                color = NoirDanger,
+                style = NoirType.rowSub,
             )
         }
         state.arenaMessage?.let { message ->
             Text(
                 text = message.resolveText(),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium,
+                color = LocalNoirAccent.current,
+                style = NoirType.rowSub,
             )
         }
 
@@ -503,14 +506,14 @@ private fun <T> StructureDropdown(
             shape = schoolQuizDesignCardShape(),
             colors =
                 OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedTextColor = NoirT1,
+                    unfocusedTextColor = NoirT1,
                     focusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
                     unfocusedContainerColor = schoolQuizDesignDeepSurfaceColor(),
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedBorderColor = LocalNoirAccent.current,
                     unfocusedBorderColor = schoolQuizDesignLightBorderColor(),
-                    focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
-                    unfocusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+                    focusedTrailingIconColor = LocalNoirAccent.current,
+                    unfocusedTrailingIconColor = LocalNoirAccent.current,
                 ),
             modifier =
                 Modifier

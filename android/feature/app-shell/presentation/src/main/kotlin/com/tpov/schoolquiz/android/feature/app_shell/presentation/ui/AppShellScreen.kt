@@ -251,6 +251,20 @@ fun AppShellScreen(
                                         )
                                     }
                                 },
+                            // The canvas hangs a refresh action on the home bar; everything else
+                            // keeps the sync in the drawer where it always lived.
+                            trailing =
+                                if (state.activeTab == Tab.LOCAL && !isImmersiveScreenActive) {
+                                    {
+                                        NoirIconButton(
+                                            icon = NoirIcons.Sync,
+                                            contentDescription = stringResource(R.string.cd_sync_now),
+                                            onClick = { rootComponent.onSyncNow() },
+                                        )
+                                    }
+                                } else {
+                                    {}
+                                },
                         )
                     }
                 },

@@ -11,7 +11,9 @@
     <string name="quest_cd_add_quest">Добавить квест</string>
 
     <!-- Gift box overlay -->
-    <string name="quest_cd_open_box">Открыть коробку</string>
+        <string name="quest_continue">Продолжить</string>
+    <string name="quest_continue_progress">%1$d / %2$d</string>
+<string name="quest_cd_open_box">Открыть коробку</string>
     <string name="quest_gift_box_title">Коробка</string>
     <string name="quest_close">Закрыть</string>
     <string name="quest_opening_in_progress">Открываем…</string>

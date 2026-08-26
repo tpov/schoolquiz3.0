@@ -8,6 +8,10 @@ android {
 
 dependencies {
     implementation(project(":shared:feature:quest:domain"))
+    implementation(project(":shared:feature:section:domain"))
+    implementation(project(":shared:feature:theme:domain"))
+    implementation(project(":shared:feature:lesson-runner:domain"))
+    implementation(project(":shared:feature:lesson:domain"))
     implementation(project(":shared:feature:quest-authoring:domain"))
     implementation(project(":shared:feature:economy:domain"))
     implementation(project(":shared:feature:internet:profile:domain"))

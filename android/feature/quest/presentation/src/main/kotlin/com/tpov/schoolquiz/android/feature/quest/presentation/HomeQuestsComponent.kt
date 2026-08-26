@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.quest.presentation
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -18,6 +19,9 @@ interface HomeQuestsComponent {
         id: CatalogId,
         name: String,
     )
+
+    /** Opens the runner for the lesson the continue card points at. */
+    fun onContinueClick()
 
     fun onGiftBoxFabClick() = Unit
 
@@ -35,6 +39,26 @@ data class HomeQuestsUiState(
     val giftBoxCount: Int = 0,
     val giftBoxStreakDays: Int = 0,
     val giftBoxOpening: HomeGiftBoxOpeningState? = null,
+    /** The lesson the player was last mid-way through, or null when there is nothing to resume. */
+    val continueLesson: ContinueLessonUi? = null,
+)
+
+/** What the continue card needs to draw: the lesson and the section it belongs to. */
+data class ContinueLessonUi(
+    val lessonId: LessonId,
+    val title: String,
+    /** Breadcrumb path — quest › section › theme — the way the quizzes screens name the way down. */
+    val path: String,
+    /** One segment per lesson of the section, in teaching order. */
+    val lessonSegments: List<LessonSegmentUi>,
+)
+
+/** A single slot on the continue card's strip: one lesson of the section. */
+data class LessonSegmentUi(
+    val lessonId: LessonId,
+    val title: String,
+    val completed: Boolean,
+    val isCurrent: Boolean,
 )
 
 sealed interface HomeGiftBoxOpeningState {

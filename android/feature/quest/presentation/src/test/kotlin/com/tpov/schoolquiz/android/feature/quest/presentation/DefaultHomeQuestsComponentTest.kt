@@ -8,7 +8,14 @@ import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.quest.presentation.DefaultHomeQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeAuthRepository
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeCatalogRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonAttemptRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeQuestRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeSectionRepository
+import com.tpov.schoolquiz.android.feature.quest.presentation.fake.FakeThemeRepository
+import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.android.feature.quest.presentation.fake.buildCatalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
@@ -76,12 +83,20 @@ class DefaultHomeQuestsComponentTest {
         profileRepo: FakeProfileRepository = FakeProfileRepository(),
         giftBoxRepo: FakeGiftBoxRepository = FakeGiftBoxRepository(),
         onCatalogDrillDown: (CatalogId, String) -> Unit = { _, _ -> },
+        onResumeLesson: (LessonId) -> Unit = {},
     ) = DefaultHomeQuestsComponent(
         componentContext = testCtx(),
         observeCatalogs = ObserveCatalogsUseCase(catalogRepo),
         observeProfile = ObserveCurrentProfileUseCase(profileRepo),
         openGiftBoxUseCase = OpenGiftBoxUseCase(giftBoxRepo),
         onCatalogDrillDown = onCatalogDrillDown,
+        onResumeLesson = onResumeLesson,
+        attemptRepository = FakeLessonAttemptRepository(),
+        lessonRepository = FakeLessonRepository(),
+        themeRepository = FakeThemeRepository(),
+        sectionRepository = FakeSectionRepository(),
+        questRepository = FakeQuestRepository(),
+        authRepository = FakeAuthRepository(),
         mainContext = testDispatcher,
     )
 

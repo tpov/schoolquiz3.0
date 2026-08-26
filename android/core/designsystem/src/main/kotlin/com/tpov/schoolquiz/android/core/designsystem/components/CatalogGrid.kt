@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
@@ -57,6 +58,7 @@ fun CatalogGrid(
     items: List<CatalogDisplayItem>,
     onCatalogClick: (CatalogId, String) -> Unit,
     modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -65,6 +67,11 @@ fun CatalogGrid(
         horizontalArrangement = Arrangement.spacedBy(CATALOG_GAP),
         verticalArrangement = Arrangement.spacedBy(CATALOG_GAP),
     ) {
+        if (header != null) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                header()
+            }
+        }
         items(items, key = { it.id.value }) { item ->
             CatalogGridItem(
                 item = item,
