@@ -8,7 +8,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +31,9 @@ class LessonItemCardTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    private fun stringRes(res: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
 
     // CT-22
     // GIVEN LessonItemUi(averageRating=1.5, hardUnlocked=false)
@@ -89,6 +94,6 @@ class LessonItemCardTest {
                 LessonItemCard(item = item, onClick = {}, onHardCheckChanged = {})
             }
         }
-        composeTestRule.onNodeWithText("Легкий").assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringRes(R.string.quizzes_chip_easy)).assertIsDisplayed()
     }
 }

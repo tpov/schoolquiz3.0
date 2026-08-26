@@ -7,6 +7,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
@@ -120,7 +121,7 @@ class DefaultLessonListComponent(
         stats: Map<LessonId, LessonAttemptStats>,
         checkedSet: Set<String>,
     ): LessonListUiState {
-        if (lessons.isEmpty()) return LessonListUiState.Empty("Нет уроков")
+        if (lessons.isEmpty()) return LessonListUiState.Empty(HierarchyLevel.LESSONS)
         val items =
             lessons.sortedBy { it.order }.map { lesson ->
                 val lessonStats = stats[lesson.id]

@@ -184,13 +184,13 @@ class DefaultHomeQuestsComponentTest {
         assertEquals("Mathematics", capturedName, "lambda must receive the name passed from UI")
     }
 
-    // ── HC-U-02 — blank name → catalogName fallback "Каталог" ─────────────────
+    // ── HC-U-02 — blank name is forwarded as-is ────────────────────────────────
     // Spec: docs/features/quizzes-screen/plan/phase-07/tests.md HC-U-02
     // GIVEN onCatalogClick with blank name
-    // THEN lambda invoked; capturedName == "Каталог" (non-blank fallback prevents empty breadcrumb)
+    // THEN lambda invoked; capturedName == "" (screen resolves blank to localized fallback)
 
     @Test
-    fun `when onCatalogClick called with blank name then catalogName is fallback`() = runTest {
+    fun `when onCatalogClick called with blank name then catalogName is forwarded unchanged`() = runTest {
         var capturedId: CatalogId? = null
         var capturedName: String? = null
 
@@ -204,7 +204,7 @@ class DefaultHomeQuestsComponentTest {
         component.onCatalogClick(CatalogId("cat-1"), "")
 
         assertEquals(CatalogId("cat-1"), capturedId, "lambda must receive the clicked id even if name is blank")
-        assertEquals("Каталог", capturedName, "fallback name must be non-blank to prevent empty breadcrumb segment")
+        assertEquals("", capturedName, "blank name must be forwarded; the screen resolves the fallback label")
     }
 
     // ── HC-U-03 — lambda is only side-effect, no double invocation ────────────

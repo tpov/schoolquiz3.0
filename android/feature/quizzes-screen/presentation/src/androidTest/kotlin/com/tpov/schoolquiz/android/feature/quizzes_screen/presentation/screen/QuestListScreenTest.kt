@@ -7,8 +7,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -27,14 +29,15 @@ import kotlin.test.assertNotNull
  *              QLS-UI-04 (quest click), QLS-UI-05 (breadcrumb)
  *
  * Uses FakeQuestListComponent (MutableValue-backed) — no real DefaultQuestListComponent needed.
- * Open Question: androidTestImplementation(compose.ui.test.junit4) must be added to
- * android/feature/quizzes-screen/presentation/build.gradle.kts (scaffold change — backend-dev).
  */
 @RunWith(AndroidJUnit4::class)
 class QuestListScreenTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    private fun stringRes(res: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
 
     // QLS-UI-01
     // GIVEN fake component with state=Loading
@@ -80,7 +83,7 @@ class QuestListScreenTest {
     // QLS-UI-03
     // GIVEN fake component with state=Empty
     // WHEN screen rendered
-    // THEN "Нет квестов" placeholder visible; no LazyColumn crash with 0 items
+    // THEN localized empty-quests placeholder visible; no LazyColumn crash with 0 items
     @Test
     fun qlsUi03_emptyStateShowsPlaceholderText() {
         val fake = FakeQuestListComponent(initialState = QuestListUiState.Empty)
@@ -91,7 +94,7 @@ class QuestListScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Нет квестов").assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringRes(R.string.quizzes_empty_quests)).assertIsDisplayed()
     }
 
     // QLS-UI-04

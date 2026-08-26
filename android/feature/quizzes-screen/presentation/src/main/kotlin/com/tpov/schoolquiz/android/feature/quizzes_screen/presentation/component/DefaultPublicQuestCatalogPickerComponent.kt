@@ -63,7 +63,8 @@ class DefaultPublicQuestCatalogPickerComponent(
         navigation.pushNew(
             QuizzesConfig.QuestList(
                 catalogId = id.value,
-                titles = titles + (name.takeIf { it.isNotBlank() } ?: "Каталог"),
+                // Blank names are forwarded as-is; the screen resolves them to a localized fallback.
+                titles = titles + name,
                 shelf = if (selectionTargetShelf == null) config.targetShelf else ARENA_SHELF,
                 mode = QuestListMode.Arena,
                 selectionTargetShelf = selectionTargetShelf,

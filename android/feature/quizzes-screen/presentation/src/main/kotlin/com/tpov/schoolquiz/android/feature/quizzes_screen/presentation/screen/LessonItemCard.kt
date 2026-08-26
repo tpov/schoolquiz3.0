@@ -10,17 +10,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChipTone
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
-import java.util.Locale
 
 /**
  * One lesson: its number, its title, the mode it will be played in, and how it was rated.
@@ -60,8 +62,11 @@ fun LessonItemCard(
         )
         if (item.hardUnlocked) {
             NoirChip(
-                text = if (item.isHardChecked) "Hard" else "Easy",
-                tone = if (item.isHardChecked) NoirChipTone.Danger else NoirChipTone.Accent,
+                text =
+                    stringResource(
+                        if (item.isHardChecked) R.string.quizzes_chip_hard else R.string.quizzes_chip_easy,
+                    ),
+                tone = if (item.isHardChecked) NoirChipTone.Danger else NoirChipTone.Ok,
                 modifier = Modifier.clickable { onHardCheckChanged(!item.isHardChecked) },
             )
         }
@@ -79,14 +84,11 @@ fun LessonItemCard(
 @Composable
 private fun LessonRating(item: LessonItemUi) {
     if (item.averageRating == null) {
-        Text("no ratings", style = NoirType.kicker)
+        Text(stringResource(R.string.quizzes_rating_none), style = NoirType.kicker)
         return
     }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = String.format(Locale.US, "%.1f", item.averageRating),
-            style = NoirType.num.copy(color = NoirGold),
-        )
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        StarRating(rating = item.averageRating, tint = NoirGold, size = 13.dp)
         if (item.ratingCount > 0) {
             Text("(${item.ratingCount})", style = NoirType.kicker)
         }

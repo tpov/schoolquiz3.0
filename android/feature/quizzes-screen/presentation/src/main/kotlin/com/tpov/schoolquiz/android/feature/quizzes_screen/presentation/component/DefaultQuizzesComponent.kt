@@ -5,6 +5,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.popTo
 import com.arkivanov.decompose.router.stack.popToFirst
@@ -261,6 +262,13 @@ class DefaultQuizzesComponent(
 
     override fun popCurrentChild() {
         navigation.pop()
+    }
+
+    override fun openLessonRunner(lessonId: String) {
+        val active = childStack.value.active
+        val config = active.configuration as? QuizzesConfig.LessonRunner ?: return
+        // Replace, not push: the finished attempt has nowhere to go back to.
+        navigation.navigate { stack -> stack.dropLast(1) + config.copy(lessonId = lessonId) }
     }
 
     override fun dismissQuizzes() {

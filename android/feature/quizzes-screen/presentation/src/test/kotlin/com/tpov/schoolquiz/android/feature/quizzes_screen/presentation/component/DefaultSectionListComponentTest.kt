@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Qu
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.section.domain.model.Section
@@ -139,16 +140,17 @@ class DefaultSectionListComponentTest {
     // ── SL-U-03 ──────────────────────────────────────────────────────────────
 
     /**
-     * Spec: SL-U-03 — empty list → Empty state; Empty.levelLabel is non-empty string.
+     * Spec: SL-U-03 — empty list → Empty state carrying the SECTIONS level;
+     * the screen resolves the level to localized copy.
      */
     @Test
-    fun `empty list produces Empty state with non-empty levelLabel`() = runTest(testScheduler) {
+    fun `empty list produces Empty state with sections level`() = runTest(testScheduler) {
         val component = buildComponent()
         fakeRepo.emit(emptyList())
         advanceUntilIdle()
         val state = component.uiState.value
         assertIs<HierarchyListUiState.Empty>(state)
-        assertTrue(state.levelLabel.isNotEmpty(), "Empty.levelLabel must be non-empty")
+        assertEquals(HierarchyLevel.SECTIONS, state.level, "Empty must carry the sections level")
     }
 
     // ── SL-U-04 ──────────────────────────────────────────────────────────────

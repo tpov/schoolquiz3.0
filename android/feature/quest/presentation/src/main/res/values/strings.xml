@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Quest feature strings. Default locale: Russian (the product's primary language);
+    English lives in values-en/strings.xml.
+-->
+<resources>
+    <!-- Home quests screen -->
+    <string name="quest_empty_catalogs_title">Нет каталогов</string>
+    <string name="quest_empty_catalogs_hint">Ничего не сохранено на устройстве. Загрузите из меню.</string>
+    <string name="quest_sync">Синхронизировать →</string>
+    <string name="quest_cd_add_quest">Добавить квест</string>
+
+    <!-- Gift box overlay -->
+    <string name="quest_cd_open_box">Открыть коробку</string>
+    <string name="quest_gift_box_title">Коробка</string>
+    <string name="quest_close">Закрыть</string>
+    <string name="quest_opening_in_progress">Открываем…</string>
+    <string name="quest_boxes_left">Осталось коробок: %1$d</string>
+    <string name="quest_profile_sync_note">Профиль обновится после следующей синхронизации</string>
+    <string name="quest_request_sent">Запрос к серверу уже отправлен</string>
+    <string name="quest_claim_reward">Забрать</string>
+    <string name="quest_subtitle_shake">Трясём коробку и ждём награду</string>
+    <string name="quest_subtitle_reward_credited">Награда начислена в профиль</string>
+    <string name="quest_subtitle_failed">Открытие не удалось</string>
+    <string name="quest_reward_nolics">%1$d ноликов</string>
+    <string name="quest_reward_gold">%1$d золота</string>
+    <string name="quest_reward_premium_days">%1$d дн. премиума</string>
+    <string name="quest_reward_logo">Логотип: %1$s</string>
+    <string name="quest_reward_trophies">%1$d трофеев</string>
+    <string name="quest_error_no_boxes">Нет доступных коробок</string>
+    <string name="quest_error_box_generic">Не удалось открыть коробку</string>
+
+    <!-- My quests screen -->
+    <string name="quest_empty_quests_title">Нет квестов</string>
+    <string name="quest_empty_quests_hint">Нажмите + чтобы создать первый квест</string>
+    <string name="quest_cd_create_quest">Создать квест</string>
+    <string name="quest_draft_label">Черновик</string>
+    <string name="quest_questions_count">Вопросов: %1$d</string>
+</resources>

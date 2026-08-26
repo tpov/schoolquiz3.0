@@ -49,7 +49,19 @@ sealed interface HomeGiftBoxOpeningState {
     ) : HomeGiftBoxOpeningState
 
     data class Failed(
-        val message: String,
+        val reason: HomeGiftBoxFailure,
         val remainingBoxCount: Int,
     ) : HomeGiftBoxOpeningState
+}
+
+/**
+ * Neutral failure data for the gift box overlay; the screen resolves it to localized copy.
+ */
+sealed interface HomeGiftBoxFailure {
+    data object NoBoxes : HomeGiftBoxFailure
+
+    /** Unexpected backend failure; [detail] is raw technical data, not curated copy. */
+    data class Unexpected(
+        val detail: String?,
+    ) : HomeGiftBoxFailure
 }

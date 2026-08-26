@@ -21,8 +21,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -55,6 +57,9 @@ class QuestCardMenuTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private fun stringRes(res: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
+
     private fun questItem(id: String = "q-a", title: String = "Квест А") = QuestDisplayItem(
         id = QuestId(id),
         catalogId = CatalogId("cat-1"),
@@ -66,7 +71,7 @@ class QuestCardMenuTest {
     // QC-UI-01
     // GIVEN QuestListScreen with one quest
     // WHEN user long-presses the quest card
-    // THEN DropdownMenu tagged "quest_menu" becomes visible with item "Поделиться"
+    // THEN DropdownMenu tagged "quest_menu" becomes visible with the share item
     @Test
     fun qcUi01_longPress_opens_dropdownMenu() {
         val questA = questItem()
@@ -84,13 +89,13 @@ class QuestCardMenuTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithTag("quest_menu").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Поделиться").assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringRes(R.string.quizzes_menu_share)).assertIsDisplayed()
     }
 
     // QC-UI-02
     // GIVEN DropdownMenu is open (QC-UI-01 precondition)
     // WHEN user taps outside the menu
-    // THEN "Поделиться" node no longer exists in composition
+    // THEN the share item node no longer exists in composition
     @Test
     fun qcUi02_tapOutside_closes_menu() {
         val questA = questItem()
@@ -111,13 +116,13 @@ class QuestCardMenuTest {
         composeTestRule.onNodeWithTag("quest_menu_dismiss_layer").performTouchInput { click() }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Поделиться").assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringRes(R.string.quizzes_menu_share)).assertDoesNotExist()
         composeTestRule.onNodeWithTag("quest_menu").assertDoesNotExist()
     }
 
     // QC-UI-03
     // GIVEN DropdownMenu is open
-    // WHEN user taps "Поделиться"
+    // WHEN user taps the share item
     // THEN menu dismisses first (expandedQuestId=null, text gone), then Intent.ACTION_CHOOSER fired
     //
     // Order invariant (ADR-QS-08): expandedQuestId = null BEFORE startActivity.
@@ -142,11 +147,11 @@ class QuestCardMenuTest {
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithTag("quest_menu").assertIsDisplayed()
 
-            composeTestRule.onNodeWithText("Поделиться").performClick()
+            composeTestRule.onNodeWithText(stringRes(R.string.quizzes_menu_share)).performClick()
             composeTestRule.waitForIdle()
 
             // Menu dismissed first (expandedQuestId = null was executed before startActivity)
-            composeTestRule.onNodeWithText("Поделиться").assertDoesNotExist()
+            composeTestRule.onNodeWithText(stringRes(R.string.quizzes_menu_share)).assertDoesNotExist()
             composeTestRule.onNodeWithTag("quest_menu").assertDoesNotExist()
 
             // Share intent dispatched: Intent.createChooser wraps ACTION_SEND in ACTION_CHOOSER
@@ -158,7 +163,7 @@ class QuestCardMenuTest {
 
     // QC-UI-04
     // GIVEN context.startActivity throws ActivityNotFoundException
-    // WHEN user taps "Поделиться"
+    // WHEN user taps the share item
     // THEN no crash; menu closes; test completes successfully
     @Test
     fun qcUi04_activityNotFoundException_handled_silently() {
@@ -184,11 +189,11 @@ class QuestCardMenuTest {
 
         composeTestRule.onNodeWithText("Квест А").performTouchInput { longClick() }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Поделиться").performClick()
+        composeTestRule.onNodeWithText(stringRes(R.string.quizzes_menu_share)).performClick()
         composeTestRule.waitForIdle()
 
         // No crash — test reaches this point; menu is dismissed
-        composeTestRule.onNodeWithText("Поделиться").assertDoesNotExist()
+        composeTestRule.onNodeWithText(stringRes(R.string.quizzes_menu_share)).assertDoesNotExist()
     }
 
     // QC-UI-05

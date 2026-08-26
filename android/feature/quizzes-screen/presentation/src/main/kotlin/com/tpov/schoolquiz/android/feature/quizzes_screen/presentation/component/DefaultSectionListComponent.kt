@@ -9,6 +9,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.mapper.toDrillItem
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
 import com.tpov.schoolquiz.shared.feature.quest.domain.model.QuestId
 import com.tpov.schoolquiz.shared.feature.section.domain.repository.SectionRepository
@@ -42,7 +43,7 @@ class DefaultSectionListComponent(
             sectionRepository.observeByQuest(questId)
                 .map { sections ->
                     if (sections.isEmpty()) {
-                        HierarchyListUiState.Empty("Нет секций")
+                        HierarchyListUiState.Empty(HierarchyLevel.SECTIONS)
                     } else {
                         HierarchyListUiState.Loaded(sections.sortedBy { it.order }.map { it.toDrillItem() })
                     }

@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
@@ -47,6 +48,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyDownloadStatus
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuestListMode
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.QuestListUiState
@@ -61,7 +63,7 @@ private const val PREVIEW_TRIGONOMETRY_RATING_COUNT = 7
 
 private data class PublicShelfAction(
     val shelf: String,
-    val label: String,
+    val labelRes: Int,
 )
 
 private data class QuestListItemActions(
@@ -75,10 +77,10 @@ private data class QuestListItemActions(
 
 private val publicShelfActions =
     listOf(
-        PublicShelfAction("home", "Показать в домашних"),
-        PublicShelfAction("arena", "Показать на арене"),
-        PublicShelfAction("tournament", "Показать в отборочном"),
-        PublicShelfAction("tournamentFinal", "Показать в чемпионате мира"),
+        PublicShelfAction("home", R.string.quizzes_shelf_show_home),
+        PublicShelfAction("arena", R.string.quizzes_shelf_show_arena),
+        PublicShelfAction("tournament", R.string.quizzes_shelf_show_qualification),
+        PublicShelfAction("tournamentFinal", R.string.quizzes_shelf_show_world),
     )
 
 @Composable
@@ -91,7 +93,7 @@ fun QuestListScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = component.titles,
+            titles = breadcrumbTitles(component.titles),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier
@@ -106,7 +108,7 @@ fun QuestListScreen(
             is QuestListUiState.Empty ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     Text(
-                        text = "Нет квестов",
+                        text = stringResource(R.string.quizzes_empty_quests),
                         modifier = Modifier.align(Alignment.Center),
                         style = MaterialTheme.typography.titleMedium,
                     )
@@ -214,13 +216,13 @@ private fun QuestListItem(
             modifier = Modifier.testTag("quest_menu"),
         ) {
             DropdownMenuItem(
-                text = { Text("Поделиться") },
+                text = { Text(stringResource(R.string.quizzes_menu_share)) },
                 onClick = actions.onShareClick,
             )
             if (canManagePublicShelves) {
                 publicShelfActions.forEach { action ->
                     DropdownMenuItem(
-                        text = { Text(action.label) },
+                        text = { Text(stringResource(action.labelRes)) },
                         onClick = { actions.onSetShelfClick(action.shelf) },
                     )
                 }
@@ -243,7 +245,7 @@ private fun BoxScope.ArenaRandomQuestFab(onClick: () -> Unit) {
     ) {
         Icon(
             imageVector = Icons.Default.SportsEsports,
-            contentDescription = "Случайный квест",
+            contentDescription = stringResource(R.string.quizzes_cd_random_quest),
         )
     }
 }
@@ -255,7 +257,7 @@ private fun shareQuest(
     val appName =
         context.applicationInfo
             .loadLabel(context.packageManager).toString()
-    val shareText = "Квест «${quest.title}» — $appName"
+    val shareText = context.getString(R.string.quizzes_share_text, quest.title, appName)
     val intent =
         Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"

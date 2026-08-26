@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Quizzes screen strings. Default locale: Russian (the product's primary language);
+    English lives in values-en/strings.xml.
+-->
+<resources>
+    <!-- Empty states -->
+    <string name="quizzes_empty_sections">Нет секций</string>
+    <string name="quizzes_empty_themes">Нет тем</string>
+    <string name="quizzes_empty_lessons">Нет уроков</string>
+    <string name="quizzes_empty_quests">Нет квестов</string>
+    <string name="quizzes_empty_catalogs">Нет каталогов</string>
+    <string name="quizzes_no_catalog">Без каталога</string>
+
+    <!-- Lesson item -->
+    <string name="quizzes_chip_easy">Easy</string>
+    <string name="quizzes_chip_hard">Hard</string>
+    <string name="quizzes_rating_none">no ratings</string>
+
+    <!-- Quest list menu -->
+    <string name="quizzes_menu_share">Поделиться</string>
+    <string name="quizzes_shelf_show_home">Показать в домашних</string>
+    <string name="quizzes_shelf_show_arena">Показать на арене</string>
+    <string name="quizzes_shelf_show_qualification">Показать в отборочном</string>
+    <string name="quizzes_shelf_show_world">Показать в чемпионате мира</string>
+    <string name="quizzes_cd_random_quest">Случайный квест</string>
+    <string name="quizzes_share_text">Квест «%1$s» — %2$s</string>
+</resources>

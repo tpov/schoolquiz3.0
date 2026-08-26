@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandSquareIconButton
@@ -26,6 +27,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.CatalogSpinner
 import com.tpov.schoolquiz.android.core.designsystem.components.QuestCard
 import com.tpov.schoolquiz.android.feature.quest.presentation.DraftQuestDisplayItem
 import com.tpov.schoolquiz.android.feature.quest.presentation.MyQuestsComponent
+import com.tpov.schoolquiz.android.feature.quest.presentation.R
 
 /**
  * "Мои квесты" screen.
@@ -74,11 +76,11 @@ fun MyQuestsScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Нет квестов",
+                            text = stringResource(R.string.quest_empty_quests_title),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            text = "Нажмите + чтобы создать первый квест",
+                            text = stringResource(R.string.quest_empty_quests_hint),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(top = 8.dp),
                         )
@@ -112,7 +114,7 @@ fun MyQuestsScreen(
 
         BrandSquareIconButton(
             icon = Icons.Default.Add,
-            contentDescription = "Создать квест",
+            contentDescription = stringResource(R.string.quest_cd_create_quest),
             onClick = component::onCreateQuestClick,
             modifier =
                 Modifier
@@ -138,13 +140,13 @@ private fun DraftQuestCard(
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = "Черновик",
+                    text = stringResource(R.string.quest_draft_label),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelMedium,
                 )
             }
             Text(
-                text = "Вопросов: ${item.questionCount}",
+                text = stringResource(R.string.quest_questions_count, item.questionCount),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp),
             )

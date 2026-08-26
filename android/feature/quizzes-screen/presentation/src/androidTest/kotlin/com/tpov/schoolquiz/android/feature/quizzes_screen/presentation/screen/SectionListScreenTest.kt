@@ -7,9 +7,12 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeSectionListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
 import org.junit.Rule
 import org.junit.Test
@@ -24,14 +27,15 @@ import kotlin.test.assertNotNull
  * AC coverage: SLS-UI-01 (loading), SLS-UI-02 (loaded), SLS-UI-03 (empty), SLS-UI-04 (click)
  *
  * Uses FakeSectionListComponent (MutableValue-backed) — no real DefaultSectionListComponent needed.
- * Open Question: androidTestImplementation(compose.ui.test.junit4) must be added to
- * android/feature/quizzes-screen/presentation/build.gradle.kts (scaffold change — backend-dev).
  */
 @RunWith(AndroidJUnit4::class)
 class SectionListScreenTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    private fun stringRes(res: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
 
     // SLS-UI-01
     // GIVEN fake component with state=Loading
@@ -73,13 +77,13 @@ class SectionListScreenTest {
     }
 
     // SLS-UI-03
-    // GIVEN fake component with state=Empty("Нет секций")
+    // GIVEN fake component with state=Empty(HierarchyLevel.SECTIONS)
     // WHEN screen rendered
-    // THEN "Нет секций" levelLabel visible
+    // THEN localized empty-sections label visible
     @Test
     fun slsUi03_emptyStateShowsLevelLabel() {
         val fake = FakeSectionListComponent(
-            initialState = HierarchyListUiState.Empty("Нет секций"),
+            initialState = HierarchyListUiState.Empty(HierarchyLevel.SECTIONS),
         )
 
         composeTestRule.setContent {
@@ -88,7 +92,7 @@ class SectionListScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Нет секций").assertIsDisplayed()
+        composeTestRule.onNodeWithText(stringRes(R.string.quizzes_empty_sections)).assertIsDisplayed()
     }
 
     // SLS-UI-04

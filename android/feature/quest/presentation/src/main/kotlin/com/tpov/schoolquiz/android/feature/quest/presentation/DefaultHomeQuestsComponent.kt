@@ -89,7 +89,7 @@ class DefaultHomeQuestsComponent(
                     },
                     onFailure = { error ->
                         HomeGiftBoxOpeningState.Failed(
-                            message = error.readableGiftBoxMessage(),
+                            reason = error.toGiftBoxFailure(),
                             remainingBoxCount = current.giftBoxCount,
                         )
                     },
@@ -106,17 +106,16 @@ class DefaultHomeQuestsComponent(
         id: CatalogId,
         name: String,
     ) {
-        val catalogName = name.takeIf { it.isNotBlank() } ?: "Каталог"
-        onCatalogDrillDown(id, catalogName)
+        // Blank names are forwarded as-is; the screen resolves them to a localized fallback.
+        onCatalogDrillDown(id, name)
     }
 
-    private fun Throwable.readableGiftBoxMessage(): String {
+    private fun Throwable.toGiftBoxFailure(): HomeGiftBoxFailure {
         if (this is CancellationException) throw this
-        val raw = message.orEmpty()
-        return when {
-            raw.contains("No gift boxes", ignoreCase = true) -> "Нет доступных коробок"
-            raw.isNotBlank() -> raw
-            else -> "Не удалось открыть коробку"
+        return if (message.orEmpty().contains("No gift boxes", ignoreCase = true)) {
+            HomeGiftBoxFailure.NoBoxes
+        } else {
+            HomeGiftBoxFailure.Unexpected(detail = message?.takeIf { it.isNotBlank() })
         }
     }
 }

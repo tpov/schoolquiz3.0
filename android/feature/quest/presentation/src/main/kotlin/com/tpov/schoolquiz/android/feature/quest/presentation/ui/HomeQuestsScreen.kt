@@ -9,12 +9,16 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,8 +31,6 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.WorkspacePremium
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,17 +46,27 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.components.CatalogGrid
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBgDeep
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.quest.presentation.HomeGiftBoxFailure
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeGiftBoxOpeningState
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeQuestsUiState
+import com.tpov.schoolquiz.android.feature.quest.presentation.R
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.GiftBoxReward
 
@@ -148,15 +160,18 @@ private fun LoadingContent(modifier: Modifier = Modifier) {
 @Composable
 private fun EmptyContent(modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
-                text = "Нет каталогов",
-                style = MaterialTheme.typography.titleMedium,
+                text = stringResource(R.string.quest_empty_catalogs_title),
+                style = NoirType.appbar,
             )
             Text(
-                text = "Синхронизируйте данные через меню",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp),
+                text = stringResource(R.string.quest_empty_catalogs_hint),
+                style = NoirType.rowSub,
+            )
+            Text(
+                text = stringResource(R.string.quest_sync),
+                style = NoirType.button.copy(color = LocalNoirAccent.current),
             )
         }
     }
@@ -175,7 +190,7 @@ private fun AddPublicQuestFab(
     ) {
         Icon(
             imageVector = Icons.Default.Add,
-            contentDescription = "Добавить квест",
+            contentDescription = stringResource(R.string.quest_cd_add_quest),
         )
     }
 }
@@ -186,22 +201,47 @@ private fun GiftBoxFab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FloatingActionButton(
-        onClick = onClick,
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    ) {
-        BadgedBox(
-            badge = {
-                Badge {
-                    Text(count.toString())
-                }
-            },
+    val accent = LocalNoirAccent.current
+    val fabShape = RoundedCornerShape(18.dp)
+    Box(modifier = modifier) {
+        Box(
+            modifier =
+                Modifier
+                    .size(58.dp)
+                    // The canvas lights the button with an accent glow plus a drop shadow.
+                    .shadow(
+                        elevation = 14.dp,
+                        shape = fabShape,
+                        ambientColor = accent.copy(alpha = 0.42f),
+                        spotColor = accent.copy(alpha = 0.42f),
+                    )
+                    .clip(fabShape)
+                    .background(accent)
+                    .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Default.CardGiftcard,
-                contentDescription = "Открыть коробку",
+                contentDescription = stringResource(R.string.quest_cd_open_box),
+                tint = NoirInk,
+                modifier = Modifier.size(26.dp),
+            )
+        }
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 6.dp, y = (-6).dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(NoirBgDeep)
+                    .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(999.dp))
+                    .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp)
+                    .padding(horizontal = 5.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = count.toString(),
+                style = NoirType.num.copy(color = accent, fontSize = 11.sp, fontWeight = FontWeight.Bold),
             )
         }
     }
@@ -256,19 +296,19 @@ private fun GiftBoxOverlayHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Коробка",
+                text = stringResource(R.string.quest_gift_box_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = opening.subtitle(),
+                text = stringResource(opening.subtitleRes()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         if (opening !is HomeGiftBoxOpeningState.Opening) {
             IconButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = "Закрыть")
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.quest_close))
             }
         }
     }
@@ -327,7 +367,7 @@ private fun GiftBoxOverlayBody(opening: HomeGiftBoxOpeningState) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
                 Text(
-                    text = "Открываем...",
+                    text = stringResource(R.string.quest_opening_in_progress),
                     modifier = Modifier.padding(top = 8.dp),
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -336,7 +376,12 @@ private fun GiftBoxOverlayBody(opening: HomeGiftBoxOpeningState) {
             RewardContent(opening = opening)
         is HomeGiftBoxOpeningState.Failed ->
             Text(
-                text = opening.message,
+                text =
+                    when (val reason = opening.reason) {
+                        HomeGiftBoxFailure.NoBoxes -> stringResource(R.string.quest_error_no_boxes)
+                        is HomeGiftBoxFailure.Unexpected ->
+                            reason.detail ?: stringResource(R.string.quest_error_box_generic)
+                    },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center,
@@ -362,19 +407,19 @@ private fun RewardContent(opening: HomeGiftBoxOpeningState.Opened) {
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = opening.reward.rewardText(),
+                text = rewardText(opening.reward),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
         }
         Text(
-            text = "Осталось коробок: ${opening.remainingBoxCount}",
+            text = stringResource(R.string.quest_boxes_left, opening.remainingBoxCount),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (!opening.profileSynced) {
             Text(
-                text = "Профиль обновится после следующей синхронизации",
+                text = stringResource(R.string.quest_profile_sync_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -391,27 +436,40 @@ private fun GiftBoxOverlayActions(
     when (opening) {
         is HomeGiftBoxOpeningState.Opening ->
             Text(
-                text = "Запрос к серверу уже отправлен",
+                text = stringResource(R.string.quest_request_sent),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         is HomeGiftBoxOpeningState.Opened ->
             Button(onClick = onDismiss) {
-                Text("Забрать")
+                Text(stringResource(R.string.quest_claim_reward))
             }
         is HomeGiftBoxOpeningState.Failed ->
             OutlinedButton(onClick = onDismiss) {
-                Text("Закрыть")
+                Text(stringResource(R.string.quest_close))
             }
     }
 }
 
-private fun HomeGiftBoxOpeningState.subtitle(): String =
+private fun HomeGiftBoxOpeningState.subtitleRes(): Int =
     when (this) {
-        is HomeGiftBoxOpeningState.Opening -> "Трясём коробку и ждём награду"
-        is HomeGiftBoxOpeningState.Opened -> "Награда начислена в профиль"
-        is HomeGiftBoxOpeningState.Failed -> "Открытие не удалось"
+        is HomeGiftBoxOpeningState.Opening -> R.string.quest_subtitle_shake
+        is HomeGiftBoxOpeningState.Opened -> R.string.quest_subtitle_reward_credited
+        is HomeGiftBoxOpeningState.Failed -> R.string.quest_subtitle_failed
     }
+
+@Composable
+private fun rewardText(reward: GiftBoxReward): String =
+    when (reward) {
+        is GiftBoxReward.Nolics -> stringResource(R.string.quest_reward_nolics, reward.amount)
+        is GiftBoxReward.Gold -> stringResource(R.string.quest_reward_gold, reward.amount)
+        is GiftBoxReward.Premium ->
+            stringResource(R.string.quest_reward_premium_days, reward.premiumDays())
+        is GiftBoxReward.Logo -> stringResource(R.string.quest_reward_logo, reward.itemName)
+        is GiftBoxReward.Trophy -> stringResource(R.string.quest_reward_trophies, reward.amount)
+    }
+
+private fun GiftBoxReward.Premium.premiumDays(): Long = (amount / SECONDS_IN_DAY).coerceAtLeast(1L)
 
 private fun GiftBoxReward.icon(): ImageVector =
     when (this) {
@@ -421,17 +479,6 @@ private fun GiftBoxReward.icon(): ImageVector =
         is GiftBoxReward.Logo -> Icons.Default.Star
         is GiftBoxReward.Trophy -> Icons.Default.EmojiEvents
     }
-
-private fun GiftBoxReward.rewardText(): String =
-    when (this) {
-        is GiftBoxReward.Nolics -> "$amount ноликов"
-        is GiftBoxReward.Gold -> "$amount золота"
-        is GiftBoxReward.Premium -> "${premiumDays()} дн. премиума"
-        is GiftBoxReward.Logo -> "Логотип: $itemName"
-        is GiftBoxReward.Trophy -> "$amount трофеев"
-    }
-
-private fun GiftBoxReward.Premium.premiumDays(): Long = (amount / SECONDS_IN_DAY).coerceAtLeast(1L)
 
 private const val SECONDS_IN_DAY = 86_400L
 private const val SCRIM_ALPHA = 0.54f

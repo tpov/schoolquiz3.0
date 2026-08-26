@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
@@ -24,7 +25,9 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.LessonListComponent
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
 
@@ -39,7 +42,7 @@ fun LessonListScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = component.titles,
+            titles = breadcrumbTitles(component.titles),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier
@@ -54,7 +57,14 @@ fun LessonListScreen(
             is LessonListUiState.Empty ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     Text(
-                        text = state.levelLabel,
+                        text =
+                            stringResource(
+                                when (state.level) {
+                                    HierarchyLevel.LESSONS -> R.string.quizzes_empty_lessons
+                                    HierarchyLevel.SECTIONS -> R.string.quizzes_empty_sections
+                                    HierarchyLevel.THEMES -> R.string.quizzes_empty_themes
+                                },
+                            ),
                         modifier = Modifier.align(Alignment.Center),
                         style = MaterialTheme.typography.titleMedium,
                     )

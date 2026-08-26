@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
@@ -25,8 +26,10 @@ import com.arkivanov.decompose.value.Value
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ThemeListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyItemUi
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyListUiState
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
@@ -40,7 +43,7 @@ fun ThemeListScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbBar(
-            titles = component.titles,
+            titles = breadcrumbTitles(component.titles),
             onSegmentClick = onSegmentClick,
             modifier =
                 Modifier
@@ -55,7 +58,14 @@ fun ThemeListScreen(
             is HierarchyListUiState.Empty ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     Text(
-                        text = state.levelLabel,
+                        text =
+                            stringResource(
+                                when (state.level) {
+                                    HierarchyLevel.SECTIONS -> R.string.quizzes_empty_sections
+                                    HierarchyLevel.THEMES -> R.string.quizzes_empty_themes
+                                    HierarchyLevel.LESSONS -> R.string.quizzes_empty_lessons
+                                },
+                            ),
                         modifier = Modifier.align(Alignment.Center),
                         style = MaterialTheme.typography.titleMedium,
                     )
@@ -106,7 +116,7 @@ private fun ThemeListScreenEmptyPreview() {
             component =
                 object : ThemeListComponent {
                     override val uiState: Value<HierarchyListUiState> =
-                        MutableValue(HierarchyListUiState.Empty("Нет тем"))
+                        MutableValue(HierarchyListUiState.Empty(HierarchyLevel.THEMES))
                     override val titles = listOf("Математика", "Квест 1", "Секция 1")
 
                     override fun onThemeClick(theme: HierarchyItemUi) = Unit

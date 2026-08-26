@@ -34,4 +34,11 @@ interface QuizzesComponent : QuizzesNavigator {
     fun popToLevel(uiLevel: Int)
 
     fun popCurrentChild()
+
+    /**
+     * Replace the active lesson runner with one for [lessonId] (design decision F3 —
+     * "Next lesson →"). Mode, session mode and breadcrumb titles are carried over from the
+     * active runner config; a no-op when the runner is not on top.
+     */
+    fun openLessonRunner(lessonId: String)
 }
