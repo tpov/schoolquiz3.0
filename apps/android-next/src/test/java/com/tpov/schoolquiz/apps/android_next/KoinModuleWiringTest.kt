@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsDao
 import com.tpov.schoolquiz.shared.core.persistence.UserStatsEntity
+import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.stats.RawUserStats
 import com.tpov.schoolquiz.shared.core.stats.UserStatsDataSource
@@ -172,6 +173,9 @@ class KoinModuleWiringTest : KoinTest {
         single<SyncScheduler> {
             object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
+
+                override fun applyFrequency(frequency: SyncFrequency) = Unit
+override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             }
         }
     }
@@ -461,6 +465,9 @@ class KoinModuleWiringTest : KoinTest {
             userStatsRepository = fakeRepo,
             syncScheduler = object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
+
+                override fun applyFrequency(frequency: SyncFrequency) = Unit
+override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
             homeQuestsFactory = { _, _ ->
                 object : HomeQuestsComponent {
@@ -486,6 +493,7 @@ class KoinModuleWiringTest : KoinTest {
                                 backStack = emptyList(),
                             )
                         )
+                    override fun openLessonRunner(lessonId: String) = Unit
                     override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
                     override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
@@ -549,6 +557,9 @@ class KoinModuleWiringTest : KoinTest {
             userStatsRepository = fakeRepo,
             syncScheduler = object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
+
+                override fun applyFrequency(frequency: SyncFrequency) = Unit
+override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
             homeQuestsFactory = { _, _ ->
                 object : HomeQuestsComponent {
@@ -574,6 +585,7 @@ class KoinModuleWiringTest : KoinTest {
                                 backStack = emptyList(),
                             )
                         )
+                    override fun openLessonRunner(lessonId: String) = Unit
                     override val currentCatalogName: StateFlow<String?> = MutableStateFlow(null)
                     override val currentCatalogIcons: StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =
                         MutableStateFlow(emptyList<androidx.compose.ui.graphics.vector.ImageVector>())
@@ -624,6 +636,20 @@ class KoinModuleWiringTest : KoinTest {
         single<QuestionRepository> { mock(QuestionRepository::class.java) }
         single<LessonRepository> { mock(LessonRepository::class.java) }
         single<AuthRepository> { mock(AuthRepository::class.java) }
+    }
+
+    /** The runner reads lives from the profile; tests that never touch it still need the binding. */
+    private val testProfileRepositoryStub = module {
+        single<ProfileRepository> {
+            object : ProfileRepository {
+                override fun observeCurrentProfile(): Flow<UserProfile> = flowOf(UserProfile.offline())
+                override suspend fun currentProfile(): UserProfile = UserProfile.offline()
+                override suspend fun ensureCurrentProfile(): Result<UserProfile> =
+                    Result.success(UserProfile.offline())
+                override suspend fun updateNickname(nickname: String): Result<UserProfile> =
+                    Result.success(UserProfile.offline().copy(nickname = nickname))
+            }
+        }
     }
 
     // ── IT-09a ────────────────────────────────────────────────────────────────
@@ -686,6 +712,7 @@ class KoinModuleWiringTest : KoinTest {
                 testLessonRatingLocalDaoStub,
                 testLessonResultOutboxDepsStub,
                 testRunnerRepositoryStubs,
+                testProfileRepositoryStub,
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 questionSchemaModule,
@@ -715,6 +742,7 @@ class KoinModuleWiringTest : KoinTest {
                 testLessonRatingLocalDaoStub,
                 testLessonResultOutboxDepsStub,
                 testRunnerRepositoryStubs,
+                testProfileRepositoryStub,
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,

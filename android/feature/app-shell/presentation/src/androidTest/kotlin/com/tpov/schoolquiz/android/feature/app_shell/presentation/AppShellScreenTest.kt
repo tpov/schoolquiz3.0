@@ -20,6 +20,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.arkivanov.decompose.Child
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
@@ -50,6 +52,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
+import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
@@ -87,6 +90,9 @@ class AppShellScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private fun string(res: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
+
     // AC 13: GIVEN SchoolQuizTheme applied WHEN UnderConstructionScreen shown
     // THEN both title and subtitle text are displayed
     @Test
@@ -97,7 +103,7 @@ class AppShellScreenTest {
             }
         }
         composeTestRule.onNodeWithText("Test Screen").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Скоро здесь будет...").assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.under_construction_subtitle)).assertIsDisplayed()
     }
 
     // GIVEN CompositionLocalProvider with ScrollToTopRegistry
@@ -157,8 +163,8 @@ class AppShellScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Начать турнир").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Добавить урок").assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.tournament_start)).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.cd_add_lesson)).assertIsDisplayed()
     }
 
     @Test
@@ -185,8 +191,8 @@ class AppShellScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Начать турнир").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Добавить урок").assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.tournament_start)).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(string(R.string.cd_add_lesson)).assertDoesNotExist()
     }
 
     // SCH-2: settings_footer_exact_label
@@ -347,6 +353,9 @@ class AppShellScreenTest {
             userStatsRepository = repo,
             syncScheduler = object : SyncScheduler {
                 override fun enqueueManualSync() = Unit
+
+                override fun applyFrequency(frequency: SyncFrequency) = Unit
+override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
             },
             myQuestsFactory = { _, _, _ ->
                 object : MyQuestsComponent {
@@ -370,6 +379,7 @@ class AppShellScreenTest {
                         backStack = emptyList(),
                     )
                     override val childStack = MutableValue(idleStack)
+                    override fun openLessonRunner(lessonId: String) = Unit
                     override val currentCatalogName: kotlinx.coroutines.flow.StateFlow<String?> =
                         kotlinx.coroutines.flow.MutableStateFlow(null)
                     override val currentCatalogIcons: kotlinx.coroutines.flow.StateFlow<List<androidx.compose.ui.graphics.vector.ImageVector>> =

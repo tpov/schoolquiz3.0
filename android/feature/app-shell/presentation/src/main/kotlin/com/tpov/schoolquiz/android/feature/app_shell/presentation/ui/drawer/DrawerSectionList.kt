@@ -38,6 +38,7 @@ fun DrawerSectionList(
                     onDismissQuizzes()
                     navigator.goTo(Destination.SelectSection(section))
                 },
+                divided = true,
             )
         }
     }

@@ -22,11 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignCard
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 
 private const val MIN_PERCENT_VALUE = 0
 private const val MAX_PERCENT_VALUE = 100
@@ -76,23 +78,25 @@ internal fun TournamentLeaderboardScreen(
         item {
             TournamentHeaderCard(
                 icon = Icons.Default.EmojiEvents,
-                title = "Лидерборд",
+                title = stringResource(R.string.config_leaderboard),
                 subtitle = model.title,
                 detail = model.stageLabel,
             )
         }
         item {
             TournamentMetricCard(
-                title = "Мой результат",
-                value = model.currentUserPercent?.let { "$it%" } ?: "нет попытки",
+                title = stringResource(R.string.tournament_my_result),
+                value =
+                    model.currentUserPercent?.let { "$it%" }
+                        ?: stringResource(R.string.tournament_no_attempt),
                 subtitle = model.currentUserNickname,
             )
         }
         item {
             TournamentMetricCard(
-                title = "Правило отбора",
+                title = stringResource(R.string.tournament_qualification_rule),
                 value = model.qualificationRule,
-                subtitle = "обновляется после серверной синхронизации",
+                subtitle = stringResource(R.string.tournament_updates_after_sync),
             )
         }
         if (model.isLoading) {
@@ -103,7 +107,7 @@ internal fun TournamentLeaderboardScreen(
         model.errorMessage?.let { message ->
             item {
                 TournamentEmptyCard(
-                    title = "Не удалось обновить таблицу",
+                    title = stringResource(R.string.tournament_error_update_table),
                     subtitle = message,
                 )
             }
@@ -111,8 +115,8 @@ internal fun TournamentLeaderboardScreen(
         if (model.standings.isEmpty()) {
             item {
                 TournamentEmptyCard(
-                    title = "Пока нет результатов",
-                    subtitle = "После первых прохождений здесь появится общая таблица.",
+                    title = stringResource(R.string.tournament_empty_results),
+                    subtitle = stringResource(R.string.tournament_empty_results_hint),
                 )
             }
         } else {
@@ -137,16 +141,16 @@ internal fun TournamentParticipantsScreen(
         item {
             TournamentHeaderCard(
                 icon = Icons.Default.Groups,
-                title = "Список участников",
+                title = stringResource(R.string.tournament_participants_title),
                 subtitle = model.title,
                 detail = model.stageLabel,
             )
         }
         item {
             TournamentMetricCard(
-                title = "Участников",
+                title = stringResource(R.string.tournament_participants_count),
                 value = model.participants.size.toString(),
-                subtitle = "серверный список",
+                subtitle = stringResource(R.string.tournament_server_list),
             )
         }
         if (model.isLoading) {
@@ -157,7 +161,7 @@ internal fun TournamentParticipantsScreen(
         model.errorMessage?.let { message ->
             item {
                 TournamentEmptyCard(
-                    title = "Не удалось обновить участников",
+                    title = stringResource(R.string.tournament_error_update_participants),
                     subtitle = message,
                 )
             }
@@ -226,7 +230,7 @@ private fun TournamentLoadingCard() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                text = "Обновляем данные",
+                text = stringResource(R.string.tournament_loading),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.SemiBold,
@@ -347,7 +351,7 @@ private fun TournamentStandingRow(
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(
-                text = "Попыток: ${standing.attempts}",
+                text = stringResource(R.string.tournament_attempts_count, standing.attempts),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
             )
@@ -386,7 +390,7 @@ private fun TournamentParticipantRow(participant: TournamentParticipantUi) {
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f),
                 )
                 Text(
-                    text = "Попыток: ${participant.attempts}",
+                    text = stringResource(R.string.tournament_attempts_count, participant.attempts),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
                 )

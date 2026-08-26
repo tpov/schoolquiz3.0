@@ -25,7 +25,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
@@ -39,6 +41,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirNavItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSkin
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.TournamentOverviewLoadState
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.screen.EventsScreenComponent
@@ -60,6 +63,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuizzesChild
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen.QuizzesScreen
 import com.tpov.schoolquiz.shared.core.foundation.QualificationLevel
+import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.logic.visibleFooterActions
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerFooterAction
@@ -113,6 +117,10 @@ fun AppShellScreen(
     appVersionName: String,
     appVersionCode: Int,
     isDebugBuild: Boolean = false,
+    syncFrequency: SyncFrequency = SyncFrequency.DAILY,
+    onSyncFrequencySelected: (SyncFrequency) -> Unit = {},
+    profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY,
+    onProfileSyncFrequencySelected: (SyncFrequency) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by rootComponent.appShellState.collectAsStateWithLifecycle(
@@ -161,22 +169,26 @@ fun AppShellScreen(
     }
 
     // Event collector: object-key prevents duplicate collectors on recomposition.
+    // Snackbar texts resolve outside the coroutine: stringResource needs composition.
+    val devModeOnMessage = stringResource(R.string.snackbar_dev_mode_on)
+    val devModeAlreadyMessage = stringResource(R.string.snackbar_dev_mode_already)
+    val syncStartedMessage = stringResource(R.string.snackbar_sync_started)
     LaunchedEffect(rootComponent) {
         rootComponent.events.collect { event ->
             when (event) {
                 RootEvent.DevModeActivated ->
                     snackbarHostState.showSnackbar(
-                        message = "Режим разработчика включён",
+                        message = devModeOnMessage,
                         duration = SnackbarDuration.Long,
                     )
                 RootEvent.DevModeAlreadyActive ->
                     snackbarHostState.showSnackbar(
-                        message = "Уже в режиме разработчика",
+                        message = devModeAlreadyMessage,
                         duration = SnackbarDuration.Short,
                     )
                 RootEvent.SyncStarted ->
                     snackbarHostState.showSnackbar(
-                        message = "Синхронизация запущена",
+                        message = syncStartedMessage,
                         duration = SnackbarDuration.Short,
                     )
                 RootEvent.SystemBack -> (context as? Activity)?.moveTaskToBack(true)
@@ -194,11 +206,15 @@ fun AppShellScreen(
             canManagePublicShelves = canManagePublicShelves,
         )
 
+    val homeQuestsState by rootComponent.homeQuestsComponent.state.collectAsStateWithLifecycle(
+        initialValue = rootComponent.homeQuestsComponent.state.value,
+    )
     CompositionLocalProvider(LocalScrollToTopRegistry provides registry) {
         ModalNavigationDrawer(
             modifier = modifier,
             drawerState = drawerState,
             gesturesEnabled = !state.isShopActive && !isImmersiveScreenActive,
+            scrimColor = Color.Black.copy(alpha = 0.66f),
             drawerContent = {
                 DrawerContent(
                     userStats = state.userStats,
@@ -207,6 +223,7 @@ fun AppShellScreen(
                     navigator = rootComponent.navigator,
                     isDebugBuild = isDebugBuild,
                     versionName = appVersionName,
+                    giftBoxCount = homeQuestsState.giftBoxCount,
                     onVersionTap = { rootComponent.onVersionTap(System.currentTimeMillis()) },
                     onSyncNow = { rootComponent.onSyncNow() },
                     onDismissQuizzes = { rootComponent.quizzesComponent.dismissQuizzes() },
@@ -227,7 +244,7 @@ fun AppShellScreen(
                                     {
                                         NoirIconButton(
                                             icon = NoirIcons.Menu,
-                                            contentDescription = "Open menu",
+                                            contentDescription = stringResource(R.string.cd_open_menu),
                                             onClick = {
                                                 rootComponent.navigator.goTo(Destination.OpenDrawer)
                                             },
@@ -278,6 +295,10 @@ fun AppShellScreen(
                         paddingValues = paddingValues,
                         uiAccess = uiAccess,
                         tournamentOverviewState = tournamentOverviewState,
+                        syncFrequency = syncFrequency,
+                        onSyncFrequencySelected = onSyncFrequencySelected,
+                        profileSyncFrequency = profileSyncFrequency,
+                        onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
                     )
                     if (quizzesStack.active.instance !is QuizzesChild.Idle) {
                         val overlayModifier =
@@ -309,6 +330,10 @@ private fun AppShellContent(
     paddingValues: PaddingValues,
     uiAccess: AppShellUiAccess,
     tournamentOverviewState: Map<String, TournamentOverviewLoadState>,
+    syncFrequency: SyncFrequency,
+    onSyncFrequencySelected: (SyncFrequency) -> Unit,
+    profileSyncFrequency: SyncFrequency,
+    onProfileSyncFrequencySelected: (SyncFrequency) -> Unit,
 ) {
     Crossfade(
         targetState = state.activeTab,
@@ -329,6 +354,10 @@ private fun AppShellContent(
                         paddingValues = paddingValues,
                         canSeeDesignCatalog = uiAccess.canSeeDesignCatalog,
                         canManagePublicShelves = uiAccess.canManagePublicShelves,
+                        syncFrequency = syncFrequency,
+                        onSyncFrequencySelected = onSyncFrequencySelected,
+                        profileSyncFrequency = profileSyncFrequency,
+                        onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
                     )
                 }
             Tab.INTERNET ->
@@ -373,6 +402,10 @@ private fun LocalTabContent(
     paddingValues: PaddingValues,
     canSeeDesignCatalog: Boolean,
     canManagePublicShelves: Boolean,
+    syncFrequency: SyncFrequency,
+    onSyncFrequencySelected: (SyncFrequency) -> Unit,
+    profileSyncFrequency: SyncFrequency,
+    onProfileSyncFrequencySelected: (SyncFrequency) -> Unit,
 ) {
     when (screen) {
         is LocalScreenComponent.Placeholder -> {
@@ -382,7 +415,10 @@ private fun LocalTabContent(
                         DesignCatalogScreen(modifier = Modifier.padding(paddingValues))
                     } else {
                         // AC 8: DesignCatalogRoot shows "Недоступно" in release.
-                        UnderConstructionScreen("Недоступно", modifier = Modifier.padding(paddingValues))
+                        UnderConstructionScreen(
+                            stringResource(R.string.unavailable),
+                            modifier = Modifier.padding(paddingValues),
+                        )
                     }
                 is LocalConfig.MyQuestsRoot ->
                     MyQuestsContent(rootComponent = rootComponent, paddingValues = paddingValues)
@@ -413,6 +449,10 @@ private fun LocalTabContent(
                         profile = profileState.profile,
                         appVersionName = appVersionName,
                         appVersionCode = appVersionCode,
+                        syncFrequency = syncFrequency,
+                        onSyncFrequencySelected = onSyncFrequencySelected,
+                        profileSyncFrequency = profileSyncFrequency,
+                        onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
                         onSyncNow = { rootComponent.onSyncNow() },
                         modifier = Modifier.padding(paddingValues),
                     )
@@ -452,6 +492,7 @@ private fun HomeQuestsContent(
     paddingValues: PaddingValues,
     canManagePublicShelves: Boolean,
 ) {
+    val homeQuestsTitle = stringResource(R.string.section_home_quests)
     HomeQuestsScreen(
         component = rootComponent.homeQuestsComponent,
         modifier = Modifier.padding(paddingValues),
@@ -459,7 +500,7 @@ private fun HomeQuestsContent(
         onAddPublicQuestClick = {
             rootComponent.quizzesComponent.openPublicQuestCatalogPicker(
                 targetShelf = HOME_SHELF,
-                title = "Домашние квесты",
+                title = homeQuestsTitle,
             )
         },
     )
@@ -510,6 +551,7 @@ private fun EventsTabContent(
     userStats: UserStats,
     tournamentOverviewState: Map<String, TournamentOverviewLoadState>,
 ) {
+    val loadErrorMessage = stringResource(R.string.tournament_error_load)
     when (screen) {
         is EventsScreenComponent.Placeholder ->
             when (screen.config) {
@@ -519,16 +561,20 @@ private fun EventsTabContent(
                         paddingValues = paddingValues,
                         canManagePublicShelves = canManagePublicShelves,
                         targetShelf = QUALIFIER_TOURNAMENT_SHELF,
-                        title = "Отборочный турнир",
-                        stageLabel = "Лёгкие вопросы",
+                        title = stringResource(R.string.section_qualifier_tournament),
+                        stageLabel = stringResource(R.string.stage_easy_questions),
                         forcedHardMode = false,
                     )
                 EventsConfig.QualifierTournamentLeaderboardRoot ->
                     TournamentLeaderboardScreen(
                         model =
                             qualifierLeaderboardModel(
+                                title = stringResource(R.string.section_qualifier_tournament),
+                                stageLabel = stringResource(R.string.stage_easy_questions),
+                                qualificationRule = stringResource(R.string.rule_top32),
                                 userStats = userStats,
                                 loadState = tournamentOverviewState[QUALIFIER_TOURNAMENT_SHELF],
+                                loadErrorMessage = loadErrorMessage,
                             ),
                         modifier = Modifier.padding(paddingValues),
                     )
@@ -536,8 +582,13 @@ private fun EventsTabContent(
                     TournamentParticipantsScreen(
                         model =
                             qualifierParticipantsModel(
+                                title = stringResource(R.string.section_qualifier_tournament),
+                                stageLabel = stringResource(R.string.stage_easy_questions),
+                                fallbackStatus = stringResource(R.string.participant_access_open),
+                                activeStatus = stringResource(R.string.participant_status_active),
                                 userStats = userStats,
                                 loadState = tournamentOverviewState[QUALIFIER_TOURNAMENT_SHELF],
+                                loadErrorMessage = loadErrorMessage,
                             ),
                         modifier = Modifier.padding(paddingValues),
                     )
@@ -547,16 +598,20 @@ private fun EventsTabContent(
                         paddingValues = paddingValues,
                         canManagePublicShelves = canManagePublicShelves,
                         targetShelf = WORLD_CHAMPIONSHIP_SHELF,
-                        title = "Чемпионат мира",
-                        stageLabel = "Сложные вопросы",
+                        title = stringResource(R.string.section_world_championship),
+                        stageLabel = stringResource(R.string.stage_hard_questions),
                         forcedHardMode = true,
                     )
                 EventsConfig.WorldChampionshipLeaderboardRoot ->
                     TournamentLeaderboardScreen(
                         model =
                             worldLeaderboardModel(
+                                title = stringResource(R.string.section_world_championship),
+                                stageLabel = stringResource(R.string.stage_hard_questions),
+                                qualificationRule = stringResource(R.string.rule_final_table),
                                 userStats = userStats,
                                 loadState = tournamentOverviewState[WORLD_CHAMPIONSHIP_SHELF],
+                                loadErrorMessage = loadErrorMessage,
                             ),
                         modifier = Modifier.padding(paddingValues),
                     )
@@ -564,8 +619,13 @@ private fun EventsTabContent(
                     TournamentParticipantsScreen(
                         model =
                             worldParticipantsModel(
+                                title = stringResource(R.string.section_world_championship),
+                                stageLabel = stringResource(R.string.stage_hard_questions),
+                                fallbackStatus = stringResource(R.string.participant_awaiting_selection),
+                                activeStatus = stringResource(R.string.participant_status_active),
                                 userStats = userStats,
                                 loadState = tournamentOverviewState[WORLD_CHAMPIONSHIP_SHELF],
+                                loadErrorMessage = loadErrorMessage,
                             ),
                         modifier = Modifier.padding(paddingValues),
                     )
@@ -628,27 +688,37 @@ private fun TournamentEventContent(
 }
 
 private fun qualifierLeaderboardModel(
+    title: String,
+    stageLabel: String,
+    qualificationRule: String,
     userStats: UserStats,
     loadState: TournamentOverviewLoadState?,
+    loadErrorMessage: String,
 ): TournamentLeaderboardUi =
     tournamentLeaderboardModel(
-        title = "Отборочный турнир",
-        stageLabel = "Лёгкие вопросы",
-        qualificationRule = "Топ-32",
+        title = title,
+        stageLabel = stageLabel,
+        qualificationRule = qualificationRule,
         userStats = userStats,
         loadState = loadState,
+        loadErrorMessage = loadErrorMessage,
     )
 
 private fun worldLeaderboardModel(
+    title: String,
+    stageLabel: String,
+    qualificationRule: String,
     userStats: UserStats,
     loadState: TournamentOverviewLoadState?,
+    loadErrorMessage: String,
 ): TournamentLeaderboardUi =
     tournamentLeaderboardModel(
-        title = "Чемпионат мира",
-        stageLabel = "Сложные вопросы",
-        qualificationRule = "Финальная таблица",
+        title = title,
+        stageLabel = stageLabel,
+        qualificationRule = qualificationRule,
         userStats = userStats,
         loadState = loadState,
+        loadErrorMessage = loadErrorMessage,
     )
 
 private fun tournamentLeaderboardModel(
@@ -657,9 +727,11 @@ private fun tournamentLeaderboardModel(
     qualificationRule: String,
     userStats: UserStats,
     loadState: TournamentOverviewLoadState?,
+    loadErrorMessage: String,
 ): TournamentLeaderboardUi {
     val overview = loadState?.overview
     val participantsByUser = overview?.participants.orEmpty().associateBy { it.userId }
+    val error = loadState as? TournamentOverviewLoadState.Error
     return TournamentLeaderboardUi(
         title = title,
         stageLabel = stageLabel,
@@ -677,32 +749,46 @@ private fun tournamentLeaderboardModel(
                 )
             },
         isLoading = loadState is TournamentOverviewLoadState.Loading,
-        errorMessage = (loadState as? TournamentOverviewLoadState.Error)?.message,
+        errorMessage = error?.message ?: loadErrorMessage.takeIf { error != null },
     )
 }
 
 private fun qualifierParticipantsModel(
+    title: String,
+    stageLabel: String,
+    fallbackStatus: String,
+    activeStatus: String,
     userStats: UserStats,
     loadState: TournamentOverviewLoadState?,
+    loadErrorMessage: String,
 ): TournamentParticipantsUi =
     tournamentParticipantsModel(
-        title = "Отборочный турнир",
-        stageLabel = "Лёгкие вопросы",
+        title = title,
+        stageLabel = stageLabel,
         userStats = userStats,
-        fallbackStatus = "доступ открыт",
+        fallbackStatus = fallbackStatus,
+        activeStatus = activeStatus,
         loadState = loadState,
+        loadErrorMessage = loadErrorMessage,
     )
 
 private fun worldParticipantsModel(
+    title: String,
+    stageLabel: String,
+    fallbackStatus: String,
+    activeStatus: String,
     userStats: UserStats,
     loadState: TournamentOverviewLoadState?,
+    loadErrorMessage: String,
 ): TournamentParticipantsUi =
     tournamentParticipantsModel(
-        title = "Чемпионат мира",
-        stageLabel = "Сложные вопросы",
+        title = title,
+        stageLabel = stageLabel,
         userStats = userStats,
-        fallbackStatus = "ожидает отбора",
+        fallbackStatus = fallbackStatus,
+        activeStatus = activeStatus,
         loadState = loadState,
+        loadErrorMessage = loadErrorMessage,
     )
 
 private fun tournamentParticipantsModel(
@@ -710,14 +796,16 @@ private fun tournamentParticipantsModel(
     stageLabel: String,
     userStats: UserStats,
     fallbackStatus: String,
+    activeStatus: String,
     loadState: TournamentOverviewLoadState?,
+    loadErrorMessage: String,
 ): TournamentParticipantsUi {
     val overview = loadState?.overview
     val remoteParticipants =
         overview?.participants.orEmpty().map { participant ->
             TournamentParticipantUi(
                 nickname = participant.nickname,
-                status = participant.status.displayTournamentParticipantStatus(),
+                status = participant.status.displayTournamentParticipantStatus(activeStatus),
                 attempts = participant.attemptCount,
             )
         }
@@ -731,18 +819,19 @@ private fun tournamentParticipantsModel(
                 ),
             )
         }
+    val error = loadState as? TournamentOverviewLoadState.Error
     return TournamentParticipantsUi(
         title = title,
         stageLabel = stageLabel,
         participants = participants,
         isLoading = loadState is TournamentOverviewLoadState.Loading,
-        errorMessage = (loadState as? TournamentOverviewLoadState.Error)?.message,
+        errorMessage = error?.message ?: loadErrorMessage.takeIf { error != null },
     )
 }
 
-private fun String.displayTournamentParticipantStatus(): String =
+private fun String.displayTournamentParticipantStatus(activeLabel: String): String =
     when (this) {
-        "active" -> "участвует"
+        "active" -> activeLabel
         else -> this
     }
 

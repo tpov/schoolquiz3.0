@@ -190,6 +190,7 @@ class QuizzesRootIntegrationTest {
 
         override fun popToLevel(uiLevel: Int) = Unit
         override fun popCurrentChild() = Unit
+        override fun openLessonRunner(lessonId: String) = Unit
 
         private fun idleStack() = ChildStack(
             active = Child.Created(configuration = QuizzesConfig.Idle, instance = QuizzesChild.Idle),
@@ -394,12 +395,13 @@ class QuizzesRootIntegrationTest {
             "second title must be quest title")
     }
 
-    // ── WIRE-03 fallback — catalogs empty → titles[0] == "Без каталога" (no crash) ────────
+    // ── WIRE-03 fallback — catalogs empty → titles[0] is blank (no crash) ─────────
     // Spec: 04-testing.md §10 WIRE-03 edge case
-    // DefaultRootComponent line 145: `?: "Без каталога"` fallback when catalog not found.
+    // DefaultRootComponent passes an empty catalog name when the catalog is not found;
+    // the UI layer renders the localized placeholder for blank names.
 
     @Test
-    fun `WIRE-03 fallback when catalogs empty then catalogName is Без каталога and no crash`() = runTest {
+    fun `WIRE-03 fallback when catalogs empty then catalogName is blank and no crash`() = runTest {
         val catalogRepo = FakeCatalogRepository()
         // no emit → empty catalogs
         val captured = CapturedQuizzesComponent()
@@ -416,8 +418,8 @@ class QuizzesRootIntegrationTest {
         root.myQuestsComponent.onQuestClick(quest)
 
         val titles = captured.openSectionListArgs?.titles
-        assertEquals("Без каталога", titles?.getOrNull(0),
-            "fallback catalogName must be 'Без каталога' when catalog is not found")
+        assertEquals("", titles?.getOrNull(0),
+            "fallback catalogName must be blank when catalog is not found")
         assertEquals("Quest B", titles?.getOrNull(1),
             "quest title must still be included in titles")
     }

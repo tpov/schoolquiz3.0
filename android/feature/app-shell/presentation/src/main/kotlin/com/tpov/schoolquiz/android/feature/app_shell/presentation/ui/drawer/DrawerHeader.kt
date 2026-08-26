@@ -9,39 +9,50 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirProgressBar
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.UserStats
 
 private const val STREAK_TARGET_DAYS = 10
+
+/** Unfilled streak segments: one step above the drawer ground, never a full surface. */
+private val NoirSegmentOff = Color(0xFF2A2A32)
 
 /**
  * Who you are, how long your streak is, and what you hold.
  *
  * The five counters used to be emoji with a number underneath. NOIR bans emoji standing in for
  * icons: they render differently on every device, cannot be tinted, and carry a vendor's drawing
- * style into a system that has its own.
+ * style into a system that has its own. The streak is ten segments, not a bar, so it reads like
+ * the question segments in the runner.
  */
 @Composable
 fun DrawerHeader(
     userStats: UserStats,
+    giftBoxCount: Int,
     modifier: Modifier = Modifier,
 ) {
     NoirGlassCard(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp)) {
@@ -65,34 +76,56 @@ fun DrawerHeader(
                     )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(userStats.nickname.ifBlank { "Гость" }, style = NoirType.rowTitle)
+                    Text(
+                        userStats.nickname.ifBlank { stringResource(R.string.drawer_guest) },
+                        style = NoirType.rowTitle,
+                    )
                     if (userStats.hasPremium) {
-                        Text("Premium", style = NoirType.kicker.copy(color = NoirGold))
+                        Text(stringResource(R.string.drawer_premium), style = NoirType.kicker.copy(color = NoirGold))
                     }
                 }
             }
-
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                NoirProgressBar(
-                    fraction = (userStats.streakDays.toFloat() / STREAK_TARGET_DAYS).coerceIn(0f, 1f),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    "Серия ${userStats.streakDays} / $STREAK_TARGET_DAYS дней",
-                    style = NoirType.kicker,
-                )
-            }
+            StreakSegments(streakDays = userStats.streakDays)
+            Text(
+                stringResource(R.string.drawer_streak_days, userStats.streakDays, STREAK_TARGET_DAYS),
+                style = NoirType.kicker.copy(letterSpacing = 0.1.em),
+            )
 
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                StatItem(NoirIcons.Heart, "${userStats.standardHearts}", NoirDanger)
-                StatItem(NoirIcons.Gem, "${userStats.goldHearts}", NoirGold)
-                StatItem(NoirIcons.Star, "${userStats.stars}", NoirGold)
-                StatItem(NoirIcons.Nolic, "${userStats.nolics}", LocalNoirAccent.current)
-                StatItem(NoirIcons.GoldStack, "${userStats.gold}", NoirGold)
+                StatItem(NoirIcons.Heart, userStats.standardHearts.toString(), NoirDanger)
+                StatItem(NoirIcons.Gem, userStats.goldHearts.toString(), NoirGold)
+                StatItem(NoirIcons.Star, userStats.stars.toString(), NoirGold)
+                StatItem(NoirIcons.Nolic, userStats.nolics.toString(), LocalNoirAccent.current)
+                // The last counter is the gift boxes left to open, not currency — the box icon
+                // keeps the number honest.
+                StatItem(NoirIcons.Box, giftBoxCount.toString(), NoirT3)
             }
+        }
+    }
+}
+
+/**
+ * Ten hairline-separated segments; filled ones carry the accent. A day is a question answered,
+ * so the streak borrows the runner's segment language.
+ */
+@Composable
+private fun StreakSegments(streakDays: Int) {
+    val accent = LocalNoirAccent.current
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        repeat(STREAK_TARGET_DAYS) { index ->
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(if (index < streakDays) accent else NoirSegmentOff),
+            )
         }
     }
 }

@@ -87,7 +87,7 @@ sealed interface TournamentOverviewLoadState {
     ) : TournamentOverviewLoadState
 
     data class Error(
-        val message: String,
+        val message: String?,
         override val overview: TournamentOverview?,
     ) : TournamentOverviewLoadState
 }
@@ -211,7 +211,7 @@ class DefaultRootComponent(
             { quest: QuestDisplayItem ->
                 val catalogName =
                     homeQuestsComponent.state.value.catalogs
-                        .find { it.id == quest.catalogId }?.name ?: "Без каталога"
+                        .find { it.id == quest.catalogId }?.name.orEmpty()
                 quizzesComponent.openSectionList(quest.id, listOf(catalogName, quest.title))
             },
         )
@@ -379,7 +379,7 @@ class DefaultRootComponent(
                         onSuccess = { TournamentOverviewLoadState.Content(it) },
                         onFailure = {
                             TournamentOverviewLoadState.Error(
-                                message = it.message ?: "Не удалось загрузить турнир",
+                                message = it.message,
                                 overview = previous?.overview,
                             )
                         },

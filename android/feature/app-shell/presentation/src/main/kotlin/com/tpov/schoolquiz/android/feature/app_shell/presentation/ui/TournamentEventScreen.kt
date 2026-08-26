@@ -27,10 +27,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignCard
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 
 internal data class TournamentEventUi(
     val title: String,
@@ -81,23 +83,23 @@ internal fun TournamentEventScreen(
                         )
                         Spacer(Modifier.height(4.dp))
                         TournamentActionButton(
-                            text = "Начать турнир",
+                            text = stringResource(R.string.tournament_start),
                             icon = Icons.Default.PlayArrow,
                             primary = true,
                             onClick = actions.onStartClick,
                         )
                         TournamentActionButton(
-                            text = "Лидерборд",
+                            text = stringResource(R.string.config_leaderboard),
                             icon = Icons.Default.Leaderboard,
                             onClick = actions.onLeaderboardClick,
                         )
                         TournamentActionButton(
-                            text = "Список уроков",
+                            text = stringResource(R.string.tournament_lessons_list),
                             icon = Icons.Default.Book,
                             onClick = actions.onLessonsClick,
                         )
                         TournamentActionButton(
-                            text = "Список участников",
+                            text = stringResource(R.string.tournament_participants_list),
                             icon = Icons.Default.People,
                             onClick = actions.onParticipantsClick,
                         )
@@ -112,7 +114,7 @@ internal fun TournamentEventScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Добавить урок",
+                    contentDescription = stringResource(R.string.cd_add_lesson),
                 )
             }
         }

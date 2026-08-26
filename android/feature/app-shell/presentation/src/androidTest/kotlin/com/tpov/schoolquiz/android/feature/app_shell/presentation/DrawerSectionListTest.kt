@@ -4,7 +4,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.drawer.DrawerSectionList
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
@@ -31,6 +33,9 @@ class DrawerSectionListTest {
         override fun goTo(destination: Destination) {}
     }
 
+    private fun string(res: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(res)
+
     // GIVEN tab=INTERNET, guest stats (currentSkill=0, requires 3000 for Arena/Catalog)
     // WHEN DrawerSectionList composed
     // THEN "Арена" and "Каталог" NOT rendered (requiredRoles not met, BR #17)
@@ -46,8 +51,8 @@ class DrawerSectionListTest {
                 )
             }
         }
-        composeTestRule.onNodeWithText("Арена").assertDoesNotExist()
-        composeTestRule.onNodeWithText("Каталог").assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.section_arena)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(string(R.string.section_catalog)).assertDoesNotExist()
     }
 
     // GIVEN tab=INTERNET, stats with currentSkill=3000
@@ -65,7 +70,7 @@ class DrawerSectionListTest {
                 )
             }
         }
-        composeTestRule.onNodeWithText("Арена").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Каталог").assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.section_arena)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(string(R.string.section_catalog)).assertIsDisplayed()
     }
 }

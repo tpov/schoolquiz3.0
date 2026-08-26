@@ -12,8 +12,12 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.defaultComponentContext
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
+import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
+import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
 import org.koin.android.ext.android.get
 import org.koin.core.parameter.parametersOf
@@ -29,6 +33,18 @@ class MainActivity : AppCompatActivity() {
 
         rootComponent = get { parametersOf(defaultComponentContext()) }
 
+        // The stored cadences are reconciled on every launch: this (re)arms the periodic workers
+        // after a force-stop or an app update, and fires the one-shot for "every launch".
+        val syncScheduler = get<SyncScheduler>()
+        val syncPreferences = SyncPreferences(this)
+        val storedFrequency = syncPreferences.read()
+        val storedProfileFrequency = syncPreferences.readProfile()
+        syncScheduler.applyFrequency(storedFrequency)
+        syncScheduler.applyProfileFrequency(storedProfileFrequency)
+        if (storedFrequency == SyncFrequency.ON_LAUNCH || storedProfileFrequency == SyncFrequency.ON_LAUNCH) {
+            syncScheduler.enqueueManualSync()
+        }
+
         setContent {
             val preferences = remember { getSharedPreferences(DESIGN_PREFS_NAME, MODE_PRIVATE) }
             var selectedDesignStyle by remember {
@@ -36,14 +52,33 @@ class MainActivity : AppCompatActivity() {
                     preferences.getString(DESIGN_STYLE_KEY, null).toSchoolQuizDesignStyle(),
                 )
             }
+            var syncFrequency by remember { mutableStateOf(storedFrequency) }
+            var profileSyncFrequency by remember { mutableStateOf(storedProfileFrequency) }
 
             SchoolQuizTheme(designStyle = selectedDesignStyle) {
-                AppShellScreen(
-                    rootComponent = rootComponent,
-                    appVersionName = BuildConfig.VERSION_NAME,
-                    appVersionCode = BuildConfig.VERSION_CODE,
-                    isDebugBuild = BuildConfig.DEBUG,
-                )
+                NoirTheme {
+                    AppShellScreen(
+                        rootComponent = rootComponent,
+                        appVersionName = BuildConfig.VERSION_NAME,
+                        appVersionCode = BuildConfig.VERSION_CODE,
+                        isDebugBuild = BuildConfig.DEBUG,
+                        syncFrequency = syncFrequency,
+                        onSyncFrequencySelected = { frequency ->
+                            syncFrequency = frequency
+                            syncPreferences.write(frequency)
+                            syncScheduler.applyFrequency(frequency)
+                            if (frequency == SyncFrequency.ON_LAUNCH) {
+                                syncScheduler.enqueueManualSync()
+                            }
+                        },
+                        profileSyncFrequency = profileSyncFrequency,
+                        onProfileSyncFrequencySelected = { frequency ->
+                            profileSyncFrequency = frequency
+                            syncPreferences.writeProfile(frequency)
+                            syncScheduler.applyProfileFrequency(frequency)
+                        },
+                    )
+                }
             }
         }
     }

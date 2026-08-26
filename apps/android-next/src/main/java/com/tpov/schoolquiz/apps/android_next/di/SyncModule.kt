@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.apps.android_next.di
 
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
+import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
 import com.tpov.schoolquiz.platform.android_services.sync.WorkManagerSyncScheduler
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
@@ -28,11 +29,16 @@ import com.tpov.schoolquiz.shared.feature.theme.domain.repository.ThemeRepositor
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
+/** The account's own state — the only thing the rarer profile cadence refreshes. */
+class ProfileSyncables(val value: List<Syncable>)
+
 val syncModule =
     module {
         single<SyncStateRepository> { RoomSyncStateRepository(get<SyncStateDao>()) }
         single<WorkManager> { WorkManager.getInstance(androidContext()) }
         single<SyncScheduler> { WorkManagerSyncScheduler(get<WorkManager>()) }
+        single<SyncPreferences> { SyncPreferences(androidContext()) }
+        single<WorkerFactory> { SyncWorkerFactory(get(), get<ProfileSyncables>().value) }
         single<CatalogSyncListOrchestrator> {
             CatalogSyncListOrchestrator(
                 catalogRepo = get<CatalogRepository>(),
@@ -87,6 +93,10 @@ val syncModule =
                 answerDao = get(),
             )
         }
+        single<ProfileSyncables> {
+            ProfileSyncables(listOf(get<ProfileBootstrapSync>(), get<UserStatsRepository>() as Syncable))
+        }
+
         single<List<Syncable>> {
             val profileSync = get<ProfileBootstrapSync>()
             listOf(
@@ -101,5 +111,4 @@ val syncModule =
                 get<CatalogSyncListOrchestrator>(),
             )
         }
-        single<WorkerFactory> { SyncWorkerFactory(get()) }
     }

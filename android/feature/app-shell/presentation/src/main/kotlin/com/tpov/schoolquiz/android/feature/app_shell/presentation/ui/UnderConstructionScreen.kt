@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
@@ -23,6 +24,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignCard
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
 
 /**
  * Generic placeholder for screens not yet implemented.
@@ -67,7 +69,7 @@ fun UnderConstructionScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Скоро здесь будет...",
+                        text = stringResource(R.string.under_construction_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     )

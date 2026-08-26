@@ -14,7 +14,8 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.FakeUserS
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubHomeQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubMyQuestsComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.fake.StubQuizzesComponent
-import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.displayName
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.R
+import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.labels.labelRes
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.LocalConfig
@@ -517,18 +518,17 @@ class DefaultRootComponentTest {
 
     // -----------------------------------------------------------------------
     // Labels.kt exhaustive when — scenario 41e
-    // Spec: Labels_displayName_QuestCreateRoot_non_blank
+    // Spec: Labels_labelRes_QuestCreateRoot_non_blank
     // GIVEN LocalConfig.QuestCreateRoot
-    // WHEN displayName property accessed
-    // THEN returns non-blank string "Создание квеста"
+    // WHEN labelRes property accessed
+    // THEN maps to the quest-create screen title resource
     // (compile-time: exhaustive `when` in Labels.kt ensures QuestCreateRoot is handled)
     // -----------------------------------------------------------------------
 
     @Test
     fun `Labels displayName QuestCreateRoot returns non-blank string`() {
-        val name = LocalConfig.QuestCreateRoot.displayName
-        assertTrue(name.isNotBlank())
-        assertEquals("Создание квеста", name)
+        val res = LocalConfig.QuestCreateRoot.labelRes
+        assertEquals(R.string.config_quest_create, res)
     }
 
     // -----------------------------------------------------------------------
