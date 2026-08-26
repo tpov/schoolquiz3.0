@@ -13,7 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.tpov.schoolquiz.android.core.designsystem.R
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 
@@ -41,7 +43,8 @@ fun CatalogSpinner(
     modifier: Modifier = Modifier,
 ) {
     val expanded = remember { mutableStateOf(false) }
-    val selectedLabel = items.firstOrNull { it.id == selectedId }?.name ?: "Все категории"
+    val selectedLabel =
+        items.firstOrNull { it.id == selectedId }?.name ?: stringResource(R.string.ds_spinner_all_categories)
 
     ExposedDropdownMenuBox(
         expanded = expanded.value,
@@ -72,7 +75,7 @@ fun CatalogSpinner(
             onDismissRequest = { expanded.value = false },
         ) {
             DropdownMenuItem(
-                text = { Text("Все категории") },
+                text = { Text(stringResource(R.string.ds_spinner_all_categories)) },
                 onClick = {
                     onSelectionChanged(null)
                     expanded.value = false

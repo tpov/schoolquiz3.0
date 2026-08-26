@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -613,6 +614,9 @@ fun NoirProgressBar(
 
 // ─── Bottom navigation ──────────────────────────────────────────────────────
 
+/** Width of the active tab's accent rail, as a fraction of the slot (the canvas uses 52%). */
+private const val ACTIVE_RAIL_FRACTION = 0.52f
+
 /**
  * One destination in the bottom bar.
  *
@@ -639,22 +643,33 @@ fun NoirBottomNav(
                     end = Offset(size.width, 0f),
                 )
             }
-            .navigationBarsPadding()
-            .padding(horizontal = 6.dp, vertical = 6.dp),
+            .navigationBarsPadding(),
     ) {
         items.forEachIndexed { index, tab ->
             val active = index == selectedIndex
+            val accent = LocalNoirAccent.current
             val color by animateColorAsState(
-                targetValue = if (active) LocalNoirAccent.current else NoirT3,
+                targetValue = if (active) accent else NoirT3,
                 animationSpec = tween(120),
                 label = "nav",
             )
             Column(
                 Modifier
                     .weight(1f)
-                    .clip(NoirShapeMd)
+                    .drawBehind {
+                        // The active tab carries a short accent rail on the bar's top edge,
+                        // like the canvas: 2px tall, about half the slot wide.
+                        if (active) {
+                            val railWidth = size.width * ACTIVE_RAIL_FRACTION
+                            drawRect(
+                                color = accent,
+                                topLeft = Offset((size.width - railWidth) / 2f, 0f),
+                                size = Size(railWidth, 2.dp.toPx()),
+                            )
+                        }
+                    }
                     .clickable(role = Role.Tab) { onSelect(index) }
-                    .defaultMinSize(minHeight = 52.dp)
+                    .defaultMinSize(minHeight = 56.dp)
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp),
@@ -665,7 +680,14 @@ fun NoirBottomNav(
                     tint = color,
                     modifier = Modifier.size(20.dp),
                 )
-                Text(tab.label.uppercase(), style = NoirType.navLabel, color = color)
+                Text(
+                    tab.label.uppercase(),
+                    style =
+                        NoirType.navLabel.copy(
+                            fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+                        ),
+                    color = color,
+                )
             }
         }
     }

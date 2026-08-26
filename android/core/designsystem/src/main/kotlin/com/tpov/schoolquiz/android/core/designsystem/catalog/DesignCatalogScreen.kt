@@ -17,8 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.tpov.schoolquiz.android.core.designsystem.R
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandCard
 import com.tpov.schoolquiz.android.core.designsystem.components.BrandCircleIconButton
@@ -58,7 +60,7 @@ fun DesignCatalogScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Design Catalog",
+            text = stringResource(R.string.ds_catalog_title),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
@@ -68,26 +70,30 @@ fun DesignCatalogScreen(modifier: Modifier = Modifier) {
         SectionLabel("BrandCard")
         BrandCard(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "BrandCard content",
+                text = stringResource(R.string.ds_catalog_brandcard_content),
                 modifier = Modifier.padding(16.dp),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
 
         SectionLabel("BrandPrimaryButton")
-        BrandPrimaryButton(text = "Primary Action", onClick = {})
+        BrandPrimaryButton(text = stringResource(R.string.ds_catalog_primary_action), onClick = {})
 
         SectionLabel("BrandSecondaryButton")
-        BrandSecondaryButton(text = "Secondary Action", onClick = {})
+        BrandSecondaryButton(text = stringResource(R.string.ds_catalog_secondary_action), onClick = {})
 
         SectionLabel("BrandProgressBar")
         BrandProgressBar(progress = 0.7f, modifier = Modifier.fillMaxWidth())
 
         SectionLabel("BrandCircleIconButton")
-        BrandCircleIconButton(icon = Icons.Default.Star, contentDescription = "Star", onClick = {})
+        BrandCircleIconButton(
+            icon = Icons.Default.Star,
+            contentDescription = stringResource(R.string.ds_catalog_cd_star),
+            onClick = {},
+        )
 
         SectionLabel("CategoryIcon")
-        CategoryIcon(icon = Icons.Default.Home, contentDescription = "Home")
+        CategoryIcon(icon = Icons.Default.Home, contentDescription = stringResource(R.string.ds_catalog_cd_home))
 
         NoirShowcase()
     }
@@ -112,35 +118,39 @@ private fun NoirShowcase() {
 
             SectionLabel("NoirGroup — hairline instead of a floating card")
             NoirGroup {
-                NoirGroupHeader(label = "Настройки")
+                NoirGroupHeader(label = stringResource(R.string.ds_showcase_settings_header))
                 NoirRow(
                     leading = { NoirRowIcon(NoirIcons.Sliders) },
                     trailing = { NoirSwitch(checked = true, onCheckedChange = {}) },
                 ) {
-                    Text("Переключатель, а не галочка", style = NoirType.rowTitle)
-                    Text("On/off — это switch", style = NoirType.rowSub)
+                    Text(stringResource(R.string.ds_showcase_switch_title), style = NoirType.rowTitle)
+                    Text(stringResource(R.string.ds_showcase_switch_subtitle), style = NoirType.rowSub)
                 }
                 NoirRow(
                     showDivider = false,
                     leading = { NoirRowIcon(NoirIcons.Clock) },
                     trailing = { Text("12:30", style = NoirType.num) },
                 ) {
-                    Text("Числа моноширинные", style = NoirType.rowTitle)
+                    Text(stringResource(R.string.ds_showcase_mono_title), style = NoirType.rowTitle)
                 }
             }
 
             SectionLabel("NoirButton — mono uppercase, one primary per screen")
-            NoirButton(text = "Основное действие", onClick = {})
-            NoirButton(text = "Второстепенное", onClick = {}, style = NoirButtonStyle.Ghost)
+            NoirButton(text = stringResource(R.string.ds_showcase_button_primary), onClick = {})
+            NoirButton(
+                text = stringResource(R.string.ds_showcase_button_secondary),
+                onClick = {},
+                style = NoirButtonStyle.Ghost,
+            )
             NoirButton(text = "Pro", onClick = {}, style = NoirButtonStyle.Gold)
-            NoirButton(text = "Недоступно", onClick = {}, enabled = false)
+            NoirButton(text = stringResource(R.string.ds_showcase_button_disabled), onClick = {}, enabled = false)
 
             SectionLabel("NoirChip")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NoirChip(text = "Обычный")
-                NoirChip(text = "Акцент", tone = NoirChipTone.Accent)
+                NoirChip(text = stringResource(R.string.ds_showcase_chip_default))
+                NoirChip(text = stringResource(R.string.ds_showcase_chip_accent), tone = NoirChipTone.Accent)
                 NoirChip(text = "Pro", tone = NoirChipTone.Gold)
-                NoirChip(text = "Ошибка", tone = NoirChipTone.Danger)
+                NoirChip(text = stringResource(R.string.ds_showcase_chip_danger), tone = NoirChipTone.Danger)
             }
 
             SectionLabel("NoirProgressBar")

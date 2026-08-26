@@ -1,4 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default locale: Russian for ds_* keys.
+  long_press_action predates localization and keeps its original English text.
+-->
 <resources>
     <string name="long_press_action">Long press action</string>
+
+    <string name="ds_catalog_title">Design Catalog</string>
+    <string name="ds_catalog_brandcard_content">BrandCard content</string>
+    <string name="ds_catalog_primary_action">Primary Action</string>
+    <string name="ds_catalog_secondary_action">Secondary Action</string>
+    <string name="ds_catalog_cd_star">Star</string>
+    <string name="ds_catalog_cd_home">Home</string>
+
+    <string name="ds_showcase_settings_header">Настройки</string>
+    <string name="ds_showcase_switch_title">Переключатель, а не галочка</string>
+    <string name="ds_showcase_switch_subtitle">On/off — это switch</string>
+    <string name="ds_showcase_mono_title">Числа моноширинные</string>
+    <string name="ds_showcase_button_primary">Основное действие</string>
+    <string name="ds_showcase_button_secondary">Второстепенное</string>
+    <string name="ds_showcase_button_disabled">Недоступно</string>
+    <string name="ds_showcase_chip_default">Обычный</string>
+    <string name="ds_showcase_chip_accent">Акцент</string>
+    <string name="ds_showcase_chip_danger">Ошибка</string>
+
+    <string name="ds_spinner_all_categories">Все категории</string>
+    <string name="ds_hierarchy_download">Скачать</string>
+    <string name="ds_hierarchy_downloaded">Скачано</string>
 </resources>

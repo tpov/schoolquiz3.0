@@ -36,6 +36,12 @@ import androidx.compose.ui.unit.sp
 /** Pure OLED black. The brand choice, and not the usual #121212. */
 val NoirBg = Color(0xFF000000)
 
+/**
+ * A step off pure black — the drawer ground, badges sitting on art, anything that must read as
+ * "a layer above" without becoming a surface.
+ */
+val NoirBgDeep = Color(0xFF08080A)
+
 /** Surface 1 — a card sitting on the black. */
 val NoirS1 = Color(0xFF1E1E24)
 
@@ -136,17 +142,16 @@ fun noirGlow(): Color =
 /**
  * Entry point. Nests inside [com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme].
  *
- * Both fonts fall back to system faces, so the system works before the real ones are bundled — the
- * headings simply read as an ordinary grotesque until then. Archivo must be the variable cut when
- * it does arrive: without the width axis at roughly 112 the wide display character is lost, which
- * is most of what makes this look like itself.
+ * Both fonts default to the bundled cuts — Archivo variable at width 112 for display, JetBrains
+ * Mono for anything numeric — so a plain `NoirTheme { … }` already reads as NOIR. Tests can still
+ * pass system faces to keep screenshots deterministic.
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 fun NoirTheme(
     state: NoirState = rememberNoirState(),
-    displayFont: FontFamily = FontFamily.Default,
-    monoFont: FontFamily = FontFamily.Monospace,
+    displayFont: FontFamily = NoirDisplayFont,
+    monoFont: FontFamily = NoirMonoFont,
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
@@ -247,8 +252,10 @@ object NoirType {
         @Composable get() =
             TextStyle(
                 fontFamily = LocalNoirDisplay.current,
-                fontSize = 22.sp,
-                lineHeight = 27.sp,
+                fontSize = 28.sp,
+                // Design v2: 28px at line-height 1.22, weight 600.
+                lineHeight = 34.sp,
+                fontWeight = FontWeight.SemiBold,
                 letterSpacing = (-0.01).em,
                 color = NoirT1,
             )
