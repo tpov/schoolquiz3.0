@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository
 
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileLogo
 
 /**
@@ -11,6 +12,19 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileL
 interface LogoRepository {
     suspend fun catalog(): List<ProfileLogo>
 
-    /** Spends gold. Returns what was charged. */
+    /** Spends gold on the fixed-price purchase. Returns what was charged. */
     suspend fun buy(logo: String): Long
+
+    /** Puts the avatar on the account. Returns the image URL the server assigned to it. */
+    suspend fun wear(logo: String): String
+
+    suspend fun listings(limit: Int): List<LogoListing>
+
+    /** Opens a seller listing at [price] gold. */
+    suspend fun listForSale(logo: String, price: Long)
+
+    suspend fun cancelListing(logo: String)
+
+    /** Buys a listed avatar. Returns the commission the trade paid. */
+    suspend fun buyListed(logo: String): Long
 }
