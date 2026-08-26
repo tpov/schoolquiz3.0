@@ -3,10 +3,13 @@
 package com.tpov.schoolquiz.android.feature.internet.profile.presentation.screen
 
 import android.app.Activity
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,11 +19,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.R
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileMessage
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.PlatformAccountChooserHost
@@ -45,6 +51,7 @@ data class ProfileActions(
     val onSaveNickname: () -> Unit = {},
     val onSelectNickname: (String) -> Unit = {},
     val onLinkGoogle: () -> Unit = {},
+    val onRefresh: () -> Unit = {},
 )
 
 @Composable
@@ -66,6 +73,10 @@ fun ProfileScreen(
                 onLinkGoogle = {
                     // The account sheet is a system dialog and needs the Activity it appears over.
                     (context as? Activity)?.let { component.onLinkGoogle(PlatformAccountChooserHost(it)) }
+                },
+                onRefresh = {
+                    // One sync at a time: the in-flight flag also drives the icon's spin.
+                    if (!state.isLoading) component.onRefresh()
                 },
             ),
         modifier = modifier,
@@ -98,6 +109,9 @@ fun ProfileView(
     modifier: Modifier = Modifier,
 ) {
     val metrics = remember(state.profile) { state.profile.dashboardMetrics() }
+    val leagueName = stringResource(LEAGUE_NAME_RES[metrics.leagueNameIndex])
+    val nextLeagueName = metrics.nextLeagueIndex?.let { stringResource(LEAGUE_NAME_RES[it]) }
+    val topRole = metrics.topRoleIndex?.let { stringResource(ROLE_NAME_RES[it]) }
     Column(
         modifier
             .fillMaxSize()
@@ -105,6 +119,16 @@ fun ProfileView(
             .padding(PaddingValues(horizontal = 16.dp, vertical = 4.dp)),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
+        // The canvas keeps refresh on the bar's trailing edge; the shell owns that bar, so the
+        // control lives on the screen's first line instead.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            ProfileRefreshButton(
+                isSyncing = state.isLoading,
+                contentDescription = stringResource(R.string.profile_cd_refresh),
+                onClick = actions.onRefresh,
+            )
+        }
+
         ProfileIdentityRow(
             state = state,
             onNicknameChange = actions.onNicknameChange,
@@ -114,8 +138,8 @@ fun ProfileView(
         )
 
         ProfileLeagueBand(
-            leagueName = metrics.leagueName,
-            nextLeagueName = metrics.nextLeagueName,
+            leagueName = leagueName,
+            nextLeagueName = nextLeagueName,
             nextMilestoneDelta = metrics.nextMilestoneDelta,
             skillPoints = state.profile.skillPoints,
             progress = metrics.leagueProgress,
@@ -127,7 +151,7 @@ fun ProfileView(
             activity = metrics.qualificationActivity,
             averagePercent = metrics.qualificationPercent,
             rolesHeld = metrics.rolesHeld,
-            topRole = metrics.topRole,
+            topRole = topRole,
         )
 
         ProfileNicknameShelf(state = state, onSelect = actions.onSelectNickname)
@@ -140,7 +164,7 @@ fun ProfileView(
 
         ProfileFooterRows(profile = state.profile)
 
-        state.message?.let { ProfileToast(message = it) }
+        state.message?.let { ProfileToast(message = it.resolvedText()) }
     }
 }
 
@@ -150,15 +174,45 @@ private data class ProfileDashboardMetrics(
     val qualificationActivity: List<Float>,
     val qualificationPercent: Int,
     val rolesHeld: Int,
-    val topRole: String?,
-    val leagueName: String,
-    val nextLeagueName: String?,
+    /** Index into [ROLE_NAME_RES]; null when no qualification is held at all. */
+    val topRoleIndex: Int?,
+    val leagueNameIndex: Int,
+    val nextLeagueIndex: Int?,
     val leagueProgress: Int,
     val nextMilestoneDelta: Int,
 )
 
 /** The role names, in the order [ProfileQualification] declares them. */
-private val ROLE_NAMES = listOf("Спонсор", "Тестер", "Переводчик", "Модератор", "Админ", "Разработчик")
+private val ROLE_NAME_RES =
+    listOf(
+        R.string.profile_role_sponsor,
+        R.string.profile_role_tester,
+        R.string.profile_role_translator,
+        R.string.profile_role_moderator,
+        R.string.profile_role_admin,
+        R.string.profile_role_developer,
+    )
+
+private val LEAGUE_NAME_RES =
+    listOf(
+        R.string.profile_league_start,
+        R.string.profile_league_student,
+        R.string.profile_league_connoisseur,
+        R.string.profile_league_expert,
+        R.string.profile_league_master,
+        R.string.profile_league_legend,
+    )
+
+@Composable
+private fun ProfileMessage.resolvedText(): String =
+    when (this) {
+        is ProfileMessage.NicknameActivated -> stringResource(R.string.profile_message_nickname_active, nickname)
+        ProfileMessage.ProfileSynced -> stringResource(R.string.profile_message_synced)
+        ProfileMessage.NicknameUpdated -> stringResource(R.string.profile_message_nickname_updated)
+        ProfileMessage.GoogleLinked -> stringResource(R.string.profile_message_google_linked)
+        ProfileMessage.GoogleSwitchedToExisting -> stringResource(R.string.profile_message_google_switched)
+        is ProfileMessage.Failure -> detail ?: stringResource(R.string.profile_message_sync_failed)
+    }
 
 private fun UserProfile.dashboardMetrics(): ProfileDashboardMetrics {
     val levels =
@@ -179,25 +233,24 @@ private fun UserProfile.dashboardMetrics(): ProfileDashboardMetrics {
         rolesHeld = levels.count { it > 0 },
         // The role the account is furthest along in; ties go to the earlier one, which is the
         // order the qualifications are granted in anyway.
-        topRole = levels.withIndex().maxByOrNull { it.value }?.takeIf { it.value > 0 }?.let { ROLE_NAMES[it.index] },
-        leagueName = league.name,
-        nextLeagueName = league.nextName,
+        topRoleIndex = levels.withIndex().maxByOrNull { it.value }?.takeIf { it.value > 0 }?.index,
+        leagueNameIndex = league.nameIndex,
+        nextLeagueIndex = league.nextIndex,
         leagueProgress = league.progress,
         nextMilestoneDelta = league.nextMilestoneDelta,
     )
 }
 
 private data class ExperienceLeague(
-    val name: String,
-    val nextName: String?,
+    val nameIndex: Int,
+    val nextIndex: Int?,
     val progress: Int,
     val nextMilestoneDelta: Int,
 )
 
 private fun leagueForSkill(skillPoints: Int): ExperienceLeague {
     val milestones = listOf(0, 100, 500, 1_500, 5_000, 15_000, 50_000)
-    val names = listOf("Старт", "Ученик", "Знаток", "Эксперт", "Мастер", "Легенда")
-    val lowerIndex = milestones.indexOfLast { skillPoints >= it }.coerceIn(0, names.lastIndex)
+    val lowerIndex = milestones.indexOfLast { skillPoints >= it }.coerceIn(0, LEAGUE_NAME_RES.lastIndex)
     val lower = milestones[lowerIndex]
     val upper = milestones.getOrElse(lowerIndex + 1) { milestones.last() }
     val progress =
@@ -209,21 +262,24 @@ private fun leagueForSkill(skillPoints: Int): ExperienceLeague {
                 .coerceIn(0, 100)
         }
     return ExperienceLeague(
-        name = names[lowerIndex],
-        nextName = names.getOrNull(lowerIndex + 1),
+        nameIndex = lowerIndex,
+        nextIndex = (lowerIndex + 1).takeIf { it <= LEAGUE_NAME_RES.lastIndex },
         progress = progress,
         nextMilestoneDelta = (upper - skillPoints).coerceAtLeast(0),
     )
 }
 
-internal val ProfileStatus.displayName: String
-    get() =
+val ProfileStatus.labelRes: Int
+    @StringRes get() =
         when (this) {
-            ProfileStatus.OFFLINE -> "Офлайн"
-            ProfileStatus.ANONYMOUS -> "Анонимный"
-            ProfileStatus.REGISTERED -> "Зарегистрирован"
-            ProfileStatus.VALIDATED -> "Валидирован"
+            ProfileStatus.OFFLINE -> R.string.profile_status_offline
+            ProfileStatus.ANONYMOUS -> R.string.profile_status_anonymous
+            ProfileStatus.REGISTERED -> R.string.profile_status_registered
+            ProfileStatus.VALIDATED -> R.string.profile_status_validated
         }
+
+val ProfileStatus.displayName: String
+    @Composable get() = stringResource(labelRes)
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 412, heightDp = 892)
 @Composable

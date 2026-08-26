@@ -2,19 +2,29 @@
 
 package com.tpov.schoolquiz.android.feature.local.settings.presentation.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -23,20 +33,21 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroupHeader
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirRow
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenGround
+import com.tpov.schoolquiz.android.feature.local.settings.presentation.R
+import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
-
-/** Stands in for every value the account has not filled in. One wording, so a gap reads as a gap. */
-private const val UNSET = "Не установлен"
 
 /**
  * Settings, carried over from the legacy screen.
@@ -53,6 +64,10 @@ fun NoirSettingsScreen(
     appVersionCode: Int,
     onSyncNow: () -> Unit,
     modifier: Modifier = Modifier,
+    syncFrequency: SyncFrequency = SyncFrequency.DAILY,
+    onSyncFrequencySelected: (SyncFrequency) -> Unit = {},
+    profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY,
+    onProfileSyncFrequencySelected: (SyncFrequency) -> Unit = {},
 ) {
     Box(modifier.fillMaxSize().noirScreenGround()) {
         LazyColumn(
@@ -62,7 +77,15 @@ fun NoirSettingsScreen(
         ) {
             item { PersonalGroup(profile) }
             item { GameStatsGroup(profile) }
-            item { SyncGroup(onSyncNow) }
+            item {
+                SyncGroup(
+                    frequency = syncFrequency,
+                    onFrequencySelected = onSyncFrequencySelected,
+                    profileFrequency = profileSyncFrequency,
+                    onProfileFrequencySelected = onProfileSyncFrequencySelected,
+                    onSyncNow = onSyncNow,
+                )
+            }
             item { NotificationsGroup() }
         }
         // Pinned to the bottom rather than trailing the list, and carrying no click of its own —
@@ -84,29 +107,49 @@ fun NoirSettingsScreen(
 @Composable
 private fun PersonalGroup(profile: UserProfile) {
     NoirGroup {
-        NoirGroupHeader("Персональная информация")
+        NoirGroupHeader(stringResource(R.string.settings_group_personal))
         // Login and password are the same single fact — whether this account is signed in — so
         // they are one row, not two. There is nothing to change until Google sign-in is wired.
         SettingRow(
-            label = "Аккаунт",
+            label = stringResource(R.string.settings_account),
             value =
                 when (profile.status) {
-                    ProfileStatus.OFFLINE -> "Офлайн"
-                    ProfileStatus.ANONYMOUS -> "Анонимный, без входа"
-                    ProfileStatus.REGISTERED -> "Зарегистрирован"
-                    ProfileStatus.VALIDATED -> "Подтверждён"
+                    ProfileStatus.OFFLINE -> stringResource(R.string.settings_status_offline)
+                    ProfileStatus.ANONYMOUS -> stringResource(R.string.settings_status_anonymous)
+                    ProfileStatus.REGISTERED -> stringResource(R.string.settings_status_registered)
+                    ProfileStatus.VALIDATED -> stringResource(R.string.settings_status_validated)
                 },
             locked = true,
-            note = if (profile.status == ProfileStatus.ANONYMOUS) "Вход через Google — скоро" else null,
+            note =
+                if (profile.status == ProfileStatus.ANONYMOUS) {
+                    stringResource(R.string.settings_note_google_soon)
+                } else {
+                    null
+                },
         )
-        SettingRow("Никнейм", profile.nickname)
-        SettingRow("Имя", profile.realName ?: UNSET)
-        SettingRow("День рождения", profile.birthday ?: UNSET)
-        SettingRow("Город", profile.city ?: UNSET)
-        SettingRow("Telegram", profile.telegram ?: UNSET)
+        SettingRow(stringResource(R.string.settings_nickname), profile.nickname)
         SettingRow(
-            label = "Языки",
-            value = profile.knownLanguages.joinToString(", ") { it.uppercase() }.ifBlank { UNSET },
+            stringResource(R.string.settings_real_name),
+            profile.realName ?: stringResource(R.string.settings_value_unset),
+        )
+        SettingRow(
+            stringResource(R.string.settings_birthday),
+            profile.birthday ?: stringResource(R.string.settings_value_unset),
+        )
+        SettingRow(
+            stringResource(R.string.settings_city),
+            profile.city ?: stringResource(R.string.settings_value_unset),
+        )
+        SettingRow(
+            stringResource(R.string.settings_telegram),
+            profile.telegram ?: stringResource(R.string.settings_value_unset),
+        )
+        SettingRow(
+            label = stringResource(R.string.settings_languages),
+            value =
+                profile.knownLanguages
+                    .joinToString(", ") { it.uppercase() }
+                    .ifBlank { stringResource(R.string.settings_value_unset) },
             showDivider = false,
         )
     }
@@ -115,43 +158,156 @@ private fun PersonalGroup(profile: UserProfile) {
 @Composable
 private fun GameStatsGroup(profile: UserProfile) {
     NoirGroup {
-        NoirGroupHeader("Игровая статистика")
-        SettingRow("Жизни", "${profile.standardHearts}", icon = NoirIcons.Heart)
-        SettingRow("Золотые жизни", "${profile.goldHearts}", icon = NoirIcons.Gem)
-        SettingRow("Опыт", "${profile.skillPoints} XP")
+        NoirGroupHeader(stringResource(R.string.settings_group_game_stats))
+        SettingRow(stringResource(R.string.settings_hearts), "${profile.standardHearts}", icon = NoirIcons.Heart)
+        SettingRow(stringResource(R.string.settings_gold_hearts), "${profile.goldHearts}", icon = NoirIcons.Gem)
+        SettingRow(stringResource(R.string.settings_skill_points), "${profile.skillPoints} XP")
         // Premium was a switch on the old screen. It is granted by the server, so a switch here
         // would be a control that refuses to move — the state is the whole truth.
         SettingRow(
-            label = "Премиум",
-            value = if (profile.premiumUntilMs > 0L) "Активен" else "Нет",
+            label = stringResource(R.string.settings_premium),
+            value =
+                if (profile.premiumUntilMs > 0L) {
+                    stringResource(R.string.settings_premium_active)
+                } else {
+                    stringResource(R.string.settings_premium_no)
+                },
             valueTint = if (profile.premiumUntilMs > 0L) NoirGold else NoirT3,
             showDivider = false,
         )
     }
 }
 
+/**
+ * The sync group: how often the app reaches out on its own, plus the always-there manual action.
+ *
+ * Content and the profile carry separate cadences — quests play offline either way, so the
+ * profile is allowed to trail behind on a rarer schedule. Each row opens the same picker; one
+ * decision, five answers, no depth.
+ */
 @Composable
-private fun SyncGroup(onSyncNow: () -> Unit) {
+private fun SyncGroup(
+    frequency: SyncFrequency,
+    onFrequencySelected: (SyncFrequency) -> Unit,
+    profileFrequency: SyncFrequency,
+    onProfileFrequencySelected: (SyncFrequency) -> Unit,
+    onSyncNow: () -> Unit,
+) {
+    val pickingContent = remember { mutableStateOf(false) }
+    val pickingProfile = remember { mutableStateOf(false) }
+    if (pickingContent.value) {
+        FrequencyPickerDialog(
+            titleRes = R.string.settings_sync_frequency,
+            current = frequency,
+            onSelect = { option ->
+                pickingContent.value = false
+                onFrequencySelected(option)
+            },
+            onDismiss = { pickingContent.value = false },
+        )
+    }
+    if (pickingProfile.value) {
+        FrequencyPickerDialog(
+            titleRes = R.string.settings_sync_frequency_profile,
+            current = profileFrequency,
+            onSelect = { option ->
+                pickingProfile.value = false
+                onProfileFrequencySelected(option)
+            },
+            onDismiss = { pickingProfile.value = false },
+        )
+    }
     NoirGroup {
-        NoirGroupHeader("Синхронизация")
-        SettingRow("Профиль", "Каждый день")
-        SettingRow("Квесты", "Каждый день")
+        NoirGroupHeader(stringResource(R.string.settings_group_sync))
+        NoirRow(onClick = { pickingContent.value = true }) {
+            Text(stringResource(R.string.settings_sync_frequency), style = NoirType.rowTitle)
+            Text(stringResource(frequency.labelRes), style = NoirType.rowSub.copy(color = LocalNoirAccent.current))
+        }
+        NoirRow(onClick = { pickingProfile.value = true }) {
+            Text(stringResource(R.string.settings_sync_frequency_profile), style = NoirType.rowTitle)
+            Text(
+                stringResource(profileFrequency.labelRes),
+                style = NoirType.rowSub.copy(color = LocalNoirAccent.current),
+            )
+        }
         // The empty catalog screen tells people to sync from the menu, so the action belongs here
         // where they come looking for it.
         NoirRow(onClick = onSyncNow, showDivider = false) {
-            Text("Синхронизировать сейчас", style = NoirType.rowTitle)
-            Text("Забрать каталоги и профиль с сервера", style = NoirType.rowSub)
+            Text(stringResource(R.string.settings_sync_now), style = NoirType.rowTitle)
+            Text(stringResource(R.string.settings_sync_now_subtitle), style = NoirType.rowSub)
         }
     }
 }
 
+/** One decision, five answers: a whole cadence choice in a single dialog. */
+@Composable
+private fun FrequencyPickerDialog(
+    titleRes: Int,
+    current: SyncFrequency,
+    onSelect: (SyncFrequency) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(titleRes)) },
+        text = {
+            Column {
+                SyncFrequency.entries.forEachIndexed { index, option ->
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(NoirShapeMd)
+                                .clickable { onSelect(option) }
+                                .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        RadioButton(selected = option == current, onClick = { onSelect(option) })
+                        Text(stringResource(option.labelRes), style = NoirType.rowTitle)
+                    }
+                    if (index < SyncFrequency.entries.lastIndex) {
+                        HorizontalDivider(color = NoirHair)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+    )
+}
+
+/** Label for the cadence value and its picker rows. */
+private val SyncFrequency.labelRes: Int
+    get() =
+        when (this) {
+            SyncFrequency.MANUAL -> R.string.settings_sync_freq_manual
+            SyncFrequency.ON_LAUNCH -> R.string.settings_sync_freq_on_launch
+            SyncFrequency.DAILY -> R.string.settings_sync_freq_daily
+            SyncFrequency.EVERY_3_DAYS -> R.string.settings_sync_freq_3days
+            SyncFrequency.WEEKLY -> R.string.settings_sync_freq_weekly
+        }
+
 @Composable
 private fun NotificationsGroup() {
     NoirGroup {
-        NoirGroupHeader("Уведомления")
-        SettingRow("Напоминания", "Выключены", locked = true, note = "Ждёт модуль уведомлений")
-        SettingRow("Время занятий", UNSET, locked = true)
-        SettingRow("Дни занятий", "Не выбраны", locked = true, showDivider = false)
+        NoirGroupHeader(stringResource(R.string.settings_group_notifications))
+        SettingRow(
+            label = stringResource(R.string.settings_reminders),
+            value = stringResource(R.string.settings_reminders_off),
+            locked = true,
+            note = stringResource(R.string.settings_note_waiting_module),
+        )
+        SettingRow(
+            label = stringResource(R.string.settings_lesson_time),
+            value = stringResource(R.string.settings_value_unset),
+            locked = true,
+        )
+        SettingRow(
+            label = stringResource(R.string.settings_lesson_days),
+            value = stringResource(R.string.settings_not_selected),
+            locked = true,
+            showDivider = false,
+        )
     }
 }
 
@@ -190,7 +346,7 @@ private fun SettingRow(
             if (locked) {
                 Icon(
                     NoirIcons.Lock,
-                    contentDescription = "Пока недоступно",
+                    contentDescription = stringResource(R.string.settings_cd_locked),
                     tint = NoirTOff,
                     modifier = Modifier.size(15.dp),
                 )

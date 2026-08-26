@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English UI strings of the local settings feature. -->
+<resources>
+    <string name="settings_group_personal">Personal information</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_status_offline">Offline</string>
+    <string name="settings_status_anonymous">Anonymous, not signed in</string>
+    <string name="settings_status_registered">Registered</string>
+    <string name="settings_status_validated">Verified</string>
+    <string name="settings_note_google_soon">Google sign-in coming soon</string>
+    <string name="settings_nickname">Nickname</string>
+    <string name="settings_real_name">Name</string>
+    <string name="settings_birthday">Birthday</string>
+    <string name="settings_city">City</string>
+    <string name="settings_telegram">Telegram</string>
+    <string name="settings_languages">Languages</string>
+
+    <string name="settings_group_game_stats">Game statistics</string>
+    <string name="settings_hearts">Lives</string>
+    <string name="settings_gold_hearts">Golden lives</string>
+    <string name="settings_skill_points">Experience</string>
+    <string name="settings_premium">Premium</string>
+    <string name="settings_premium_active">Active</string>
+    <string name="settings_premium_no">No</string>
+
+    <string name="settings_group_sync">Synchronization</string>
+    <string name="settings_sync_frequency">Sync frequency</string>
+    <string name="settings_sync_freq_manual">Manual</string>
+    <string name="settings_sync_freq_on_launch">Every app launch</string>
+    <string name="settings_sync_frequency_profile">Profile sync</string>
+    <string name="settings_sync_freq_daily">Once a day</string>
+    <string name="settings_sync_freq_3days">Every 3 days</string>
+    <string name="settings_sync_freq_weekly">Once a week</string>
+    <string name="settings_sync_now">Sync now</string>
+    <string name="settings_sync_now_subtitle">Fetch catalogs and profile from the server</string>
+
+    <string name="settings_group_notifications">Notifications</string>
+    <string name="settings_reminders">Reminders</string>
+    <string name="settings_reminders_off">Off</string>
+    <string name="settings_note_waiting_module">Waiting for the notifications module</string>
+    <string name="settings_lesson_time">Lesson time</string>
+    <string name="settings_lesson_days">Lesson days</string>
+    <string name="settings_not_selected">Not selected</string>
+
+    <string name="settings_value_unset">Not set</string>
+    <string name="settings_cd_locked">Not available yet</string>
+</resources>

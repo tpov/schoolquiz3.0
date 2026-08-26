@@ -11,7 +11,7 @@ data class ProfileUiState(
     val nicknameInput: String = profile.nickname,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val message: String? = null,
+    val message: ProfileMessage? = null,
     /**
      * Lessons finished on each of the last [ACTIVITY_WINDOW_DAYS] days, oldest first.
      *
@@ -37,7 +37,7 @@ data class ProfileUiState(
     val isLinkingGoogle: Boolean = false,
 ) {
     /**
-     * Whether upgrading the account is on offer.
+     * Whether the Google linking flow may be started.
      *
      * Only an anonymous account has anything to gain: a registered one is already linked, and an
      * offline one has no account to link to.

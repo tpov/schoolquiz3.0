@@ -2,6 +2,11 @@
 
 package com.tpov.schoolquiz.android.feature.internet.profile.presentation.screen
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +33,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +45,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -51,6 +59,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
@@ -63,6 +72,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.R
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
@@ -89,7 +99,24 @@ private val GIFT_BOX_TROPHIES =
     )
 
 /** The six roles, in the order [radarPoint] walks them: top, then clockwise. */
-private val QUALIFICATION_AXES = listOf("Спонсор", "Тестер", "Перевод", "Модер", "Админ", "Разраб")
+private val QUALIFICATION_AXES_RES =
+    listOf(
+        R.string.profile_role_short_sponsor,
+        R.string.profile_role_short_tester,
+        R.string.profile_role_short_translator,
+        R.string.profile_role_short_moderator,
+        R.string.profile_role_short_admin,
+        R.string.profile_role_short_developer,
+    )
+
+// One spin of the refresh icon per sync pass, as the canvas times it.
+private const val SYNC_SPIN_MS = 1100
+
+/**
+ * The league progress track. A step lighter than NoirS2, so the bar stays visible on the
+ * accent-tinted band it sits on.
+ */
+private val ProgressTrack = Color(0xFF2A2A32)
 
 // ─── Identity ───────────────────────────────────────────────────────────────
 
@@ -158,7 +185,7 @@ internal fun ProfileIdentityRow(
                         // something bought or won, and this cannot be either.
                         Icon(
                             NoirIcons.Check,
-                            contentDescription = "Подтверждённый аккаунт",
+                            contentDescription = stringResource(R.string.profile_cd_verified_account),
                             tint = accent,
                             modifier = Modifier.size(15.dp),
                         )
@@ -176,11 +203,21 @@ internal fun ProfileIdentityRow(
         when {
             state.isEditingNickname ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    NoirTextAction("Отмена", enabled = !state.isSaving, muted = true, onClick = onCancelRename)
-                    NoirTextAction("Сохранить", enabled = state.canSaveNickname, onClick = onSaveNickname)
+                    NoirTextAction(
+                        label = stringResource(R.string.profile_action_cancel),
+                        enabled = !state.isSaving,
+                        muted = true,
+                        onClick = onCancelRename,
+                    )
+                    NoirTextAction(
+                        label = stringResource(R.string.profile_action_save),
+                        enabled = state.canSaveNickname,
+                        onClick = onSaveNickname,
+                    )
                 }
 
-            state.canEditNickname -> NoirTextAction("Изменить", onClick = onStartRename)
+            state.canEditNickname ->
+                NoirTextAction(label = stringResource(R.string.profile_action_edit), onClick = onStartRename)
         }
     }
 }
@@ -255,7 +292,7 @@ internal fun ProfileLeagueBand(
             ) {
                 Text(
                     text = leagueName.uppercase(),
-                    style = NoirType.appbar.copy(fontSize = 26.sp),
+                    style = NoirType.appbar.copy(fontSize = 32.sp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -265,7 +302,7 @@ internal fun ProfileLeagueBand(
                         .padding(top = 13.dp)
                         .height(4.dp)
                         .clip(NoirShapePill)
-                        .background(NoirS2),
+                        .background(ProgressTrack),
                 ) {
                     Box(
                         Modifier
@@ -282,9 +319,13 @@ internal fun ProfileLeagueBand(
                     Text(
                         text =
                             if (nextLeagueName != null) {
-                                "$nextMilestoneDelta XP до «$nextLeagueName»"
+                                stringResource(
+                                    R.string.profile_league_next_milestone,
+                                    nextMilestoneDelta,
+                                    nextLeagueName,
+                                )
                             } else {
-                                "Высшая лига"
+                                stringResource(R.string.profile_league_top)
                             },
                         style = NoirType.kicker.copy(color = NoirT3),
                         maxLines = 1,
@@ -319,17 +360,18 @@ private fun ActivitySparkline(
     if (played == 0) {
         Box(modifier, contentAlignment = Alignment.Center) {
             Text(
-                "НЕТ АКТИВНОСТИ",
+                stringResource(R.string.profile_activity_none),
                 style = NoirType.kicker.copy(color = NoirTOff),
                 textAlign = TextAlign.Center,
             )
         }
         return
     }
+    val activityDescription = stringResource(R.string.profile_cd_activity_14_days, played)
     Box(modifier) {
         Canvas(
             Modifier.fillMaxSize().semantics {
-                contentDescription = "Активность за 14 дней: $played уроков"
+                contentDescription = activityDescription
             },
         ) {
             if (activity.size < 2) return@Canvas
@@ -349,14 +391,23 @@ private fun ActivitySparkline(
                     moveTo(points.first().x, points.first().y)
                     points.drop(1).forEach { lineTo(it.x, it.y) }
                 }
-            val area =
+            val areaBelow =
                 Path().apply {
                     addPath(line)
                     lineTo(size.width, size.height)
                     lineTo(0f, size.height)
                     close()
                 }
-            drawPath(area, color = NoirSuccess.copy(alpha = 0.14f))
+            // The red is everything above the line — the fortnight's unrealised peak.
+            val areaAbove =
+                Path().apply {
+                    addPath(line)
+                    lineTo(size.width, 0f)
+                    lineTo(0f, 0f)
+                    close()
+                }
+            drawPath(areaBelow, color = NoirSuccess.copy(alpha = 0.14f))
+            drawPath(areaAbove, color = NoirDanger.copy(alpha = 0.10f))
             drawPath(
                 line,
                 color = NoirSuccess,
@@ -364,7 +415,7 @@ private fun ActivitySparkline(
             )
         }
         Text(
-            "Активность",
+            stringResource(R.string.profile_activity_label),
             style = NoirType.kicker.copy(color = LocalNoirAccent.current),
             modifier = Modifier.align(Alignment.BottomStart).padding(start = 10.dp, bottom = 7.dp),
         )
@@ -390,10 +441,10 @@ internal fun ProfileQualificationCard(
 ) {
     NoirPanel(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Квалификации · Активность", style = NoirType.groupTitle)
+            Text(stringResource(R.string.profile_qualification_title), style = NoirType.groupTitle)
             Text(
-                "СРЕДН. $averagePercent%",
-                style = NoirType.kicker.copy(color = NoirDanger),
+                stringResource(R.string.profile_qualification_average, averagePercent),
+                style = NoirType.kicker.copy(color = NoirSuccess),
             )
         }
 
@@ -410,7 +461,7 @@ internal fun ProfileQualificationCard(
                 )
             corners.forEachIndexed { index, corner ->
                 RadarAxisLabel(
-                    role = QUALIFICATION_AXES[index],
+                    role = stringResource(QUALIFICATION_AXES_RES[index]),
                     value = values[index],
                     activity = activity.getOrElse(index) { 0f },
                     alignment = corner,
@@ -425,12 +476,15 @@ internal fun ProfileQualificationCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+            ) {
                 Text("$rolesHeld", style = NoirType.num.copy(fontSize = 15.sp, color = NoirT1))
-                Text("ИЗ 6 КВАЛИФИКАЦИЙ", style = NoirType.kicker)
+                Text(stringResource(R.string.profile_qualification_of_six), style = NoirType.kicker)
             }
             Text(
-                text = topRole?.uppercase() ?: "НЕТ",
+                text = topRole?.uppercase() ?: stringResource(R.string.profile_value_none),
                 style =
                     NoirType.kicker.copy(
                         color = if (topRole != null) LocalNoirAccent.current else NoirTOff,
@@ -451,34 +505,51 @@ private fun QualificationRadar(
     values: List<Float>,
     activity: List<Float>,
 ) {
+    val radarDescription = stringResource(R.string.profile_cd_radar)
     Canvas(
         Modifier
             .size(178.dp)
-            .semantics { contentDescription = "Радар квалификаций" },
+            .semantics { contentDescription = radarDescription },
     ) {
         val center = Offset(size.width / 2f, size.height / 2f)
         val radius = size.minDimension * 0.46f
-        repeat(2) { ring ->
+        // The web the canvas draws: outer ring at 26% white, inner ring at 20%, spokes at 18%.
+        val ringAlphas = listOf(0.26f, 0.20f)
+        ringAlphas.forEachIndexed { ring, alpha ->
             drawRadarWeb(
                 axes = values.size,
                 center = center,
-                radius = radius * ((ring + 1) / 2f),
-                color = NoirGlassStroke,
+                radius = radius * ((ring + 1) / ringAlphas.size.toFloat()),
+                color = Color.White.copy(alpha = alpha),
                 width = 1.dp.toPx(),
             )
         }
         repeat(values.size) { index ->
             drawLine(
-                NoirHair,
+                Color.White.copy(alpha = 0.18f),
                 center,
                 radarPoint(center, radius, index, values.size, 1f),
                 strokeWidth = 1.dp.toPx(),
             )
         }
-        // Activity underneath, qualification over it: the level is the subject, the activity is
-        // the context, and the reading is how far the green falls short of the red.
-        drawRadarPolygon(values = activity, center = center, radius = radius, color = NoirSuccess)
-        drawRadarPolygon(values = values, center = center, radius = radius, color = NoirDanger)
+        // Activity underneath in red, qualification over it in green: the level is the subject,
+        // the activity is the context, and the reading is how far green falls short of red.
+        drawRadarPolygon(
+            values = activity,
+            center = center,
+            radius = radius,
+            color = NoirDanger,
+            fillAlpha = 0.10f,
+            strokeWidthDp = 1.6f,
+        )
+        drawRadarPolygon(
+            values = values,
+            center = center,
+            radius = radius,
+            color = NoirSuccess,
+            fillAlpha = 0.12f,
+            strokeWidthDp = 1.8f,
+        )
     }
 }
 
@@ -506,11 +577,11 @@ private fun BoxScope.RadarAxisLabel(
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(
                 "$level",
-                style = NoirType.num.copy(fontSize = 12.sp, color = if (level == 0) NoirOutline else NoirDanger),
+                style = NoirType.num.copy(fontSize = 12.sp, color = if (level == 0) NoirOutline else NoirSuccess),
             )
             Text(
                 "$act",
-                style = NoirType.num.copy(fontSize = 12.sp, color = if (act == 0) NoirOutline else NoirSuccess),
+                style = NoirType.num.copy(fontSize = 12.sp, color = if (act == 0) NoirOutline else NoirDanger),
             )
         }
     }
@@ -523,8 +594,8 @@ private fun RadarLegend() {
         Modifier.fillMaxWidth().padding(bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        LegendEntry("Квалификация", NoirDanger)
-        LegendEntry("Активность", NoirSuccess)
+        LegendEntry(stringResource(R.string.profile_legend_qualification), NoirSuccess)
+        LegendEntry(stringResource(R.string.profile_legend_activity), NoirDanger)
     }
 }
 
@@ -555,7 +626,7 @@ internal fun ProfileNicknameShelf(
 ) {
     NoirPanel(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Мои имена", style = NoirType.groupTitle)
+            Text(stringResource(R.string.profile_nicknames_title), style = NoirType.groupTitle)
             Text(
                 text = if (state.nicknamesUnreachable) "—" else "${state.ownedNicknames.size}",
                 style = NoirType.kicker.copy(color = LocalNoirAccent.current),
@@ -564,13 +635,13 @@ internal fun ProfileNicknameShelf(
 
         when {
             state.isLoadingNicknames && state.ownedNicknames.isEmpty() ->
-                NicknameNote("Загрузка…", NoirTOff)
+                NicknameNote(stringResource(R.string.profile_nicknames_loading), NoirTOff)
 
             state.nicknamesUnreachable && state.ownedNicknames.isEmpty() ->
-                NicknameNote("Не удалось загрузить — нет связи с сервером", NoirT3)
+                NicknameNote(stringResource(R.string.profile_nicknames_unreachable), NoirT3)
 
             state.ownedNicknames.isEmpty() ->
-                NicknameNote("Пока только текущее имя. Купить ещё — в магазине, вкладка NFT", NoirT3)
+                NicknameNote(stringResource(R.string.profile_nicknames_empty_hint), NoirT3)
 
             else ->
                 state.ownedNicknames.forEach { owned ->
@@ -611,7 +682,7 @@ private fun NicknameRow(
             )
             if (owned.isForSale) {
                 Text(
-                    "ПРОДАЁТСЯ ЗА ${owned.listedPrice}",
+                    stringResource(R.string.profile_nickname_for_sale, owned.listedPrice ?: 0L),
                     style = NoirType.kicker.copy(color = NoirGold),
                 )
             }
@@ -620,13 +691,13 @@ private fun NicknameRow(
             owned.active ->
                 Icon(
                     NoirIcons.Check,
-                    contentDescription = "Активное имя",
+                    contentDescription = stringResource(R.string.profile_cd_active_name),
                     tint = accent,
                     modifier = Modifier.size(16.dp),
                 )
 
             busy -> Text("…", style = NoirType.kicker.copy(color = NoirTOff))
-            else -> Text("НАДЕТЬ", style = NoirType.kicker.copy(color = accent))
+            else -> Text(stringResource(R.string.profile_nickname_wear), style = NoirType.kicker.copy(color = accent))
         }
     }
 }
@@ -656,9 +727,9 @@ internal fun ProfileTrophyShelf(
     val earned = GIFT_BOX_TROPHIES.count { it in held }
     NoirPanel(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Трофеи", style = NoirType.groupTitle)
+            Text(stringResource(R.string.profile_trophies_title), style = NoirType.groupTitle)
             Text(
-                "$earned ИЗ ${GIFT_BOX_TROPHIES.size}",
+                stringResource(R.string.profile_trophies_count, earned, GIFT_BOX_TROPHIES.size),
                 style = NoirType.kicker.copy(color = NoirGold),
             )
         }
@@ -707,11 +778,10 @@ internal fun ProfileFooterRows(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth()) {
-        FooterRow("Коробки", profile.boxCount.toString())
-        FooterRow("Серия", "${profile.boxStreakDays} дн.")
-        FooterRow("Логотипы", profile.ownedLogos.size.toString())
+        FooterRow(stringResource(R.string.profile_footer_boxes), profile.boxCount.toString())
+        FooterRow(stringResource(R.string.profile_footer_logos), profile.ownedLogos.size.toString())
         FooterRow(
-            label = "Языки",
+            label = stringResource(R.string.profile_footer_languages),
             value = profile.knownLanguages.joinToString(" ") { it.uppercase() }.ifBlank { "—" },
         )
     }
@@ -733,6 +803,45 @@ private fun FooterRow(
             Text(value, style = NoirType.num.copy(fontSize = 12.sp, color = NoirT1))
         }
     }
+}
+
+// ─── Screen chrome ──────────────────────────────────────────────────────────
+
+/**
+ * The refresh control of the screen.
+ *
+ * Spins once per sync pass and takes the accent while it runs; composed only while the sync is
+ * in flight, so an idle screen keeps no animator alive. The toast on completion is the ordinary
+ * message pipeline, not this button's business.
+ */
+@Composable
+internal fun ProfileRefreshButton(
+    isSyncing: Boolean,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val spin =
+        if (isSyncing) {
+            val transition = rememberInfiniteTransition(label = "profile_refresh")
+            val angle by transition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec =
+                    infiniteRepeatable(tween(durationMillis = SYNC_SPIN_MS, easing = LinearEasing)),
+                label = "profile_refresh_angle",
+            )
+            angle
+        } else {
+            0f
+        }
+    NoirIconButton(
+        icon = NoirIcons.Sync,
+        contentDescription = contentDescription,
+        onClick = onClick,
+        tint = if (isSyncing) LocalNoirAccent.current else NoirT3,
+        modifier = modifier.graphicsLayer { rotationZ = spin },
+    )
 }
 
 // ─── Shared shell ───────────────────────────────────────────────────────────
@@ -796,6 +905,8 @@ private fun DrawScope.drawRadarPolygon(
     center: Offset,
     radius: Float,
     color: Color,
+    fillAlpha: Float,
+    strokeWidthDp: Float,
 ) {
     // Nothing held collapses every corner onto the centre, and a polygon with no area draws
     // nothing at all — an empty web that reads as a chart which failed to load. A ring at the
@@ -818,8 +929,8 @@ private fun DrawScope.drawRadarPolygon(
         if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
     }
     path.close()
-    drawPath(path = path, color = color.copy(alpha = 0.12f))
-    drawPath(path = path, color = color, style = Stroke(width = 1.8.dp.toPx()))
+    drawPath(path = path, color = color.copy(alpha = fillAlpha))
+    drawPath(path = path, color = color, style = Stroke(width = strokeWidthDp.dp.toPx()))
     // Only the corners that carry a level get a dot; a dot at the centre would read as a value.
     points.forEachIndexed { index, point ->
         if (values[index] > 0f) drawCircle(color = color, radius = 2.6.dp.toPx(), center = point)
@@ -867,14 +978,14 @@ internal fun ProfileGoogleUpgrade(
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "ВОЙТИ ЧЕРЕЗ GOOGLE",
+                stringResource(R.string.profile_google_sign_in),
                 style = NoirType.button.copy(color = if (busy) NoirTOff else accent),
                 modifier = Modifier.weight(1f),
             )
             if (busy) Text("…", style = NoirType.kicker.copy(color = NoirTOff))
         }
         Text(
-            "Прогресс гостя сохранится. Регистрация открывает подтверждение аккаунта и торговлю именами.",
+            stringResource(R.string.profile_google_hint),
             style = NoirType.rowSub.copy(fontSize = 11.sp, color = NoirT3),
         )
     }

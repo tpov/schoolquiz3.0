@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.internet.profile.presentation.compon
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileMessage
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.AccountChooserHost
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.GoogleLinkOutcome
@@ -68,8 +69,8 @@ class DefaultProfileComponent(
                     switchingNickname = null,
                     message =
                         outcome.fold(
-                            onSuccess = { "Активное имя — $nickname" },
-                            onFailure = { error -> error.readableMessage() },
+                            onSuccess = { ProfileMessage.NicknameActivated(nickname) },
+                            onFailure = { error -> error.toFailureMessage() },
                         ),
                 )
             }
@@ -116,9 +117,12 @@ class DefaultProfileComponent(
             result.fold(
                 onSuccess = { profile ->
                     current.withProfile(profile)
-                        .copy(isLoading = false, message = if (announce) "Профиль синхронизирован" else current.message)
+                        .copy(
+                            isLoading = false,
+                            message = if (announce) ProfileMessage.ProfileSynced else current.message,
+                        )
                 },
-                onFailure = { error -> current.copy(isLoading = false, message = error.readableMessage()) },
+                onFailure = { error -> current.copy(isLoading = false, message = error.toFailureMessage()) },
             )
         }
         loadNicknames()
@@ -147,10 +151,14 @@ class DefaultProfileComponent(
                 result.fold(
                     onSuccess = { profile ->
                         current.withProfile(profile)
-                            .copy(isSaving = false, isEditingNickname = false, message = "Ник обновлён")
+                            .copy(
+                                isSaving = false,
+                                isEditingNickname = false,
+                                message = ProfileMessage.NicknameUpdated,
+                            )
                     },
                     onFailure = { error ->
-                        current.copy(isSaving = false, message = error.readableMessage())
+                        current.copy(isSaving = false, message = error.toFailureMessage())
                     },
                 )
             }
@@ -169,14 +177,13 @@ class DefaultProfileComponent(
                         result.fold(
                             onSuccess = { outcome ->
                                 when (outcome) {
-                                    GoogleLinkOutcome.LINKED -> "Аккаунт привязан, прогресс сохранён"
+                                    GoogleLinkOutcome.LINKED -> ProfileMessage.GoogleLinked
                                     // Said plainly. The alternative is somebody discovering on
                                     // their own that everything they had is no longer here.
-                                    GoogleLinkOutcome.SWITCHED ->
-                                        "Вход выполнен в существующий аккаунт — прогресс гостя остался на нём"
+                                    GoogleLinkOutcome.SWITCHED -> ProfileMessage.GoogleSwitchedToExisting
                                 }
                             },
-                            onFailure = { error -> error.readableMessage() },
+                            onFailure = { error -> error.toFailureMessage() },
                         ),
                 )
             }
@@ -205,8 +212,8 @@ class DefaultProfileComponent(
     private fun ProfileUiState.withProfile(profile: UserProfile): ProfileUiState =
         copy(profile = profile, nicknameInput = profile.nickname)
 
-    private fun Throwable.readableMessage(): String {
+    private fun Throwable.toFailureMessage(): ProfileMessage {
         if (this is CancellationException) throw this
-        return message?.takeIf { it.isNotBlank() } ?: "Не удалось синхронизировать профиль"
+        return ProfileMessage.Failure(message?.takeIf { it.isNotBlank() })
     }
 }
