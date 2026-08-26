@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,6 +61,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameListingSort
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameMarketTab
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameShopState
@@ -67,6 +70,7 @@ import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopVi
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameRejection
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileLogo
 import kotlinx.coroutines.delay
 
 /** How long the typing has to settle before the name goes to the server. */
@@ -146,9 +150,9 @@ fun NoirNicknameMarket(
                 item {
                     MarketNote(
                         when {
-                            nicknames.isLoading -> "Загрузка…"
-                            nicknames.listings.isEmpty() -> "Никто ничего не продаёт"
-                            else -> "Ничего не найдено"
+                            nicknames.isLoading -> stringResource(R.string.nft_loading)
+                            nicknames.listings.isEmpty() -> stringResource(R.string.nft_market_empty)
+                            else -> stringResource(R.string.nft_no_results)
                         },
                     )
                 }
@@ -184,7 +188,9 @@ private fun LazyListScope.searchAnswer(
     if (query.isBlank()) return
     val verdict = state.draftAvailability
     if (verdict == null) {
-        if (state.isCheckingAvailability) item { MarketNote("Проверяем…") }
+        if (state.isCheckingAvailability) {
+            item { MarketNote(stringResource(R.string.nft_checking)) }
+        }
         return
     }
     val holder = verdict.holder
@@ -194,18 +200,30 @@ private fun LazyListScope.searchAnswer(
             item {
                 MarketRow(
                     name = verdict.nickname,
-                    meta = if (verdict.price == 0L) "свободно · первое имя бесплатно" else "свободно",
+                    meta =
+                        if (verdict.price == 0L) {
+                            stringResource(R.string.nft_available_first_free)
+                        } else {
+                            stringResource(R.string.nft_available)
+                        },
                     accentName = true,
                 ) {
                     if (verdict.price > 0) GoldAmount(verdict.price)
                     MarketAction(
-                        "Занять",
+                        stringResource(R.string.nft_action_claim),
                         enabled = state.processingNickname != verdict.nickname,
                     ) { onEvent(ShopViewEvent.ClaimNickname(verdict.nickname)) }
                 }
             }
-        holder != null -> item { MarketRow(name = verdict.nickname, meta = "у $holder", dim = true) {} }
-        reason != null -> item { MarketNote(reason.wording()) }
+        holder != null ->
+            item {
+                MarketRow(
+                    name = verdict.nickname,
+                    meta = stringResource(R.string.nft_taken_by, holder),
+                    dim = true,
+                ) {}
+            }
+        reason != null -> item { MarketNote(stringResource(reason.wordingRes())) }
         else -> Unit
     }
 }
@@ -236,15 +254,19 @@ private fun MarketTabs(
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MarketTab("Имена", onNames) { onPick(NicknameMarketTab.NAMES) }
-        MarketTab("Логотипы", !onNames) { onPick(NicknameMarketTab.LOGOS) }
+        MarketTab(stringResource(R.string.nft_tab_names), onNames) { onPick(NicknameMarketTab.NAMES) }
+        MarketTab(stringResource(R.string.nft_tab_logos), !onNames) { onPick(NicknameMarketTab.LOGOS) }
         Spacer(Modifier.weight(1f))
         Text(
             text =
                 if (onNames) {
-                    "${state.listings.size} в продаже"
+                    stringResource(R.string.nft_on_sale_count, state.listings.size)
                 } else {
-                    "${state.logos.count { it.owned }} из ${state.logos.size}"
+                    stringResource(
+                        R.string.nft_owned_of_total,
+                        state.logos.count { it.owned },
+                        state.logos.size,
+                    )
                 },
             style = NoirType.kicker.copy(color = NoirTOff),
         )
@@ -308,13 +330,16 @@ private fun MarketSearch(
                 modifier = Modifier.fillMaxWidth(),
             )
             if (query.isEmpty()) {
-                Text("Найти имя", style = NoirType.rowTitle.copy(fontSize = 15.sp, color = NoirTOff))
+                Text(
+                    stringResource(R.string.nft_search_hint),
+                    style = NoirType.rowTitle.copy(fontSize = 15.sp, color = NoirTOff),
+                )
             }
         }
         if (query.isNotEmpty()) {
             Icon(
                 NoirIcons.Close,
-                contentDescription = "Очистить",
+                contentDescription = stringResource(R.string.nft_cd_clear),
                 tint = NoirTOff,
                 modifier =
                     Modifier
@@ -350,7 +375,7 @@ private fun OwnedPanel(
             .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 3.dp),
     ) {
         Row(Modifier.fillMaxWidth().padding(bottom = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("ВАШИ ИМЕНА", style = NoirType.kicker.copy(color = NoirTOff))
+            Text(stringResource(R.string.nft_your_names), style = NoirType.kicker.copy(color = NoirTOff))
             Spacer(Modifier.weight(1f))
             Text(
                 text = "${state.owned.count { it.isForSale }} / ${state.owned.size}",
@@ -359,7 +384,7 @@ private fun OwnedPanel(
         }
         if (state.owned.isEmpty()) {
             Text(
-                if (state.isLoading) "Загрузка…" else "Пока ни одного",
+                if (state.isLoading) stringResource(R.string.nft_loading) else stringResource(R.string.nft_none_yet),
                 style = NoirType.rowSub.copy(color = NoirTOff),
                 modifier = Modifier.padding(vertical = 12.dp),
             )
@@ -381,7 +406,7 @@ private fun OwnedPanel(
  * A name you hold.
  *
  * Both things you can do with it are written out. Tapping the name wears it, as the design has it,
- * but a tap target nothing names is a tap target nobody finds — so "надеть" is said as well.
+ * but a tap target nothing names is a tap target nobody finds — so wearing is said as well.
  */
 @Composable
 private fun OwnedNicknameRow(
@@ -426,8 +451,9 @@ private fun OwnedNicknameRow(
                 )
                 val meta =
                     when {
-                        owned.active -> "надето" to LocalNoirAccent.current
-                        owned.isForSale -> "продаётся за ${owned.listedPrice}" to NoirSuccess
+                        owned.active -> stringResource(R.string.nft_worn) to LocalNoirAccent.current
+                        owned.isForSale ->
+                            stringResource(R.string.nft_for_sale_price, owned.listedPrice ?: 0L) to NoirSuccess
                         else -> null
                     }
                 if (meta != null) {
@@ -437,53 +463,80 @@ private fun OwnedNicknameRow(
             when {
                 // Taking a lot down is offered even for the worn name: wearing one cancels its lot
                 // now, but an account that reached that state earlier needs a way out of it.
-                owned.isForSale -> MarketAction("Снять", enabled = !busy, muted = true, onClick = onCancel)
+                owned.isForSale ->
+                    MarketAction(
+                        stringResource(R.string.nft_action_remove),
+                        enabled = !busy,
+                        muted = true,
+                        onClick = onCancel,
+                    )
                 pricing -> Unit
                 // Selling the name you wear is refused by the server, so the word is left off
                 // rather than shown dead: a control that can never fire is worse than no control.
                 owned.active -> Unit
                 else -> {
-                    MarketAction("Надеть", enabled = !busy, onClick = onWear)
-                    MarketAction("Продать", enabled = !busy, muted = true) { pricing = true }
+                    MarketAction(stringResource(R.string.nft_action_wear), enabled = !busy, onClick = onWear)
+                    MarketAction(
+                        stringResource(R.string.nft_action_sell),
+                        enabled = !busy,
+                        muted = true,
+                    ) { pricing = true }
                 }
             }
         }
 
         if (pricing && !owned.isForSale) {
-            Row(
-                Modifier.fillMaxWidth().padding(bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Box(
-                    Modifier
-                        .width(96.dp)
-                        .clip(NoirShapeMd)
-                        .background(NoirS1)
-                        .border(1.dp, NoirOutline, NoirShapeMd)
-                        .padding(horizontal = 12.dp, vertical = 9.dp),
-                ) {
-                    BasicTextField(
-                        value = priceDraft,
-                        onValueChange = { priceDraft = it.filter(Char::isDigit).take(9) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        textStyle = NoirType.num.copy(fontSize = 16.sp, color = NoirGold),
-                        cursorBrush = SolidColor(NoirGold),
-                    )
-                    if (priceDraft.isEmpty()) {
-                        Text("1", style = NoirType.num.copy(fontSize = 16.sp, color = NoirTOff))
-                    }
-                }
-                Icon(NoirIcons.GoldStack, contentDescription = null, tint = NoirGold, modifier = Modifier.size(15.dp))
-                Spacer(Modifier.weight(1f))
-                MarketAction("Отмена", enabled = true, muted = true) { pricing = false }
-                val price = priceDraft.toLongOrNull() ?: 0L
-                MarketAction("Выставить", enabled = !busy && price >= 1L) {
-                    onList(price)
-                    pricing = false
-                }
+            PricingRow(
+                priceDraft = priceDraft,
+                onPriceChange = { priceDraft = it },
+                busy = busy,
+                onCancel = { pricing = false },
+                onList = onList,
+            )
+        }
+    }
+}
+
+/** The pricing form a held name unfolds: a gold amount, and the two things you can do with it. */
+@Composable
+private fun PricingRow(
+    priceDraft: String,
+    onPriceChange: (String) -> Unit,
+    busy: Boolean,
+    onCancel: () -> Unit,
+    onList: (Long) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            Modifier
+                .width(96.dp)
+                .clip(NoirShapeMd)
+                .background(NoirS1)
+                .border(1.dp, NoirOutline, NoirShapeMd)
+                .padding(horizontal = 12.dp, vertical = 9.dp),
+        ) {
+            BasicTextField(
+                value = priceDraft,
+                onValueChange = { onPriceChange(it.filter(Char::isDigit).take(9)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                textStyle = NoirType.num.copy(fontSize = 16.sp, color = NoirGold),
+                cursorBrush = SolidColor(NoirGold),
+            )
+            if (priceDraft.isEmpty()) {
+                Text("1", style = NoirType.num.copy(fontSize = 16.sp, color = NoirTOff))
             }
+        }
+        Icon(NoirIcons.GoldStack, contentDescription = null, tint = NoirGold, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.weight(1f))
+        MarketAction(stringResource(R.string.nft_action_cancel), enabled = true, muted = true, onClick = onCancel)
+        val price = priceDraft.toLongOrNull() ?: 0L
+        MarketAction(stringResource(R.string.nft_action_list), enabled = !busy && price >= 1L) {
+            onList(price)
         }
     }
 }
@@ -540,11 +593,11 @@ private fun ListingRow(
     onArm: () -> Unit,
     onBuy: () -> Unit,
 ) {
-    MarketRow(name = listing.nickname, meta = "продаёт ${listing.sellerNickname}") {
+    MarketRow(name = listing.nickname, meta = stringResource(R.string.nft_sells, listing.sellerNickname)) {
         when {
-            own -> Text("ваш лот", style = NoirType.kicker.copy(color = NoirTOff))
+            own -> Text(stringResource(R.string.nft_your_lot), style = NoirType.kicker.copy(color = NoirTOff))
             !affordable -> GoldAmount(listing.price, tone = NoirOutline)
-            armed -> MarketAction("Купить", enabled = !busy, onClick = onBuy)
+            armed -> MarketAction(stringResource(R.string.nft_action_confirm), enabled = !busy, onClick = onBuy)
             else ->
                 Box(Modifier.clip(NoirShapePill).clickable(enabled = !busy, onClick = onArm)) {
                     GoldAmount(listing.price)
@@ -553,75 +606,142 @@ private fun ListingRow(
     }
 }
 
-/** The eight emblems. A tile is the glyph, its name, and either a price or the word "ваш". */
+/**
+ * The eight emblems, laid out as the canvas has them: a two-column grid of tiles.
+ *
+ * A tile is the glyph and one line under it — the price, the word for "yours", or the confirm step.
+ * Owned tiles go green rather than accent-coloured: green says "already yours", while azure stays
+ * reserved for what a tap can still do. Not enough gold reads as a dead grey tile.
+ */
 private fun LazyListScope.logoShelf(
     state: ShopViewState,
     onEvent: (ShopViewEvent) -> Unit,
 ) {
     val nicknames = state.nicknames
     if (nicknames.logos.isEmpty()) {
-        item { MarketNote("Загрузка…") }
+        item { MarketNote(stringResource(R.string.nft_loading)) }
         return
     }
-    items(nicknames.logos, key = { "logo-${it.name}" }) { logo ->
-        val key = "logo:${logo.name}"
-        val armed = nicknames.armed == key
-        val affordable = state.balance.gold >= logo.price
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .defaultMinSize(minHeight = 56.dp)
-                .drawBehind {
-                    drawLine(
-                        color = NoirHair,
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 1f,
-                    )
-                }
-                .padding(vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+    item {
+        Column(
+            Modifier.padding(top = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(LOGO_GRID_GAP),
         ) {
-            Icon(
-                imageVector = logoGlyph(logo.name),
-                contentDescription = null,
-                tint = if (logo.owned) LocalNoirAccent.current else NoirT3,
-                modifier = Modifier.size(22.dp),
-            )
-            Text(
-                text = logo.name.removeSuffix(" Logo"),
-                style = NoirType.rowTitle.copy(color = if (logo.owned) NoirT1 else NoirT2),
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            when {
-                logo.owned -> Text("ваш", style = NoirType.kicker.copy(color = LocalNoirAccent.current))
-                !affordable -> GoldAmount(logo.price, tone = NoirOutline)
-                armed ->
-                    MarketAction(
-                        "Купить",
-                        enabled = nicknames.processingNickname != logo.name,
-                    ) { onEvent(ShopViewEvent.BuyLogo(logo.name)) }
-                else ->
-                    Box(
-                        Modifier.clip(NoirShapePill).clickable { onEvent(ShopViewEvent.ArmPurchase(key)) },
-                    ) {
-                        GoldAmount(logo.price)
+            nicknames.logos.chunked(LOGO_GRID_COLUMNS).forEach { row ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(LOGO_GRID_GAP),
+                ) {
+                    row.forEach { logo ->
+                        val key = "logo:${logo.name}"
+                        LogoTile(
+                            logo = logo,
+                            armed = nicknames.armed == key,
+                            affordable = state.balance.gold >= logo.price,
+                            busy = nicknames.processingNickname == logo.name,
+                            onTap = {
+                                if (nicknames.armed == key) {
+                                    onEvent(ShopViewEvent.BuyLogo(logo.name))
+                                } else {
+                                    onEvent(ShopViewEvent.ArmPurchase(key))
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
+                    // An odd tail row keeps its tile at half width instead of stretching full.
+                    repeat(LOGO_GRID_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                }
             }
         }
     }
     item {
         Text(
-            "Логотип заменяет рамку аватара везде, где встречается имя — таблицы, результаты, меню. " +
-                "Выпавшие из коробок ничего не стоят.",
+            stringResource(R.string.nft_logos_note),
             style = NoirType.rowSub.copy(color = NoirTOff),
             modifier = Modifier.padding(vertical = 14.dp),
         )
     }
 }
+
+/**
+ * One emblem on the shelf.
+ *
+ * The whole tile asks twice, the way every price here does: the first tap arms it — the price
+ * becomes the word for "confirm" — and only the second moves gold.
+ */
+@Composable
+private fun LogoTile(
+    logo: ProfileLogo,
+    armed: Boolean,
+    affordable: Boolean,
+    busy: Boolean,
+    onTap: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalNoirAccent.current
+    val fill =
+        when {
+            logo.owned -> NoirSuccess.copy(alpha = 0.07f)
+            armed -> accent.copy(alpha = 0.09f)
+            else -> NoirGlassFill
+        }
+    val stroke =
+        when {
+            logo.owned -> NoirSuccess.copy(alpha = 0.34f)
+            armed -> accent.copy(alpha = 0.5f)
+            else -> NoirGlassStroke
+        }
+    val tone =
+        when {
+            logo.owned -> NoirSuccess
+            armed -> accent
+            !affordable -> NoirOutline
+            else -> NoirT2
+        }
+    val labelTone =
+        when {
+            logo.owned || armed -> tone
+            !affordable -> NoirOutline
+            else -> NoirGold
+        }
+    Column(
+        modifier
+            .clip(LogoTileShape)
+            .background(fill)
+            .border(1.dp, stroke, LogoTileShape)
+            .clickable(enabled = !logo.owned && !busy, onClick = onTap)
+            .padding(horizontal = 8.dp, vertical = 18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Icon(
+            imageVector = logoGlyph(logo.name),
+            contentDescription = null,
+            tint = tone,
+            modifier = Modifier.size(22.dp),
+        )
+        Text(
+            text =
+                (
+                    when {
+                        logo.owned -> stringResource(R.string.nft_owned)
+                        armed -> stringResource(R.string.nft_action_confirm)
+                        else -> logo.price.groupedByThousands()
+                    }
+                ).uppercase(),
+            style = NoirType.kicker.copy(fontSize = 9.sp, color = labelTone),
+        )
+    }
+}
+
+/** Grid geometry from the canvas: two columns with an 8px gutter, tiles rounded to 14px. */
+private const val LOGO_GRID_COLUMNS = 2
+private val LOGO_GRID_GAP = 8.dp
+private val LogoTileShape = RoundedCornerShape(14.dp)
+
+/** Thin spaces, so a four-digit price reads at a glance inside a half-width tile. */
+private fun Long.groupedByThousands(): String = toString().reversed().chunked(3).joinToString(" ").reversed()
 
 /**
  * Which glyph stands for which emblem.
@@ -641,16 +761,15 @@ private fun logoGlyph(name: String) =
         else -> NoirIcons.Lock
     }
 
-private fun NicknameRejection?.wording(): String =
+private fun NicknameRejection.wordingRes(): Int =
     when (this) {
-        NicknameRejection.TOO_SHORT -> "Слишком короткое"
-        NicknameRejection.TOO_LONG -> "Слишком длинное"
-        NicknameRejection.UNSUPPORTED_CHARACTERS -> "Есть недопустимые символы"
-        NicknameRejection.BLOCKED_SYMBOL -> "Есть запрещённый символ"
-        NicknameRejection.BLOCKED_WORD -> "Такое имя запрещено"
-        NicknameRejection.TAKEN -> "Уже занято"
-        NicknameRejection.YOURS -> "Это ваше имя"
-        null -> ""
+        NicknameRejection.TOO_SHORT -> R.string.nft_reject_too_short
+        NicknameRejection.TOO_LONG -> R.string.nft_reject_too_long
+        NicknameRejection.UNSUPPORTED_CHARACTERS -> R.string.nft_reject_bad_characters
+        NicknameRejection.BLOCKED_SYMBOL -> R.string.nft_reject_blocked_symbol
+        NicknameRejection.BLOCKED_WORD -> R.string.nft_reject_blocked_word
+        NicknameRejection.TAKEN -> R.string.nft_reject_taken
+        NicknameRejection.YOURS -> R.string.nft_reject_yours
     }
 
 @Composable
@@ -723,9 +842,9 @@ private fun ListingControls(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SortLabel("А–Я", NicknameListingSort.NAME, state, onSort)
-        SortLabel("Цена", NicknameListingSort.PRICE, state, onSort)
-        SortLabel("Дата", NicknameListingSort.DATE, state, onSort)
+        SortLabel(stringResource(R.string.nft_sort_name), NicknameListingSort.NAME, state, onSort)
+        SortLabel(stringResource(R.string.nft_sort_price), NicknameListingSort.PRICE, state, onSort)
+        SortLabel(stringResource(R.string.nft_sort_date), NicknameListingSort.DATE, state, onSort)
     }
 }
 

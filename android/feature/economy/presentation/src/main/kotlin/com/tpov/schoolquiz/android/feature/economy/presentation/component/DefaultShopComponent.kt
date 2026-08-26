@@ -84,27 +84,27 @@ class DefaultShopComponent(
                                 ),
                         )
                     }
-                    if (charged > 0) "Имя куплено за $charged" else "Имя занято за вами"
+                    ShopMessage.NicknameClaimed(charged)
                 }
             is ShopViewEvent.SetActiveNickname ->
                 runNicknameAction(event.nickname) {
                     nicknames.setActive(event.nickname)
-                    "Активное имя — ${event.nickname}"
+                    ShopMessage.NicknameWorn(event.nickname)
                 }
             is ShopViewEvent.ListNicknameForSale ->
                 runNicknameAction(event.nickname) {
                     nicknames.listForSale(event.nickname, event.price)
-                    "Выставлено за ${event.price}"
+                    ShopMessage.NicknameListed(event.price)
                 }
             is ShopViewEvent.CancelNicknameListing ->
                 runNicknameAction(event.nickname) {
                     nicknames.cancelListing(event.nickname)
-                    "Снято с продажи"
+                    ShopMessage.ListingCancelled
                 }
             is ShopViewEvent.BuyNickname ->
                 runNicknameAction(event.nickname) {
                     val commission = nicknames.buy(event.nickname)
-                    "Имя куплено, комиссия $commission"
+                    ShopMessage.NicknameBought(commission)
                 }
             else -> browse(event)
         }
@@ -148,7 +148,10 @@ class DefaultShopComponent(
                             availabilityUnreachable = result.isFailure,
                         ),
                     // A failed check is not a refusal; say so rather than leaving a silent field.
-                    message = result.exceptionOrNull()?.readableMessage() ?: current.message,
+                    message =
+                        result.exceptionOrNull()
+                            ?.let { ShopMessage.Failure(it.errorDetail()) }
+                            ?: current.message,
                 )
             }
         }
@@ -202,8 +205,8 @@ class DefaultShopComponent(
                     nicknames = current.nicknames.copy(processingNickname = null),
                     message =
                         result.fold(
-                            onSuccess = { charged -> "Логотип ваш · −$charged" },
-                            onFailure = { error -> error.readableMessage() },
+                            onSuccess = { charged -> ShopMessage.LogoPurchased(charged) },
+                            onFailure = { error -> ShopMessage.Failure(error.errorDetail()) },
                         ),
                 )
             }
@@ -216,9 +219,9 @@ class DefaultShopComponent(
         _state.update { current ->
             current.copy(
                 nicknames = current.nicknames.copy(logos = result.getOrDefault(current.nicknames.logos)),
-                // A shelf that says "загрузка…" for ever is the one outcome worth interrupting for:
+                // A shelf that says "loading" for ever is the one outcome worth interrupting for:
                 // swallowing the failure leaves nothing to distinguish it from a slow network.
-                message = result.exceptionOrNull()?.readableMessage() ?: current.message,
+                message = result.exceptionOrNull()?.let { ShopMessage.Failure(it.errorDetail()) } ?: current.message,
             )
         }
     }
@@ -243,8 +246,8 @@ class DefaultShopComponent(
                         ),
                     // Either half may fail on its own; show whichever complaint arrived.
                     message =
-                        owned.exceptionOrNull()?.readableMessage()
-                            ?: listings.exceptionOrNull()?.readableMessage()
+                        owned.exceptionOrNull()?.let { ShopMessage.Failure(it.errorDetail()) }
+                            ?: listings.exceptionOrNull()?.let { ShopMessage.Failure(it.errorDetail()) }
                             ?: current.message,
                 )
             }
@@ -259,7 +262,7 @@ class DefaultShopComponent(
      */
     private fun runNicknameAction(
         nickname: String,
-        action: suspend () -> String,
+        action: suspend () -> ShopMessage,
     ) {
         if (_state.value.nicknames.processingNickname != null) return
         scope.launch {
@@ -270,7 +273,7 @@ class DefaultShopComponent(
             _state.update {
                 it.copy(
                     nicknames = it.nicknames.copy(processingNickname = null),
-                    message = outcome.getOrElse { error -> error.readableMessage() },
+                    message = outcome.getOrElse { error -> ShopMessage.Failure(error.errorDetail()) },
                 )
             }
             refreshNicknames()
@@ -290,14 +293,14 @@ class DefaultShopComponent(
                             items = getCatalog.execute(purchase.balance),
                             processingItemId = null,
                             isLoading = false,
-                            message = purchase.message,
+                            message = ShopMessage.Notice(purchase.message),
                         )
                     },
                     onFailure = { error ->
                         current.copy(
                             processingItemId = null,
                             isLoading = false,
-                            message = error.readableMessage(),
+                            message = ShopMessage.Failure(error.errorDetail()),
                         )
                     },
                 )
@@ -305,8 +308,8 @@ class DefaultShopComponent(
         }
     }
 
-    private fun Throwable.readableMessage(): String {
+    private fun Throwable.errorDetail(): String? {
         if (this is CancellationException) throw this
-        return message?.takeIf { it.isNotBlank() } ?: "Не удалось выполнить действие"
+        return message?.takeIf { it.isNotBlank() }
     }
 }

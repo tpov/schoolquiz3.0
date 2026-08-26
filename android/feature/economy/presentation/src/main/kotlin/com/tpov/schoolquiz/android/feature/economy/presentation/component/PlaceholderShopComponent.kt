@@ -8,7 +8,7 @@ class PlaceholderShopComponent : ShopComponent {
         MutableStateFlow(
             ShopViewState(
                 isLoading = false,
-                message = "Магазин пока недоступен",
+                message = ShopMessage.ShopUnavailable,
             ),
         )
 

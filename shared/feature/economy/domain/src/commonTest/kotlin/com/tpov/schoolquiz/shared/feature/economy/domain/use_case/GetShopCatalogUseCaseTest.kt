@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GetShopCatalogUseCaseTest {
@@ -36,6 +37,19 @@ class GetShopCatalogUseCaseTest {
             val price = assertNotNull(item.price, "$id must carry a price to render")
             assertEquals(ShopCurrency.FREE, price.currency)
             assertEquals(0L, price.amount)
+        }
+    }
+
+    /**
+     * The catalogue is data, not copy: every word the reader sees is picked by the screen from
+     * [ShopItemId], so no wording may travel inside the domain model.
+     */
+    @Test
+    fun catalogCarriesNoDisplayStrings() {
+        catalog.forEach { item ->
+            assertEquals("", item.title, "${item.id} must not carry a title")
+            assertEquals("", item.description, "${item.id} must not carry a description")
+            assertNull(item.unavailableReason, "${item.id} must not carry an availability reason")
         }
     }
 }

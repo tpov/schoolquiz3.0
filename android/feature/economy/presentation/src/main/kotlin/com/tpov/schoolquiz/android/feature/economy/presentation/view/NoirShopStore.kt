@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,10 +36,13 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSectionRule
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCurrency
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.GetShopCatalogUseCase
 
 /**
  * The store shelf.
@@ -45,6 +50,9 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
  * Two shelves, not one list: what the code can actually sell, and below it what is drawn but not
  * wired. The second is shown rather than hidden so the shape of the app is visible, and it is
  * locked rather than merely greyed — a disabled button invites tapping, a lock does not.
+ *
+ * Every word on a card comes from this module's resources, keyed by [ShopItemId]; the catalogue
+ * itself carries data only.
  */
 @Composable
 internal fun NoirShopStore(
@@ -68,12 +76,12 @@ internal fun NoirShopStore(
         if (BETA_ITEMS.isNotEmpty()) {
             item {
                 NoirSectionRule(
-                    label = "In beta",
+                    label = stringResource(R.string.shop_section_in_beta),
                     trailing = BETA_ITEMS.size.toString(),
                     modifier = Modifier.padding(top = 6.dp),
                 )
             }
-            items(BETA_ITEMS, key = { it.title }) { beta -> BetaRow(beta) }
+            items(BETA_ITEMS, key = { it.titleRes }) { beta -> BetaRow(beta) }
         }
     }
 }
@@ -89,7 +97,7 @@ private fun ShopOfferCard(
         NoirItemTile(icon = item.icon, tint = item.tint)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
-                text = item.title,
+                text = stringResource(item.titleRes()),
                 style = NoirType.rowTitle.copy(fontSize = 14.5.sp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -113,7 +121,7 @@ private fun ShopOfferCard(
                 Text(
                     // Never a chevron: three different outcomes deserve three different words, and
                     // a chevron only ever promises "there is more".
-                    text = if (processing) "…" else item.actionLabel,
+                    text = if (processing) "…" else stringResource(item.actionLabelRes()),
                     style = NoirType.button.copy(fontSize = 12.sp, color = NoirGold),
                 )
             } else {
@@ -121,7 +129,7 @@ private fun ShopOfferCard(
                 // the reason is already on the line above.
                 Icon(
                     NoirIcons.Lock,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.shop_cd_locked),
                     tint = NoirTOff,
                     modifier = Modifier.size(16.dp),
                 )
@@ -138,7 +146,7 @@ private fun PriceLabel(item: ShopCatalogItem) {
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Text(
-            text = price.shortLabel,
+            text = price.shortLabel(),
             style = NoirType.num.copy(fontSize = 16.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold),
         )
         price.currencyIcon?.let { icon ->
@@ -157,14 +165,14 @@ private fun BetaRow(beta: BetaItem) {
     ) {
         NoirItemTile(icon = beta.icon, tint = NoirT1.copy(alpha = 0.38f))
         Text(
-            text = beta.title,
+            text = stringResource(beta.titleRes),
             style = NoirType.rowTitle.copy(color = NoirT1.copy(alpha = 0.62f)),
             modifier = Modifier.weight(1f),
         )
-        NoirChip(text = "Beta", tone = NoirChipTone.Neutral)
+        NoirChip(text = stringResource(R.string.shop_chip_beta), tone = NoirChipTone.Neutral)
         Icon(
             NoirIcons.Lock,
-            contentDescription = "Недоступно",
+            contentDescription = stringResource(R.string.shop_cd_locked),
             tint = NoirTOff,
             modifier = Modifier.size(16.dp),
         )
@@ -187,14 +195,14 @@ private val DISPLAY_ORDER =
         ShopItemId.NICKNAME_MARKET,
     )
 
-private data class BetaItem(val title: String, val icon: ImageVector)
+private data class BetaItem(val titleRes: Int, val icon: ImageVector)
 
 /** Drawn but not wired. Listed here rather than in the catalogue, which only holds what works. */
 private val BETA_ITEMS =
     listOf(
-        BetaItem("Tournaments", NoirIcons.Calendar),
-        BetaItem("Minigames", NoirIcons.Play),
-        BetaItem("Quest builder", NoirIcons.Plus),
+        BetaItem(R.string.shop_beta_tournaments, NoirIcons.Calendar),
+        BetaItem(R.string.shop_beta_minigames, NoirIcons.Play),
+        BetaItem(R.string.shop_beta_quest_builder, NoirIcons.Plus),
     )
 
 private val ShopCatalogItem.icon: ImageVector
@@ -223,15 +231,24 @@ private val ShopCatalogItem.tint: Color
             else -> NoirT1.copy(alpha = 0.55f)
         }
 
-private val ShopCatalogItem.actionLabel: String
-    get() =
-        when (id) {
-            ShopItemId.AD_REWARD_BOX -> "Watch →"
-            ShopItemId.DONATE_GOOGLE_PLAY -> "Donate ↗"
-            ShopItemId.REFERRAL_PROGRAM -> "Open →"
-            ShopItemId.NICKNAME_MARKET -> "Open →"
-            else -> "Buy →"
-        }
+private fun ShopCatalogItem.titleRes(): Int =
+    when (id) {
+        ShopItemId.STANDARD_HEART_SLOT -> R.string.shop_item_standard_heart
+        ShopItemId.GOLD_HEART -> R.string.shop_item_gold_heart
+        ShopItemId.QUIZ_SLOT -> R.string.shop_item_quiz_slot
+        ShopItemId.AD_REWARD_BOX -> R.string.shop_item_ad_reward_box
+        ShopItemId.DONATE_GOOGLE_PLAY -> R.string.shop_item_donate_google_play
+        ShopItemId.REFERRAL_PROGRAM -> R.string.shop_item_referral_program
+        ShopItemId.NICKNAME_MARKET -> R.string.shop_item_nickname_market
+    }
+
+private fun ShopCatalogItem.actionLabelRes(): Int =
+    when (id) {
+        ShopItemId.AD_REWARD_BOX -> R.string.shop_action_watch_ad
+        ShopItemId.DONATE_GOOGLE_PLAY -> R.string.shop_action_donate
+        ShopItemId.REFERRAL_PROGRAM, ShopItemId.NICKNAME_MARKET -> R.string.shop_action_open
+        else -> R.string.shop_action_buy
+    }
 
 /**
  * The line under the title: what you hold, and what it will cost next time.
@@ -239,23 +256,42 @@ private val ShopCatalogItem.actionLabel: String
  * Never repeats the price shown alongside it — the next price is a different number, and repeating
  * the same one twice on a card is how a screen starts to look busy without saying more.
  */
+@Composable
 private fun ShopCatalogItem.stateLine(state: ShopViewState): String? =
     when (id) {
-        ShopItemId.STANDARD_HEART_SLOT ->
-            "You have ${state.balance.standardHearts}" + (unavailableReason?.let { " · $it" } ?: "")
-        ShopItemId.GOLD_HEART ->
-            "You have ${state.balance.goldHearts} · hard mode only"
-        else -> unavailableReason
+        ShopItemId.STANDARD_HEART_SLOT -> {
+            val base = stringResource(R.string.shop_state_you_have, state.balance.standardHearts)
+            val maxed = state.balance.standardHearts >= EconomyResourceBalance.MaxStandardHearts
+            if (maxed) {
+                base + stringResource(R.string.shop_state_maxed_suffix)
+            } else {
+                // The card's price is this purchase; the line under the title answers the next one,
+                // from the same ladder of costs — so a card never prints one number twice.
+                base +
+                    stringResource(
+                        R.string.shop_state_next_suffix,
+                        GetShopCatalogUseCase
+                            .standardHeartCost(state.balance.standardHearts + 1)
+                            .groupedByThousands(),
+                    )
+            }
+        }
+        ShopItemId.GOLD_HEART -> stringResource(R.string.shop_state_gold_hearts, state.balance.goldHearts)
+        ShopItemId.QUIZ_SLOT -> stringResource(R.string.shop_lock_quiz_slot)
+        ShopItemId.AD_REWARD_BOX -> stringResource(R.string.shop_lock_ad_box)
+        ShopItemId.DONATE_GOOGLE_PLAY -> stringResource(R.string.shop_lock_donate)
+        else -> null
     }
 
-private val com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice.shortLabel: String
-    get() =
-        when (currency) {
-            ShopCurrency.NOLICS, ShopCurrency.GOLD -> amount.groupedByThousands()
-            ShopCurrency.ADS -> "$amount ads"
-            ShopCurrency.EXTERNAL -> "Google Play"
-            ShopCurrency.FREE -> "Free"
-        }
+@Composable
+private fun com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice.shortLabel(): String =
+    when (currency) {
+        ShopCurrency.NOLICS, ShopCurrency.GOLD -> amount.groupedByThousands()
+        ShopCurrency.ADS ->
+            pluralStringResource(R.plurals.shop_ads_count, amount.toInt(), amount)
+        ShopCurrency.EXTERNAL -> stringResource(R.string.shop_price_google_play)
+        ShopCurrency.FREE -> stringResource(R.string.shop_price_free)
+    }
 
 private val com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice.currencyIcon: ImageVector?
     get() =
@@ -269,6 +305,6 @@ private val com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPrice.cu
     get() = if (currency == ShopCurrency.GOLD) NoirGold else NoirAccentFallback
 
 /** Thin spaces, so a four-digit price reads at a glance and the digits stay tabular. */
-private fun Long.groupedByThousands(): String = toString().reversed().chunked(3).joinToString(" ").reversed()
+private fun Long.groupedByThousands(): String = toString().reversed().chunked(3).joinToString(" ").reversed()
 
 private val NoirAccentFallback = Color(0xFF0599EF)

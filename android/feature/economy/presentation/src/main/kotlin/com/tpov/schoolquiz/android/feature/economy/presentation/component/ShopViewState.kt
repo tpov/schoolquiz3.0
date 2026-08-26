@@ -16,7 +16,7 @@ data class ShopViewState(
     val selectedTab: ShopTab = ShopTab.STORE,
     val isLoading: Boolean = true,
     val processingItemId: ShopItemId? = null,
-    val message: String? = null,
+    val message: ShopMessage? = null,
     val nicknames: NicknameShopState = NicknameShopState(),
 )
 

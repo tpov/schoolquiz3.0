@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +56,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.economy.presentation.R
+import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopMessage
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopTab
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
@@ -106,9 +108,9 @@ fun ShopView(
                 balance = state.balance,
                 onBack = { onEvent(ShopViewEvent.SelectTab(ShopTab.STORE)) },
             )
-            if (state.message != null) {
+            state.message?.let { message ->
                 Text(
-                    text = state.message,
+                    text = message.resolvedText(),
                     style = NoirType.rowSub,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 )
@@ -122,9 +124,9 @@ fun ShopView(
     // second one here mixed two glows and muddied both.
     Column(modifier.fillMaxSize()) {
         ShopHeader(state, onOpenDrawer)
-        if (state.message != null) {
+        state.message?.let { message ->
             Text(
-                text = state.message,
+                text = message.resolvedText(),
                 style = NoirType.rowSub,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
             )
@@ -161,18 +163,25 @@ private fun NicknameMarketHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        NoirIconButton(icon = NoirIcons.Back, contentDescription = "Назад", onClick = onBack)
-        Text("NFT", style = NoirType.appbar, modifier = Modifier.weight(1f))
-        NoirBalancePill(
-            icon = NoirIcons.Nolic,
-            value = balance.nolics.toString(),
-            tint = LocalNoirAccent.current,
+        NoirIconButton(
+            icon = NoirIcons.Back,
+            contentDescription = stringResource(R.string.shop_cd_back),
+            onClick = onBack,
         )
-        NoirBalancePill(
-            icon = NoirIcons.GoldStack,
-            value = balance.gold.toString(),
-            tint = NoirGold,
-        )
+        Text(stringResource(R.string.shop_title_nft), style = NoirType.appbar, modifier = Modifier.weight(1f))
+        // The canvas carries gold alone in this bar, and tints the number itself: on the one screen
+        // where every price is gold, the second currency only muddies which one buys things.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+        ) {
+            Icon(NoirIcons.GoldStack, contentDescription = null, tint = NoirGold, modifier = Modifier.size(13.dp))
+            Text(
+                text = balance.gold.toString(),
+                style = NoirType.num.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                color = NoirGold,
+            )
+        }
     }
 }
 
@@ -192,10 +201,14 @@ private fun ShopHeader(
     ) {
         NoirIconButton(
             icon = NoirIcons.Menu,
-            contentDescription = "Open menu",
+            contentDescription = stringResource(R.string.shop_cd_open_menu),
             onClick = onOpenDrawer,
         )
-        Text("Магазин".uppercase(), style = NoirType.appbar, modifier = Modifier.weight(1f))
+        Text(
+            stringResource(R.string.shop_title_store).uppercase(),
+            style = NoirType.appbar,
+            modifier = Modifier.weight(1f),
+        )
         NoirBalancePill(
             icon = NoirIcons.Nolic,
             value = state.balance.nolics.toString(),
@@ -219,7 +232,11 @@ private fun ReferralProgramView(
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val link = referralProgram.link
-    val referralId = referralProgram.referralIdLabel()
+    val referralId =
+        stringResource(
+            R.string.shop_referral_id_format,
+            referralProgram.referralId(context.getString(R.string.shop_referral_guest)),
+        )
 
     Box(
         modifier =
@@ -242,13 +259,13 @@ private fun ReferralProgramView(
                     referralId = referralId,
                     onCopy = {
                         clipboardManager.setText(AnnotatedString(link))
-                        Toast.makeText(context, "Referral link copied!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.shop_toast_link_copied, Toast.LENGTH_SHORT).show()
                     },
                     onShare = {
                         val sendIntent =
                             Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "Join me using my referral link: $link")
+                                putExtra(Intent.EXTRA_TEXT, context.getString(R.string.shop_share_message, link))
                             }
                         context.startActivity(Intent.createChooser(sendIntent, null))
                     },
@@ -285,12 +302,12 @@ private fun ReferralHeader(
     ) {
         LegacyCircleIconButton(
             iconRes = R.drawable.ic_back_arrow,
-            contentDescription = "Back",
+            contentDescription = stringResource(R.string.shop_cd_back),
             tint = Color.White,
             onClick = onBack,
         )
         Text(
-            text = "Referrals",
+            text = stringResource(R.string.shop_referral_title),
             modifier = Modifier.padding(start = 16.dp),
             color = Color.White,
             fontSize = 24.sp,
@@ -312,7 +329,7 @@ private fun ReferralLinkCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Referral link:",
+                text = stringResource(R.string.shop_referral_link_label),
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
@@ -330,14 +347,14 @@ private fun ReferralLinkCard(
             )
             LegacyCircleIconButton(
                 iconRes = R.drawable.ic_copy,
-                contentDescription = "Copy",
+                contentDescription = stringResource(R.string.shop_cd_copy),
                 tint = LegacyAccent,
                 onClick = onCopy,
             )
             Spacer(modifier = Modifier.width(12.dp))
             LegacyCircleIconButton(
                 iconRes = R.drawable.ic_share,
-                contentDescription = "Share",
+                contentDescription = stringResource(R.string.shop_cd_share),
                 tint = LegacyAccent,
                 onClick = onShare,
             )
@@ -362,7 +379,12 @@ private fun ReferralRewardCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = if (rewardReceived) "Reward received" else "Invite 6 players and receive",
+                text =
+                    if (rewardReceived) {
+                        stringResource(R.string.shop_referral_reward_received)
+                    } else {
+                        stringResource(R.string.shop_referral_reward_invite)
+                    },
                 modifier = Modifier.weight(1f),
                 color = LegacyHighlightText,
                 fontSize = 16.sp,
@@ -391,13 +413,13 @@ private fun ReferralSeasonCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "At the end of season you will receive boxes:",
+                    text = stringResource(R.string.shop_referral_season_header),
                     color = Color.White,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "You receive 1% of all opened boxes from all your invited friends.",
+                    text = stringResource(R.string.shop_referral_season_note),
                     color = LegacyTextSecondary,
                     fontSize = 12.sp,
                 )
@@ -421,7 +443,7 @@ private fun ReferralUsersCard(
             modifier = Modifier.padding(16.dp),
         ) {
             Text(
-                text = "Your Referrals",
+                text = stringResource(R.string.shop_referral_users_title),
                 modifier = Modifier.padding(bottom = 12.dp),
                 color = Color.White,
                 fontSize = 18.sp,
@@ -477,7 +499,7 @@ private fun ReferralUserItem(user: ReferralUserDisplay) {
                     }
                 }
                 Text(
-                    text = user.nickname,
+                    text = if (user.isPlaceholder) stringResource(R.string.shop_referral_empty_slot) else user.nickname,
                     modifier =
                         Modifier
                             .weight(1f)
@@ -493,14 +515,14 @@ private fun ReferralUserItem(user: ReferralUserDisplay) {
                     horizontalAlignment = Alignment.End,
                 ) {
                     ReferralStatRow(
-                        label = "Open boxes:",
+                        label = stringResource(R.string.shop_referral_stat_open_boxes),
                         value = if (user.isPlaceholder) "-" else user.allOpenedBoxes.toString(),
                         valueColor = if (user.isPlaceholder) Color.LightGray else Color.White,
                         labelColor = if (user.isPlaceholder) Color.LightGray else Color.White,
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     ReferralStatRow(
-                        label = "Your Bonus:",
+                        label = stringResource(R.string.shop_referral_stat_bonus),
                         value = if (user.isPlaceholder) "-" else user.bonusLabel,
                         valueColor = if (user.isPlaceholder) Color.LightGray else LegacyAccent,
                         labelColor = if (user.isPlaceholder) Color.LightGray else Color.White,
@@ -530,7 +552,7 @@ private fun ReferralProgress(user: ReferralUserDisplay) {
             if (activated) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "ACTIVATED",
+                    text = stringResource(R.string.shop_referral_activated),
                     color = LegacyAccent,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -543,7 +565,7 @@ private fun ReferralProgress(user: ReferralUserDisplay) {
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "${REFERRAL_TARGET_BOXES - progress} boxes to activate",
+                    text = stringResource(R.string.shop_referral_boxes_left, REFERRAL_TARGET_BOXES - progress),
                     modifier =
                         Modifier
                             .weight(1f)
@@ -697,15 +719,12 @@ private data class ReferralUserDisplay(
     val bonusLabel: String = String.format(Locale.US, "%.1f", seasonBoxes / 100.0)
 }
 
-private fun ReferralProgram.referralIdLabel(): String {
-    val id =
-        link
-            .substringAfter("id=", missingDelimiterValue = link)
-            .substringBefore('&')
-            .substringAfterLast('/')
-            .ifBlank { "guest" }
-    return "tpovId: $id"
-}
+private fun ReferralProgram.referralId(guestFallback: String): String =
+    link
+        .substringAfter("id=", missingDelimiterValue = link)
+        .substringBefore('&')
+        .substringAfterLast('/')
+        .ifBlank { guestFallback }
 
 private fun ReferralProgram.displayUsers(): List<ReferralUserDisplay> {
     val users =
@@ -722,11 +741,10 @@ private fun ReferralProgram.displayUsers(): List<ReferralUserDisplay> {
             }
             .toMutableList()
     while (users.size < REFERRAL_MIN_SLOTS) {
-        val slot = users.size + 1
         users +=
             ReferralUserDisplay(
-                id = "empty-slot-$slot",
-                nickname = "Empty Slot",
+                id = "empty-slot-${users.size + 1}",
+                nickname = "",
                 allOpenedBoxes = 0,
                 seasonBoxes = 0,
                 isPlaceholder = true,
@@ -734,5 +752,25 @@ private fun ReferralProgram.displayUsers(): List<ReferralUserDisplay> {
     }
     return users
 }
+
+/** Picks the words for what the component reported, including which language they are. */
+@Composable
+private fun ShopMessage.resolvedText(): String =
+    when (this) {
+        is ShopMessage.NicknameClaimed ->
+            if (charged > 0) {
+                stringResource(R.string.nft_msg_claimed_paid, charged)
+            } else {
+                stringResource(R.string.nft_msg_claimed_free)
+            }
+        is ShopMessage.NicknameWorn -> stringResource(R.string.nft_msg_worn, nickname)
+        is ShopMessage.NicknameListed -> stringResource(R.string.nft_msg_listed, price)
+        ShopMessage.ListingCancelled -> stringResource(R.string.nft_msg_listing_cancelled)
+        is ShopMessage.NicknameBought -> stringResource(R.string.nft_msg_bought, commission)
+        is ShopMessage.LogoPurchased -> stringResource(R.string.nft_msg_logo_bought, charged)
+        ShopMessage.ShopUnavailable -> stringResource(R.string.shop_msg_unavailable)
+        is ShopMessage.Notice -> text
+        is ShopMessage.Failure -> detail ?: stringResource(R.string.shop_msg_action_failed)
+    }
 
 private fun ReferralProgram.seasonBonusBoxes(): Int = invitedUsers.sumOf { it.seasonBoxes / 100 }
