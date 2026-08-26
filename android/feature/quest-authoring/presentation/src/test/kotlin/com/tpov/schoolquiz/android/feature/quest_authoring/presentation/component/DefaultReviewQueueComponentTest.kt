@@ -5,8 +5,10 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.destroy
 import com.arkivanov.essenty.lifecycle.resume
 import com.arkivanov.essenty.lifecycle.stop
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.KotlinxSerializationQuestionContentParser
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
@@ -72,7 +74,7 @@ class DefaultReviewQueueComponentTest {
         component.onAssignmentSelected("assignment-1")
         component.onSubmitClick()
 
-        assertEquals("Выберите оценку 1..3", component.state.value.errorMessage)
+        assertEquals(UiMessage.Res(R.string.qa_error_choose_score), component.state.value.errorMessage)
         assertTrue(repository.submittedCommands.isEmpty())
 
         component.onScoreSelected(2)
@@ -103,7 +105,7 @@ class DefaultReviewQueueComponentTest {
 
         component.onSubmitClick()
 
-        assertEquals("Заполните все поля перевода", component.state.value.errorMessage)
+        assertEquals(UiMessage.Res(R.string.qa_error_fill_all_translations), component.state.value.errorMessage)
         assertTrue(repository.submittedCommands.isEmpty())
 
         segments.forEach { segment ->

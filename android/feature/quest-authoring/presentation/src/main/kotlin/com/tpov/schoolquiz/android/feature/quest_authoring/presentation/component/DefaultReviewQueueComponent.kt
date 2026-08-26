@@ -2,13 +2,17 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.compone
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentDetailUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentListItemUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewLanguagesUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQuestionUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentLabelKind
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContentParser
@@ -154,12 +158,14 @@ class DefaultReviewQueueComponent(
                     it.copy(
                         isSubmitting = false,
                         detail = null,
-                        successMessage = "Проверка отправлена",
+                        successMessage = UiMessage.Res(R.string.qa_review_submitted),
                     )
                 } else {
                     it.copy(
                         isSubmitting = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Не удалось отправить проверку",
+                        errorMessage =
+                            result.exceptionOrNull()?.message?.let(UiMessage::Raw)
+                                ?: UiMessage.Res(R.string.qa_error_submit_review_failed),
                     )
                 }
             }
@@ -177,7 +183,7 @@ class DefaultReviewQueueComponent(
                             isLoading = false,
                             assignments = emptyList(),
                             detail = null,
-                            errorMessage = "Авторизация еще не готова",
+                            errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready),
                         )
                     }
                 } else {
@@ -198,7 +204,9 @@ class DefaultReviewQueueComponent(
                                 isLoading = false,
                                 assignments = emptyList(),
                                 detail = null,
-                                errorMessage = error.message ?: "Не удалось загрузить задания",
+                                errorMessage =
+                                    error.message?.let(UiMessage::Raw)
+                                        ?: UiMessage.Res(R.string.qa_error_load_assignments_failed),
                             )
                         }
                     }
@@ -234,7 +242,7 @@ class DefaultReviewQueueComponent(
             ReviewQueueKindUi.TESTING, ReviewQueueKindUi.LOGIC -> {
                 val score = selectedScore
                 if (score == null) {
-                    _state.update { it.copy(errorMessage = "Выберите оценку 1..3") }
+                    _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_choose_score)) }
                     return null
                 }
                 SubmitReviewActionCommand(
@@ -247,11 +255,13 @@ class DefaultReviewQueueComponent(
             ReviewQueueKindUi.TRANSLATION -> {
                 val language = selectedLanguage
                 if (language.isNullOrBlank()) {
-                    _state.update { it.copy(errorMessage = "Выберите язык перевода") }
+                    _state.update {
+                        it.copy(errorMessage = UiMessage.Res(R.string.qa_error_choose_translation_language))
+                    }
                     return null
                 }
                 if (questions.any { question -> question.segments.any { it.translatedText.isBlank() } }) {
-                    _state.update { it.copy(errorMessage = "Заполните все поля перевода") }
+                    _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_fill_all_translations)) }
                     return null
                 }
                 SubmitReviewActionCommand(
@@ -265,7 +275,7 @@ class DefaultReviewQueueComponent(
             ReviewQueueKindUi.TRANSLATION_REVIEW -> {
                 val language = selectedLanguage
                 if (language.isNullOrBlank()) {
-                    _state.update { it.copy(errorMessage = "Выберите язык проверки") }
+                    _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_choose_review_language)) }
                     return null
                 }
                 SubmitReviewActionCommand(
@@ -326,7 +336,6 @@ class DefaultReviewQueueComponent(
             lessonId = lessonId,
             title = title,
             kind = kind,
-            kindLabel = kind.displayName,
             selectedLanguage = selectedLanguage,
             availableLanguages = languages,
             selectedScore = null,
@@ -381,7 +390,7 @@ class DefaultReviewQueueComponent(
     private fun ReviewQuestion.toQuestionUi(): ReviewQuestionUiState =
         ReviewQuestionUiState(
             id = id,
-            title = "Вопрос ${order + 1}",
+            order = order,
             language = language,
             text = text,
         )
@@ -389,7 +398,7 @@ class DefaultReviewQueueComponent(
     private fun ReviewQuestion.toTranslationQuestionUi(): ReviewQuestionUiState =
         ReviewQuestionUiState(
             id = id,
-            title = "Вопрос ${order + 1}",
+            order = order,
             language = language,
             text = text,
             segments =
@@ -397,7 +406,8 @@ class DefaultReviewQueueComponent(
                     ReviewSegmentUiState(
                         questionId = id,
                         key = it.key,
-                        label = it.label,
+                        labelKind = it.kind,
+                        labelArg = it.arg,
                         sourceText = it.text,
                         translatedText = "",
                     )
@@ -408,7 +418,7 @@ class DefaultReviewQueueComponent(
         val targetSegments = target?.extractSegments().orEmpty().associateBy { it.key }
         return ReviewQuestionUiState(
             id = id,
-            title = "Вопрос ${order + 1}",
+            order = order,
             language = language,
             text = text,
             segments =
@@ -417,7 +427,8 @@ class DefaultReviewQueueComponent(
                     ReviewSegmentUiState(
                         questionId = id,
                         key = it.key,
-                        label = it.label,
+                        labelKind = it.kind,
+                        labelArg = it.arg,
                         sourceText = it.text,
                         translatedText = translatedText,
                         accepted = translatedText.isNotBlank(),
@@ -490,15 +501,16 @@ class DefaultReviewQueueComponent(
 
     private fun ReviewQuestion.extractSegments(): List<ReviewSegmentDraft> {
         val content = parseContent()
-        if (content == null) return listOf(ReviewSegmentDraft("text", "Текст", text))
-        val segments = mutableListOf(ReviewSegmentDraft("text", "Текст", content.text))
+        if (content == null) return listOf(ReviewSegmentDraft("text", ReviewSegmentLabelKind.TEXT, null, text))
+        val segments = mutableListOf(ReviewSegmentDraft("text", ReviewSegmentLabelKind.TEXT, null, content.text))
         when (content) {
             is QuestionContent.SingleChoice ->
                 segments +=
                     content.options.map {
                         ReviewSegmentDraft(
                             key = "option:${it.id.raw}",
-                            label = "Вариант ${it.id.raw}",
+                            kind = ReviewSegmentLabelKind.OPTION,
+                            arg = it.id.raw,
                             text = it.text,
                         )
                     }
@@ -507,7 +519,8 @@ class DefaultReviewQueueComponent(
                     content.options.map {
                         ReviewSegmentDraft(
                             key = "option:${it.id.raw}",
-                            label = "Вариант ${it.id.raw}",
+                            kind = ReviewSegmentLabelKind.OPTION,
+                            arg = it.id.raw,
                             text = it.text,
                         )
                     }
@@ -516,7 +529,8 @@ class DefaultReviewQueueComponent(
                     content.options.map {
                         ReviewSegmentDraft(
                             key = "option:${it.id.raw}",
-                            label = "Вариант ${it.id.raw}",
+                            kind = ReviewSegmentLabelKind.OPTION,
+                            arg = it.id.raw,
                             text = it.text,
                         )
                     }
@@ -525,7 +539,8 @@ class DefaultReviewQueueComponent(
                     content.items.map {
                         ReviewSegmentDraft(
                             key = "item:${it.id.raw}",
-                            label = "Элемент ${it.id.raw}",
+                            kind = ReviewSegmentLabelKind.ITEM,
+                            arg = it.id.raw,
                             text = it.text,
                         )
                     }
@@ -534,13 +549,14 @@ class DefaultReviewQueueComponent(
                     content.candidates.map {
                         ReviewSegmentDraft(
                             key = "candidate:${it.id.raw}",
-                            label = "Кандидат ${it.id.raw}",
+                            kind = ReviewSegmentLabelKind.CANDIDATE,
+                            arg = it.id.raw,
                             text = it.text,
                         )
                     }
         }
         content.info?.takeIf { it.isNotBlank() }?.let {
-            segments += ReviewSegmentDraft("info", "Пояснение", it)
+            segments += ReviewSegmentDraft("info", ReviewSegmentLabelKind.INFO, null, it)
         }
         return segments
     }
@@ -603,21 +619,18 @@ class DefaultReviewQueueComponent(
         ReviewAssignmentListItemUiState(
             id = id,
             title = title,
-            kindLabels = taskKinds.mapNotNull { it.toUiKindOrNull()?.displayName }.sorted(),
-            languageLabel = languageLabel(),
+            kinds = taskKinds.mapNotNull { it.toUiKindOrNull() }.sorted(),
+            languages =
+                ReviewLanguagesUi(
+                    source = sourceLanguages.sorted(),
+                    translationTargets = newTranslationLanguages.sorted(),
+                    reviewTargets = reviewLanguages.sorted(),
+                ),
             questionCount = questions.size,
             testingScore = checks.testingScore?.formatScore(),
             logicScore = checks.logicScore?.formatScore(),
-            translationScore = checks.translationScore?.let { "$it%" },
+            translationScore = checks.translationScore?.toString(),
         )
-
-    private fun ReviewAssignment.languageLabel(): String {
-        val parts = mutableListOf<String>()
-        if (sourceLanguages.isNotEmpty()) parts += "из ${sourceLanguages.sorted().joinToString()}"
-        if (newTranslationLanguages.isNotEmpty()) parts += "в ${newTranslationLanguages.sorted().joinToString()}"
-        if (reviewLanguages.isNotEmpty()) parts += "проверка ${reviewLanguages.sorted().joinToString()}"
-        return parts.joinToString(separator = " / ").ifBlank { "языки не указаны" }
-    }
 
     private fun ReviewAssignmentKind.toUiKindOrNull(): ReviewQueueKindUi? =
         when (this) {
@@ -635,20 +648,12 @@ class DefaultReviewQueueComponent(
             ReviewQueueKindUi.TRANSLATION_REVIEW -> ReviewAssignmentKind.TRANSLATION_REVIEW
         }
 
-    private val ReviewQueueKindUi.displayName: String
-        get() =
-            when (this) {
-                ReviewQueueKindUi.TESTING -> "Тестирование"
-                ReviewQueueKindUi.LOGIC -> "Валидация"
-                ReviewQueueKindUi.TRANSLATION -> "Перевод"
-                ReviewQueueKindUi.TRANSLATION_REVIEW -> "Проверка перевода"
-            }
-
     private fun Double.formatScore(): String = if (this % 1.0 == 0.0) toInt().toString() else "%.1f".format(this)
 
     private data class ReviewSegmentDraft(
         val key: String,
-        val label: String,
+        val kind: ReviewSegmentLabelKind,
+        val arg: String?,
         val text: String,
     )
 

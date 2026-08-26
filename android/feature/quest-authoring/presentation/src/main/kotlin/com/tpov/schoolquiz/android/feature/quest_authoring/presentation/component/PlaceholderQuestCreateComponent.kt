@@ -1,7 +1,10 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component
 
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Destination
@@ -19,7 +22,12 @@ class PlaceholderQuestCreateComponent(
     private val navigator: Navigator,
 ) : QuestCreateComponent {
     override val state: StateFlow<QuestCreateUiState> =
-        MutableStateFlow(QuestCreateUiState(isWaitingForUser = false, errorMessage = "Создание квеста недоступно"))
+        MutableStateFlow(
+            QuestCreateUiState(
+                isWaitingForUser = false,
+                errorMessage = UiMessage.Res(R.string.qa_error_unavailable),
+            ),
+        )
 
     override fun onCatalogSelected(id: CatalogId?) = Unit
 

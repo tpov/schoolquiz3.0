@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    English translations for quest-authoring. Default locale (Russian) lives in values/strings.xml.
+-->
+<resources>
+    <!-- Common actions -->
+    <string name="qa_action_save">Save</string>
+    <string name="qa_action_create">Create</string>
+    <string name="qa_status_saving">Saving</string>
+    <string name="qa_status_submitting">Submitting</string>
+    <string name="qa_cd_back">Back</string>
+
+    <!-- Quest create -->
+    <string name="qa_create_title">Quest creation</string>
+    <string name="qa_active_draft_chip">Saved quest: %1$s</string>
+    <string name="qa_easy_questions">Easy questions</string>
+    <string name="qa_hard_questions">Hard questions</string>
+    <string name="qa_submit_to_arena">Send to arena</string>
+
+    <!-- Structure dropdowns -->
+    <string name="qa_label_quest">Quest</string>
+    <string name="qa_create_quest">Create quest</string>
+    <string name="qa_label_section">Section</string>
+    <string name="qa_create_section">Create section</string>
+    <string name="qa_label_theme">Topic</string>
+    <string name="qa_create_theme">Create topic</string>
+    <string name="qa_label_lesson">Lesson</string>
+    <string name="qa_create_lesson">Create lesson</string>
+
+    <!-- Quest create messages -->
+    <string name="qa_error_auth_not_ready">Sign-in is not ready yet</string>
+    <string name="qa_error_save_quest_first">Save the quest first</string>
+    <string name="qa_error_no_lessons_in_node">The selected node has no lessons to submit</string>
+    <string name="qa_error_select_catalog">Select a catalog</string>
+    <string name="qa_error_save_quest_failed">Failed to save the quest</string>
+    <string name="qa_error_unavailable">Quest creation is unavailable</string>
+    <string name="qa_error_check_fields">Check the question fields</string>
+    <string name="qa_error_save_question_failed">Failed to save the question</string>
+    <string name="qa_saved_question_created">Question created</string>
+    <string name="qa_saved_question_saved">Question saved</string>
+    <string name="qa_arena_queued">%1$s queued for %2$s</string>
+    <string name="qa_node_quest">Quest</string>
+    <string name="qa_node_section">Section</string>
+    <string name="qa_node_theme">Topic</string>
+    <string name="qa_node_lesson">Lesson</string>
+    <string name="qa_dest_archive">archive</string>
+    <string name="qa_dest_arena">arena</string>
+    <string name="qa_error_arena_missing_questions">Submission needs saved easy and hard questions in every lesson</string>
+    <string name="qa_error_arena_enqueue_failed">Failed to queue the quest for the arena</string>
+    <string name="qa_error_enter_quest_title">Enter the quest title</string>
+    <string name="qa_error_enter_section_title">Enter the section title</string>
+    <string name="qa_error_enter_theme_title">Enter the topic title</string>
+    <string name="qa_error_enter_lesson_title">Enter the lesson title</string>
+
+    <!-- Question types -->
+    <string name="qa_type_single_choice">Single choice</string>
+    <string name="qa_type_multiple_choice">Multiple choice</string>
+    <string name="qa_type_ordering">Ordering</string>
+    <string name="qa_type_fill_blank">Fill in the blank</string>
+    <string name="qa_type_survey">Survey</string>
+
+    <!-- Editor validation -->
+    <string name="qa_validation_single_choice">Add a question, two options and one correct answer</string>
+    <string name="qa_validation_multiple_choice">Add a question, two options and at least two correct answers</string>
+    <string name="qa_validation_ordering">Add a question and at least two items</string>
+    <string name="qa_validation_fill_blank">Use 1-3 **text** blanks or mark correct answers in the text</string>
+    <string name="qa_validation_survey">Add a question and at least two options</string>
+
+    <!-- Question editor -->
+    <string name="qa_editor_question_number">Question %1$d</string>
+    <string name="qa_editor_question_label">Question</string>
+    <string name="qa_editor_fill_blank_text_label">Question text</string>
+    <string name="qa_editor_info_label">Explanation</string>
+    <string name="qa_editor_add_option">Add option</string>
+    <string name="qa_editor_option_number">Option %1$d</string>
+    <string name="qa_editor_item_label">Item</string>
+    <string name="qa_editor_add_item">Add item</string>
+    <string name="qa_editor_correct_answers_title">Correct fills</string>
+    <string name="qa_editor_correct_answer_number">Correct %1$d</string>
+    <string name="qa_editor_do_not_translate">Do not translate</string>
+    <string name="qa_editor_distractors_title">Wrong fills</string>
+    <string name="qa_editor_distractor_number">Wrong %1$d</string>
+    <string name="qa_editor_add_correct">Add correct</string>
+    <string name="qa_editor_add_distractor">Add wrong</string>
+    <string name="qa_editor_new_question_number">New %1$d</string>
+    <string name="qa_cd_back_to_structure">Back to structure</string>
+    <string name="qa_cd_add_photo">Add photo</string>
+    <string name="qa_cd_edit">Edit</string>
+    <string name="qa_cd_preview">Preview</string>
+    <string name="qa_cd_previous_question">Previous question</string>
+    <string name="qa_cd_next_question">Next question</string>
+    <string name="qa_cd_add_question">Add question</string>
+
+    <!-- Review queue -->
+    <string name="qa_review_title">Review</string>
+    <string name="qa_review_empty">No assignments</string>
+    <string name="qa_filter_all">All</string>
+    <string name="qa_filter_testing">Testing</string>
+    <string name="qa_filter_logic">Validation</string>
+    <string name="qa_filter_translation">Translation</string>
+    <string name="qa_filter_translation_review">Translation review</string>
+    <string name="qa_review_translation_label">Translation</string>
+    <string name="qa_review_no_translation">No translation</string>
+    <string name="qa_review_accepted">Accepted</string>
+    <string name="qa_review_submit">Submit</string>
+    <string name="qa_review_submitting">Submitting</string>
+    <string name="qa_review_score_testing">Test: %1$s</string>
+    <string name="qa_review_score_logic">Validation: %1$s</string>
+    <string name="qa_review_score_translation">Translation: %1$s%%</string>
+    <string name="qa_review_languages_from">from %1$s</string>
+    <string name="qa_review_languages_to">to %1$s</string>
+    <string name="qa_review_languages_review">review %1$s</string>
+    <string name="qa_review_languages_none">languages not specified</string>
+    <string name="qa_review_question_title">Question %1$d</string>
+    <string name="qa_review_submitted">Review submitted</string>
+    <string name="qa_error_submit_review_failed">Failed to submit the review</string>
+    <string name="qa_error_load_assignments_failed">Failed to load assignments</string>
+    <string name="qa_error_choose_score">Choose a score from 1 to 3</string>
+    <string name="qa_error_choose_translation_language">Choose a translation language</string>
+    <string name="qa_error_fill_all_translations">Fill in every translation field</string>
+    <string name="qa_error_choose_review_language">Choose a review language</string>
+
+    <!-- Review segments -->
+    <string name="qa_segment_text">Text</string>
+    <string name="qa_segment_option">Option %1$s</string>
+    <string name="qa_segment_item">Item %1$s</string>
+    <string name="qa_segment_candidate">Candidate %1$s</string>
+    <string name="qa_segment_info">Explanation</string>
+
+    <!-- Plurals -->
+    <plurals name="qa_review_assignments_count">
+        <item quantity="one">%1$d assignment</item>
+        <item quantity="other">%1$d assignments</item>
+    </plurals>
+    <plurals name="qa_review_questions_count">
+        <item quantity="one">%1$d question</item>
+        <item quantity="other">%1$d questions</item>
+    </plurals>
+</resources>

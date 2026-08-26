@@ -47,8 +47,8 @@ data class QuestQuestionEditorUiState(
     val fillBlankDistractors: List<String> = listOf("", "", "", ""),
     val isSaving: Boolean = false,
     val isPreviewVisible: Boolean = false,
-    val errorMessage: String? = null,
-    val lastSavedMessage: String? = null,
+    val errorMessage: UiMessage? = null,
+    val lastSavedMessage: UiMessage? = null,
 ) {
     val displayQuestionNumber: Int
         get() = activeIndex + 1

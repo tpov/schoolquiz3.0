@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.compone
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankAnswerSpec
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.buildFillBlankRuntimeText
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.extractFillBlankAnswers
@@ -15,11 +16,14 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankAnswerItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestQuestionEditorUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.SectionPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ThemePathItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.UiMessage
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.validationMessageRes
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
@@ -212,26 +216,25 @@ class DefaultQuestCreateComponent(
         val draftId = bundle?.draft?.id
         val targetShelf = targetShelfOverride ?: _state.value.targetShelf()
         val lessonIds = bundle?.targetLessonIds(target).orEmpty()
-        val targetTitle = target.submissionTitle(targetShelf)
         when {
             uid == null ->
                 _state.update {
                     it.copy(
-                        errorMessage = "Авторизация еще не готова",
+                        errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready),
                         arenaMessage = null,
                     )
                 }
             draftId == null ->
                 _state.update {
                     it.copy(
-                        errorMessage = "Сначала сохраните квест",
+                        errorMessage = UiMessage.Res(R.string.qa_error_save_quest_first),
                         arenaMessage = null,
                     )
                 }
             lessonIds.isEmpty() ->
                 _state.update {
                     it.copy(
-                        errorMessage = "В выбранном узле нет уроков для отправки",
+                        errorMessage = UiMessage.Res(R.string.qa_error_no_lessons_in_node),
                         arenaMessage = null,
                     )
                 }
@@ -256,7 +259,11 @@ class DefaultQuestCreateComponent(
                             it.copy(
                                 isSubmittingToArena = false,
                                 errorMessage = null,
-                                arenaMessage = "$targetTitle поставлен в очередь",
+                                arenaMessage =
+                                    UiMessage.ArenaQueued(
+                                        target = target,
+                                        toArchive = targetShelf == QUEST_ARCHIVE_TARGET_SHELF,
+                                    ),
                             )
                         }
                     } else {
@@ -310,7 +317,9 @@ class DefaultQuestCreateComponent(
                 _state.update {
                     it.copy(
                         isCreating = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Не удалось сохранить квест",
+                        errorMessage =
+                            result.exceptionOrNull()?.message?.let(UiMessage::Raw)
+                                ?: UiMessage.Res(R.string.qa_error_save_quest_failed),
                     )
                 }
             }
@@ -321,7 +330,7 @@ class DefaultQuestCreateComponent(
         scope.launch {
             val uid = ownerUid
             if (uid == null) {
-                _state.update { it.copy(errorMessage = "Авторизация еще не готова") }
+                _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready)) }
                 return@launch
             }
             _state.update { it.copy(defaultDifficulty = difficulty, errorMessage = null) }
@@ -341,18 +350,18 @@ class DefaultQuestCreateComponent(
     ): CreateQuestDraftCommand? {
         val uid = ownerUid
         val catalogId = snapshot.selectedCatalogId
-        val structureError = if (requireStructureTitles) snapshot.structureValidationError() else null
+        val structureErrorRes = if (requireStructureTitles) snapshot.structureValidationErrorRes() else null
         return when {
             uid == null -> {
-                _state.update { it.copy(errorMessage = "Авторизация еще не готова") }
+                _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready)) }
                 null
             }
             catalogId == null -> {
-                _state.update { it.copy(errorMessage = "Выберите каталог") }
+                _state.update { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_select_catalog)) }
                 null
             }
-            structureError != null -> {
-                _state.update { it.copy(errorMessage = structureError) }
+            structureErrorRes != null -> {
+                _state.update { it.copy(errorMessage = UiMessage.Res(structureErrorRes)) }
                 null
             }
             else ->
@@ -709,7 +718,7 @@ class DefaultQuestCreateComponent(
             else ->
                 updateEditor {
                     it.copy(
-                        errorMessage = it.autosaveValidationMessage(),
+                        errorMessage = UiMessage.Res(it.type.validationMessageRes()),
                         lastSavedMessage = null,
                     )
                 }
@@ -723,7 +732,7 @@ class DefaultQuestCreateComponent(
     ): DraftQuestionId? {
         val uid = ownerUid
         if (uid == null) {
-            updateEditor { it.copy(errorMessage = "Авторизация еще не готова") }
+            updateEditor { it.copy(errorMessage = UiMessage.Res(R.string.qa_error_auth_not_ready)) }
             return null
         }
 
@@ -735,7 +744,9 @@ class DefaultQuestCreateComponent(
             updateEditor {
                 it.copy(
                     isSaving = false,
-                    errorMessage = contentResult.exceptionOrNull()?.message ?: "Проверьте поля вопроса",
+                    errorMessage =
+                        contentResult.exceptionOrNull()?.message?.let(UiMessage::Raw)
+                            ?: UiMessage.Res(R.string.qa_error_check_fields),
                 )
             }
             return null
@@ -770,7 +781,13 @@ class DefaultQuestCreateComponent(
                     isSaving = false,
                     lastSavedMessage =
                         if (showSavedMessage) {
-                            if (isNewQuestion) "Вопрос создан" else "Вопрос сохранен"
+                            val savedRes =
+                                if (isNewQuestion) {
+                                    R.string.qa_saved_question_created
+                                } else {
+                                    R.string.qa_saved_question_saved
+                                }
+                            UiMessage.Res(savedRes)
                         } else {
                             null
                         },
@@ -782,7 +799,9 @@ class DefaultQuestCreateComponent(
         updateEditor {
             it.copy(
                 isSaving = false,
-                errorMessage = result.exceptionOrNull()?.message ?: "Не удалось сохранить вопрос",
+                errorMessage =
+                    result.exceptionOrNull()?.message?.let(UiMessage::Raw)
+                        ?: UiMessage.Res(R.string.qa_error_save_question_failed),
             )
         }
         return null
@@ -909,7 +928,7 @@ class DefaultQuestCreateComponent(
                         .distinctBy { it.id }
                         .sortedWith(compareBy<Quest> { it.title.lowercase() }.thenBy { it.id.value })
                 }
-                    .catch { error -> _state.update { it.copy(errorMessage = error.message) } }
+                    .catch { error -> _state.update { it.copy(errorMessage = error.message?.let(UiMessage::Raw)) } }
                     .collect { quests ->
                         _state.update { current ->
                             val selectedQuest =
@@ -929,7 +948,7 @@ class DefaultQuestCreateComponent(
         sectionsJob =
             scope.launch {
                 sectionRepository.observeByQuest(questId)
-                    .catch { error -> _state.update { it.copy(errorMessage = error.message) } }
+                    .catch { error -> _state.update { it.copy(errorMessage = error.message?.let(UiMessage::Raw)) } }
                     .collect { sections ->
                         _state.update { current ->
                             val selectedSection =
@@ -948,7 +967,7 @@ class DefaultQuestCreateComponent(
         themesJob =
             scope.launch {
                 themeRepository.observeBySection(sectionId)
-                    .catch { error -> _state.update { it.copy(errorMessage = error.message) } }
+                    .catch { error -> _state.update { it.copy(errorMessage = error.message?.let(UiMessage::Raw)) } }
                     .collect { themes ->
                         _state.update { current ->
                             val selectedTheme =
@@ -967,7 +986,7 @@ class DefaultQuestCreateComponent(
         lessonsJob =
             scope.launch {
                 lessonRepository.observeByTheme(themeId)
-                    .catch { error -> _state.update { it.copy(errorMessage = error.message) } }
+                    .catch { error -> _state.update { it.copy(errorMessage = error.message?.let(UiMessage::Raw)) } }
                     .collect { lessons ->
                         _state.update { current ->
                             val selectedLesson =
@@ -1200,7 +1219,7 @@ class DefaultQuestCreateComponent(
                         DraftQuestionListItem(
                             id = question.id,
                             number = index + 1,
-                            title = question.text.ifBlank { question.type.title },
+                            title = question.text,
                             type = question.type,
                             difficulty = question.difficulty,
                         )
@@ -1390,16 +1409,6 @@ class DefaultQuestCreateComponent(
     }
 }
 
-private val DraftQuestionType.title: String
-    get() =
-        when (this) {
-            DraftQuestionType.SINGLE_CHOICE -> "Один ответ"
-            DraftQuestionType.MULTIPLE_CHOICE -> "Несколько ответов"
-            DraftQuestionType.ORDERING -> "Порядок"
-            DraftQuestionType.FILL_BLANK -> "Пропуск"
-            DraftQuestionType.SURVEY -> "Опрос"
-        }
-
 private fun String.cleanNullable(): String? = trim().takeIf { it.isNotEmpty() }
 
 private fun List<String>.withValue(
@@ -1462,19 +1471,19 @@ private fun QuestCreateUiState.selectedLessonTitle(): String =
         ?.let { id -> lessonItems.firstOrNull { it.id == id }?.title }
         ?: newLessonTitle.trim().ifBlank { "Новый урок" }
 
-private fun QuestCreateUiState.structureValidationError(): String? =
+private fun QuestCreateUiState.structureValidationErrorRes(): Int? =
     when {
-        selectedQuestId == null && newQuestTitle.isBlank() -> "Введите название квеста"
-        selectedSectionId == null && newSectionTitle.isBlank() -> "Введите название раздела"
-        selectedThemeId == null && newThemeTitle.isBlank() -> "Введите название темы"
-        selectedLessonId == null && newLessonTitle.isBlank() -> "Введите название урока"
+        selectedQuestId == null && newQuestTitle.isBlank() -> R.string.qa_error_enter_quest_title
+        selectedSectionId == null && newSectionTitle.isBlank() -> R.string.qa_error_enter_section_title
+        selectedThemeId == null && newThemeTitle.isBlank() -> R.string.qa_error_enter_theme_title
+        selectedLessonId == null && newLessonTitle.isBlank() -> R.string.qa_error_enter_lesson_title
         else -> null
     }
 
-private fun Throwable?.arenaSubmissionErrorMessage(): String =
-    when (this) {
-        is IllegalArgumentException -> "Для отправки нужны сохраненные легкие и сложные вопросы в каждом уроке"
-        else -> this?.message ?: "Не удалось поставить квест в очередь арены"
+private fun Throwable?.arenaSubmissionErrorMessage(): UiMessage =
+    when {
+        this is IllegalArgumentException -> UiMessage.Res(R.string.qa_error_arena_missing_questions)
+        else -> this?.message?.let(UiMessage::Raw) ?: UiMessage.Res(R.string.qa_error_arena_enqueue_failed)
     }
 
 /**
@@ -1490,23 +1499,6 @@ private fun QuestCreateUiState.targetShelf(): String =
 
 private fun QuestCreateUiState.selectedCatalogType(): QuestType =
     catalogs.firstOrNull { it.id == selectedCatalogId }?.questType ?: QuestType.REGULAR
-
-private fun QuestArenaTargetNode.submissionTitle(targetShelf: String): String {
-    val destination =
-        if (targetShelf == QUEST_ARCHIVE_TARGET_SHELF) {
-            "архив"
-        } else {
-            "арену"
-        }
-    val node =
-        when (this) {
-            QuestArenaTargetNode.QUEST -> "Квест"
-            QuestArenaTargetNode.SECTION -> "Раздел"
-            QuestArenaTargetNode.THEME -> "Тема"
-            QuestArenaTargetNode.LESSON -> "Урок"
-        }
-    return "$node на $destination"
-}
 
 private fun String.appendFillBlankMarker(kind: FillBlankMarkerKind): String {
     val marker =
@@ -1548,15 +1540,6 @@ private fun QuestQuestionEditorUiState.isEmptyNewQuestion(): Boolean =
         fillBlankText.isBlank() &&
         fillBlankAnswers.all { it.text.isBlank() } &&
         fillBlankDistractors.all { it.isBlank() }
-
-private fun QuestQuestionEditorUiState.autosaveValidationMessage(): String =
-    when (type) {
-        DraftQuestionType.SINGLE_CHOICE -> "Нужны вопрос, два варианта и правильный ответ"
-        DraftQuestionType.MULTIPLE_CHOICE -> "Нужны вопрос, два варианта и минимум два правильных ответа"
-        DraftQuestionType.ORDERING -> "Нужны вопрос и минимум два элемента"
-        DraftQuestionType.FILL_BLANK -> "Нужны 1-3 пропуска через **текст** или правильные ответы в тексте"
-        DraftQuestionType.SURVEY -> "Нужны вопрос и минимум два варианта"
-    }
 
 private fun QuestQuestionEditorUiState.withSyncedFillBlankText(value: String): QuestQuestionEditorUiState {
     val markupAnswers = extractFillBlankAnswers(value)

@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
@@ -50,9 +51,10 @@ import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesign
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignDeepSurfaceColor
 import com.tpov.schoolquiz.android.core.designsystem.components.schoolQuizDesignLightBorderColor
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
-import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestArenaTargetNode
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component.QuestCreateComponent
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.LessonPathItem
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestPathItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.SectionPathItem
@@ -202,10 +204,10 @@ private fun QuestCreateContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.qa_cd_back))
             }
             Text(
-                text = "Создание квеста",
+                text = stringResource(R.string.qa_create_title),
                 style = MaterialTheme.typography.titleLarge,
                 modifier =
                     Modifier
@@ -219,7 +221,7 @@ private fun QuestCreateContent(
                     onClick = onStructureCheckClick,
                     enabled = isStructureActionEnabled,
                 ) {
-                    Text("Сохранить")
+                    Text(stringResource(R.string.qa_action_save))
                 }
             }
         }
@@ -227,7 +229,7 @@ private fun QuestCreateContent(
         state.activeDraftTitle?.let { title ->
             AssistChip(
                 onClick = onContinueDraftClick,
-                label = { Text("Сохраненный квест: $title") },
+                label = { Text(stringResource(R.string.qa_active_draft_chip, title)) },
             )
         }
 
@@ -297,14 +299,14 @@ private fun QuestCreateContent(
 
         state.errorMessage?.let { message ->
             Text(
-                text = message,
+                text = message.resolveText(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
         state.arenaMessage?.let { message ->
             Text(
-                text = message,
+                text = message.resolveText(),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -316,9 +318,10 @@ private fun QuestCreateContent(
         ) {
             BrandPrimaryButton(
                 text =
-                    when {
-                        state.isCreating -> "Сохраняю"
-                        else -> "Легкие вопросы"
+                    if (state.isCreating) {
+                        stringResource(R.string.qa_status_saving)
+                    } else {
+                        stringResource(R.string.qa_easy_questions)
                     },
                 onClick = { onQuestionsClick(Difficulty.EASY) },
                 enabled = isQuestionActionEnabled,
@@ -326,9 +329,10 @@ private fun QuestCreateContent(
             )
             BrandPrimaryButton(
                 text =
-                    when {
-                        state.isCreating -> "Сохраняю"
-                        else -> "Сложные вопросы"
+                    if (state.isCreating) {
+                        stringResource(R.string.qa_status_saving)
+                    } else {
+                        stringResource(R.string.qa_hard_questions)
                     },
                 onClick = { onQuestionsClick(Difficulty.HARD) },
                 enabled = isQuestionActionEnabled,
@@ -338,9 +342,10 @@ private fun QuestCreateContent(
         if (state.hasActiveDraft) {
             BrandPrimaryButton(
                 text =
-                    when {
-                        state.isSubmittingToArena -> "Отправляю"
-                        else -> "Отправить на арену"
+                    if (state.isSubmittingToArena) {
+                        stringResource(R.string.qa_status_submitting)
+                    } else {
+                        stringResource(R.string.qa_submit_to_arena)
                     },
                 onClick = onSubmitToArenaClick,
                 enabled = state.canSubmitToArena,
@@ -363,8 +368,8 @@ private fun QuestPathSpinner(
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
-        label = "Квест",
-        createPlaceholder = "Создать квест",
+        label = stringResource(R.string.qa_label_quest),
+        createPlaceholder = stringResource(R.string.qa_create_quest),
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
         createTitle = createTitle,
@@ -387,8 +392,8 @@ private fun SectionPathSpinner(
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
-        label = "Раздел",
-        createPlaceholder = "Создать раздел",
+        label = stringResource(R.string.qa_label_section),
+        createPlaceholder = stringResource(R.string.qa_create_section),
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
         createTitle = createTitle,
@@ -411,8 +416,8 @@ private fun ThemePathSpinner(
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
-        label = "Тема",
-        createPlaceholder = "Создать тему",
+        label = stringResource(R.string.qa_label_theme),
+        createPlaceholder = stringResource(R.string.qa_create_theme),
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
         createTitle = createTitle,
@@ -435,8 +440,8 @@ private fun LessonPathSpinner(
     modifier: Modifier = Modifier,
 ) {
     StructureDropdown(
-        label = "Урок",
-        createPlaceholder = "Создать урок",
+        label = stringResource(R.string.qa_label_lesson),
+        createPlaceholder = stringResource(R.string.qa_create_lesson),
         options = items.map { StructureOption(id = it.id, title = it.title) },
         selectedId = selectedId,
         createTitle = createTitle,
@@ -527,7 +532,7 @@ private fun <T> StructureDropdown(
             onDismissRequest = { expanded.value = false },
         ) {
             DropdownMenuItem(
-                text = { Text(CREATE_OPTION_TITLE) },
+                text = { Text(stringResource(R.string.qa_action_create)) },
                 onClick = {
                     onSelectionChanged(null)
                     expanded.value = false
@@ -572,8 +577,6 @@ private data class StructureOption<T>(
     val id: T,
     val title: String,
 )
-
-private const val CREATE_OPTION_TITLE = "Создать"
 
 @Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
 @Preview(showBackground = true, backgroundColor = 0xFF000000)

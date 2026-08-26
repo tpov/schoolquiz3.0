@@ -1,18 +1,23 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentDetailUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentListItemUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewLanguagesUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQuestionUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentLabelKind
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentUiState
 import org.junit.Rule
 import org.junit.Test
@@ -21,6 +26,8 @@ import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class ReviewQueueViewTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
 
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -40,8 +47,8 @@ class ReviewQueueViewTest {
                                     ReviewAssignmentListItemUiState(
                                         id = "assignment-1",
                                         title = "Lesson for review",
-                                        kindLabels = listOf("Проверка перевода"),
-                                        languageLabel = "проверка en",
+                                        kinds = listOf(ReviewQueueKindUi.TRANSLATION_REVIEW),
+                                        languages = ReviewLanguagesUi(reviewTargets = listOf("en")),
                                         questionCount = 1,
                                         testingScore = null,
                                         logicScore = null,
@@ -83,7 +90,6 @@ class ReviewQueueViewTest {
                                     lessonId = "lesson-1",
                                     title = "Lesson for review",
                                     kind = ReviewQueueKindUi.TRANSLATION_REVIEW,
-                                    kindLabel = "Проверка перевода",
                                     selectedLanguage = "en",
                                     availableLanguages = listOf("en"),
                                     selectedScore = null,
@@ -91,7 +97,7 @@ class ReviewQueueViewTest {
                                         listOf(
                                             ReviewQuestionUiState(
                                                 id = "question-1",
-                                                title = "Вопрос 1",
+                                                order = 0,
                                                 language = "uk",
                                                 text = "Source text",
                                                 segments =
@@ -99,7 +105,7 @@ class ReviewQueueViewTest {
                                                         ReviewSegmentUiState(
                                                             questionId = "question-1",
                                                             key = "text",
-                                                            label = "Текст",
+                                                            labelKind = ReviewSegmentLabelKind.TEXT,
                                                             sourceText = "Source text",
                                                             translatedText = "",
                                                             accepted = false,
@@ -123,7 +129,11 @@ class ReviewQueueViewTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Проверка перевода").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Нет перевода").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(context.getString(R.string.qa_filter_translation_review))
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(context.getString(R.string.qa_review_no_translation))
+            .assertIsDisplayed()
     }
 }

@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -63,6 +65,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.Orderin
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.QuestionImage
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.SingleChoiceContent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.SurveyContent
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FILL_BLANK_RUNTIME_MARKER
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankAnswerSpec
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.logic.FillBlankVisualSegment
@@ -74,6 +77,7 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankAnswerItem
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestQuestionEditorUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.validationMessageRes
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftLessonId
 import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQuestionId
@@ -216,22 +220,30 @@ private fun EditorTopPanel(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 IconButton(onClick = onBackClick) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "К структуре")
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.qa_cd_back_to_structure),
+                    )
                 }
                 Text(
-                    text = "Вопрос ${state.displayQuestionNumber}",
+                    text = stringResource(R.string.qa_editor_question_number, state.displayQuestionNumber),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = onQuestionImageClick) {
-                    Icon(Icons.Filled.Image, contentDescription = "Добавить фото")
+                    Icon(Icons.Filled.Image, contentDescription = stringResource(R.string.qa_cd_add_photo))
                 }
                 IconButton(onClick = onQuestionPreviewClick) {
                     Icon(
                         imageVector = Icons.Filled.Visibility,
-                        contentDescription = if (state.isPreviewVisible) "Редактировать" else "Превью",
+                        contentDescription =
+                            if (state.isPreviewVisible) {
+                                stringResource(R.string.qa_cd_edit)
+                            } else {
+                                stringResource(R.string.qa_cd_preview)
+                            },
                     )
                 }
                 if (state.isSaving) {
@@ -287,7 +299,7 @@ private fun GenerationSurface(
     onFillBlankDistractorRemoved: (Int) -> Unit,
 ) {
     RunnerLikeFrame(
-        title = "Вопрос ${state.displayQuestionNumber}",
+        title = stringResource(R.string.qa_editor_question_number, state.displayQuestionNumber),
         subtitle = state.type.displayTitle,
         question = {
             if (state.type == DraftQuestionType.FILL_BLANK) {
@@ -430,7 +442,7 @@ private fun EditableQuestionCard(
             EditorTextField(
                 value = text,
                 onValueChange = onTextChanged,
-                label = "Вопрос",
+                label = stringResource(R.string.qa_editor_question_label),
                 minLines = 3,
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth(),
@@ -467,7 +479,7 @@ private fun FillBlankQuestionCard(
             EditorTextField(
                 value = state.fillBlankText,
                 onValueChange = onFillBlankTextChanged,
-                label = "Текст вопроса",
+                label = stringResource(R.string.qa_editor_fill_blank_text_label),
                 minLines = 3,
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth(),
@@ -578,7 +590,7 @@ private fun ChoiceGenerationEditor(
             )
         }
         AddRowButton(
-            text = "Добавить вариант",
+            text = stringResource(R.string.qa_editor_add_option),
             enabled = state.optionTexts.size < MAX_OPTION_ROWS,
             onClick = onOptionAdded,
         )
@@ -637,7 +649,7 @@ private fun AnswerRow(
             EditorTextField(
                 value = value,
                 onValueChange = onTextChanged,
-                label = "Вариант ${index + 1}",
+                label = stringResource(R.string.qa_editor_option_number, index + 1),
                 modifier = Modifier.weight(1f),
             )
             RemoveRowButton(
@@ -667,7 +679,7 @@ private fun OrderingGenerationEditor(
             )
         }
         AddRowButton(
-            text = "Добавить элемент",
+            text = stringResource(R.string.qa_editor_add_item),
             enabled = state.orderingItems.size < MAX_OPTION_ROWS,
             onClick = onOrderingItemAdded,
         )
@@ -712,7 +724,7 @@ private fun OrderedItemRow(
             EditorTextField(
                 value = value,
                 onValueChange = onTextChanged,
-                label = "Элемент",
+                label = stringResource(R.string.qa_editor_item_label),
                 modifier = Modifier.weight(1f),
             )
             RemoveRowButton(
@@ -788,7 +800,7 @@ private fun FillBlankAnswerSection(
 ) {
     EditorPanel {
         Text(
-            text = "Правильные заполнения",
+            text = stringResource(R.string.qa_editor_correct_answers_title),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -803,7 +815,7 @@ private fun FillBlankAnswerSection(
             )
         }
         AddRowButton(
-            text = "Добавить правильный",
+            text = stringResource(R.string.qa_editor_add_correct),
             enabled = answers.size < 3,
             onClick = onAnswerAdded,
         )
@@ -839,7 +851,7 @@ private fun FillBlankAnswerRow(
                 EditorTextField(
                     value = answer.text,
                     onValueChange = onTextChanged,
-                    label = "Правильный ${index + 1}",
+                    label = stringResource(R.string.qa_editor_correct_answer_number, index + 1),
                     modifier = Modifier.weight(1f),
                 )
                 RemoveRowButton(
@@ -856,7 +868,7 @@ private fun FillBlankAnswerRow(
                     onCheckedChange = onProtectedChanged,
                 )
                 Text(
-                    text = "Не переводить",
+                    text = stringResource(R.string.qa_editor_do_not_translate),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -875,7 +887,7 @@ private fun FillBlankDistractorSection(
 ) {
     EditorPanel {
         Text(
-            text = "Неправильные заполнения",
+            text = stringResource(R.string.qa_editor_distractors_title),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -888,7 +900,7 @@ private fun FillBlankDistractorSection(
                 EditorTextField(
                     value = value,
                     onValueChange = { onDistractorChanged(index, it) },
-                    label = "Неправильный ${index + 1}",
+                    label = stringResource(R.string.qa_editor_distractor_number, index + 1),
                     modifier = Modifier.weight(1f),
                 )
                 RemoveRowButton(
@@ -898,7 +910,7 @@ private fun FillBlankDistractorSection(
             }
         }
         AddRowButton(
-            text = "Добавить неправильный",
+            text = stringResource(R.string.qa_editor_add_distractor),
             enabled = correctCount + distractors.size < 10,
             onClick = onDistractorAdded,
         )
@@ -990,7 +1002,7 @@ private fun QuestionInfoPanel(
         EditorTextField(
             value = info,
             onValueChange = onQuestionInfoChanged,
-            label = "Пояснение",
+            label = stringResource(R.string.qa_editor_info_label),
             minLines = 2,
             singleLine = false,
             modifier = Modifier.fillMaxWidth(),
@@ -1076,13 +1088,16 @@ private fun EditorBottomBar(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 IconButton(onClick = onBackClick) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.qa_cd_back))
                 }
                 IconButton(
                     onClick = onPreviousQuestionClick,
                     enabled = state.canGoPrevious,
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Предыдущий вопрос")
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.qa_cd_previous_question),
+                    )
                 }
                 Row(
                     modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
@@ -1107,10 +1122,13 @@ private fun EditorBottomBar(
                     onClick = onNextQuestionClick,
                     enabled = state.canGoNext,
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Следующий вопрос")
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = stringResource(R.string.qa_cd_next_question),
+                    )
                 }
                 IconButton(onClick = onAddQuestionClick) {
-                    Icon(Icons.Filled.Add, contentDescription = "Добавить вопрос")
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.qa_cd_add_question))
                 }
             }
         }
@@ -1129,7 +1147,12 @@ private fun QuestionChip(
         onClick = onClick,
         label = {
             Text(
-                text = "${item.number}. ${item.title}",
+                text =
+                    if (item.title.isBlank()) {
+                        "${item.number}. ${item.type.displayTitle}"
+                    } else {
+                        "${item.number}. ${item.title}"
+                    },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.widthIn(max = 150.dp),
@@ -1148,7 +1171,7 @@ private fun NewQuestionChip(
     FilterChip(
         selected = selected,
         onClick = onClick,
-        label = { Text("Новый $number") },
+        label = { Text(stringResource(R.string.qa_editor_new_question_number, number)) },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Filled.Add,
@@ -1162,10 +1185,12 @@ private fun NewQuestionChip(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun FeedbackLine(state: QuestQuestionEditorUiState) {
-    val message = state.errorMessage ?: state.lastSavedMessage ?: state.validationMessage()
-    if (message == null) return
+    val error = state.errorMessage?.resolveText()
+    val saved = state.lastSavedMessage?.resolveText()
+    val validation = state.validationMessageRes()?.let { stringResource(it) }
+    val message = error ?: saved ?: validation ?: return
 
-    val isError = state.errorMessage != null || (!state.canSave && state.lastSavedMessage == null)
+    val isError = error != null || (!state.canSave && saved == null)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -1245,15 +1270,18 @@ private fun EditorTextField(
     )
 }
 
-private val DraftQuestionType.displayTitle: String
-    get() =
+internal val DraftQuestionType.labelRes: Int
+    @StringRes get() =
         when (this) {
-            DraftQuestionType.SINGLE_CHOICE -> "Один ответ"
-            DraftQuestionType.MULTIPLE_CHOICE -> "Несколько ответов"
-            DraftQuestionType.ORDERING -> "Порядок"
-            DraftQuestionType.FILL_BLANK -> "Пропуск"
-            DraftQuestionType.SURVEY -> "Опрос"
+            DraftQuestionType.SINGLE_CHOICE -> R.string.qa_type_single_choice
+            DraftQuestionType.MULTIPLE_CHOICE -> R.string.qa_type_multiple_choice
+            DraftQuestionType.ORDERING -> R.string.qa_type_ordering
+            DraftQuestionType.FILL_BLANK -> R.string.qa_type_fill_blank
+            DraftQuestionType.SURVEY -> R.string.qa_type_survey
         }
+
+private val DraftQuestionType.displayTitle: String
+    @Composable get() = stringResource(labelRes)
 
 private const val BLANK_MARKER_COLOR_ARGB = 0xFFFFC107
 private const val PROTECTED_MARKER_COLOR_ARGB = 0xFF2196F3
@@ -1270,17 +1298,11 @@ private fun FillBlankVisualSegment.markerColor(): Color =
         else -> ProtectedMarkerColor
     }
 
-private fun QuestQuestionEditorUiState.validationMessage(): String? =
+private fun QuestQuestionEditorUiState.validationMessageRes(): Int? =
     if (shouldHideValidationMessage()) {
         null
     } else {
-        when (type) {
-            DraftQuestionType.SINGLE_CHOICE -> "Нужны вопрос, два варианта и правильный ответ"
-            DraftQuestionType.MULTIPLE_CHOICE -> "Нужны вопрос, два варианта и минимум два правильных ответа"
-            DraftQuestionType.ORDERING -> "Нужны вопрос и минимум два элемента"
-            DraftQuestionType.FILL_BLANK -> "Нужны 1-3 пропуска через **текст** или правильные ответы в тексте"
-            DraftQuestionType.SURVEY -> "Нужны вопрос и минимум два варианта"
-        }
+        type.validationMessageRes()
     }
 
 private fun QuestQuestionEditorUiState.shouldHideValidationMessage(): Boolean =

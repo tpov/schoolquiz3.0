@@ -1,6 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.component
 
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.FillBlankMarkerKind
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestArenaTargetNode
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.QuestCreateUiState
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
@@ -10,13 +11,6 @@ import com.tpov.schoolquiz.shared.feature.quest_authoring.domain.model.DraftQues
 import com.tpov.schoolquiz.shared.feature.section.domain.model.SectionId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.flow.StateFlow
-
-enum class QuestArenaTargetNode {
-    QUEST,
-    SECTION,
-    THEME,
-    LESSON,
-}
 
 @Suppress("TooManyFunctions")
 interface QuestCreateComponent {

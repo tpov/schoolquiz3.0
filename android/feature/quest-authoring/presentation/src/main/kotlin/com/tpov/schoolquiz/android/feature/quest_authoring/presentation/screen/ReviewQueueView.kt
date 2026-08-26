@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.quest_authoring.presentation.screen
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -36,14 +37,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.R
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentDetailUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewAssignmentListItemUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewLanguagesUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQuestionUiState
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueFilter
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueKindUi
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewQueueUiState
+import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentLabelKind
 import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.uistate.ReviewSegmentUiState
 
 @Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
@@ -92,10 +98,10 @@ fun ReviewQueueView(
             )
         }
         state.errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Text(text = it.resolveText(), color = MaterialTheme.colorScheme.error)
         }
         state.successMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.primary)
+            Text(text = it.resolveText(), color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -115,12 +121,17 @@ private fun ReviewQueueListHeader(
     ) {
         Column {
             Text(
-                text = "Проверка",
+                text = stringResource(R.string.qa_review_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "${state.assignments.size} заданий",
+                text =
+                    pluralStringResource(
+                        R.plurals.qa_review_assignments_count,
+                        state.assignments.size,
+                        state.assignments.size,
+                    ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -162,7 +173,7 @@ private fun ReviewQueueList(
             }
         state.assignments.isEmpty() ->
             Text(
-                text = "Нет заданий",
+                text = stringResource(R.string.qa_review_empty),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = modifier,
             )
@@ -199,15 +210,26 @@ private fun ReviewAssignmentCard(
         ) {
             Text(text = item.title, style = MaterialTheme.typography.titleMedium)
             Text(
-                text = item.languageLabel,
+                text = item.languages.label(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                item.kindLabels.forEach { label ->
-                    AssistChip(onClick = {}, label = { Text(label) })
+                item.kinds.forEach { kind ->
+                    AssistChip(onClick = {}, label = { Text(kind.displayName) })
                 }
-                AssistChip(onClick = {}, label = { Text("${item.questionCount} вопросов") })
+                AssistChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            pluralStringResource(
+                                R.plurals.qa_review_questions_count,
+                                item.questionCount,
+                                item.questionCount,
+                            ),
+                        )
+                    },
+                )
             }
             ReviewScores(item)
         }
@@ -219,9 +241,9 @@ private fun ReviewAssignmentCard(
 private fun ReviewScores(item: ReviewAssignmentListItemUiState) {
     val scores =
         listOfNotNull(
-            item.testingScore?.let { "Тест: $it" },
-            item.logicScore?.let { "Валидация: $it" },
-            item.translationScore?.let { "Перевод: $it" },
+            item.testingScore?.let { stringResource(R.string.qa_review_score_testing, it) },
+            item.logicScore?.let { stringResource(R.string.qa_review_score_logic, it) },
+            item.translationScore?.let { stringResource(R.string.qa_review_score_translation, it) },
         )
     if (scores.isNotEmpty()) {
         Text(
@@ -251,12 +273,12 @@ private fun ReviewDetail(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBackToListClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.qa_cd_back))
             }
             Column {
                 Text(text = detail.title, style = MaterialTheme.typography.titleLarge)
                 Text(
-                    text = detail.kindLabel,
+                    text = detail.kind.displayName,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -295,7 +317,14 @@ private fun ReviewDetail(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-            Text(text = if (isSubmitting) "Отправка" else "Отправить")
+            Text(
+                text =
+                    if (isSubmitting) {
+                        stringResource(R.string.qa_review_submitting)
+                    } else {
+                        stringResource(R.string.qa_review_submit)
+                    },
+            )
         }
     }
 }
@@ -337,7 +366,10 @@ private fun ReviewQuestionBlock(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(text = question.title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = stringResource(R.string.qa_review_question_title, question.order + 1),
+            style = MaterialTheme.typography.titleMedium,
+        )
         Text(text = question.text, style = MaterialTheme.typography.bodyMedium)
         if (question.segments.isNotEmpty()) {
             question.segments.forEach { segment ->
@@ -363,7 +395,7 @@ private fun ReviewSegmentRow(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = segment.label,
+            text = segment.labelText(),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -374,10 +406,15 @@ private fun ReviewSegmentRow(
                 onValueChange = { onTranslationTextChanged(segment.questionId, segment.key, it) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 1,
-                label = { Text("Перевод") },
+                label = { Text(stringResource(R.string.qa_review_translation_label)) },
             )
         } else if (kind == ReviewQueueKindUi.TRANSLATION_REVIEW) {
-            val translatedText = segment.translatedText.ifBlank { "Нет перевода" }
+            val translatedText =
+                if (segment.translatedText.isBlank()) {
+                    stringResource(R.string.qa_review_no_translation)
+                } else {
+                    segment.translatedText
+                }
             Text(
                 text = translatedText,
                 style = MaterialTheme.typography.bodyMedium,
@@ -393,21 +430,61 @@ private fun ReviewSegmentRow(
                     checked = segment.accepted,
                     onCheckedChange = { onSegmentAcceptedChanged(segment.questionId, segment.key, it) },
                 )
-                Text("Принято")
+                Text(stringResource(R.string.qa_review_accepted))
             }
         }
     }
 }
 
-private val ReviewQueueFilter.displayName: String
-    get() =
-        when (this) {
-            ReviewQueueFilter.ALL -> "Все"
-            ReviewQueueFilter.TESTING -> "Тестирование"
-            ReviewQueueFilter.LOGIC -> "Валидация"
-            ReviewQueueFilter.TRANSLATION -> "Перевод"
-            ReviewQueueFilter.TRANSLATION_REVIEW -> "Проверка перевода"
+@Composable
+private fun ReviewSegmentUiState.labelText(): String =
+    when (labelKind) {
+        ReviewSegmentLabelKind.TEXT -> stringResource(R.string.qa_segment_text)
+        ReviewSegmentLabelKind.OPTION -> stringResource(R.string.qa_segment_option, labelArg.orEmpty())
+        ReviewSegmentLabelKind.ITEM -> stringResource(R.string.qa_segment_item, labelArg.orEmpty())
+        ReviewSegmentLabelKind.CANDIDATE -> stringResource(R.string.qa_segment_candidate, labelArg.orEmpty())
+        ReviewSegmentLabelKind.INFO -> stringResource(R.string.qa_segment_info)
+    }
+
+@Composable
+private fun ReviewLanguagesUi.label(): String {
+    val parts =
+        buildList {
+            if (source.isNotEmpty()) add(stringResource(R.string.qa_review_languages_from, source.joinToString()))
+            if (translationTargets.isNotEmpty()) {
+                add(stringResource(R.string.qa_review_languages_to, translationTargets.joinToString()))
+            }
+            if (reviewTargets.isNotEmpty()) {
+                add(stringResource(R.string.qa_review_languages_review, reviewTargets.joinToString()))
+            }
         }
+    return parts.joinToString(separator = " / ").ifBlank { stringResource(R.string.qa_review_languages_none) }
+}
+
+private val ReviewQueueFilter.labelRes: Int
+    @StringRes get() =
+        when (this) {
+            ReviewQueueFilter.ALL -> R.string.qa_filter_all
+            ReviewQueueFilter.TESTING -> R.string.qa_filter_testing
+            ReviewQueueFilter.LOGIC -> R.string.qa_filter_logic
+            ReviewQueueFilter.TRANSLATION -> R.string.qa_filter_translation
+            ReviewQueueFilter.TRANSLATION_REVIEW -> R.string.qa_filter_translation_review
+        }
+
+private val ReviewQueueFilter.displayName: String
+    @Composable get() = stringResource(labelRes)
+
+private val ReviewQueueKindUi.labelRes: Int
+    @StringRes get() =
+        when (this) {
+            ReviewQueueKindUi.TESTING -> R.string.qa_filter_testing
+            ReviewQueueKindUi.LOGIC -> R.string.qa_filter_logic
+            ReviewQueueKindUi.TRANSLATION -> R.string.qa_filter_translation
+            ReviewQueueKindUi.TRANSLATION_REVIEW -> R.string.qa_filter_translation_review
+        }
+
+private val ReviewQueueKindUi.displayName: String
+    @Composable get() = stringResource(labelRes)
 
 private const val MIN_REVIEW_SCORE = 1
 private const val MAX_REVIEW_SCORE = 3

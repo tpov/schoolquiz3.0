@@ -51,8 +51,8 @@ data class QuestCreateUiState(
     val isWaitingForUser: Boolean = true,
     val isCreating: Boolean = false,
     val isSubmittingToArena: Boolean = false,
-    val errorMessage: String? = null,
-    val arenaMessage: String? = null,
+    val errorMessage: UiMessage? = null,
+    val arenaMessage: UiMessage? = null,
 ) {
     val hasActiveDraft: Boolean
         get() = activeDraftTitle != null
