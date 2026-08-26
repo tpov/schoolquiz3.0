@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
@@ -54,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAvatar
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
@@ -141,15 +141,10 @@ internal fun ProfileIdentityRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
-            Modifier
-                .size(40.dp)
-                .background(accent.copy(alpha = 0.10f), CircleShape)
-                .border(1.dp, NoirGlassStroke, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(NoirIcons.Users, contentDescription = null, tint = accent, modifier = Modifier.size(21.dp))
-        }
+        NoirAvatar(
+            avatarUrl = state.profile.avatarUrl,
+            size = 40.dp,
+        )
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             if (state.isEditingNickname) {

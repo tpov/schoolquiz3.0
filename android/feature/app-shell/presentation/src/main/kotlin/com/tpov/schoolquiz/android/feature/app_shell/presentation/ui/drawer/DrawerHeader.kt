@@ -3,7 +3,6 @@
 package com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.drawer
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAvatar
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
@@ -61,20 +60,12 @@ fun DrawerHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Box(
-                    Modifier
-                        .size(44.dp)
-                        .background(LocalNoirAccent.current.copy(alpha = 0.12f), CircleShape)
-                        .border(1.dp, LocalNoirAccent.current.copy(alpha = 0.28f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = NoirIcons.Users,
-                        contentDescription = null,
-                        tint = LocalNoirAccent.current,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
+                NoirAvatar(
+                    avatarUrl = userStats.avatarUrl,
+                    size = 44.dp,
+                    borderColor = LocalNoirAccent.current.copy(alpha = 0.28f),
+                    fillColor = LocalNoirAccent.current.copy(alpha = 0.12f),
+                )
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         userStats.nickname.ifBlank { stringResource(R.string.drawer_guest) },
