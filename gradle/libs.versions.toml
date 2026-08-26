@@ -71,6 +71,7 @@ mockito-core = "5.15.2"
 mockito-kotlin = "5.4.0"
 mockk = "1.13.10"
 turbine = "1.1.0"
+robolectric = "4.11.1"
 
 [libraries]
 # Kotlin / coroutines / serialization
@@ -119,6 +120,7 @@ androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.r
 
 # Work
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
+androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "androidx-work" }
 
 # Navigation — Decompose (KMP-ready, см. ADR-0008)
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
@@ -178,6 +180,7 @@ mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-cor
 mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockito-core" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 # Gradle plugins (used by convention plugins in buildSrc)
