@@ -5,7 +5,9 @@ const crypto = require("crypto");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
+const {onRequest} = require("firebase-functions/v2/https");
 const {trophyList, pickGiftBoxTrophy, hasTrophy, TROPHY_VERIFIED} = require("./trophies.js");
+const {logoImageUrl, isLogoName, logoImageBytes} = require("./logos.js");
 const {
   describeNickname,
   sanitizeNickname,
@@ -104,6 +106,7 @@ const GIFT_BOX_LOGO_NAMES = [
 const NICKNAME_CLAIMS_COLLECTION = "nickname_claims";
 const NICKNAME_LISTINGS_COLLECTION = "nickname_listings";
 const NICKNAME_POLICY_DOC = "configs/nickname_policy";
+const LOGO_LISTINGS_COLLECTION = "logo_listings";
 const NICKNAME_GENERATION_ATTEMPTS = 20;
 const PUBLIC_QUEST_SHELVES = new Set(["home", "arena", "tournament", "tournamentFinal"]);
 
@@ -755,6 +758,7 @@ exports.fetchLogoCatalog = onCall(FUNCTION_OPTIONS, async (request) => {
       name,
       price: numberValue(LOGO_PRICES[name], 0),
       owned: owned.has(name),
+      imageUrl: logoImageUrl(name),
     })),
   };
 });
@@ -788,6 +792,163 @@ exports.buyLogo = onCall(FUNCTION_OPTIONS, async (request) => {
     );
   });
   return {logo: name, charged: price};
+});
+
+exports.wearLogo = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const name = stringValue(request.data && request.data.logo);
+  if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
+
+  const userRef = db.collection("users").doc(uid);
+  const user = (await userRef.get()).data() || {};
+  if (!stringArray(user.ownedLogos).includes(name)) {
+    throw new HttpsError("permission-denied", "You do not own this logo");
+  }
+  const avatarUrl = logoImageUrl(name);
+  await userRef.set({uid, avatarUrl, updatedAtMs: Date.now()}, {merge: true});
+  return {logo: name, avatarUrl};
+});
+
+/** The avatar image itself. Small, immutable, cached for a day; 404 for anything else. */
+exports.logoImage = onRequest(
+  {region: "us-central1", maxInstances: 1},
+  async (request, response) => {
+    const name = String(request.query.logo || "");
+    const bytes = isLogoName(name) ? logoImageBytes(name) : null;
+    if (!bytes) {
+      response.status(404).send("Unknown logo");
+      return;
+    }
+    response
+      .set("Content-Type", "image/png")
+      .set("Cache-Control", "public, max-age=86400, immutable")
+      .send(bytes);
+  },
+);
+
+exports.fetchLogoListings = onCall(FUNCTION_OPTIONS, async (request) => {
+  requireAuthUid(request);
+  const limit = Math.max(1, Math.min(numberValue(request.data && request.data.limit, 50), 100));
+  const snapshot = await db.collection(LOGO_LISTINGS_COLLECTION).limit(limit).get();
+  return {
+    listings: snapshot.docs.map((doc) => {
+      const data = doc.data() || {};
+      return {
+        logo: stringValue(data.logo),
+        imageUrl: stringValue(data.imageUrl),
+        price: numberValue(data.price, 0),
+        sellerNickname: stringValue(data.sellerNickname),
+        listedAtMs: numberValue(data.listedAtMs, 0),
+      };
+    }),
+  };
+});
+
+exports.listLogoForSale = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const name = stringValue(request.data && request.data.logo);
+  if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
+  const price = Math.floor(numberValue(request.data && request.data.price, 0));
+  if (price < MIN_LISTING_PRICE) {
+    throw new HttpsError("invalid-argument", `price must be at least ${MIN_LISTING_PRICE}`);
+  }
+
+  const listingRef = db.collection(LOGO_LISTINGS_COLLECTION).doc(name);
+  const userRef = db.collection("users").doc(uid);
+  const now = Date.now();
+  let sellerNickname = null;
+
+  await db.runTransaction(async (transaction) => {
+    const userSnapshot = await transaction.get(userRef);
+    const user = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    if (!stringArray(user.ownedLogos).includes(name)) {
+      throw new HttpsError("permission-denied", "You do not own this logo");
+    }
+    // Selling the avatar you wear would take the picture off your own drawer the moment it sells.
+    if (stringValue(user.avatarUrl) === logoImageUrl(name)) {
+      throw new HttpsError("failed-precondition", "Switch to another avatar before selling this one");
+    }
+    sellerNickname = stringValue(user.nickname);
+    transaction.set(listingRef, {
+      logo: name,
+      imageUrl: logoImageUrl(name),
+      price,
+      sellerUid: uid,
+      sellerNickname,
+      listedAtMs: now,
+    });
+  });
+  return {logo: name, price};
+});
+
+exports.cancelLogoListing = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const name = stringValue(request.data && request.data.logo);
+  if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
+  const listingRef = db.collection(LOGO_LISTINGS_COLLECTION).doc(name);
+  await db.runTransaction(async (transaction) => {
+    const listing = await transaction.get(listingRef);
+    if (!listing.exists) throw new HttpsError("not-found", "Listing not found");
+    if (stringValue((listing.data() || {}).sellerUid) !== uid) {
+      throw new HttpsError("permission-denied", "Not your listing");
+    }
+    transaction.delete(listingRef);
+  });
+  return {cancelled: true};
+});
+
+exports.buyListedLogo = onCall(FUNCTION_OPTIONS, async (request) => {
+  const buyerUid = requireAuthUid(request);
+  const name = stringValue(request.data && request.data.logo);
+  if (!isLogoName(name)) throw new HttpsError("invalid-argument", "Unknown logo");
+
+  const policy = await readNicknamePolicy();
+  const listingRef = db.collection(LOGO_LISTINGS_COLLECTION).doc(name);
+  const buyerRef = db.collection("users").doc(buyerUid);
+  const now = Date.now();
+  let receipt = null;
+
+  await db.runTransaction(async (transaction) => {
+    const listing = await transaction.get(listingRef);
+    if (!listing.exists) throw new HttpsError("not-found", "Listing not found");
+    const data = listing.data() || {};
+    const sellerUid = stringValue(data.sellerUid);
+    if (sellerUid === buyerUid) throw new HttpsError("failed-precondition", "This is your own listing");
+
+    const sellerRef = db.collection("users").doc(sellerUid);
+    const buyerSnapshot = await transaction.get(buyerRef);
+    const sellerSnapshot = await transaction.get(sellerRef);
+    // The seller's registry is the source of truth; a listing that outlives the ownership (for
+    // example after a rollback) transfers nothing.
+    if (!stringArray((sellerSnapshot.data() || {}).ownedLogos).includes(name)) {
+      throw new HttpsError("failed-precondition", "Seller no longer owns the logo");
+    }
+
+    const split = splitSalePrice(numberValue(data.price, 0), policy.saleCommissionPercent);
+    const buyerGold = numberValue((buyerSnapshot.data() || {}).gold, 0);
+    if (buyerGold < split.total) throw new HttpsError("failed-precondition", "Not enough gold");
+    const sellerGold = numberValue((sellerSnapshot.data() || {}).gold, 0);
+
+    // Picture, payment and the listing all move together: a partial trade would either take the
+    // gold without handing over the avatar, or hand it over unpaid.
+    transaction.set(sellerRef, {
+      gold: sellerGold + split.sellerGets,
+      ownedLogos: admin.firestore.FieldValue.arrayRemove(name),
+      updatedAtMs: now,
+    }, {merge: true});
+    transaction.set(buyerRef, {
+      gold: buyerGold - split.total,
+      ownedLogos: admin.firestore.FieldValue.arrayUnion(name),
+      updatedAtMs: now,
+    }, {merge: true});
+    transaction.delete(listingRef);
+    receipt = {
+      logo: stringValue(data.logo),
+      paid: split.total,
+      commission: split.commission,
+    };
+  });
+  return receipt;
 });
 
 exports.setActiveNickname = onCall(FUNCTION_OPTIONS, async (request) => {
