@@ -22,6 +22,12 @@ sealed interface ShopMessage {
 
     data class LogoPurchased(val charged: Long) : ShopMessage
 
+    data class LogoWorn(val logo: String) : ShopMessage
+
+    data class LogoListed(val price: Long) : ShopMessage
+
+    data class LogoBoughtListed(val commission: Long) : ShopMessage
+
     /** The shelf itself cannot be reached. */
     data object ShopUnavailable : ShopMessage
 

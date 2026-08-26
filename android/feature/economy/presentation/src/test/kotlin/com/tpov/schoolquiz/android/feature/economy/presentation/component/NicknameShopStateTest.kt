@@ -1,8 +1,12 @@
 package com.tpov.schoolquiz.android.feature.economy.presentation.component
 
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileLogo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NicknameShopStateTest {
@@ -111,6 +115,75 @@ class NicknameShopStateTest {
 
         assertEquals(owned, NicknameShopState(owned = owned).ownedWornFirst)
     }
+
+    /** The logo being worn answers "what am I wearing", so it never has to be hunted for. */
+    @Test
+    fun wornLogoComesFirst() {
+        val state =
+            NicknameShopState(
+                logos =
+                    listOf(
+                        logo("Golden Crown"),
+                        logo("Diamond Star"),
+                        logo("Phoenix Wings"),
+                    ),
+                activeLogo = "Diamond Star",
+            )
+
+        assertEquals(listOf("Diamond Star", "Golden Crown", "Phoenix Wings"), state.ownedLogosWornFirst.map { it.name })
+    }
+
+    /** With nothing worn the server's logo order survives untouched. */
+    @Test
+    fun keepsServerLogoOrderWhenNothingIsWorn() {
+        val logos = listOf(logo("Golden Crown"), logo("Diamond Star"))
+
+        assertEquals(logos, NicknameShopState(logos = logos).ownedLogosWornFirst)
+    }
+
+    /** Only held logos belong to the owned shelf: the rest are still on the store grid. */
+    @Test
+    fun ownedLogosDropsUnowned() {
+        val state =
+            NicknameShopState(
+                logos = listOf(logo("Golden Crown", owned = false), logo("Diamond Star", owned = true)),
+            )
+
+        assertEquals(listOf("Diamond Star"), state.ownedLogosWornFirst.map { it.name })
+    }
+
+    /** The lot lookup answers "is this one already on sale?" in one step, keyed by name. */
+    @Test
+    fun logoListingsAreIndexedByName() {
+        val state = NicknameShopState(logoListings = listOf(logoListing("Golden Crown", price = 10)))
+
+        assertEquals(10L, state.logoListingsByName["Golden Crown"]?.price)
+        assertEquals(emptyMap<String, LogoListing>(), NicknameShopState().logoListingsByName)
+    }
+
+    @Test
+    fun isWornFollowsActiveLogo() {
+        val state = NicknameShopState(activeLogo = "Diamond Star")
+
+        assertTrue(state.isWorn("Diamond Star"))
+        assertFalse(state.isWorn("Golden Crown"))
+        assertFalse(NicknameShopState().isWorn("Diamond Star"))
+    }
+
+    private fun logo(
+        name: String,
+        owned: Boolean = true,
+    ) = ProfileLogo(name = name, price = 100, owned = owned)
+
+    private fun logoListing(
+        logo: String,
+        price: Long,
+    ) = LogoListing(
+        logo = logo,
+        price = price,
+        sellerNickname = "seller",
+        listedAtMs = 1,
+    )
 
     private fun listing(
         nickname: String,

@@ -768,6 +768,9 @@ private fun ShopMessage.resolvedText(): String =
         ShopMessage.ListingCancelled -> stringResource(R.string.nft_msg_listing_cancelled)
         is ShopMessage.NicknameBought -> stringResource(R.string.nft_msg_bought, commission)
         is ShopMessage.LogoPurchased -> stringResource(R.string.nft_msg_logo_bought, charged)
+        is ShopMessage.LogoWorn -> stringResource(R.string.nft_msg_logo_worn, logo)
+        is ShopMessage.LogoListed -> stringResource(R.string.nft_msg_logo_listed, price)
+        is ShopMessage.LogoBoughtListed -> stringResource(R.string.nft_msg_logo_bought_listed, commission)
         ShopMessage.ShopUnavailable -> stringResource(R.string.shop_msg_unavailable)
         is ShopMessage.Notice -> text
         is ShopMessage.Failure -> detail ?: stringResource(R.string.shop_msg_action_failed)

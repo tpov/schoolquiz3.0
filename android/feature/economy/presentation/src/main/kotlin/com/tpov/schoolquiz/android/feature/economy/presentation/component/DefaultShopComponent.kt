@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.ObserveEconomy
 import com.tpov.schoolquiz.shared.feature.economy.domain.use_case.PurchaseShopItemUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.LogoRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class DefaultShopComponent(
     private val getCatalog: GetShopCatalogUseCase,
     private val purchaseItem: PurchaseShopItemUseCase,
     private val logos: LogoRepository,
+    private val profile: ProfileRepository,
     private val getReferralProgram: GetReferralProgramUseCase,
     private val nicknames: NicknameRepository,
 ) : ShopComponent, ComponentContext by componentContext {
@@ -71,6 +73,32 @@ class DefaultShopComponent(
                 _state.update { it.copy(nicknames = it.nicknames.copy(draft = event.value)) }
             is ShopViewEvent.CheckNicknameAvailability -> checkAvailability(event.nickname)
             is ShopViewEvent.BuyLogo -> buyLogo(event.logo)
+            is ShopViewEvent.SetActiveLogo ->
+                runLogoAction(event.logo) {
+                    logos.wear(event.logo)
+                    _state.update {
+                        it.copy(nicknames = it.nicknames.copy(activeLogo = event.logo))
+                    }
+                    // The avatar lives on the account: pull it home now, or the drawer keeps the
+                    // old picture until the next scheduled sync.
+                    profile.ensureCurrentProfile()
+                    ShopMessage.LogoWorn(event.logo)
+                }
+            is ShopViewEvent.ListLogoForSale ->
+                runLogoAction(event.logo) {
+                    logos.listForSale(event.logo, event.price)
+                    ShopMessage.LogoListed(event.price)
+                }
+            is ShopViewEvent.CancelLogoListing ->
+                runLogoAction(event.logo) {
+                    logos.cancelListing(event.logo)
+                    ShopMessage.ListingCancelled
+                }
+            is ShopViewEvent.BuyLogoListing ->
+                runLogoAction(event.logo) {
+                    val commission = logos.buyListed(event.logo)
+                    ShopMessage.LogoBoughtListed(commission)
+                }
             is ShopViewEvent.ClaimNickname ->
                 runNicknameAction(event.nickname) {
                     val charged = nicknames.claim(event.nickname)
@@ -215,13 +243,21 @@ class DefaultShopComponent(
     }
 
     private suspend fun loadLogos() {
-        val result = runCatching { logos.catalog() }
+        val catalog = runCatching { logos.catalog() }
+        val listings = runCatching { logos.listings(LOGO_LISTING_LIMIT) }
         _state.update { current ->
             current.copy(
-                nicknames = current.nicknames.copy(logos = result.getOrDefault(current.nicknames.logos)),
+                nicknames =
+                    current.nicknames.copy(
+                        logos = catalog.getOrDefault(current.nicknames.logos),
+                        logoListings = listings.getOrDefault(current.nicknames.logoListings),
+                    ),
                 // A shelf that says "loading" for ever is the one outcome worth interrupting for:
                 // swallowing the failure leaves nothing to distinguish it from a slow network.
-                message = result.exceptionOrNull()?.let { ShopMessage.Failure(it.errorDetail()) } ?: current.message,
+                message =
+                    catalog.exceptionOrNull()?.let { ShopMessage.Failure(it.errorDetail()) }
+                        ?: listings.exceptionOrNull()?.let { ShopMessage.Failure(it.errorDetail()) }
+                        ?: current.message,
             )
         }
     }
@@ -280,6 +316,32 @@ class DefaultShopComponent(
         }
     }
 
+    /**
+     * Runs one logo request and reloads afterwards.
+     *
+     * The reload is not optional: ownership and prices are decided on the server, and after a buy
+     * or a sale the local lists are wrong in ways the user would otherwise act on.
+     */
+    private fun runLogoAction(
+        logo: String,
+        action: suspend () -> ShopMessage,
+    ) {
+        if (_state.value.nicknames.processingNickname != null) return
+        scope.launch {
+            _state.update {
+                it.copy(nicknames = it.nicknames.copy(processingNickname = logo), message = null)
+            }
+            val outcome = runCatching { action() }
+            _state.update {
+                it.copy(
+                    nicknames = it.nicknames.copy(processingNickname = null),
+                    message = outcome.getOrElse { error -> ShopMessage.Failure(error.errorDetail()) },
+                )
+            }
+            refreshLogos()
+        }
+    }
+
     private fun purchase(itemId: ShopItemId) {
         if (_state.value.processingItemId != null) return
         scope.launch {
@@ -313,3 +375,6 @@ class DefaultShopComponent(
         return message?.takeIf { it.isNotBlank() }
     }
 }
+
+/** The avatar window is capped like the names window: fifty lots is a list a phone sorts instantly. */
+private const val LOGO_LISTING_LIMIT = 50

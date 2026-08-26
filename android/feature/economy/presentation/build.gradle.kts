@@ -17,6 +17,8 @@ dependencies {
     implementation(libs.bundles.androidx.ui.base)
     implementation(libs.bundles.androidx.lifecycle)
     implementation(libs.bundles.androidx.lifecycle.compose)
+    implementation(libs.coil3.compose)
+    implementation(libs.coil3.network.okhttp)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.test.junit)

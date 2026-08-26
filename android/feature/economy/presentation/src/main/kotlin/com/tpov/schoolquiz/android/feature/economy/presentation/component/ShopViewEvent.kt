@@ -24,6 +24,15 @@ sealed interface ShopViewEvent {
 
     data class BuyLogo(val logo: String) : ShopViewEvent
 
+    data class SetActiveLogo(val logo: String) : ShopViewEvent
+
+    data class ListLogoForSale(val logo: String, val price: Long) : ShopViewEvent
+
+    data class CancelLogoListing(val logo: String) : ShopViewEvent
+
+    /** Buys an avatar listed by another account. */
+    data class BuyLogoListing(val logo: String) : ShopViewEvent
+
     data class ListingQueryChanged(val value: String) : ShopViewEvent
 
     /** Picking the sort that is already picked reverses it. */

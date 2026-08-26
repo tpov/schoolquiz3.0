@@ -94,6 +94,8 @@
 
     <!-- NFT market: logos shelf -->
     <string name="nft_owned">Owned</string>
+    <string name="nft_your_logos">YOUR LOGOS</string>
+    <string name="nft_logo_worn_hint">worn — cannot be sold</string>
     <string name="nft_logos_note">A logo replaces the avatar frame wherever a name appears — tables, results, menus. The ones dropped from boxes cost nothing.</string>
 
     <!-- NFT market: sorting -->
@@ -118,6 +120,9 @@
     <string name="nft_msg_listing_cancelled">Listing removed</string>
     <string name="nft_msg_bought">Name bought, fee %1$d</string>
     <string name="nft_msg_logo_bought">Logo is yours · −%1$d</string>
+    <string name="nft_msg_logo_worn">Active logo — %1$s</string>
+    <string name="nft_msg_logo_listed">Logo listed for %1$d</string>
+    <string name="nft_msg_logo_bought_listed">Logo bought, fee %1$d</string>
 
     <!-- Referral program (legacy screen, copy kept verbatim) -->
     <string name="shop_referral_title">Referrals</string>

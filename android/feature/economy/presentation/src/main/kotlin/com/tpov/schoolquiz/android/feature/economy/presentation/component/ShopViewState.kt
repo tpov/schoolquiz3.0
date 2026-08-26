@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBa
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopCatalogItem
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameAvailability
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
@@ -58,6 +59,17 @@ data class NicknameShopState(
     /** Which shelf the market is showing. */
     val marketTab: NicknameMarketTab = NicknameMarketTab.NAMES,
     val logos: List<ProfileLogo> = emptyList(),
+    /** Avatars other accounts listed; the LOGOS shelf sells from it. */
+    val logoListings: List<LogoListing> = emptyList(),
+    /**
+     * The emblem on the account right now, kept by the client.
+     *
+     * The catalogue has no active flag — the server does not send one — so the worn logo is
+     * remembered here: set when a wear is asked for and left untouched by refreshes, which only
+     * re-ask for what is owned and listed. For the UI the name is all it takes; the avatarUrl the
+     * server returns is for other screens.
+     */
+    val activeLogo: String? = null,
     /**
      * What a second tap would buy.
      *
@@ -109,6 +121,17 @@ data class NicknameShopState(
 
     val canClaimDraft: Boolean
         get() = draftAvailability?.available == true && processingNickname == null
+
+    /** The logos you hold, the worn one first, mirroring [ownedWornFirst]. */
+    val ownedLogosWornFirst: List<ProfileLogo>
+        get() = logos.filter { it.owned }.sortedByDescending { it.name == activeLogo }
+
+    /** Each listed logo's lot by name, so a row answers "is it on sale?" in one lookup. */
+    val logoListingsByName: Map<String, LogoListing>
+        get() = logoListings.associateBy { it.logo }
+
+    /** "Is this the emblem on the account right now?" — the answer the catalogue does not carry. */
+    fun isWorn(logo: String): Boolean = activeLogo == logo
 }
 
 /** The two shelves the market sells from. */

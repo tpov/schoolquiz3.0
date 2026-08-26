@@ -16,6 +16,7 @@ val economyPresentationModule =
                 getReferralProgram = get(),
                 nicknames = get(),
                 logos = get(),
+                profile = get(),
             )
         }
     }

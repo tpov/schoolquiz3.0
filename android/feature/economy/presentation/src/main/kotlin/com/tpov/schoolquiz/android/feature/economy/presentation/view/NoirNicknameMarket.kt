@@ -38,12 +38,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
@@ -67,6 +70,7 @@ import com.tpov.schoolquiz.android.feature.economy.presentation.component.Nickna
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.NicknameShopState
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewEvent
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopViewState
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LogoListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameListing
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.NicknameRejection
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
@@ -541,7 +545,7 @@ private fun PricingRow(
     }
 }
 
-/** The shared shape of a market row: a name, a quiet line, and whatever can be done with it. */
+/** The shared shape of a market row: a thumbnail, a name, a quiet line, and the actions. */
 @Composable
 private fun MarketRow(
     name: String,
@@ -549,6 +553,7 @@ private fun MarketRow(
     modifier: Modifier = Modifier,
     dim: Boolean = false,
     accentName: Boolean = false,
+    leading: (@Composable RowScope.() -> Unit)? = null,
     trailing: @Composable RowScope.() -> Unit,
 ) {
     Row(
@@ -559,6 +564,9 @@ private fun MarketRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        if (leading != null) {
+            leading()
+        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = name,
@@ -607,7 +615,7 @@ private fun ListingRow(
 }
 
 /**
- * The eight emblems, laid out as the canvas has them: a two-column grid of tiles.
+ * The emblem shelf: what you hold, the market where avatars change hands, and the store below it.
  *
  * A tile is the glyph and one line under it — the price, the word for "yours", or the confirm step.
  * Owned tiles go green rather than accent-coloured: green says "already yours", while azure stays
@@ -623,34 +631,63 @@ private fun LazyListScope.logoShelf(
         return
     }
     item {
-        Column(
-            Modifier.padding(top = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(LOGO_GRID_GAP),
-        ) {
-            nicknames.logos.chunked(LOGO_GRID_COLUMNS).forEach { row ->
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(LOGO_GRID_GAP),
-                ) {
-                    row.forEach { logo ->
-                        val key = "logo:${logo.name}"
-                        LogoTile(
-                            logo = logo,
-                            armed = nicknames.armed == key,
-                            affordable = state.balance.gold >= logo.price,
-                            busy = nicknames.processingNickname == logo.name,
-                            onTap = {
-                                if (nicknames.armed == key) {
-                                    onEvent(ShopViewEvent.BuyLogo(logo.name))
-                                } else {
-                                    onEvent(ShopViewEvent.ArmPurchase(key))
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
+        OwnedLogoPanel(
+            state = nicknames,
+            onWear = { onEvent(ShopViewEvent.SetActiveLogo(it)) },
+            onList = { name, price -> onEvent(ShopViewEvent.ListLogoForSale(name, price)) },
+            onCancel = { onEvent(ShopViewEvent.CancelLogoListing(it)) },
+        )
+    }
+    if (nicknames.logoListings.isNotEmpty()) {
+        items(nicknames.logoListings, key = { "listed-logo-${it.logo}" }) { listing ->
+            val key = "listedLogo:${listing.logo}"
+            LogoListingRow(
+                listing = listing,
+                busy = nicknames.processingNickname == listing.logo,
+                affordable = state.balance.gold >= listing.price,
+                own = nicknames.ownedLogosWornFirst.any { it.name == listing.logo },
+                armed = nicknames.armed == key,
+                onArm = {
+                    onEvent(ShopViewEvent.ArmPurchase(if (nicknames.armed == key) null else key))
+                },
+                onBuy = { onEvent(ShopViewEvent.BuyLogoListing(listing.logo)) },
+            )
+        }
+    } else if (!nicknames.isLoading && nicknames.ownedLogosWornFirst.isNotEmpty()) {
+        item { MarketNote(stringResource(R.string.nft_market_empty)) }
+    }
+    val buyable = nicknames.logos.filter { !it.owned }
+    if (buyable.isNotEmpty()) {
+        item {
+            Column(
+                Modifier.padding(top = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(LOGO_GRID_GAP),
+            ) {
+                buyable.chunked(LOGO_GRID_COLUMNS).forEach { row ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(LOGO_GRID_GAP),
+                    ) {
+                        row.forEach { logo ->
+                            val key = "logo:${logo.name}"
+                            LogoTile(
+                                logo = logo,
+                                armed = nicknames.armed == key,
+                                affordable = state.balance.gold >= logo.price,
+                                busy = nicknames.processingNickname == logo.name,
+                                onTap = {
+                                    if (nicknames.armed == key) {
+                                        onEvent(ShopViewEvent.BuyLogo(logo.name))
+                                    } else {
+                                        onEvent(ShopViewEvent.ArmPurchase(key))
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        // An odd tail row keeps its tile at half width instead of stretching full.
+                        repeat(LOGO_GRID_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
                     }
-                    // An odd tail row keeps its tile at half width instead of stretching full.
-                    repeat(LOGO_GRID_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }
@@ -661,6 +698,202 @@ private fun LazyListScope.logoShelf(
             style = NoirType.rowSub.copy(color = NoirTOff),
             modifier = Modifier.padding(vertical = 14.dp),
         )
+    }
+}
+
+/**
+ * The emblems this account holds, kept inside a frame, mirroring the names panel.
+ *
+ * The worn one is drawn first and marked: it is the answer to "what am I wearing right now".
+ * Everything else that can be done to a held logo is written out — wear it, list it, take it
+ * down — the same words the names rows use, because they are the same decisions.
+ */
+@Composable
+private fun OwnedLogoPanel(
+    state: NicknameShopState,
+    onWear: (String) -> Unit,
+    onList: (String, Long) -> Unit,
+    onCancel: (String) -> Unit,
+) {
+    val owned = state.ownedLogosWornFirst
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp)
+            .clip(NoirShapeLg)
+            .background(NoirGlassFill)
+            .border(1.dp, NoirGlassStroke, NoirShapeLg)
+            .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 3.dp),
+    ) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.nft_your_logos), style = NoirType.kicker.copy(color = NoirTOff))
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "${owned.count { state.isWorn(it.name) }} / ${owned.size}",
+                style = NoirType.kicker.copy(color = NoirTOff),
+            )
+        }
+        if (owned.isEmpty()) {
+            Text(
+                if (state.isLoading) stringResource(R.string.nft_loading) else stringResource(R.string.nft_none_yet),
+                style = NoirType.rowSub.copy(color = NoirTOff),
+                modifier = Modifier.padding(vertical = 12.dp),
+            )
+        } else {
+            owned.forEach { logo ->
+                OwnedLogoRow(
+                    logo = logo,
+                    worn = state.isWorn(logo.name),
+                    listing = state.logoListingsByName[logo.name],
+                    busy = state.processingNickname == logo.name,
+                    onWear = { onWear(logo.name) },
+                    onList = { price -> onList(logo.name, price) },
+                    onCancel = { onCancel(logo.name) },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A logo you hold.
+ *
+ * Everything you can do with it is written out, exactly as the names rows do: wear it, price it,
+ * and take a lot down. The worn logo cannot go on sale — the server refuses — so the word is left
+ * dead with a quiet line saying why rather than missing, because a control that is greyed out
+ * still teaches what the next tap could do.
+ */
+@Composable
+private fun OwnedLogoRow(
+    logo: ProfileLogo,
+    worn: Boolean,
+    listing: LogoListing?,
+    busy: Boolean,
+    onWear: () -> Unit,
+    onList: (Long) -> Unit,
+    onCancel: () -> Unit,
+) {
+    var pricing by remember(logo.name) { mutableStateOf(false) }
+    var priceDraft by remember(logo.name) { mutableStateOf("") }
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .drawBehind {
+                drawLine(
+                    color = NoirHair,
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
+                    strokeWidth = 1f,
+                )
+            },
+    ) {
+        Row(
+            Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            LogoThumbnail(
+                name = logo.name,
+                imageUrl = logo.imageUrl,
+                tint = if (worn) LocalNoirAccent.current else NoirT2,
+            )
+            Column(
+                Modifier
+                    .weight(1f)
+                    .then(if (!worn && !busy) Modifier.clickable(onClick = onWear) else Modifier)
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    logo.name,
+                    style = NoirType.rowTitle.copy(color = if (worn) NoirT1 else NoirT2),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                val meta =
+                    when {
+                        worn -> stringResource(R.string.nft_worn) to LocalNoirAccent.current
+                        listing != null ->
+                            stringResource(R.string.nft_for_sale_price, listing.price) to NoirSuccess
+                        else -> null
+                    }
+                if (meta != null) {
+                    Text(meta.first, style = NoirType.rowSub.copy(color = meta.second))
+                }
+            }
+            when {
+                // A logo can end up worn with its lot still up (an older state, like a name could);
+                // taking the lot down is the way out, and it stays offered.
+                listing != null ->
+                    MarketAction(
+                        stringResource(R.string.nft_action_remove),
+                        enabled = !busy,
+                        muted = true,
+                        onClick = onCancel,
+                    )
+                pricing -> Unit
+                worn ->
+                    MarketAction(
+                        stringResource(R.string.nft_action_sell),
+                        enabled = false,
+                        muted = true,
+                        onClick = {},
+                    )
+                else -> {
+                    MarketAction(stringResource(R.string.nft_action_wear), enabled = !busy, onClick = onWear)
+                    MarketAction(
+                        stringResource(R.string.nft_action_sell),
+                        enabled = !busy,
+                        muted = true,
+                    ) { pricing = true }
+                }
+            }
+        }
+        if (worn && listing == null) {
+            Text(
+                stringResource(R.string.nft_logo_worn_hint),
+                style = NoirType.rowSub.copy(color = NoirOutline),
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
+        if (pricing && listing == null) {
+            PricingRow(
+                priceDraft = priceDraft,
+                onPriceChange = { priceDraft = it },
+                busy = busy,
+                onCancel = { pricing = false },
+                onList = onList,
+            )
+        }
+    }
+}
+
+/** Somebody else's avatar lot. The price is the button: tap once to arm it, again to spend. */
+@Composable
+private fun LogoListingRow(
+    listing: LogoListing,
+    busy: Boolean,
+    affordable: Boolean,
+    own: Boolean,
+    armed: Boolean,
+    onArm: () -> Unit,
+    onBuy: () -> Unit,
+) {
+    MarketRow(
+        name = listing.logo,
+        meta = stringResource(R.string.nft_sells, listing.sellerNickname),
+        leading = { LogoThumbnail(name = listing.logo, imageUrl = listing.imageUrl, tint = NoirT2) },
+    ) {
+        when {
+            own -> Text(stringResource(R.string.nft_your_lot), style = NoirType.kicker.copy(color = NoirTOff))
+            !affordable -> GoldAmount(listing.price, tone = NoirOutline)
+            armed -> MarketAction(stringResource(R.string.nft_action_confirm), enabled = !busy, onClick = onBuy)
+            else ->
+                Box(Modifier.clip(NoirShapePill).clickable(enabled = !busy, onClick = onArm)) {
+                    GoldAmount(listing.price)
+                }
+        }
     }
 }
 
@@ -715,12 +948,7 @@ private fun LogoTile(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
-        Icon(
-            imageVector = logoGlyph(logo.name),
-            contentDescription = null,
-            tint = tone,
-            modifier = Modifier.size(22.dp),
-        )
+        LogoThumbnail(name = logo.name, imageUrl = logo.imageUrl, tint = tone)
         Text(
             text =
                 (
@@ -739,6 +967,36 @@ private fun LogoTile(
 private const val LOGO_GRID_COLUMNS = 2
 private val LOGO_GRID_GAP = 8.dp
 private val LogoTileShape = RoundedCornerShape(14.dp)
+
+/**
+ * The emblem's face: the avatar picture when the catalogue carries one, the glyph otherwise.
+ *
+ * The glyph is tinted to say what the logo is right now; a picture stands on its own, so tinting
+ * would be a lie — and a coloured photo would fight the dark glass around it.
+ */
+@Composable
+private fun LogoThumbnail(
+    name: String,
+    imageUrl: String?,
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    if (imageUrl != null) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = modifier.size(22.dp),
+        )
+    } else {
+        Icon(
+            imageVector = logoGlyph(name),
+            contentDescription = null,
+            tint = tint,
+            modifier = modifier.size(22.dp),
+        )
+    }
+}
 
 /** Thin spaces, so a four-digit price reads at a glance inside a half-width tile. */
 private fun Long.groupedByThousands(): String = toString().reversed().chunked(3).joinToString(" ").reversed()
