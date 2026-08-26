@@ -35,5 +35,17 @@ interface LessonRunnerRootComponent {
 
     fun onFinish()
 
+    /** Restart the same lesson as a fresh attempt (design decision F3). */
+    fun onRunAgain()
+
+    /** Open the next lesson of the theme, or fall back to [onFinish] when there is none. */
+    fun onNextLesson()
+
+    /**
+     * Spend one life for the hint (design §4.4). Returns true when a life was spent; false when
+     * no life budget is known or it is already empty.
+     */
+    fun hintRequested(): Boolean
+
     fun onBack()
 }

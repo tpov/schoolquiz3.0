@@ -21,12 +21,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState.RatingSubmissionState
 
 private const val MAX_RATING = 3
@@ -60,7 +63,7 @@ fun RatingPromptSection(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Оцените урок",
+                text = stringResource(R.string.runner_rating_title),
                 style = NoirType.groupTitle,
             )
             Row(
@@ -84,7 +87,7 @@ fun RatingPromptSection(
                                 } else {
                                     Icons.Outlined.StarOutline
                                 },
-                            contentDescription = "$i звезды",
+                            contentDescription = pluralStringResource(R.plurals.runner_rating_star_cd, i, i),
                             tint =
                                 if (i <= selectedRating) {
                                     NoirViolet
@@ -97,7 +100,7 @@ fun RatingPromptSection(
             }
             if (ratingSubmissionState == RatingSubmissionState.Failed) {
                 Text(
-                    text = "Не удалось сохранить оценку",
+                    text = stringResource(R.string.runner_rating_failed),
                     style = NoirType.rowSub,
                     color = NoirDanger,
                 )

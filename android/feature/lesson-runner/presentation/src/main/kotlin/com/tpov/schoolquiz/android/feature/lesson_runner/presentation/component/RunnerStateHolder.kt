@@ -27,11 +27,27 @@ class RunnerStateHolder(
     /** Last partial answer typed/selected on current question — survives rotation via InstanceKeeper. */
     var currentDraftAnswer: UserAnswerDraft? = null
 
+    /**
+     * Local mirror of the life budget for this session, in hearts. Read from the profile at
+     * start, spent by the hint; the server stays the authority and is never written here.
+     */
+    var livesRemainingHearts: Int? = null
+
+    /** Fresh attempt on the same lesson (Run again) — keeps the scope and the life mirror. */
+    fun resetForRestart() {
+        pendingConfigChangeRestore = false
+        snapshotBeforeStop = null
+        currentDraftAnswer = null
+        domainState = RunnerState.Loading
+        uiState.value = RunnerUiState.Loading
+    }
+
     override fun onDestroy() {
         // Called on navigation pop or process death — NOT on config change.
         pendingConfigChangeRestore = false
         snapshotBeforeStop = null
         currentDraftAnswer = null
+        livesRemainingHearts = null
         scope.cancel()
         uiState.value = RunnerUiState.Loading
         domainState = RunnerState.Loading

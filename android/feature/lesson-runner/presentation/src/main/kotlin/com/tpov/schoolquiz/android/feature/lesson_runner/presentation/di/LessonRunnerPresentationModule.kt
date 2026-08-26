@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
@@ -33,6 +34,7 @@ val lessonRunnerPresentationModule =
                     ),
                 lessonRepository = get(),
                 attemptRepository = get(),
+                profileRepository = get<ProfileRepository>(),
                 getResultAdvice = GetResultAdviceUseCase(lessonRepository = get()),
                 clock = get(),
             ) as LessonRunnerRootComponent

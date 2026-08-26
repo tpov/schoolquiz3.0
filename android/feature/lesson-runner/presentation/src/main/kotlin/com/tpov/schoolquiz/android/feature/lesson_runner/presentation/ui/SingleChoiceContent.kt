@@ -3,20 +3,24 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 
 private const val FEEDBACK_STAGGER_MS = 90
 
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 fun SingleChoiceContent(
     state: QuestionUiState.SingleChoice,
     onOptionSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     feedback: AnswerFeedback.SingleChoice? = null,
+    hintEnabled: Boolean = false,
+    onHint: () -> Unit = {},
 ) {
     val feedbackSelectedId = feedback?.selectedId
     val selectedIndex = state.options.indexOfFirst { it.id == feedbackSelectedId }.coerceAtLeast(0)
@@ -24,16 +28,25 @@ fun SingleChoiceContent(
         questionText = state.questionText,
         imageUrl = state.imageUrl?.takeIf { state.hasImage },
         modifier = modifier,
+        hintAction = {
+            RunnerSecondaryAction(
+                text = stringResource(R.string.runner_hint_action),
+                enabled = hintEnabled,
+                onClick = onHint,
+            )
+        },
     ) {
         state.options.forEachIndexed { index, option ->
             val isSelected = option.id == (feedbackSelectedId ?: state.selectedOptionId)
+            // Green only for a right answer the user actually chose; a right answer nobody
+            // chose is muted (F6), everything else wrong-or-neutral.
             val tone =
                 when {
                     feedback == null -> AnswerFeedbackTone.Neutral
                     !feedback.revealCorrect -> AnswerFeedbackTone.Neutral
-                    option.id == feedback.correctId -> AnswerFeedbackTone.Correct
-                    feedback.correctId == null && option.id == feedback.selectedId -> AnswerFeedbackTone.Wrong
-                    feedback.correctId != null -> AnswerFeedbackTone.Wrong
+                    isSelected && option.id == feedback.correctId -> AnswerFeedbackTone.Correct
+                    option.id == feedback.correctId -> AnswerFeedbackTone.Muted
+                    isSelected -> AnswerFeedbackTone.Wrong
                     else -> AnswerFeedbackTone.Neutral
                 }
             AnswerOptionSurface(

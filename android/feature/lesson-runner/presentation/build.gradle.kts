@@ -9,6 +9,9 @@ android {
 dependencies {
     implementation(project(":shared:feature:lesson-runner:domain"))
     implementation(project(":shared:feature:lesson:domain"))
+    implementation(project(":shared:feature:internet:profile:domain"))
+    // Next-lesson resolution reads lesson.themeId (design decision F3).
+    implementation(project(":shared:feature:theme:domain"))
     implementation(project(":shared:core:question-schema"))
     implementation(project(":shared:core:leaderboard"))
     implementation(project(":android:core:designsystem"))

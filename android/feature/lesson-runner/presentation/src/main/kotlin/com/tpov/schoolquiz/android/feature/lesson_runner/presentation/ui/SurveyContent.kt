@@ -4,8 +4,10 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 
@@ -32,7 +34,7 @@ fun SurveyContent(
         modifier = modifier,
         bottomAction = {
             RunnerPrimaryAction(
-                text = "Ответить",
+                text = stringResource(R.string.runner_action_answer),
                 enabled = feedback == null && state.selectedIds.isNotEmpty(),
                 onClick = onSubmit,
             )

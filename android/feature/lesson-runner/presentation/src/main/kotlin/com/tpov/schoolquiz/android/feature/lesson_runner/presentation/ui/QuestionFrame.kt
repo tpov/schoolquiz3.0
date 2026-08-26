@@ -26,16 +26,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import kotlinx.coroutines.delay
 
@@ -83,6 +85,7 @@ internal fun QuestionFrame(
     imageUrl: String?,
     modifier: Modifier = Modifier,
     bottomAction: (@Composable () -> Unit)? = null,
+    hintAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val hasQuestionSurface = !questionText.isNullOrBlank() || imageUrl != null
@@ -128,14 +131,17 @@ internal fun QuestionFrame(
             }
             content()
         }
-        if (bottomAction != null) {
-            Box(
+        if (bottomAction != null || hintAction != null) {
+            Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                bottomAction()
+                hintAction?.invoke()
+                Spacer(Modifier.weight(1f))
+                bottomAction?.invoke()
             }
         }
     }
@@ -157,11 +163,37 @@ internal fun RunnerPrimaryAction(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    NoirButton(
+    Text(
         text = text,
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
+        style =
+            NoirType.button.copy(
+                fontSize = 13.sp,
+                color = if (enabled) LocalNoirAccent.current else NoirTOff,
+            ),
+        modifier = modifier.clickable(enabled = enabled, onClick = onClick).padding(vertical = 12.dp),
+    )
+}
+
+/**
+ * The quiet left-hand action of the bottom row — the hint. Muted on purpose: it is a wayfinding
+ * label, not an invitation, and it must never compete with the answer action on the right.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+internal fun RunnerSecondaryAction(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Text(
+        text = text.uppercase(),
+        style =
+            NoirType.chip.copy(
+                fontSize = 11.sp,
+                color = if (enabled) NoirT3 else NoirTOff,
+            ),
+        modifier = modifier.clickable(enabled = enabled, onClick = onClick).padding(vertical = 12.dp),
     )
 }
 
@@ -201,18 +233,22 @@ internal fun AnswerOptionSurface(
         when (displayTone) {
             AnswerFeedbackTone.Correct -> NoirSuccess
             AnswerFeedbackTone.Wrong -> NoirDanger
+            AnswerFeedbackTone.Muted -> NoirTOff
             AnswerFeedbackTone.Neutral -> if (selected) accent else NoirT2
         }
-    // The chosen row keeps a whisper of fill so it is findable after the reveal; everything else
-    // stays on the ground.
+    // No fill on selection: the frame (radio/checkbox + hairline) carries it, per the design.
     val fill =
         when {
             displayTone == AnswerFeedbackTone.Correct -> NoirSuccess.copy(alpha = 0.10f)
             displayTone == AnswerFeedbackTone.Wrong -> NoirDanger.copy(alpha = 0.10f)
-            selected -> accent.copy(alpha = 0.08f)
             else -> Color.Transparent
         }
-    Column(modifier.fillMaxWidth()) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .alpha(if (displayTone == AnswerFeedbackTone.Muted) MUTED_ROW_ALPHA else 1f),
+    ) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -240,6 +276,9 @@ internal fun AnswerOptionSurface(
 }
 
 private const val FLIP_CAMERA_DISTANCE = 16f
+
+/** Alpha of a correct-but-unchosen row (design decision F6) — invited, not celebrated. */
+internal const val MUTED_ROW_ALPHA = 0.38f
 
 /**
  * Camera distance for the reveal flip, shared by every question type.

@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -31,6 +32,7 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 
 @Composable
 internal fun QuestionInfoButton(
@@ -52,7 +54,7 @@ internal fun QuestionInfoButton(
         ) {
             Icon(
                 imageVector = Icons.Default.Info,
-                contentDescription = "Инфо",
+                contentDescription = stringResource(R.string.runner_cd_info),
             )
         }
     }
@@ -88,7 +90,7 @@ internal fun QuestionInfoDialog(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Text(
-                        text = "Инфо",
+                        text = stringResource(R.string.runner_info_title),
                         style = NoirType.groupTitle,
                         color = LocalNoirAccent.current,
                     )
@@ -103,7 +105,7 @@ internal fun QuestionInfoDialog(
                         color = NoirT1,
                     )
                     RunnerPrimaryAction(
-                        text = "Понятно",
+                        text = stringResource(R.string.runner_action_got_it),
                         onClick = onDismiss,
                     )
                 }

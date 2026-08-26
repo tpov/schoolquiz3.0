@@ -3,14 +3,16 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 
 private const val FEEDBACK_STAGGER_MS = 90
 
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Suppress("FunctionNaming", "LongParameterList", "ktlint:standard:function-naming")
 @Composable
 fun MultipleChoiceContent(
     state: QuestionUiState.MultipleChoice,
@@ -18,6 +20,8 @@ fun MultipleChoiceContent(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
     feedback: AnswerFeedback.MultipleChoice? = null,
+    hintEnabled: Boolean = false,
+    onHint: () -> Unit = {},
 ) {
     val feedbackSelected = feedback?.selectedIds
     val selectedIds = feedbackSelected ?: state.selectedIds
@@ -28,21 +32,29 @@ fun MultipleChoiceContent(
         modifier = modifier,
         bottomAction = {
             RunnerPrimaryAction(
-                text = "Ответить",
+                text = stringResource(R.string.runner_action_answer),
                 enabled = feedback == null && state.selectedIds.isNotEmpty(),
                 onClick = onSubmit,
+            )
+        },
+        hintAction = {
+            RunnerSecondaryAction(
+                text = stringResource(R.string.runner_hint_action),
+                enabled = hintEnabled,
+                onClick = onHint,
             )
         },
     ) {
         state.options.forEachIndexed { index, option ->
             val isSelected = option.id in selectedIds
+            // Green only for picked-and-correct; a correct option nobody picked dims (F6).
             val tone =
                 when {
                     feedback == null -> AnswerFeedbackTone.Neutral
                     !feedback.revealCorrect -> AnswerFeedbackTone.Neutral
-                    option.id in feedback.correctIds -> AnswerFeedbackTone.Correct
-                    feedback.correctIds.isNotEmpty() -> AnswerFeedbackTone.Wrong
-                    option.id in feedback.selectedIds -> AnswerFeedbackTone.Wrong
+                    isSelected && option.id in feedback.correctIds -> AnswerFeedbackTone.Correct
+                    option.id in feedback.correctIds -> AnswerFeedbackTone.Muted
+                    isSelected -> AnswerFeedbackTone.Wrong
                     else -> AnswerFeedbackTone.Neutral
                 }
             AnswerOptionSurface(

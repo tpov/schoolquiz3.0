@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation
 
+import android.content.Context
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
@@ -8,8 +9,10 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.RunFakeComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
@@ -32,6 +35,10 @@ class LessonRunnerScreenTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
+
+    private fun str(resId: Int): String = context.getString(resId)
 
     // --- State helpers ---
 
@@ -136,7 +143,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Уверены? Прогресс попытки потеряется").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_exit_confirm_title)).assertIsDisplayed()
     }
 
     // --- CT-04: GIVEN Result state WHEN rendered THEN percent and Завершить button visible ---
@@ -152,10 +159,10 @@ class LessonRunnerScreenTest {
         }
 
         assertTrue(composeTestRule.onAllNodesWithText("75%").fetchSemanticsNodes().isNotEmpty())
-        composeTestRule.onNodeWithText("Завершить").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_result_next)).assertIsDisplayed()
     }
 
-    // --- CT-05: GIVEN Result state WHEN rendered THEN Завершить button present ---
+    // --- CT-05: GIVEN Result state WHEN rendered THEN finish action present ---
     // Spec AC-20
     @Test
     fun ct05_finishButton_present_on_result() {
@@ -167,7 +174,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Завершить").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_result_next)).assertIsDisplayed()
     }
 
     // --- CT-10: GIVEN expired deadline WHEN rendered THEN onTimeout invoked ---
@@ -297,7 +304,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Продолжить прохождение?").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_resume_title)).assertIsDisplayed()
     }
 
     // --- CT-16: GIVEN blocking dialog shown WHEN "Продолжить" clicked THEN continueCount == 1 ---
@@ -314,7 +321,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Продолжить").performClick()
+        composeTestRule.onNodeWithText(str(R.string.runner_action_continue)).performClick()
 
         assertEquals(1, fakeComponent.continueCount)
     }
@@ -334,7 +341,7 @@ class LessonRunnerScreenTest {
         }
 
         // "Выйти" in BlockingResumeDialog (OutlinedButton)
-        composeTestRule.onNodeWithText("Выйти").performClick()
+        composeTestRule.onNodeWithText(str(R.string.runner_action_exit)).performClick()
 
         assertEquals(1, fakeComponent.exitCount)
     }
@@ -351,7 +358,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Оцените урок").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_rating_title)).assertIsDisplayed()
     }
 
     // --- CT-19: GIVEN showRatingPrompt=false WHEN rendered THEN rating section absent ---
@@ -366,7 +373,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Оцените урок").assertDoesNotExist()
+        composeTestRule.onNodeWithText(str(R.string.runner_rating_title)).assertDoesNotExist()
     }
 
     // --- CT-20: GIVEN top3 non-empty WHEN rendered THEN participant name and percent visible ---
@@ -438,7 +445,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Нет доступных вопросов").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_error_empty_pool)).assertIsDisplayed()
     }
 
     // --- CT-26: GIVEN InitFailed(NoValidQuestions) WHEN rendered THEN "Вопросы недействительны" visible ---
@@ -455,7 +462,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Вопросы недействительны").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_error_no_valid_questions)).assertIsDisplayed()
     }
 
     // --- CT-27: GIVEN Result(saveWarning=true) WHEN rendered THEN warning indicator visible ---
@@ -470,7 +477,7 @@ class LessonRunnerScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Результат не сохранён").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_result_save_warning)).assertIsDisplayed()
     }
 
     // --- CT-28: GIVEN SaveRatingFailed event WHEN emitted THEN snackbar "Не удалось сохранить оценку" shown ---
@@ -490,7 +497,7 @@ class LessonRunnerScreenTest {
         fakeComponent.emit(RunnerEvent.SaveRatingFailed)
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Не удалось сохранить оценку").assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.runner_error_save_rating)).assertIsDisplayed()
     }
 
     // --- CT-29: GIVEN hard mode rendered WHEN activity recreated THEN FLAG_SECURE still set ---

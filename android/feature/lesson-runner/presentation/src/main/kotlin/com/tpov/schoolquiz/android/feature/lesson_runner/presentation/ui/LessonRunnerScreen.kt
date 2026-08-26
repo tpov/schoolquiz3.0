@@ -5,9 +5,11 @@ import android.view.WindowManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -30,8 +32,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -39,11 +43,15 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBg
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirMode
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.rememberNoirState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
@@ -60,7 +68,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlin.random.Random
 
-private const val ANSWER_FEEDBACK_DELAY_MS = 3_000L
+// Design decision §4.4: the verdict waits for a tap instead of advancing on a hidden timer;
+// the short arm delay swallows the double-tap that selected the answer in the first place.
 private const val ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS = 250L
 
 @Composable
@@ -84,9 +93,12 @@ fun LessonRunnerScreen(
     onNavigateBack: () -> Unit,
     floatingIcons: List<ImageVector>,
     modifier: Modifier = Modifier,
+    onOpenLesson: (String) -> Unit = {},
 ) {
     val state by component.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val saveResultError = stringResource(R.string.runner_error_save_result)
+    val saveRatingError = stringResource(R.string.runner_error_save_rating)
 
     rememberFlagSecure(enabled = component.isHardMode)
 
@@ -111,10 +123,11 @@ fun LessonRunnerScreen(
         component.events.collect { event ->
             when (event) {
                 is RunnerEvent.SaveAttemptFailed ->
-                    snackbarHostState.showSnackbar("Не удалось сохранить результат")
+                    snackbarHostState.showSnackbar(saveResultError)
                 RunnerEvent.SaveRatingFailed ->
-                    snackbarHostState.showSnackbar("Не удалось сохранить оценку")
+                    snackbarHostState.showSnackbar(saveRatingError)
                 RunnerEvent.NavigateBack -> onNavigateBack()
+                is RunnerEvent.OpenNextLesson -> onOpenLesson(event.lessonId)
             }
         }
     }
@@ -185,7 +198,8 @@ private fun RunnerStateContent(
             ResultContent(
                 state = state,
                 onSubmitRating = { component.onSubmitRating(it) },
-                onFinish = { component.onFinish() },
+                onRunAgain = { component.onRunAgain() },
+                onNextLesson = { component.onNextLesson() },
                 modifier = Modifier.fillMaxSize(),
             )
     }
@@ -199,8 +213,21 @@ private fun InitFailedContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = reason.displayMessage(), style = NoirType.rowTitle)
-        TextButton(onClick = onBack) { Text("Назад") }
+        Text(
+            text =
+                when (reason) {
+                    RunnerUiState.InitFailureReason.AuthRequired ->
+                        stringResource(R.string.runner_error_auth_required)
+                    RunnerUiState.InitFailureReason.LessonNotFound ->
+                        stringResource(R.string.runner_error_lesson_not_found)
+                    RunnerUiState.InitFailureReason.EmptyPool ->
+                        stringResource(R.string.runner_error_empty_pool)
+                    RunnerUiState.InitFailureReason.NoValidQuestions ->
+                        stringResource(R.string.runner_error_no_valid_questions)
+                },
+            style = NoirType.rowTitle,
+        )
+        TextButton(onClick = onBack) { Text(stringResource(R.string.runner_action_back)) }
     }
 }
 
@@ -222,15 +249,12 @@ private fun QuestionStateContent(
         component.onAnswer(answer)
     }
 
-    LaunchedEffect(feedback, showInfoDialog) {
+    // No auto-advance: the verdict stays until the tap (design §4.4).
+    LaunchedEffect(feedback) {
         canSkipFeedback = false
-        if (feedback == null || showInfoDialog) {
-            return@LaunchedEffect
-        }
+        if (feedback == null || showInfoDialog) return@LaunchedEffect
         delay(ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS)
         canSkipFeedback = true
-        delay(ANSWER_FEEDBACK_DELAY_MS - ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS)
-        submitFeedbackNow()
     }
 
     Column(
@@ -245,6 +269,7 @@ private fun QuestionStateContent(
             deadlineMs = state.deadlineMs,
             isPaused = state.isPaused,
             isHard = state.isHard,
+            lives = state.lives,
             onCrossClick = { component.onCrossButtonTap() },
             onTimeout = {
                 if (feedback == null) {
@@ -271,21 +296,14 @@ private fun QuestionStateContent(
                 feedback = feedback,
                 revealCorrect = state.revealCorrect,
                 component = component,
+                livesAvailable = (state.lives ?: 0) > 0,
                 onFeedback = { feedback = it },
             )
-            if (feedback != null) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .clickable(
-                                enabled = canSkipFeedback,
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() },
-                                onClick = ::submitFeedbackNow,
-                            ),
-                )
-            }
+            FeedbackOverlay(
+                feedbackDigit = feedback?.revealDigit(),
+                canSkip = canSkipFeedback,
+                onSkip = ::submitFeedbackNow,
+            )
             if (feedback != null && infoText != null) {
                 QuestionInfoButton(
                     onClick = { showInfoDialog = true },
@@ -325,8 +343,11 @@ private fun QuestionTypeContent(
     feedback: AnswerFeedback?,
     revealCorrect: Boolean,
     component: LessonRunnerRootComponent,
+    livesAvailable: Boolean,
     onFeedback: (AnswerFeedback) -> Unit,
 ) {
+    // Hint spends a life and plays the correct answer; surveys have nothing to reveal.
+    val hintEnabled = livesAvailable && feedback == null && qState !is QuestionUiState.Survey
     when (qState) {
         is QuestionUiState.Survey ->
             SurveyContent(
@@ -359,28 +380,46 @@ private fun QuestionTypeContent(
                 },
                 feedback = feedback as? AnswerFeedback.Survey,
             )
-        is QuestionUiState.SingleChoice ->
+        is QuestionUiState.SingleChoice -> {
+            val selectAndReveal: (String) -> Unit = { optionId ->
+                val draft = UserAnswerDraft.SingleChoiceDraft(OptionId(optionId))
+                component.onDraftChanged(draft)
+                onFeedback(
+                    AnswerFeedback.SingleChoice(
+                        answer = draft,
+                        selectedId = optionId,
+                        correctId = qState.correctOptionId,
+                        revealCorrect = revealCorrect,
+                    ),
+                )
+            }
             SingleChoiceContent(
                 state = qState,
-                onOptionSelected = { optionId ->
-                    val draft = UserAnswerDraft.SingleChoiceDraft(OptionId(optionId))
-                    component.onDraftChanged(draft)
-                    onFeedback(
-                        AnswerFeedback.SingleChoice(
-                            answer = draft,
-                            selectedId = optionId,
-                            correctId = qState.correctOptionId,
-                            revealCorrect = revealCorrect,
-                        ),
-                    )
-                },
+                onOptionSelected = selectAndReveal,
                 feedback = feedback as? AnswerFeedback.SingleChoice,
+                hintEnabled = hintEnabled,
+                onHint = {
+                    val correctId = qState.correctOptionId
+                    if (correctId != null && component.hintRequested()) selectAndReveal(correctId)
+                },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
         is QuestionUiState.MultipleChoice -> {
             val currentSelected =
                 (currentDraft as? UserAnswerDraft.MultipleChoiceDraft)
                     ?.selected?.map { it.raw }?.toSet() ?: qState.selectedIds
+            val submitWith: (Set<String>) -> Unit = { ids ->
+                val draft = UserAnswerDraft.MultipleChoiceDraft(ids.map { OptionId(it) }.toSet())
+                onFeedback(
+                    AnswerFeedback.MultipleChoice(
+                        answer = draft,
+                        selectedIds = ids,
+                        correctIds = qState.correctIds,
+                        revealCorrect = revealCorrect,
+                    ),
+                )
+            }
             MultipleChoiceContent(
                 state = qState.copy(selectedIds = currentSelected),
                 onOptionToggled = { optionId ->
@@ -390,18 +429,12 @@ private fun QuestionTypeContent(
                         UserAnswerDraft.MultipleChoiceDraft(newSelected.map { OptionId(it) }.toSet()),
                     )
                 },
-                onSubmit = {
-                    val draft = UserAnswerDraft.MultipleChoiceDraft(currentSelected.map { OptionId(it) }.toSet())
-                    onFeedback(
-                        AnswerFeedback.MultipleChoice(
-                            answer = draft,
-                            selectedIds = currentSelected,
-                            correctIds = qState.correctIds,
-                            revealCorrect = revealCorrect,
-                        ),
-                    )
-                },
+                onSubmit = { submitWith(currentSelected) },
                 feedback = feedback as? AnswerFeedback.MultipleChoice,
+                hintEnabled = hintEnabled,
+                onHint = {
+                    if (component.hintRequested()) submitWith(qState.correctIds)
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -461,6 +494,21 @@ private fun QuestionTypeContent(
                     )
                 },
                 feedback = orderingFeedback,
+                hintEnabled = hintEnabled,
+                onHint = {
+                    // correctOrderIds is the content order, i.e. the right arrangement itself.
+                    if (component.hintRequested() && qState.correctOrderIds.isNotEmpty()) {
+                        val draft = UserAnswerDraft.OrderingDraft(qState.correctOrderIds.map { OptionId(it) })
+                        onFeedback(
+                            AnswerFeedback.Ordering(
+                                answer = draft,
+                                orderIds = qState.correctOrderIds,
+                                correctOrderIds = qState.correctOrderIds,
+                                revealCorrect = revealCorrect,
+                            ),
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -524,11 +572,99 @@ private fun QuestionTypeContent(
                     )
                 },
                 feedback = feedback as? AnswerFeedback.FillBlank,
+                hintEnabled = hintEnabled,
+                onHint = {
+                    if (!component.hintRequested()) return@FillBlankContent
+                    val correctFilled =
+                        qState.correctCandidateIdsByBlankIndex.mapNotNull { (index, candidateId) ->
+                            val blankId = blanksByIndex[index]?.blankId ?: return@mapNotNull null
+                            blankId to candidateId
+                        }.toMap()
+                    onFeedback(
+                        AnswerFeedback.FillBlank(
+                            answer =
+                                UserAnswerDraft.FillBlankDraft(
+                                    correctFilled.mapKeys { BlankId(it.key) }.mapValues { CandidateId(it.value) },
+                                ),
+                            filledCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
+                            correctCandidateIdsByBlankIndex = qState.correctCandidateIdsByBlankIndex,
+                            revealCorrect = revealCorrect,
+                        ),
+                    )
+                },
                 modifier = Modifier.fillMaxSize(),
             )
         }
     }
 }
+
+/**
+ * Tap-anywhere layer plus the reveal line — the mockup's verdict slot, which replaces the old
+ * invisible three-second overlay. The verdict waits for a tap instead of advancing on a timer.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun BoxScope.FeedbackOverlay(
+    feedbackDigit: Int?,
+    canSkip: Boolean,
+    onSkip: () -> Unit,
+) {
+    if (feedbackDigit == null) return
+    Box(
+        modifier =
+            Modifier
+                .matchParentSize()
+                .clickable(
+                    enabled = canSkip,
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = onSkip,
+                ),
+    )
+    VerdictBanner(
+        digit = feedbackDigit,
+        modifier =
+            Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp),
+    )
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun VerdictBanner(
+    digit: Int,
+    modifier: Modifier = Modifier,
+) {
+    val toneColor =
+        when (digit) {
+            PERFECT_DIGIT -> NoirSuccess
+            WORST_DIGIT -> NoirDanger
+            else -> LocalNoirAccent.current
+        }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = verdictLabel(digit).uppercase(),
+            style = NoirType.button.copy(fontSize = 12.sp, color = toneColor),
+        )
+        Text(
+            text = stringResource(R.string.runner_verdict_continue).uppercase(),
+            style = NoirType.chip.copy(color = NoirTOff),
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun verdictLabel(digit: Int): String =
+    when (digit) {
+        PERFECT_DIGIT -> stringResource(R.string.runner_verdict_correct)
+        WORST_DIGIT -> stringResource(R.string.runner_verdict_wrong)
+        else -> stringResource(R.string.runner_verdict_partial, digit)
+    }
 
 private fun buildTimeoutFeedback(
     qState: QuestionUiState,
@@ -677,14 +813,6 @@ private fun buildFillBlankTimeoutFeedback(
     )
 }
 
-private fun RunnerUiState.InitFailureReason.displayMessage(): String =
-    when (this) {
-        RunnerUiState.InitFailureReason.AuthRequired -> "Требуется авторизация"
-        RunnerUiState.InitFailureReason.LessonNotFound -> "Урок не найден"
-        RunnerUiState.InitFailureReason.EmptyPool -> "Нет доступных вопросов"
-        RunnerUiState.InitFailureReason.NoValidQuestions -> "Вопросы недействительны"
-    }
-
 private val previewQuestionOptions =
     listOf(
         OptionUi("1", "Париж"),
@@ -790,6 +918,12 @@ private class PreviewLessonRunnerComponent(initialState: RunnerUiState) : Lesson
     override fun onSubmitRating(rating: Int) = Unit
 
     override fun onFinish() = Unit
+
+    override fun onRunAgain() = Unit
+
+    override fun onNextLesson() = Unit
+
+    override fun hintRequested(): Boolean = false
 
     override fun onBack() = Unit
 }

@@ -24,6 +24,12 @@ sealed interface RunnerUiState {
         val revealCorrect: Boolean = true,
         val showExitConfirmDialog: Boolean,
         val currentDraft: UserAnswerDraft? = null,
+        /**
+         * Hearts left this session, mirrored locally for the header pill and hint affordability.
+         * Null when the profile is unreadable — the pill and hint stay hidden/disabled rather
+         * than guessing. Server-side charging is out of scope here.
+         */
+        val lives: Int? = null,
     ) : RunnerUiState
 
     data class Result(
@@ -42,6 +48,17 @@ sealed interface RunnerUiState {
         val userBestPercentScore: Int = percentScore.raw,
         /** What to study next, or null when the run was good enough not to need telling. */
         val advice: ResultAdvice? = null,
+        /**
+         * Per-question score digits ('0'..'9', '0' = not shown) in play order — the raw material
+         * of the accuracy chart on the result card.
+         */
+        val questionScores: List<Int> = emptyList(),
+        /**
+         * Full hearts still standing after this attempt, over capacity. Null when the profile is
+         * not readable; the lives figure stays hidden rather than showing a made-up count.
+         */
+        val livesRemainingHearts: Int? = null,
+        val livesMaxHearts: Int? = null,
         val showRatingPrompt: Boolean,
         val saveWarning: Boolean,
         val ratingSubmissionState: RatingSubmissionState = RatingSubmissionState.Idle,

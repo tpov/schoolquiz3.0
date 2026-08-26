@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 import kotlin.math.roundToInt
@@ -50,7 +52,13 @@ private const val FEEDBACK_FLIP_FULL_ROTATION = 180f
 private const val FEEDBACK_STAGGER_MS = 90
 private const val FEEDBACK_CONTAINER_ALPHA = 0.16f
 
-@Suppress("FunctionNaming", "LongMethod", "CyclomaticComplexMethod", "ktlint:standard:function-naming")
+@Suppress(
+    "FunctionNaming",
+    "LongMethod",
+    "CyclomaticComplexMethod",
+    "LongParameterList",
+    "ktlint:standard:function-naming",
+)
 @Composable
 fun OrderingContent(
     state: QuestionUiState.Ordering,
@@ -60,6 +68,8 @@ fun OrderingContent(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
     feedback: AnswerFeedback.Ordering? = null,
+    hintEnabled: Boolean = false,
+    onHint: () -> Unit = {},
 ) {
     val lastIndex = state.items.lastIndex
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
@@ -72,9 +82,16 @@ fun OrderingContent(
         modifier = modifier,
         bottomAction = {
             RunnerPrimaryAction(
-                text = "Готово",
+                text = stringResource(R.string.runner_action_done),
                 enabled = feedback == null,
                 onClick = onSubmit,
+            )
+        },
+        hintAction = {
+            RunnerSecondaryAction(
+                text = stringResource(R.string.runner_hint_action),
+                enabled = hintEnabled,
+                onClick = onHint,
             )
         },
     ) {
@@ -105,7 +122,7 @@ fun OrderingContent(
                 when (displayTone) {
                     AnswerFeedbackTone.Correct -> NoirSuccess
                     AnswerFeedbackTone.Wrong -> NoirDanger
-                    AnswerFeedbackTone.Neutral -> runnerLightBorderColor()
+                    AnswerFeedbackTone.Muted, AnswerFeedbackTone.Neutral -> runnerLightBorderColor()
                 }
             val containerColor =
                 when (displayTone) {
@@ -113,14 +130,14 @@ fun OrderingContent(
                         NoirSuccess.copy(alpha = FEEDBACK_CONTAINER_ALPHA).compositeOver(surface)
                     AnswerFeedbackTone.Wrong ->
                         NoirDanger.copy(alpha = FEEDBACK_CONTAINER_ALPHA).compositeOver(surface)
-                    AnswerFeedbackTone.Neutral -> surface
+                    AnswerFeedbackTone.Muted, AnswerFeedbackTone.Neutral -> surface
                 }
             Surface(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .graphicsLayer {
-                            rotationY = flip.rotation
+                            rotationX = flip.rotation
                             cameraDistance = FEEDBACK_CAMERA_DISTANCE_FACTOR * density
                         }
                         .onSizeChanged { size -> if (itemHeightPx == 0) itemHeightPx = size.height }
@@ -171,14 +188,14 @@ fun OrderingContent(
                             .fillMaxWidth()
                             .heightIn(min = 58.dp)
                             .graphicsLayer {
-                                rotationY = if (flip.showBack) FEEDBACK_FLIP_FULL_ROTATION else 0f
+                                rotationX = if (flip.showBack) FEEDBACK_FLIP_FULL_ROTATION else 0f
                             }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = Icons.Default.DragHandle,
-                        contentDescription = "Перетащить",
+                        contentDescription = stringResource(R.string.runner_cd_drag),
                         tint = NoirT3,
                     )
                     Text(
@@ -194,7 +211,7 @@ fun OrderingContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Переместить вверх",
+                            contentDescription = stringResource(R.string.runner_cd_move_up),
                         )
                     }
                     IconButton(
@@ -204,7 +221,7 @@ fun OrderingContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Переместить вниз",
+                            contentDescription = stringResource(R.string.runner_cd_move_down),
                         )
                     }
                 }

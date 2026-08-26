@@ -2,6 +2,7 @@
 
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,8 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -23,9 +27,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
@@ -33,23 +45,54 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.weakAnswersWording
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
 
 private const val PERFECT_SCORE = 100
 private const val HARD_REWARD_MULTIPLIER = 2
 private const val NOLICS_PERCENT_STEP = 10
+
+// Accuracy chart geometry, lifted from the design's SVG (viewBox 340×120 rendered at 104×44):
+// the plot spans x 10..330, score digits 1..9 sit on nine levels 11.5 units apart with '9' on
+// y=14, and hairline gridlines cross at y=14/60/106.
+private const val CHART_WIDTH_DP = 104
+private const val CHART_HEIGHT_DP = 44
+private const val CHART_VIEWBOX_W = 340f
+private const val CHART_VIEWBOX_H = 120f
+private val CHART_GRIDLINE_YS = listOf(14f, 60f, 106f)
+private const val CHART_PLOT_START_X = 10f
+private const val CHART_PLOT_SPAN = 320f
+private const val CHART_BASE_Y = 106f
+private const val CHART_LEVEL_STEP = 11.5f
+
+// Best-mark scale, from the same design: a 34px block holding a 5px track, a 2×14 tick at the
+// best mark, and the label hanging under the tick's position.
+private const val BEST_SCALE_HEIGHT_DP = 34
+private const val BEST_TRACK_HEIGHT_DP = 5
+private const val BEST_FILL_ALPHA = 0.65f
+
+// Chart paint, straight from the design: success wash under the line (0.10), danger wash above
+// it (0.08), the stroke at three-quarter accent with a heavier head dot.
+private const val SUCCESS_AREA_ALPHA = 0.10f
+private const val DANGER_AREA_ALPHA = 0.08f
+private const val CHART_LINE_ALPHA = 0.75f
+private const val CHART_LINE_WIDTH = 3f
+private const val CHART_DOT_ALPHA = 0.65f
+private const val CHART_FIRST_DOT_R = 3.2f
+private const val CHART_DOT_R = 2.4f
 
 /**
  * The end of an attempt.
@@ -63,11 +106,11 @@ private const val NOLICS_PERCENT_STEP = 10
 fun ResultContent(
     state: RunnerUiState.Result,
     onSubmitRating: (Int) -> Unit,
-    onFinish: () -> Unit,
+    onRunAgain: () -> Unit,
+    onNextLesson: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isHard = state.mode == Difficulty.HARD
-    val modeLabel = if (isHard) "hard" else "easy"
     val earnedExperience = resultExperienceReward(state.percentScore.raw, state.mode)
     val earnedNolics = resultNolicsReward(state.percentScore.raw, state.mode)
 
@@ -80,16 +123,29 @@ fun ResultContent(
             .padding(horizontal = 16.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Урок пройден · $modeLabel".uppercase(), style = NoirType.kicker)
+        Text(
+            text =
+                stringResource(
+                    if (isHard) R.string.runner_result_kicker_hard else R.string.runner_result_kicker_easy,
+                ).uppercase(),
+            style = NoirType.kicker,
+        )
 
         NoirGlassCard {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = state.percentScore.raw.toString(),
-                        style = NoirType.num.copy(fontSize = 56.sp, fontWeight = FontWeight.Bold),
-                    )
-                    Text("%", style = NoirType.num.copy(fontSize = 22.sp, color = NoirT3))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom,
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = state.percentScore.raw.toString(),
+                            style = NoirType.num.copy(fontSize = 56.sp, fontWeight = FontWeight.Bold),
+                        )
+                        Text("%", style = NoirType.num.copy(fontSize = 22.sp, color = NoirT3))
+                    }
+                    AccuracyChart(scores = state.questionScores)
                 }
                 BestMarkScale(
                     current = state.percentScore.raw,
@@ -100,17 +156,23 @@ fun ResultContent(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    ResultFigure("Attempt", state.userAttemptCount.toString())
-                    ResultFigure("Average", "${state.userAveragePercentScore}%")
-                    ResultFigure("XP", "+$earnedExperience")
-                    ResultFigure("Nolics", "+$earnedNolics")
+                    val lives =
+                        state.livesRemainingHearts?.let { remaining ->
+                            state.livesMaxHearts?.let { capacity -> "$remaining/$capacity" }
+                        }
+                    if (lives != null) {
+                        ResultFigure(stringResource(R.string.runner_figure_lives), lives)
+                    }
+                    ResultFigure(stringResource(R.string.runner_figure_attempt), state.userAttemptCount.toString())
+                    ResultFigure(stringResource(R.string.runner_figure_xp), "+$earnedExperience")
+                    ResultFigure(stringResource(R.string.runner_figure_nolics), "+$earnedNolics")
                 }
             }
         }
 
         if (state.saveWarning) {
             Text(
-                "Результат не сохранён — уйдёт при следующей синхронизации",
+                stringResource(R.string.runner_result_save_warning),
                 style = NoirType.rowSub.copy(color = NoirDanger),
             )
         }
@@ -136,14 +198,14 @@ fun ResultContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "Ещё раз",
+                stringResource(R.string.runner_result_again),
                 style = NoirType.button.copy(color = NoirT3),
-                modifier = Modifier.clickable(onClick = onFinish),
+                modifier = Modifier.clickable(onClick = onRunAgain),
             )
             Text(
-                "Дальше →",
+                stringResource(R.string.runner_result_next),
                 style = NoirType.button.copy(color = LocalNoirAccent.current),
-                modifier = Modifier.clickable(onClick = onFinish),
+                modifier = Modifier.clickable(onClick = onNextLesson),
             )
         }
     }
@@ -169,14 +231,19 @@ private fun AdviceSection(advice: ResultAdvice) {
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        Text("ЧТОБЫ НАБРАТЬ БОЛЬШЕ", style = NoirType.kicker.copy(color = NoirTOff))
+        Text(stringResource(R.string.runner_advice_kicker), style = NoirType.kicker.copy(color = NoirTOff))
         Text(
-            text = weakAnswersWording(advice.weakAnswers),
+            text =
+                pluralStringResource(
+                    R.plurals.runner_advice_weak_answers,
+                    advice.weakAnswers,
+                    advice.weakAnswers,
+                ),
             style = NoirType.rowSub.copy(color = NoirT2),
         )
         advice.suggestedLessonTitle?.let { title ->
             Text(
-                text = "Основу даёт урок «$title»",
+                text = stringResource(R.string.runner_advice_suggested_lesson, title),
                 style = NoirType.rowSub.copy(color = accent),
             )
         }
@@ -186,8 +253,9 @@ private fun AdviceSection(advice: ResultAdvice) {
 /**
  * This attempt against your own best.
  *
- * The mark is the number worth beating, and it is the player's own — a leaderboard says who is
- * ahead, this says whether today went better than last time.
+ * The tick is the number worth beating, and it is the player's own — a leaderboard says who is
+ * ahead, this says whether today went better than last time. The label hangs off the tick so the
+ * two read as one mark, not as a caption under the bar.
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -197,23 +265,121 @@ private fun BestMarkScale(
     isHard: Boolean,
 ) {
     val accent = if (isHard) NoirDanger else LocalNoirAccent.current
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Box(Modifier.fillMaxWidth().height(BEST_SCALE_HEIGHT_DP.dp)) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(6.dp)
+                .height(BEST_TRACK_HEIGHT_DP.dp)
                 .clip(NoirShapePill)
-                .background(NoirOutline),
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(current.coerceIn(0, 100) / 100f)
-                    .height(6.dp)
-                    .clip(NoirShapePill)
-                    .background(accent),
+                .background(NoirS2),
+        )
+        Box(
+            Modifier
+                .fillMaxWidth(current.coerceIn(0, PERFECT_SCORE) / PERFECT_SCORE.toFloat())
+                .height(BEST_TRACK_HEIGHT_DP.dp)
+                .clip(NoirShapePill)
+                .background(accent.copy(alpha = BEST_FILL_ALPHA)),
+        )
+        if (best > 0) {
+            Box(Modifier.fillMaxWidth(best.coerceIn(0, PERFECT_SCORE) / PERFECT_SCORE.toFloat())) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .width(2.dp)
+                        .height(14.dp)
+                        .background(NoirT2),
+                )
+                Text(
+                    stringResource(R.string.runner_result_best, best),
+                    style =
+                        NoirType.kicker.copy(
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.12.em,
+                            color = NoirT2,
+                        ),
+                    modifier = Modifier.align(Alignment.TopEnd).offset(x = (-6).dp, y = 16.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The attempt as one stroke: per-question correctness from the first answer to the last.
+ *
+ * What the line keeps below it is painted green — answers that held; what leaks above it is red.
+ * A run that stays good reads as a mostly green field with the stroke riding high, which is the
+ * whole story of the attempt in one glance.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun AccuracyChart(
+    scores: List<Int>,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalNoirAccent.current
+    Canvas(modifier.size(width = CHART_WIDTH_DP.dp, height = CHART_HEIGHT_DP.dp)) {
+        val shown = scores.filter { it in 1..9 }
+        if (shown.isEmpty()) return@Canvas
+        val scaleX = size.width / CHART_VIEWBOX_W
+        val scaleY = size.height / CHART_VIEWBOX_H
+
+        fun vx(x: Float) = x * scaleX
+
+        fun vy(y: Float) = y * scaleY
+
+        CHART_GRIDLINE_YS.forEach { y ->
+            drawLine(NoirHair, Offset(0f, vy(y)), Offset(size.width, vy(y)), strokeWidth = 1f)
+        }
+
+        val stepX = if (shown.size == 1) 0f else CHART_PLOT_SPAN / (shown.size - 1)
+        val points =
+            shown.mapIndexed { index, digit ->
+                Offset(
+                    vx(CHART_PLOT_START_X + index * stepX),
+                    vy(CHART_BASE_Y - (digit - 1) * CHART_LEVEL_STEP),
+                )
+            }
+
+        drawPath(
+            Path().apply {
+                moveTo(points.first().x, size.height)
+                points.forEach { lineTo(it.x, it.y) }
+                lineTo(points.last().x, size.height)
+                close()
+            },
+            color = NoirSuccess.copy(alpha = SUCCESS_AREA_ALPHA),
+        )
+        drawPath(
+            Path().apply {
+                moveTo(points.first().x, 0f)
+                points.forEach { lineTo(it.x, it.y) }
+                lineTo(points.last().x, 0f)
+                close()
+            },
+            color = NoirDanger.copy(alpha = DANGER_AREA_ALPHA),
+        )
+        drawPath(
+            Path().apply {
+                moveTo(points.first().x, points.first().y)
+                points.drop(1).forEach { lineTo(it.x, it.y) }
+            },
+            color = accent.copy(alpha = CHART_LINE_ALPHA),
+            style =
+                Stroke(
+                    width = CHART_LINE_WIDTH * scaleY,
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round,
+                ),
+        )
+        points.forEachIndexed { index, point ->
+            drawCircle(
+                color = if (index == 0) accent else accent.copy(alpha = CHART_DOT_ALPHA),
+                radius = (if (index == 0) CHART_FIRST_DOT_R else CHART_DOT_R) * scaleY,
+                center = point,
             )
         }
-        Text("Ваш лучший $best%", style = NoirType.kicker)
     }
 }
 
@@ -224,9 +390,9 @@ private fun ResultFigure(
     label: String,
     value: String,
 ) {
-    Column(horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label.uppercase(), style = NoirType.kicker)
-        Text(value, style = NoirType.num.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold))
+        Text(value, style = NoirType.num.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold))
     }
 }
 
@@ -270,11 +436,17 @@ private fun ResultContentPreview() {
                     userAttemptCount = 3,
                     userAveragePercentScore = 75,
                     userBestPercentScore = 92,
+                    advice = null,
+                    questionScores =
+                        listOf(9, 9, 9, 8, 8, 7, 7, 7, 6, 6, 5, 5, 5, 4, 3, 3, 1, 1, 1, 1),
+                    livesRemainingHearts = 3,
+                    livesMaxHearts = 5,
                     showRatingPrompt = true,
                     saveWarning = false,
                 ),
             onSubmitRating = {},
-            onFinish = {},
+            onRunAgain = {},
+            onNextLesson = {},
         )
     }
 }
@@ -299,11 +471,13 @@ private fun ResultContentSaveWarningPreview() {
                     userAttemptCount = 1,
                     userAveragePercentScore = 60,
                     userBestPercentScore = 60,
+                    questionScores = listOf(5, 6, 4, 7, 3, 2, 8, 1),
                     showRatingPrompt = false,
                     saveWarning = true,
                 ),
             onSubmitRating = {},
-            onFinish = {},
+            onRunAgain = {},
+            onNextLesson = {},
         )
     }
 }

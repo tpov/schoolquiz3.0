@@ -20,7 +20,7 @@ private const val MULTIPLE_CHOICE_SHUFFLE_SALT = 31L
 private const val ORDERING_SHUFFLE_SALT = 47L
 private const val FILL_BLANK_SHUFFLE_SALT = 61L
 
-fun RunnerState.Ready.toQuestionUiState(): RunnerUiState.Question {
+fun RunnerState.Ready.toQuestionUiState(lives: Int? = null): RunnerUiState.Question {
     val question = playOrder[indexInPool]
     val displaySeed =
         seed xor question.order.toLong() xor question.codeAnswerIndex.toLong() xor indexInPool.toLong()
@@ -38,6 +38,7 @@ fun RunnerState.Ready.toQuestionUiState(): RunnerUiState.Question {
         revealCorrect = sessionMode.revealsCorrectAnswer(mode),
         showExitConfirmDialog = false,
         currentDraft = currentDraftAnswer,
+        lives = lives,
     )
 }
 

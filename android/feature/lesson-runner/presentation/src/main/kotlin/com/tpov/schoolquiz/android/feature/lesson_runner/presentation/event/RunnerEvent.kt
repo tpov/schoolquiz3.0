@@ -8,4 +8,7 @@ sealed interface RunnerEvent {
     data object SaveRatingFailed : RunnerEvent
 
     data object NavigateBack : RunnerEvent
+
+    /** Host should open the runner for the next lesson of the same theme (design decision F3). */
+    data class OpenNextLesson(val lessonId: String) : RunnerEvent
 }

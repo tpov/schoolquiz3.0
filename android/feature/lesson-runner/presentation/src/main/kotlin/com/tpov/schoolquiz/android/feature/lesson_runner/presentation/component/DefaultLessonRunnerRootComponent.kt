@@ -13,6 +13,8 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toU
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState.RatingSubmissionState
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.autoAnswerOnTimeout
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -47,6 +50,11 @@ class DefaultLessonRunnerRootComponent(
     private val useCases: LessonRunnerUseCases,
     private val lessonRepository: LessonRepository,
     private val attemptRepository: LessonAttemptRepository,
+    /**
+     * Read once per completed round for the lives figure on the result card. Null (the default)
+     * when the host has no profile to read — the figure stays hidden instead of guessing.
+     */
+    private val profileRepository: ProfileRepository? = null,
     private val getResultAdvice: GetResultAdviceUseCase,
     private val clock: Clock,
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
@@ -102,7 +110,8 @@ class DefaultLessonRunnerRootComponent(
         val domainState = stateHolder.domainState as? RunnerState.Ready ?: return
         val updatedDomain = domainState.copy(currentDraftAnswer = draft)
         stateHolder.domainState = updatedDomain
-        stateHolder.uiState.value = updatedDomain.toQuestionUiState()
+        stateHolder.uiState.value =
+            updatedDomain.toQuestionUiState(stateHolder.livesRemainingHearts)
     }
 
     override fun onAnswer(answer: UserAnswerDraft) {
@@ -116,7 +125,8 @@ class DefaultLessonRunnerRootComponent(
         if (newState.indexInPool >= newState.playOrder.size) {
             scope.launch { triggerComplete(newState) }
         } else {
-            stateHolder.uiState.value = newState.toQuestionUiState()
+            stateHolder.uiState.value =
+                newState.toQuestionUiState(stateHolder.livesRemainingHearts)
         }
     }
 
@@ -129,7 +139,8 @@ class DefaultLessonRunnerRootComponent(
         if (newState.indexInPool >= newState.playOrder.size) {
             scope.launch { triggerComplete(newState) }
         } else {
-            stateHolder.uiState.value = newState.toQuestionUiState()
+            stateHolder.uiState.value =
+                newState.toQuestionUiState(stateHolder.livesRemainingHearts)
         }
     }
 
@@ -146,7 +157,8 @@ class DefaultLessonRunnerRootComponent(
                 deadlineMs = nowMs + duration.seconds * 1000L,
             )
         stateHolder.domainState = resumedState
-        stateHolder.uiState.value = resumedState.toQuestionUiState()
+        stateHolder.uiState.value =
+            resumedState.toQuestionUiState(stateHolder.livesRemainingHearts)
     }
 
     override fun onExit() {
@@ -203,8 +215,46 @@ class DefaultLessonRunnerRootComponent(
         emitEvent(RunnerEvent.NavigateBack)
     }
 
+    override fun onRunAgain() {
+        stateHolder.resetForRestart()
+        scope.launch { triggerStart() }
+    }
+
+    override fun onNextLesson() {
+        scope.launch {
+            val nextLessonId = resolveNextLessonId()
+            if (nextLessonId != null) {
+                emitEvent(RunnerEvent.OpenNextLesson(nextLessonId))
+            } else {
+                emitEvent(RunnerEvent.NavigateBack)
+            }
+        }
+    }
+
+    @Suppress("ReturnCount")
+    override fun hintRequested(): Boolean {
+        val current = stateHolder.uiState.value as? RunnerUiState.Question ?: return false
+        val remaining = current.lives ?: return false
+        if (remaining <= 0) return false
+        val updated = remaining - 1
+        stateHolder.livesRemainingHearts = updated
+        stateHolder.uiState.value = current.copy(lives = updated)
+        return true
+    }
+
     override fun onBack() {
         emitEvent(RunnerEvent.NavigateBack)
+    }
+
+    /** First lesson of the same theme ordered after the current one, if it is synced locally. */
+    private suspend fun resolveNextLessonId(): String? {
+        val lesson = lessonRepository.getById(lessonId) ?: return null
+        return lessonRepository
+            .observeByTheme(lesson.themeId)
+            .first()
+            .firstOrNull { it.order > lesson.order }
+            ?.id
+            ?.value
     }
 
     @Suppress("ReturnCount")
@@ -219,7 +269,8 @@ class DefaultLessonRunnerRootComponent(
         } else {
             val pausedState = newState.copy(isPaused = true)
             stateHolder.domainState = pausedState
-            stateHolder.uiState.value = pausedState.toQuestionUiState()
+            stateHolder.uiState.value =
+                pausedState.toQuestionUiState(stateHolder.livesRemainingHearts)
         }
     }
 
@@ -228,11 +279,26 @@ class DefaultLessonRunnerRootComponent(
         stateHolder.domainState = result
         stateHolder.uiState.value =
             when (result) {
-                is RunnerState.Ready -> result.toQuestionUiState()
+                is RunnerState.Ready -> {
+                    if (stateHolder.livesRemainingHearts == null) {
+                        stateHolder.livesRemainingHearts = readLivesFromProfile()
+                    }
+                    result.toQuestionUiState(stateHolder.livesRemainingHearts)
+                }
                 is RunnerState.InitFailed -> RunnerUiState.InitFailed(result.reason.toUiReason())
                 else -> RunnerUiState.Loading
             }
     }
+
+    /**
+     * Hearts the profile can currently pay for. Null when there is no profile to read — the UI
+     * then hides the pill and disables the hint instead of inventing a budget.
+     */
+    private suspend fun readLivesFromProfile(): Int? =
+        profileRepository
+            ?.observeCurrentProfile()
+            ?.firstOrNull()
+            ?.let { it.lifePoints / UserProfile.LIFE_POINTS_PER_HEART }
 
     private suspend fun triggerComplete(readyState: RunnerState.Ready) {
         val result = useCases.completeAttempt(readyState)
@@ -288,6 +354,7 @@ class DefaultLessonRunnerRootComponent(
             }
         val previousBestPercentScore = userAttempts.maxOfOrNull { it.percentScore.raw } ?: 0
         val userBestPercentScore = maxOf(previousBestPercentScore, attempt.percentScore.raw)
+        val profile = profileRepository?.observeCurrentProfile()?.first()
         return RunnerUiState.Result(
             percentScore = attempt.percentScore,
             mode = attempt.mode,
@@ -302,6 +369,9 @@ class DefaultLessonRunnerRootComponent(
             userAveragePercentScore = userAveragePercentScore,
             userBestPercentScore = userBestPercentScore,
             advice = getResultAdvice(attempt),
+            questionScores = attempt.codeAnswer.raw.map { it - '0' },
+            livesRemainingHearts = profile?.let { it.lifePoints / UserProfile.LIFE_POINTS_PER_HEART },
+            livesMaxHearts = profile?.let { it.maxLifePoints / UserProfile.LIFE_POINTS_PER_HEART },
             showRatingPrompt = showRatingPrompt,
             saveWarning = saveWarning,
         )

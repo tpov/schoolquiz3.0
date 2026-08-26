@@ -3,6 +3,11 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +48,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -92,6 +100,18 @@ fun QuestionProgressHeader(
         targetValue = if (urgent) NoirDanger else NoirT1,
         label = "timer",
     )
+    // Design: `noir-pulse 1s ease-in-out infinite` — opacity swings .5 ↔ 1 in the last stretch.
+    val pulseTransition = rememberInfiniteTransition(label = "timerPulse")
+    val pulseAlpha by pulseTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = TIMER_PULSE_MIN_ALPHA,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = TIMER_PULSE_HALF_PERIOD_MS),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "timerPulseAlpha",
+    )
 
     Column(
         modifier
@@ -106,21 +126,23 @@ fun QuestionProgressHeader(
         ) {
             NoirIconButton(
                 icon = NoirIcons.Close,
-                contentDescription = "Прервать",
+                contentDescription = stringResource(R.string.runner_cd_abort),
                 onClick = onCrossClick,
             )
             if (lives != null) {
+                // Gold heart on hard, red heart otherwise — never the Gem.
                 HeaderPill(
-                    icon = if (isHard) NoirIcons.Gem else NoirIcons.Heart,
+                    icon = NoirIcons.Heart,
                     text = lives.toString(),
                     tint = if (isHard) NoirGold else NoirDanger,
                 )
             }
-            HeaderPill(icon = NoirIcons.TypeA, text = remainingQuestions.toString(), tint = NoirT3)
+            HeaderPill(icon = NoirIcons.Menu, text = remainingQuestions.toString(), tint = NoirT3)
             Spacer(Modifier.weight(1f))
             Text(
                 text = remainingMs.asClock(),
-                style = NoirType.timer.copy(color = timerColor),
+                style = NoirType.timer.copy(color = timerColor, fontSize = 34.sp),
+                modifier = Modifier.graphicsLayer { alpha = if (urgent) pulseAlpha else 1f },
             )
         }
         ProgressSegments(total = total, current = current, isHard = isHard)
@@ -179,6 +201,8 @@ private fun ProgressSegments(
 }
 
 private const val URGENT_THRESHOLD_MS = 5_000L
+private const val TIMER_PULSE_MIN_ALPHA = 0.5f
+private const val TIMER_PULSE_HALF_PERIOD_MS = 500
 
 /** m:ss, and never a bare second count — "0:07" reads as time, "7" reads as a score. */
 private fun Long.asClock(): String {

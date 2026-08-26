@@ -41,6 +41,12 @@ class RunFakeComponent(
         private set
     var backCount: Int = 0
         private set
+    var runAgainCount: Int = 0
+        private set
+    var nextLessonCount: Int = 0
+        private set
+    var hintCount: Int = 0
+        private set
 
     override fun onDraftChanged(draft: UserAnswerDraft) {
         lastDraft = draft
@@ -80,6 +86,19 @@ class RunFakeComponent(
 
     override fun onFinish() {
         finishCount++
+    }
+
+    override fun onRunAgain() {
+        runAgainCount++
+    }
+
+    override fun onNextLesson() {
+        nextLessonCount++
+    }
+
+    override fun hintRequested(): Boolean {
+        hintCount++
+        return true
     }
 
     override fun onBack() {

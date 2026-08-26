@@ -21,17 +21,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.QuestionUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.TemplatePart
@@ -60,6 +64,8 @@ fun FillBlankContent(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
     feedback: AnswerFeedback.FillBlank? = null,
+    hintEnabled: Boolean = false,
+    onHint: () -> Unit = {},
 ) {
     val blankParts = state.templateParts.filterIsInstance<TemplatePart.Blank>()
     val firstEmptyIndex = blankParts.firstOrNull { it.index !in state.filledValues }?.index
@@ -80,9 +86,16 @@ fun FillBlankContent(
         modifier = modifier,
         bottomAction = {
             RunnerPrimaryAction(
-                text = "Готово",
+                text = stringResource(R.string.runner_action_done),
                 enabled = feedback == null && isComplete,
                 onClick = onSubmit,
+            )
+        },
+        hintAction = {
+            RunnerSecondaryAction(
+                text = stringResource(R.string.runner_hint_action),
+                enabled = hintEnabled,
+                onClick = onHint,
             )
         },
     ) {
@@ -136,7 +149,8 @@ fun FillBlankContent(
                                 when (displayTone) {
                                     AnswerFeedbackTone.Correct -> NoirSuccess
                                     AnswerFeedbackTone.Wrong -> NoirDanger
-                                    AnswerFeedbackTone.Neutral -> runnerLightBorderColor()
+                                    AnswerFeedbackTone.Muted, AnswerFeedbackTone.Neutral ->
+                                        runnerLightBorderColor()
                                 }
                             val blankContainerColor =
                                 when {
@@ -165,7 +179,7 @@ fun FillBlankContent(
                                 },
                                 modifier =
                                     Modifier.graphicsLayer {
-                                        rotationY = flip.rotation
+                                        rotationX = flip.rotation
                                         cameraDistance = FEEDBACK_CAMERA_DISTANCE_FACTOR * density
                                     },
                                 shape = MaterialTheme.shapes.small,
@@ -189,7 +203,7 @@ fun FillBlankContent(
                                     text = filledText ?: part.placeholder,
                                     modifier =
                                         Modifier.graphicsLayer {
-                                            rotationY =
+                                            rotationX =
                                                 if (flip.showBack) {
                                                     FEEDBACK_FLIP_FULL_ROTATION
                                                 } else {
@@ -204,11 +218,6 @@ fun FillBlankContent(
             }
         }
         if (candidates.isNotEmpty()) {
-            Text(
-                text = "Варианты",
-                style = NoirType.button,
-                color = NoirT3,
-            )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -225,13 +234,15 @@ fun FillBlankContent(
                         },
                         enabled = feedback == null && !isUsed,
                         modifier = Modifier.alpha(if (isUsed) CONSUMED_ALPHA else 1f),
+                        shape = NoirShapePill,
+                        border = BorderStroke(1.dp, NoirOutline),
                         colors =
                             ButtonDefaults.buttonColors(
-                                containerColor = NoirViolet,
-                                contentColor = NoirInk,
+                                containerColor = NoirS1,
+                                contentColor = NoirT2,
                             ),
                     ) {
-                        Text(text = candidate.text)
+                        Text(text = candidate.text, style = NoirType.button)
                     }
                 }
             }

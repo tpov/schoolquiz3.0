@@ -6,9 +6,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -20,7 +22,7 @@ fun CrossButton(
         IconButton(onClick = onClick) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Выйти из урока",
+                contentDescription = stringResource(R.string.runner_cd_exit_lesson),
             )
         }
     }

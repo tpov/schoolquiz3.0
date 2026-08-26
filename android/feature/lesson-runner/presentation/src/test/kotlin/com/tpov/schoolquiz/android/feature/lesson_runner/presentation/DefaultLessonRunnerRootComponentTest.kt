@@ -14,6 +14,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeC
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonRatingRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeLessonRepository
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeProfileRepository
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeStartLessonAttemptUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake.FakeSubmitLessonRatingUseCase
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
@@ -107,6 +108,7 @@ class DefaultLessonRunnerRootComponentTest {
         completeAttemptUseCase: suspend (RunnerState.Ready) -> RunnerState = fakeComplete::invoke,
         abortAttemptUseCase: suspend (RunnerState.Ready) -> RunnerState = fakeAbort::invoke,
         submitRatingUseCase: suspend (String, LessonId, Int) -> Result<Unit> = fakeSubmitRating::invoke,
+        profileRepository: FakeProfileRepository? = null,
     ): DefaultLessonRunnerRootComponent {
         lifecycle = LifecycleRegistry()
         lifecycle.resume()
@@ -123,6 +125,7 @@ class DefaultLessonRunnerRootComponentTest {
             ),
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
+            profileRepository = profileRepository,
             getResultAdvice = GetResultAdviceUseCase(lessonRepository = fakeLessonRepo),
             clock = fakeClock,
             mainContext = Dispatchers.Unconfined,
@@ -192,6 +195,7 @@ class DefaultLessonRunnerRootComponentTest {
     private fun makeLesson(
         id: String = "lesson1",
         version: Long = 5L,
+        order: Int = 0,
         top3: List<TopParticipant> = emptyList(),
         averageRating: Float? = null,
         ratingCount: Int = 0,
@@ -199,7 +203,7 @@ class DefaultLessonRunnerRootComponentTest {
         id = LessonId(id),
         themeId = ThemeId("theme1"),
         title = "Test Lesson",
-        order = 0,
+        order = order,
         version = version,
         contentsVersion = 1L,
         lastModifiedAt = 1000L,
@@ -947,5 +951,117 @@ class DefaultLessonRunnerRootComponentTest {
 
         val event = deferred.await()
         assertIs<RunnerEvent.SaveRatingFailed>(event, "SaveRatingFailed event must be emitted on rating failure")
+    }
+
+    // ── Lives pill + hint budget (design §4.4, decision F2) ──────────────────
+
+    // GIVEN a profile with 300 life points (= 3 hearts)
+    //        WHEN the attempt starts THEN Question.lives == 3
+    @Test
+    fun `profileHearts_mappedIntoQuestionLives`() {
+        fakeStart.result = makeReadyState(questions = 1)
+        val component = buildComponent(
+            profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 300)),
+        )
+
+        val uiState = assertIs<RunnerUiState.Question>(component.uiState.value)
+        assertEquals(3, uiState.lives, "300 life points must surface as 3 hearts")
+    }
+
+    // GIVEN no profile repository THEN lives stay null (pill hidden, hint disabled)
+    @Test
+    fun `noProfile_livesNull`() {
+        fakeStart.result = makeReadyState(questions = 1)
+        val component = buildComponent()
+
+        val uiState = assertIs<RunnerUiState.Question>(component.uiState.value)
+        assertEquals(null, uiState.lives)
+    }
+
+    // GIVEN hearts available WHEN hintRequested() THEN one life is spent locally
+    @Test
+    fun `hintRequested_spendsOneLife`() {
+        fakeStart.result = makeReadyState(questions = 2)
+        val component = buildComponent(
+            profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 200)),
+        )
+        assertEquals(2, (component.uiState.value as RunnerUiState.Question).lives)
+
+        assertTrue(component.hintRequested(), "hint must succeed while lives remain")
+
+        assertEquals(
+            1,
+            (component.uiState.value as RunnerUiState.Question).lives,
+            "hint must decrement the local life mirror",
+        )
+    }
+
+    // GIVEN zero lives WHEN hintRequested() THEN it is refused and the count stays at zero
+    @Test
+    fun `hintRequested_refused_whenNoLives`() {
+        fakeStart.result = makeReadyState(questions = 2)
+        val component = buildComponent(
+            profileRepository = FakeProfileRepository(FakeProfileRepository.defaultProfile(lifePoints = 100)),
+        )
+        assertTrue(component.hintRequested())
+
+        assertFalse(component.hintRequested(), "hint must be refused with an empty budget")
+        assertEquals(0, (component.uiState.value as RunnerUiState.Question).lives)
+    }
+
+    // ── F3: Run again vs Next lesson ─────────────────────────────────────────
+
+    // GIVEN a completed attempt WHEN onRunAgain() THEN startAttemptUseCase runs again → Question
+    @Test
+    fun `onRunAgain_restartsSameLesson_freshAttempt`() {
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+        val component = buildComponent()
+        component.onAnswer(singleChoiceDraft())
+        assertIs<RunnerUiState.Result>(component.uiState.value)
+
+        component.onRunAgain()
+
+        assertIs<RunnerUiState.Question>(
+            component.uiState.value,
+            "Run again must restart the same lesson as a fresh attempt",
+        )
+        assertEquals(2, fakeStart.callCount, "restart must go through StartLessonAttemptUseCase again")
+    }
+
+    // GIVEN a next lesson in the theme WHEN onNextLesson() THEN OpenNextLesson(next id)
+    @Test
+    fun `onNextLesson_emitsOpenNextLesson_whenNextExists`() = runTest {
+        fakeLessonRepo.addLesson(makeLesson(id = "lesson2", order = 1))
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+        val component = buildComponent()
+        component.onAnswer(singleChoiceDraft())
+        assertIs<RunnerUiState.Result>(component.uiState.value)
+
+        val deferred = async { component.events.first() }
+        component.onNextLesson()
+
+        val event = deferred.await()
+        val opened = assertIs<RunnerEvent.OpenNextLesson>(event, "next lesson must be offered to the host")
+        assertEquals("lesson2", opened.lessonId)
+    }
+
+    // GIVEN no next lesson WHEN onNextLesson() THEN fall back to NavigateBack
+    @Test
+    fun `onNextLesson_fallsBackToNavigateBack_whenNoNext`() = runTest {
+        fakeStart.result = makeReadyState(questions = 1)
+        fakeComplete.result = RunnerState.Completed(FakeAttemptFixtures.fixtureAttempt(), ratingPrompt = false)
+        val component = buildComponent()
+        component.onAnswer(singleChoiceDraft())
+        assertIs<RunnerUiState.Result>(component.uiState.value)
+
+        val deferred = async { component.events.first() }
+        component.onNextLesson()
+
+        assertIs<RunnerEvent.NavigateBack>(
+            deferred.await(),
+            "without a next lesson the runner must close",
+        )
     }
 }
