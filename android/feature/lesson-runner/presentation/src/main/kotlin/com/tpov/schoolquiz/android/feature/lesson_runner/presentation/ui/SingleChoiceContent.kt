@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
-import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -53,12 +52,7 @@ fun SingleChoiceContent(
                 text = option.text,
                 selected = isSelected,
                 enabled = feedback == null && state.selectedOptionId == null,
-                leading = {
-                    RadioButton(
-                        selected = isSelected,
-                        onClick = null,
-                    )
-                },
+                leading = { AnswerKeyLetter(index = index, selected = isSelected) },
                 feedbackTone = tone,
                 feedbackDelayMillis = kotlin.math.abs(index - selectedIndex) * FEEDBACK_STAGGER_MS,
                 onClick = { onOptionSelected(option.id) },

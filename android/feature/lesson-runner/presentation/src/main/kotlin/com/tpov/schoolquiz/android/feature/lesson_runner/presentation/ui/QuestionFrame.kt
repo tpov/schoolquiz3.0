@@ -88,31 +88,29 @@ internal fun QuestionFrame(
     hintAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val hasQuestionSurface = !questionText.isNullOrBlank() || imageUrl != null
     Column(modifier = modifier.fillMaxSize()) {
+        // The question owns the space above the answers and sits in the middle of it.
+        //
+        // One scrolling column put the question hard against the header with the answers pressed
+        // underneath, which reads as a form. The design gives the question the whole upper half
+        // and lets the answers sit at the bottom where a thumb is — so the two are laid out as two
+        // regions, not one list.
         Column(
             modifier =
                 Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.Center,
         ) {
             if (!questionText.isNullOrBlank()) {
                 // No card around the question. It is the screen, and a border around the screen's
                 // subject only competes with it; the mode glow behind already does the framing.
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    Text(
-                        text = questionText,
-                        style = NoirType.question,
-                    )
-                    if (imageUrl != null) {
-                        QuestionImage(url = imageUrl, modifier = Modifier.fillMaxWidth())
-                    }
+                Text(text = questionText, style = NoirType.question)
+                if (imageUrl != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    QuestionImage(url = imageUrl, modifier = Modifier.fillMaxWidth())
                 }
             } else if (imageUrl != null) {
                 RunnerDesignCard(
@@ -126,11 +124,10 @@ internal fun QuestionFrame(
                     )
                 }
             }
-            if (hasQuestionSurface) {
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            content()
         }
+
+        content()
+
         if (bottomAction != null || hintAction != null) {
             Row(
                 modifier =
@@ -258,10 +255,10 @@ internal fun AnswerOptionSurface(
                 }
                 .background(fill)
                 .clickable(enabled = enabled, onClick = onClick)
-                .defaultMinSize(minHeight = 56.dp)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .defaultMinSize(minHeight = 62.dp)
+                .padding(horizontal = 18.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             leading?.invoke(this)
             Text(
@@ -273,6 +270,25 @@ internal fun AnswerOptionSurface(
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(NoirHair))
     }
+}
+
+/**
+ * The letter that names an answer: A, B, C, D.
+ *
+ * A letter rather than a radio dot, as the design draws it. The row is the target — the whole
+ * width of it — so a control that looks like a small thing to hit invites aiming at the small
+ * thing, and the letter reads as a label instead.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+internal fun AnswerKeyLetter(
+    index: Int,
+    selected: Boolean,
+) {
+    Text(
+        text = ('A' + index).toString(),
+        style = NoirType.num.copy(fontSize = 13.sp, color = if (selected) LocalNoirAccent.current else NoirTOff),
+    )
 }
 
 private const val FLIP_CAMERA_DISTANCE = 16f
