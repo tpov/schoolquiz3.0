@@ -635,7 +635,7 @@ fun NoirBottomNav(
     Row(
         modifier
             .fillMaxWidth()
-            .background(NoirS1.copy(alpha = 0.94f))
+            .background(NoirChrome)
             .drawBehind {
                 drawLine(
                     color = NoirHair,

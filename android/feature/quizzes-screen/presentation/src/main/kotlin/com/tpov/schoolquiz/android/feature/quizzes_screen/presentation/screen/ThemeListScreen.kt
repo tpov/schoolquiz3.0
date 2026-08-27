@@ -27,6 +27,7 @@ import com.tpov.schoolquiz.android.core.designsystem.components.BreadcrumbBar
 import com.tpov.schoolquiz.android.core.designsystem.components.HierarchyItemCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.ThemeListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
@@ -43,7 +44,9 @@ fun ThemeListScreen(
     val uiState by component.uiState.subscribeAsState()
     val lazyListState = rememberLazyListState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier.fillMaxSize().noirScreenWash(NoirQuizzesWash),
+    ) {
         BreadcrumbBar(
             titles = breadcrumbTitles(component.breadcrumbs),
             onSegmentClick = onSegmentClick,
@@ -140,3 +143,6 @@ private fun ThemeListScreenEmptyPreview() {
         )
     }
 }
+
+/** Midpoint of the quizzes wash, from the drawing. */
+private val NoirQuizzesWash = androidx.compose.ui.graphics.Color(0xFF142B3B)

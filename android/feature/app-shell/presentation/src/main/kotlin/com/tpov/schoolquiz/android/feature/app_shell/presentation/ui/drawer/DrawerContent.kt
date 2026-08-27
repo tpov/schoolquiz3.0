@@ -9,7 +9,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBgDeep
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DrawerSection
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.Tab
@@ -53,7 +53,8 @@ fun DrawerContent(
                         strokeWidth = strokeWidth,
                     )
                 },
-        drawerContainerColor = NoirBgDeep,
+        // The drawer is black in the drawing; its header and footer are the bands that stand out.
+        drawerContainerColor = NoirBg,
         drawerTonalElevation = 0.dp,
         drawerShape = RectangleShape,
     ) {

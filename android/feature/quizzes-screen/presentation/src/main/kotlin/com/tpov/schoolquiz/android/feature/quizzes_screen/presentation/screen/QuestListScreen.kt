@@ -50,6 +50,7 @@ import com.tpov.schoolquiz.android.core.designsystem.model.QuestDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirViolet
+import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component.QuestListComponent
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
@@ -94,7 +95,9 @@ fun QuestListScreen(
 ) {
     val uiState by component.uiState.subscribeAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier.fillMaxSize().noirScreenWash(NoirQuizzesWash),
+    ) {
         BreadcrumbBar(
             titles = breadcrumbTitles(component.breadcrumbs),
             onSegmentClick = onSegmentClick,
@@ -375,3 +378,6 @@ private val QuestDisplayItem.downloadStatus: HierarchyDownloadStatus
             isDownloadable -> HierarchyDownloadStatus.Available
             else -> HierarchyDownloadStatus.Hidden
         }
+
+/** Midpoint of the quizzes wash, from the drawing. */
+private val NoirQuizzesWash = androidx.compose.ui.graphics.Color(0xFF142B3B)

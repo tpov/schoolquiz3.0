@@ -49,6 +49,12 @@ val NoirBg = NoirColorTokens.colorBg
  */
 val NoirBgDeep = Color(0xFF08080A)
 
+/**
+ * The bands that frame a screen rather than belong to it: the bottom bar, the drawer's header and
+ * footer. A shade above black, so the frame reads as behind the content instead of beside it.
+ */
+val NoirChrome = Color(0xFF17171B)
+
 /** Surface 1 — a card sitting on the black. */
 val NoirS1 = NoirColorTokens.colorSurface1
 
