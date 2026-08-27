@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
-import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -61,12 +60,7 @@ fun MultipleChoiceContent(
                 text = option.text,
                 selected = isSelected,
                 enabled = feedback == null,
-                leading = {
-                    Checkbox(
-                        checked = isSelected,
-                        onCheckedChange = null,
-                    )
-                },
+                leading = { AnswerKeyBox(index = index, selected = isSelected) },
                 feedbackTone = tone,
                 feedbackDelayMillis = kotlin.math.abs(index - firstSelectedIndex) * FEEDBACK_STAGGER_MS,
                 onClick = { onOptionToggled(option.id) },

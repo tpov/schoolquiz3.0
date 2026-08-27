@@ -132,3 +132,23 @@ fun Modifier.fxViolet(shape: Shape = NoirShapeLg): Modifier =
             shape = shape,
         )
         .border(1.dp, NoirViolet.copy(alpha = 0.55f), shape)
+
+/**
+ * The wash a whole screen sits on: near-black at both ends, the screen's own colour in the middle.
+ *
+ * Every NOIR screen that has a subject has one — gold for the shop and the name market, the mode
+ * colour in a lesson. It is what stops a page of dark cards on a dark page from reading as a list
+ * floating in nothing, and it is faint enough (the midpoint is barely off black) that nothing
+ * drawn on top has to fight it.
+ */
+fun Modifier.noirScreenWash(tone: Color): Modifier =
+    this.drawBehind {
+        drawRect(
+            brush =
+                Brush.verticalGradient(
+                    0f to NoirBg,
+                    0.5f to tone,
+                    1f to NoirBg,
+                ),
+        )
+    }

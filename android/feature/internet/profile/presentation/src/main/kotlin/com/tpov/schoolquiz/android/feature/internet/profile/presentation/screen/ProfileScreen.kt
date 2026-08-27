@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.R
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.component.ProfileComponent
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileMessage
@@ -35,6 +36,9 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileS
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+
+/** Midpoint of the profile's wash, from the drawing: near-black with the accent's blue in it. */
+private val NoirProfileWash = androidx.compose.ui.graphics.Color(0xFF0C1C28)
 
 private const val MESSAGE_AUTO_DISMISS_MS = 3_000L
 
@@ -114,6 +118,7 @@ fun ProfileView(
     val topRole = metrics.topRoleIndex?.let { stringResource(ROLE_NAME_RES[it]) }
     Column(
         modifier
+            .noirScreenWash(NoirProfileWash)
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(PaddingValues(horizontal = 16.dp, vertical = 4.dp)),

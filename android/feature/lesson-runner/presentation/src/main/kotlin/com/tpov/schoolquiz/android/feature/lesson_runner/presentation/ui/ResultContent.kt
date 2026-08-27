@@ -154,9 +154,9 @@ fun ResultContent(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = state.percentScore.raw.toString(),
-                            style = NoirType.num.copy(fontSize = 56.sp, fontWeight = FontWeight.Bold),
+                            style = NoirType.num.copy(fontSize = 60.sp, fontWeight = FontWeight.Bold),
                         )
-                        Text("%", style = NoirType.num.copy(fontSize = 22.sp, color = NoirT3))
+                        Text("%", style = NoirType.num.copy(fontSize = 16.sp, color = NoirTOff))
                     }
                     AccuracyChart(scores = state.questionScores)
                 }

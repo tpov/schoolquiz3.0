@@ -441,7 +441,7 @@ internal fun ProfileQualificationCard(
             Text(stringResource(R.string.profile_qualification_title), style = NoirType.groupTitle)
             Text(
                 stringResource(R.string.profile_qualification_average, averagePercent),
-                style = NoirType.kicker.copy(color = NoirSuccess),
+                style = NoirType.kicker.copy(color = NoirDanger),
             )
         }
 
@@ -552,13 +552,14 @@ private fun QualificationRadar(
                 strokeWidth = 1.dp.toPx(),
             )
         }
-        // Activity underneath in red, qualification over it in green: the level is the subject,
-        // the activity is the context, and the reading is how far green falls short of red.
+        // Activity underneath in green, qualification over it in red — the pairing the legacy
+        // profile used and the one the owner asked for. The level is the subject, the activity is
+        // the context, and the reading is how far the green falls short of the red.
         drawRadarPolygon(
             values = activity,
             center = center,
             radius = radius,
-            color = NoirDanger,
+            color = NoirSuccess,
             fillAlpha = 0.10f,
             strokeWidthDp = 1.6f,
         )
@@ -566,7 +567,7 @@ private fun QualificationRadar(
             values = values,
             center = center,
             radius = radius,
-            color = NoirSuccess,
+            color = NoirDanger,
             fillAlpha = 0.12f,
             strokeWidthDp = 1.8f,
         )
@@ -597,11 +598,11 @@ private fun BoxScope.RadarAxisLabel(
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(
                 "$level",
-                style = NoirType.num.copy(fontSize = 12.sp, color = if (level == 0) NoirOutline else NoirSuccess),
+                style = NoirType.num.copy(fontSize = 12.sp, color = if (level == 0) NoirOutline else NoirDanger),
             )
             Text(
                 "$act",
-                style = NoirType.num.copy(fontSize = 12.sp, color = if (act == 0) NoirOutline else NoirDanger),
+                style = NoirType.num.copy(fontSize = 12.sp, color = if (act == 0) NoirOutline else NoirSuccess),
             )
         }
     }
@@ -614,8 +615,8 @@ private fun RadarLegend() {
         Modifier.fillMaxWidth().padding(bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        LegendEntry(stringResource(R.string.profile_legend_qualification), NoirSuccess)
-        LegendEntry(stringResource(R.string.profile_legend_activity), NoirDanger)
+        LegendEntry(stringResource(R.string.profile_legend_qualification), NoirDanger)
+        LegendEntry(stringResource(R.string.profile_legend_activity), NoirSuccess)
     }
 }
 

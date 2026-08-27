@@ -5,6 +5,7 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -34,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
@@ -289,6 +294,34 @@ internal fun AnswerKeyLetter(
         text = ('A' + index).toString(),
         style = NoirType.num.copy(fontSize = 13.sp, color = if (selected) LocalNoirAccent.current else NoirTOff),
     )
+}
+
+/**
+ * The same letter, boxed — how the design marks an answer you can pick several of.
+ *
+ * The box is what says "more than one of these": a bare letter reads as single choice, and the
+ * player finds out otherwise only after tapping. 22dp square with a 1.5dp edge, from the drawing.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+internal fun AnswerKeyBox(
+    index: Int,
+    selected: Boolean,
+) {
+    val accent = LocalNoirAccent.current
+    Box(
+        Modifier
+            .size(22.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (selected) accent.copy(alpha = 0.20f) else Color.Transparent)
+            .border(1.5.dp, if (selected) accent else NoirOutline, RoundedCornerShape(6.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = ('A' + index).toString(),
+            style = NoirType.num.copy(fontSize = 10.sp, color = if (selected) accent else NoirTOff),
+        )
+    }
 }
 
 private const val FLIP_CAMERA_DISTANCE = 16f
