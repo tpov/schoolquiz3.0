@@ -50,10 +50,10 @@
     <string name="runner_result_again">Ещё раз</string>
     <string name="runner_result_next">Дальше →</string>
     <string name="runner_top3_title">Лучшие участники</string>
-    <string name="runner_figure_attempt">Attempt</string>
+    <string name="runner_figure_attempt">Попытка</string>
     <string name="runner_figure_lives">Заряды</string>
     <string name="runner_figure_xp">XP</string>
-    <string name="runner_figure_nolics">Nolics</string>
+    <string name="runner_figure_nolics">Нолики</string>
     <string name="runner_advice_kicker">ЧТОБЫ НАБРАТЬ БОЛЬШЕ</string>
     <string name="runner_advice_suggested_lesson">Основу даёт урок «%1$s»</string>
 

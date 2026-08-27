@@ -22,9 +22,9 @@
     <string name="quizzes_breadcrumb_world_championship">Чемпионат мира</string>
 
     <!-- Lesson item -->
-    <string name="quizzes_chip_easy">Easy</string>
-    <string name="quizzes_chip_hard">Hard</string>
-    <string name="quizzes_rating_none">no ratings</string>
+    <string name="quizzes_chip_easy">Лёгкий</string>
+    <string name="quizzes_chip_hard">Сложный</string>
+    <string name="quizzes_rating_none">нет оценок</string>
 
     <!-- Quest list menu -->
     <string name="quizzes_menu_share">Поделиться</string>

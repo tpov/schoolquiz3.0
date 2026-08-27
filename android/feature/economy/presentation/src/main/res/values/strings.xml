@@ -40,7 +40,7 @@
     <string name="shop_lock_donate">Ждёт billing-модуль</string>
 
     <!-- Store: beta shelf -->
-    <string name="shop_section_in_beta">In beta</string>
+    <string name="shop_section_in_beta">В бете</string>
     <string name="shop_chip_beta">Beta</string>
     <string name="shop_beta_tournaments">Турниры</string>
     <string name="shop_beta_minigames">Мини-игры</string>
@@ -51,7 +51,7 @@
     <string name="shop_title_store">Магазин</string>
     <string name="shop_title_nft">NFT</string>
     <string name="shop_cd_back">Назад</string>
-    <string name="shop_cd_open_menu">Open menu</string>
+    <string name="shop_cd_open_menu">Открыть меню</string>
 
     <!-- Shop messages -->
     <string name="shop_msg_action_failed">Не удалось выполнить действие</string>
@@ -128,12 +128,12 @@
     <string name="nft_msg_logo_bought_listed">Логотип куплен, комиссия %1$d</string>
 
     <!-- Referral program (legacy screen, copy kept verbatim) -->
-    <string name="shop_referral_title">Referrals</string>
-    <string name="shop_referral_link_label">Referral link:</string>
+    <string name="shop_referral_title">Рефералы</string>
+    <string name="shop_referral_link_label">Ссылка-приглашение:</string>
     <string name="shop_referral_id_format">tpovId: %1$s</string>
-    <string name="shop_referral_guest">guest</string>
-    <string name="shop_referral_reward_received">Reward received</string>
-    <string name="shop_referral_reward_invite">Invite 6 players and receive</string>
+    <string name="shop_referral_guest">гость</string>
+    <string name="shop_referral_reward_received">Награда получена</string>
+    <string name="shop_referral_reward_invite">Пригласите 6 игроков и получите</string>
     <string name="shop_referral_season_header">At the end of season you will receive boxes:</string>
     <string name="shop_referral_season_note">You receive 1% of all opened boxes from all your invited friends.</string>
     <string name="shop_referral_users_title">Your Referrals</string>

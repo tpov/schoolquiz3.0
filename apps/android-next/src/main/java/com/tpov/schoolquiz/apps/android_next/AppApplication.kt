@@ -1,6 +1,8 @@
 package com.tpov.schoolquiz.apps.android_next
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.work.Configuration
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -22,6 +24,7 @@ import com.tpov.schoolquiz.apps.android_next.di.authModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
 import com.tpov.schoolquiz.platform.firebase.di.firebaseCatalogModule
+import com.tpov.schoolquiz.platform.firebase.di.firebaseLessonCommentModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseLessonModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseQuestModule
@@ -81,6 +84,10 @@ class AppApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        // Force Russian for now — the design (noir-screens-1.html) is Russian, and the device
+        // locale (English) was making every screen read as the wrong language. English strings
+        // stay in values-en for when proper locale switching is wired up.
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ru"))
         initializeFirebaseSecurity(
             app = this,
             useDebugAppCheckProvider = BuildConfig.DEBUG,
@@ -121,6 +128,7 @@ class AppApplication : Application(), Configuration.Provider {
                 firebaseSectionModule,
                 firebaseThemeModule,
                 firebaseLessonModule,
+                firebaseLessonCommentModule,
                 firebaseQuestionModule,
                 appShellDataModule { sharedAuthUidFlow },
                 profileDataModule { sharedAuthUidFlow },
