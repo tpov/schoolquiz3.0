@@ -1,5 +1,7 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,7 +21,10 @@ import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChipTone
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
@@ -45,6 +51,12 @@ fun LessonItemCard(
         modifier
             .fillMaxWidth()
             .height(64.dp)
+            // A card, as the design draws it: the row carries a chip and a rating beside its
+            // title, and without a container those three read as three separate columns rather
+            // than one lesson.
+            .clip(NoirShapeLg)
+            .background(NoirS1)
+            .border(1.dp, NoirGlassStroke, NoirShapeLg)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,

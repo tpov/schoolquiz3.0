@@ -207,8 +207,14 @@ private const val TIMER_PULSE_HALF_PERIOD_MS = 500
 /** m:ss, and never a bare second count — "0:07" reads as time, "7" reads as a score. */
 private fun Long.asClock(): String {
     val totalSeconds = (this / 1000L).coerceAtLeast(0)
-    return "${totalSeconds / 60}:${(totalSeconds % 60).toString().padStart(2, '0')}"
+    // Under a minute the seconds stand alone, as the design draws them. A leading "0:" is a
+    // minutes column that is always zero — it reads as a clock when the thing being watched is a
+    // countdown of a dozen seconds.
+    if (totalSeconds < SECONDS_PER_MINUTE) return totalSeconds.toString()
+    return "${totalSeconds / SECONDS_PER_MINUTE}:${(totalSeconds % SECONDS_PER_MINUTE).toString().padStart(2, '0')}"
 }
+
+private const val SECONDS_PER_MINUTE = 60L
 
 @Suppress("FunctionNaming", "UnusedPrivateMember", "MagicNumber", "ktlint:standard:function-naming")
 @Preview(showBackground = true)
