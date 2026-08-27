@@ -1,7 +1,5 @@
 package com.tpov.schoolquiz.android.core.designsystem.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -18,7 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -30,11 +30,9 @@ import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.R
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
@@ -85,10 +83,17 @@ fun HierarchyItemCard(
             modifier
                 .fillMaxWidth()
                 .height(HIERARCHY_ROW_HEIGHT)
-                .clip(NoirShapeLg)
-                .background(NoirS1)
-                .border(1.dp, NoirGlassStroke, NoirShapeLg)
                 .then(clickModifier)
+                // A hairline underneath instead of a box around: a list of twenty catalogues drawn
+                // as twenty bordered cards reads as twenty separate things to decide between,
+                // when it is one list to run an eye down.
+                .drawBehind {
+                    drawRect(
+                        color = NoirHair,
+                        topLeft = Offset(0f, size.height - 1.dp.toPx()),
+                        size = Size(size.width, 1.dp.toPx()),
+                    )
+                }
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

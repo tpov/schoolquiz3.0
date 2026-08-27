@@ -18,6 +18,13 @@ data class CatalogDisplayItem(
     val picturePath: String? = null,
     /** Drives editor and publication behaviour; see [QuestType]. */
     val questType: QuestType = QuestType.REGULAR,
+    /**
+     * How many quests the catalogue holds, already worded for the tile, or null while unknown.
+     *
+     * A string rather than a number, because the tile shows it verbatim and Russian counts three
+     * ways — deciding that here keeps the plural rule off the screen and out of the design system.
+     */
+    val questCountLabel: String? = null,
 )
 
 fun Catalog.toDisplayItem(): CatalogDisplayItem =

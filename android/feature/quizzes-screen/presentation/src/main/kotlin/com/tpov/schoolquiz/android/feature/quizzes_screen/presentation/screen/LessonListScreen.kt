@@ -1,6 +1,5 @@
 package com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.screen
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -78,7 +77,6 @@ fun LessonListScreen(
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.items, key = { it.id }) { item ->
                         LessonItemCard(

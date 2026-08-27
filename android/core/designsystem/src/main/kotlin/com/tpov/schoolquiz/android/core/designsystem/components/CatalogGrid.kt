@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,11 +16,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -34,7 +34,6 @@ import coil3.request.crossfade
 import com.tpov.schoolquiz.android.core.designsystem.R
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
@@ -99,7 +98,7 @@ fun CatalogGridItem(
     val context = LocalContext.current
     val safeUrl = item.pictureUrl?.takeIf { it.startsWith("https://") }
     val imageData = safeUrl ?: item.picturePath.toCatalogPictureResId()
-    Column(
+    Box(
         modifier
             .clip(NoirShapeLg)
             .background(NoirGlassFill)
@@ -116,29 +115,36 @@ fun CatalogGridItem(
                     .fillMaxWidth()
                     .aspectRatio(TILE_ASPECT_RATIO),
         )
-        Text(
-            text = item.name,
-            style = NoirType.rowTitle,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .drawTopHairline()
-                    .padding(start = 12.dp, top = 9.dp, end = 12.dp, bottom = 10.dp),
-        )
+        // The name sits on the picture, over a wash that fades upward into it.
+        //
+        // The wash is not decoration: half these catalogues are bright photographs, and white text
+        // laid straight onto one is unreadable. Painting it always — rather than only over the
+        // light ones — keeps every tile looking like the same component.
+        Column(
+            Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        1f to Color.Black.copy(alpha = 0.78f),
+                    ),
+                )
+                .padding(start = 12.dp, end = 12.dp, top = 22.dp, bottom = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = item.name,
+                style = NoirType.rowTitle,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            item.questCountLabel?.let { label ->
+                Text(label, style = NoirType.rowSub.copy(color = Color.White.copy(alpha = 0.72f)))
+            }
+        }
     }
 }
-
-/** Hairline between the art and its caption plate, matching the canvas divider. */
-private fun Modifier.drawTopHairline(): Modifier =
-    drawBehind {
-        drawRect(
-            color = NoirHair,
-            topLeft = Offset.Zero,
-            size = Size(size.width, 1.dp.toPx()),
-        )
-    }
 
 private fun String?.toCatalogPictureResId(): Int? =
     when (this) {

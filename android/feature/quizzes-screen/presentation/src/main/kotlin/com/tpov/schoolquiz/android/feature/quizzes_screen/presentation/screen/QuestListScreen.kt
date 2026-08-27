@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -152,7 +151,6 @@ private fun QuestListLoadedContent(
                     end = 16.dp,
                     bottom = if (isArena && !isSelectionMode) 96.dp else 24.dp,
                 ),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             itemsIndexed(state.quests, key = { _, quest -> quest.id.value }) { index, quest ->
                 QuestListItem(
