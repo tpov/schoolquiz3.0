@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate
 
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
@@ -9,6 +10,8 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ACTIV
 data class ProfileUiState(
     val profile: UserProfile = UserProfile.offline(),
     val nicknameInput: String = profile.nickname,
+    /** Place among all players, or null while unknown — never a fabricated zero. */
+    val standing: LeagueStanding? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val message: ProfileMessage? = null,

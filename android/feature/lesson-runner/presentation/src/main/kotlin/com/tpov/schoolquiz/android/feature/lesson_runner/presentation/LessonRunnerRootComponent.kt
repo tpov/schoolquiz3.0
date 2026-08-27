@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation
 
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,6 +11,9 @@ import kotlinx.coroutines.flow.StateFlow
 interface LessonRunnerRootComponent {
     val uiState: StateFlow<RunnerUiState>
     val events: Flow<RunnerEvent>
+
+    /** Newest-last discussion comments for the current lesson. */
+    val comments: StateFlow<List<LessonComment>>
 
     /** True when this runner session is in HARD mode — used for FLAG_SECURE (AC-28). */
     val isHardMode: Boolean
@@ -46,6 +50,9 @@ interface LessonRunnerRootComponent {
      * no life budget is known or it is already empty.
      */
     fun hintRequested(): Boolean
+
+    /** Publishes a trimmed, non-empty discussion comment for the current lesson. */
+    fun onPostComment(text: String)
 
     fun onBack()
 }

@@ -74,6 +74,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.R
 import com.tpov.schoolquiz.android.feature.internet.profile.presentation.uistate.ProfileUiState
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.OwnedNickname
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import kotlin.math.PI
@@ -427,6 +428,7 @@ private fun ActivitySparkline(
  */
 @Composable
 internal fun ProfileQualificationCard(
+    standing: LeagueStanding?,
     values: List<Float>,
     activity: List<Float>,
     averagePercent: Int,
@@ -486,6 +488,29 @@ internal fun ProfileQualificationCard(
                     ),
             )
         }
+
+        // Standing goes last, under everything it is derived from: a place means nothing until the
+        // reader has seen what earns it.
+        standing?.let { StandingRow(it) }
+    }
+}
+
+/** One line: where the player stands, and what share of everybody that is. */
+@Composable
+private fun StandingRow(standing: LeagueStanding) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 9.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            Text(
+                "#${standing.place}",
+                style = NoirType.num.copy(fontSize = 15.sp, color = LocalNoirAccent.current),
+            )
+            Text("ИЗ ${standing.total} ИГРОКОВ", style = NoirType.kicker)
+        }
+        Text("ТОП ${standing.topPercent}%", style = NoirType.kicker.copy(color = NoirT3))
     }
 }
 

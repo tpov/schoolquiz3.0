@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileBo
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import kotlinx.coroutines.CancellationException
@@ -38,6 +39,9 @@ class ProfileRepositoryImpl(
         if (uid.isNullOrBlank()) return UserProfile.offline()
         return local.find(uid) ?: createSeedProfile(uid)
     }
+
+    /** Best effort: a standing nobody could fetch is left unsaid rather than guessed at. */
+    override suspend fun leagueStanding(): LeagueStanding? = runCatching { remote.leagueStanding() }.getOrNull()
 
     override suspend fun ensureCurrentProfile(): Result<UserProfile> {
         val uid = currentUidFlow().first()

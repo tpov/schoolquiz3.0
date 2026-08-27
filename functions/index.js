@@ -951,6 +951,31 @@ exports.buyListedLogo = onCall(FUNCTION_OPTIONS, async (request) => {
   return receipt;
 });
 
+/**
+ * Where this player stands among everybody, by experience.
+ *
+ * Counted rather than listed: the answer is two numbers, and fetching every profile to work them
+ * out would grow with the playerbase for no benefit. Firestore's aggregation counts do it in one
+ * round trip each, and the count is approximate only in the sense that somebody may pass you
+ * between the two — which is true of any ranking that is not frozen.
+ */
+exports.fetchLeagueStanding = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const snapshot = await db.collection("users").doc(uid).get();
+  const mine = numberValue((snapshot.data() || {}).skillPoints, 0);
+
+  const [aheadCount, totalCount] = await Promise.all([
+    db.collection("users").where("skillPoints", ">", mine).count().get(),
+    db.collection("users").count().get(),
+  ]);
+  const ahead = aheadCount.data().count;
+  const total = Math.max(1, totalCount.data().count);
+  const place = ahead + 1;
+  // Rounded up, so being 1st of 128 reads as the top 1% rather than the top 0%.
+  const topPercent = Math.max(1, Math.min(100, Math.ceil((place / total) * 100)));
+  return {place, total, topPercent, skillPoints: mine};
+});
+
 exports.setActiveNickname = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   const canonical = canonicalNickname(stringValue(request.data && request.data.nickname));

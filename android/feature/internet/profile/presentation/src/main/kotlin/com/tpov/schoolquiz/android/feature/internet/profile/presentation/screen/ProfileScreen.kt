@@ -147,14 +147,13 @@ fun ProfileView(
         )
 
         ProfileQualificationCard(
+            standing = state.standing,
             values = metrics.qualificationValues,
             activity = metrics.qualificationActivity,
             averagePercent = metrics.qualificationPercent,
             rolesHeld = metrics.rolesHeld,
             topRole = topRole,
         )
-
-        ProfileNicknameShelf(state = state, onSelect = actions.onSelectNickname)
 
         if (state.canLinkGoogle || state.isLinkingGoogle) {
             ProfileGoogleUpgrade(busy = state.isLinkingGoogle, onClick = actions.onLinkGoogle)

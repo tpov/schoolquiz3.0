@@ -60,6 +60,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Temp
 import com.tpov.schoolquiz.shared.core.question_schema.BlankId
 import com.tpov.schoolquiz.shared.core.question_schema.CandidateId
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -194,14 +195,18 @@ private fun RunnerStateContent(
             }
         is RunnerUiState.Question ->
             QuestionStateContent(state = state, component = component)
-        is RunnerUiState.Result ->
+        is RunnerUiState.Result -> {
+            val comments by component.comments.collectAsState()
             ResultContent(
                 state = state,
+                comments = comments,
                 onSubmitRating = { component.onSubmitRating(it) },
                 onRunAgain = { component.onRunAgain() },
                 onNextLesson = { component.onNextLesson() },
+                onPostComment = { component.onPostComment(it) },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
     }
 }
 
@@ -898,6 +903,7 @@ private class PreviewLessonRunnerComponent(initialState: RunnerUiState) : Lesson
     override val isHardMode: Boolean = false
     override val uiState: StateFlow<RunnerUiState> = MutableStateFlow(initialState)
     override val events: Flow<RunnerEvent> = emptyFlow()
+    override val comments: StateFlow<List<LessonComment>> = MutableStateFlow(emptyList())
 
     override fun onAnswer(answer: UserAnswerDraft) = Unit
 
@@ -926,4 +932,6 @@ private class PreviewLessonRunnerComponent(initialState: RunnerUiState) : Lesson
     override fun hintRequested(): Boolean = false
 
     override fun onBack() = Unit
+
+    override fun onPostComment(text: String) = Unit
 }

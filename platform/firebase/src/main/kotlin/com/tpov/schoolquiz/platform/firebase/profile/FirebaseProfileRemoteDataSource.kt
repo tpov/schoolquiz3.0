@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.platform.firebase.profile
 import com.google.firebase.functions.FirebaseFunctions
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileBootstrapRequest
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileActivityRatings
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
@@ -43,6 +44,16 @@ class FirebaseProfileRemoteDataSource(
                 .await()
                 .data
         return (data as? Map<*, *>).toUserProfile(fallbackUid = "")
+    }
+
+    override suspend fun leagueStanding(): LeagueStanding {
+        val data = functions.getHttpsCallable(FETCH_LEAGUE_STANDING).call(emptyMap<String, Any>()).await().data
+        val map = data as? Map<*, *>
+        return LeagueStanding(
+            place = (map?.get(PLACE) as? Number)?.toInt() ?: 0,
+            total = (map?.get(TOTAL) as? Number)?.toInt() ?: 0,
+            topPercent = (map?.get(TOP_PERCENT) as? Number)?.toInt() ?: 0,
+        )
     }
 
     private fun Map<*, *>?.toUserProfile(fallbackUid: String): UserProfile {
@@ -137,6 +148,10 @@ class FirebaseProfileRemoteDataSource(
         const val NEXT_BOX_AT_MS = "nextBoxAtMs"
         const val PREMIUM_UNTIL_MS = "premiumUntilMs"
         const val TROPHIES = "trophies"
+        const val FETCH_LEAGUE_STANDING = "fetchLeagueStanding"
+        const val PLACE = "place"
+        const val TOTAL = "total"
+        const val TOP_PERCENT = "topPercent"
         const val RATING_QUESTIONS = "ratingCountQuestions"
         const val RATING_QUESTIONS_RIGHT = "ratingCountTrueQuestion"
         const val RATING_TIME_IN_QUIZ = "ratingTimeInQuiz"

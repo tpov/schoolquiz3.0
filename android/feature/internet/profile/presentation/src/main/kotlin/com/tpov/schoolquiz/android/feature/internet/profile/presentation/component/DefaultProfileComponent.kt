@@ -9,6 +9,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.GoogleLi
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.NicknameRepository
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.EnsureCurrentProfileUseCase
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.GetLeagueStandingUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.LinkGoogleAccountUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveDailyActivityUseCase
@@ -22,14 +23,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Everything the profile screen asks the app to do, in one parameter.
+ *
+ * Bundled because the list only grows — a profile reads six unrelated things — and a constructor
+ * of nine collaborators stops being readable at the call site long before the compiler minds.
+ */
+data class ProfileUseCases(
+    val observeCurrentProfile: ObserveCurrentProfileUseCase,
+    val ensureCurrentProfile: EnsureCurrentProfileUseCase,
+    val updateProfileNickname: UpdateProfileNicknameUseCase,
+    val observeDailyActivity: ObserveDailyActivityUseCase,
+    val linkGoogleAccount: LinkGoogleAccountUseCase,
+    val getLeagueStanding: GetLeagueStandingUseCase,
+)
+
 class DefaultProfileComponent(
     componentContext: ComponentContext,
-    private val observeCurrentProfile: ObserveCurrentProfileUseCase,
-    private val ensureCurrentProfile: EnsureCurrentProfileUseCase,
-    private val updateProfileNickname: UpdateProfileNicknameUseCase,
-    private val observeDailyActivity: ObserveDailyActivityUseCase,
+    private val useCases: ProfileUseCases,
     private val nicknames: NicknameRepository,
-    private val linkGoogleAccount: LinkGoogleAccountUseCase,
 ) : ProfileComponent, ComponentContext by componentContext {
     private val componentJob = SupervisorJob()
     private val scope = CoroutineScope(componentJob + Dispatchers.Main.immediate)
@@ -40,7 +52,7 @@ class DefaultProfileComponent(
     init {
         lifecycle.doOnDestroy { componentJob.cancel() }
         scope.launch {
-            observeCurrentProfile().collect { profile ->
+            useCases.observeCurrentProfile().collect { profile ->
                 _state.update { current ->
                     val keepEditing = current.isEditingNickname && current.canEditNickname
                     current.copy(
@@ -52,7 +64,7 @@ class DefaultProfileComponent(
             }
         }
         scope.launch {
-            observeDailyActivity().collect { activity ->
+            useCases.observeDailyActivity().collect { activity ->
                 _state.update { it.copy(dailyActivity = activity) }
             }
         }
@@ -76,7 +88,7 @@ class DefaultProfileComponent(
             }
             // The worn name lives on the profile document, so the account has to be re-read for
             // the header to agree with the shelf below it.
-            if (outcome.isSuccess) ensureCurrentProfile()
+            if (outcome.isSuccess) useCases.ensureCurrentProfile()
             refreshNicknames()
         }
     }
@@ -112,7 +124,7 @@ class DefaultProfileComponent(
      * no names, which reads as "everything you had is gone".
      */
     private suspend fun syncAccountThenNicknames(announce: Boolean) {
-        val result = ensureCurrentProfile()
+        val result = useCases.ensureCurrentProfile()
         _state.update { current ->
             result.fold(
                 onSuccess = { profile ->
@@ -126,6 +138,19 @@ class DefaultProfileComponent(
             )
         }
         loadNicknames()
+        loadStanding()
+    }
+
+    /**
+     * Where the player stands, fetched after the profile rather than beside it.
+     *
+     * The ranking is counted from experience the bootstrap may have just changed, so asking first
+     * would report yesterday's place. A failure leaves the row off the screen: not knowing where
+     * somebody stands is not the same as their standing last.
+     */
+    private suspend fun loadStanding() {
+        val standing = useCases.getLeagueStanding()
+        _state.update { it.copy(standing = standing ?: it.standing) }
     }
 
     override fun onStartRename() {
@@ -146,7 +171,7 @@ class DefaultProfileComponent(
         val nickname = _state.value.nicknameInput
         scope.launch {
             _state.update { it.copy(isSaving = true, message = null) }
-            val result = updateProfileNickname(nickname)
+            val result = useCases.updateProfileNickname(nickname)
             _state.update { current ->
                 result.fold(
                     onSuccess = { profile ->
@@ -169,7 +194,7 @@ class DefaultProfileComponent(
         if (_state.value.isLinkingGoogle) return
         scope.launch {
             _state.update { it.copy(isLinkingGoogle = true, message = null) }
-            val result = linkGoogleAccount(host)
+            val result = useCases.linkGoogleAccount(host)
             _state.update { current ->
                 current.copy(
                     isLinkingGoogle = false,

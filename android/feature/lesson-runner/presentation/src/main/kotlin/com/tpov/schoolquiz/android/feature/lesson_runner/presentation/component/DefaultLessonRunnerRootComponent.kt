@@ -24,22 +24,29 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeStar
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTimer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.submitAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SessionMode
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.TimerCoefficients
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonCommentRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.GetResultAdviceUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlin.coroutines.CoroutineContext
+
+private const val DEFAULT_AUTHOR = "Аноним"
 
 @Suppress("LongParameterList")
 class DefaultLessonRunnerRootComponent(
@@ -55,6 +62,7 @@ class DefaultLessonRunnerRootComponent(
      * when the host has no profile to read — the figure stays hidden instead of guessing.
      */
     private val profileRepository: ProfileRepository? = null,
+    private val commentRepository: LessonCommentRepository? = null,
     private val getResultAdvice: GetResultAdviceUseCase,
     private val clock: Clock,
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
@@ -69,6 +77,10 @@ class DefaultLessonRunnerRootComponent(
     override val isHardMode: Boolean = mode == Difficulty.HARD
 
     override val uiState: StateFlow<RunnerUiState> = stateHolder.uiState.asStateFlow()
+
+    override val comments: StateFlow<List<LessonComment>> =
+        (commentRepository?.observe(lessonId) ?: flowOf(emptyList()))
+            .stateIn(scope, SharingStarted.Lazily, emptyList())
 
     private val _events = Channel<RunnerEvent>(capacity = Channel.BUFFERED)
     override val events: Flow<RunnerEvent> = _events.receiveAsFlow()
@@ -244,6 +256,21 @@ class DefaultLessonRunnerRootComponent(
 
     override fun onBack() {
         emitEvent(RunnerEvent.NavigateBack)
+    }
+
+    override fun onPostComment(text: String) {
+        val repository = commentRepository ?: return
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return
+        scope.launch {
+            val profile = profileRepository?.observeCurrentProfile()?.firstOrNull()
+            repository.post(
+                lessonId = lessonId,
+                authorNickname = profile?.nickname ?: DEFAULT_AUTHOR,
+                authorAvatarUrl = profile?.avatarUrl,
+                text = trimmed,
+            )
+        }
     }
 
     /** First lesson of the same theme ordered after the current one, if it is synced locally. */

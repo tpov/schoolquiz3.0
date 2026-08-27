@@ -21,14 +21,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -46,10 +52,14 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
@@ -59,6 +69,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Runn
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
 
 private const val PERFECT_SCORE = 100
@@ -105,9 +116,11 @@ private const val CHART_DOT_R = 2.4f
 @Composable
 fun ResultContent(
     state: RunnerUiState.Result,
+    comments: List<LessonComment>,
     onSubmitRating: (Int) -> Unit,
     onRunAgain: () -> Unit,
     onNextLesson: () -> Unit,
+    onPostComment: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isHard = state.mode == Difficulty.HARD
@@ -188,6 +201,11 @@ fun ResultContent(
         if (state.top3.isNotEmpty()) {
             Top3Section(top3 = state.top3)
         }
+
+        DiscussionSection(
+            comments = comments,
+            onPostComment = onPostComment,
+        )
 
         state.advice?.let { AdviceSection(advice = it) }
 
@@ -396,6 +414,115 @@ private fun ResultFigure(
     }
 }
 
+/**
+ * The lesson's discussion: the comments people left, and a one-line field to add one.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun DiscussionSection(
+    comments: List<LessonComment>,
+    onPostComment: (String) -> Unit,
+) {
+    var draft by remember { mutableStateOf("") }
+    val accent = LocalNoirAccent.current
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.runner_discussion_header),
+                style = NoirType.kicker.copy(color = NoirTOff),
+            )
+            Text(
+                text = comments.size.toString(),
+                style = NoirType.kicker.copy(color = NoirTOff),
+            )
+        }
+        comments.forEach { comment -> CommentRow(comment) }
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(40.dp)
+                    .clip(NoirShapeMd)
+                    .background(NoirS2)
+                    .border(1.dp, NoirOutline, NoirShapeMd)
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                if (draft.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.runner_discussion_placeholder),
+                        style = NoirType.rowSub.copy(color = NoirTOff),
+                    )
+                }
+                BasicTextField(
+                    value = draft,
+                    onValueChange = { draft = it },
+                    textStyle = NoirType.rowSub.copy(color = NoirT1),
+                    singleLine = true,
+                    cursorBrush = SolidColor(accent),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            Text(
+                text = stringResource(R.string.runner_discussion_send),
+                style = NoirType.button.copy(color = accent),
+                modifier =
+                    Modifier.clickable {
+                        if (draft.isNotBlank()) {
+                            onPostComment(draft)
+                            draft = ""
+                        }
+                    },
+            )
+        }
+    }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun CommentRow(comment: LessonComment) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Box(
+            Modifier
+                .size(26.dp)
+                .clip(NoirShapePill)
+                .background(NoirS3)
+                .border(1.dp, NoirOutline, NoirShapePill),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = comment.authorNickname.take(1).uppercase(),
+                style = NoirType.kicker.copy(color = NoirT2),
+            )
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                text = comment.authorNickname,
+                style = NoirType.rowTitle.copy(fontSize = 12.5.sp),
+            )
+            Text(
+                text = comment.text,
+                style = NoirType.rowSub.copy(color = NoirT2),
+            )
+        }
+    }
+}
+
 private fun resultExperienceReward(
     percent: Int,
     mode: Difficulty,
@@ -445,8 +572,10 @@ private fun ResultContentPreview() {
                     saveWarning = false,
                 ),
             onSubmitRating = {},
+            comments = emptyList(),
             onRunAgain = {},
             onNextLesson = {},
+            onPostComment = {},
         )
     }
 }
@@ -476,8 +605,10 @@ private fun ResultContentSaveWarningPreview() {
                     saveWarning = true,
                 ),
             onSubmitRating = {},
+            comments = emptyList(),
             onRunAgain = {},
             onNextLesson = {},
+            onPostComment = {},
         )
     }
 }

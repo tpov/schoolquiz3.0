@@ -1,5 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.internet.profile.domain.di
 
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.GetLeagueStandingUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.EnsureCurrentProfileUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.LinkGoogleAccountUseCase
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.use_case.ObserveCurrentProfileUseCase
@@ -12,5 +13,6 @@ val profileDomainModule = module {
     factory { EnsureCurrentProfileUseCase(get()) }
     factory { ObserveDailyActivityUseCase(get()) }
     factory { LinkGoogleAccountUseCase(get()) }
+    factory { GetLeagueStandingUseCase(repository = get()) }
     factory { UpdateProfileNicknameUseCase(get()) }
 }

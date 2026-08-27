@@ -4,6 +4,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileBo
 import com.tpov.schoolquiz.shared.feature.internet.profile.data.remote.ProfileRemoteDataSource
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileQualification
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.ProfileStatus
+import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.LeagueStanding
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,6 +84,9 @@ private class FakeProfileLocalDataSource : ProfileLocalDataSource {
 }
 
 private class FakeProfileRemoteDataSource : ProfileRemoteDataSource {
+    /** Ranking is not what these tests are about; a fixed standing keeps them honest and quiet. */
+    override suspend fun leagueStanding(): LeagueStanding = LeagueStanding(place = 1, total = 1, topPercent = 1)
+
     var ensureCalls: Int = 0
     var lastNickname: String? = null
 
