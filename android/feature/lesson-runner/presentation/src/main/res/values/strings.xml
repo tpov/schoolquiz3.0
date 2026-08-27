@@ -13,9 +13,9 @@
     <string name="runner_action_done">Готово</string>
     <string name="runner_action_got_it">Понятно</string>
 
-    <!-- Hint: plays the correct answer for the user, costs one life (plan §4.4) -->
+    <!-- Hint: plays the correct answer for the user, costs one charge (plan §4.4) -->
     <string name="runner_hint_action">Подсказка · −1 ♥</string>
-    <string name="runner_hint_cd">Показать верный ответ за одну жизнь</string>
+    <string name="runner_hint_cd">Показать верный ответ за один заряд</string>
 
     <!-- Verdict on the question screen: waits for a tap instead of a hidden timer -->
     <string name="runner_verdict_correct">Верно</string>
@@ -51,11 +51,16 @@
     <string name="runner_result_next">Дальше →</string>
     <string name="runner_top3_title">Лучшие участники</string>
     <string name="runner_figure_attempt">Attempt</string>
-    <string name="runner_figure_lives">Lives</string>
+    <string name="runner_figure_lives">Заряды</string>
     <string name="runner_figure_xp">XP</string>
     <string name="runner_figure_nolics">Nolics</string>
     <string name="runner_advice_kicker">ЧТОБЫ НАБРАТЬ БОЛЬШЕ</string>
     <string name="runner_advice_suggested_lesson">Основу даёт урок «%1$s»</string>
+
+    <!-- Discussion -->
+    <string name="runner_discussion_header">Обсуждение урока</string>
+    <string name="runner_discussion_placeholder">Написать комментарий…</string>
+    <string name="runner_discussion_send">Отправить</string>
 
     <!-- Errors -->
     <string name="runner_error_auth_required">Требуется авторизация</string>

@@ -5,8 +5,8 @@
 -->
 <resources>
     <!-- Store: item titles, resolved in the UI from ShopItemId -->
-    <string name="shop_item_standard_heart">Life</string>
-    <string name="shop_item_gold_heart">Golden life</string>
+    <string name="shop_item_standard_heart">Charge</string>
+    <string name="shop_item_gold_heart">Golden charge</string>
     <string name="shop_item_quiz_slot">Quiz slot</string>
     <string name="shop_item_ad_reward_box">Box for watching 5 ads</string>
     <string name="shop_item_donate_google_play">Support the project</string>

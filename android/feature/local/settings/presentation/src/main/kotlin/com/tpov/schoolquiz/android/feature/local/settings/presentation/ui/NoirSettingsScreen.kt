@@ -160,7 +160,7 @@ private fun GameStatsGroup(profile: UserProfile) {
     NoirGroup {
         NoirGroupHeader(stringResource(R.string.settings_group_game_stats))
         SettingRow(stringResource(R.string.settings_hearts), "${profile.standardHearts}", icon = NoirIcons.Heart)
-        SettingRow(stringResource(R.string.settings_gold_hearts), "${profile.goldHearts}", icon = NoirIcons.Gem)
+        SettingRow(stringResource(R.string.settings_gold_hearts), "${profile.goldHearts}", icon = NoirIcons.GoldStack)
         SettingRow(stringResource(R.string.settings_skill_points), "${profile.skillPoints} XP")
         // Premium was a switch on the old screen. It is granted by the server, so a switch here
         // would be a control that refuses to move — the state is the whole truth.

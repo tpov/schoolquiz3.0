@@ -87,7 +87,7 @@ fun DrawerHeader(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 StatItem(NoirIcons.Heart, userStats.standardHearts.toString(), NoirDanger)
-                StatItem(NoirIcons.Gem, userStats.goldHearts.toString(), NoirGold)
+                StatItem(NoirIcons.GoldStack, userStats.goldHearts.toString(), NoirGold)
                 StatItem(NoirIcons.Star, userStats.stars.toString(), NoirGold)
                 StatItem(NoirIcons.Nolic, userStats.nolics.toString(), LocalNoirAccent.current)
                 // The last counter is the gift boxes left to open, not currency — the box icon

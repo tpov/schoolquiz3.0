@@ -209,12 +209,14 @@ private val ShopCatalogItem.icon: ImageVector
     get() =
         when (id) {
             ShopItemId.STANDARD_HEART_SLOT -> NoirIcons.Heart
-            ShopItemId.GOLD_HEART -> NoirIcons.Gem
+            // Золото — стопка монет. Ромб за валюту не отвечает.
+            ShopItemId.GOLD_HEART -> NoirIcons.GoldStack
             ShopItemId.QUIZ_SLOT -> NoirIcons.Plus
             ShopItemId.AD_REWARD_BOX -> NoirIcons.Box
             ShopItemId.DONATE_GOOGLE_PLAY -> NoirIcons.Heart
             ShopItemId.REFERRAL_PROGRAM -> NoirIcons.Users
-            ShopItemId.NICKNAME_MARKET -> NoirIcons.Gem
+            // Рынок имён — не валюта: буквенная иконка, чтобы ромб не читался как золото.
+            ShopItemId.NICKNAME_MARKET -> NoirIcons.TypeA
         }
 
 /**

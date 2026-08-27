@@ -16,8 +16,8 @@
     <string name="settings_languages">Languages</string>
 
     <string name="settings_group_game_stats">Game statistics</string>
-    <string name="settings_hearts">Lives</string>
-    <string name="settings_gold_hearts">Golden lives</string>
+    <string name="settings_hearts">Charges</string>
+    <string name="settings_gold_hearts">Golden charges</string>
     <string name="settings_skill_points">Experience</string>
     <string name="settings_premium">Premium</string>
     <string name="settings_premium_active">Active</string>

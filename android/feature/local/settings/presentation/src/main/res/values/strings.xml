@@ -16,8 +16,8 @@
     <string name="settings_languages">Языки</string>
 
     <string name="settings_group_game_stats">Игровая статистика</string>
-    <string name="settings_hearts">Жизни</string>
-    <string name="settings_gold_hearts">Золотые жизни</string>
+    <string name="settings_hearts">Заряды</string>
+    <string name="settings_gold_hearts">Золотые заряды</string>
     <string name="settings_skill_points">Опыт</string>
     <string name="settings_premium">Премиум</string>
     <string name="settings_premium_active">Активен</string>

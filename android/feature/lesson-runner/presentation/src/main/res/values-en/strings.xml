@@ -10,9 +10,9 @@
     <string name="runner_action_done">Done</string>
     <string name="runner_action_got_it">Got it</string>
 
-    <!-- Hint: plays the correct answer for the user, costs one life (plan §4.4) -->
+    <!-- Hint: plays the correct answer for the user, costs one charge (plan §4.4) -->
     <string name="runner_hint_action">Hint · −1 ♥</string>
-    <string name="runner_hint_cd">Reveal the correct answer for one life</string>
+    <string name="runner_hint_cd">Reveal the correct answer for one charge</string>
 
     <!-- Verdict on the question screen: waits for a tap instead of a hidden timer -->
     <string name="runner_verdict_correct">Correct</string>
@@ -48,11 +48,16 @@
     <string name="runner_result_next">Next →</string>
     <string name="runner_top3_title">Top participants</string>
     <string name="runner_figure_attempt">Attempt</string>
-    <string name="runner_figure_lives">Lives</string>
+    <string name="runner_figure_lives">Charges</string>
     <string name="runner_figure_xp">XP</string>
     <string name="runner_figure_nolics">Nolics</string>
     <string name="runner_advice_kicker">TO SCORE MORE</string>
     <string name="runner_advice_suggested_lesson">“%1$s” lays the groundwork</string>
+
+    <!-- Discussion -->
+    <string name="runner_discussion_header">Lesson discussion</string>
+    <string name="runner_discussion_placeholder">Write a comment…</string>
+    <string name="runner_discussion_send">Send</string>
 
     <!-- Errors -->
     <string name="runner_error_auth_required">Sign-in required</string>

@@ -81,6 +81,7 @@ import com.tpov.schoolquiz.shared.feature.internet.profile.domain.di.profileDoma
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDataModule
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonCommentRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.di.lessonRunnerDomainKoinAdapter
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.AttemptIdProvider
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.provider.RandomSeedProvider
@@ -637,6 +638,10 @@ class KoinModuleWiringTest : KoinTest {
         single<QuestionRepository> { mock(QuestionRepository::class.java) }
         single<LessonRepository> { mock(LessonRepository::class.java) }
         single<AuthRepository> { mock(AuthRepository::class.java) }
+        // The discussion sits on the result screen, so building the runner needs this binding even
+        // in tests that never open a comment. The app supplies it from firebaseLessonCommentModule,
+        // which is a platform module and cannot be started here.
+        single<LessonCommentRepository> { mock(LessonCommentRepository::class.java) }
     }
 
     /** The runner reads lives from the profile; tests that never touch it still need the binding. */
