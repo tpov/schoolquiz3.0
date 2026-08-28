@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 4,
+    "l": 4
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Наука, культура, абстрактные темы",
+  "lessonTitle": "Урок 4. Абстрактная дискуссия: аргументация о ценностях, этике и обществе",
+  "focus": "Вести абстрактную дискуссию об этике, ценностях и общественных проблемах: строить аргументацию, взвешивать «за» и «против», формулировать позицию и возражение в академически выдержанном тоне.",
+  "grammar_points": [
+    "Конструкции для гипотез и нереальных условий — Konjunktiv II: Wenn der Mensch frei wäre, müsste er auch Verantwortung tragen.",
+    "Финальные и инструментальные связки: damit (+ придаточное) vs. um… zu (+ Infinitiv); indem, dadurch dass.",
+    "Безличные обороты для абстрактного субъекта: Es stellt sich die Frage, ob…; Es lässt sich nicht leugnen, dass…; Es bleibt fraglich, inwiefern…",
+    "Концессивные и условные коннекторы высокого уровня: sofern, sofern nicht, es sei denn, ungeachtet + Genitiv, vorausgesetzt, dass.",
+    "Глагольно-именные связи для тонкой оценки (в рамках этой темы — для аргумента): Zweifel hegen an + Dativ, Stellung nehmen zu + Dativ, in Frage stellen."
+  ],
+  "vocab": [
+    "die Verantwortung (без мн.) — ответственность",
+    "die Gerechtigkeit (без мн.) — справедливость",
+    "der Wert (-e) — ценность",
+    "abwägen — взвешивать (доводы, за и против)",
+    "das Gemeinwohl (без мн.) — общее благо",
+    "die Freiheit (-en) — свобода",
+    "fragwürdig — сомнительный, спорный",
+    "die Würde (без мн.) — достоинство"
+  ],
+  "examples": [
+    "Es lässt sich nicht leugnen, dass individuelle Freiheit und Gemeinwohl mitunter in Konflikt geraten. — Нельзя отрицать, что индивидуальная свобода и общее благо порой вступают в конфликт.",
+    "Man sollte beide Argumente sorgfältig abwägen, bevor man eine moralische Entscheidung trifft. — Следует тщательно взвесить оба аргумента, прежде чем принимать моральное решение.",
+    "Wenn man die Würde des Menschen ernst nähme, dürfte man ihn nie bloß als Mittel behandeln. — Если бы достоинство человека принимали всерьёз, нельзя было бы относиться к нему лишь как к средству.",
+    "Es bleibt fraglich, inwiefern technischer Fortschritt der Gerechtigkeit tatsächlich dient. — Остаётся под вопросом, в какой мере технический прогресс действительно служит справедливости."
+  ]
+}

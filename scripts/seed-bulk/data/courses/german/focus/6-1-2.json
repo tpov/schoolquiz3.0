@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 1,
+    "l": 2
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+  "lessonTitle": "Subjunktoren высокого уровня: уступка, условие, следствие",
+  "focus": "Расширить арсенал подчинительных союзов для уступительных, условных и следственных придаточных, типичных для письменной и аргументированной речи C1, с акцентом на различия в нюансах.",
+  "grammar_points": [
+    "Уступительные союзы: obwohl/obgleich/obschon (хотя), auch wenn / selbst wenn (даже если), wenngleich (книжн. хотя), so … auch (как бы ни): So schwierig die Aufgabe auch war, …",
+    "Условные оттенки: sofern / soweit (поскольку, в той мере как), falls (если, в случае если), es sei denn, dass (если только не), vorausgesetzt, dass (при условии что).",
+    "Следствие: sodass / so …, dass (так что), als dass (после zu + сравнительной: zu …, als dass + Konjunktiv II).",
+    "Различие kausal (weil/da) и konzessiv (obwohl): da предпочтительно в начале и для известной причины; weil — для новой, рематической причины.",
+    "Порядок слов: финитный глагол в конце придаточного; при вынесении придаточного в начало — инверсия в главном."
+  ],
+  "vocab": [
+    "der Vorbehalt — оговорка, условие",
+    "die Bedingung — условие",
+    "die Folge — следствие, последствие",
+    "das Zugeständnis — уступка",
+    "der Umstand — обстоятельство",
+    "die Sachlage — положение дел, ситуация",
+    "maßgeblich — решающий, определяющий",
+    "hinreichend — достаточный"
+  ],
+  "examples": [
+    "So überzeugend seine Argumente auch klangen, der Vorstand blieb skeptisch. — Как бы убедительно ни звучали его аргументы, правление осталось скептичным.",
+    "Wir nehmen den Auftrag an, sofern die Lieferfristen eingehalten werden. — Мы примем заказ, поскольку (при условии что) будут соблюдены сроки поставки.",
+    "Die Frist ist zu knapp, als dass wir das Gutachten rechtzeitig fertigstellen könnten. — Срок слишком сжат, чтобы мы могли вовремя завершить заключение.",
+    "Selbst wenn die Förderung gestrichen würde, bliebe das Vorhaben realisierbar. — Даже если бы финансирование отменили, проект остался бы осуществимым.",
+    "Es sei denn, dass unerwartete Komplikationen auftreten, wird der Eingriff ambulant durchgeführt. — Если только не возникнут неожиданные осложнения, операция будет проведена амбулаторно."
+  ]
+}

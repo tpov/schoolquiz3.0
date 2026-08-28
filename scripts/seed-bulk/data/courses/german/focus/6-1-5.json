@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 1,
+    "l": 5
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+  "lessonTitle": "Сложный синтаксис: связность текста и инверсия после коннекторов",
+  "focus": "Овладеть наречными коннекторами (Konjunktionaladverbien) и средствами текстовой связности, выстраивая многоступенчатую аргументацию с правильным порядком слов — финальный синтез темы на уровне C1.",
+  "grammar_points": [
+    "Konjunktionaladverbien (наречные коннекторы) занимают позицию I и вызывают инверсию: deshalb, dennoch, trotzdem, folglich, demnach, allerdings, hingegen, somit, dadurch, infolgedessen.",
+    "Различие союзов (Konjunktionen: aber, denn, und — не влияют на порядок) и наречных коннекторов (инверсия): …, aber er kam vs …, allerdings kam er.",
+    "Позиционная гибкость наречных коннекторов: могут стоять и в середине поля (im Mittelfeld): Er war jedoch anderer Meinung.",
+    "Средства текстовой когезии: zum einen … zum anderen, einerseits … andererseits, im Gegensatz dazu, darüber hinaus, nichtsdestotrotz, gleichwohl.",
+    "Многоступенчатые конструкции: вложение придаточных, рамочная конструкция (Satzklammer) и сохранение глагола на верном месте при нагромождении оборотов."
+  ],
+  "vocab": [
+    "die Kohärenz — связность, когерентность",
+    "der Textzusammenhang — связность текста, контекст",
+    "die Argumentationskette — цепочка аргументации",
+    "die Gewichtung — расстановка акцентов, взвешивание",
+    "der Verweis — отсылка, ссылка",
+    "folglich — следовательно",
+    "nichtsdestotrotz — тем не менее, несмотря на это",
+    "infolgedessen — вследствие этого"
+  ],
+  "examples": [
+    "Die Nachfrage ist stark gestiegen; folglich müssen wir die Produktion ausweiten. — Спрос сильно вырос; следовательно, нам нужно расширить производство.",
+    "Er hatte sich gründlich vorbereitet; dennoch fiel ihm die Prüfung schwer. — Он основательно подготовился; тем не менее экзамен дался ему тяжело.",
+    "Einerseits lockt die Stelle mit einem hohen Gehalt, andererseits verlangt sie ständige Reisebereitschaft. — С одной стороны, должность привлекает высокой зарплатой, с другой — требует постоянной готовности к командировкам.",
+    "Die Investition war riskant; nichtsdestotrotz entschied sich der Vorstand dafür. — Инвестиция была рискованной; тем не менее правление приняло решение в её пользу.",
+    "Im Gegensatz zu seinen Kollegen, die das Konzept ablehnten, sah sie darin eine echte Chance. — В отличие от коллег, отвергнувших концепцию, она видела в ней реальный шанс."
+  ]
+}

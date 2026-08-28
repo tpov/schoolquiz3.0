@@ -1,0 +1,41 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 1,
+    "l": 4
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+  "lessonTitle": "Придаточные с weil и dass: порядок слов",
+  "focus": "Научиться строить придаточные предложения причины (weil) и дополнительные (dass), где спрягаемый глагол стоит в самом конце. Это ключевое отличие придаточных от главных предложений в немецком.",
+  "grammar_points": [
+    "weil = «потому что» (причина), dass = «что» (содержание мысли, дополнение).",
+    "В придаточном предложении спрягаемый глагол стоит В КОНЦЕ: Ich bleibe zu Hause, weil ich krank bin.",
+    "Перед союзом weil/dass всегда ставится запятая.",
+    "Если придаточное стоит первым, в главном предложении сразу идёт глагол (правило «глагол на втором месте»): Weil ich krank bin, bleibe ich zu Hause.",
+    "У глаголов с отделяемой приставкой в придаточном приставка снова срастается с глаголом: ..., weil der Zug ankommt.",
+    "С модальными глаголами в конец уходит модальный глагол, а инфинитив стоит перед ним: ..., weil ich arbeiten muss.",
+    "Не путать weil (союз, глагол в конец) с denn (союз «так как», обычный порядок слов): Ich bleibe zu Hause, denn ich bin krank."
+  ],
+  "vocab": [
+    "weil — потому что",
+    "dass — что (союз)",
+    "der Grund — причина",
+    "denken — думать",
+    "glauben — полагать, верить",
+    "hoffen — надеяться",
+    "wissen — знать",
+    "der Termin — приём, встреча",
+    "wichtig — важный",
+    "sicher — уверенный; наверняка"
+  ],
+  "examples": [
+    "Ich komme heute nicht, weil ich krank bin. — Я сегодня не приду, потому что я болен.",
+    "Weil das Wetter schlecht war, blieben wir zu Hause. — Так как погода была плохой, мы остались дома.",
+    "Ich glaube, dass er recht hat. — Я думаю, что он прав.",
+    "Sie sagt, dass sie morgen einen Termin hat. — Она говорит, что у неё завтра приём.",
+    "Ich freue mich, dass du kommst. — Я рад, что ты придёшь.",
+    "Er kann nicht schlafen, weil er zu viel Kaffee getrunken hat. — Он не может уснуть, потому что выпил слишком много кофе."
+  ]
+}

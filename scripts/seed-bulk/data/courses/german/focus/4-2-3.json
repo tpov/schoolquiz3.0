@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 2,
+    "l": 3
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+  "lessonTitle": "Собеседование: вопросы и ответы",
+  "focus": "Подготовиться к собеседованию: рассказать о сильных сторонах, опыте и мотивации, задать вопросы работодателю. Употребление вопросительных слов, придаточных с косвенным вопросом (ob, W-Wörter) и порядка слов в них.",
+  "grammar_points": [
+    "Косвенный вопрос с ob (ли) и с вопросительными словами (warum, wie lange) — глагол уходит в КОНЕЦ придаточного: Können Sie mir sagen, warum Sie zu uns kommen möchten? Ich weiß nicht, ob ich die Stelle bekomme.",
+    "Порядок слов в придаточном предложении с косвенным вопросом: союз/W-слово → подлежащее → … → спрягаемый глагол в конце.",
+    "Выражение мотивации через weil (придаточное причины — глагол в конце): Ich bewerbe mich, weil mich diese Arbeit interessiert.",
+    "Указание длительности опыта: seit + Dativ (Ich arbeite seit drei Jahren als …), Akkusativ времени (drei Jahre lang)."
+  ],
+  "vocab": [
+    "das Vorstellungsgespräch — собеседование",
+    "die Stärke — сильная сторона",
+    "die Schwäche — слабая сторона",
+    "die Motivation — мотивация",
+    "die Fähigkeit — способность, умение",
+    "selbstständig — самостоятельный",
+    "zuverlässig — надёжный",
+    "belastbar — стрессоустойчивый",
+    "das Gehalt — оклад, зарплата",
+    "die Kündigung — увольнение, заявление об уходе"
+  ],
+  "examples": [
+    "Können Sie mir sagen, warum Sie sich bei uns beworben haben? — Можете сказать, почему вы откликнулись именно к нам?",
+    "Ich bin zuverlässig und kann auch unter Druck selbstständig arbeiten. — Я надёжный и умею самостоятельно работать даже под давлением.",
+    "Ich weiß noch nicht, ob das Gehalt verhandelbar ist. — Я пока не знаю, можно ли договориться о зарплате.",
+    "Ich bewerbe mich um diese Stelle, weil mich die Arbeit im Team motiviert. — Я подаю заявление на эту должность, потому что работа в команде меня мотивирует."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 3,
+    "l": 5
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+  "lessonTitle": "Урок 5. Дипломатичная дискуссия: Konjunktiv II для вежливости и гипотез",
+  "focus": "Научиться смягчать высказывания, формулировать предложения и гипотезы с помощью Konjunktiv II, чтобы вести дискуссию вежливо, дипломатично и убедительно.",
+  "grammar_points": [
+    "Образование Konjunktiv II: würde + Infinitiv как универсальная форма (Ich würde sagen, …), а также сильные формы wäre, hätte, könnte, müsste, sollte.",
+    "Смягчение мнения и предложений: Ich würde sagen, dass …; Könnten wir nicht …?; Man sollte vielleicht ….",
+    "Гипотетические уступки и условия: An deiner Stelle würde ich … (на твоём месте я бы …); Es wäre besser, wenn ….",
+    "Вежливая критика и просьба о слове: Ich würde gern etwas ergänzen; Dürfte ich kurz einhaken?",
+    "Различие реального совета (Imperativ/sollen) и дипломатичного (Konjunktiv II) для разных регистров дискуссии."
+  ],
+  "vocab": [
+    "vorschlagen — предлагать",
+    "der Vorschlag — предложение",
+    "der Kompromiss — компромисс",
+    "ergänzen — дополнять",
+    "einlenken — идти на уступки, смягчать позицию",
+    "höflich — вежливый",
+    "der Konsens — консенсус, согласие",
+    "abwägen — взвешивать (за и против)",
+    "letztendlich — в конечном счёте"
+  ],
+  "examples": [
+    "Ich würde sagen, dass wir noch einmal darüber nachdenken sollten. — Я бы сказал, что нам стоит ещё раз об этом подумать.",
+    "An deiner Stelle würde ich erst mit dem Chef sprechen. — На твоём месте я бы сначала поговорил с начальником.",
+    "Könnten wir nicht einen Kompromiss finden? — А не могли бы мы найти компромисс?",
+    "Es wäre besser, wenn wir alle Argumente abwägen würden. — Было бы лучше, если бы мы взвесили все аргументы.",
+    "Dürfte ich kurz einhaken? Ich würde diesen Punkt gern ergänzen. — Можно я коротко вклинюсь? Мне хотелось бы дополнить этот пункт."
+  ]
+}

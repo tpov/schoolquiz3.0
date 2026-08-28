@@ -1,0 +1,34 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 4,
+    "l": 1
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+  "lessonTitle": "Что это? Предметы вокруг нас (Was ist das?)",
+  "focus": "Учим называть повседневные предметы и спрашивать «Что это?». Закрепляем артикль ein/eine с уже знакомым родом и глагол sein в 3-м лице.",
+  "grammar_points": [
+    "Вопрос Was ist das? — «Что это?». Ответ: Das ist ... — «Это ...».",
+    "Неопределённый артикль: ein для der/das (m/n), eine для die (f).",
+    "Глагол sein, 3-е лицо ед. ч.: es ist / das ist — «это есть/это».",
+    "Порядок слов в простом утверждении: подлежащее — глагол на 2-м месте (Das ist ein Tisch)."
+  ],
+  "vocab": [
+    "der Tisch — стол",
+    "der Stuhl — стул",
+    "das Buch — книга",
+    "das Fenster — окно",
+    "die Tür — дверь",
+    "die Lampe — лампа",
+    "das Bett — кровать"
+  ],
+  "examples": [
+    "Was ist das? — Что это?",
+    "Das ist ein Tisch. — Это стол.",
+    "Das ist eine Lampe. — Это лампа.",
+    "Das ist ein Buch. — Это книга.",
+    "Ist das ein Stuhl? — Ja, das ist ein Stuhl. — Это стул? — Да, это стул."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 2,
+    "l": 2
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+  "lessonTitle": "Урок 2. Смешанное склонение (после неопределённого артикля и притяжательных)",
+  "focus": "Освоить окончания после ein/eine, kein/keine и притяжательных местоимений (mein, dein, sein, ihr, unser, euer, Ihr). Главное — три «сильных» окончания там, где артикль не показывает род/падеж.",
+  "grammar_points": [
+    "Неопределённый артикль ein/eine не имеет окончания в трёх позициях: Nom. муж. (ein), Nom. ср. (ein), Akk. ср. (ein) — там прилагательное берёт сильное окончание и «договаривает» род.",
+    "Эти три сильных окончания: -er (ein guter Mann), -es (ein gutes Kind в Nom. и Akk.).",
+    "В женском роде Nom./Akk. — окончание -e (eine gute Frau), как при определённом артикле.",
+    "Во всех остальных падежах (весь Dativ, Genitiv, Akk. муж.) — окончание -en, как при слабом склонении.",
+    "kein и притяжательные (mein, dein, sein, ihr, unser, euer, Ihr) склоняются точно как ein, поэтому прилагательное после них следует тому же смешанному образцу.",
+    "Во множественном числе у kein/притяжательных АРТИКЛЬ ЕСТЬ (keine, meine), поэтому прилагательное идёт по слабому образцу: всегда -en (meine guten Freunde)."
+  ],
+  "vocab": [
+    "unbestimmt — неопределённый",
+    "das Possessivpronomen — притяжательное местоимение",
+    "gemischt — смешанный",
+    "ehrgeizig — амбициозный, честолюбивый",
+    "zuverlässig — надёжный",
+    "die Gelegenheit — возможность, случай",
+    "der Vorschlag — предложение",
+    "begabt — одарённый, способный"
+  ],
+  "examples": [
+    "Ein zuverlässiger Mitarbeiter ist viel wert. — Надёжный сотрудник многого стоит.",
+    "Sie hat mir einen interessanten Vorschlag gemacht. — Она сделала мне интересное предложение.",
+    "Das war eine einmalige Gelegenheit. — Это была уникальная возможность.",
+    "Mein älterer Bruder studiert in München. — Мой старший брат учится в Мюнхене.",
+    "Wir suchen kein billiges, sondern ein gutes Produkt. — Мы ищем не дешёвый, а качественный продукт.",
+    "Meine ehrgeizigen Kollegen arbeiten oft bis spät. — Мои амбициозные коллеги часто работают допоздна."
+  ]
+}

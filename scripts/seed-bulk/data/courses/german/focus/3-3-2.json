@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 3,
+    "l": 2
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+  "lessonTitle": "Урок 2. Perfekt с sein: движение и изменение состояния",
+  "focus": "Научить выбирать вспомогательный глагол sein вместо haben. Sein используется с глаголами движения (изменение места) и изменения состояния, а также с особыми глаголами sein/bleiben/werden.",
+  "grammar_points": [
+    "С sein образуют Perfekt: 1) глаголы движения с изменением места (gehen, kommen, fahren, fliegen, laufen); 2) глаголы изменения состояния (aufstehen, einschlafen, sterben); 3) sein, bleiben, werden.",
+    "Спряжение sein в настоящем времени: ich bin, du bist, er/sie/es ist, wir sind, ihr seid, sie/Sie sind.",
+    "Многие из этих глаголов — сильные, у них Partizip II на -en: gehen → gegangen, kommen → gekommen, fahren → gefahren, fliegen → geflogen.",
+    "Partizip II глагола sein → gewesen, bleiben → geblieben. Эти формы нужно запомнить.",
+    "Структура та же рамочная: sein на 2-м месте, Partizip II — в конце."
+  ],
+  "vocab": [
+    "gehen — идти",
+    "kommen — приходить",
+    "fahren — ехать",
+    "fliegen — лететь",
+    "bleiben — оставаться",
+    "die Reise — поездка, путешествие",
+    "der Bahnhof — вокзал",
+    "nach Hause — домой"
+  ],
+  "examples": [
+    "Ich bin gestern nach Hause gegangen. — Я вчера пошёл домой.",
+    "Wir sind mit dem Zug nach Berlin gefahren. — Мы поехали в Берлин на поезде.",
+    "Wann bist du gekommen? — Когда ты пришёл?",
+    "Sie ist nach Spanien geflogen. — Она улетела в Испанию.",
+    "Am Sonntag bin ich zu Hause geblieben. — В воскресенье я остался дома."
+  ]
+}

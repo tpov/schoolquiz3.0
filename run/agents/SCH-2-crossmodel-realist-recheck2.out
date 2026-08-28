@@ -1,0 +1,16 @@
+Готово: перезаписал отчёт в [docs/features/settings-app-version-footer/reviews/design-realist.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/reviews/design-realist.md).
+
+Новый вердикт: **PASS**.
+
+Перепроверил пропущенные обязательные code references и обновил отчёт в [docs/features/settings-app-version-footer/reviews/design-realist.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/reviews/design-realist.md).
+
+Вердикт остаётся: **PASS**.
+
+Дополнительно подтвердил:
+- drawer path всё ещё отдельный: `DrawerContent` → `DrawerFooter`, clickable version label, local About dialog;
+- dev-mode path всё ещё живёт в `DefaultRootComponent.onVersionTap`;
+- `LocalTabComponent` не требует отдельного SCH-2 контракта;
+- `AppShellScreenTest` корректно учтён в docs как stale call site, который нужно будет обновить при реальной смене сигнатуры;
+- `android/core/designsystem/build.gradle.kts` по-прежнему соответствует описанному нижележащему dependency boundary.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "71d39967-c881-400d-9ce9-1dc1f6a590d2" "follow-up"`.

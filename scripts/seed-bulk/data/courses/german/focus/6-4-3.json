@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 4,
+    "l": 3
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Наука, культура, абстрактные темы",
+  "lessonTitle": "Урок 3. Культура и искусство: интерпретация, оценка, дискуссия",
+  "focus": "Говорить и писать о культуре, искусстве и литературе: интерпретировать, давать дифференцированную оценку, выражать впечатление и эстетическое суждение в нюансированном регистре C1.",
+  "grammar_points": [
+    "Окончания прилагательных в развёрнутых атрибутивных группах: ein tief bewegendes Werk, von erstaunlicher Aktualität, das künstlerische Schaffen des Autors.",
+    "Субъективные модальные глаголы для интерпретации: Das Bild soll Vergänglichkeit darstellen (по замыслу/как считается); Der Roman will provozieren (стремится).",
+    "Сравнительные и оценочные конструкции: weniger… als vielmehr…; nicht so sehr… als…; es handelt sich um…",
+    "Распространённое определение как альтернатива придаточному: der von der Kritik gefeierte Film (= der Film, der von der Kritik gefeiert wird).",
+    "Связки контраста и уступки для аргументации: zwar… aber…; einerseits… andererseits…; gleichwohl, dennoch."
+  ],
+  "vocab": [
+    "das Werk (-e) — произведение",
+    "die Vergänglichkeit (без мн.) — бренность, преходящесть",
+    "die Deutung (-en) / die Interpretation (-en) — толкование, интерпретация",
+    "der Eindruck (-¨e) — впечатление",
+    "anspruchsvoll — взыскательный, серьёзный (о произведении), требовательный",
+    "das Schaffen (без мн.) — творчество (как процесс/совокупность работ)",
+    "die Auseinandersetzung (-en) mit — осмысление, столкновение/спор с (темой)",
+    "zeitgenössisch — современный (о той же эпохе), нынешний"
+  ],
+  "examples": [
+    "Das anspruchsvolle Werk handelt weniger von der Liebe als vielmehr von der Vergänglichkeit menschlichen Glücks. — Это серьёзное произведение не столько о любви, сколько о бренности человеческого счастья.",
+    "Der von der Kritik gefeierte Roman setzt sich kritisch mit der zeitgenössischen Gesellschaft auseinander. — Превознесённый критиками роман критически осмысляет современное общество.",
+    "Das Gemälde soll, so eine verbreitete Deutung, die Zerbrechlichkeit des Lebens darstellen. — Эта картина, согласно распространённому толкованию, призвана изображать хрупкость жизни.",
+    "Zwar wirkt der Film auf den ersten Blick sperrig, dennoch hinterlässt er einen tiefen Eindruck. — Хотя на первый взгляд фильм кажется неподатливым, он всё же оставляет глубокое впечатление."
+  ]
+}

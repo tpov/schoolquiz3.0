@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 1,
+    "l": 3
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+  "lessonTitle": "Партиципиальные обороты I: Partizip I и Partizip II как определения",
+  "focus": "Научиться образовывать и склонять причастия I и II в роли распространённых определений и понимать их активное/пассивное и временное значение — ключевой признак письменного стиля C1.",
+  "grammar_points": [
+    "Partizip I = Infinitiv + -d (lachend, lesend); выражает одновременное, активное, незавершённое действие: das weinende Kind.",
+    "Partizip II (gelesen, gekauft, angekommen); выражает завершённое, чаще пассивное действие у переходных глаголов: das gelesene Buch; у непереходных перфектных — результат: der angekommene Zug.",
+    "Причастие в роли определения склоняется как прилагательное и получает падежные окончания: ein laut bellender Hund, mit dem reparierten Auto.",
+    "Распространённое причастное определение (erweitertes Partizipialattribut): целая группа стоит между артиклем и существительным — die vor wenigen Tagen veröffentlichte Studie.",
+    "Gerundivum: zu + Partizip I как определение со значением долженствования/возможности (пассив): die zu lösende Aufgabe (задача, которую нужно решить)."
+  ],
+  "vocab": [
+    "das Partizip — причастие",
+    "das Attribut — определение",
+    "die Erweiterung — распространение, расширение",
+    "die Gleichzeitigkeit — одновременность",
+    "die Vorzeitigkeit — предшествование (во времени)",
+    "anhaltend — продолжающийся, длительный",
+    "zugrunde liegend — лежащий в основе",
+    "betreffend — касающийся, соответствующий"
+  ],
+  "examples": [
+    "Die im letzten Jahr verabschiedete Reform zeigt erste Wirkungen. — Принятая в прошлом году реформа показывает первые результаты.",
+    "Ein überzeugend argumentierender Redner gewinnt das Publikum schnell. — Убедительно аргументирующий оратор быстро завоёвывает публику.",
+    "Wir besprechen die noch zu klärenden Fragen morgen. — Ещё подлежащие выяснению вопросы мы обсудим завтра.",
+    "Der von Experten geprüfte Bericht wurde gestern veröffentlicht. — Проверенный экспертами отчёт был опубликован вчера.",
+    "Die rasch ansteigenden Kosten zwangen das Unternehmen zum Umdenken. — Стремительно растущие издержки заставили компанию пересмотреть подход."
+  ]
+}

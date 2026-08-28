@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 4,
+    "l": 3
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+  "lessonTitle": "Урок 3. Экология и охрана окружающей среды (Umwelt und Umweltschutz)",
+  "focus": "Лексика экологии, климата и устойчивого образа жизни. Учимся описывать экологические проблемы и причинно-следственные связи между ними.",
+  "grammar_points": [
+    "Причинно-следственные средства: weil/da (придаточное с глаголом в конце), deshalb/deswegen/daher (с инверсией), wegen + Genitiv (предлог).",
+    "Условные предложения реального типа: wenn … (Präsens), … (Präsens/Futur I) — wenn wir nichts tun, wird sich das Klima weiter erwärmen.",
+    "Глаголы и существительные экологической темы с управлением: beitragen zu + Dativ, schützen vor + Dativ, sich auswirken auf + Akkusativ.",
+    "Сравнительная и превосходная степень для оценки масштаба: ein größeres Problem, die größte Herausforderung, am stärksten betroffen."
+  ],
+  "vocab": [
+    "die Umwelt — окружающая среда",
+    "der Umweltschutz — охрана окружающей среды",
+    "der Klimawandel — изменение климата",
+    "die Erderwärmung — глобальное потепление",
+    "die erneuerbaren Energien (Pl.) — возобновляемые источники энергии",
+    "der Müll — мусор",
+    "die Mülltrennung — раздельный сбор мусора",
+    "der CO2-Ausstoß — выброс CO2",
+    "die Nachhaltigkeit — устойчивость",
+    "der Verbrauch — потребление",
+    "verschmutzen — загрязнять",
+    "vermeiden — избегать, предотвращать"
+  ],
+  "examples": [
+    "Wegen des steigenden CO2-Ausstoßes erwärmt sich die Erde immer schneller. — Из-за растущих выбросов CO2 Земля нагревается всё быстрее.",
+    "Wenn wir nichts gegen den Klimawandel tun, werden viele Tierarten aussterben. — Если мы ничего не сделаем против изменения климата, многие виды животных вымрут.",
+    "Jeder kann zum Umweltschutz beitragen, indem er Müll trennt und weniger Plastik verbraucht. — Каждый может внести вклад в охрану природы, разделяя мусор и потребляя меньше пластика.",
+    "Erneuerbare Energien sind wichtig, um den Verbrauch fossiler Brennstoffe zu vermeiden. — Возобновляемая энергия важна, чтобы избежать потребления ископаемого топлива."
+  ]
+}

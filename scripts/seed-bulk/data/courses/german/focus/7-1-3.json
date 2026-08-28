@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 1,
+    "l": 3
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Модальные частицы (doch, ja, mal, eben) и тонкости порядка слов (грамматика)",
+  "lessonTitle": "Частицы в разных типах предложений: вопросы, восклицания, императив",
+  "focus": "Систематизировать сочетаемость частиц с типом предложения (Satztyp): какие частицы допустимы в вопросе (denn, etwa, wohl), какие в восклицании (aber, vielleicht, ja), какие в императиве (mal, doch, ruhig, bloß/nur). Понять, что выбор частицы и тип предложения взаимно обусловлены.",
+  "grammar_points": [
+    "'denn' — частица только в вопросах, придаёт заинтересованность или удивление: 'Was machst du denn da?'; в утверждении невозможна.",
+    "'etwa' в вопросе сигнализирует опасение/нежелательный ответ ('Hast du etwa vergessen?' — неужели ты забыл?); 'wohl' выражает предположение ('Er ist wohl krank').",
+    "'aber' и 'vielleicht' как частицы восклицания усиливают эмоцию: 'Das ist aber schön!', 'Du hast vielleicht Glück!' (отличать от союза 'aber' и наречия 'vielleicht').",
+    "В императиве: 'mal/doch' смягчают, 'ruhig' разрешает ('Setz dich ruhig'), 'bloß/nur' усиливают предостережение или настойчивость: 'Mach das bloß nicht!'",
+    "Рамочная конструкция (Satzklammer) сохраняется: частицы располагаются внутри среднего поля между спрягаемой и неспрягаемой частью глагола — 'Du hast denn doch wohl recht gehabt.'"
+  ],
+  "vocab": [
+    "der Satztyp — тип предложения",
+    "der Ausruf — восклицание",
+    "die Vermutung — предположение",
+    "die Befürchtung — опасение",
+    "die Warnung — предостережение",
+    "der Imperativsatz — повелительное предложение",
+    "nachdrücklich — настоятельный, с нажимом"
+  ],
+  "examples": [
+    "Was machst du denn da? — Что это ты там делаешь? (заинтересованное удивление)",
+    "Du hast doch nicht etwa gelogen? — Ты ведь не соврал, надеюсь? (опасение нежелательного)",
+    "Das ist aber eine Überraschung! — Вот это сюрприз! (усиленное восклицание)",
+    "Setz dich ruhig, du störst nicht. — Садись спокойно, ты не мешаешь. (разрешение, снятие неловкости)",
+    "Vergiss bloß nicht den Schlüssel! — Только не забудь ключ! (настойчивое предостережение)"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 1,
+    "l": 1
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+  "lessonTitle": "Präteritum: sein, haben и модальные глаголы",
+  "focus": "Освоить прошедшее время Präteritum для базовых глаголов sein, haben и модальных (können, müssen, wollen и т.д.). Это «письменно-повествовательное» прошедшее, но для sein/haben/модальных оно используется и в устной речи вместо Perfekt.",
+  "grammar_points": [
+    "Präteritum — простое прошедшее время, образуется одним словом (без вспомогательного глагола).",
+    "sein → war, haben → hatte. Спряжение war: ich war, du warst, er/sie/es war, wir waren, ihr wart, sie/Sie waren.",
+    "hatte: ich hatte, du hattest, er hatte, wir hatten, ihr hattet, sie hatten.",
+    "Модальные в Präteritum теряют умляут: können → konnte, müssen → musste, wollen → wollte, dürfen → durfte, sollen → sollte, mögen → mochte.",
+    "Для sein, haben и модальных глаголов Präteritum естественно звучит и в разговоре — Perfekt здесь почти не используют.",
+    "Окончания: 1-е и 3-е лицо ед. ч. БЕЗ окончания (ich war, er konnte), как у всех глаголов в Präteritum."
+  ],
+  "vocab": [
+    "das Präteritum — претерит (простое прошедшее)",
+    "gestern — вчера",
+    "früher — раньше, в прежние времена",
+    "damals — тогда, в то время",
+    "krank — больной",
+    "müde — усталый",
+    "das Kind — ребёнок",
+    "die Schule — школа",
+    "der Termin — назначенная встреча, приём",
+    "leider — к сожалению"
+  ],
+  "examples": [
+    "Gestern war ich sehr müde. — Вчера я был очень усталым.",
+    "Als Kind hatte ich einen Hund. — В детстве у меня была собака.",
+    "Wir konnten leider nicht kommen. — Мы, к сожалению, не смогли прийти.",
+    "Du musstest gestern arbeiten, oder? — Тебе вчера пришлось работать, верно?",
+    "Früher wollte ich Pilot werden. — Раньше я хотел стать пилотом.",
+    "Das Kind war krank und hatte Fieber. — Ребёнок был болен, и у него была температура."
+  ]
+}

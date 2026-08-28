@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 4,
+    "l": 1
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+  "lessonTitle": "Урок 1. Что такое Konjunktiv II и как образуется würde + Infinitiv",
+  "focus": "Познакомить с понятием сослагательного наклонения (нереальность, вежливость) и дать самую универсальную форму B1: würde + Infinitiv. Это база, на которой строятся остальные уроки темы.",
+  "grammar_points": [
+    "Konjunktiv II — это форма для НЕреальных, гипотетических ситуаций и вежливости (не путать с Indikativ — реальностью).",
+    "Универсальная аналитическая форма: würde (спрягаемая часть) + Infinitiv глагола в конце предложения. Рамочная конструкция сохраняется.",
+    "Спряжение würde: ich würde, du würdest, er/sie/es würde, wir würden, ihr würdet, sie/Sie würden.",
+    "Глагол-Infinitiv всегда стоит в самом конце: Ich würde gern nach Italien fahren.",
+    "würde + Infinitiv годится почти для любого полнозначного глагола; для sein, haben и модальных предпочитают собственные формы (это в уроках 2–3)."
+  ],
+  "vocab": [
+    "der Konjunktiv — сослагательное наклонение",
+    "würde — (вспом.) бы (форма для условности)",
+    "der Infinitiv — инфинитив, неопределённая форма",
+    "gern — охотно, с удовольствием",
+    "eigentlich — вообще-то, собственно",
+    "wirklich — действительно, по-настоящему",
+    "stattdessen — вместо этого",
+    "der Wunsch — желание"
+  ],
+  "examples": [
+    "Ich würde gern ein Eis essen. — Я бы с удовольствием съел мороженое.",
+    "Was würdest du an meiner Stelle machen? — Что бы ты сделал на моём месте?",
+    "Wir würden lieber zu Hause bleiben. — Мы бы лучше остались дома.",
+    "An deiner Stelle würde ich den Arzt fragen. — На твоём месте я бы спросил врача.",
+    "Sie würde nie so etwas sagen. — Она бы никогда такого не сказала."
+  ]
+}

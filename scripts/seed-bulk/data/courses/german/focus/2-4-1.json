@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 4,
+    "l": 1
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+  "lessonTitle": "Урок 1. Жильё и комнаты: артикли и множественное число",
+  "focus": "Назвать своё жильё и комнаты в нём. Закрепить неопределённый/определённый артикль в именительном падеже и образование множественного числа существительных на бытовой лексике.",
+  "grammar_points": [
+    "Неопределённый артикль ein/eine в Nominativ: ein (m/n) — eine (f). Пример: ein Haus, eine Wohnung.",
+    "Определённый артикль der/die/das в Nominativ соответствует роду существительного.",
+    "Множественное число с разными окончаниями: -e (das Zimmer → die Zimmer без изменения по типу, но der Tisch → die Tische), -en (die Wohnung → die Wohnungen), -er с умлаутом (das Haus → die Häuser).",
+    "Артикль во множественном числе всегда die: die Häuser, die Zimmer.",
+    "Глагол wohnen (жить, проживать) в Präsens: ich wohne, du wohnst, er/sie wohnt, wir wohnen."
+  ],
+  "vocab": [
+    "das Haus — дом",
+    "die Wohnung — квартира",
+    "das Zimmer — комната",
+    "die Küche — кухня",
+    "das Bad — ванная",
+    "das Schlafzimmer — спальня",
+    "das Wohnzimmer — гостиная",
+    "der Flur — коридор, прихожая",
+    "der Balkon — балкон",
+    "die Toilette — туалет"
+  ],
+  "examples": [
+    "Ich wohne in einer Wohnung. — Я живу в квартире.",
+    "Das Haus hat vier Zimmer. — В доме четыре комнаты.",
+    "Die Küche ist klein, aber das Wohnzimmer ist groß. — Кухня маленькая, но гостиная большая.",
+    "Wir haben einen Balkon und ein Bad. — У нас есть балкон и ванная.",
+    "Die Wohnungen sind neu. — Квартиры новые."
+  ]
+}

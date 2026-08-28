@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 2,
+    "l": 4
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+  "lessonTitle": "Рабочий день и обязанности в офисе",
+  "focus": "Описывать рабочий распорядок, задачи и обязанности, общаться с коллегами. Глаголы с отделяемыми приставками в контексте офиса и предлоги времени для рабочего графика.",
+  "grammar_points": [
+    "Глаголы с отделяемыми приставками: приставка уходит в конец предложения — Ich fange um acht Uhr an (anfangen), Ich rufe den Kunden an (anrufen), Ich nehme an der Sitzung teil (teilnehmen an + Dativ).",
+    "Предлоги времени для графика: um + час (um 9 Uhr), von … bis (von 8 bis 17 Uhr), ab + Dativ (ab Montag), am + день недели (am Freitag).",
+    "Дательный падеж после глаголов коммуникации: helfen, antworten, danken + Dativ (Ich helfe meinem Kollegen).",
+    "Порядок дополнений: Dativ перед Akkusativ при существительных (Ich schicke dem Chef die E-Mail)."
+  ],
+  "vocab": [
+    "der Kollege — коллега (м.)",
+    "die Aufgabe — задача",
+    "die Besprechung — совещание",
+    "die Sitzung — заседание",
+    "der Termin — встреча, назначенное время",
+    "die Pause — перерыв",
+    "die Überstunde — сверхурочный час",
+    "der Feierabend — конец рабочего дня",
+    "erledigen — выполнять, улаживать",
+    "der Kunde — клиент"
+  ],
+  "examples": [
+    "Ich fange jeden Morgen um acht Uhr an und mache um zwölf Uhr eine kurze Pause. — Я начинаю каждое утро в восемь часов и в двенадцать делаю короткий перерыв.",
+    "Am Montag nehme ich an einer wichtigen Besprechung teil. — В понедельник я участвую в важном совещании.",
+    "Können Sie mir bei dieser Aufgabe helfen? — Можете помочь мне с этой задачей?",
+    "Nach Feierabend schicke ich dem Chef noch schnell die E-Mail. — После конца рабочего дня я быстро отправлю шефу письмо."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 2
+  },
+  "subjectTitle": "Корпоративные финансы (Corporate Finance)",
+  "themeTitle": "Оценка проектов и компаний: DCF и мультипликаторы",
+  "lessonTitle": "Построение свободного денежного потока: от EBIT к unlevered FCF (FCFF)",
+  "focus": "Научить считать прогнозный денежный поток для DCF — именно unlevered free cash flow (FCFF), который дисконтируют для получения enterprise value.",
+  "teaching_points": [
+    "DCF дисконтирует не прибыль, а свободный денежный поток (free cash flow) — реальные деньги, доступные инвесторам после реинвестиций. Прибыль (net income) содержит неденежные статьи и эффект финансирования.",
+    "Unlevered FCF (= FCFF, free cash flow to firm) — поток до выплат по долгу, доступный ВСЕМ поставщикам капитала. Поэтому он соответствует enterprise value и дисконтируется по WACC.",
+    "Формула: FCFF = EBIT·(1−t) + D&A − CapEx − ΔNWC. Где EBIT·(1−t) = NOPAT (после-налоговая операционная прибыль, «unlevered net income»).",
+    "Почему добавляем D&A: амортизация — неденежный расход, реального оттока денег нет, поэтому её прибавляют обратно к NOPAT.",
+    "Почему вычитаем CapEx: капитальные затраты — реальный отток денег на поддержание и рост активов, обязательный для будущих потоков.",
+    "Почему вычитаем ΔNWC (изменение чистого оборотного капитала): рост запасов/дебиторки «замораживает» деньги; NWC = текущие активы − текущие обязательства (операционные).",
+    "Levered FCF (FCFE) — это уже после процентов по долгу, поток только акционерам; его дисконтируют по cost of equity и получают equity value напрямую. Важно не смешивать два мира.",
+    "Зачем менеджеру: корректный FCFF отделяет операционную результативность от решений о финансировании, делая оценку бизнеса сопоставимой и «чистой»."
+  ],
+  "frameworks": [
+    "FCFF = EBIT·(1−t) + D&A − CapEx − ΔNWC",
+    "NOPAT = EBIT·(1−t)",
+    "Unlevered FCF vs Levered FCF (FCFE)",
+    "Net Working Capital (NWC)"
+  ],
+  "example": "EBIT = 200, ставка налога t = 25%, D&A = 40, CapEx = 60, рост NWC = 15. NOPAT = 200·(1−0,25) = 150. FCFF = 150 + 40 − 60 − 15 = 115. Именно эти 115 (и потоки следующих лет) пойдут в дисконтирование.",
+  "sources": [
+    "Brealey, Myers, Allen, «Principles of Corporate Finance»",
+    "Wall Street Prep, «Unlevered Free Cash Flow (UFCF)» (wallstreetprep.com/knowledge/unlevered-free-cash-flow/)",
+    "Corporate Finance Institute, «DCF Formula Guide» (corporatefinanceinstitute.com/resources/valuation/dcf-formula-guide/)"
+  ]
+}

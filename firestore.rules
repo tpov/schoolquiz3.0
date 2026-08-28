@@ -139,6 +139,23 @@ service cloud.firestore {
       }
     }
 
+    match /lessonComments/{commentId} {
+      // Public lesson discussion: any signed-in user may read and post. Posts are immutable and
+      // field-allowlisted; the author identity is the nickname/avatar the client already holds,
+      // so no server hop is needed for a plain comment.
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+             'lessonId', 'authorNickname', 'authorAvatarUrl', 'text', 'createdAt'
+           ])
+        && request.resource.data.lessonId is string
+        && request.resource.data.lessonId.size() > 0
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000;
+      allow update, delete: if false;
+    }
+
     match /tournaments/{tournamentId} {
       // Tournament tables are server-written from lesson result events.
       // Authenticated clients may read public standings and participant lists.

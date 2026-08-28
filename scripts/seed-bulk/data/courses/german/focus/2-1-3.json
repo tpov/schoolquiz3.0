@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 1,
+    "l": 3
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+  "lessonTitle": "Урок 3. Глагол sein (быть) и его формы",
+  "focus": "Освоить неправильный глагол sein, который не подчиняется общим правилам, и научиться называть профессию, национальность, местоположение и состояние.",
+  "grammar_points": [
+    "Спряжение sein (быть): ich bin, du bist, er/sie/es ist, wir sind, ihr seid, sie/Sie sind.",
+    "sein — неправильный глагол, формы нужно выучить наизусть.",
+    "При названии профессии артикль НЕ ставится: Ich bin Lehrer (а не «ein Lehrer»).",
+    "sein используется для состояния и характеристики: Ich bin müde. Das ist gut.",
+    "Отрицание прилагательного/наречия словом nicht после sein: Er ist nicht zu Hause."
+  ],
+  "vocab": [
+    "sein — быть",
+    "der Lehrer — учитель",
+    "der Student — студент",
+    "müde — усталый",
+    "krank — больной",
+    "glücklich — счастливый",
+    "zu Hause — дома",
+    "verheiratet — женат, замужем"
+  ],
+  "examples": [
+    "Ich bin Studentin und komme aus Russland. — Я студентка и родом из России.",
+    "Du bist sehr nett. — Ты очень милый.",
+    "Wir sind zu Hause. — Мы дома.",
+    "Seid ihr müde? – Ja, wir sind müde. — Вы устали? – Да, мы устали.",
+    "Er ist nicht krank, er ist gesund. — Он не болен, он здоров."
+  ]
+}

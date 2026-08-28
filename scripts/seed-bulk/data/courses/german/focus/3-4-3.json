@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 4,
+    "l": 3
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+  "lessonTitle": "Урок 3. Городской транспорт (Öffentliche Verkehrsmittel)",
+  "focus": "Лексика и фразы для поездки на общественном транспорте: купить билет, найти линию, спросить про пересадку. Грамматический фокус — предлог mit + Dativ (средство передвижения) и отделяемые глаголы (einsteigen, aussteigen, umsteigen).",
+  "grammar_points": [
+    "Способ передвижения: mit + Dativ (mit dem Bus, mit der Bahn, mit der U-Bahn).",
+    "Отделяемые глаголы и рамочная конструкция: Ich steige am Bahnhof um. (приставка уходит в конец).",
+    "Вопрос Wie komme ich zu ...? + zum/zur (zu + dem = zum, zu + der = zur).",
+    "Указание времени отправления: Der Zug fährt um 9 Uhr ab.",
+    "Существительные с предлогом nach для городов: Ich fahre nach Berlin."
+  ],
+  "vocab": [
+    "der Bus — автобус",
+    "die Bahn — поезд (городской), трамвай",
+    "die U-Bahn — метро",
+    "die Straßenbahn — трамвай",
+    "die Fahrkarte — билет",
+    "der Fahrplan — расписание",
+    "die Linie — линия, маршрут",
+    "einsteigen — садиться (в транспорт)",
+    "aussteigen — выходить (из транспорта)",
+    "umsteigen — пересаживаться",
+    "der Fahrgast — пассажир",
+    "abfahren — отправляться",
+    "ankommen — прибывать",
+    "die Verspätung — опоздание, задержка"
+  ],
+  "examples": [
+    "Wie komme ich zum Flughafen? — Fahren Sie mit der U-Bahn, Linie 8. (Как добраться до аэропорта? — Поезжайте на метро, линия 8.)",
+    "Ich steige am Hauptbahnhof in den Bus 12 ein. (Я сажусь на главном вокзале в автобус 12.)",
+    "Wir müssen am Markt umsteigen. (Нам нужно пересесть на площади Маркт.)",
+    "Der Zug fährt um halb zehn ab und kommt um elf Uhr an. (Поезд отправляется в половине десятого и прибывает в одиннадцать.)",
+    "Eine Fahrkarte nach Köln, bitte. (Один билет до Кёльна, пожалуйста.)"
+  ]
+}

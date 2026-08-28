@@ -1,0 +1,1262 @@
+[
+  {
+    "s": 1,
+    "t": 1,
+    "l": 1,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Алфавит, произношение, артикли der/die/das и грамматический род (грамматика)",
+    "title": "Урок 1. Немецкий алфавит и буквы"
+  },
+  {
+    "s": 1,
+    "t": 1,
+    "l": 2,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Алфавит, произношение, артикли der/die/das и грамматический род (грамматика)",
+    "title": "Урок 2. Произношение: гласные, умлауты и долгота"
+  },
+  {
+    "s": 1,
+    "t": 1,
+    "l": 3,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Алфавит, произношение, артикли der/die/das и грамматический род (грамматика)",
+    "title": "Урок 3. Произношение: трудные согласные и сочетания"
+  },
+  {
+    "s": 1,
+    "t": 1,
+    "l": 4,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Алфавит, произношение, артикли der/die/das и грамматический род (грамматика)",
+    "title": "Урок 4. Артикли der, die, das и грамматический род"
+  },
+  {
+    "s": 1,
+    "t": 1,
+    "l": 5,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Алфавит, произношение, артикли der/die/das и грамматический род (грамматика)",
+    "title": "Урок 5. Подсказки рода и неопределённый артикль ein/eine"
+  },
+  {
+    "s": 1,
+    "t": 2,
+    "l": 1,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Приветствия и знакомство (Begrüßung, sich vorstellen)",
+    "title": "Урок 1. Приветствия и формулы вежливости (Begrüßung)"
+  },
+  {
+    "s": 1,
+    "t": 2,
+    "l": 2,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Приветствия и знакомство (Begrüßung, sich vorstellen)",
+    "title": "Урок 2. Представиться: «Меня зовут…» (sich vorstellen — heißen, sein)"
+  },
+  {
+    "s": 1,
+    "t": 2,
+    "l": 3,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Приветствия и знакомство (Begrüßung, sich vorstellen)",
+    "title": "Урок 3. Откуда ты и где живёшь (Woher kommst du? — kommen, wohnen)"
+  },
+  {
+    "s": 1,
+    "t": 2,
+    "l": 4,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Приветствия и знакомство (Begrüßung, sich vorstellen)",
+    "title": "Урок 4. «Как дела?» и вежливое обращение (Wie geht's? — formell/informell)"
+  },
+  {
+    "s": 1,
+    "t": 2,
+    "l": 5,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Приветствия и знакомство (Begrüßung, sich vorstellen)",
+    "title": "Урок 5. Прощание и первый диалог-знакомство (Verabschiedung + Mini-Dialog)"
+  },
+  {
+    "s": 1,
+    "t": 3,
+    "l": 1,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+    "title": "Урок 1. Числа 0–12 (Die Zahlen von 0 bis 12)"
+  },
+  {
+    "s": 1,
+    "t": 3,
+    "l": 2,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+    "title": "Урок 2. Числа 13–100 (Die Zahlen von 13 bis 100)"
+  },
+  {
+    "s": 1,
+    "t": 3,
+    "l": 3,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+    "title": "Урок 3. Который час: полные и половинные часы (Wie spät ist es?)"
+  },
+  {
+    "s": 1,
+    "t": 3,
+    "l": 4,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+    "title": "Урок 4. Дни недели (Die Wochentage)"
+  },
+  {
+    "s": 1,
+    "t": 3,
+    "l": 5,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+    "title": "Урок 5. Мой распорядок дня по времени и дням (Mein Tag: Zeit und Wochentage)"
+  },
+  {
+    "s": 1,
+    "t": 4,
+    "l": 1,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+    "title": "Что это? Предметы вокруг нас (Was ist das?)"
+  },
+  {
+    "s": 1,
+    "t": 4,
+    "l": 2,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+    "title": "Основные цвета (Die Grundfarben)"
+  },
+  {
+    "s": 1,
+    "t": 4,
+    "l": 3,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+    "title": "Цветной предмет: красный стол (rote, blaue Sachen)"
+  },
+  {
+    "s": 1,
+    "t": 4,
+    "l": 4,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+    "title": "Один и много: множественное число предметов (Singular und Plural)"
+  },
+  {
+    "s": 1,
+    "t": 4,
+    "l": 5,
+    "cefr": "A0",
+    "sectionTitle": "Erste Schritte — самые азы",
+    "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+    "title": "Это не лампа: отрицание kein и описание комнаты"
+  },
+  {
+    "s": 2,
+    "t": 1,
+    "l": 1,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+    "title": "Урок 1. Präsens правильных глаголов в единственном числе (ich, du, er/sie/es)"
+  },
+  {
+    "s": 2,
+    "t": 1,
+    "l": 2,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+    "title": "Урок 2. Präsens правильных глаголов во множественном числе (wir, ihr, sie/Sie)"
+  },
+  {
+    "s": 2,
+    "t": 1,
+    "l": 3,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+    "title": "Урок 3. Глагол sein (быть) и его формы"
+  },
+  {
+    "s": 2,
+    "t": 1,
+    "l": 4,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+    "title": "Урок 4. Глагол haben (иметь) и винительный падеж в отрицании kein"
+  },
+  {
+    "s": 2,
+    "t": 1,
+    "l": 5,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+    "title": "Урок 5. Вопросы: W-Fragen и Ja-Nein-Fragen"
+  },
+  {
+    "s": 2,
+    "t": 2,
+    "l": 1,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Семья и описание людей (Familie, Personen)",
+    "title": "Урок 1. Члены семьи и притяжательные mein/dein"
+  },
+  {
+    "s": 2,
+    "t": 2,
+    "l": 2,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Семья и описание людей (Familie, Personen)",
+    "title": "Урок 2. Расширенная семья и притяжательные sein/ihr"
+  },
+  {
+    "s": 2,
+    "t": 2,
+    "l": 3,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Семья и описание людей (Familie, Personen)",
+    "title": "Урок 3. Возраст, профессия и страна — рассказ о человеке"
+  },
+  {
+    "s": 2,
+    "t": 2,
+    "l": 4,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Семья и описание людей (Familie, Personen)",
+    "title": "Урок 4. Внешность: прилагательные после sein"
+  },
+  {
+    "s": 2,
+    "t": 2,
+    "l": 5,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Семья и описание людей (Familie, Personen)",
+    "title": "Урок 5. Характер и вкусы — рассказ о близком человеке"
+  },
+  {
+    "s": 2,
+    "t": 3,
+    "l": 1,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+    "title": "Урок 1. Грамматика темы: винительный падеж (Akkusativ) и неопределённый артикль"
+  },
+  {
+    "s": 2,
+    "t": 3,
+    "l": 2,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+    "title": "Урок 2. Еда и напитки: что я ем и пью"
+  },
+  {
+    "s": 2,
+    "t": 3,
+    "l": 3,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+    "title": "Урок 3. Покупки: цены, количество и упаковка"
+  },
+  {
+    "s": 2,
+    "t": 3,
+    "l": 4,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+    "title": "Урок 4. В магазине: диалог с продавцом"
+  },
+  {
+    "s": 2,
+    "t": 3,
+    "l": 5,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+    "title": "Урок 5. В кафе и ресторане: заказ еды"
+  },
+  {
+    "s": 2,
+    "t": 4,
+    "l": 1,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+    "title": "Урок 1. Жильё и комнаты: артикли и множественное число"
+  },
+  {
+    "s": 2,
+    "t": 4,
+    "l": 2,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+    "title": "Урок 2. Мебель и предметы: винительный падеж с haben"
+  },
+  {
+    "s": 2,
+    "t": 4,
+    "l": 3,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+    "title": "Урок 3. Где что находится: предлоги места и дативный артикль"
+  },
+  {
+    "s": 2,
+    "t": 4,
+    "l": 4,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+    "title": "Урок 4. Распорядок дня: время суток и время по часам"
+  },
+  {
+    "s": 2,
+    "t": 4,
+    "l": 5,
+    "cefr": "A1",
+    "sectionTitle": "Grundstufe 1",
+    "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+    "title": "Урок 5. Мой день: отделяемые глаголы и порядок дел"
+  },
+  {
+    "s": 3,
+    "t": 1,
+    "l": 1,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+    "title": "Аккузатив: винительный падеж и его роль"
+  },
+  {
+    "s": 3,
+    "t": 1,
+    "l": 2,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+    "title": "Датив: дательный падеж и косвенное дополнение"
+  },
+  {
+    "s": 3,
+    "t": 1,
+    "l": 3,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+    "title": "Глаголы с двумя дополнениями: Dativ + Akkusativ"
+  },
+  {
+    "s": 3,
+    "t": 1,
+    "l": 4,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+    "title": "Предлоги с Akkusativ и предлоги с Dativ"
+  },
+  {
+    "s": 3,
+    "t": 1,
+    "l": 5,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+    "title": "Предлоги места: Wo? (Dativ) и Wohin? (Akkusativ)"
+  },
+  {
+    "s": 3,
+    "t": 2,
+    "l": 1,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+    "title": "Урок 1. Что такое модальные глаголы и как они спрягаются (können, müssen, wollen)"
+  },
+  {
+    "s": 3,
+    "t": 2,
+    "l": 2,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+    "title": "Урок 2. Разрешение и запрет: dürfen (и nicht dürfen)"
+  },
+  {
+    "s": 3,
+    "t": 2,
+    "l": 3,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+    "title": "Урок 3. Совет, поручение и желание: sollen и mögen / möchten"
+  },
+  {
+    "s": 3,
+    "t": 2,
+    "l": 4,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+    "title": "Урок 4. Отрицание и вопросы с модальными глаголами"
+  },
+  {
+    "s": 3,
+    "t": 2,
+    "l": 5,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+    "title": "Урок 5. Все вместе: модальные глаголы в живой речи (быт, правила, просьбы)"
+  },
+  {
+    "s": 3,
+    "t": 3,
+    "l": 1,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+    "title": "Урок 1. Что такое Perfekt: haben + Partizip II"
+  },
+  {
+    "s": 3,
+    "t": 3,
+    "l": 2,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+    "title": "Урок 2. Perfekt с sein: движение и изменение состояния"
+  },
+  {
+    "s": 3,
+    "t": 3,
+    "l": 3,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+    "title": "Урок 3. Partizip II сильных глаголов и глаголов на -ieren"
+  },
+  {
+    "s": 3,
+    "t": 3,
+    "l": 4,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+    "title": "Урок 4. Приставки в Partizip II: trennbar, untrennbar и ge-"
+  },
+  {
+    "s": 3,
+    "t": 3,
+    "l": 5,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Прошедшее Perfekt (haben/sein + Partizip II) (грамматика)",
+    "title": "Урок 5. Perfekt в речи: рассказ о прошлом и порядок слов"
+  },
+  {
+    "s": 3,
+    "t": 4,
+    "l": 1,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+    "title": "Урок 1. В городе: места и здания (In der Stadt: Orte und Gebäude)"
+  },
+  {
+    "s": 3,
+    "t": 4,
+    "l": 2,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+    "title": "Урок 2. Как пройти? Спросить и понять дорогу (Nach dem Weg fragen)"
+  },
+  {
+    "s": 3,
+    "t": 4,
+    "l": 3,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+    "title": "Урок 3. Городской транспорт (Öffentliche Verkehrsmittel)"
+  },
+  {
+    "s": 3,
+    "t": 4,
+    "l": 4,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+    "title": "Урок 4. Планируем путешествие (Eine Reise planen)"
+  },
+  {
+    "s": 3,
+    "t": 4,
+    "l": 5,
+    "cefr": "A2",
+    "sectionTitle": "Grundstufe 2",
+    "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+    "title": "Урок 5. В отеле и в дороге: ситуации (Im Hotel und unterwegs)"
+  },
+  {
+    "s": 4,
+    "t": 1,
+    "l": 1,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+    "title": "Präteritum: sein, haben и модальные глаголы"
+  },
+  {
+    "s": 4,
+    "t": 1,
+    "l": 2,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+    "title": "Präteritum правильных (слабых) глаголов"
+  },
+  {
+    "s": 4,
+    "t": 1,
+    "l": 3,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+    "title": "Präteritum неправильных (сильных) глаголов"
+  },
+  {
+    "s": 4,
+    "t": 1,
+    "l": 4,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+    "title": "Придаточные с weil и dass: порядок слов"
+  },
+  {
+    "s": 4,
+    "t": 1,
+    "l": 5,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+    "title": "Придаточные с wenn и обзор порядка слов"
+  },
+  {
+    "s": 4,
+    "t": 2,
+    "l": 1,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+    "title": "Профессии и место работы: рассказываем о себе"
+  },
+  {
+    "s": 4,
+    "t": 2,
+    "l": 2,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+    "title": "Поиск работы: вакансия, резюме, объявление"
+  },
+  {
+    "s": 4,
+    "t": 2,
+    "l": 3,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+    "title": "Собеседование: вопросы и ответы"
+  },
+  {
+    "s": 4,
+    "t": 2,
+    "l": 4,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+    "title": "Рабочий день и обязанности в офисе"
+  },
+  {
+    "s": 4,
+    "t": 2,
+    "l": 5,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Работа и профессии (Arbeit, Beruf)",
+    "title": "Условия труда и жизнь работника"
+  },
+  {
+    "s": 4,
+    "t": 3,
+    "l": 1,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+    "title": "Урок 1. Тело и недомогания: «Mir tut ... weh» и Schmerzen"
+  },
+  {
+    "s": 4,
+    "t": 3,
+    "l": 2,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+    "title": "Урок 2. У врача: запись, симптомы и диалог в Praxis"
+  },
+  {
+    "s": 4,
+    "t": 3,
+    "l": 3,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+    "title": "Урок 3. Лекарства и советы: рекомендации с модальными глаголами"
+  },
+  {
+    "s": 4,
+    "t": 3,
+    "l": 4,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+    "title": "Урок 4. Здоровый образ жизни: советы и привычки в императиве"
+  },
+  {
+    "s": 4,
+    "t": 3,
+    "l": 5,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+    "title": "Урок 5. Несчастный случай и в больнице: рассказ о здоровье в перфекте"
+  },
+  {
+    "s": 4,
+    "t": 4,
+    "l": 1,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+    "title": "Урок 1. Что такое Konjunktiv II и как образуется würde + Infinitiv"
+  },
+  {
+    "s": 4,
+    "t": 4,
+    "l": 2,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+    "title": "Урок 2. hätte и wäre: Konjunktiv II от haben и sein"
+  },
+  {
+    "s": 4,
+    "t": 4,
+    "l": 3,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+    "title": "Урок 3. könnte, müsste, sollte: Konjunktiv II модальных глаголов"
+  },
+  {
+    "s": 4,
+    "t": 4,
+    "l": 4,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+    "title": "Урок 4. Вежливые просьбы и предложения через Konjunktiv II"
+  },
+  {
+    "s": 4,
+    "t": 4,
+    "l": 5,
+    "cefr": "B1",
+    "sectionTitle": "Mittelstufe 1",
+    "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+    "title": "Урок 5. Нереальные условия: wenn-предложения с Konjunktiv II"
+  },
+  {
+    "s": 5,
+    "t": 1,
+    "l": 1,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+    "title": "Vorgangspassiv в Präsens — основа пассива (werden + Partizip II)"
+  },
+  {
+    "s": 5,
+    "t": 1,
+    "l": 2,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+    "title": "Пассив в прошедшем и будущем + von / durch"
+  },
+  {
+    "s": 5,
+    "t": 1,
+    "l": 3,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+    "title": "Пассив с модальными глаголами и Zustandspassiv"
+  },
+  {
+    "s": 5,
+    "t": 1,
+    "l": 4,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+    "title": "Genitiv — четвёртый падеж: артикли, окончания и -s у существительных"
+  },
+  {
+    "s": 5,
+    "t": 1,
+    "l": 5,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+    "title": "Предлоги с генитивом и генитив в письменном стиле"
+  },
+  {
+    "s": 5,
+    "t": 2,
+    "l": 1,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+    "title": "Урок 1. Слабое склонение прилагательных (после определённого артикля)"
+  },
+  {
+    "s": 5,
+    "t": 2,
+    "l": 2,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+    "title": "Урок 2. Смешанное склонение (после неопределённого артикля и притяжательных)"
+  },
+  {
+    "s": 5,
+    "t": 2,
+    "l": 3,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+    "title": "Урок 3. Сильное склонение (без артикля)"
+  },
+  {
+    "s": 5,
+    "t": 2,
+    "l": 4,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+    "title": "Урок 4. Особые случаи: основа прилагательного, субстантивация и сравнительные формы"
+  },
+  {
+    "s": 5,
+    "t": 2,
+    "l": 5,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Склонение прилагательных — окончания (Adjektivdeklination) (грамматика)",
+    "title": "Урок 5. Цепочки прилагательных и интеграция всех типов склонения"
+  },
+  {
+    "s": 5,
+    "t": 3,
+    "l": 1,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+    "title": "Урок 1. Выражаем своё мнение: вводные обороты и порядок слов"
+  },
+  {
+    "s": 5,
+    "t": 3,
+    "l": 2,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+    "title": "Урок 2. Согласие и несогласие: вежливо возразить"
+  },
+  {
+    "s": 5,
+    "t": 3,
+    "l": 3,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+    "title": "Урок 3. Аргументируем: причина, следствие, примеры"
+  },
+  {
+    "s": 5,
+    "t": 3,
+    "l": 4,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+    "title": "Урок 4. Уступка и противопоставление: «хотя», «несмотря на», «тем не менее»"
+  },
+  {
+    "s": 5,
+    "t": 3,
+    "l": 5,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+    "title": "Урок 5. Дипломатичная дискуссия: Konjunktiv II для вежливости и гипотез"
+  },
+  {
+    "s": 5,
+    "t": 4,
+    "l": 1,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+    "title": "Урок 1. Общество и социальные процессы (Gesellschaft im Wandel)"
+  },
+  {
+    "s": 5,
+    "t": 4,
+    "l": 2,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+    "title": "Урок 2. Медиа и цифровизация (Medien und Digitalisierung)"
+  },
+  {
+    "s": 5,
+    "t": 4,
+    "l": 3,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+    "title": "Урок 3. Экология и охрана окружающей среды (Umwelt und Umweltschutz)"
+  },
+  {
+    "s": 5,
+    "t": 4,
+    "l": 4,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+    "title": "Урок 4. Глобальные проблемы и ответственность (Globale Herausforderungen)"
+  },
+  {
+    "s": 5,
+    "t": 4,
+    "l": 5,
+    "cefr": "B2",
+    "sectionTitle": "Mittelstufe 2",
+    "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+    "title": "Урок 5. Дискуссия о будущем: проект и презентация (Über die Zukunft sprechen)"
+  },
+  {
+    "s": 6,
+    "t": 1,
+    "l": 1,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+    "title": "Двучленные коннекторы (zweiteilige Konnektoren) и логические связки"
+  },
+  {
+    "s": 6,
+    "t": 1,
+    "l": 2,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+    "title": "Subjunktoren высокого уровня: уступка, условие, следствие"
+  },
+  {
+    "s": 6,
+    "t": 1,
+    "l": 3,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+    "title": "Партиципиальные обороты I: Partizip I и Partizip II как определения"
+  },
+  {
+    "s": 6,
+    "t": 1,
+    "l": 4,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+    "title": "Партиципиальные обороты II: обособленные конструкции (Partizipialsätze)"
+  },
+  {
+    "s": 6,
+    "t": 1,
+    "l": 5,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+    "title": "Сложный синтаксис: связность текста и инверсия после коннекторов"
+  },
+  {
+    "s": 6,
+    "t": 2,
+    "l": 1,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+    "title": "Урок 1. Введение в номинальный стиль: вербальный vs. номинальный"
+  },
+  {
+    "s": 6,
+    "t": 2,
+    "l": 2,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+    "title": "Урок 2. Глагольно-именные обороты (Funktionsverbgefüge): основные модели"
+  },
+  {
+    "s": 6,
+    "t": 2,
+    "l": 3,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+    "title": "Урок 3. Номинализация: трансформация придаточных в именные группы"
+  },
+  {
+    "s": 6,
+    "t": 2,
+    "l": 4,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+    "title": "Урок 4. Регистр и уместность: где номинальный стиль работает, а где вредит"
+  },
+  {
+    "s": 6,
+    "t": 2,
+    "l": 5,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+    "title": "Урок 5. Синтез: продуктивное использование Nominalstil и FVG в письменном тексте"
+  },
+  {
+    "s": 6,
+    "t": 3,
+    "l": 1,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+    "title": "Урок 1. Структура формального письма и e-mail: обращение, концовка, конвенции"
+  },
+  {
+    "s": 6,
+    "t": 3,
+    "l": 2,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+    "title": "Урок 2. Запрос и официальная просьба: höfliche Bitten, Anfrage, Konjunktiv II"
+  },
+  {
+    "s": 6,
+    "t": 3,
+    "l": 3,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+    "title": "Урок 3. Рекламация и жалоба: проблему назвать, требование выдвинуть, тон удержать"
+  },
+  {
+    "s": 6,
+    "t": 3,
+    "l": 4,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+    "title": "Урок 4. Заявление о приёме на работу: Bewerbungsschreiben и сопроводительное письмо"
+  },
+  {
+    "s": 6,
+    "t": 3,
+    "l": 5,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+    "title": "Урок 5. Дипломатичный регистр: отказы, возражения и эскалация без потери лица"
+  },
+  {
+    "s": 6,
+    "t": 4,
+    "l": 1,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Наука, культура, абстрактные темы",
+    "title": "Урок 1. Грамматика темы: Konjunktiv I и косвенная речь в научном/публицистическом тексте"
+  },
+  {
+    "s": 6,
+    "t": 4,
+    "l": 2,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Наука, культура, абстрактные темы",
+    "title": "Урок 2. Лексика науки и техники: процессы, причинность, абстрактные понятия"
+  },
+  {
+    "s": 6,
+    "t": 4,
+    "l": 3,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Наука, культура, абстрактные темы",
+    "title": "Урок 3. Культура и искусство: интерпретация, оценка, дискуссия"
+  },
+  {
+    "s": 6,
+    "t": 4,
+    "l": 4,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Наука, культура, абстрактные темы",
+    "title": "Урок 4. Абстрактная дискуссия: аргументация о ценностях, этике и обществе"
+  },
+  {
+    "s": 6,
+    "t": 4,
+    "l": 5,
+    "cefr": "C1",
+    "sectionTitle": "Oberstufe 1",
+    "themeTitle": "Наука, культура, абстрактные темы",
+    "title": "Урок 5. Доклад и научно-популярная презентация: структурирование и резюмирование"
+  },
+  {
+    "s": 7,
+    "t": 1,
+    "l": 1,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Модальные частицы (doch, ja, mal, eben) и тонкости порядка слов (грамматика)",
+    "title": "Базовые модальные частицы doch, ja, mal: эмоциональная окраска высказывания"
+  },
+  {
+    "s": 7,
+    "t": 1,
+    "l": 2,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Модальные частицы (doch, ja, mal, eben) и тонкости порядка слов (грамматика)",
+    "title": "Частицы упрёка и очевидности: eben, halt, schon, eigentlich"
+  },
+  {
+    "s": 7,
+    "t": 1,
+    "l": 3,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Модальные частицы (doch, ja, mal, eben) и тонкости порядка слов (грамматика)",
+    "title": "Частицы в разных типах предложений: вопросы, восклицания, императив"
+  },
+  {
+    "s": 7,
+    "t": 1,
+    "l": 4,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Модальные частицы (doch, ja, mal, eben) и тонкости порядка слов (грамматика)",
+    "title": "Порядок слов в среднем поле: тема-рема, ударение, перестановки"
+  },
+  {
+    "s": 7,
+    "t": 1,
+    "l": 5,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Модальные частицы (doch, ja, mal, eben) и тонкости порядка слов (грамматика)",
+    "title": "Частицы и порядок слов в связной речи: комбинации, эмфаза, регистровые нюансы выбора"
+  },
+  {
+    "s": 7,
+    "t": 2,
+    "l": 1,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+    "title": "Идиомы как единое целое: образ, значение и фиксированная форма"
+  },
+  {
+    "s": 7,
+    "t": 2,
+    "l": 2,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+    "title": "Тематические гнёзда идиом: тело, животные, природа"
+  },
+  {
+    "s": 7,
+    "t": 2,
+    "l": 3,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+    "title": "Коллокации и Funktionsverbgefüge: какое слово с каким сочетается"
+  },
+  {
+    "s": 7,
+    "t": 2,
+    "l": 4,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+    "title": "Парные формулы и пословицы: Zwillingsformeln und Sprichwörter"
+  },
+  {
+    "s": 7,
+    "t": 2,
+    "l": 5,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+    "title": "Идиомы в деле: вариация, обыгрывание и ложные друзья"
+  },
+  {
+    "s": 7,
+    "t": 3,
+    "l": 1,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+    "title": "Стилевые уровни (Stilebenen): карта регистров немецкого"
+  },
+  {
+    "s": 7,
+    "t": 3,
+    "l": 2,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+    "title": "Высокий стиль (gehobene Sprache): нормы письменного и официального немецкого"
+  },
+  {
+    "s": 7,
+    "t": 3,
+    "l": 3,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+    "title": "Разговорный немецкий (Umgangssprache): живая речь и её механика"
+  },
+  {
+    "s": 7,
+    "t": 3,
+    "l": 4,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+    "title": "Переключение регистров (Register wechseln): одно и то же — на трёх уровнях"
+  },
+  {
+    "s": 7,
+    "t": 3,
+    "l": 5,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+    "title": "Стилевая виртуозность: ирония, намеренный Stilbruch и эстетика текста"
+  },
+  {
+    "s": 7,
+    "t": 4,
+    "l": 1,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Нюанс, импликатура и сложные тексты",
+    "title": "Импликатура: что текст говорит между строк"
+  },
+  {
+    "s": 7,
+    "t": 4,
+    "l": 2,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Нюанс, импликатура и сложные тексты",
+    "title": "Ирония, сарказм и фигуры непрямой речи"
+  },
+  {
+    "s": 7,
+    "t": 4,
+    "l": 3,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Нюанс, импликатура и сложные тексты",
+    "title": "Многозначность, амбигуитет и игра слов"
+  },
+  {
+    "s": 7,
+    "t": 4,
+    "l": 4,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Нюанс, импликатура и сложные тексты",
+    "title": "Сложные нон-фикшн тексты: аргументация и связность"
+  },
+  {
+    "s": 7,
+    "t": 4,
+    "l": 5,
+    "cefr": "C2",
+    "sectionTitle": "Oberstufe 2 — Mastery",
+    "themeTitle": "Нюанс, импликатура и сложные тексты",
+    "title": "Литературный подтекст и многослойное прочтение"
+  }
+]

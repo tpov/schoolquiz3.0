@@ -1,0 +1,11 @@
+Готово: обновил отчёт в [docs/features/settings-app-version-footer/reviews/design-realist.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/reviews/design-realist.md).
+
+Новый вердикт: **PASS**.
+
+Исправил отчёт в [docs/features/settings-app-version-footer/reviews/design-realist.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/reviews/design-realist.md).
+
+Новый вердикт: **FAIL**.
+
+Причина: нашёл реальный Realist blocker — дизайн/API-контракт не учитывает промежуточный private `AppShellContent`, через который в текущем коде обязательно проходят данные между `AppShellScreen` и `LocalTabContent`. Без этого `appVersionCode` нельзя протащить по описанному контракту без дополнительного undocumented изменения структуры или сигнатуры.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "71d39967-c881-400d-9ce9-1dc1f6a590d2" "follow-up"`.

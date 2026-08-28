@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 1
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Семья и описание людей (Familie, Personen)",
+  "lessonTitle": "Урок 1. Члены семьи и притяжательные mein/dein",
+  "focus": "Ввести базовую лексику семьи и научить говорить «мой/твой» в именительном падеже. Это фундамент темы: называем людей и обозначаем принадлежность.",
+  "grammar_points": [
+    "Притяжательные местоимения mein (мой) и dein (твой) в Nominativ: согласование по роду — mein Vater (м.р., без окончания), meine Mutter (ж.р., окончание -e), mein Kind (ср.р., без окончания).",
+    "Во множественном числе притяжательное всегда с -e: meine Eltern, deine Geschwister.",
+    "Род существительного определяет форму притяжательного: der → mein/dein, die → meine/deine, das → mein/dein.",
+    "Существительные семьи всегда пишутся с большой буквы; артикль выражает род."
+  ],
+  "vocab": [
+    "die Familie — семья",
+    "der Vater — отец",
+    "die Mutter — мать",
+    "die Eltern (Pl.) — родители",
+    "der Bruder — брат",
+    "die Schwester — сестра",
+    "die Geschwister (Pl.) — братья и сёстры",
+    "der Sohn — сын",
+    "die Tochter — дочь",
+    "das Kind — ребёнок"
+  ],
+  "examples": [
+    "Das ist meine Familie. — Это моя семья.",
+    "Mein Vater heißt Thomas. — Моего отца зовут Томас.",
+    "Meine Mutter ist nett. — Моя мама приятная.",
+    "Ist das dein Bruder? — Это твой брат?",
+    "Meine Eltern wohnen in Berlin. — Мои родители живут в Берлине."
+  ]
+}

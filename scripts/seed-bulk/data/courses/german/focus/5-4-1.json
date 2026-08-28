@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 4,
+    "l": 1
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+  "lessonTitle": "Урок 1. Общество и социальные процессы (Gesellschaft im Wandel)",
+  "focus": "Лексика социальной сферы и описание общественных изменений. Закрепляем уже изученные на уровне средства (номинальный стиль с Genitiv, безличные конструкции man/es), применяя их к теме общества, без введения новой грамматики.",
+  "grammar_points": [
+    "Номинализация для описания процессов: глагол → существительное (sich entwickeln → die Entwicklung, sich verändern → die Veränderung); такой именной стиль типичен для текстов об обществе.",
+    "Безличные обороты man и es gibt + Akkusativ для обобщений: man beobachtet, dass …; es gibt immer mehr …",
+    "Усиливающие/сравнительные наречия степени: immer + сравнительная степень (immer älter, immer mehr) для выражения нарастающей тенденции.",
+    "Порядок слов в придаточном с dass (рамка: подлежащее … глагол в конце): Studien zeigen, dass die Bevölkerung altert."
+  ],
+  "vocab": [
+    "die Gesellschaft — общество",
+    "die Entwicklung — развитие",
+    "die Veränderung — изменение",
+    "die Bevölkerung — население",
+    "der demografische Wandel — демографические изменения",
+    "die Generation — поколение",
+    "die Integration — интеграция",
+    "die Gleichberechtigung — равноправие",
+    "die Minderheit — меньшинство",
+    "die soziale Gerechtigkeit — социальная справедливость",
+    "altern — стареть",
+    "wachsen — расти"
+  ],
+  "examples": [
+    "Studien zeigen, dass die Bevölkerung in Deutschland immer älter wird. — Исследования показывают, что население Германии становится всё старше.",
+    "Man beobachtet einen tiefgreifenden Wandel in der Gesellschaft. — Наблюдают глубокие изменения в обществе.",
+    "Es gibt immer mehr Diskussionen über Gleichberechtigung und soziale Gerechtigkeit. — Всё больше дискуссий о равноправии и социальной справедливости.",
+    "Die Integration von Minderheiten ist eine wichtige Aufgabe unserer Generation. — Интеграция меньшинств — важная задача нашего поколения."
+  ]
+}

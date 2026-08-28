@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 4,
+    "l": 5
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+  "lessonTitle": "Урок 5. Дискуссия о будущем: проект и презентация (Über die Zukunft sprechen)",
+  "focus": "Интеграция всей темы в продуктивную задачу: подготовить связное устное/письменное высказывание о будущем общества, медиа и экологии. Закрепляем Futur I и средства прогноза в рамках B2.",
+  "grammar_points": [
+    "Futur I (werden + Infinitiv) для прогнозов и предположений: In zwanzig Jahren werden wir anders leben.",
+    "Выражение вероятности через модальные слова и наречия: wahrscheinlich, vermutlich, möglicherweise, sicherlich (порядок слов — на втором месте глагол).",
+    "Структурирование связного текста: Einleitung — Hauptteil — Schluss; переходы zum einen … zum anderen, abschließend lässt sich sagen.",
+    "Косвенная отсылка к источникам без новой грамматики: laut + Dativ (laut Experten), nach Angaben + Genitiv — для опоры на данные."
+  ],
+  "vocab": [
+    "die Zukunft — будущее",
+    "die Prognose — прогноз",
+    "die Entwicklung — развитие, тенденция",
+    "der Fortschritt — прогресс",
+    "die Auswirkung — последствие, воздействие",
+    "der Experte — эксперт",
+    "die Statistik — статистика",
+    "der Vorteil — преимущество",
+    "der Nachteil — недостаток",
+    "das Ziel — цель",
+    "sich vorstellen — представлять себе",
+    "erwarten — ожидать"
+  ],
+  "examples": [
+    "Laut Experten wird die künstliche Intelligenz die Medienlandschaft stark verändern. — По мнению экспертов, искусственный интеллект сильно изменит медиаландшафт.",
+    "In Zukunft werden wir wahrscheinlich mehr auf erneuerbare Energien setzen. — В будущем мы, вероятно, будем больше полагаться на возобновляемую энергию.",
+    "Zum einen bringt der Fortschritt viele Vorteile, zum anderen entstehen neue Probleme. — С одной стороны, прогресс приносит много преимуществ, с другой — возникают новые проблемы.",
+    "Abschließend lässt sich sagen, dass jeder Verantwortung für die Zukunft trägt. — В заключение можно сказать, что каждый несёт ответственность за будущее."
+  ]
+}

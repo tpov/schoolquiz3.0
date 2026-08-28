@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 4,
+    "l": 5
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Наука, культура, абстрактные темы",
+  "lessonTitle": "Урок 5. Доклад и научно-популярная презентация: структурирование и резюмирование",
+  "focus": "Свести материал темы воедино: подготовить и провести устный доклад или научно-популярную презентацию об абстрактной теме — структурировать, цитировать источники, обобщать и подводить итог на уровне C1.",
+  "grammar_points": [
+    "Метаязык структуры доклада (Redemittel): Zunächst möchte ich… / Im Folgenden gehe ich auf… ein / Abschließend lässt sich festhalten, dass…",
+    "Резюмирование и обобщение: zusammenfassend; im Großen und Ganzen; unter dem Strich; es lässt sich somit festhalten, dass…",
+    "Ссылки на источники и Konjunktiv I (повтор и закрепление урока 1): Laut der Studie sei…; Dem Autor zufolge handle es sich um…",
+    "Связное противопоставление позиций в дискуссии: Im Gegensatz zu… vertritt X die Auffassung, dass…; Während die einen… betonen, weisen andere darauf hin, dass…",
+    "Указание на цель и адресность доклада: Ziel dieses Vortrags ist es, … zu beleuchten / aufzuzeigen / zu verdeutlichen (um… zu vs. zu + Infinitiv в инфинитивных группах)."
+  ],
+  "vocab": [
+    "der Vortrag (-¨e) — доклад, выступление",
+    "die Gliederung (-en) — структура, план (доклада)",
+    "die Quelle (-n) — источник",
+    "zusammenfassen — резюмировать, обобщать",
+    "verdeutlichen — пояснять, делать наглядным",
+    "die Auffassung (-en) — мнение, точка зрения",
+    "das Fazit (-s) — вывод, итог",
+    "veranschaulichen — наглядно показывать, иллюстрировать"
+  ],
+  "examples": [
+    "Ziel dieses Vortrags ist es, den Zusammenhang zwischen Wissenschaft und Gesellschaft zu verdeutlichen. — Цель этого доклада — прояснить связь между наукой и обществом.",
+    "Laut der zitierten Studie sei der Effekt deutlich stärker als bisher angenommen. — Согласно процитированному исследованию, эффект якобы заметно сильнее, чем считалось ранее.",
+    "Während die einen den technischen Fortschritt feiern, weisen andere auf seine Risiken hin. — Тогда как одни превозносят технический прогресс, другие указывают на его риски.",
+    "Zusammenfassend lässt sich festhalten, dass die Frage nicht eindeutig zu beantworten ist; mein Fazit fällt daher differenziert aus. — Подводя итог, можно констатировать, что на этот вопрос нет однозначного ответа; поэтому мой вывод носит взвешенный характер."
+  ]
+}

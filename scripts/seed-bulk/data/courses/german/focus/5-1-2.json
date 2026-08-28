@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 1,
+    "l": 2
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+  "lessonTitle": "Пассив в прошедшем и будущем + von / durch",
+  "focus": "Расширить пассив на Präteritum, Perfekt и Futur I и научить различать деятеля (von) и средство/причину (durch).",
+  "grammar_points": [
+    "Passiv Präteritum: wurde + Partizip II ('Das Haus wurde gebaut').",
+    "Passiv Perfekt: sein + Partizip II + worden (не 'geworden'!): 'Das Haus ist gebaut worden'.",
+    "Passiv Futur I: werden + Partizip II + werden в конце: 'Das Haus wird gebaut werden'.",
+    "von + Dativ обозначает действующее лицо/виновника действия: 'von dem Architekten'.",
+    "durch + Akkusativ обозначает средство, инструмент или причину: 'durch einen Sturm', 'durch das Internet'.",
+    "Запомнить формы werden: Präteritum wurde, особая форма пассива в Perfekt — worden (без приставки ge-)."
+  ],
+  "vocab": [
+    "bauen — строить",
+    "zerstören — разрушать",
+    "gründen — основывать",
+    "der Architekt — архитектор",
+    "der Sturm — буря, шторм",
+    "die Ursache — причина",
+    "entdecken — открывать, обнаруживать",
+    "erfinden — изобретать"
+  ],
+  "examples": [
+    "Die Kirche wurde im 15. Jahrhundert gebaut. — Церковь была построена в 15 веке.",
+    "Das Dach ist durch einen Sturm zerstört worden. — Крыша была разрушена бурей.",
+    "Amerika wurde 1492 von Kolumbus entdeckt. — Америка была открыта Колумбом в 1492 году.",
+    "Die Brücke wird nächstes Jahr renoviert werden. — Мост будет отремонтирован в следующем году.",
+    "Das Problem wurde durch ein Update gelöst. — Проблема была решена с помощью обновления."
+  ]
+}

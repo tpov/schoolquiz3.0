@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 1,
+    "l": 3
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Алфавит, произношение, артикли der/die/das и грамматический род (грамматика)",
+  "lessonTitle": "Урок 3. Произношение: трудные согласные и сочетания",
+  "focus": "Отработать чтение немецких согласных и буквосочетаний, которые отличаются от русского: sch, ch, sp/st, z, w, v, ei/eu. Это база, чтобы правильно прочитать любое немецкое слово.",
+  "grammar_points": [
+    "sch читается как [ш]: die Schule, schön.",
+    "sp и st в начале слова/корня читаются как [шп] и [шт]: spielen [шпи́:лен], die Straße [штра́:се].",
+    "z читается как [ц], а не [з]: die Zeit, zehn.",
+    "w читается как [в], а v — обычно как [ф]: das Wasser, der Vater.",
+    "ch после a, o, u, au — твёрдый звук [х] (das Buch); после i, e, ä, ö, ü, согласных — мягкий [хь] (ich, das Mädchen).",
+    "ei читается [ай], eu и äu — [ой]: drei, neun, das Häuschen."
+  ],
+  "vocab": [
+    "die Schule — школа",
+    "das Wasser — вода",
+    "der Vater — отец",
+    "die Straße — улица",
+    "das Buch — книга",
+    "die Zeit — время",
+    "spielen — играть",
+    "drei — три"
+  ],
+  "examples": [
+    "Die Schule ist groß. — Школа большая.",
+    "Das Wasser ist kalt. — Вода холодная.",
+    "Mein Vater liest ein Buch. — Мой отец читает книгу.",
+    "Die Kinder spielen auf der Straße. — Дети играют на улице.",
+    "Ich habe keine Zeit. — У меня нет времени."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 2,
+    "l": 2
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+  "lessonTitle": "Урок 2. Разрешение и запрет: dürfen (и nicht dürfen)",
+  "focus": "Научить выражать разрешение и запрет с глаголом dürfen. Показать спряжение dürfen и важный нюанс: nicht dürfen означает «нельзя / запрещено», а не «не быть должным».",
+  "grammar_points": [
+    "dürfen — мочь в смысле «иметь разрешение». Спряжение: ich darf, du darfst, er/sie/es darf, wir dürfen, ihr dürft, sie/Sie dürfen.",
+    "nicht dürfen = запрет («нельзя, нельзя делать»). Сравните: müssen — необходимость, dürfen — разрешение. Внимание: nicht müssen ≠ nicht dürfen.",
+    "Различие können и dürfen: können — физическая возможность/умение, dürfen — позволение со стороны правил или человека.",
+    "Вопрос-просьба о разрешении: Darf ich …? — «Можно мне …?». Это вежливая стандартная формула.",
+    "Рамочная конструкция сохраняется: модальный глагол на 2-й позиции, Infinitiv в конце. Hier darf man nicht rauchen."
+  ],
+  "vocab": [
+    "dürfen — мочь (иметь разрешение)",
+    "rauchen — курить",
+    "das Verbot — запрет",
+    "die Erlaubnis — разрешение",
+    "hier — здесь",
+    "man — (безличное «можно/нужно»)",
+    "parken — парковаться",
+    "fragen — спрашивать"
+  ],
+  "examples": [
+    "Darf ich hier parken? — Можно мне здесь припарковаться?",
+    "Hier darf man nicht rauchen. — Здесь нельзя курить.",
+    "Die Kinder dürfen heute länger spielen. — Сегодня детям можно играть подольше.",
+    "Du darfst nicht so laut sprechen. — Тебе нельзя говорить так громко.",
+    "Darf ich Sie etwas fragen? — Можно мне Вас кое о чём спросить?"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 1,
+    "l": 4
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+  "lessonTitle": "Партиципиальные обороты II: обособленные конструкции (Partizipialsätze)",
+  "focus": "Научиться сокращать придаточные предложения до обособленных причастных оборотов и корректно их пунктуировать, выражая одновременность, предшествование, причину и образ действия в компактном стиле C1.",
+  "grammar_points": [
+    "Обособленный оборот с Partizip I — одновременность с действием главного предложения: In Gedanken versunken, bemerkte er den Anruf nicht.",
+    "Обособленный оборот с Partizip II — предшествование или пассивная завершённость: Vom langen Marsch erschöpft, legten die Wanderer eine Pause ein.",
+    "Свёртывание придаточных (weil/als/nachdem/während) в причастный оборот: подлежащее оборота должно совпадать с подлежащим главного предложения.",
+    "Постановка запятой: распространённый обособленный причастный оборот выделяется запятыми; подлежащего внутри оборота нет.",
+    "Сопоставление с инфинитивным и предложным оборотом; стилистическая принадлежность к письменной, публицистической и научной речи."
+  ],
+  "vocab": [
+    "die Verkürzung — сокращение, свёртывание",
+    "die Absonderung — обособление",
+    "erschöpft — измождённый, истощённый",
+    "begleitend — сопровождающий",
+    "vorausgehend — предшествующий",
+    "die Knappheit — краткость, лаконичность",
+    "verdichten — уплотнять, сжимать",
+    "geradezu — буквально, прямо-таки"
+  ],
+  "examples": [
+    "Gestützt auf aktuelle Daten, kommt die Studie zu einem klaren Ergebnis. — Опираясь на актуальные данные, исследование приходит к ясному выводу.",
+    "Tief beeindruckt von der Rede, applaudierte das Publikum minutenlang. — Глубоко впечатлённая речью, публика аплодировала несколько минут.",
+    "Den Vertrag sorgfältig prüfend, entdeckte die Juristin mehrere Lücken. — Тщательно проверяя договор, юристка обнаружила несколько пробелов.",
+    "Wie bereits erwähnt, bleibt der Termin unverändert. — Как уже упоминалось, срок остаётся неизменным.",
+    "Streng genommen, handelt es sich um zwei verschiedene Phänomene. — Строго говоря, речь идёт о двух разных явлениях."
+  ]
+}

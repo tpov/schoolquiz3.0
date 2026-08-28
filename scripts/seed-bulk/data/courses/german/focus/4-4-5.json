@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 4,
+    "l": 5
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+  "lessonTitle": "Урок 5. Нереальные условия: wenn-предложения с Konjunktiv II",
+  "focus": "Соединить изученные формы в нереальное условие настоящего времени: «если бы …, то …». Это итог темы — гипотезы о невозможном/маловероятном с союзом wenn.",
+  "grammar_points": [
+    "Нереальное условие настоящего: в обеих частях Konjunktiv II. Wenn ich Zeit hätte, würde ich dir helfen.",
+    "В придаточном с wenn спрягаемый глагол стоит в конце: Wenn ich reich wäre, …",
+    "В главной части обычно würde + Infinitiv, но с sein/haben/модальными — собственные формы (wäre, hätte, könnte).",
+    "Если главная часть идёт первой, wenn-часть можно заменить инверсией без союза: Hätte ich Zeit, würde ich kommen.",
+    "Konjunktiv II здесь показывает, что условие НЕреально или маловероятно в настоящем (в отличие от реального wenn с Indikativ из темы 1)."
+  ],
+  "vocab": [
+    "die Bedingung — условие",
+    "wenn — если; когда",
+    "dann — тогда, то",
+    "reich — богатый",
+    "gewinnen — выигрывать, побеждать",
+    "sich ändern — меняться",
+    "die Welt — мир",
+    "möglich — возможный"
+  ],
+  "examples": [
+    "Wenn ich mehr Geld hätte, würde ich eine Weltreise machen. — Если бы у меня было больше денег, я бы отправился в кругосветное путешествие.",
+    "Wenn das Wetter besser wäre, könnten wir spazieren gehen. — Если бы погода была лучше, мы могли бы пойти гулять.",
+    "Wenn du mich fragen würdest, würde ich Ja sagen. — Если бы ты меня спросил, я бы сказал «да».",
+    "Hätte ich deine Nummer, würde ich dich öfter anrufen. — Будь у меня твой номер, я бы звонил тебе чаще.",
+    "Wenn ich du wäre, würde ich diese Chance nutzen. — На твоём месте я бы воспользовался этим шансом."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 2,
+    "l": 5
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+  "lessonTitle": "Урок 5. Синтез: продуктивное использование Nominalstil и FVG в письменном тексте",
+  "focus": "Свести воедино навыки уроков 1–4: продуцировать связный фрагмент текста (тезис, аргумент, вывод), осознанно дозируя FVG и номинализации, и редактировать собственный текст, переключая регистр там, где это улучшает стиль.",
+  "grammar_points": [
+    "Сборка абзаца: ввод FVG в ключевые позиции (eine Rolle spielen, in Zusammenhang stehen, Berücksichtigung finden) для академического тона без перегрузки.",
+    "Связность номинального текста: комбинирование FVG/номинализаций с коннекторами C1 (somit, demzufolge, hierbei, dabei), чтобы цепочка существительных не теряла логику.",
+    "Редактирование (Stilüberarbeitung): диагностировать перегруженные предложения и точечно вербализировать самые тяжёлые узлы, сохраняя 1–2 номинальных оборота на абзац.",
+    "Согласование падежей и артиклей внутри длинных именных групп: Genitiv-цепочки и предложное управление FVG должны быть безупречны (unter Berücksichtigung der aktuellen Lage).",
+    "Жанровая адаптация: один и тот же контент оформляется номинально (отчёт) или вербально (устный доклад) — навык целевого переписывания под адресата."
+  ],
+  "vocab": [
+    "eine Rolle spielen — играть роль, иметь значение",
+    "Berücksichtigung finden — приниматься во внимание, учитываться",
+    "in Zusammenhang stehen — быть связанным, находиться во взаимосвязи",
+    "die Stilüberarbeitung — стилистическая правка, редактирование",
+    "der Zusammenhang — взаимосвязь, контекст",
+    "somit — таким образом, тем самым",
+    "demzufolge — вследствие этого, согласно этому",
+    "die Schlussfolgerung — вывод, заключение",
+    "in Anspruch nehmen — пользоваться, прибегать к (чему-л.)",
+    "die Wechselwirkung — взаимодействие, взаимовлияние"
+  ],
+  "examples": [
+    "Unter Berücksichtigung der aktuellen Lage spielt dieser Faktor eine entscheidende Rolle. — С учётом текущей ситуации этот фактор играет решающую роль.",
+    "Beide Phänomene stehen in einem engen Zusammenhang; demzufolge müssen sie gemeinsam analysiert werden. — Оба явления тесно связаны; следовательно, их нужно анализировать вместе.",
+    "Bei der Stilüberarbeitung ersetzte sie die schwerfälligsten Nominalketten durch klare Verbalsätze. — При стилистической правке она заменила самые тяжеловесные именные цепочки ясными глагольными предложениями.",
+    "Diese Aspekte finden in unserer Analyse besondere Berücksichtigung. — Эти аспекты находят в нашем анализе особое внимание (учитываются).",
+    "Die Schlussfolgerung lässt sich somit in einem einzigen Satz zusammenfassen. — Таким образом, вывод можно резюмировать одним-единственным предложением."
+  ]
+}

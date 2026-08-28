@@ -1,0 +1,16 @@
+Готово.
+
+Changed only [03-decisions.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/03-decisions.md).
+
+Sections tightened:
+
+- **ADR-SCH2-01 / Consequences**: added stale call-site coverage for production app composition, private shell render hops, settings preview, and app-shell androidTest caller.
+- **ADR-SCH2-02 / Decision, Rationale, Consequences**: clarified that “settings viewport” is the padded settings root after app-shell scaffold insets, not raw device bounds or under bottom bar.
+- **ADR-SCH2-05 / Alternatives Considered**: replaced reflection/service-location with grounded alternative of pushing build metadata into shell/local child-stack or route config, rejected as navigation/domain contamination.
+
+Confirmed:
+
+- No `TODO`, `TBD`, `UNRESOLVED`, `REQUIRES VERIFY`, question marks, or `Open Questions`.
+- Required ADR type grep prints nothing.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "dfd362a4-f528-407a-9aa3-b426b9645b07" "follow-up"`.

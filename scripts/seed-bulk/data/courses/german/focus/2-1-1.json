@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 1,
+    "l": 1
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+  "lessonTitle": "Урок 1. Präsens правильных глаголов в единственном числе (ich, du, er/sie/es)",
+  "focus": "Научиться спрягать правильные (слабые) глаголы в настоящем времени в единственном числе и строить простое утвердительное предложение с глаголом на 2-м месте.",
+  "grammar_points": [
+    "Структура глагола: основа (Stamm) + личное окончание. Инфинитив machen = mach- + -en.",
+    "Окончания единственного числа: ich -e (ich mache), du -st (du machst), er/sie/es -t (er macht).",
+    "Глагол всегда стоит на 2-м месте в утвердительном предложении: Ich wohne in Berlin.",
+    "Личные местоимения ед. числа: ich, du, er, sie, es. Sie (Вы) — вежливая форма.",
+    "Соединительная -e- после основ на -t/-d/-n: arbeiten → du arbeitest, er arbeitet (чтобы можно было произнести)."
+  ],
+  "vocab": [
+    "machen — делать",
+    "wohnen — жить, проживать",
+    "lernen — учить, учиться",
+    "arbeiten — работать",
+    "spielen — играть",
+    "kommen — приходить, приезжать (откуда-то)",
+    "heißen — зваться, называться",
+    "die Stadt — город"
+  ],
+  "examples": [
+    "Ich wohne in München. — Я живу в Мюнхене.",
+    "Du lernst Deutsch. — Ты учишь немецкий.",
+    "Er arbeitet in einer Bank. — Он работает в банке.",
+    "Wie heißt du? – Ich heiße Anna. — Как тебя зовут? – Меня зовут Анна.",
+    "Sie spielt gern Tennis. — Она охотно играет в теннис."
+  ]
+}

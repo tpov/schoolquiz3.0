@@ -1,0 +1,14 @@
+Готово.
+
+Changed:
+- [04-testing.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/04-testing.md)
+- [06-api-contract.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/06-api-contract.md)
+
+Fixes applied:
+- Expanded shorthand refs to full repo paths with line numbers.
+- Kept full canonical Kotlin signatures only in `06-api-contract.md`.
+- Re-checked for banned markers (`TODO`, `TBD`, `UNRESOLVED`, `REQUIRES VERIFY`, uncertainty markers).
+
+Caveat: production code and `01/02/03` docs were not touched.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "799c9576-f8c0-4ab7-90db-b633ccc7439d" "follow-up"`.

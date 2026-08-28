@@ -1,0 +1,100 @@
+## Findings
+
+- `DesignSettingsScreen` is currently a Compose-only settings UI: `SchoolQuizDesignBackground` wraps a full-size `LazyColumn`, whose content is only `SettingsHeader()` plus `SchoolQuizDesignStyle.entries` options. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:48`, `:53`, `:58`, `:63`, `:66`.
+- Settings is rendered from the LOCAL tab branch of `AppShellScreen` for `LocalConfig.SettingsRoot`, with `Scaffold` `paddingValues` applied to the screen modifier. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:461`, `:462`, `:465`.
+- App version data currently flows only as `BuildConfig.VERSION_NAME` from app layer into `AppShellScreen` and drawer footer; `VERSION_CODE` exists in Gradle but is not passed through current UI APIs. Evidence: `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:43`, `apps/android-next/build.gradle.kts:16`, `apps/android-next/build.gradle.kts:17`, `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:123`.
+
+## Components
+
+### `DesignSettingsScreen`
+
+- **Location**: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:48`
+- **Description**: public composable receives `selectedStyle`, `onStyleSelected`, and `modifier`; it renders design selection UI inside `SchoolQuizDesignBackground`. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:48`, `:49`, `:50`, `:51`, `:53`.
+- **Uses**: `MaterialTheme.colorScheme.primary`, `SchoolQuizDesignBackground`, `LazyColumn`, `SchoolQuizDesignStyle.entries`, and `DesignStyleOption`. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:55`, `:58`, `:66`, `:67`, `:70`.
+- **Used by**: `AppShellScreen.LocalTabContent` under `LocalConfig.SettingsRoot`; preview calls it directly. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:461`, `:462`; `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:302`.
+- **Data flow**: `selectedStyle` controls selected option comparison, and option click calls `onStyleSelected(style)`. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:49`, `:72`, `:73`.
+
+### `DesignStyleOption`
+
+- **Location**: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:97`
+- **Description**: selectable style card; click handling is attached to the full-width `SchoolQuizDesignCard`. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:97`, `:109`, `:112`, `:113`.
+- **Uses**: `schoolQuizDesignModeAccent`, `schoolQuizDesignNeutralBorderColor`, `schoolQuizDesignDeepSurfaceColor`, `MaterialTheme.typography.titleMedium/bodySmall`. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:102`, `:107`, `:115`, `:134`, `:141`.
+- **Used by**: `DesignSettingsScreen` lazy `items` block. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:66`, `:70`.
+- **Data flow**: style title/caption render from private extension properties. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:133`, `:140`, `:284`, `:291`.
+
+### `AppShellScreen`
+
+- **Location**: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:121`
+- **Description**: root shell composable wires drawer, scaffold, app bars, nav bar, per-tab child content. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:99`, `:102`, `:208`, `:227`, `:287`.
+- **Uses**: `appVersionName` param from app layer, `DrawerContent`, `LocalTabContent`, `selectedDesignStyle`, `onDesignStyleSelected`. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:123`, `:214`, `:220`, `:293`, `:294`.
+- **Used by**: `MainActivity.setContent`. Evidence: `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:40`, `:41`.
+- **Data flow**: `Scaffold` emits `paddingValues`, passes them to `AppShellContent`, then `LocalTabContent`, then `DesignSettingsScreen` as `Modifier.padding(paddingValues)`. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:281`, `:290`, `:341`, `:425`, `:465`.
+
+### `DrawerFooter`
+
+- **Location**: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:40`
+- **Description**: existing drawer footer renders footer actions and a version label. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:31`, `:40`, `:53`, `:55`, `:73`.
+- **Uses**: `versionName`, `MaterialTheme.typography.labelSmall`, `MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)`, and `clickable(onClick = onVersionTap)`. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:43`, `:74`, `:75`, `:76`, `:79`.
+- **Used by**: `DrawerContent`, which receives `versionName` and forwards `onVersionTap`. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerContent.kt:31`, `:32`, `:70`, `:73`, `:75`.
+- **Data flow**: `AppShellScreen` passes `appVersionName` to `DrawerContent.versionName`, then `DrawerFooter` renders `"v$versionName"`. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:220`; `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:74`.
+
+## Data flow
+
+- `apps/android-next/build.gradle.kts:16` defines `versionCode = 1`; `apps/android-next/build.gradle.kts:17` defines `versionName = "0.1.0"`.
+- `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:43` passes `BuildConfig.VERSION_NAME` into `AppShellScreen.appVersionName`.
+- `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:107` documents `appVersionName` as app-layer `BuildConfig.VERSION_NAME`; `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:108` documents that library modules cannot access `BuildConfig.VERSION_NAME` directly.
+- `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:220` forwards `appVersionName` to drawer `versionName`.
+- `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:74` renders drawer version as `v$versionName`.
+- `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:461` routes `LocalConfig.SettingsRoot` to `DesignSettingsScreen`.
+- `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:463` passes `selectedDesignStyle`; `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:464` passes `onDesignStyleSelected`.
+- `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:46` updates selected design style; `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:48` persists it to shared preferences.
+
+## Entry Points
+
+### Entry Points for `DesignSettingsScreen`
+
+| Entry Point | Caller | Expected State | file:line |
+|---|---|---|---|
+| `DesignSettingsScreen(selectedStyle, onStyleSelected, modifier)` | `AppShellScreen.LocalTabContent` when `LocalConfig.SettingsRoot` is active | `selectedDesignStyle` and `onDesignStyleSelected` are supplied by `AppShellScreen` | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:461` |
+| `DesignSettingsScreen(selectedStyle, onStyleSelected)` | Compose preview | `SchoolQuizTheme` wraps preview and selected style is `SchoolQuizDesignStyle.Clean` | `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:300` |
+
+### Entry Points for settings navigation
+
+| Entry Point | Caller | Expected State | file:line |
+|---|---|---|---|
+| `LocalConfig.SettingsRoot` | `DrawerSection.LocalSection.Settings` maps to settings root stack | LOCAL tab section `Settings` opens `NavStack(LocalConfig.SettingsRoot)` | `shared/feature/app-shell/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/app_shell/domain/logic/AppShellTransitions.kt:34` |
+| `LocalConfig.SettingsRoot` | `rootOf(DrawerSection.LocalSection.Settings)` | settings section resolves to settings root config | `shared/feature/app-shell/domain/src/commonMain/kotlin/com/tpov/schoolquiz/shared/feature/app_shell/domain/logic/Visibility.kt:122` |
+| Drawer section click | `DrawerSectionList` | click calls `navigator.goTo(Destination.SelectSection(section))` | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerSectionList.kt:37` |
+
+## Impact Scan
+
+| Consumer | Assumption | Impact | Severity |
+|---|---|---|---|
+| `AppShellScreen.LocalTabContent` | Current `DesignSettingsScreen` call supplies only `selectedStyle`, `onStyleSelected`, and `modifier` | Signature changes require updating this call site | Medium — `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:462` |
+| `DesignSettingsScreenPreview` | Current preview call supplies only `selectedStyle` and `onStyleSelected` | Signature changes require updating preview | Low — `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:302` |
+| `AppShellScreen` app caller | Current `AppShellScreen` API requires `appVersionName`; no `appVersionCode` param exists | Passing version code to settings requires an API/wiring change at app-shell boundary | Medium — `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:121` |
+| `MainActivity` | Current app layer passes only `BuildConfig.VERSION_NAME` | `BuildConfig.VERSION_CODE` is available in app Gradle config but not passed to UI | Medium — `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:43`; `apps/android-next/build.gradle.kts:16` |
+| Existing drawer version behavior | Drawer version label is clickable and invokes `onVersionTap` | Settings display-only footer must not accidentally reuse drawer tap behavior if scope remains display-only | Medium — `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:79` |
+
+## Duplicate Logic Scan
+
+| Existing | Location | Similarity | Question |
+|---|---|---|---|
+| Drawer version formatter uses `v$versionName` | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:74` | Same version prefix pattern, but current drawer omits `versionCode` | Reuse/extend/create separate settings display string? |
+| Drawer low-emphasis version style | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:75` | Same “small grey” typography/color intent via `labelSmall` and alpha color | Reuse same visual tokens or define local footer styling? |
+| Drawer version tap callback | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:79` | Same version label area, but existing drawer is interactive | Keep settings footer separate/display-only or intentionally share behavior? |
+| About dialog version text | `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/drawer/DrawerFooter.kt:89` | Existing version copy in dialog, but not pinned footer | Reuse formatting or keep dialog copy unchanged? |
+
+## Constraints / Risks / Open Questions
+
+- Current settings layout is a full-size `LazyColumn` with content padding and spaced items; adding footer as another lazy item would put it in the scroll content path. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:58`, `:60`, `:61`, `:63`, `:66`.
+- `SchoolQuizDesignBackground` content is a `BoxScope`, so the current background wrapper can host Box-positioned children in addition to the current `LazyColumn`. Evidence: `android/core/designsystem/src/main/kotlin/com/tpov/schoolquiz/android/core/designsystem/components/SchoolQuizDesign.kt:170`, `:175`, `:189`, `:199`.
+- Settings receives `Scaffold` insets through `Modifier.padding(paddingValues)`, after the top app bar and bottom navigation bar are installed by the shell. Evidence: `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:227`, `:250`, `:281`, `:465`.
+- Existing settings controls are the style cards; each card is clickable and calls `onStyleSelected(style)`. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:70`, `:73`, `:109`, `:113`.
+- Existing design style persistence lives in `MainActivity` shared preferences; settings UI only emits `onStyleSelected`. Evidence: `apps/android-next/src/main/java/com/tpov/schoolquiz/apps/android_next/MainActivity.kt:33`, `:36`, `:46`, `:48`.
+- Existing design-system styling uses `MaterialTheme` color/typography and design tokens; settings currently uses direct `dp` spacing values rather than a spacing token. Evidence: `android/feature/local/settings/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/local/settings/presentation/ui/DesignSettingsScreen.kt:60`, `:85`, `:91`, `:120`; `android/core/designsystem/src/main/kotlin/com/tpov/schoolquiz/android/core/designsystem/SchoolQuizTheme.kt:35`.
+- `SchoolQuizTheme` selects typography by `SchoolQuizDesignStyle`, so footer typography will inherit active design style if it uses `MaterialTheme.typography`. Evidence: `android/core/designsystem/src/main/kotlin/com/tpov/schoolquiz/android/core/designsystem/SchoolQuizTheme.kt:39`, `:40`, `:41`.
+- `VERSION_CODE` is available from app module configuration, but no current app-shell/settings parameter carries it. Evidence: `apps/android-next/build.gradle.kts:16`; `android/feature/app-shell/presentation/src/main/kotlin/com/tpov/schoolquiz/android/feature/app_shell/presentation/ui/AppShellScreen.kt:123`.
+- Open question: exact test coverage for settings footer is absent in the local settings module; only `.gitkeep` exists under test/androidTest paths. Evidence: `android/feature/local/settings/presentation/src/test/java/.gitkeep`; `android/feature/local/settings/presentation/src/androidTest/java/.gitkeep`.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "df53c60a-9bf8-4294-921f-0f80bc9dee14" "follow-up"`.

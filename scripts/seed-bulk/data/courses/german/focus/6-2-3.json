@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 2,
+    "l": 3
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+  "lessonTitle": "Урок 3. Номинализация: трансформация придаточных в именные группы",
+  "focus": "Научиться целенаправленно преобразовывать вербальные предложения (придаточные с weil/wenn/nachdem/dass) в номинальные конструкции с предлогом + существительное, и наоборот — корректно выбирать предлог и падеж.",
+  "grammar_points": [
+    "Причина: weil → wegen / aufgrund / infolge + Genitiv (weil es regnete → wegen des Regens; infolge подчёркивает следствие).",
+    "Время: als/nachdem → bei / nach / vor / während + Dativ (nachdem er angekommen war → nach seiner Ankunft; während er sprach → während seiner Rede).",
+    "Условие/уступка: wenn → bei + Dativ (bei schlechtem Wetter); obwohl → trotz + Genitiv (trotz des schlechten Wetters).",
+    "Цель: damit / um…zu → zur / zum + субстантивированный инфинитив (um sich zu informieren → zur Information; zum Schutz der Daten).",
+    "Грамматическая «привязка» при номинализации: субъект придаточного становится притяжательным/родительным определением (er kam → seine Ankunft / die Ankunft des Gastes); прямое дополнение → Genitivattribut (man prüft den Antrag → die Prüfung des Antrags)."
+  ],
+  "vocab": [
+    "aufgrund — на основании, из-за (+ Genitiv)",
+    "infolge — вследствие (+ Genitiv)",
+    "die Ankunft — прибытие, приезд",
+    "die Abreise — отъезд",
+    "die Prüfung — проверка, экзамен",
+    "der Antrag — заявление, ходатайство",
+    "der Schutz — защита",
+    "trotz — несмотря на (+ Genitiv)",
+    "während — во время, в течение (+ Genitiv)",
+    "die Verspätung — опоздание, задержка"
+  ],
+  "examples": [
+    "Wegen der Verspätung des Zuges verpassten wir den Anschluss. — Из-за опоздания поезда мы пропустили пересадку.",
+    "Nach der Ankunft des Gastes begann die Konferenz. — После прибытия гостя началась конференция.",
+    "Trotz des schlechten Wetters fand die Veranstaltung statt. — Несмотря на плохую погоду, мероприятие состоялось.",
+    "Zum Schutz der persönlichen Daten werden die Server verschlüsselt. — Для защиты персональных данных серверы шифруются.",
+    "Aufgrund der sorgfältigen Prüfung des Antrags wurde er bewilligt. — На основании тщательной проверки заявление было одобрено."
+  ]
+}

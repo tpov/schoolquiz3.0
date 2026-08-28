@@ -1,0 +1,17 @@
+node: env_preflight (node-079132a2-39f2-4bcb-849c-e2153b88e728)
+kind: agent · role: diagnostics · model: gpt-5.5
+добавлена: 2026-07-26 (после прогона SCH-2 — build gate упал на окружении УЖЕ ПОСЛЕ написания кода)
+
+место в графе: impl_preflight —proposal→ env_preflight —env_ok→ implement
+                                                        —env_fail→ debug
+
+задача: гейт пригодности окружения сборки ДО поднятия команды реализации.
+проверки: (1) ноль AppleDouble `._*` вне .git (exFAT-воркспейс = непригоден),
+(2) sdk.dir из local.properties существует, (3) apps/android-next/google-services.json
+присутствует (только наличие, содержимое не печатать), (4) смок `./gradlew :buildSrc:compileKotlin`.
+ничего не чинит и не удаляет — только вердикт env_ok/env_fail + комментарий в задачу.
+
+контекст: воркспейс перенесён /Volumes/EXTERNAL/schoolquiz3.0 (exFAT) → /Users/tpov/schoolquiz3.0 (APFS)
+2026-07-26; старая копия оставлена как бэкап. Причина: macOS пишет `._*` сайдкары на exFAT,
+они зашиваются внутрь classes.jar и валят ClasspathEntrySnapshotTransform — чистка не живёт,
+Gradle регенерит их немедленно.

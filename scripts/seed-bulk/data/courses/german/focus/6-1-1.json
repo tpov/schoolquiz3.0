@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 1,
+    "l": 1
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Коннекторы и сложные структуры, партиципиальные обороты (грамматика)",
+  "lessonTitle": "Двучленные коннекторы (zweiteilige Konnektoren) и логические связки",
+  "focus": "Освоить двучленные союзы для выражения тонких логических отношений (сопоставление, ограничение, альтернатива) на уровне C1 и научиться правильно строить с ними порядок слов.",
+  "grammar_points": [
+    "Двучленные коннекторы: sowohl … als auch (и … и), weder … noch (ни … ни), nicht nur … sondern auch (не только … но и), entweder … oder (или … или), zwar … aber (хотя и … но), je … desto/umso (чем … тем).",
+    "При weder … noch второй части не нужно отрицание; глагол при инверсии после noch ставится перед подлежащим: …, noch interessiert ihn das.",
+    "Конструкция je … desto: после je идёт придаточное с глаголом в конце, после desto — главное с инверсией и сравнительной степенью: Je mehr du übst, desto besser wirst du.",
+    "Согласование сказуемого с sowohl … als auch и nicht nur … sondern auch: обычно во множественном числе, если соединены два подлежащих.",
+    "Различие nicht nur … sondern auch (добавление) и не путать с zwar … aber (уступка/ограничение)."
+  ],
+  "vocab": [
+    "der Konnektor — коннектор, союз",
+    "die Voraussetzung — предпосылка, условие",
+    "die Einschränkung — ограничение, оговорка",
+    "der Gegensatz — противоположность, контраст",
+    "die Steigerung — усиление, повышение (степени)",
+    "die Wechselbeziehung — взаимосвязь",
+    "ausgeprägt — ярко выраженный, заметный",
+    "wechselseitig — взаимный, обоюдный"
+  ],
+  "examples": [
+    "Sie spricht sowohl Französisch als auch Chinesisch fließend. — Она свободно говорит и по-французски, и по-китайски.",
+    "Er hat weder angerufen, noch hat er eine Nachricht hinterlassen. — Он ни не позвонил, ни не оставил сообщения.",
+    "Das Projekt ist nicht nur teuer, sondern auch technisch äußerst anspruchsvoll. — Проект не только дорогой, но и технически крайне сложный.",
+    "Je länger die Verhandlungen dauerten, desto unwahrscheinlicher wurde eine Einigung. — Чем дольше длились переговоры, тем менее вероятным становилось соглашение.",
+    "Zwar war die Kritik berechtigt, aber sie wurde in einem unangemessenen Ton vorgetragen. — Хотя критика и была обоснованной, она была высказана в неуместном тоне."
+  ]
+}

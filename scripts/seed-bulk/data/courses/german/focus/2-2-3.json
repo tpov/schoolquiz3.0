@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 3
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Семья и описание людей (Familie, Personen)",
+  "lessonTitle": "Урок 3. Возраст, профессия и страна — рассказ о человеке",
+  "focus": "Научиться давать базовую справку о человеке: сколько лет, кем работает, откуда. Здесь активно работают haben и sein в рамках A1.",
+  "grammar_points": [
+    "Возраст через sein + Zahl + Jahre alt: Ich bin dreißig Jahre alt; в вопросе — Wie alt bist du?",
+    "Профессия без артикля после sein: Er ist Lehrer. Sie ist Ärztin (женский род профессии с суффиксом -in).",
+    "Происхождение: kommen aus + страна (Ich komme aus Russland) и wohnen in + город (Ich wohne in Hamburg).",
+    "Глагол haben для семьи: Ich habe einen Bruder (Akkusativ: ein → einen у м.р.)."
+  ],
+  "vocab": [
+    "alt — старый",
+    "jung — молодой",
+    "das Jahr — год",
+    "der Beruf — профессия",
+    "der Lehrer / die Lehrerin — учитель / учительница",
+    "der Arzt / die Ärztin — врач (м/ж)",
+    "der Student / die Studentin — студент / студентка",
+    "das Land — страна",
+    "die Stadt — город",
+    "von Beruf — по профессии"
+  ],
+  "examples": [
+    "Wie alt bist du? — Ich bin zwölf Jahre alt. — Сколько тебе лет? — Мне двенадцать лет.",
+    "Mein Vater ist Arzt von Beruf. — Мой отец врач по профессии.",
+    "Meine Schwester ist Studentin. — Моя сестра студентка.",
+    "Wir kommen aus Russland und wohnen in München. — Мы из России и живём в Мюнхене.",
+    "Ich habe einen Bruder und eine Schwester. — У меня есть брат и сестра."
+  ]
+}

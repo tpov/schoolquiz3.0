@@ -1,0 +1,16 @@
+Updated [04-testing.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/04-testing.md).
+
+Changed sections:
+- Test Surface Plan
+- Acceptance Criteria Mapping
+- Suggested Automated Tests
+- Required Validation Commands
+- Architecture Regression Checks
+
+Confirmed:
+- AC1 now has a required deterministic instrumented Compose bounds assertion path.
+- AC5 now includes executable grep checks for interaction primitives plus semantics assertion.
+- Debug and release visibility validation added, including `assembleRelease`.
+- No banned markers or question marks found.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "799c9576-f8c0-4ab7-90db-b633ccc7439d" "follow-up"`.

@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 3,
+    "l": 1
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+  "lessonTitle": "Урок 1. Выражаем своё мнение: вводные обороты и порядок слов",
+  "focus": "Научиться чётко формулировать личное мнение на B2 с помощью устойчивых вводных конструкций и правильно строить сложноподчинённое предложение с союзом dass (рамочная конструкция, глагол в конец).",
+  "grammar_points": [
+    "Вводные обороты мнения с придаточным dass: Ich bin der Meinung, dass …; Ich finde/denke/glaube, dass … — спрягаемый глагол уходит в конец придаточного.",
+    "Альтернатива без dass: после Ich finde/glaube можно опустить союз, тогда порядок слов прямой (Ich finde, das ist falsch).",
+    "Безличные конструкции мнения: Meiner Meinung nach + инверсия (глагол на 2-м месте): Meiner Meinung nach ist das Gesetz sinnvoll.",
+    "Различие meiner Meinung nach (Dativ, послелог nach) и Ich bin der Meinung, dass — два регистра одной идеи.",
+    "Усиление и смягчение оценки наречиями: durchaus, eindeutig, eher, ziemlich перед прилагательным."
+  ],
+  "vocab": [
+    "die Meinung — мнение",
+    "der Standpunkt — точка зрения",
+    "die Ansicht — взгляд, воззрение",
+    "überzeugt (sein) — быть убеждённым",
+    "der Eindruck — впечатление",
+    "behaupten — утверждать",
+    "betonen — подчёркивать",
+    "eindeutig — однозначно",
+    "durchaus — вполне, безусловно"
+  ],
+  "examples": [
+    "Meiner Meinung nach sollte man mehr Zeit mit der Familie verbringen. — По моему мнению, нужно проводить больше времени с семьёй.",
+    "Ich bin der Ansicht, dass diese Entscheidung ein Fehler war. — Я придерживаюсь мнения, что это решение было ошибкой.",
+    "Ich finde, das Buch ist eindeutig zu lang. — Я считаю, что книга однозначно слишком длинная.",
+    "Er ist fest davon überzeugt, dass er recht hat. — Он твёрдо убеждён, что он прав.",
+    "Aus meiner Sicht ist der Vorschlag durchaus sinnvoll. — С моей точки зрения, предложение вполне разумно."
+  ]
+}

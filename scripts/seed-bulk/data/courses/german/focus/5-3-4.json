@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 3,
+    "l": 4
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+  "lessonTitle": "Урок 4. Уступка и противопоставление: «хотя», «несмотря на», «тем не менее»",
+  "focus": "Освоить уступительные и противительные конструкции, которые позволяют признать чужой довод и всё же отстоять свою позицию — ключевой приём зрелой аргументации B2.",
+  "grammar_points": [
+    "Уступительное придаточное obwohl/obgleich (глагол в конец): Obwohl es regnet, gehe ich spazieren.",
+    "Противительные коннекторы trotzdem / dennoch / allerdings — после них инверсия (глагол на 2-м месте).",
+    "Предложный оборот trotz + Genitiv (trotz des Regens) как компактная альтернатива придаточному с obwohl.",
+    "Ограничение и оговорка: zwar …, aber …; es sei denn, … (если только не).",
+    "Различие aber (сочинительный, прямой порядок) и sondern (после отрицания: nicht …, sondern …)."
+  ],
+  "vocab": [
+    "obwohl — хотя",
+    "trotzdem — тем не менее, всё же",
+    "dennoch — однако, тем не менее",
+    "allerdings — впрочем, правда",
+    "der Widerspruch — противоречие",
+    "die Ausnahme — исключение",
+    "berücksichtigen — учитывать, принимать во внимание",
+    "einräumen — признавать (довод)",
+    "im Gegensatz zu — в противоположность"
+  ],
+  "examples": [
+    "Obwohl das Argument überzeugend klingt, bin ich nicht einverstanden. — Хотя аргумент звучит убедительно, я не согласен.",
+    "Der Plan ist riskant, trotzdem würde ich ihn unterstützen. — План рискованный, тем не менее я бы его поддержал.",
+    "Trotz aller Bedenken hat das Team die Entscheidung getroffen. — Несмотря на все сомнения, команда приняла решение.",
+    "Ich gebe zu, dass du teilweise recht hast, allerdings übersiehst du einen Punkt. — Признаю, что ты отчасти прав, впрочем, ты упускаешь один момент.",
+    "Wir fahren nicht morgen, sondern erst nächste Woche. — Мы поедем не завтра, а только на следующей неделе."
+  ]
+}

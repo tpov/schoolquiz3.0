@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 3,
+    "l": 2
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+  "lessonTitle": "Урок 2. Еда и напитки: что я ем и пью",
+  "focus": "Базовая лексика продуктов, блюд и напитков. Учимся говорить, что любим и едим на завтрак/обед/ужин, и употреблять названия еды без артикля (как вещество) или с количеством.",
+  "grammar_points": [
+    "Неисчисляемые продукты (вещества) часто употребляются БЕЗ артикля: Ich trinke Tee. Ich esse Reis.",
+    "Глагол mögen (любить, нравится — о еде): ich mag, du magst, er/sie mag, wir mögen, sie mögen.",
+    "Отрицание еды: kein/keine перед существительным — Ich esse kein Fleisch (мужской/средний → kein, женский → keine, множ. → keine).",
+    "Наречия частоты и времени: morgens (по утрам), mittags (днём), abends (по вечерам), gern (охотно/с удовольствием).",
+    "Род существительных-продуктов нужно запоминать вместе со словом: der Käse, die Butter, das Ei."
+  ],
+  "vocab": [
+    "das Ei — яйцо",
+    "der Käse — сыр",
+    "die Butter — масло (сливочное)",
+    "das Fleisch — мясо",
+    "der Fisch — рыба",
+    "das Gemüse — овощи",
+    "das Obst — фрукты",
+    "der Tee — чай",
+    "der Saft — сок",
+    "mögen — любить (о еде)"
+  ],
+  "examples": [
+    "Ich mag Käse, aber ich esse kein Fleisch. — Я люблю сыр, но я не ем мясо.",
+    "Morgens esse ich ein Ei und Brot mit Butter. — По утрам я ем яйцо и хлеб с маслом.",
+    "Trinkst du gern Tee oder Kaffee? — Ты охотно пьёшь чай или кофе?",
+    "Sie isst viel Obst und Gemüse. — Она ест много фруктов и овощей.",
+    "Wir mögen Fisch. — Мы любим рыбу."
+  ]
+}

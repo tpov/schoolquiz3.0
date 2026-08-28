@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 4,
+    "l": 5
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+  "lessonTitle": "Урок 5. В отеле и в дороге: ситуации (Im Hotel und unterwegs)",
+  "focus": "Финальная практика темы: диалоги на ресепшене, проблемы в пути, вежливые просьбы туриста. Грамматический фокус — вежливая просьба с Ich hätte gern / Könnten Sie ... ? (Konjunktiv II в готовых оборотах, без полного разбора) и Perfekt для рассказа о поездке (как повторение, без углубления — это отдельная тема).",
+  "grammar_points": [
+    "Вежливая просьба: Ich hätte gern ein Zimmer mit Frühstück.",
+    "Вежливый вопрос-просьба: Könnten Sie mir bitte helfen?",
+    "Краткий рассказ о прошедшей поездке в Perfekt как итог (повторение): Wir sind nach München gefahren.",
+    "Союз weil для простой причины: Ich nehme ein Taxi, weil es spät ist.",
+    "Конструкция es gibt + Akkusativ для наличия услуг: Gibt es hier WLAN?"
+  ],
+  "vocab": [
+    "die Rezeption — ресепшен, стойка регистрации",
+    "der Schlüssel — ключ",
+    "das Frühstück — завтрак",
+    "einchecken — заселяться",
+    "auschecken — выселяться",
+    "die Rechnung — счёт",
+    "die Sehenswürdigkeit — достопримечательность",
+    "die Stadtführung — экскурсия по городу",
+    "das Taxi — такси",
+    "das Trinkgeld — чаевые",
+    "reservieren — резервировать",
+    "die Quittung — квитанция, чек",
+    "verloren — потерянный",
+    "unterwegs — в пути, по дороге"
+  ],
+  "examples": [
+    "Guten Tag, ich habe ein Zimmer auf den Namen Schmidt reserviert. (Здравствуйте, я забронировал номер на имя Шмидт.)",
+    "Ich hätte gern den Schlüssel für Zimmer 204. (Я хотел бы ключ от номера 204.)",
+    "Könnten Sie mir bitte eine gute Stadtführung empfehlen? (Не могли бы вы порекомендовать хорошую экскурсию по городу?)",
+    "Wir sind drei Tage in Wien geblieben und haben viele Sehenswürdigkeiten gesehen. (Мы пробыли три дня в Вене и посмотрели много достопримечательностей.)",
+    "Ich nehme ein Taxi, weil mein Koffer zu schwer ist. (Я возьму такси, потому что мой чемодан слишком тяжёлый.)"
+  ]
+}

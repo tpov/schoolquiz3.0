@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 2,
+    "l": 5
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+  "lessonTitle": "Урок 5. Все вместе: модальные глаголы в живой речи (быт, правила, просьбы)",
+  "focus": "Свести все шесть модальных глаголов в типичных бытовых ситуациях и научить выбирать правильный глагол по смыслу. Закрепить рамочную конструкцию в развёрнутых предложениях.",
+  "grammar_points": [
+    "Сводная таблица значений: können (умение/возможность), müssen (необходимость), dürfen (разрешение/запрет), wollen (твёрдое желание), sollen (чужая воля/совет), möchten (вежливое желание).",
+    "Выбор глагола по контексту: правило/закон → dürfen или müssen; собственное намерение → wollen; вежливая просьба/заказ → möchten; рекомендация → sollen.",
+    "Рамочная конструкция в более длинных предложениях: между модальным глаголом (позиция 2) и инфинитивом (конец) могут стоять обстоятельства времени, места и дополнения: Ich muss heute Abend noch Hausaufgaben machen.",
+    "Модальный глагол может стоять и без второго глагола, когда смысл понятен из контекста: Ich muss nach Hause. (= nach Hause gehen). Ich kann Deutsch. (= sprechen).",
+    "Вежливость в просьбах: Könnten Sie …? и Ich möchte … звучат вежливее, чем Kannst du …? и Ich will …."
+  ],
+  "vocab": [
+    "die Hausaufgabe — домашнее задание",
+    "nach Hause — домой",
+    "der Termin — встреча, приём (по записи)",
+    "die Regel — правило",
+    "pünktlich — пунктуальный, вовремя",
+    "helfen — помогать",
+    "der Abend — вечер",
+    "vielleicht — может быть, возможно"
+  ],
+  "examples": [
+    "Ich muss heute Abend noch Hausaufgaben machen. — Сегодня вечером мне ещё нужно сделать домашнее задание.",
+    "Können Sie mir bitte helfen? — Не могли бы Вы мне помочь?",
+    "Im Krankenhaus darf man nicht laut sein. — В больнице нельзя шуметь.",
+    "Du sollst pünktlich zum Termin kommen. — Ты должен прийти на приём вовремя.",
+    "Ich will heute nicht kochen, ich möchte ins Restaurant gehen. — Сегодня я не хочу готовить, я хотел бы пойти в ресторан."
+  ]
+}

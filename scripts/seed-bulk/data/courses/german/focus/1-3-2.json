@@ -1,0 +1,40 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 3,
+    "l": 2
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+  "lessonTitle": "Урок 2. Числа 13–100 (Die Zahlen von 13 bis 100)",
+  "focus": "Освоить построение больших чисел и важную особенность немецкого: единицы называются ПЕРЕД десятками. Уметь назвать возраст, цену и номер телефона.",
+  "grammar_points": [
+    "Числа 13–19 = единица + zehn: dreizehn, vierzehn ... (siebzehn, achtzehn — без -en/изменения корня).",
+    "Десятки на -zig: zwanzig, dreißig (исключение -ßig!), vierzig, fünfzig, sechzig, siebzig, achtzig, neunzig.",
+    "ГЛАВНОЕ правило: 21–99 читаются «задом наперёд» через und: einundzwanzig = ein-und-zwanzig (1 и 20), всё пишется слитно.",
+    "Возраст: Ich bin ... Jahre alt. (Мне ... лет) — глагол sein, дословно «Я есть ... лет старый»."
+  ],
+  "vocab": [
+    "dreizehn — тринадцать",
+    "sechzehn — шестнадцать",
+    "siebzehn — семнадцать",
+    "zwanzig — двадцать",
+    "einundzwanzig — двадцать один",
+    "dreißig — тридцать",
+    "vierzig — сорок",
+    "fünfzig — пятьдесят",
+    "hundert — сто",
+    "das Jahr — год",
+    "alt — старый, в возрасте",
+    "das Alter — возраст",
+    "die Nummer — номер"
+  ],
+  "examples": [
+    "Ich bin dreizehn Jahre alt. — Мне тринадцать лет.",
+    "Vierundzwanzig: vier und zwanzig. — Двадцать четыре: четыре и двадцать.",
+    "Sie ist einunddreißig. — Ей тридцать один.",
+    "Das kostet fünfzig Euro. — Это стоит пятьдесят евро.",
+    "Meine Nummer ist sieben-acht-neun. — Мой номер семь-восемь-девять."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 2
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Семья и описание людей (Familie, Personen)",
+  "lessonTitle": "Урок 2. Расширенная семья и притяжательные sein/ihr",
+  "focus": "Добавить родственников (бабушка, дедушка, дядя, тётя) и научиться говорить «его/её» о третьем лице. Естественное продолжение: теперь рассказываем не только о своей семье.",
+  "grammar_points": [
+    "Притяжательные sein (его) и ihr (её) в Nominativ: окончания как у mein — sein Bruder, seine Schwester; ihr Bruder, ihre Schwester.",
+    "Выбор sein/ihr зависит от ВЛАДЕЛЬЦА (он → sein, она → ihr), а окончание -e/без — от рода предмета обладания.",
+    "Различение Großvater/Opa и Großmutter/Oma как нейтральной и разговорной форм.",
+    "Вопрос Wer ist das? (Кто это?) для представления родственников."
+  ],
+  "vocab": [
+    "die Großmutter / die Oma — бабушка",
+    "der Großvater / der Opa — дедушка",
+    "die Großeltern (Pl.) — бабушка и дедушка",
+    "der Onkel — дядя",
+    "die Tante — тётя",
+    "der Cousin — двоюродный брат",
+    "die Cousine — двоюродная сестра",
+    "der Mann — муж / мужчина",
+    "die Frau — жена / женщина",
+    "verheiratet — женат / замужем"
+  ],
+  "examples": [
+    "Wer ist das? — Das ist meine Oma. — Кто это? — Это моя бабушка.",
+    "Anna ist verheiratet. Ihr Mann heißt Peter. — Анна замужем. Её мужа зовут Петер.",
+    "Tom hat einen Onkel. Sein Onkel wohnt in Wien. — У Тома есть дядя. Его дядя живёт в Вене.",
+    "Meine Großeltern sind schon alt. — Мои бабушка и дедушка уже старые.",
+    "Ihre Tante kommt aus Italien. — Её тётя родом из Италии."
+  ]
+}

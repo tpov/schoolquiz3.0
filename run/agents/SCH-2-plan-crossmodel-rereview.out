@@ -1,0 +1,11 @@
+Updated [docs/features/settings-app-version-footer/reviews/plan-review.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/reviews/plan-review.md).
+
+Corrected outcome:
+- **Sequencing:** PASS
+- **Plan-as-ТЗ:** CONTESTED
+- **Overall:** CONTESTED
+
+Reason:
+- one remaining **medium** finding is still present in Pattern Invariants: [docs/features/settings-app-version-footer/plan/phase-01/overview.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/plan/phase-01/overview.md):51 still uses shorthand `:139-145` instead of a full `file:line` citation.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "85cfc7ad-3d19-4058-9634-9f7873abfa33" "follow-up"`.

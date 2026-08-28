@@ -1,0 +1,40 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 1,
+    "l": 5
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+  "lessonTitle": "Предлоги места: Wo? (Dativ) и Wohin? (Akkusativ)",
+  "focus": "Освоить девять «двойных» предлогов (Wechselpräpositionen): Dativ при местоположении (Wo? — где?) и Akkusativ при направлении (Wohin? — куда?). Кульминация темы: выбор падежа зависит от смысла.",
+  "grammar_points": [
+    "Девять Wechselpräpositionen: in, an, auf, über, unter, vor, hinter, neben, zwischen.",
+    "Wo? (где, местоположение, нет движения к цели) → Dativ: Das Buch liegt auf dem Tisch.",
+    "Wohin? (куда, направление, движение к цели) → Akkusativ: Ich lege das Buch auf den Tisch.",
+    "Глаголы покоя (Wo?): liegen, stehen, sitzen, sein, hängen, bleiben — обычно Dativ.",
+    "Глаголы движения к цели (Wohin?): legen, stellen, setzen, gehen, fahren, hängen — обычно Akkusativ.",
+    "Слияния: in+dem=im, an+dem=am (Dat.); in+das=ins, an+das=ans (Akk.)."
+  ],
+  "vocab": [
+    "in — в (+ Dat./Akk.)",
+    "auf — на (горизонт.) (+ Dat./Akk.)",
+    "an — у, на (вертик.) (+ Dat./Akk.)",
+    "unter — под (+ Dat./Akk.)",
+    "neben — рядом с (+ Dat./Akk.)",
+    "die Wand — стена",
+    "der Schrank — шкаф",
+    "legen — класть",
+    "stellen — ставить",
+    "liegen — лежать"
+  ],
+  "examples": [
+    "Das Buch liegt auf dem Tisch. (Wo?) — Книга лежит на столе.",
+    "Ich lege das Buch auf den Tisch. (Wohin?) — Я кладу книгу на стол.",
+    "Die Lampe hängt über dem Tisch. (Wo?) — Лампа висит над столом.",
+    "Wir gehen ins Kino. (Wohin?) — Мы идём в кино.",
+    "Das Auto steht vor dem Haus. (Wo?) — Машина стоит перед домом.",
+    "Stell die Flasche in den Schrank! (Wohin?) — Поставь бутылку в шкаф!"
+  ]
+}

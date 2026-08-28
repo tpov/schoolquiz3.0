@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 3,
+    "l": 2
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Мнение и аргументация (Meinung, Diskussion)",
+  "lessonTitle": "Урок 2. Согласие и несогласие: вежливо возразить",
+  "focus": "Освоить язык согласия, частичного согласия и аргументированного несогласия в дискуссии, включая вежливые формулы возражения и реакцию на чужую позицию.",
+  "grammar_points": [
+    "Формулы согласия: Da hast du recht; Das sehe ich genauso; Dem stimme ich zu (глагол zustimmen управляет Dativ).",
+    "Частичное согласие (уступка): Da ist (et)was Wahres dran, aber …; Einerseits …, andererseits … (после einerseits/andererseits — инверсия).",
+    "Вежливое несогласие: Das sehe ich (etwas) anders; Da bin ich anderer Meinung; Ich bezweifle, dass … (придаточное с dass).",
+    "Глаголы с предложным управлением в споре: widersprechen + Dativ, zustimmen + Dativ, zweifeln an + Dativ.",
+    "Смягчители для несогласия: ehrlich gesagt, ich weiß nicht, vielleicht — чтобы возражение звучало некатегорично."
+  ],
+  "vocab": [
+    "zustimmen — соглашаться",
+    "widersprechen — возражать, противоречить",
+    "bezweifeln — сомневаться (в чём-то)",
+    "ablehnen — отвергать, отклонять",
+    "recht haben — быть правым",
+    "einverstanden (sein) — быть согласным",
+    "der Einwand — возражение",
+    "teilweise — отчасти",
+    "einerseits … andererseits — с одной стороны … с другой стороны"
+  ],
+  "examples": [
+    "Da hast du völlig recht, das sehe ich genauso. — Тут ты совершенно прав, я считаю точно так же.",
+    "Ich stimme dir grundsätzlich zu, aber in einem Punkt sehe ich das anders. — В принципе я с тобой согласен, но в одном пункте я смотрю на это иначе.",
+    "Ehrlich gesagt bezweifle ich, dass das funktioniert. — Честно говоря, я сомневаюсь, что это сработает.",
+    "Da ist etwas Wahres dran, trotzdem überzeugt mich das Argument nicht. — В этом есть доля правды, и всё же этот аргумент меня не убеждает.",
+    "Einerseits ist die Idee gut, andererseits ist sie zu teuer. — С одной стороны, идея хорошая, с другой стороны, она слишком дорогая."
+  ]
+}

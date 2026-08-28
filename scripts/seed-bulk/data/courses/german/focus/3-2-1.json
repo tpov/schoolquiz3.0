@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 2,
+    "l": 1
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Модальные глаголы Modalverben (können, müssen, wollen, dürfen, sollen, mögen)",
+  "lessonTitle": "Урок 1. Что такое модальные глаголы и как они спрягаются (können, müssen, wollen)",
+  "focus": "Познакомить с модальными глаголами и их особым спряжением. Показать рамочную конструкцию: модальный глагол спрягается на 2-й позиции, смысловой глагол стоит в инфинитиве в конце предложения.",
+  "grammar_points": [
+    "Модальный глагол меняет смысл основного глагола: возможность, необходимость, желание. Основной глагол при этом стоит в Infinitiv (неопределённой форме) в самом конце предложения — это рамочная конструкция (Satzklammer).",
+    "Особенность спряжения: в единственном числе ich/er/sie/es корень меняется и НЕТ окончаний у ich и er/sie/es. können: ich kann, du kannst, er kann; müssen: ich muss, du musst, er muss; wollen: ich will, du willst, er will.",
+    "Во множественном числе и в форме Sie окончания обычные и без изменения корня: wir können/müssen/wollen, ihr könnt/müsst/wollt, sie/Sie können/müssen/wollen.",
+    "Базовые значения: können — мочь, уметь (возможность/умение); müssen — быть должным, вынужденным (необходимость); wollen — хотеть (намерение, воля).",
+    "Порядок слов в утверждении: подлежащее — модальный глагол (позиция 2) — … — Infinitiv (конец). Например: Ich muss heute arbeiten."
+  ],
+  "vocab": [
+    "können — мочь, уметь",
+    "müssen — быть должным, быть вынужденным",
+    "wollen — хотеть",
+    "der Infinitiv — инфинитив (неопределённая форма)",
+    "die Arbeit — работа",
+    "heute — сегодня",
+    "schwimmen — плавать",
+    "lernen — учить(ся)"
+  ],
+  "examples": [
+    "Ich kann gut schwimmen. — Я хорошо умею плавать.",
+    "Wir müssen heute viel lernen. — Сегодня мы должны много учиться.",
+    "Er will eine neue Sprache lernen. — Он хочет учить новый язык.",
+    "Kannst du mir helfen? — Ты можешь мне помочь?",
+    "Sie müssen um acht Uhr arbeiten. — Они должны работать в восемь часов."
+  ]
+}

@@ -1,0 +1,12 @@
+Обновил review в [docs/features/settings-app-version-footer/reviews/plan-review.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/reviews/plan-review.md).
+
+Теперь там:
+- добавлен ещё один **medium** finding про `plan/README.md:19`, где validation в dashboard записан shorthand-ярлыками вместо реальных runnable команд;
+- секция **Deterministic checks run** исправлена: убрал `...`, вписал полные `grep` команды, которые реально были запущены.
+
+Итоговый вердикт не изменился:
+- **Sequencing:** PASS
+- **Plan-as-ТЗ:** PASS
+- **Overall:** PASS
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "85cfc7ad-3d19-4058-9634-9f7873abfa33" "follow-up"`.

@@ -1,0 +1,40 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 1,
+    "l": 3
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+  "lessonTitle": "Präteritum неправильных (сильных) глаголов",
+  "focus": "Научиться образовывать Präteritum сильных глаголов через изменение корневой гласной (Ablaut) и применять самые частотные формы в связном рассказе о прошлом.",
+  "grammar_points": [
+    "Сильные глаголы меняют корневую гласную и НЕ имеют суффикса -te: gehen → ging, kommen → kam, fahren → fuhr.",
+    "Личные окончания: ich ging, du gingst, er ging, wir gingen, ihr gingt, sie gingen. 1-е и 3-е лицо ед. ч. — без окончания.",
+    "Частотные ряды по типу чередования: i/a/u (finden → fand), e/a (geben → gab), ei/ie (bleiben → blieb), ie/o (fliegen → flog).",
+    "Самые нужные формы: sehen → sah, nehmen → nahm, sprechen → sprach, essen → aß, lesen → las, schreiben → schrieb, stehen → stand.",
+    "Отделяемая приставка остаётся в конце: ankommen → er kam ... an; mitnehmen → sie nahm ... mit.",
+    "Эти формы нужно заучивать списком (третья основная форма глагола); их дают в таблицах сильных глаголов."
+  ],
+  "vocab": [
+    "gehen — идти, ходить",
+    "kommen — приходить",
+    "fahren — ехать",
+    "sehen — видеть",
+    "nehmen — брать",
+    "sprechen — говорить",
+    "schreiben — писать",
+    "finden — находить",
+    "bleiben — оставаться",
+    "die Reise — поездка, путешествие"
+  ],
+  "examples": [
+    "Wir gingen am Abend ins Kino. — Вечером мы пошли в кино.",
+    "Der Zug kam pünktlich an. — Поезд прибыл вовремя.",
+    "Sie fuhr im Sommer nach Italien. — Летом она ездила в Италию.",
+    "Ich sah ihn gestern auf der Straße. — Я видел его вчера на улице.",
+    "Er schrieb einen langen Brief und blieb zu Hause. — Он написал длинное письмо и остался дома.",
+    "Auf der Reise sprachen wir nur Deutsch. — В поездке мы говорили только по-немецки."
+  ]
+}

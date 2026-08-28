@@ -1,0 +1,33 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 4
+  },
+  "subjectTitle": "Корпоративные финансы (Corporate Finance)",
+  "themeTitle": "Оценка проектов и компаний: DCF и мультипликаторы",
+  "lessonTitle": "Относительная оценка: мультипликаторы P/E, EV/EBITDA и анализ сопоставимых компаний",
+  "focus": "Освоить оценку по мультипликаторам — выбор корректного мультипликатора, принцип согласованности числителя/знаменателя и процедуру comparable company analysis.",
+  "teaching_points": [
+    "Мультипликатор = стандартизованная цена: отношение метрики стоимости к финансовому показателю. Equity-мультипликаторы (P/E, P/B) в числителе имеют equity value; firm/EV-мультипликаторы (EV/EBITDA, EV/Sales) — enterprise value.",
+    "Принцип согласованности (Дамодаран): числитель и знаменатель должны относиться к одним и тем же претендентам на деньги. P/E корректен (equity к прибыли акционеров), а «EV/Net Income» — ошибка (EV к посленалоговой прибыли уже после процентов).",
+    "EV/EBITDA — главный мультипликатор mid-market M&A: нейтрализует различия в структуре капитала и амортизационной политике, поэтому хорош для сравнения компаний с разным долгом.",
+    "P/E (Price/Earnings) — самый известный, но искажается структурой капитала и налогами; его «спутники» (определяющие переменные) — ожидаемый рост, payout и риск.",
+    "EV/Sales (EV/Revenue) применяют к убыточным/высокоростовым компаниям, где EBITDA или прибыль отрицательны.",
+    "Процедура comparable company analysis: (1) выбрать peer group по бизнесу/росту/риску, (2) посчитать мультипликаторы по каждому, (3) взять медиану (она отсекает выбросы), (4) применить к показателю целевой компании.",
+    "«Идеально чистых» аналогов не бывает — нужна реалистичность; различия в росте/риске объясняют, почему мультипликаторы отличаются (Дамодаран: «мультипликатор — отправная точка, а не финал»).",
+    "Зачем менеджеру: быстрый рыночный sanity-check стоимости, обоснование цены сделки и ориентир для переговоров, не строя полную DCF-модель."
+  ],
+  "frameworks": [
+    "Comparable Company Analysis (trading comps)",
+    "P/E, EV/EBITDA, EV/Sales, P/B",
+    "Принцип согласованности equity- и firm-мультипликаторов (Damodaran)",
+    "Precedent transactions (как родственный метод)"
+  ],
+  "example": "Целевая компания: EBITDA = 120 млн. Аналоги дают EV/EBITDA: 7,5x; 8,8x; 9,0x; 11,2x. Медиана = (8,8+9,0)/2 = 8,9x. Implied EV = 8,9·120 = 1068 млн. Минус Net Debt 250 → implied equity value ≈ 818 млн.",
+  "sources": [
+    "Aswath Damodaran, «It is all relative… Multiples, Comparables and Value» (pages.stern.nyu.edu/~adamodar/pdfiles/country/relvalAIMR.pdf)",
+    "Aswath Damodaran, EV/EBITDA by sector data (pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/vebitda.html)",
+    "Wall Street Prep, «Comparable Company Analysis (Comps)» (wallstreetprep.com/knowledge/comparable-company-analysis-comps/)"
+  ]
+}

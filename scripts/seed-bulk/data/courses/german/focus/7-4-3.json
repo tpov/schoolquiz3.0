@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 4,
+    "l": 3
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Нюанс, импликатура и сложные тексты",
+  "lessonTitle": "Многозначность, амбигуитет и игра слов",
+  "focus": "Работать с лексической и синтаксической многозначностью, омонимией и каламбурами. Учиться удерживать несколько прочтений сразу и определять, какое активируется контекстом — ключ к рекламе, заголовкам и литературе.",
+  "grammar_points": [
+    "Лексическая многозначность (Polysemie): 'der Flügel' = крыло / рояль / фланг; нужное значение задаёт контекст и сочетаемость.",
+    "Синтаксическая амбигуитет (Strukturambiguität): 'Er sah die Frau mit dem Fernglas' — кто с биноклем? — разрешается порядком слов или перифразой.",
+    "Омонимия и каламбур (das Wortspiel): использование 'die Bank' (скамья / банк) для двойного смысла в заголовках.",
+    "Garden-path-эффект: предложение ведёт к ложному прочтению до последнего слова — 'Der Komplex, den die Architekten entwarfen, stürzte ein' (Komplex как здание, а не психол.).",
+    "Двусмысленность референции: неоднозначное местоимение 'Peter sagte Hans, dass er gewonnen habe' — 'er' = Peter или Hans? Снимается перестройкой фразы."
+  ],
+  "vocab": [
+    "die Mehrdeutigkeit — многозначность, неоднозначность",
+    "die Doppeldeutigkeit — двусмысленность",
+    "das Wortspiel — игра слов, каламбур",
+    "die Polysemie — полисемия (многозначность слова)",
+    "der Bedeutungsschimmer — оттенок значения, обертон смысла",
+    "die Lesart — прочтение, вариант толкования",
+    "vieldeutig — многозначный, допускающий разные толкования",
+    "die Anspielung — аллюзия, скрытая отсылка"
+  ],
+  "examples": [
+    "Die Schlagzeile „Bank gibt nach“ ist bewusst doppeldeutig: Es kann das Geldinstitut oder die Sitzbank gemeint sein. — Заголовок «Bank gibt nach» намеренно двусмысленный: имеется в виду либо банк, либо скамья.",
+    "Der Satz „Sie beobachtete den Mann mit dem Fernrohr“ lässt offen, wer das Fernrohr hatte. — Предложение «Она наблюдала за мужчиной с подзорной трубой» оставляет открытым, у кого была труба.",
+    "„Ich gehe zur Bank“ — erst der Kontext entscheidet, ob er Geld abhebt oder sich setzt. — «Я иду к банку/скамейке» — только контекст решает, снимает ли он деньги или садится.",
+    "Das Gedicht spielt mit der Mehrdeutigkeit von „Schloss“ — Burg und Türverschluss zugleich. — Стихотворение играет на многозначности «Schloss» — замок-дворец и дверной замок одновременно."
+  ]
+}

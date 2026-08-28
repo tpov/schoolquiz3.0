@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 4,
+    "l": 3
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Жильё и распорядок дня (Wohnen, Tagesablauf)",
+  "lessonTitle": "Урок 3. Где что находится: предлоги места и дативный артикль",
+  "focus": "Сказать, где находятся вещи в квартире. Ввести предлоги места с дативом и формы определённого артикля в Dativ.",
+  "grammar_points": [
+    "Определённый артикль в Dativ: der → dem (m), das → dem (n), die → der (f), die (Pl.) → den (+ -n у существительного).",
+    "Предлоги места с дативом (где? wo?): in (в), auf (на), unter (под), neben (рядом), hinter (за), vor (перед), zwischen (между).",
+    "Слияние предлога и артикля: in dem → im, an dem → am. Пример: im Wohnzimmer, am Fenster.",
+    "Глаголы положения stehen, liegen, hängen отвечают на вопрос wo? и требуют датива.",
+    "Вопрос Wo? (где?) + ответ с предлогом и дативом: Wo ist die Lampe? — Auf dem Tisch."
+  ],
+  "vocab": [
+    "in — в",
+    "auf — на",
+    "unter — под",
+    "neben — рядом с",
+    "hinter — за, позади",
+    "vor — перед",
+    "zwischen — между",
+    "stehen — стоять",
+    "liegen — лежать",
+    "hängen — висеть"
+  ],
+  "examples": [
+    "Die Lampe steht auf dem Tisch. — Лампа стоит на столе.",
+    "Das Buch liegt unter dem Stuhl. — Книга лежит под стулом.",
+    "Im Wohnzimmer hängt ein Bild an der Wand. — В гостиной на стене висит картина.",
+    "Der Schrank steht neben dem Bett. — Шкаф стоит рядом с кроватью.",
+    "Wo ist die Katze? — Sie liegt zwischen den Kissen. — Где кошка? — Она лежит между подушками."
+  ]
+}

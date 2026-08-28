@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 4,
+    "l": 4
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Общество, медиа, экология (Gesellschaft, Medien, Umwelt)",
+  "lessonTitle": "Урок 4. Глобальные проблемы и ответственность (Globale Herausforderungen)",
+  "focus": "Объединяем общество, медиа и экологию в более крупную тему глобальных вызовов. Учимся выражать необходимость, ответственность и предложения по решению на уровне B2.",
+  "grammar_points": [
+    "Конструкции необходимости и долженствования: müssen/sollen и альтернативы es ist notwendig/wichtig, dass …; haben + zu + Infinitiv (wir haben viel zu tun).",
+    "Пассивная замена через man и sein + zu + Infinitiv для рекомендаций: Das Problem ist nur gemeinsam zu lösen (=kann gelöst werden).",
+    "Связки текста для аргументации без пересечения с темой «мнение»: zunächst, außerdem, schließlich — для перечисления мер, а не личной позиции.",
+    "Сложные придаточные цели и следствия: damit (с подлежащим) против um … zu (одно подлежащее); so …, dass для следствия."
+  ],
+  "vocab": [
+    "die Herausforderung — вызов, проблема",
+    "die Armut — бедность",
+    "die Globalisierung — глобализация",
+    "die Verantwortung — ответственность",
+    "die Lösung — решение",
+    "die Maßnahme — мера",
+    "die Zusammenarbeit — сотрудничество",
+    "die Krise — кризис",
+    "die Migration — миграция",
+    "die Ressource — ресурс",
+    "bekämpfen — бороться (с чем-либо)",
+    "fördern — содействовать, поддерживать"
+  ],
+  "examples": [
+    "Es ist notwendig, dass alle Länder bei globalen Herausforderungen zusammenarbeiten. — Необходимо, чтобы все страны сотрудничали в решении глобальных проблем.",
+    "Diese Krise ist nur durch internationale Zusammenarbeit zu lösen. — Этот кризис можно решить только через международное сотрудничество.",
+    "Wir müssen Armut bekämpfen und gleichzeitig die natürlichen Ressourcen schützen. — Мы должны бороться с бедностью и одновременно защищать природные ресурсы.",
+    "Die Regierung ergreift Maßnahmen, damit die Wirtschaft nachhaltiger wird. — Правительство принимает меры, чтобы экономика стала более устойчивой."
+  ]
+}

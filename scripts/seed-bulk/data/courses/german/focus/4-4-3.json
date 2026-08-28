@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 4,
+    "l": 3
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Konjunktiv II: вежливость и гипотезы (würde, könnte, hätte) (грамматика)",
+  "lessonTitle": "Урок 3. könnte, müsste, sollte: Konjunktiv II модальных глаголов",
+  "focus": "Дать вежливо-гипотетические формы модальных глаголов: könnte (мог бы / можно было бы), müsste (следовало бы / должно быть), sollte (стоило бы). Они смягчают просьбы и советы.",
+  "grammar_points": [
+    "Модальные глаголы в Konjunktiv II образуют собственные формы: können → könnte, müssen → müsste, sollen → sollte, dürfen → dürfte, mögen → möchte.",
+    "Модальный глагол спрягается и стоит на 2-м месте, а смысловой глагол — в инфинитиве в конце (рамка): Du könntest mich anrufen.",
+    "könnte — возможность/вежливая просьба; müsste — мягкое долженствование или предположение; sollte — рекомендация, совет.",
+    "Эти формы звучат заметно вежливее и мягче, чем Indikativ (kann, muss, soll).",
+    "Спряжение könnte: ich könnte, du könntest, er könnte, wir könnten, ihr könntet, sie/Sie könnten (аналогично müsste, sollte)."
+  ],
+  "vocab": [
+    "könnte — мог(ла) бы",
+    "müsste — должен был бы, следовало бы",
+    "sollte — стоило бы, следовало бы",
+    "der Rat — совет",
+    "der Vorschlag — предложение (идея)",
+    "vielleicht — может быть",
+    "unbedingt — непременно, обязательно",
+    "helfen — помогать"
+  ],
+  "examples": [
+    "Könntest du mir bitte kurz helfen? — Ты не мог бы мне немного помочь?",
+    "Du solltest mehr schlafen, du siehst müde aus. — Тебе стоило бы больше спать, ты выглядишь усталым.",
+    "Wir müssten eigentlich schon los. — Нам, вообще-то, уже пора бы идти.",
+    "Das könnte ein Problem werden. — Это могло бы стать проблемой.",
+    "Sie sollten den Vertrag noch einmal lesen. — Вам стоило бы ещё раз прочитать договор."
+  ]
+}

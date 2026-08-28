@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 3,
+    "l": 4
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+  "lessonTitle": "Урок 4. Заявление о приёме на работу: Bewerbungsschreiben и сопроводительное письмо",
+  "focus": "Писать сильное мотивационное/сопроводительное письмо (Bewerbungsschreiben): отсылка к вакансии, презентация компетенций без самовосхваления, выражение мотивации и готовности, грамотная просьба о собеседовании. Регистр — официально-уверенный.",
+  "grammar_points": [
+    "Отсылка к источнику вакансии: 'mit großem Interesse habe ich Ihre Stellenanzeige … gelesen', 'auf Ihre ausgeschriebene Stelle als … bewerbe ich mich'",
+    "Релативные придаточные для описания опыта: 'eine Position, die meinen Qualifikationen entspricht'; 'Kenntnisse, die ich in … erworben habe'",
+    "Каузальные и финальные коннекторы мотивации: 'da', 'weil', 'um … zu', 'damit' (порядок слов в придаточном/инфинитивном обороте)",
+    "Перфект для перечисления достижений: 'Ich habe … geleitet / entwickelt / verantwortet'",
+    "Прилагательные-компетенции с правильными окончаниями: 'fundierte Kenntnisse', 'ausgeprägte Teamfähigkeit', 'mehrjährige Erfahrung'",
+    "Финальная вежливая просьба о приглашении: 'Über die Einladung zu einem Vorstellungsgespräch würde ich mich sehr freuen'"
+  ],
+  "vocab": [
+    "die Bewerbung — заявление о приёме, заявка",
+    "das Bewerbungsschreiben — сопроводительное письмо",
+    "die Stellenanzeige — объявление о вакансии",
+    "der Lebenslauf — резюме (CV)",
+    "die Qualifikation — квалификация",
+    "die Berufserfahrung — профессиональный опыт",
+    "das Vorstellungsgespräch — собеседование",
+    "die Kenntnisse (Pl.) — знания, навыки",
+    "sich bewerben um (+Akk.) — претендовать на, подавать заявку на",
+    "die Stärke — сильная сторона"
+  ],
+  "examples": [
+    "Mit großem Interesse habe ich Ihre Stellenanzeige für die Position als Projektmanagerin gelesen und bewerbe mich hiermit um diese Stelle. — С большим интересом я прочитала ваше объявление о вакансии менеджера проектов и настоящим претендую на эту должность.",
+    "Während meiner fünfjährigen Berufserfahrung habe ich mehrere internationale Projekte erfolgreich geleitet. — За пять лет профессионального опыта я успешно руководила несколькими международными проектами.",
+    "Ich verfüge über fundierte Kenntnisse im Bereich Datenanalyse sowie über eine ausgeprägte Teamfähigkeit. — Я обладаю основательными знаниями в области анализа данных, а также выраженным умением работать в команде.",
+    "Eine neue Herausforderung in Ihrem Unternehmen reizt mich besonders, da ich meine Stärken gezielt einbringen möchte. — Новый вызов в вашей компании привлекает меня особенно, поскольку я хочу целенаправленно применить свои сильные стороны.",
+    "Über die Einladung zu einem persönlichen Vorstellungsgespräch würde ich mich sehr freuen. — Я была бы очень рада приглашению на личное собеседование."
+  ]
+}

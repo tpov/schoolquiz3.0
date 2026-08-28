@@ -1,0 +1,40 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 1,
+    "l": 2
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Präteritum и придаточные с weil/dass/wenn, порядок слов (грамматика)",
+  "lessonTitle": "Präteritum правильных (слабых) глаголов",
+  "focus": "Научиться образовывать Präteritum правильных (слабых) глаголов с помощью суффикса -te и рассказывать о прошлом в повествовательном стиле (рассказы, тексты, истории).",
+  "grammar_points": [
+    "Слабые глаголы образуют Präteritum по схеме: основа + -te + личное окончание (machen → machte).",
+    "Полное спряжение machen: ich machte, du machtest, er machte, wir machten, ihr machtet, sie machten.",
+    "Если основа оканчивается на -t, -d или сочетание согласных (-chn, -ffn), вставляется -e-: arbeiten → arbeitete, öffnen → öffnete.",
+    "1-е и 3-е лицо ед. ч. совпадают: ich machte = er machte (нет окончания после -te).",
+    "Отделяемая приставка в Präteritum остаётся в конце: einkaufen → ich kaufte ... ein.",
+    "Präteritum слабых глаголов используется прежде всего в письменной речи: рассказы, новости, сказки, биографии. В разговоре чаще Perfekt."
+  ],
+  "vocab": [
+    "machen — делать",
+    "arbeiten — работать",
+    "wohnen — жить, проживать",
+    "spielen — играть",
+    "lernen — учить(ся)",
+    "kaufen — покупать",
+    "fragen — спрашивать",
+    "die Geschichte — история, рассказ",
+    "das Wochenende — выходные",
+    "damals — тогда"
+  ],
+  "examples": [
+    "Früher wohnte meine Familie in Berlin. — Раньше моя семья жила в Берлине.",
+    "Am Wochenende spielten die Kinder im Park. — На выходных дети играли в парке.",
+    "Er arbeitete drei Jahre lang in dieser Firma. — Он три года работал в этой фирме.",
+    "Ich kaufte gestern Brot und Milch ein. — Я вчера купил хлеб и молоко.",
+    "Sie lernte fleißig Deutsch und machte schnelle Fortschritte. — Она усердно учила немецкий и быстро делала успехи.",
+    "Der Lehrer fragte, und die Schüler antworteten. — Учитель спрашивал, а ученики отвечали."
+  ]
+}

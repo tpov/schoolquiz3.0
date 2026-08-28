@@ -1,0 +1,34 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 4,
+    "l": 4
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+  "lessonTitle": "Один и много: множественное число предметов (Singular und Plural)",
+  "focus": "Учим образовывать множественное число повседневных предметов и говорить «это ... (мн.ч.)» с артиклем die. Цвет во множественном остаётся простым предикативом.",
+  "grammar_points": [
+    "Во множественном числе артикль всегда die: die Tische, die Bücher, die Stühle.",
+    "Типичные модели множественного: -e (der Tisch → die Tische), умлаут + -e (der Stuhl → die Stühle), умлаут + -er (das Buch → die Bücher), -n (die Lampe → die Lampen).",
+    "Sein во мн. ч.: sie sind / das sind — «это (мн.)».",
+    "Цвет-предикатив во мн. ч. тоже без окончания: Die Bücher sind rot."
+  ],
+  "vocab": [
+    "die Tische — столы",
+    "die Stühle — стулья",
+    "die Bücher — книги",
+    "die Lampen — лампы",
+    "die Türen — двери",
+    "die Fenster — окна (не меняется)",
+    "die Betten — кровати"
+  ],
+  "examples": [
+    "Das sind zwei Stühle. — Это два стула.",
+    "Die Bücher sind blau. — Книги синие.",
+    "Hier sind drei Fenster. — Здесь три окна.",
+    "Die Lampen sind weiß. — Лампы белые.",
+    "Das sind die Türen. — Это двери."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 1,
+    "l": 5
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+  "lessonTitle": "Предлоги с генитивом и генитив в письменном стиле",
+  "focus": "Научить употреблять важнейшие предлоги, требующие Genitiv, и понимать роль генитива в официально-письменном регистре, включая разговорную замену на von + Dativ.",
+  "grammar_points": [
+    "Предлоги с Genitiv: während (во время), wegen (из-за), trotz (несмотря на), (an)statt (вместо), innerhalb (внутри/в течение), außerhalb (вне), aufgrund (на основании), während.",
+    "После такого предлога вся группа стоит в Genitiv: 'wegen des Wetters', 'während der Ferien', 'trotz des Regens'.",
+    "Genitiv типичен для письменного и официального стиля; в разговорной речи его часто заменяют на von + Dativ: 'das Auto von meinem Vater', 'wegen dem Wetter' (разговорно, но не норма).",
+    "Вопросительное слово wessen и относительное местоимение dessen/deren в Genitiv: 'der Mann, dessen Auto hier steht'.",
+    "Слабое склонение (n-Deklination): некоторые мужские существительные в Genitiv получают -(e)n, а не -s: 'des Studenten', 'des Kollegen', 'des Menschen'."
+  ],
+  "vocab": [
+    "während — во время, в течение",
+    "wegen — из-за, по причине",
+    "trotz — несмотря на",
+    "(an)statt — вместо",
+    "innerhalb — внутри, в пределах, в течение",
+    "der Student — студент (слабое склонение)",
+    "der Vertrag — договор, контракт",
+    "die Verspätung — опоздание, задержка"
+  ],
+  "examples": [
+    "Während der Sitzung wurde viel diskutiert. — Во время заседания много обсуждалось.",
+    "Wegen des schlechten Wetters bleiben wir zu Hause. — Из-за плохой погоды мы остаёмся дома.",
+    "Trotz der Verspätung erreichten wir den Zug. — Несмотря на опоздание, мы успели на поезд.",
+    "Das ist die Meinung des Studenten, dessen Vortrag wir hörten. — Это мнение студента, чей доклад мы слышали.",
+    "Statt eines Briefes schickte er eine E-Mail. — Вместо письма он отправил электронное письмо."
+  ]
+}

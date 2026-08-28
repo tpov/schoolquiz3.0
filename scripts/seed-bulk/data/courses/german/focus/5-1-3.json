@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 1,
+    "l": 3
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+  "lessonTitle": "Пассив с модальными глаголами и Zustandspassiv",
+  "focus": "Освоить пассив с модальными глаголами (müssen, können, sollen и др.) и отличать пассив процесса (werden) от пассива состояния (sein + Partizip II).",
+  "grammar_points": [
+    "Пассив с модальным глаголом: модальный глагол (спрягается) + Partizip II + werden в инфинитиве в конце: 'Der Brief muss heute geschrieben werden'.",
+    "В прошедшем времени: модальный в Präteritum + Partizip II + werden: 'Der Brief musste geschrieben werden'.",
+    "Zustandspassiv (пассив состояния): sein + Partizip II — описывает результат, а не процесс: 'Die Tür ist geschlossen' (дверь закрыта = состояние).",
+    "Контраст: Vorgangspassiv 'Die Tür wird geschlossen' (дверь закрывают, идёт процесс) vs Zustandspassiv 'Die Tür ist geschlossen' (дверь уже закрыта).",
+    "Zustandspassiv обычно не употребляется с von + деятель, так как фокус на состоянии, а не на действии."
+  ],
+  "vocab": [
+    "müssen — быть должным (необходимость)",
+    "dürfen — мочь, иметь разрешение",
+    "schließen — закрывать",
+    "öffnen — открывать",
+    "lösen — решать (задачу)",
+    "der Zustand — состояние",
+    "erledigen — выполнять, улаживать",
+    "vorbereiten — подготавливать"
+  ],
+  "examples": [
+    "Diese Aufgabe muss bis morgen erledigt werden. — Эта задача должна быть выполнена к завтрашнему дню.",
+    "Hier darf nicht geraucht werden. — Здесь нельзя курить (курить не разрешается).",
+    "Das Fenster ist schon geöffnet. — Окно уже открыто (состояние).",
+    "Das Fenster wird gerade geöffnet. — Окно сейчас открывают (процесс).",
+    "Der Vertrag konnte nicht unterschrieben werden. — Договор не мог быть подписан."
+  ]
+}

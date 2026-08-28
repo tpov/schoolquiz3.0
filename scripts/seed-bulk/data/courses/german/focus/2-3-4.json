@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 3,
+    "l": 4
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Еда, напитки, покупки (Essen, Trinken, Einkaufen)",
+  "lessonTitle": "Урок 4. В магазине: диалог с продавцом",
+  "focus": "Коммуникация при покупке: попросить товар, вежливо ответить, сказать «это всё», заплатить. Вежливые формулы и обращение на «Sie».",
+  "grammar_points": [
+    "Вежливая просьба с möchten + bitte: «Ich möchte bitte ...». Также «Ich hätte gern ...» (хотел бы) как устойчивая формула.",
+    "Обращение к продавцу на «Sie»: Möchten Sie ...? Haben Sie ...? Was nehmen Sie?",
+    "Короткие реплики диалога: «Sonst noch etwas?» (Что-нибудь ещё?) — «Nein, danke, das ist alles.» (Нет, спасибо, это всё.).",
+    "Оплата: «Was macht das?» / «Das macht 5 Euro.»; «Zahlen, bitte.»; bar (наличными) или mit Karte (картой).",
+    "Вежливые слова: bitte (пожалуйста), danke (спасибо), Entschuldigung (извините)."
+  ],
+  "vocab": [
+    "der Supermarkt — супермаркет",
+    "der Markt — рынок",
+    "die Verkäuferin — продавщица",
+    "der Kunde — покупатель / клиент",
+    "brauchen — нуждаться / нужно",
+    "bezahlen — платить",
+    "die Kasse — касса",
+    "die Tüte — пакет",
+    "bar — наличными",
+    "die Karte — карта (банковская)"
+  ],
+  "examples": [
+    "Guten Tag! Ich hätte gern ein Kilo Tomaten. — Добрый день! Я хотел бы килограмм помидоров.",
+    "Sonst noch etwas? — Nein, danke, das ist alles. — Что-нибудь ещё? — Нет, спасибо, это всё.",
+    "Was macht das? — Das macht acht Euro fünfzig. — Сколько с меня? — Восемь евро пятьдесят.",
+    "Zahlen Sie bar oder mit Karte? — Вы платите наличными или картой?",
+    "Brauchen Sie eine Tüte? — Вам нужен пакет?"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 1,
+    "l": 3
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Падежи Akkusativ и Dativ, предлоги (грамматика)",
+  "lessonTitle": "Глаголы с двумя дополнениями: Dativ + Akkusativ",
+  "focus": "Соединить два падежа в одном предложении: кто кому что (даёт/показывает). Освоить порядок дополнений и закрепить разницу Dativ (кому) vs Akkusativ (что). Это синтез уроков 1 и 2.",
+  "grammar_points": [
+    "Многие глаголы требуют сразу Dativ (адресат) + Akkusativ (предмет): geben, schenken, zeigen, bringen, schicken, erklären, kaufen.",
+    "Базовый порядок при двух существительных: сначала Dativ (кому), потом Akkusativ (что): Ich gebe dem Kind das Buch.",
+    "Если одно из дополнений — местоимение, оно идёт раньше существительного.",
+    "Если оба — местоимения, порядок меняется: сначала Akkusativ, потом Dativ: Ich gebe es ihm.",
+    "Вопрос к Dativ — wem?, к Akkusativ — was?: Wem gibst du was?"
+  ],
+  "vocab": [
+    "geben — давать",
+    "schenken — дарить",
+    "zeigen — показывать",
+    "bringen — приносить",
+    "schicken — посылать",
+    "erklären — объяснять",
+    "das Geschenk — подарок",
+    "die Blume — цветок",
+    "der Brief — письмо",
+    "die Karte — открытка, карта"
+  ],
+  "examples": [
+    "Ich gebe dem Kind das Buch. — Я даю ребёнку книгу.",
+    "Sie schenkt ihrer Mutter Blumen. — Она дарит своей маме цветы.",
+    "Er zeigt mir die Stadt. — Он показывает мне город.",
+    "Ich schicke dir den Brief. — Я посылаю тебе письмо.",
+    "Kannst du es mir erklären? — Ты можешь мне это объяснить?",
+    "Wem bringst du das Geschenk? — Кому ты несёшь подарок?"
+  ]
+}

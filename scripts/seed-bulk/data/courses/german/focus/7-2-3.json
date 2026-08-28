@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 2,
+    "l": 3
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+  "lessonTitle": "Коллокации и Funktionsverbgefüge: какое слово с каким сочетается",
+  "focus": "Перейти от ярких идиом к менее заметным, но критичным для звучания «как носитель» коллокациям и глагольно-именным конструкциям (Funktionsverbgefüge). Цель — выбирать правильный глагол-партнёр к существительному (eine Entscheidung TREFFEN, а не *machen) и осваивать книжные обороты типа in Frage stellen.",
+  "grammar_points": [
+    "Коллокация — узуально закреплённая пара слов: одно (основа) выбирает другое (коллокат). По-немецки решение «принимают» глаголом treffen (eine Entscheidung treffen), внимание «уделяют» через schenken (Aufmerksamkeit schenken) — калька с русского даёт ошибку.",
+    "Funktionsverbgefüge (FVG) = «бледный» глагол + отглагольное существительное, несущее основное значение: in Frage stellen (= bezweifeln), zur Verfügung stellen (= bereitstellen), in Betracht ziehen (= erwägen). Глагол почти пуст, смысл в имени.",
+    "В FVG предлог и падеж жёстко фиксированы: in + Akk. (in Frage stellen, zur Verfügung — zu+der), unter Druck setzen, in Kauf nehmen — заменять предлог нельзя.",
+    "FVG часто звучат официальнее своего однословного синонима и предпочтительны в письменном/деловом немецком: eine Entscheidung treffen вместо entscheiden, Kritik üben вместо kritisieren.",
+    "В рамочной конструкции именная часть FVG и глагол расходятся: глагол спрягается на 2-й позиции, имя+предлог уходят в конец (Ich stelle deine Aussage ernsthaft in Frage)."
+  ],
+  "vocab": [
+    "eine Entscheidung treffen — принять решение",
+    "etwas in Frage stellen — ставить под сомнение, подвергать сомнению",
+    "etwas zur Verfügung stellen — предоставить (в распоряжение)",
+    "etwas in Betracht ziehen — принимать во внимание, рассматривать вариант",
+    "Kritik üben (an + Dat.) — критиковать, высказывать критику",
+    "in Kauf nehmen — мириться с (неизбежным минусом), идти на",
+    "jemanden unter Druck setzen — давить на кого-то, оказывать давление"
+  ],
+  "examples": [
+    "Der Vorstand muss bis Freitag eine endgültige Entscheidung treffen. — Совет директоров должен до пятницы принять окончательное решение.",
+    "Niemand stellt deine fachliche Kompetenz in Frage. — Никто не ставит под сомнение твою профессиональную компетентность.",
+    "Die Universität stellt den Studierenden moderne Labore zur Verfügung. — Университет предоставляет студентам современные лаборатории.",
+    "Wir sollten auch eine spätere Lieferung in Betracht ziehen. — Нам стоит рассмотреть и вариант более поздней поставки.",
+    "Um Zeit zu sparen, nehmen wir höhere Kosten in Kauf. — Чтобы сэкономить время, мы миримся с более высокими расходами."
+  ]
+}

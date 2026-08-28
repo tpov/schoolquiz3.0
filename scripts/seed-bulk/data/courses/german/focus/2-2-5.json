@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 2,
+    "l": 5
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Семья и описание людей (Familie, Personen)",
+  "lessonTitle": "Урок 5. Характер и вкусы — рассказ о близком человеке",
+  "focus": "Свести всё воедино: описать характер человека и его простые предпочтения, составив связный рассказ из 3–5 фраз. Итог темы — мини-портрет родственника.",
+  "grammar_points": [
+    "Прилагательные характера после sein без окончания: Sie ist nett, freundlich, lustig.",
+    "Глагол mögen (нравиться) с прямым дополнением в Akkusativ: Er mag Musik. Sie mag Hunde.",
+    "gern + глагол для занятий: Meine Mutter kocht gern (мама любит готовить).",
+    "Соединение фраз союзом und и противопоставление aber: Er ist ruhig, aber meine Schwester ist laut."
+  ],
+  "vocab": [
+    "nett — милый / приятный",
+    "freundlich — дружелюбный",
+    "lustig — весёлый",
+    "ruhig — спокойный",
+    "streng — строгий",
+    "klug — умный",
+    "mögen — любить / нравиться",
+    "gern — охотно / с удовольствием",
+    "der Charakter — характер",
+    "der Hund — собака"
+  ],
+  "examples": [
+    "Meine Mutter ist freundlich und kocht gern. — Моя мама дружелюбная и любит готовить.",
+    "Mein Vater ist ruhig, aber mein Bruder ist sehr lustig. — Мой папа спокойный, а брат очень весёлый.",
+    "Meine Oma ist nett und klug. — Моя бабушка милая и умная.",
+    "Mein Bruder mag Hunde und Musik. — Мой брат любит собак и музыку.",
+    "Das ist meine Familie. Ich liebe sie. — Это моя семья. Я её люблю."
+  ]
+}

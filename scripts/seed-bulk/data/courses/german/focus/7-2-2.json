@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 2,
+    "l": 2
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Идиомы, устойчивые выражения и коллокации (Redewendungen)",
+  "lessonTitle": "Тематические гнёзда идиом: тело, животные, природа",
+  "focus": "Систематизировать идиомы по образным полям (соматизмы — части тела; зоонимы — животные; природа/погода), чтобы активно вытаскивать нужное выражение по ситуации, а не угадывать наугад. Расширение активного запаса вокруг продуктивных образов немецкой фразеологии.",
+  "grammar_points": [
+    "Соматические идиомы (части тела) часто требуют дательного падежа лица: jemandem unter die Arme greifen (помочь), jemandem auf der Nase herumtanzen (садиться на шею) — Dativ обязателен.",
+    "Зоонимные идиомы фиксируют артикль и число животного: die Flinte ins Korn werfen (сдаться), den Vogel abschießen (переплюнуть всех) — менять единственное/множественное число нельзя.",
+    "Идиомы с глаголами движения сохраняют рамку: при перфекте смысловой компонент уходит в конец (…hat den Vogel abgeschossen), при модальном глаголе инфинитив идиомы стоит в конце (…will nicht die Flinte ins Korn werfen).",
+    "У многих образных идиом есть фиксированная отрицательная или превосходная окраска, которую нельзя «смягчить» заменой слова: kein Blatt vor den Mund nehmen = говорить прямо (досл. не держать листок перед ртом).",
+    "Различай идиому и свободное сочетание тех же слов: Hand und Fuß haben (быть продуманным, логичным) ≠ буквальное «иметь руку и ногу»; контекст и отсутствие артикля у Hand/Fuß сигналят об идиоме."
+  ],
+  "vocab": [
+    "jemandem unter die Arme greifen — помочь, выручить кого-то",
+    "Hand und Fuß haben — быть продуманным, иметь смысл (о плане, аргументе)",
+    "kein Blatt vor den Mund nehmen — говорить начистоту, не стесняться в выражениях",
+    "die Flinte ins Korn werfen — опустить руки, сдаться раньше времени",
+    "den Vogel abschießen — переплюнуть всех, отличиться (часто иронично)",
+    "die Katze aus dem Sack lassen — раскрыть карты, выдать секрет",
+    "ins Wasser fallen — сорваться, не состояться (о планах)"
+  ],
+  "examples": [
+    "In der Krise hat mir mein Bruder finanziell unter die Arme gegriffen. — В кризис брат финансово меня выручил.",
+    "Dein Vorschlag hat wirklich Hand und Fuß — wir setzen ihn um. — Твоё предложение действительно продумано — мы его реализуем.",
+    "Sie nimmt nie ein Blatt vor den Mund und sagt jedem die Wahrheit. — Она никогда не стесняется в выражениях и каждому говорит правду.",
+    "Mit dieser peinlichen Rede hat er endgültig den Vogel abgeschossen. — Этой неловкой речью он окончательно всех переплюнул (иронично).",
+    "Wegen des Sturms ist unser Ausflug leider ins Wasser gefallen. — Из-за бури наша вылазка, к сожалению, сорвалась."
+  ]
+}

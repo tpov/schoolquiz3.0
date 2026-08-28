@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 3,
+    "l": 3
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Регистр и стиль (Stilebenen, формальный vs разговорный)",
+  "lessonTitle": "Разговорный немецкий (Umgangssprache): живая речь и её механика",
+  "focus": "Понять и активно использовать средства обиходно-разговорного регистра: стяжения, эллипсис, дислокацию, частицы-усилители, разговорный перфект и эмфатические конструкции. Цель — звучать естественно в неформальной устной речи и понимать спонтанный диалог носителей.",
+  "grammar_points": [
+    "Стяжения (Verschleifungen/Klitisierung) устной речи: »haste« (hast du), »gibt's«, »auf'm Tisch«, »ins Kino« → »inn Kino«, »so'n«, »'ne«; на письме передаются в диалогах и чатах.",
+    "Разговорный эллипсис: опущение подлежащего/глагола »(Ich) Komm gleich«, »(Das) Macht nichts«, »(Hast du) Alles klar?«; топик-эллипсис в начале реплики.",
+    "Перфект вытесняет претерит в устной речи Юга и Запада: »Ich hab das gestern gemacht« вместо »Ich machte«; претерит звучит письменно/высоко (кроме sein/haben/модальных).",
+    "Левая и правая дислокация (Herausstellung): »Der Peter, der kommt später« (левая); »Das ist super, das Buch« (правая) — типичный разговорный синтаксис.",
+    "»tun«-перифраза и »am«-прогрессив как разговорные маркеры: »Tust du das mal halten?«, »Ich bin am Arbeiten« (Rheinische Verlaufsform).",
+    "Разговорные интенсификаторы и оценочные слова: »total«, »voll«, »echt«, »mega«, »irgendwie«, »ziemlich«; их позиция и сочетаемость."
+  ],
+  "vocab": [
+    "die Umgangssprache — разговорный язык",
+    "echt — реально, правда (усилитель/реакция)",
+    "voll — полностью, очень (разг. усилитель)",
+    "der Kram — барахло, дела, всякая всячина",
+    "kriegen — получать (разг. вместо bekommen)",
+    "der Typ — тип, парень, чувак",
+    "quatschen — болтать, трепаться",
+    "die Klamotten (Pl.) — шмотки, одежда",
+    "nö / ne — не-а, нет (разг.)",
+    "der Quatsch — чушь, ерунда, болтовня"
+  ],
+  "examples": [
+    "Haste mal 'ne Minute? Ich muss dich echt was fragen. — Есть у тебя минутка? Мне правда надо тебя кое о чём спросить.",
+    "Der Typ von gestern, der hat den ganzen Kram einfach liegen lassen. — Тот тип со вчера — он просто бросил всё это барахло как было.",
+    "Ne, ich hab heute keinen Bock, lass uns das morgen machen. — Не-а, мне сегодня неохота, давай завтра это сделаем.",
+    "Ich bin gerade voll am Arbeiten, ich ruf dich später zurück, okay? — Я прямо сейчас по уши в работе, перезвоню тебе попозже, ладно?",
+    "Das mit der Wohnung, das hat irgendwie total nicht geklappt. — Эта история с квартирой — она как-то вообще не выгорела."
+  ]
+}

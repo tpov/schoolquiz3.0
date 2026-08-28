@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 3,
+    "l": 4
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+  "lessonTitle": "Урок 4. Здоровый образ жизни: советы и привычки в императиве",
+  "focus": "Говорить о здоровых и вредных привычках, питании, спорте и сне; формулировать советы через повелительное наклонение (du/ihr/Sie) с рамочной конструкцией.",
+  "grammar_points": [
+    "Императив du (без -st и часто без местоимения): Iss mehr Gemüse! Trink genug Wasser!",
+    "Императив ihr (форма = презенс без местоимения): Esst gesund! Treibt Sport!",
+    "Императив Sie (инверсия с местоимением): Bewegen Sie sich mehr! Schlafen Sie genug!",
+    "Императив с отделяемой приставкой и рефлексивом — рамка: Hör mit dem Rauchen auf! Beweg dich mehr!",
+    "Чередование основы у сильных глаголов в du-форме: essen → iss, nehmen → nimm, geben → gib."
+  ],
+  "vocab": [
+    "die Gesundheit — здоровье",
+    "die Ernährung — питание",
+    "sich ernähren — питаться",
+    "der Sport — спорт",
+    "sich bewegen — двигаться",
+    "der Schlaf — сон",
+    "die Gewohnheit — привычка",
+    "das Gemüse — овощи",
+    "das Obst — фрукты",
+    "das Rauchen — курение",
+    "aufhören — прекращать, бросать",
+    "vermeiden — избегать",
+    "der Stress — стресс",
+    "fit — в хорошей форме, бодрый"
+  ],
+  "examples": [
+    "Iss mehr Obst und Gemüse, dann bleibst du gesund! — Ешь больше фруктов и овощей, тогда будешь здоров!",
+    "Bewegen Sie sich jeden Tag mindestens dreißig Minuten. — Двигайтесь каждый день минимум тридцать минут.",
+    "Hör endlich mit dem Rauchen auf, es schadet deiner Gesundheit. — Брось наконец курить, это вредит твоему здоровью.",
+    "Trinkt genug Wasser und vermeidet zu viel Stress! — Пейте достаточно воды и избегайте слишком большого стресса!",
+    "Wer sich gesund ernährt und gut schläft, fühlt sich fitter. — Кто правильно питается и хорошо спит, чувствует себя бодрее."
+  ]
+}

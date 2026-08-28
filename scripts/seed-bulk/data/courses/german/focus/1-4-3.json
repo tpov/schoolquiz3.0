@@ -1,0 +1,34 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 4,
+    "l": 3
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Цвета и предметы повседневности (Farben, Gegenstände)",
+  "lessonTitle": "Цветной предмет: красный стол (rote, blaue Sachen)",
+  "focus": "Делаем шаг к согласованию: цвет перед существительным в простой именительной фразе с ein/eine. Учим базовое окончание -e после неопределённого артикля.",
+  "grammar_points": [
+    "Прилагательное-цвет ПЕРЕД существительным получает окончание: ein roter Tisch (m), eine rote Tür (f), ein rotes Buch (n) — именительный падеж.",
+    "Сравнение двух конструкций: Der Tisch ist rot (без окончания) ↔ ein roter Tisch (с окончанием).",
+    "Цвета weiß и rosa: rosa и lila не склоняются (eine rosa Lampe).",
+    "Простой ответ-описание: Das ist ein blaues Buch. — «Это синяя книга»."
+  ],
+  "vocab": [
+    "braun — коричневый",
+    "grau — серый",
+    "orange — оранжевый",
+    "rosa — розовый",
+    "lila — фиолетовый, сиреневый",
+    "die Sache — вещь, предмет",
+    "neu — новый"
+  ],
+  "examples": [
+    "Das ist ein roter Stuhl. — Это красный стул.",
+    "Das ist eine blaue Tür. — Это синяя дверь.",
+    "Das ist ein grünes Buch. — Это зелёная книга.",
+    "Ich habe eine rosa Lampe. — У меня розовая лампа.",
+    "Das ist ein neuer brauner Tisch. — Это новый коричневый стол."
+  ]
+}

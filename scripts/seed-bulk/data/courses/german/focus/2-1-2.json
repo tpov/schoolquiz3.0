@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 2,
+    "t": 1,
+    "l": 2
+  },
+  "cefr": "A1",
+  "sectionTitle": "Grundstufe 1",
+  "themeTitle": "Präsens правильных глаголов, sein/haben, вопросы W-Fragen/Ja-Nein (грамматика)",
+  "lessonTitle": "Урок 2. Präsens правильных глаголов во множественном числе (wir, ihr, sie/Sie)",
+  "focus": "Завершить парадигму спряжения слабых глаголов, освоив формы множественного числа и вежливое Sie, и согласовывать подлежащее с глаголом во всех лицах.",
+  "grammar_points": [
+    "Окончания множественного числа: wir -en (wir machen), ihr -t (ihr macht), sie/Sie -en (sie machen).",
+    "Полная таблица спряжения machen: ich mache, du machst, er/sie/es macht, wir machen, ihr macht, sie/Sie machen.",
+    "Формы wir, sie (они) и Sie (вежливое Вы) совпадают с инфинитивом по окончанию -en.",
+    "Вежливое Sie всегда пишется с большой буквы и используется в любом числе: Wohnen Sie hier?",
+    "Соединительная -e- во мн. числе: ihr arbeitet (не «arbeitt»)."
+  ],
+  "vocab": [
+    "leben — жить (быть живым, проживать)",
+    "fragen — спрашивать",
+    "antworten — отвечать",
+    "hören — слушать, слышать",
+    "kaufen — покупать",
+    "brauchen — нуждаться, требоваться",
+    "der Freund — друг",
+    "die Leute — люди (мн. число)"
+  ],
+  "examples": [
+    "Wir lernen zusammen Deutsch. — Мы вместе учим немецкий.",
+    "Ihr wohnt in Hamburg, oder? — Вы (вы все) живёте в Гамбурге, не так ли?",
+    "Sie kaufen Brot und Milch. — Они покупают хлеб и молоко.",
+    "Wohnen Sie in Wien? — Вы живёте в Вене? (вежливо)",
+    "Die Kinder spielen im Park. — Дети играют в парке."
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 3,
+    "l": 2
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+  "lessonTitle": "Урок 2. Запрос и официальная просьба: höfliche Bitten, Anfrage, Konjunktiv II",
+  "focus": "Научиться формулировать официальный запрос (Anfrage) и вежливые просьбы с нужной степенью смягчения через конъюнктив II, модальные глаголы и косвенные вопросы. Регистр — деловой, ненавязчивый, но точный.",
+  "grammar_points": [
+    "Конъюнктив II вежливости: 'würden Sie …', 'könnten Sie …', 'wäre es möglich, …', 'hätten Sie die Güte, …' — снижение категоричности",
+    "Косвенный вопрос как смягчённая просьба: 'Ich würde gerne wissen, ob …' / 'Könnten Sie mir mitteilen, wann …' (порядок слов: глагол в конце придаточного)",
+    "Безличные и пассивные обороты для дистанции: 'Es wäre hilfreich, wenn …', 'Wir bitten um Zusendung der Unterlagen' (номинализированная просьба)",
+    "'um + Akk.' после bitten: 'Ich bitte Sie um eine kurze Bestätigung'",
+    "Модальная частица в формальной просьбе ограниченно: нейтральное 'bitte', усиление вежливости через 'doch bitte' в полуофициальном тоне",
+    "Будущее/перспектива ответа: 'Ich sehe Ihrer Antwort mit Interesse entgegen'"
+  ],
+  "vocab": [
+    "die Anfrage — запрос",
+    "die Bitte — просьба",
+    "um etwas bitten — просить о чём-либо",
+    "die Auskunft — справка, информация",
+    "die Bestätigung — подтверждение",
+    "mitteilen — сообщать",
+    "zusenden — высылать",
+    "die Frist — срок",
+    "erforderlich — необходимый",
+    "die Rückmeldung — обратная связь, ответ"
+  ],
+  "examples": [
+    "Könnten Sie mir bitte mitteilen, ob die Plätze für das Seminar noch verfügbar sind? — Не могли бы вы сообщить мне, есть ли ещё свободные места на семинар?",
+    "Ich wäre Ihnen sehr dankbar, wenn Sie mir die Unterlagen bis Freitag zusenden könnten. — Я был бы вам очень признателен, если бы вы выслали мне документы до пятницы.",
+    "Wir bitten Sie höflich um eine kurze Bestätigung des Termins. — Мы вежливо просим вас о кратком подтверждении встречи.",
+    "Wäre es möglich, den Liefertermin um eine Woche zu verschieben? — Возможно ли перенести срок поставки на неделю?",
+    "Für Ihre Auskunft bedanke ich mich bereits im Voraus. — Заранее благодарю вас за вашу справку."
+  ]
+}

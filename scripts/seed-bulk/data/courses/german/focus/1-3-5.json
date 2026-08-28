@@ -1,0 +1,37 @@
+{
+  "coords": {
+    "s": 1,
+    "t": 3,
+    "l": 5
+  },
+  "cefr": "A0",
+  "sectionTitle": "Erste Schritte — самые азы",
+  "themeTitle": "Числа, время, дни недели (Zahlen, Uhrzeit, Wochentage)",
+  "lessonTitle": "Урок 5. Мой распорядок дня по времени и дням (Mein Tag: Zeit und Wochentage)",
+  "focus": "Объединить числа, время и дни недели в простых фразах о расписании. Сказать, во сколько и в какой день происходит действие — практика рамочной конструкции на минимальном уровне.",
+  "grammar_points": [
+    "Предлог um для точного времени: um acht Uhr (в восемь часов). Вопрос: Um wie viel Uhr? (Во сколько?).",
+    "Комбинация времени и дня в одном предложении: am + день, затем um + час: «am Montag um neun Uhr».",
+    "Прямой порядок слов: подлежащее + глагол на 2-м месте: «Ich stehe um sieben Uhr auf».",
+    "Обстоятельство времени можно вынести в начало — тогда глагол всё равно на 2-м месте: «Am Freitag gehe ich ins Kino» (инверсия)."
+  ],
+  "vocab": [
+    "um — в (о точном времени)",
+    "der Termin — встреча, назначенное время",
+    "der Unterricht — урок, занятие",
+    "die Arbeit — работа",
+    "aufstehen — вставать",
+    "anfangen — начинаться",
+    "essen — есть, кушать",
+    "das Frühstück — завтрак",
+    "der Mittag — полдень, обед",
+    "von ... bis ... — с ... до ..."
+  ],
+  "examples": [
+    "Ich stehe um sieben Uhr auf. — Я встаю в семь часов.",
+    "Am Montag um neun Uhr beginnt der Unterricht. — В понедельник в девять часов начинается занятие.",
+    "Der Termin ist am Dienstag um halb elf. — Встреча во вторник в половине одиннадцатого.",
+    "Ich arbeite von neun bis fünf. — Я работаю с девяти до пяти.",
+    "Um wie viel Uhr essen wir? — Во сколько мы едим?"
+  ]
+}

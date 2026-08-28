@@ -1,0 +1,39 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 3,
+    "l": 5
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Формальная коммуникация: письма, e-mail, деловой стиль",
+  "lessonTitle": "Урок 5. Дипломатичный регистр: отказы, возражения и эскалация без потери лица",
+  "focus": "Управлять тоном в чувствительных ситуациях: вежливо отказать, выразить несогласие, напомнить, мягко настоять или эскалировать — сохраняя формальную корректность и лицо обеих сторон. Высший пилотаж формальной коммуникации C1.",
+  "grammar_points": [
+    "Смягчение отказа через сожаление + обоснование: 'Leider sehe ich mich nicht in der Lage, …', 'Bedauerlicherweise können wir Ihrem Wunsch nicht entsprechen, da …'",
+    "Дистанцирующий конъюнктив II и косвенная речь (Konjunktiv I) при передаче чужой позиции: 'Sie teilten mit, das Angebot sei nicht mehr gültig'",
+    "Гедж-обороты и осторожные формулировки несогласия: 'Ich erlaube mir den Hinweis, dass …', 'Mit Verlaub möchte ich anmerken, …', 'Ich kann Ihre Sichtweise nachvollziehen, dennoch …'",
+    "Вежливое напоминание/эскалация со ступенчатостью: 'Darf ich Sie höflich an … erinnern', → 'Ich sehe mich gezwungen, …'",
+    "Уступительные коннекторы для дипломатичного контраста: 'zwar … aber', 'dennoch', 'gleichwohl', 'nichtsdestotrotz'",
+    "Номинализованная вежливость и пассив для безличной дистанции: 'Von einer weiteren Verzögerung ist abzusehen', 'Es wäre wünschenswert, …'"
+  ],
+  "vocab": [
+    "der Einwand — возражение",
+    "ablehnen — отклонять, отказывать",
+    "bedauern — сожалеть",
+    "die Zusage — обещание, согласие",
+    "die Absage — отказ",
+    "das Entgegenkommen — встречный шаг, любезность",
+    "sich gezwungen sehen — быть вынужденным",
+    "nachvollziehen — понять, проследить (логику)",
+    "die Verzögerung — задержка",
+    "das Missverständnis — недоразумение"
+  ],
+  "examples": [
+    "Leider sehe ich mich nicht in der Lage, Ihrem Vorschlag in dieser Form zuzustimmen. — К сожалению, я не в состоянии согласиться с вашим предложением в таком виде.",
+    "Ich kann Ihre Sichtweise durchaus nachvollziehen, dennoch möchte ich einen wichtigen Einwand vorbringen. — Я вполне могу понять вашу точку зрения, тем не менее хотел бы выдвинуть важное возражение.",
+    "Darf ich Sie höflich daran erinnern, dass die vereinbarte Frist bereits verstrichen ist? — Позвольте вежливо напомнить вам, что согласованный срок уже истёк.",
+    "Sollte sich die Angelegenheit nicht klären lassen, sehe ich mich gezwungen, die nächsthöhere Instanz einzuschalten. — Если вопрос не удастся прояснить, я буду вынужден обратиться в вышестоящую инстанцию.",
+    "Wir bedauern das entstandene Missverständnis und danken Ihnen für Ihr Entgegenkommen. — Мы сожалеем о возникшем недоразумении и благодарим вас за вашу любезность."
+  ]
+}

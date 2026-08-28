@@ -1,0 +1,32 @@
+Started a new session, `"/opt/homebrew/bin/kent" run steer 799c9576-f8c0-4ab7-90db-b633ccc7439d "prompt"` to send messages while it runs
+Готово.
+
+- Kent session id command: не был напечатан в этой headless subagent-сессии.
+- Written path:
+  - [component.md](/Volumes/EXTERNAL/schoolquiz3.0/docs/features/settings-app-version-footer/design-drafts/component.md)
+
+Key decisions:
+- `BuildConfig.VERSION_NAME` + `BuildConfig.VERSION_CODE` читаются только в `apps/android-next/MainActivity`.
+- Протаскивание через Compose props:
+  - `AppShellScreen(appVersionName, appVersionCode, ...)`
+  - `LocalTabContent(..., appVersionName, appVersionCode, ...)`
+  - `DesignSettingsScreen(..., appVersionName, appVersionCode, ...)`
+- Footer рендерится внутри `DesignSettingsScreen` как pinned `BoxScope` sibling поверх/рядом с `LazyColumn`, не как последний scroll item.
+- Footer display-only: plain `Text`, без `clickable`, `onVersionTap`, About/dev-mode, storage/event side effects.
+- DI / Room / storage / domain / navigation: N/A.
+- Drawer footer оставляем без изменений: `v<versionName>`, clickable/About/dev-mode поведение отдельно.
+
+Objections to high-level position:
+- Блокеров нет: high-level draft совпадает по границам.
+- Единственный nuance: high-level считает `06-api-contract.md` N/A для external/API/domain contract; component draft согласен, но рекомендует всё равно зафиксировать internal public Compose signatures в финальном design pack — либо в `06-api-contract.md`, либо в `01-architecture.md` / `03-decisions.md`.
+
+Open Questions:
+- None blocking.
+- Только implementation-level выбор: где лучше покрыть direct Compose UI tests — в settings module при наличии/добавлении test deps или через существующий app-shell androidTest/manual QA.
+
+Validation:
+- Production code / Gradle / resources не редактировал.
+- Markdown draft перечитал через `sed`.
+- Tooling caveat: `rg` недоступен в shell (`command not found`), для проверки использовал `grep`/`sed`.
+
+To continue this run, execute `"/opt/homebrew/bin/kent" run --continue "799c9576-f8c0-4ab7-90db-b633ccc7439d" "follow-up"`.

@@ -1,0 +1,38 @@
+## Mandatory docs
+present 01-architecture.md
+present 02-behavior.md
+present 03-decisions.md
+present 04-testing.md
+present 06-api-contract.md
+
+## Conditional docs
+07-events.md omitted (N/A)
+08-storage-model.md omitted (N/A)
+
+## Mermaid count
+docs/features/settings-app-version-footer/01-architecture.md:5
+docs/features/settings-app-version-footer/02-behavior.md:3
+docs/features/settings-app-version-footer/03-decisions.md:0
+docs/features/settings-app-version-footer/04-testing.md:0
+docs/features/settings-app-version-footer/06-api-contract.md:0
+
+## Forbidden markers in final design docs
+
+## Full signatures outside 06
+
+## ADR types requiring 06 entries
+none
+
+## Review verdicts
+--- design-realist.md
+7:verdict: PASS
+--- design-skeptic.md
+3:Verdict: **PASS**
+--- design-architect.md
+5:**Verdict:** PASS
+--- design-module-direction.md
+14:**PASS**
+
+## Hooks
+c4_exit=0
+api_exit=0

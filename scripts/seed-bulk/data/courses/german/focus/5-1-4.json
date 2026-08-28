@@ -1,0 +1,36 @@
+{
+  "coords": {
+    "s": 5,
+    "t": 1,
+    "l": 4
+  },
+  "cefr": "B2",
+  "sectionTitle": "Mittelstufe 2",
+  "themeTitle": "Пассив Passiv (werden + Partizip II) и Genitiv (грамматика)",
+  "lessonTitle": "Genitiv — четвёртый падеж: артикли, окончания и -s у существительных",
+  "focus": "Ввести генитив как падеж принадлежности: формы артиклей, окончания существительных мужского и среднего рода и порядок слов в генитивной группе.",
+  "grammar_points": [
+    "Genitiv отвечает на вопрос wessen? (чей?) и выражает принадлежность: 'das Auto des Vaters' (машина отца).",
+    "Артикли в Genitiv: m des / n des / f der / Pl der; неопределённые: eines / eines / einer; притяжательные meines/meiner и т. д.",
+    "Существительные мужского и среднего рода получают окончание -s или -es: 'des Mannes', 'des Autos', 'des Kindes' (-es обычно у односложных слов).",
+    "Существительные женского рода и множественного числа окончания не получают: 'der Frau', 'der Kinder'.",
+    "Стандартный порядок: определяемое слово + существительное в Genitiv после него ('der Titel des Buches'); у имён собственных Genitiv часто впереди с -s без апострофа: 'Annas Buch'."
+  ],
+  "vocab": [
+    "der Genitiv — родительный падеж",
+    "der Besitz — владение, собственность",
+    "der Titel — название, заголовок",
+    "die Bedeutung — значение",
+    "der Eigentümer — владелец, собственник",
+    "das Mitglied — член (организации)",
+    "die Hauptstadt — столица",
+    "der Inhalt — содержание"
+  ],
+  "examples": [
+    "Das ist das Auto meines Vaters. — Это машина моего отца.",
+    "Der Titel des Buches gefällt mir. — Название книги мне нравится.",
+    "Die Farbe des Kleides ist sehr schön. — Цвет платья очень красивый.",
+    "Berlin ist die Hauptstadt Deutschlands. — Берлин — столица Германии.",
+    "Die Meinung der Lehrerin war wichtig. — Мнение учительницы было важным."
+  ]
+}

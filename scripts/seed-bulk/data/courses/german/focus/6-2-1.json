@@ -1,0 +1,38 @@
+{
+  "coords": {
+    "s": 6,
+    "t": 2,
+    "l": 1
+  },
+  "cefr": "C1",
+  "sectionTitle": "Oberstufe 1",
+  "themeTitle": "Номинальный стиль и глагольно-именные обороты (Nominalstil, Funktionsverbgefüge)",
+  "lessonTitle": "Урок 1. Введение в номинальный стиль: вербальный vs. номинальный",
+  "focus": "Понять различие между вербальным (глагольным) и номинальным стилем и научиться распознавать черты Nominalstil: отглагольные существительные, цепочки родительного падежа, длинные именные группы. Это база темы перед изучением конкретных конструкций.",
+  "grammar_points": [
+    "Вербальный стил опирается на глаголы (придаточные с weil/dass), номинальный — на существительные (отглагольные имена + предлог): weil die Preise steigen → wegen des Anstiegs der Preise.",
+    "Образование отглагольных существительных: суффикс -ung (untersuchen → die Untersuchung), субстантивированный инфинитив (das Untersuchen), -tion/-ion у латинских основ (produzieren → die Produktion).",
+    "Genitivattribut и цепочки родительного падежа как ядро номинального стиля: die Erhöhung der Kosten der Produktion.",
+    "Признак Nominalstil: причинные/временные/условные связи выражаются предлогом + существительное (wegen, infolge, bei, trotz, durch + Genitiv/Dativ) вместо союза + придаточного.",
+    "Сфера употребления: научный, административный, юридический, публицистический регистр; в устной речи и неформальном письме предпочтителен вербальный стиль."
+  ],
+  "vocab": [
+    "der Nominalstil — номинальный (именной) стиль",
+    "der Verbalstil — вербальный (глагольный) стиль",
+    "die Substantivierung — субстантивация, превращение в существительное",
+    "die Nominalisierung — номинализация",
+    "das Genitivattribut — определение в родительном падеже",
+    "die Endung -ung — суффикс -ung (для отглагольных существительных)",
+    "der Anstieg — рост, повышение",
+    "die Untersuchung — исследование, обследование",
+    "die Behörde — учреждение, ведомство",
+    "abstrakt — абстрактный"
+  ],
+  "examples": [
+    "Verbalstil: Weil die Preise stark gestiegen sind, müssen wir sparen. — Поскольку цены сильно выросли, нам приходится экономить.",
+    "Nominalstil: Wegen des starken Anstiegs der Preise müssen wir sparen. — Из-за сильного роста цен нам приходится экономить.",
+    "Nach der Untersuchung des Falls traf die Behörde eine Entscheidung. — После рассмотрения дела ведомство приняло решение.",
+    "Die Erhöhung der Produktionskosten führte zu einem Rückgang des Gewinns. — Повышение производственных издержек привело к снижению прибыли.",
+    "Der häufige Gebrauch von Substantiven ist ein typisches Merkmal wissenschaftlicher Texte. — Частое употребление существительных — типичный признак научных текстов."
+  ]
+}

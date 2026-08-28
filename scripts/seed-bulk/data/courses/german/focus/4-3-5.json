@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 4,
+    "t": 3,
+    "l": 5
+  },
+  "cefr": "B1",
+  "sectionTitle": "Mittelstufe 1",
+  "themeTitle": "Здоровье и тело (Gesundheit, Körper)",
+  "lessonTitle": "Урок 5. Несчастный случай и в больнице: рассказ о здоровье в перфекте",
+  "focus": "Рассказывать о травме или несчастном случае и пребывании в больнице, объединяя всю лексику темы; продуктивно использовать перфект и сравнение «лучше/хуже» для динамики самочувствия.",
+  "grammar_points": [
+    "Перфект для рассказа о случившемся: с haben (Ich habe mir das Bein gebrochen) и с sein у глаголов движения/изменения состояния (Ich bin gefallen / hingefallen).",
+    "Конструкция с Dativ + Akkusativ при травме части тела: Ich habe mir den Arm gebrochen / die Hand verletzt (Dativ лица + Akkusativ части тела).",
+    "Сравнительная степень для описания динамики: besser, schlechter, schlimmer — Mir geht es heute besser als gestern.",
+    "Безличное Es geht mir gut/schlecht/besser (Dativ) для общего самочувствия.",
+    "Порядок слов в рассказе: временные обстоятельства и причинно-следственная связь без вынесения в отдельную тему (zuerst, dann, deshalb)."
+  ],
+  "vocab": [
+    "der Unfall — несчастный случай, авария",
+    "das Krankenhaus — больница",
+    "der Notarzt — врач скорой помощи",
+    "der Krankenwagen — машина скорой помощи",
+    "die Verletzung — травма, ранение",
+    "sich verletzen — пораниться, травмироваться",
+    "brechen — ломать",
+    "der Gips — гипс",
+    "die Operation — операция",
+    "die Wunde — рана",
+    "der Verband — повязка, бинт",
+    "hinfallen — упасть",
+    "sich erholen — восстанавливаться, поправляться",
+    "die Genesung — выздоровление"
+  ],
+  "examples": [
+    "Ich bin auf dem Eis hingefallen und habe mir den Arm gebrochen. — Я упал на льду и сломал руку.",
+    "Der Krankenwagen hat ihn sofort ins Krankenhaus gebracht. — Скорая сразу отвезла его в больницу.",
+    "Nach der Operation trägt sie jetzt einen Gips am Bein. — После операции она теперь носит гипс на ноге.",
+    "Mir geht es heute schon viel besser als gestern. — Сегодня мне уже намного лучше, чем вчера.",
+    "Er hat sich gut erholt und wünscht sich eine schnelle Genesung. — Он хорошо восстановился и желает себе скорейшего выздоровления."
+  ]
+}

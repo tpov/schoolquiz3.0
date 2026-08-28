@@ -1,0 +1,35 @@
+{
+  "coords": {
+    "s": 7,
+    "t": 4,
+    "l": 5
+  },
+  "cefr": "C2",
+  "sectionTitle": "Oberstufe 2 — Mastery",
+  "themeTitle": "Нюанс, импликатура и сложные тексты",
+  "lessonTitle": "Литературный подтекст и многослойное прочтение",
+  "focus": "Интерпретировать художественный текст на нескольких уровнях: символ, метафора, ненадёжный рассказчик, открытый финал. Синтез всей темы — соединить импликатуру, иронию, многозначность и анализ текста в целостном литературном чтении.",
+  "grammar_points": [
+    "Несобственно-прямая речь (erlebte Rede): мысли персонажа без вводящего глагола, в 3-м лице и претеритуме — 'Warum nur hatte sie geschwiegen? Es war zu spät.' Сливает голос автора и героя.",
+    "Ненадёжный рассказчик (unzuverlässiger Erzähler): сигналы — противоречия, преувеличенные оценки, пробелы; читатель достраивает 'настоящую' картину как импликатуру.",
+    "Символ и метафора как второй план: конкретный образ (der Nebel, der Winter) несёт абстрактное значение; прочтение требует выхода за буквальный уровень.",
+    "Открытый финал и недосказанность (Leerstelle, по Изеру): текст оставляет смысловые лакуны, которые читатель заполняет — намеренная множественность Lesarten.",
+    "Лейтмотив и повтор как смыслонесущая структура: возвращающийся образ задаёт связность и подсказывает тему, не называя её прямо."
+  ],
+  "vocab": [
+    "der Subtext — подтекст",
+    "die Metapher — метафора",
+    "das Symbol — символ",
+    "der unzuverlässige Erzähler — ненадёжный рассказчик",
+    "die Leerstelle — смысловая лакуна, пробел (для домысливания)",
+    "die Mehrschichtigkeit — многослойность",
+    "das Leitmotiv — лейтмотив",
+    "die Deutung — толкование, интерпретация"
+  ],
+  "examples": [
+    "In erlebter Rede heißt es: „Warum nur hatte sie geschwiegen? Nun war alles zu spät.“ — Erzähler- und Figurenstimme verschmelzen. — В несобственно-прямой речи сказано: «И зачем только она промолчала? Теперь всё было слишком поздно». — Голоса рассказчика и героини сливаются.",
+    "Der wiederkehrende Nebel im Text ist mehr als Wetter: Er steht symbolisch für die Orientierungslosigkeit der Figur. — Повторяющийся туман в тексте — больше, чем погода: он символизирует растерянность персонажа.",
+    "Weil der Ich-Erzähler sich ständig widerspricht, erkennt der Leser ihn als unzuverlässig und liest die wahre Geschichte zwischen den Zeilen. — Поскольку рассказчик постоянно себе противоречит, читатель распознаёт его как ненадёжного и вычитывает истинную историю между строк.",
+    "Das offene Ende lässt bewusst mehrere Deutungen zu und überlässt die Sinnstiftung dem Leser. — Открытый финал намеренно допускает несколько толкований и оставляет порождение смысла читателю."
+  ]
+}

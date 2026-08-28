@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 4,
+    "l": 4
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+  "lessonTitle": "Урок 4. Планируем путешествие (Eine Reise planen)",
+  "focus": "Говорить о планах поездки: бронирование, багаж, отпуск, виды путешествий. Грамматический фокус — будущее через Präsens + обстоятельство времени (типично для A2), а также werden для планов в простой форме и предлоги времени.",
+  "grammar_points": [
+    "Выражение будущего настоящим временем + слово времени: Nächste Woche fahre ich nach Italien.",
+    "Простое будущее с werden: Ich werde im Sommer verreisen.",
+    "Предлоги времени: am (am Montag), im (im Juli), um (um 8 Uhr).",
+    "Возвратный глагол sich freuen auf + Akkusativ: Ich freue mich auf den Urlaub.",
+    "Вынос обстоятельства времени на 1-е место с инверсией глагола (Im August fliegen wir ...)."
+  ],
+  "vocab": [
+    "die Reise — путешествие",
+    "der Urlaub — отпуск",
+    "das Hotel — отель",
+    "das Zimmer — номер, комната",
+    "buchen — бронировать",
+    "der Koffer — чемодан",
+    "das Gepäck — багаж",
+    "der Flug — рейс, перелёт",
+    "das Flugzeug — самолёт",
+    "die Grenze — граница",
+    "der Pass — паспорт",
+    "die Unterkunft — жильё, размещение",
+    "verreisen — уезжать в путешествие",
+    "die Aussicht — вид (из окна)"
+  ],
+  "examples": [
+    "Im Sommer fahren wir ans Meer. (Летом мы едем к морю.)",
+    "Ich habe ein Doppelzimmer im Hotel gebucht. (Я забронировал двухместный номер в отеле.)",
+    "Nächsten Freitag fliegen wir nach Spanien. (В следующую пятницу мы летим в Испанию.)",
+    "Ich freue mich sehr auf den Urlaub. (Я очень жду отпуск.)",
+    "Vergiss deinen Pass nicht an der Grenze! (Не забудь свой паспорт на границе!)"
+  ]
+}

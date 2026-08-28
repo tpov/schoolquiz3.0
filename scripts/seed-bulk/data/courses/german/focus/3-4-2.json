@@ -1,0 +1,42 @@
+{
+  "coords": {
+    "s": 3,
+    "t": 4,
+    "l": 2
+  },
+  "cefr": "A2",
+  "sectionTitle": "Grundstufe 2",
+  "themeTitle": "Город, ориентирование, путешествия (Stadt, Wegbeschreibung, Reisen)",
+  "lessonTitle": "Урок 2. Как пройти? Спросить и понять дорогу (Nach dem Weg fragen)",
+  "focus": "Научиться вежливо спрашивать дорогу и понимать короткий ответ. Грамматический фокус — вежливые формы вопроса (Entschuldigung, ... ?), повелительное наклонение для указаний (Gehen Sie ...), а также ordinal-числа для номера улицы/поворота в рамках A2.",
+  "grammar_points": [
+    "Вежливый вопрос с Entschuldigung и Können Sie mir sagen, wo ... ist?",
+    "Императив вежливой формы (Sie): Gehen Sie geradeaus! Biegen Sie rechts ab!",
+    "Глаголы движения для указаний: gehen, biegen ... ab, überqueren.",
+    "Предлоги направления bis zu, an ... vorbei (bis zur Ampel, am Park vorbei).",
+    "Порядковые числительные для поворотов: die erste/zweite Straße links."
+  ],
+  "vocab": [
+    "der Weg — путь, дорога",
+    "die Ampel — светофор",
+    "die Kreuzung — перекрёсток",
+    "die Ecke — угол",
+    "geradeaus — прямо",
+    "links — налево",
+    "rechts — направо",
+    "abbiegen — поворачивать",
+    "überqueren — переходить (улицу)",
+    "die Haltestelle — остановка",
+    "die Brücke — мост",
+    "nah — близко",
+    "weit — далеко",
+    "die Nähe — близость, окрестность"
+  ],
+  "examples": [
+    "Entschuldigung, wo ist die nächste Haltestelle? (Извините, где ближайшая остановка?)",
+    "Gehen Sie geradeaus und biegen Sie an der Ampel links ab. (Идите прямо и поверните на светофоре налево.)",
+    "Nehmen Sie die zweite Straße rechts. (Сверните на вторую улицу направо.)",
+    "Die Bank ist gleich um die Ecke. (Банк сразу за углом.)",
+    "Überqueren Sie die Brücke, dann sehen Sie das Rathaus. (Перейдите мост, тогда увидите ратушу.)"
+  ]
+}
