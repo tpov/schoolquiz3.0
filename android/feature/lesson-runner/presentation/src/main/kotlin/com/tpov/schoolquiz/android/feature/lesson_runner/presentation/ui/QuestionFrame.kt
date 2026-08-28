@@ -32,10 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAnswerPlate
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
@@ -93,6 +95,7 @@ internal fun QuestionFrame(
     hintAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val hasQuestionSurface = !questionText.isNullOrBlank() || imageUrl != null
     Column(modifier = modifier.fillMaxSize()) {
         // The question owns the space above the answers and sits in the middle of it.
         //
@@ -100,13 +103,17 @@ internal fun QuestionFrame(
         // underneath, which reads as a form. The design gives the question the whole upper half
         // and lets the answers sit at the bottom where a thumb is — so the two are laid out as two
         // regions, not one list.
+        //
+        // Only when there is a question to show. Fill-in-the-blank carries its sentence inside the
+        // content, so reserving half the screen for a heading it does not have would leave a void
+        // above and push the sentence off the bottom.
         Column(
             modifier =
                 Modifier
-                    .weight(1f)
+                    .then(if (hasQuestionSurface) Modifier.weight(1f) else Modifier)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 18.dp, vertical = 12.dp),
+                    .padding(horizontal = 18.dp, vertical = if (hasQuestionSurface) 12.dp else 0.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             if (!questionText.isNullOrBlank()) {
@@ -131,7 +138,7 @@ internal fun QuestionFrame(
             }
         }
 
-        content()
+        Column(if (hasQuestionSurface) Modifier else Modifier.weight(1f)) { content() }
 
         if (bottomAction != null || hintAction != null) {
             Row(
@@ -238,12 +245,15 @@ internal fun AnswerOptionSurface(
             AnswerFeedbackTone.Muted -> NoirTOff
             AnswerFeedbackTone.Neutral -> if (selected) accent else NoirT2
         }
-    // No fill on selection: the frame (radio/checkbox + hairline) carries it, per the design.
+    // Every row sits on the plate; picking one washes the mode's colour over it, and a verdict
+    // washes green or red. Transparent rows let the screen's gradient through and the block of
+    // answers stopped reading as a block.
     val fill =
         when {
-            displayTone == AnswerFeedbackTone.Correct -> NoirSuccess.copy(alpha = 0.10f)
-            displayTone == AnswerFeedbackTone.Wrong -> NoirDanger.copy(alpha = 0.10f)
-            else -> Color.Transparent
+            displayTone == AnswerFeedbackTone.Correct -> NoirSuccess.copy(alpha = 0.16f).compositeOver(NoirAnswerPlate)
+            displayTone == AnswerFeedbackTone.Wrong -> NoirDanger.copy(alpha = 0.16f).compositeOver(NoirAnswerPlate)
+            selected -> accent.copy(alpha = 0.14f).compositeOver(NoirAnswerPlate)
+            else -> NoirAnswerPlate
         }
     Column(
         modifier =

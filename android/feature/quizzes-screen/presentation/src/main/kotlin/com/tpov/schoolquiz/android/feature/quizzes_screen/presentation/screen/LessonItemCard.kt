@@ -17,12 +17,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChipTone
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
@@ -95,17 +97,36 @@ fun LessonItemCard(
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun LessonRating(item: LessonItemUi) {
-    if (item.averageRating == null) {
-        Text(stringResource(R.string.quizzes_rating_none), style = NoirType.kicker)
-        return
-    }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        StarRating(rating = item.averageRating, tint = NoirGold, size = 13.dp)
-        if (item.ratingCount > 0) {
-            Text("(${item.ratingCount})", style = NoirType.kicker)
+        // The stars are drawn either way, empty when nobody has rated. The drawing keeps them:
+        // a row that loses its stars changes width against its neighbours, and the column of
+        // ratings stops being a column.
+        StarRating(
+            rating = item.averageRating ?: 0f,
+            tint = if (item.averageRating == null) NoirOutline else NoirGold,
+            size = 13.dp,
+        )
+        if (item.averageRating == null) {
+            Text(stringResource(R.string.quizzes_rating_none), style = NoirType.kicker)
+        } else {
+            Text(
+                text = formatRating(item.averageRating),
+                style = NoirType.num.copy(fontSize = 12.sp, color = NoirGold),
+            )
+            if (item.ratingCount > 0) {
+                Text("(${item.ratingCount})", style = NoirType.kicker)
+            }
         }
     }
 }
+
+/** One decimal, as the drawing prints it: 2.0, not 2 and not 2.04. */
+private fun formatRating(rating: Float): String {
+    val tenths = kotlin.math.round(rating * TENTHS).toInt()
+    return "${tenths / TENTHS}.${tenths % TENTHS}"
+}
+
+private const val TENTHS = 10
 
 @Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
 @Preview(showBackground = true)

@@ -69,7 +69,6 @@ fun QuizzesScreen(
                 LessonRunnerScreen(
                     component = active.component,
                     onNavigateBack = { component.popCurrentChild() },
-                    floatingIcons = iconSet,
                     onOpenLesson = component::openLessonRunner,
                 )
         }

@@ -32,7 +32,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
@@ -133,7 +135,7 @@ fun ResultContent(
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 20.dp),
+            .padding(start = 18.dp, end = 18.dp, top = 22.dp, bottom = 14.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
@@ -144,44 +146,12 @@ fun ResultContent(
             style = NoirType.kicker,
         )
 
-        NoirGlassCard {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            text = state.percentScore.raw.toString(),
-                            style = NoirType.num.copy(fontSize = 60.sp, fontWeight = FontWeight.Bold),
-                        )
-                        Text("%", style = NoirType.num.copy(fontSize = 16.sp, color = NoirTOff))
-                    }
-                    AccuracyChart(scores = state.questionScores)
-                }
-                BestMarkScale(
-                    current = state.percentScore.raw,
-                    best = state.userBestPercentScore,
-                    isHard = isHard,
-                )
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    val lives =
-                        state.livesRemainingHearts?.let { remaining ->
-                            state.livesMaxHearts?.let { capacity -> "$remaining/$capacity" }
-                        }
-                    if (lives != null) {
-                        ResultFigure(stringResource(R.string.runner_figure_lives), lives)
-                    }
-                    ResultFigure(stringResource(R.string.runner_figure_attempt), state.userAttemptCount.toString())
-                    ResultFigure(stringResource(R.string.runner_figure_xp), "+$earnedExperience")
-                    ResultFigure(stringResource(R.string.runner_figure_nolics), "+$earnedNolics")
-                }
-            }
-        }
+        ResultScoreCard(
+            state = state,
+            isHard = isHard,
+            earnedExperience = earnedExperience,
+            earnedNolics = earnedNolics,
+        )
 
         if (state.saveWarning) {
             Text(
@@ -264,6 +234,71 @@ private fun AdviceSection(advice: ResultAdvice) {
                 text = stringResource(R.string.runner_advice_suggested_lesson, title),
                 style = NoirType.rowSub.copy(color = accent),
             )
+        }
+    }
+}
+
+/**
+ * The score, the accuracy line, the mark to beat and the four figures — one card, as drawn.
+ *
+ * Its own function because it is its own element of the design: the page around it is a kicker,
+ * this, and the actions, and reading that shape should not mean scrolling past sixty lines.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ResultScoreCard(
+    state: RunnerUiState.Result,
+    isHard: Boolean,
+    earnedExperience: Int,
+    earnedNolics: Int,
+) {
+    NoirGlassCard {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = state.percentScore.raw.toString(),
+                        style = NoirType.num.copy(fontSize = 60.sp, fontWeight = FontWeight.Bold),
+                    )
+                    Text("%", style = NoirType.num.copy(fontSize = 16.sp, color = NoirTOff))
+                }
+                AccuracyChart(scores = state.questionScores)
+            }
+            BestMarkScale(
+                current = state.percentScore.raw,
+                best = state.userBestPercentScore,
+                isHard = isHard,
+            )
+            // The figures sit under a hairline, spaced rather than spread. Pushed to the
+            // corners they read as four separate readings; in a row with one gap they read as
+            // one line about the run that just finished.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .drawBehind {
+                        drawRect(
+                            color = NoirGlassStroke,
+                            size = Size(size.width, 1.dp.toPx()),
+                        )
+                    }
+                    .padding(top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                val lives =
+                    state.livesRemainingHearts?.let { remaining ->
+                        state.livesMaxHearts?.let { capacity -> "$remaining/$capacity" }
+                    }
+                if (lives != null) {
+                    ResultFigure(stringResource(R.string.runner_figure_lives), lives)
+                }
+                ResultFigure(stringResource(R.string.runner_figure_attempt), state.userAttemptCount.toString())
+                ResultFigure(stringResource(R.string.runner_figure_xp), "+$earnedExperience")
+                ResultFigure(stringResource(R.string.runner_figure_nolics), "+$earnedNolics")
+            }
         }
     }
 }

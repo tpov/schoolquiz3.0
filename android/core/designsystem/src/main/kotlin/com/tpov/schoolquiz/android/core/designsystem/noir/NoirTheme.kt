@@ -56,6 +56,15 @@ val NoirBgDeep = Color(0xFF08080A)
 val NoirChrome = Color(0xFF17171B)
 
 /**
+ * The plate an answer sits on: the darkest surface in the system, a hair off black.
+ *
+ * Answers are solid rather than transparent on purpose. A question screen paints a wash behind
+ * everything, and letting it through the answers makes the block of them read as part of the
+ * background instead of the thing being chosen from.
+ */
+val NoirAnswerPlate = Color(0xFF0A0A0C)
+
+/**
  * The midpoint of each screen's wash, taken from its drawing.
  *
  * Every artboard paints near-black at both edges with one colour a whisper into the middle, and

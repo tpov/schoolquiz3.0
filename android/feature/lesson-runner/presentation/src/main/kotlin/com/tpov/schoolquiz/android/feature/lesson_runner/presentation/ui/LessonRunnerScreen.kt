@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -91,7 +90,6 @@ fun rememberFlagSecure(enabled: Boolean) {
 fun LessonRunnerScreen(
     component: LessonRunnerRootComponent,
     onNavigateBack: () -> Unit,
-    floatingIcons: List<ImageVector>,
     modifier: Modifier = Modifier,
     onOpenLesson: (String) -> Unit = {},
 ) {
@@ -850,7 +848,6 @@ private fun LessonRunnerScreenEasyPreview() {
         LessonRunnerScreen(
             component = PreviewLessonRunnerComponent(previewQuestionState(isHard = false)),
             onNavigateBack = {},
-            floatingIcons = emptyList(),
         )
     }
 }
@@ -863,7 +860,6 @@ private fun LessonRunnerScreenHardPreview() {
         LessonRunnerScreen(
             component = PreviewLessonRunnerComponent(previewQuestionState(isHard = true)),
             onNavigateBack = {},
-            floatingIcons = emptyList(),
         )
     }
 }
@@ -876,7 +872,6 @@ private fun LessonRunnerScreenLoadingPreview() {
         LessonRunnerScreen(
             component = PreviewLessonRunnerComponent(RunnerUiState.Loading),
             onNavigateBack = {},
-            floatingIcons = emptyList(),
         )
     }
 }
@@ -892,7 +887,6 @@ private fun LessonRunnerScreenInitFailedPreview() {
                     RunnerUiState.InitFailed(RunnerUiState.InitFailureReason.AuthRequired),
                 ),
             onNavigateBack = {},
-            floatingIcons = emptyList(),
         )
     }
 }

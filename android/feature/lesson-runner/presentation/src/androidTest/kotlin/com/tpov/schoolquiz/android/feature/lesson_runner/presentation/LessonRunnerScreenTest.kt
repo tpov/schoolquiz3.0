@@ -102,7 +102,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -121,7 +121,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -139,7 +139,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -154,7 +154,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -170,7 +170,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -190,7 +190,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
         composeTestRule.waitForIdle()
@@ -209,7 +209,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
         composeTestRule.waitForIdle()
@@ -229,7 +229,7 @@ class LessonRunnerScreenTest {
         composeTestRule.setContent {
             SchoolQuizTheme {
                 if (showRunner.value) {
-                    LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                    LessonRunnerScreen(fakeComponent, onNavigateBack = {})
                 }
             }
         }
@@ -255,7 +255,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
         composeTestRule.waitForIdle()
@@ -278,7 +278,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
         composeTestRule.waitForIdle()
@@ -300,7 +300,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -317,7 +317,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -336,7 +336,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -354,7 +354,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -369,7 +369,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -385,7 +385,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -402,7 +402,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -441,7 +441,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -458,7 +458,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -473,7 +473,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
 
@@ -489,7 +489,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
         composeTestRule.waitForIdle()
@@ -511,7 +511,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
         composeTestRule.waitForIdle()
@@ -524,7 +524,7 @@ class LessonRunnerScreenTest {
         // Re-set content on the recreated activity
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = {}, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
             }
         }
         composeTestRule.waitForIdle()
@@ -541,7 +541,7 @@ class LessonRunnerScreenTest {
 
         composeTestRule.setContent {
             SchoolQuizTheme {
-                LessonRunnerScreen(fakeComponent, onNavigateBack = { navCalled = true }, floatingIcons = emptyList())
+                LessonRunnerScreen(fakeComponent, onNavigateBack = { navCalled = true })
             }
         }
         composeTestRule.waitForIdle()
