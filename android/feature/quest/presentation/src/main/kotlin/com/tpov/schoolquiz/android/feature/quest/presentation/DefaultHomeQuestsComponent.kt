@@ -25,6 +25,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,6 +47,7 @@ private const val PERFECT_SCORE = 100
  * Spec: docs/features/home-and-my-quests/06-api-contract.md §6.2 DefaultHomeQuestsComponent
  * ADR-CMP-51: Decompose Component pattern.
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DefaultHomeQuestsComponent(
     componentContext: ComponentContext,
     private val observeCatalogs: ObserveCatalogsUseCase,
@@ -112,19 +116,48 @@ class DefaultHomeQuestsComponent(
         )
     }
 
+    /**
+     * How many quests each catalogue holds, kept alongside the catalogues themselves.
+     *
+     * One query per catalogue rather than a count on the catalogue row: the number is what is on
+     * the home shelf right now, and a stored total would drift every time a quest was published,
+     * hidden or archived.
+     */
+    private val questCounts =
+        observeCatalogs()
+            .flatMapLatest { catalogs ->
+                val listed = catalogs.filterNot { it.questType == QuestType.COURSE }
+                if (listed.isEmpty()) {
+                    flowOf(emptyMap())
+                } else {
+                    combine(
+                        listed.map { catalog ->
+                            questRepository
+                                .observeByCatalog(catalog.id, HOME_SHELF)
+                                .map { quests -> catalog.id to quests.size }
+                        },
+                    ) { pairs -> pairs.toMap() }
+                }
+            }
+
     override val state =
         combine(
             observeCatalogs(),
             observeProfile(),
             giftBoxOpening,
             continueLesson,
-        ) { catalogs, profile, opening, resume ->
+            questCounts,
+        ) { catalogs, profile, opening, resume, counts ->
             HomeQuestsUiState(
                 catalogs =
                     catalogs
                         // Courses have their own entry point, so they are not listed here.
                         .filterNot { it.questType == QuestType.COURSE }
-                        .map { it.toDisplayItem() },
+                        .map { catalog ->
+                            catalog.toDisplayItem().copy(
+                                questCountLabel = counts[catalog.id]?.let(::questCountWording),
+                            )
+                        },
                 giftBoxCount = profile.boxCount,
                 giftBoxStreakDays = profile.boxStreakDays,
                 giftBoxOpening = opening,
@@ -194,4 +227,26 @@ class DefaultHomeQuestsComponent(
             HomeGiftBoxFailure.Unexpected(detail = message?.takeIf { it.isNotBlank() })
         }
     }
+}
+
+/** The shelf the home screen shows; quests hidden from it must not be counted into it. */
+private const val HOME_SHELF = "home"
+
+/**
+ * "1 квест", "2 квеста", "5 квестов" — Russian counts three ways.
+ *
+ * The teens are the case naive versions get wrong: eleven takes the same form as five.
+ */
+private fun questCountWording(count: Int): String {
+    val tail = count % 100
+    val last = count % 10
+    val teens = tail in 11..14
+    val noun =
+        when {
+            teens -> "квестов"
+            last == 1 -> "квест"
+            last in 2..4 -> "квеста"
+            else -> "квестов"
+        }
+    return "$count $noun"
 }

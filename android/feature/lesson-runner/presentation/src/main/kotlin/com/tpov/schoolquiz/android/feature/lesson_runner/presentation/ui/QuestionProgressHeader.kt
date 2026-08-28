@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
+import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
@@ -44,7 +45,6 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
@@ -94,7 +94,6 @@ fun QuestionProgressHeader(
 
     val total = totalInPool.coerceAtLeast(1)
     val current = (indexInPool + 1).coerceIn(1, total)
-    val remainingQuestions = (total - current + 1).coerceAtLeast(0)
     val urgent = remainingMs <= URGENT_THRESHOLD_MS
     val timerColor by animateColorAsState(
         targetValue = if (urgent) NoirDanger else NoirT1,
@@ -148,7 +147,7 @@ fun QuestionProgressHeader(
                 modifier = Modifier.graphicsLayer { alpha = if (urgent) pulseAlpha else 1f },
             )
         }
-        ProgressSegments(total = total, current = current, isHard = isHard)
+        ProgressSegments(total = total, current = current)
     }
 }
 
@@ -169,7 +168,7 @@ private fun HeaderPill(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(13.dp))
-        Text(text, style = NoirType.num.copy(fontSize = 12.5.sp))
+        Text(text, style = NoirType.num.copy(fontSize = 12.5.sp, color = NoirT1))
     }
 }
 
@@ -184,20 +183,19 @@ private fun HeaderPill(
 private fun ProgressSegments(
     total: Int,
     current: Int,
-    isHard: Boolean,
 ) {
-    // The mode's own colour, not the skin's accent: the segments say which round this is, and
-    // a themed accent would say the same thing on easy and hard.
-    val done = if (isHard) NoirDanger else NoirSuccess
+    // The accent, not the mode: the page behind already says which round this is, and the
+    // segments are about where you are in it.
+    val done = LocalNoirAccent.current
     Row(
         Modifier.fillMaxWidth().padding(start = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         repeat(total) { index ->
             Box(
                 Modifier
                     .weight(1f)
-                    .height(4.dp)
+                    .height(3.dp)
                     .clip(NoirShapePill)
                     .background(if (index < current) done else NoirOutline),
             )

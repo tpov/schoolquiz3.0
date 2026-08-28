@@ -28,6 +28,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 
 /**
@@ -37,12 +38,13 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
  * whole port: the screens ask for "a runner card" or "the mode accent" and never name a colour, so
  * changing the answers here moves all of them at once.
  *
- * Hard mode keeps its red. It is the one place in the app where the accent carries meaning rather
- * than taste — the player needs to see at a glance which mode they are answering in — so it stays
- * fixed instead of following the accent the rest of NOIR themes on.
+ * The mode has its own two colours — green for an easy round, red for a hard one — and they do not
+ * follow the accent the rest of NOIR themes on. A player has to see which round they are in at a
+ * glance, and an accent that changes with taste cannot say that. The accent still owns the things
+ * that mean "you are here": the progress segments, the selected row.
  */
 @Composable
-internal fun runnerModeAccent(isHard: Boolean): Color = if (isHard) NoirDanger else LocalNoirAccent.current
+internal fun runnerModeAccent(isHard: Boolean): Color = if (isHard) NoirDanger else NoirSuccess
 
 @Composable
 internal fun runnerNeutralBorderColor(): Color = NoirOutline
