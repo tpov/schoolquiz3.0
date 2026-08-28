@@ -1,18 +1,22 @@
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,17 +30,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
@@ -186,17 +196,20 @@ fun OrderingContent(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 58.dp)
+                            .heightIn(min = 62.dp)
                             .graphicsLayer {
                                 rotationX = if (flip.showBack) FEEDBACK_FLIP_FULL_ROTATION else 0f
                             }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.DragHandle,
-                        contentDescription = stringResource(R.string.runner_cd_drag),
-                        tint = NoirT3,
+                    // The position, not a drag handle. Nothing here is draggable — the two
+                    // buttons are how a row moves — and a handle promises a gesture that does
+                    // nothing. The number also says what the answer currently is.
+                    Text(
+                        text = "${index + 1}",
+                        style = NoirType.num.copy(fontSize = 12.sp, color = NoirT3),
+                        modifier = Modifier.width(16.dp),
                     )
                     Text(
                         text = item.text,
@@ -204,26 +217,18 @@ fun OrderingContent(
                         style = NoirType.rowTitle,
                         color = NoirT1,
                     )
-                    IconButton(
-                        onClick = { onMoveUp(index) },
+                    OrderingMoveButton(
+                        icon = Icons.Default.KeyboardArrowUp,
+                        contentDescription = stringResource(R.string.runner_cd_move_up),
                         enabled = feedback == null && index > 0,
-                        modifier = Modifier.alpha(if (index > 0) 1f else DISABLED_ALPHA),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = stringResource(R.string.runner_cd_move_up),
-                        )
-                    }
-                    IconButton(
-                        onClick = { onMoveDown(index) },
+                        onClick = { onMoveUp(index) },
+                    )
+                    OrderingMoveButton(
+                        icon = Icons.Default.KeyboardArrowDown,
+                        contentDescription = stringResource(R.string.runner_cd_move_down),
                         enabled = feedback == null && index < lastIndex,
-                        modifier = Modifier.alpha(if (index < lastIndex) 1f else DISABLED_ALPHA),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = stringResource(R.string.runner_cd_move_down),
-                        )
-                    }
+                        onClick = { onMoveDown(index) },
+                    )
                 }
             }
         }
@@ -253,5 +258,33 @@ private fun OrderingContentPreview() {
             onReorder = { _, _ -> },
             onSubmit = {},
         )
+    }
+}
+
+/**
+ * One of the two buttons that move a row.
+ *
+ * Boxed, as the drawing has them: a bare chevron on a dark row is hard to find and harder to hit,
+ * and these are the only controls on the screen a player uses repeatedly.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun OrderingMoveButton(
+    icon: ImageVector,
+    contentDescription: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier
+            .size(44.dp)
+            .clip(NoirShapeMd)
+            .background(NoirS1)
+            .border(1.dp, NoirOutline, NoirShapeMd)
+            .clickable(enabled = enabled, onClick = onClick)
+            .alpha(if (enabled) 1f else DISABLED_ALPHA),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = contentDescription, tint = NoirT3, modifier = Modifier.size(15.dp))
     }
 }

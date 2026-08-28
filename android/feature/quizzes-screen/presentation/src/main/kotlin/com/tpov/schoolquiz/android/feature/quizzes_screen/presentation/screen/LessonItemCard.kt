@@ -98,17 +98,18 @@ fun LessonItemCard(
 @Composable
 private fun LessonRating(item: LessonItemUi) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        // The stars are drawn either way, empty when nobody has rated. The drawing keeps them:
-        // a row that loses its stars changes width against its neighbours, and the column of
-        // ratings stops being a column.
+        // Stars are this player's own progress — how many of the three they have taken from this
+        // lesson — not what anybody else thought of it. That is what they meant in the legacy app,
+        // and a row that shows a crowd's opinion where somebody expects their own is worse than
+        // showing nothing.
+        val earnedStars = item.bestStarsRawTenths / STAR_TENTHS
         StarRating(
-            rating = item.averageRating ?: 0f,
-            tint = if (item.averageRating == null) NoirOutline else NoirGold,
+            rating = earnedStars,
+            tint = if (item.bestStarsRawTenths == 0) NoirOutline else NoirGold,
             size = 13.dp,
         )
-        if (item.averageRating == null) {
-            Text(stringResource(R.string.quizzes_rating_none), style = NoirType.kicker)
-        } else {
+        // The crowd's opinion is the figure beside them, and it says how many people it speaks for.
+        if (item.averageRating != null) {
             Text(
                 text = formatRating(item.averageRating),
                 style = NoirType.num.copy(fontSize = 12.sp, color = NoirGold),
@@ -116,9 +117,14 @@ private fun LessonRating(item: LessonItemUi) {
             if (item.ratingCount > 0) {
                 Text("(${item.ratingCount})", style = NoirType.kicker)
             }
+        } else {
+            Text(stringResource(R.string.quizzes_rating_none), style = NoirType.kicker)
         }
     }
 }
+
+/** Stars are stored in tenths so half-stars survive the trip; the widget wants whole stars. */
+private const val STAR_TENTHS = 10f
 
 /** One decimal, as the drawing prints it: 2.0, not 2 and not 2.04. */
 private fun formatRating(rating: Float): String {
