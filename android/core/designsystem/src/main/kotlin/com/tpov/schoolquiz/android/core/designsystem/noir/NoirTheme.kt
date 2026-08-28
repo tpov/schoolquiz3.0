@@ -55,6 +55,25 @@ val NoirBgDeep = Color(0xFF08080A)
  */
 val NoirChrome = Color(0xFF17171B)
 
+/**
+ * The midpoint of each screen's wash, taken from its drawing.
+ *
+ * Every artboard paints near-black at both edges with one colour a whisper into the middle, and
+ * that colour is what tells the screens apart before a word is read. They live here rather than
+ * beside the screens so the set can be seen at once — four values that are meant to differ only
+ * slightly are impossible to keep in tune when they are four files apart.
+ */
+val NoirWashShop = Color(0xFF26200A)
+
+val NoirWashProfile = Color(0xFF0C1C28)
+
+val NoirWashHome = Color(0xFF122634)
+
+val NoirWashQuizzes = Color(0xFF142B3B)
+
+/** Where a wash peaks. Slightly past centre in the quizzes drawings, centred in the rest. */
+const val NOIR_WASH_MIDPOINT_LATE = 0.52f
+
 /** Surface 1 — a card sitting on the black. */
 val NoirS1 = NoirColorTokens.colorSurface1
 

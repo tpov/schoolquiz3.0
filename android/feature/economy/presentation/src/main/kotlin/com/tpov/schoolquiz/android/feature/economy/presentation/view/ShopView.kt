@@ -55,6 +55,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashShop
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.economy.presentation.R
 import com.tpov.schoolquiz.android.feature.economy.presentation.component.ShopMessage
@@ -74,9 +75,6 @@ private val ReferralItemShape = RoundedCornerShape(16.dp)
 private val LegacyShopCardColor = Color(0xFF242429)
 private val LegacyGoldCardColor = Color(0xFF3A2F0A)
 private val LegacyReferralCardColor = Color(0xFF242429)
-
-/** The midpoint of the shop's wash, straight from the drawing: near-black with gold in it. */
-private val NoirShopWash = Color(0xFF26200A)
 
 private val LegacyReferralBackground = Color.Black
 private val LegacyAccent = Color(0xFF4285F4)
@@ -108,7 +106,7 @@ fun ShopView(
     if (state.selectedTab == ShopTab.NICKNAMES) {
         // Its own screen, reached from the shop row — the same shape as Referrals. A tab strip
         // above the store would say the shop has two halves, and it has one with doors in it.
-        Column(modifier.fillMaxSize().noirScreenWash(NoirShopWash)) {
+        Column(modifier.fillMaxSize().noirScreenWash(NoirWashShop)) {
             NicknameMarketHeader(
                 balance = state.balance,
                 onBack = { onEvent(ShopViewEvent.SelectTab(ShopTab.STORE)) },
@@ -127,7 +125,7 @@ fun ShopView(
 
     // The ground is drawn once by the shell, which already owns the mode gradient. Painting a
     // second one here mixed two glows and muddied both.
-    Column(modifier.fillMaxSize().noirScreenWash(NoirShopWash)) {
+    Column(modifier.fillMaxSize().noirScreenWash(NoirWashShop)) {
         ShopHeader(state, onOpenDrawer)
         state.message?.let { message ->
             Text(

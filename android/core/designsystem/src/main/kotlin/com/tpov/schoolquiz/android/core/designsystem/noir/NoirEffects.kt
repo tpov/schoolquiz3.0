@@ -141,13 +141,16 @@ fun Modifier.fxViolet(shape: Shape = NoirShapeLg): Modifier =
  * floating in nothing, and it is faint enough (the midpoint is barely off black) that nothing
  * drawn on top has to fight it.
  */
-fun Modifier.noirScreenWash(tone: Color): Modifier =
+fun Modifier.noirScreenWash(
+    tone: Color,
+    midpoint: Float = 0.5f,
+): Modifier =
     this.drawBehind {
         drawRect(
             brush =
                 Brush.verticalGradient(
                     0f to NoirBg,
-                    0.5f to tone,
+                    midpoint to tone,
                     1f to NoirBg,
                 ),
         )

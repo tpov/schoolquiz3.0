@@ -40,7 +40,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.components.FloatingIconsLayer
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
@@ -164,10 +163,9 @@ fun LessonRunnerScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 accentColor = backgroundAccent,
             ) {
-                FloatingIconsLayer(
-                    modifier = Modifier.fillMaxSize(),
-                    icons = floatingIcons,
-                )
+                // No floating glyphs behind a question. The drawing has none, and what they
+                // actually produce is a dozen dark shapes scattered across the answers — texture
+                // where the screen is asking somebody to read carefully.
                 RunnerStateContent(state = state, component = component)
             }
         }

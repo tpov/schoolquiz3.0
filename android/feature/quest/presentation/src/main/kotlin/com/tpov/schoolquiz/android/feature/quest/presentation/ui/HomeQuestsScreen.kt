@@ -68,6 +68,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashHome
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
 import com.tpov.schoolquiz.android.feature.quest.presentation.ContinueLessonUi
 import com.tpov.schoolquiz.android.feature.quest.presentation.HomeGiftBoxFailure
@@ -108,9 +109,6 @@ fun HomeQuestsScreen(
     )
 }
 
-/** Midpoint of the home wash, from the drawing — a shade lighter than the profile's. */
-private val NoirHomeWash = androidx.compose.ui.graphics.Color(0xFF122634)
-
 @Composable
 private fun HomeQuestsContent(
     state: HomeQuestsUiState,
@@ -122,7 +120,7 @@ private fun HomeQuestsContent(
     onAddPublicQuestClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize().noirScreenWash(NoirHomeWash)) {
+    Box(modifier = modifier.fillMaxSize().noirScreenWash(NoirWashHome)) {
         when {
             state.isLoading -> LoadingContent(modifier = Modifier.fillMaxSize())
             state.catalogs.isEmpty() -> EmptyContent(modifier = Modifier.fillMaxSize())
