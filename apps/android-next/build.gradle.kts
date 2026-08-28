@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("schoolquiz.android.compose.application")
     alias(libs.plugins.google.services)
@@ -5,8 +7,24 @@ plugins {
 
 fun String.toBuildConfigString(): String = "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
+/**
+ * The App Check debug token this machine builds with.
+ *
+ * From the environment first, then local.properties. Without one the debug provider invents a
+ * fresh token on every install, that token is not on the project's allow list, and every Firestore
+ * and Functions call comes back "App attestation failed" — which looks exactly like sync being
+ * broken. Pinning it here means the token is registered once and keeps working.
+ */
 val firebaseAppCheckDebugSecret: String =
-    providers.environmentVariable("FIREBASE_APP_CHECK_DEBUG_SECRET").orNull.orEmpty()
+    providers.environmentVariable("FIREBASE_APP_CHECK_DEBUG_SECRET").orNull
+        ?: rootProject.file("local.properties")
+            .takeIf { it.exists() }
+            ?.let { file ->
+                val properties = Properties()
+                file.inputStream().use { stream -> properties.load(stream) }
+                properties.getProperty("firebase.appcheck.debug.secret")
+            }
+            .orEmpty()
 
 android {
     namespace = "com.tpov.schoolquiz.apps.android_next"
