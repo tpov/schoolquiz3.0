@@ -65,6 +65,14 @@ val NoirChrome = Color(0xFF17171B)
 val NoirAnswerPlate = Color(0xFF0A0A0C)
 
 /**
+ * A step below white, for a caption's second line sitting on artwork.
+ *
+ * Between [NoirT1] and [NoirT2]: over a photograph the usual body grey loses its edges, but a
+ * second line in full white competes with the title above it.
+ */
+val NoirT1Dim = Color(0xFFD8D8D8)
+
+/**
  * The midpoint of each screen's wash, taken from its drawing.
  *
  * Every artboard paints near-black at both edges with one colour a whisper into the middle, and

@@ -37,6 +37,7 @@ import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1Dim
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 
@@ -142,7 +143,7 @@ fun CatalogGridItem(
                 overflow = TextOverflow.Ellipsis,
             )
             item.questCountLabel?.let { label ->
-                Text(label, style = NoirType.rowSub.copy(fontSize = 12.5.sp, color = CatalogCaptionSub))
+                Text(label, style = NoirType.rowSub.copy(fontSize = 12.5.sp, color = NoirT1Dim))
             }
         }
     }
@@ -181,6 +182,3 @@ private val CatalogMuteMatrix =
             0f, 0f, 0f, 1f, 0f,
         ),
     )
-
-/** The caption's second line — a step below white, still well clear of the art behind it. */
-private val CatalogCaptionSub = Color(0xFFD8D8D8)
