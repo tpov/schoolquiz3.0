@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAnswerPlate
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
@@ -50,7 +51,7 @@ internal fun runnerNeutralBorderColor(): Color = NoirOutline
 internal fun runnerLightBorderColor(): Color = NoirHair
 
 @Composable
-internal fun runnerAnswerSurfaceColor(): Color = NoirS2
+internal fun runnerAnswerSurfaceColor(): Color = NoirAnswerPlate
 
 @Composable
 internal fun runnerDeepSurfaceColor(): Color = NoirS2

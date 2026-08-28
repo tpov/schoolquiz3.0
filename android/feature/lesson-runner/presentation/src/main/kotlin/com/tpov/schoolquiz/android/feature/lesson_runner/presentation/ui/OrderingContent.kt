@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -49,7 +51,9 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
@@ -200,22 +204,34 @@ fun OrderingContent(
                             .graphicsLayer {
                                 rotationX = if (flip.showBack) FEEDBACK_FLIP_FULL_ROTATION else 0f
                             }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(start = 18.dp, top = 9.dp, end = 10.dp, bottom = 9.dp),
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     // The position, not a drag handle. Nothing here is draggable — the two
                     // buttons are how a row moves — and a handle promises a gesture that does
                     // nothing. The number also says what the answer currently is.
+                    val revealed = feedback != null
                     Text(
                         text = "${index + 1}",
-                        style = NoirType.num.copy(fontSize = 12.sp, color = NoirT3),
+                        style =
+                            NoirType.num.copy(
+                                fontSize = 12.sp,
+                                color = if (revealed) borderColor else NoirTOff,
+                            ),
                         modifier = Modifier.width(16.dp),
                     )
                     Text(
                         text = item.text,
-                        modifier = Modifier.weight(1f).padding(horizontal = 10.dp),
-                        style = NoirType.rowTitle,
-                        color = NoirT1,
+                        modifier = Modifier.weight(1f),
+                        // Quiet until the verdict, then white and heavier — the row only becomes
+                        // an assertion once it has been judged.
+                        style =
+                            NoirType.rowTitle.copy(
+                                fontSize = 15.sp,
+                                fontWeight = if (revealed) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (revealed) NoirT1 else NoirT2,
+                            ),
                     )
                     OrderingMoveButton(
                         icon = Icons.Default.KeyboardArrowUp,
