@@ -145,7 +145,7 @@ private fun DrawScope.createStarPath(): Path {
 fun StarRating(
     rating: Float?,
     modifier: Modifier = Modifier,
-    size: Dp = 18.dp,
+    size: Dp = 24.dp,
     tint: Color = MaterialTheme.colorScheme.primary,
 ) {
     Row(modifier = modifier) {

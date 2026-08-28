@@ -23,7 +23,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChipTone
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
@@ -100,8 +100,8 @@ private fun LessonStars(item: LessonItemUi) {
     // what a crowd scored it out of five is a different question, asked nowhere on this row.
     StarRating(
         rating = item.bestStarsRawTenths / STAR_TENTHS,
-        tint = if (item.bestStarsRawTenths == 0) NoirOutline else NoirGold,
-        size = 13.dp,
+        tint = if (item.bestStarsRawTenths == 0) NoirOutline2 else NoirGold,
+        size = 15.dp,
     )
 }
 

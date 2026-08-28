@@ -66,7 +66,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBgDeep
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirInk
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirWashHome
 import com.tpov.schoolquiz.android.core.designsystem.noir.noirScreenWash
@@ -203,7 +203,7 @@ private fun ContinueLessonCard(
                             lesson.completedCount,
                             lesson.lessonSegments.size,
                         ),
-                    style = NoirType.num.copy(fontSize = 10.5.sp, color = NoirTOff),
+                    style = NoirType.num.copy(fontSize = 10.5.sp, color = NoirT2),
                 )
                 Icon(
                     imageVector = NoirIcons.ChevronRight,
@@ -221,7 +221,7 @@ private fun ContinueLessonCard(
             if (lesson.path.isNotBlank()) {
                 Text(
                     text = lesson.path,
-                    style = NoirType.rowSub.copy(color = NoirTOff),
+                    style = NoirType.rowSub.copy(color = NoirT2),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

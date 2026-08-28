@@ -36,7 +36,9 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.tpov.schoolquiz.android.core.designsystem.catalog.DesignCatalogScreen
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignBackground
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAppBar
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBalancePill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirBottomNav
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirNavItem
@@ -251,15 +253,16 @@ fun AppShellScreen(
                                         )
                                     }
                                 },
-                            // The canvas hangs a refresh action on the home bar; everything else
-                            // keeps the sync in the drawer where it always lived.
+                            // Charges, not a refresh button. Sync has a screen of its own, and a
+                            // control that fires a background job is a poor use of the one slot
+                            // the home bar has; what belongs there is the number a player spends.
                             trailing =
                                 if (state.activeTab == Tab.LOCAL && !isImmersiveScreenActive) {
                                     {
-                                        NoirIconButton(
-                                            icon = NoirIcons.Sync,
-                                            contentDescription = stringResource(R.string.cd_sync_now),
-                                            onClick = { rootComponent.onSyncNow() },
+                                        NoirBalancePill(
+                                            icon = NoirIcons.Bolt,
+                                            value = state.userStats.standardHearts.toString(),
+                                            tint = NoirDanger,
                                         )
                                     }
                                 } else {

@@ -102,7 +102,10 @@ private const val BEST_FILL_ALPHA = 0.65f
 private const val SUCCESS_AREA_ALPHA = 0.10f
 private const val DANGER_AREA_ALPHA = 0.08f
 private const val CHART_LINE_ALPHA = 0.75f
-private const val CHART_LINE_WIDTH = 3f
+
+/** How far the grid steps back so the line reads over it. */
+private const val CHART_GRID_DIM = 0.55f
+private const val CHART_LINE_WIDTH = 3.4f
 private const val CHART_DOT_ALPHA = 0.65f
 private const val CHART_FIRST_DOT_R = 3.2f
 private const val CHART_DOT_R = 2.4f
@@ -219,7 +222,7 @@ private fun AdviceSection(advice: ResultAdvice) {
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        Text(stringResource(R.string.runner_advice_kicker), style = NoirType.kicker.copy(color = NoirTOff))
+        Text(stringResource(R.string.runner_advice_kicker), style = NoirType.kicker.copy(color = NoirT2))
         Text(
             text =
                 pluralStringResource(
@@ -264,7 +267,7 @@ private fun ResultScoreCard(
                         text = state.percentScore.raw.toString(),
                         style = NoirType.num.copy(fontSize = 60.sp, fontWeight = FontWeight.Bold),
                     )
-                    Text("%", style = NoirType.num.copy(fontSize = 16.sp, color = NoirTOff))
+                    Text("%", style = NoirType.num.copy(fontSize = 16.sp, color = NoirT2))
                 }
                 AccuracyChart(scores = state.questionScores)
             }
@@ -382,8 +385,15 @@ private fun AccuracyChart(
 
         fun vy(y: Float) = y * scaleY
 
+        // The grid is dimmed so the line reads over it: a chart this small loses its shape
+        // against rules of the same weight.
         CHART_GRIDLINE_YS.forEach { y ->
-            drawLine(NoirHair, Offset(0f, vy(y)), Offset(size.width, vy(y)), strokeWidth = 1f)
+            drawLine(
+                NoirHair.copy(alpha = NoirHair.alpha * CHART_GRID_DIM),
+                Offset(0f, vy(y)),
+                Offset(size.width, vy(y)),
+                strokeWidth = 1f,
+            )
         }
 
         val stepX = if (shown.size == 1) 0f else CHART_PLOT_SPAN / (shown.size - 1)
@@ -433,6 +443,9 @@ private fun AccuracyChart(
                 center = point,
             )
         }
+        // A white dot where the run ended: the eye needs somewhere to stop, and the last answer
+        // is the one the reader is looking for.
+        drawCircle(color = NoirT1, radius = CHART_FIRST_DOT_R * scaleY, center = points.last())
     }
 }
 
@@ -471,11 +484,11 @@ private fun DiscussionSection(
         ) {
             Text(
                 text = stringResource(R.string.runner_discussion_header),
-                style = NoirType.kicker.copy(color = NoirTOff),
+                style = NoirType.kicker.copy(color = NoirT2),
             )
             Text(
                 text = comments.size.toString(),
-                style = NoirType.kicker.copy(color = NoirTOff),
+                style = NoirType.kicker.copy(color = NoirT2),
             )
         }
         comments.forEach { comment -> CommentRow(comment) }

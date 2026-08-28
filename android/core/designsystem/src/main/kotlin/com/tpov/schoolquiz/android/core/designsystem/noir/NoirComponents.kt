@@ -635,7 +635,9 @@ fun NoirBottomNav(
     Row(
         modifier
             .fillMaxWidth()
-            .background(NoirChrome)
+            // Transparent, so the screen's wash runs to the bottom edge instead of stopping
+            // at a bar. The hairline is what separates them.
+            .background(Color.Transparent)
             .drawBehind {
                 drawLine(
                     color = NoirHair,
