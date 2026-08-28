@@ -34,6 +34,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirItemTile
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSectionRule
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.economy.presentation.R
@@ -105,7 +106,7 @@ private fun ShopOfferCard(
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    style = NoirType.kicker.copy(fontSize = 10.sp, color = NoirTOff),
+                    style = NoirType.kicker.copy(fontSize = 10.5.sp, color = NoirT2),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

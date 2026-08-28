@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -35,6 +36,7 @@ import com.tpov.schoolquiz.android.core.designsystem.R
 import com.tpov.schoolquiz.android.core.designsystem.model.CatalogDisplayItem
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 
@@ -127,20 +129,20 @@ fun CatalogGridItem(
                 .background(
                     Brush.verticalGradient(
                         0f to Color.Transparent,
-                        1f to Color.Black.copy(alpha = 0.78f),
+                        1f to Color.Black.copy(alpha = 0.92f),
                     ),
                 )
-                .padding(start = 12.dp, end = 12.dp, top = 22.dp, bottom = 10.dp),
+                .padding(start = 12.dp, end = 12.dp, top = 26.dp, bottom = 10.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
                 text = item.name,
-                style = NoirType.rowTitle,
+                style = NoirType.rowTitle.copy(fontSize = 14.5.sp, color = NoirT1),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             item.questCountLabel?.let { label ->
-                Text(label, style = NoirType.rowSub.copy(color = Color.White.copy(alpha = 0.72f)))
+                Text(label, style = NoirType.rowSub.copy(fontSize = 12.5.sp, color = CatalogCaptionSub))
             }
         }
     }
@@ -164,16 +166,21 @@ private const val TILE_ASPECT_RATIO = 1.16f
 private val CATALOG_GAP = 10.dp
 
 /**
- * The canvas mutes catalog art with `saturate(.72) brightness(.62) contrast(1.06)`; collapsed into
+ * The canvas mutes catalog art with `saturate(.72) brightness(.55) contrast(1.06)`; collapsed into
  * one matrix (contrast ∘ brightness ∘ saturation).
+ *
+ * Darker than it was: the caption sits on the picture now, and art at .62 kept winning against it.
  */
 @Suppress("MagicNumber")
 private val CatalogMuteMatrix =
     ColorMatrix(
         floatArrayOf(
-            0.5124f, 0.1316f, 0.0132f, 0f, -0.03f,
-            0.0392f, 0.6048f, 0.0132f, 0f, -0.03f,
-            0.0392f, 0.1316f, 0.4864f, 0f, -0.03f,
+            0.4545f, 0.1167f, 0.0118f, 0f, -0.03f,
+            0.0347f, 0.5365f, 0.0118f, 0f, -0.03f,
+            0.0347f, 0.1167f, 0.4315f, 0f, -0.03f,
             0f, 0f, 0f, 1f, 0f,
         ),
     )
+
+/** The caption's second line — a step below white, still well clear of the art behind it. */
+private val CatalogCaptionSub = Color(0xFFD8D8D8)

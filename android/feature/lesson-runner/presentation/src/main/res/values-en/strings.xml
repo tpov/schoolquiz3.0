@@ -11,7 +11,7 @@
     <string name="runner_action_got_it">Got it</string>
 
     <!-- Hint: plays the correct answer for the user, costs one charge (plan §4.4) -->
-    <string name="runner_hint_action">Hint · −1 ♥</string>
+    <string name="runner_hint_action">Hint · −1</string>
     <string name="runner_hint_cd">Reveal the correct answer for one charge</string>
 
     <!-- Verdict on the question screen: waits for a tap instead of a hidden timer -->

@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,10 +42,11 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirAnswerPlate
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import kotlinx.coroutines.delay
@@ -138,7 +141,13 @@ internal fun QuestionFrame(
             }
         }
 
-        Column(if (hasQuestionSurface) Modifier else Modifier.weight(1f)) { content() }
+        Column(
+            (if (hasQuestionSurface) Modifier else Modifier.weight(1f))
+                // The last hairline was landing on the gesture strip, where it read as part
+                // of the system bar rather than the end of the list.
+                .navigationBarsPadding()
+                .padding(bottom = 12.dp),
+        ) { content() }
 
         if (bottomAction != null || hintAction != null) {
             Row(
@@ -195,15 +204,24 @@ internal fun RunnerSecondaryAction(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    Text(
-        text = text.uppercase(),
-        style =
-            NoirType.chip.copy(
-                fontSize = 11.sp,
-                color = if (enabled) NoirT3 else NoirTOff,
-            ),
-        modifier = modifier.clickable(enabled = enabled, onClick = onClick).padding(vertical = 12.dp),
-    )
+    // The bolt carries the price, in the colour a cost is written in. The label says what happens;
+    // the glyph says what it takes, and the two should not be the same colour.
+    Row(
+        modifier.clickable(enabled = enabled, onClick = onClick).padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Text(
+            text = text.uppercase(),
+            style = NoirType.chip.copy(fontSize = 11.sp, color = if (enabled) NoirT2 else NoirTOff),
+        )
+        Icon(
+            NoirIcons.Bolt,
+            contentDescription = null,
+            tint = if (enabled) NoirDanger else NoirTOff,
+            modifier = Modifier.size(13.dp),
+        )
+    }
 }
 
 /**
@@ -243,7 +261,8 @@ internal fun AnswerOptionSurface(
             AnswerFeedbackTone.Correct -> NoirSuccess
             AnswerFeedbackTone.Wrong -> NoirDanger
             AnswerFeedbackTone.Muted -> NoirTOff
-            AnswerFeedbackTone.Neutral -> if (selected) accent else NoirT2
+            // White, not grey: the answers are what the screen is asking somebody to read.
+            AnswerFeedbackTone.Neutral -> if (selected) accent else NoirT1
         }
     // Every row sits on the plate; picking one washes the mode's colour over it, and a verdict
     // washes green or red. Transparent rows let the screen's gradient through and the block of
@@ -302,7 +321,7 @@ internal fun AnswerKeyLetter(
 ) {
     Text(
         text = ('A' + index).toString(),
-        style = NoirType.num.copy(fontSize = 13.sp, color = if (selected) LocalNoirAccent.current else NoirTOff),
+        style = NoirType.num.copy(fontSize = 13.sp, color = if (selected) LocalNoirAccent.current else NoirT2),
     )
 }
 
@@ -329,7 +348,7 @@ internal fun AnswerKeyBox(
     ) {
         Text(
             text = ('A' + index).toString(),
-            style = NoirType.num.copy(fontSize = 10.sp, color = if (selected) accent else NoirTOff),
+            style = NoirType.num.copy(fontSize = 11.sp, color = if (selected) accent else NoirT2),
         )
     }
 }

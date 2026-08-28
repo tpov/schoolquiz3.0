@@ -254,6 +254,22 @@ object NoirIcons {
             lineTo(12f, 20f)
         }
 
+    /** Stacked sheets — how many questions there are, and where in them you stand. */
+    val Layers: ImageVector =
+        stroke {
+            moveTo(12f, 3.5f)
+            lineTo(20.5f, 8f)
+            lineTo(12f, 12.5f)
+            lineTo(3.5f, 8f)
+            close()
+            moveTo(3.5f, 12f)
+            lineTo(12f, 16.5f)
+            lineTo(20.5f, 12f)
+            moveTo(3.5f, 16f)
+            lineTo(12f, 20.5f)
+            lineTo(20.5f, 16f)
+        }
+
     /** A bolt, for the Thunder Bolt emblem — the one glyph the set had no relative of. */
     val Bolt: ImageVector =
         stroke {

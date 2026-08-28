@@ -220,7 +220,10 @@ object NoirType {
                 fontFamily = LocalNoirMono.current,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.2.em,
+                // 0.14em, not 0.2. Mono at wide tracking stops reading as words and starts reading
+                // as separate letters; this is the ceiling the design settled on, and it is set
+                // here rather than at forty call sites.
+                letterSpacing = 0.14.em,
                 color = NoirT3,
             )
 

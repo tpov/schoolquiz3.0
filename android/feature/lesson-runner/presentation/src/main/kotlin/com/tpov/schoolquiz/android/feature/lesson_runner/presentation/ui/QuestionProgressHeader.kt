@@ -37,7 +37,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
-import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIconButton
@@ -45,8 +44,9 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import kotlinx.coroutines.delay
@@ -130,14 +130,17 @@ fun QuestionProgressHeader(
                 onClick = onCrossClick,
             )
             if (lives != null) {
-                // Gold heart on hard, red heart otherwise — never the Gem.
+                // A charge is a bolt. The heart was left over from lives, and the word changed
+                // everywhere else months ago.
                 HeaderPill(
-                    icon = NoirIcons.Heart,
+                    icon = NoirIcons.Bolt,
                     text = lives.toString(),
                     tint = if (isHard) NoirGold else NoirDanger,
                 )
             }
-            HeaderPill(icon = NoirIcons.Menu, text = remainingQuestions.toString(), tint = NoirT3)
+            // Position, not a countdown: "3/12" agrees with the segments underneath, where a
+            // bare "10 left" has to be worked out against them.
+            HeaderPill(icon = NoirIcons.Layers, text = "$current/$total", tint = NoirT2)
             Spacer(Modifier.weight(1f))
             Text(
                 text = remainingMs.asClock(),
@@ -183,16 +186,18 @@ private fun ProgressSegments(
     current: Int,
     isHard: Boolean,
 ) {
-    val done = if (isHard) NoirDanger else LocalNoirAccent.current
+    // The mode's own colour, not the skin's accent: the segments say which round this is, and
+    // a themed accent would say the same thing on easy and hard.
+    val done = if (isHard) NoirDanger else NoirSuccess
     Row(
         Modifier.fillMaxWidth().padding(start = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         repeat(total) { index ->
             Box(
                 Modifier
                     .weight(1f)
-                    .height(3.dp)
+                    .height(4.dp)
                     .clip(NoirShapePill)
                     .background(if (index < current) done else NoirOutline),
             )

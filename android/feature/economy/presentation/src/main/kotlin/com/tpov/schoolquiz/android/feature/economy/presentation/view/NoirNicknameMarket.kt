@@ -958,7 +958,7 @@ private fun LogoTile(
                         else -> logo.price.groupedByThousands()
                     }
                 ).uppercase(),
-            style = NoirType.kicker.copy(fontSize = 9.sp, color = labelTone),
+            style = NoirType.kicker.copy(fontSize = 10.5.sp, color = labelTone),
         )
     }
 }
