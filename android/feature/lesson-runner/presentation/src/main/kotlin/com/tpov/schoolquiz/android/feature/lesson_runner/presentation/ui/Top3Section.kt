@@ -2,7 +2,6 @@
 
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -17,13 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeJoin
@@ -31,7 +29,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathData
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -105,39 +102,41 @@ fun Top3Section(
     modifier: Modifier = Modifier,
 ) {
     if (top3.isEmpty()) return
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        color = runnerGroupSurfaceColor(),
-        contentColor = NoirT1,
-        border = BorderStroke(1.dp, runnerLightBorderColor()),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+    Column(modifier.fillMaxWidth()) {
+        // A gold band bleeding to the right instead of a boxed header. The set this comes from
+        // drops strokes: a section is announced by its colour running out of its own title, and
+        // the ranking's colour is gold because first place is.
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        0f to NoirGold.copy(alpha = 0.20f),
+                        TOP3_BAND_FADE to Color.Transparent,
+                    ),
+                )
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = stringResource(R.string.runner_top3_title),
-                modifier = Modifier.fillMaxWidth(),
-                style = NoirType.groupTitle,
-                color = NoirT1,
-                textAlign = TextAlign.Center,
+                style = NoirType.kicker.copy(fontSize = 11.sp, color = NoirGold),
             )
-            Column {
-                LeaderRow(participant = top3.first())
-                top3.drop(1).forEachIndexed { index, participant ->
-                    RunnerUpRow(
-                        rank = index + RUNNER_UP_FIRST_RANK,
-                        participant = participant,
-                        showDivider = index < top3.size - RUNNER_UP_TRAILING_ROWS,
-                    )
-                }
-            }
+        }
+        LeaderRow(participant = top3.first())
+        top3.drop(1).forEachIndexed { index, participant ->
+            RunnerUpRow(
+                rank = index + RUNNER_UP_FIRST_RANK,
+                participant = participant,
+                showDivider = index < top3.size - RUNNER_UP_TRAILING_ROWS,
+            )
         }
     }
 }
+
+/** Where the band's gold has faded out entirely. */
+private const val TOP3_BAND_FADE = 0.8f
 
 /** First place: the gold band. Crown instead of a number, everything on it gold. */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

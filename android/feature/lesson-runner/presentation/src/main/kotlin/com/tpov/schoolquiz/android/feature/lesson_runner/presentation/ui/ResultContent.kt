@@ -2,7 +2,6 @@
 
 package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,11 +36,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,17 +49,19 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChrome
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassCard
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassFill
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGlassStroke
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirOutline
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS2
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirS3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapePill
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeXl
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT2
@@ -81,15 +83,6 @@ private const val NOLICS_PERCENT_STEP = 10
 // Accuracy chart geometry, lifted from the design's SVG (viewBox 340×120 rendered at 104×44):
 // the plot spans x 10..330, score digits 1..9 sit on nine levels 11.5 units apart with '9' on
 // y=14, and hairline gridlines cross at y=14/60/106.
-private const val CHART_WIDTH_DP = 104
-private const val CHART_HEIGHT_DP = 44
-private const val CHART_VIEWBOX_W = 340f
-private const val CHART_VIEWBOX_H = 120f
-private val CHART_GRIDLINE_YS = listOf(14f, 60f, 106f)
-private const val CHART_PLOT_START_X = 10f
-private const val CHART_PLOT_SPAN = 320f
-private const val CHART_BASE_Y = 106f
-private const val CHART_LEVEL_STEP = 11.5f
 
 // Best-mark scale, from the same design: a 34px block holding a 5px track, a 2×14 tick at the
 // best mark, and the label hanging under the tick's position.
@@ -99,16 +92,6 @@ private const val BEST_FILL_ALPHA = 0.65f
 
 // Chart paint, straight from the design: success wash under the line (0.10), danger wash above
 // it (0.08), the stroke at three-quarter accent with a heavier head dot.
-private const val SUCCESS_AREA_ALPHA = 0.10f
-private const val DANGER_AREA_ALPHA = 0.08f
-private const val CHART_LINE_ALPHA = 0.75f
-
-/** How far the grid steps back so the line reads over it. */
-private const val CHART_GRID_DIM = 0.55f
-private const val CHART_LINE_WIDTH = 3.4f
-private const val CHART_DOT_ALPHA = 0.65f
-private const val CHART_FIRST_DOT_R = 3.2f
-private const val CHART_DOT_R = 2.4f
 
 /**
  * The end of an attempt.
@@ -242,10 +225,12 @@ private fun AdviceSection(advice: ResultAdvice) {
 }
 
 /**
- * The score, the accuracy line, the mark to beat and the four figures — one card, as drawn.
+ * The score, as the drawing builds it: a lifted plate with a wash coming out of its top-left
+ * corner, one very large figure, the mark to beat under it, and the rewards along the foot.
  *
- * Its own function because it is its own element of the design: the page around it is a kicker,
- * this, and the actions, and reading that shape should not mean scrolling past sixty lines.
+ * The plate is a fill step rather than an outlined card. The set this comes from dropped strokes
+ * everywhere — at this palette a 1px white edge reads grey and chops the screen into boxes — so
+ * depth here is carried by how light the fill is and by the shadow under it.
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -255,56 +240,100 @@ private fun ResultScoreCard(
     earnedExperience: Int,
     earnedNolics: Int,
 ) {
-    NoirGlassCard {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = state.percentScore.raw.toString(),
-                        style = NoirType.num.copy(fontSize = 60.sp, fontWeight = FontWeight.Bold),
-                    )
-                    Text("%", style = NoirType.num.copy(fontSize = 16.sp, color = NoirT2))
-                }
-                AccuracyChart(scores = state.questionScores)
+    val tone = if (isHard) NoirDanger else NoirSuccess
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(NoirShapeXl)
+            .background(NoirChrome)
+            .drawBehind {
+                drawRect(
+                    brush =
+                        Brush.radialGradient(
+                            colors = listOf(tone.copy(alpha = 0.32f), Color.Transparent),
+                            center = Offset.Zero,
+                            radius = size.maxDimension * SCORE_WASH_REACH,
+                        ),
+                )
+            },
+    ) {
+        Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 16.dp)) {
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                Text(
+                    text = state.percentScore.raw.toString(),
+                    style = NoirType.num.copy(fontSize = 64.sp, fontWeight = FontWeight.Bold, color = NoirT1),
+                )
+                Text(
+                    "%",
+                    style = NoirType.num.copy(fontSize = 20.sp, color = NoirT2),
+                    modifier = Modifier.padding(bottom = 6.dp),
+                )
             }
             BestMarkScale(
                 current = state.percentScore.raw,
                 best = state.userBestPercentScore,
                 isHard = isHard,
             )
-            // The figures sit under a hairline, spaced rather than spread. Pushed to the
-            // corners they read as four separate readings; in a row with one gap they read as
-            // one line about the run that just finished.
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .drawBehind {
-                        drawRect(
-                            color = NoirGlassStroke,
-                            size = Size(size.width, 1.dp.toPx()),
-                        )
-                    }
-                    .padding(top = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
-            ) {
-                val lives =
-                    state.livesRemainingHearts?.let { remaining ->
-                        state.livesMaxHearts?.let { capacity -> "$remaining/$capacity" }
-                    }
-                if (lives != null) {
-                    ResultFigure(stringResource(R.string.runner_figure_lives), lives)
-                }
-                ResultFigure(stringResource(R.string.runner_figure_attempt), state.userAttemptCount.toString())
-                ResultFigure(stringResource(R.string.runner_figure_xp), "+$earnedExperience")
-                ResultFigure(stringResource(R.string.runner_figure_nolics), "+$earnedNolics")
-            }
         }
+        ResultRewardStrip(
+            state = state,
+            earnedExperience = earnedExperience,
+            earnedNolics = earnedNolics,
+        )
     }
 }
+
+/**
+ * What the run paid, along the foot of the card.
+ *
+ * Sunk rather than raised — a darker wash with a light hairline over it — so it reads as the base
+ * of the card and not as three more things to tap.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun ResultRewardStrip(
+    state: RunnerUiState.Result,
+    earnedExperience: Int,
+    earnedNolics: Int,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.22f))
+            .drawBehind {
+                drawRect(color = NoirGlassStroke, size = Size(size.width, 1.dp.toPx()))
+            },
+    ) {
+        RewardCell(NoirIcons.Star, "+$earnedExperience", LocalNoirAccent.current)
+        RewardCell(NoirIcons.Nolic, "+$earnedNolics", LocalNoirAccent.current)
+        state.livesRemainingHearts?.let { RewardCell(NoirIcons.Bolt, "−1", NoirDanger) }
+    }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun RowScope.RewardCell(
+    icon: ImageVector,
+    value: String,
+    tint: Color,
+) {
+    Row(
+        Modifier
+            .weight(1f)
+            .drawBehind {
+                drawRect(color = NoirHair, size = Size(1.dp.toPx(), size.height))
+            }
+            .padding(horizontal = 8.dp, vertical = 15.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(14.dp))
+        Text(value, style = NoirType.num.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = NoirT1))
+    }
+}
+
+/** How far the corner wash reaches across the card, as a share of its longest side. */
+private const val SCORE_WASH_REACH = 1.32f
 
 /**
  * This attempt against your own best.
@@ -358,107 +387,6 @@ private fun BestMarkScale(
                 )
             }
         }
-    }
-}
-
-/**
- * The attempt as one stroke: per-question correctness from the first answer to the last.
- *
- * What the line keeps below it is painted green — answers that held; what leaks above it is red.
- * A run that stays good reads as a mostly green field with the stroke riding high, which is the
- * whole story of the attempt in one glance.
- */
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun AccuracyChart(
-    scores: List<Int>,
-    modifier: Modifier = Modifier,
-) {
-    val accent = LocalNoirAccent.current
-    Canvas(modifier.size(width = CHART_WIDTH_DP.dp, height = CHART_HEIGHT_DP.dp)) {
-        val shown = scores.filter { it in 1..9 }
-        if (shown.isEmpty()) return@Canvas
-        val scaleX = size.width / CHART_VIEWBOX_W
-        val scaleY = size.height / CHART_VIEWBOX_H
-
-        fun vx(x: Float) = x * scaleX
-
-        fun vy(y: Float) = y * scaleY
-
-        // The grid is dimmed so the line reads over it: a chart this small loses its shape
-        // against rules of the same weight.
-        CHART_GRIDLINE_YS.forEach { y ->
-            drawLine(
-                NoirHair.copy(alpha = NoirHair.alpha * CHART_GRID_DIM),
-                Offset(0f, vy(y)),
-                Offset(size.width, vy(y)),
-                strokeWidth = 1f,
-            )
-        }
-
-        val stepX = if (shown.size == 1) 0f else CHART_PLOT_SPAN / (shown.size - 1)
-        val points =
-            shown.mapIndexed { index, digit ->
-                Offset(
-                    vx(CHART_PLOT_START_X + index * stepX),
-                    vy(CHART_BASE_Y - (digit - 1) * CHART_LEVEL_STEP),
-                )
-            }
-
-        drawPath(
-            Path().apply {
-                moveTo(points.first().x, size.height)
-                points.forEach { lineTo(it.x, it.y) }
-                lineTo(points.last().x, size.height)
-                close()
-            },
-            color = NoirSuccess.copy(alpha = SUCCESS_AREA_ALPHA),
-        )
-        drawPath(
-            Path().apply {
-                moveTo(points.first().x, 0f)
-                points.forEach { lineTo(it.x, it.y) }
-                lineTo(points.last().x, 0f)
-                close()
-            },
-            color = NoirDanger.copy(alpha = DANGER_AREA_ALPHA),
-        )
-        drawPath(
-            Path().apply {
-                moveTo(points.first().x, points.first().y)
-                points.drop(1).forEach { lineTo(it.x, it.y) }
-            },
-            color = accent.copy(alpha = CHART_LINE_ALPHA),
-            style =
-                Stroke(
-                    width = CHART_LINE_WIDTH * scaleY,
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round,
-                ),
-        )
-        points.forEachIndexed { index, point ->
-            drawCircle(
-                color = if (index == 0) accent else accent.copy(alpha = CHART_DOT_ALPHA),
-                radius = (if (index == 0) CHART_FIRST_DOT_R else CHART_DOT_R) * scaleY,
-                center = point,
-            )
-        }
-        // A white dot where the run ended: the eye needs somewhere to stop, and the last answer
-        // is the one the reader is looking for.
-        drawCircle(color = NoirT1, radius = CHART_FIRST_DOT_R * scaleY, center = points.last())
-    }
-}
-
-/** A figure and what it counts. Mono, so a column of them lines up. */
-@Suppress("FunctionNaming", "ktlint:standard:function-naming")
-@Composable
-private fun ResultFigure(
-    label: String,
-    value: String,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label.uppercase(), style = NoirType.kicker)
-        Text(value, style = NoirType.num.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold))
     }
 }
 
