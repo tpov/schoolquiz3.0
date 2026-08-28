@@ -187,7 +187,6 @@ class HierarchyItemCardTest {
                 HierarchyItemCard(
                     title = "NoRating",
                     rating = null,
-                    ratingCount = null,
                     onClick = {},
                 )
             }
@@ -235,7 +234,6 @@ class HierarchyItemCardTest {
                 HierarchyItemCard(
                     title = "RatedWithCount",
                     rating = 4.5f,
-                    ratingCount = 123,
                     onClick = {},
                 )
             }

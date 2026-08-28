@@ -38,7 +38,6 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeLg
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirSuccess
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
-import java.util.Locale
 
 /**
  * Generic card for hierarchy levels: Section / Theme / Lesson.
@@ -59,7 +58,6 @@ fun HierarchyItemCard(
     orderLabel: String? = null,
     subtitleCount: String? = null,
     rating: Float? = null,
-    ratingCount: Int? = null,
     ratingTint: Color? = null,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
@@ -130,20 +128,6 @@ fun HierarchyItemCard(
             size = 14.dp,
             tint = actualRatingTint,
         )
-        if (rating != null) {
-            Text(
-                text = String.format(Locale.US, "%.1f", rating),
-                style = NoirType.num.copy(fontSize = 12.sp, color = actualRatingTint),
-                modifier = Modifier.padding(start = 4.dp),
-            )
-            if (ratingCount != null && ratingCount > 0) {
-                Text(
-                    text = "($ratingCount)",
-                    style = NoirType.kicker,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
-            }
-        }
     }
 }
 
@@ -260,7 +244,6 @@ private fun HierarchyItemCardWithRatingPreview() {
             title = "Алгебра — основы",
             orderLabel = "1.",
             rating = 2.5f,
-            ratingCount = 42,
             downloadStatus = HierarchyDownloadStatus.Available,
             onDownloadClick = {},
             onClick = {},

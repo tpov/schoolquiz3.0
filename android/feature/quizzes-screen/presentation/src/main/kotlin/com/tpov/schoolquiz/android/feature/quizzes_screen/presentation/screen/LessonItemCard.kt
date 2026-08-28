@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.StarRating
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirChip
@@ -84,7 +83,7 @@ fun LessonItemCard(
                 modifier = Modifier.clickable { onHardCheckChanged(!item.isHardChecked) },
             )
         }
-        LessonRating(item)
+        LessonStars(item)
     }
 }
 
@@ -96,43 +95,18 @@ fun LessonItemCard(
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
-private fun LessonRating(item: LessonItemUi) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        // Stars are this player's own progress — how many of the three they have taken from this
-        // lesson — not what anybody else thought of it. That is what they meant in the legacy app,
-        // and a row that shows a crowd's opinion where somebody expects their own is worse than
-        // showing nothing.
-        val earnedStars = item.bestStarsRawTenths / STAR_TENTHS
-        StarRating(
-            rating = earnedStars,
-            tint = if (item.bestStarsRawTenths == 0) NoirOutline else NoirGold,
-            size = 13.dp,
-        )
-        // The crowd's opinion is the figure beside them, and it says how many people it speaks for.
-        if (item.averageRating != null) {
-            Text(
-                text = formatRating(item.averageRating),
-                style = NoirType.num.copy(fontSize = 12.sp, color = NoirGold),
-            )
-            if (item.ratingCount > 0) {
-                Text("(${item.ratingCount})", style = NoirType.kicker)
-            }
-        } else {
-            Text(stringResource(R.string.quizzes_rating_none), style = NoirType.kicker)
-        }
-    }
+private fun LessonStars(item: LessonItemUi) {
+    // Three stars, and nothing else. They say how far this player has got through the lesson —
+    // what a crowd scored it out of five is a different question, asked nowhere on this row.
+    StarRating(
+        rating = item.bestStarsRawTenths / STAR_TENTHS,
+        tint = if (item.bestStarsRawTenths == 0) NoirOutline else NoirGold,
+        size = 13.dp,
+    )
 }
 
 /** Stars are stored in tenths so half-stars survive the trip; the widget wants whole stars. */
 private const val STAR_TENTHS = 10f
-
-/** One decimal, as the drawing prints it: 2.0, not 2 and not 2.04. */
-private fun formatRating(rating: Float): String {
-    val tenths = kotlin.math.round(rating * TENTHS).toInt()
-    return "${tenths / TENTHS}.${tenths % TENTHS}"
-}
-
-private const val TENTHS = 10
 
 @Suppress("FunctionNaming", "UnusedPrivateMember", "ktlint:standard:function-naming")
 @Preview(showBackground = true)
