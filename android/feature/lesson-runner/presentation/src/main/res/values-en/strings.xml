@@ -76,4 +76,6 @@
         <item quantity="one">%1$d answer scored below half marks</item>
         <item quantity="other">%1$d answers scored below half marks</item>
     </plurals>
+    <string name="runner_discussion_title">Discussion</string>
+    <string name="runner_discussion_open">Open →</string>
 </resources>

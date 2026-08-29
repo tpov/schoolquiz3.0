@@ -376,3 +376,4 @@ hive-mind-prompt-*.txt
 /.claude/commands/workflows/workflow-export.md
 /.claude/commands/sparc/workflow-manager.md
 /.claude/commands/automation/workflow-select.md
+.disabled-speckit/

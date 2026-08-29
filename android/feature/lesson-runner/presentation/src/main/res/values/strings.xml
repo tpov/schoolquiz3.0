@@ -83,4 +83,6 @@
         <item quantity="many">%1$d ответов набрали меньше половины балла</item>
         <item quantity="other">%1$d ответов набрали меньше половины балла</item>
     </plurals>
+    <string name="runner_discussion_title">Обсуждение</string>
+    <string name="runner_discussion_open">Открыть →</string>
 </resources>

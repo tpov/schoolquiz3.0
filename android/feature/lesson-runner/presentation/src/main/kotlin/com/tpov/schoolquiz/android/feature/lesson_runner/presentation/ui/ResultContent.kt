@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,9 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -114,11 +113,11 @@ fun ResultContent(
     val isHard = state.mode == Difficulty.HARD
     val earnedExperience = resultExperienceReward(state.percentScore.raw, state.mode)
     val earnedNolics = resultNolicsReward(state.percentScore.raw, state.mode)
+    var discussionOpen by remember { mutableStateOf(false) }
 
     Column(
         modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(start = 18.dp, end = 18.dp, top = 22.dp, bottom = 14.dp),
@@ -158,14 +157,11 @@ fun ResultContent(
             Top3Section(top3 = state.top3)
         }
 
-        DiscussionSection(
-            comments = comments,
-            onPostComment = onPostComment,
-        )
+        DiscussionRow(count = comments.size, onOpen = { discussionOpen = true })
 
         state.advice?.let { AdviceSection(advice = it) }
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.weight(1f))
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -182,6 +178,14 @@ fun ResultContent(
                 modifier = Modifier.clickable(onClick = onNextLesson),
             )
         }
+    }
+
+    if (discussionOpen) {
+        DiscussionSheet(
+            comments = comments,
+            onPostComment = onPostComment,
+            onDismiss = { discussionOpen = false },
+        )
     }
 }
 
@@ -222,6 +226,60 @@ private fun AdviceSection(advice: ResultAdvice) {
             )
         }
     }
+}
+
+/**
+ * The discussion, as one row: how many have said something, and a way in.
+ *
+ * A door, not the room. The thread itself is a modal — on a result screen the comments are the
+ * least of what somebody came for, and inline they push the actions off the bottom.
+ */
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun DiscussionRow(
+    count: Int,
+    onOpen: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .defaultMinSize(minHeight = 60.dp)
+            .padding(vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                stringResource(R.string.runner_discussion_title),
+                style = NoirType.rowTitle.copy(fontSize = 15.sp, color = NoirT1),
+            )
+            Text(
+                text = discussionCountWording(count),
+                style = NoirType.rowSub.copy(fontSize = 12.5.sp, color = NoirT2),
+            )
+        }
+        Text(
+            stringResource(R.string.runner_discussion_open),
+            style = NoirType.num.copy(fontSize = 12.sp, color = LocalNoirAccent.current),
+        )
+    }
+}
+
+/** "1 комментарий", "2 комментария", "5 комментариев" — and the teens count like many. */
+private fun discussionCountWording(count: Int): String {
+    if (count == 0) return "Пока никто не написал"
+    val tail = count % 100
+    val last = count % 10
+    val teens = tail in 11..14
+    val noun =
+        when {
+            teens -> "комментариев"
+            last == 1 -> "комментарий"
+            last in 2..4 -> "комментария"
+            else -> "комментариев"
+        }
+    return "$count $noun"
 }
 
 /**
@@ -395,7 +453,19 @@ private fun BestMarkScale(
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
-private fun DiscussionSection(
+private fun DiscussionSheet(
+    comments: List<LessonComment>,
+    onPostComment: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        DiscussionBody(comments = comments, onPostComment = onPostComment)
+    }
+}
+
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@Composable
+private fun DiscussionBody(
     comments: List<LessonComment>,
     onPostComment: (String) -> Unit,
 ) {
