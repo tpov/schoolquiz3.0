@@ -301,6 +301,7 @@ private fun QuestionStateContent(
                 onFeedback = { feedback = it },
             )
             FeedbackOverlay(
+                hasAnswered = feedback != null,
                 feedbackDigit = feedback?.revealDigit(),
                 canSkip = canSkipFeedback,
                 onSkip = ::submitFeedbackNow,
@@ -602,15 +603,21 @@ private fun QuestionTypeContent(
 /**
  * Tap-anywhere layer plus the reveal line — the mockup's verdict slot, which replaces the old
  * invisible three-second overlay. The verdict waits for a tap instead of advancing on a timer.
+ *
+ * The tap layer is the only route to the next question, so it is drawn for every answered question.
+ * The banner is not: a hard question reveals nothing, so [feedbackDigit] is null and the layer
+ * carries no verdict — which is the point. Tying the layer's existence to the banner's is what
+ * stalled a hard lesson on its first answer.
  */
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
 private fun BoxScope.FeedbackOverlay(
+    hasAnswered: Boolean,
     feedbackDigit: Int?,
     canSkip: Boolean,
     onSkip: () -> Unit,
 ) {
-    if (feedbackDigit == null) return
+    if (!hasAnswered) return
     Box(
         modifier =
             Modifier
@@ -622,13 +629,15 @@ private fun BoxScope.FeedbackOverlay(
                     onClick = onSkip,
                 ),
     )
-    VerdictBanner(
-        digit = feedbackDigit,
-        modifier =
-            Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp),
-    )
+    if (feedbackDigit != null) {
+        VerdictBanner(
+            digit = feedbackDigit,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 12.dp),
+        )
+    }
 }
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")

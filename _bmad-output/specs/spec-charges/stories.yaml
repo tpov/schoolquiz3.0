@@ -31,7 +31,7 @@
 - id: "3"
   title: Plasma becomes a regenerating, purchasable resource
   description: >-
-    Give plasma a 24h regeneration, a ceiling of 3 and a flat one-gold price, replacing the
+    Give plasma a 24h regeneration, a ceiling of 3 and an escalating 1/2/3 gold ladder, replacing the
     non-regenerating ceiling-1 counter that costs ten gold. Covers the plasma half of CAP-1 and
     CAP-9.
   invoke_dev_with: >-
@@ -39,6 +39,11 @@
     module-level LIFE_POINT_INTERVAL_MS — give it the interval as a parameter rather than
     writing a second regenerator. Plasma needs its own stored timestamp beside its count.
     Ceilings and prices come from story 2's document, never from a constant.
+    Plasma is bought as a SLOT on a ladder indexed by slots owned, mirroring
+    standardHeartSlotCost — 1, 2, then 3 gold, six in total for permanent regenerating capacity.
+    spec-monetisation still says a flat 10 gold in three places; update it in the same change so
+    the two specs agree. Regeneration must also take a premium multiplier — spec-monetisation CAP-4 sells
+    faster charge regeneration as a premium benefit.
 
 - id: "4"
   title: The server decides what kind of activity was played

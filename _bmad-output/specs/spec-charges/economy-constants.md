@@ -39,7 +39,7 @@ under.
 |---|---|---|---|
 | `plasma.maxOwned` | 3 | `MAX_GOLD_HEARTS = 1` (`functions/index.js:95`) | Input raises it to 3 |
 | `plasma.regenMs` | 86 400 000 (24h) | none — gold hearts do not regenerate today | One per day. Chosen over 8h to answer the "жирно" worry directly |
-| `plasma.pricePerCharge` | 1 gold | `GOLD_HEART_COST = 10` (`functions/index.js:96`) | Flat, not a ladder: *n* charges cost *n* gold |
+| `plasma.priceLadder` | `[1, 2, 3]` in gold | `GOLD_HEART_COST = 10` flat (`functions/index.js:96`) | Indexed by slots owned, mirroring `standardHeartSlotCost`. All three cost 1+2+3 = **6 gold**, once |
 | `plasma.currency` | `gold` | `buyGoldHeart` | Monetary class — CAP-11 |
 | `plasma.appliesTo` | `HARD` skips only, tournaments included | new | One sink. Never pays a lesson toll — CAP-1 |
 | `plasma.requiresSettledAccount` | `true` | new | CAP-8 |

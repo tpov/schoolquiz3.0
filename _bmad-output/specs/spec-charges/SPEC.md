@@ -2,11 +2,14 @@
 id: SPEC-charges
 slug: charges
 derived_from: .memlog.md
-date: 2026-08-30
+date: 2026-08-31
 companions:
   - economy-constants.md
   - settlement-protocol.md
   - brownfield.md
+  - ../spec-monetisation/box-economy.md
+  - ../spec-monetisation/gold-flows.md
+  - ../spec-sync/SPEC.md
 sources: []
 ---
 
@@ -101,12 +104,15 @@ the whole heart economy into it.
     spendable.
 
 - **CAP-9 — Charges are bought, each in its own currency.**
-  - **intent:** Standard charges are bought with nolics on an escalating ladder; plasma charges
-    are bought with gold at a flat one gold per charge. Neither purchase can exceed the ceiling
-    the constants name.
-  - **success:** Buying the *n*-th standard charge costs the *n*-th ladder entry; buying three
-    plasma charges costs three gold; a purchase at the ceiling is refused with a stated reason
-    and no currency leaves the account.
+  - **intent:** Both charge types are bought as **slots** on an escalating ladder — standard with
+    nolics, plasma with gold — and a bought slot then refills on its own. Neither purchase can
+    exceed the ceiling the constants name.
+    Buying is **synchronous and online-only**: the price is decided by the server at call time,
+    so there is no offline queue and no optimistic local debit.
+  - **success:** Buying the *n*-th slot of either type costs that type's *n*-th ladder entry, so
+    all three plasma slots cost six gold in total; a purchase at the ceiling is refused with a
+    stated reason and no currency leaves the account. Offline, the purchase control is unavailable
+    and says why — it is never queued.
 
 - **CAP-10 — Time breaks a percent tie.**
   - **intent:** When tournament entrants finish on equal percent, the faster completed run ranks
@@ -125,14 +131,16 @@ the whole heart economy into it.
     without touching a monetary balance.
 
 - **CAP-12 — A box is earned offline and opened online.**
-  - **intent:** A player away from the network still accrues boxes — the streak keeps running and
-    the count goes up. Opening one is a server operation: the contents are decided and granted by
-    the server, never by the device, and the open is refused while offline.
-  - **success:** Offline, the box count rises on schedule and the open control is unavailable with
+  - **intent:** A player away from the network still accrues boxes at the rate the box economy
+    already sets — the streak keeps running while offline instead of standing still. Opening one
+    stays a server operation: the contents are decided and granted by the server, never by the
+    device, and the open is refused while offline. **This capability owns the offline/online
+    mechanic only.** Every rate, ceiling and drop is `spec-monetisation`'s, in `box-economy.md`.
+  - **success:** Offline, the streak advances on schedule and the open control is unavailable with
     a stated reason. On reconnection the accrued boxes survive the sync, are checked against what
-    the server's own clock says the account could have earned, and open normally. A device that
-    fabricates a box count gains nothing: the surplus is refused at sync and recorded like any
-    other overspend (CAP-7).
+    the server's own clock says the account could have earned, and open normally — without ever
+    exceeding the two-a-day ceiling `box-economy.md` sets. A device that fabricates a box count
+    gains nothing: the surplus is refused at sync and recorded like any other overspend (CAP-7).
 
 - **CAP-13 — A charge is a tank, and every activity has its own price.**
   - **intent:** A standard charge holds 100 points; points are what the server actually counts and
@@ -180,6 +188,15 @@ the whole heart economy into it.
   activity name today — is computed on the device and trusted verbatim by the server. Under a
   price list that hands the client its own price, so the kind must be re-derived server-side from
   the quest the attempt names.
+- **Capability ids here are externally referenced and must never be renumbered.**
+  `spec-monetisation` cites `spec-charges` CAP-3 for plasma settlement and
+  `economy-constants.md` for the monetary classification. Renumbering silently breaks a sibling
+  contract.
+- **Regeneration must accept a premium multiplier.** `spec-monetisation` CAP-4 sells faster charge
+  regeneration as a premium benefit, so neither period can be a bare constant — the multiplier is
+  a knob beside them.
+- **The box economy is `spec-monetisation`'s.** Two boxes a day is its ceiling and its constraint;
+  nothing here may add a box source or restate a rate.
 - The server clock is the only clock. Regeneration, ceilings, and the overspend window are all
   derived from server time and the stored balance timestamp; no client-supplied instant is ever
   an input to a debit.
@@ -188,8 +205,11 @@ the whole heart economy into it.
 - One source of truth for the constants. The values in `functions/index.js:93-96` and the
   mirrored companion in `UserProfile.kt` are the debt this replaces — after this work neither
   side carries its own copy.
-- A charge is a whole unit. Whatever happens to the fractional life-point substrate, a charge
-  is spent one at a time and never partially.
+- **A hint or a skip costs a whole charge; a toll does not.** The two sinks are quoted in
+  different units on purpose. A hint and a plasma skip are indivisible — one charge, never a
+  fraction. A toll is quoted in points against the 100-point tank, and an ordinary lesson at 33
+  points is deliberately a third of a charge. Any design that forces the two onto one unit breaks
+  either the price list or the hint.
 - Plasma must not become an answer channel. No design may deliver the correct answer to the
   device as a consequence of a plasma spend, including as data the UI merely declines to draw.
 - Renaming is wire-level. `standardHearts` and `goldHearts` are stored on live accounts; existing
@@ -236,19 +256,35 @@ reconnection.
 
 ## Open Questions
 
-The first two rounds are fully answered and folded in. What remains is narrow.
+### Needs a matching edit in a sibling spec
 
-1. **Where do the dormant price rows leave their marker?** Pricing ships for the three playable
-   activities; the theme-test and exam rows sit in the config waiting for modes that do not exist.
-   The owner wants those rows to be *noticed* by whoever builds those modes later. Proposed:
-   a pointer in `spec-theme-exams` back to this price list, a return pointer here, and a marker at
-   the single code site that resolves an activity kind so the addition is unmissable. Confirm the
-   shape.
-2. **How long does a server-held tournament reservation live before it is released?** CAP-15
-   releases an unsubmitted reservation lazily, which needs a deadline. Long enough that a slow but
-   honest run is never cut off; short enough that a player is not locked out of their own charges
-   for a day after one crash.
-3. **What does the reconciliation sweep actually compare?** CAP-11 re-derives forgeable balances
-   from the history that should have produced them. Whether the recorded history is complete
-   enough to re-derive nolics and skill points from — the reward path writes deltas, not an
-   auditable ledger — has not been checked.
+1. **`spec-monetisation` says plasma costs 10 gold; here it is a 1/2/3 ladder.** Not a
+   disagreement about design any more — the owner has settled the ladder — but three places in
+   monetisation still state a flat 10 (`gold-flows.md:30`, `brownfield.md:16`,
+   `box-economy.md:31`), and one of them uses the figure in an argument.
+
+   The gap is smaller than the flat-price reading suggested. Filling all three plasma slots costs
+   1+2+3 = **6 gold, once**, against the 10 that bought a single non-regenerating one. Measured
+   against `box-economy.md`'s ≈1 gold per 26 days of free play, that is 156 days rather than 260 —
+   the sink is 40% shallower, not 90%. What does change qualitatively is that plasma now refills
+   itself, so the six gold buys permanent capacity instead of one use.
+
+   Action: update those three places in `spec-monetisation`, and let its author decide whether the
+   pricing-power argument in `box-economy.md` still reads the same at six gold.
+
+### Remaining
+
+2. **Where do the dormant price rows leave their marker?** Pricing ships for the three playable
+   activities; the theme-test and exam rows wait for modes that do not exist. Proposed: a pointer
+   in `spec-theme-exams` back to this price list, a return pointer here, and a marker at the code
+   site that resolves an activity kind. Confirm the shape.
+3. **How long does a server-held tournament reservation live before release?** CAP-15 releases
+   lazily, which needs a deadline: long enough that a slow honest run is never cut off, short
+   enough that one crash does not lock a player out for a day.
+4. **What does the reconciliation sweep actually compare?** CAP-11 re-derives forgeable balances
+   from history. Whether the recorded history supports it has not been checked — the reward path
+   writes deltas, not an auditable ledger.
+5. **Does faster charge regeneration survive monetisation's own rule?** Its CAP-4 sells it as a
+   premium benefit while its constraints forbid premium affecting income rates. Charges *are* an
+   income rate. That tension is monetisation's to resolve, but this spec has to implement whatever
+   it decides.

@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.fake
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.event.RunnerEvent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
+import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,9 @@ class RunFakeComponent(
 ) : LessonRunnerRootComponent {
 
     override val uiState: StateFlow<RunnerUiState> = _uiState
+
+    private val _comments = MutableStateFlow<List<LessonComment>>(emptyList())
+    override val comments: StateFlow<List<LessonComment>> = _comments
     override val events: Flow<RunnerEvent> = _events.receiveAsFlow()
 
     var lastAnswer: UserAnswerDraft? = null
@@ -46,6 +50,8 @@ class RunFakeComponent(
     var nextLessonCount: Int = 0
         private set
     var hintCount: Int = 0
+        private set
+    var postedComments: MutableList<String> = mutableListOf()
         private set
 
     override fun onDraftChanged(draft: UserAnswerDraft) {
@@ -101,12 +107,20 @@ class RunFakeComponent(
         return true
     }
 
+    override fun onPostComment(text: String) {
+        postedComments += text
+    }
+
     override fun onBack() {
         backCount++
     }
 
     fun emit(event: RunnerEvent) {
         _events.trySend(event)
+    }
+
+    fun emitComments(comments: List<LessonComment>) {
+        _comments.value = comments
     }
 
     fun setState(state: RunnerUiState) {

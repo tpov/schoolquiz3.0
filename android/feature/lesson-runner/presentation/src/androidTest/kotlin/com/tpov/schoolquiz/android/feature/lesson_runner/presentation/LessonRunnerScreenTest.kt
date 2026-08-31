@@ -29,9 +29,15 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.compose.ui.test.onRoot
+import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.OptionUi
+import org.junit.Assert.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
 class LessonRunnerScreenTest {
+
+    /** Mirrors ANSWER_FEEDBACK_SKIP_ARM_DELAY_MS in LessonRunnerScreen, which is private. */
+    private val ANSWER_FEEDBACK_SKIP_ARM_MS = 400L
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
@@ -127,6 +133,43 @@ class LessonRunnerScreenTest {
 
         // Hard mode content renders correctly (background colour tested via screenshot testing)
         composeTestRule.onNodeWithText("CT-02 вопрос").assertIsDisplayed()
+    }
+
+    // --- CT-02b: a hard question advances on tap, even though it reveals no verdict ---
+    // Regression: the tap layer used to be drawn only when there was a verdict digit to show, and a
+    // hard question has none — so answering the first question left the runner with nowhere to go.
+    // Requires a device or emulator; it is not part of ciCheck.
+    @Test
+    fun ct02b_hardQuestion_tapAfterAnswer_advances() {
+        val fakeComponent = RunFakeComponent(
+            MutableStateFlow(
+                singleChoiceQuestion(questionText = "CT-02b вопрос", isHard = true).let { state ->
+                    state.copy(
+                        questionUiState = (state.questionUiState as QuestionUiState.SingleChoice).copy(
+                            options = listOf(OptionUi("o1", "Первый"), OptionUi("o2", "Второй")),
+                        ),
+                    )
+                },
+            ),
+            isHardMode = true,
+        )
+
+        composeTestRule.setContent {
+            SchoolQuizTheme {
+                LessonRunnerScreen(fakeComponent, onNavigateBack = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("Первый").performClick()
+        // The tap layer arms after a short delay so the answer is not swallowed by the same gesture.
+        composeTestRule.mainClock.advanceTimeBy(ANSWER_FEEDBACK_SKIP_ARM_MS)
+        composeTestRule.onRoot().performClick()
+
+        assertNotNull(
+            "a hard question must reach onAnswer on tap; without a verdict digit the tap layer used " +
+                "to be absent and the run stalled here",
+            fakeComponent.lastAnswer,
+        )
     }
 
     // --- CT-03: GIVEN showExitConfirmDialog=true WHEN rendered THEN exit dialog displayed ---
