@@ -28,8 +28,19 @@ Two rolls decide the tier. 95% of boxes never leave the first one.
 Expected value ≈ **0.019 gold per box** — about **one gold per 53 boxes**.
 
 That number is the economy's pricing power. At the honest ceiling of two boxes a day, a player
-earns roughly one gold every 26 days. A plasma charge costs 10. This is what makes gold worth
-buying, and it is why any new box source has to be measured against it rather than added freely.
+earns roughly one gold every 26 days, and any new box source has to be measured against that rather
+than added freely.
+
+What that buys has changed, and the change is qualitative. Under `spec-charges` CAP-9 plasma is
+bought as **slots on a 1 / 2 / 3 ladder — six gold for all three, once** — and a bought slot then
+refills itself every 24 h. Six gold is about **156 days**, five months, of free play. The old flat
+price of 10 was 260 days for a *single non-regenerating* charge: 260 days per use.
+
+So plasma is no longer what makes gold worth buying on an ongoing basis, because after the unlock
+it costs nothing per use. What it is now is an **acquisition trigger** — five months of waiting, or
+a small pack today — and it is arguably the better one, since six gold is an amount a player can
+picture buying where ten for one consumable read as a punishment. The ongoing drain has to come
+from the three sinks that still recur: the market commission, premium, and auction bids.
 
 ## Premium from boxes
 

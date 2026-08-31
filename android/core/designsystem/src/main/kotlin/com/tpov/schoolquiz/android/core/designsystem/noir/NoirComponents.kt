@@ -582,7 +582,11 @@ fun NoirChip(
                 modifier = Modifier.size(12.dp),
             )
         }
-        Text(text.uppercase(), style = NoirType.chip, color = color)
+        // A chip may be an icon alone — a padlock with no price yet, say. Rendering an empty label
+        // still spends the 6dp gap after the icon, which reads as a number that failed to load.
+        if (text.isNotBlank()) {
+            Text(text.uppercase(), style = NoirType.chip, color = color)
+        }
     }
 }
 

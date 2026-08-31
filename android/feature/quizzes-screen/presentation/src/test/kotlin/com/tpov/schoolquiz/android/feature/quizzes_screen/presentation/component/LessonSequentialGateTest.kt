@@ -25,7 +25,10 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -170,6 +173,45 @@ class LessonSequentialGateTest {
         assertEquals(listOf("l2" to LessonUnlockKind.LESSON), fakeEconomyRepo.unlockCalls)
         // And once bought, it opens without a restart.
         assertEquals(LessonAccess.PURCHASED, items(component).first { it.id == "l2" }.access)
+    }
+
+    @Test
+    fun `a refused purchase says why instead of leaving a dead button`() = runTest(dispatcher) {
+        val component = buildComponent(QuestType.COURSE)
+        fakeEconomyRepo.unlockFailure = IllegalStateException("Не хватает ноликов")
+        fakeLessonRepo.emit(listOf(lesson("l1", 0), lesson("l2", 1)))
+        fakeAttemptRepo.emit(emptyList())
+        advanceUntilIdle()
+
+        val messages = mutableListOf<String>()
+        val collector = launch { messages += component.messages.first() }
+
+        component.onLessonClick(items(component).first { it.id == "l2" })
+        advanceUntilIdle()
+        collector.join()
+
+        assertEquals(listOf("Не хватает ноликов"), messages)
+        // And the row stays shut, because nothing was bought.
+        assertEquals(LessonAccess.LOCKED, items(component).first { it.id == "l2" }.access)
+    }
+
+    @Test
+    fun `a second tap while the first purchase is in flight does not charge twice`() = runTest(dispatcher) {
+        val component = buildComponent(QuestType.COURSE)
+        val gate = CompletableDeferred<Unit>()
+        fakeEconomyRepo.unlockGate = gate
+        fakeLessonRepo.emit(listOf(lesson("l1", 0), lesson("l2", 1)))
+        fakeAttemptRepo.emit(emptyList())
+        advanceUntilIdle()
+
+        val locked = items(component).first { it.id == "l2" }
+        component.onLessonClick(locked)
+        component.onLessonClick(locked)
+        advanceUntilIdle()
+
+        assertEquals(1, fakeEconomyRepo.unlockCalls.size)
+        gate.complete(Unit)
+        advanceUntilIdle()
     }
 
     @Test

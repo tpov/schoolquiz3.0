@@ -80,8 +80,12 @@ fun LessonItemCard(
         if (isLocked) {
             // The whole trailing half of a shut row: a price and a padlock, and nothing else.
             // Stars would be zero and the mode chip meaningless, and both would only ask to be read.
+            //
+            // The price is the server's to decide and the lesson does not carry it yet, so until it
+            // does the chip is the padlock alone. An empty label beside the icon read as a missing
+            // number rather than as no number.
             NoirChip(
-                text = item.unlockPriceNolics?.toString().orEmpty(),
+                text = item.unlockPriceNolics?.toString() ?: "",
                 tone = NoirChipTone.Off,
                 icon = Icons.Filled.Lock,
             )

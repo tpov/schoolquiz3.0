@@ -29,12 +29,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -65,6 +68,12 @@ class DefaultLessonListComponent(
     override val uiState: Value<LessonListUiState> = _uiState
 
     private val hardCheckedSet: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+
+    private val _messages = Channel<String>(Channel.BUFFERED)
+    override val messages: Flow<String> = _messages.receiveAsFlow()
+
+    /** Lessons with a purchase in flight, so a second tap cannot start a second charge. */
+    private val purchasing = MutableStateFlow<Set<String>>(emptySet())
 
     init {
         val statsFlow =
@@ -130,8 +139,26 @@ class DefaultLessonListComponent(
         // Buying is a server call: nolics live in the profile, so a local deduction would be erased
         // by the next sync, and the price is the server's to decide.
         if (lesson.access != LessonAccess.LOCKED) return
+        // Two taps used to mean two charges, and the older of the two answers would then overwrite
+        // the newer set of unlocks — paying for a lesson that stayed shut.
+        if (!purchasing.compareAndSetAdding(lesson.id)) return
         scope.launch {
-            economyRepository.unlockLesson(lesson.id, LessonUnlockKind.LESSON)
+            val result = economyRepository.unlockLesson(lesson.id, LessonUnlockKind.LESSON)
+            purchasing.update { it - lesson.id }
+            // A refused purchase leaves the row locked, which says nothing about why. Silence here
+            // reads as a dead button.
+            result.exceptionOrNull()?.let { error ->
+                _messages.trySend(error.message?.takeIf { it.isNotBlank() } ?: "Не удалось открыть урок")
+            }
+        }
+    }
+
+    /** Adds [lessonId] and reports whether it was absent — a compare-and-set on the in-flight set. */
+    private fun MutableStateFlow<Set<String>>.compareAndSetAdding(lessonId: String): Boolean {
+        while (true) {
+            val current = value
+            if (lessonId in current) return false
+            if (compareAndSet(current, current + lessonId)) return true
         }
     }
 

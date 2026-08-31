@@ -11,9 +11,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,6 +39,8 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Br
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 @Suppress("FunctionNaming", "ktlint:standard:function-naming")
 @Composable
@@ -44,56 +50,65 @@ fun LessonListScreen(
 ) {
     val uiState by component.uiState.subscribeAsState()
     val lazyListState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(
-        modifier = Modifier.fillMaxSize().noirScreenWash(NoirWashQuizzes, midpoint = NOIR_WASH_MIDPOINT_LATE),
-    ) {
-        BreadcrumbBar(
-            titles = breadcrumbTitles(component.breadcrumbs),
-            onSegmentClick = onSegmentClick,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-        )
-        when (val state = uiState) {
-            is LessonListUiState.Loading ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = LocalNoirAccent.current,
-                    )
-                }
-            is LessonListUiState.Empty ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Text(
-                        text =
-                            stringResource(
-                                when (state.level) {
-                                    HierarchyLevel.LESSONS -> R.string.quizzes_empty_lessons
-                                    HierarchyLevel.SECTIONS -> R.string.quizzes_empty_sections
-                                    HierarchyLevel.THEMES -> R.string.quizzes_empty_themes
-                                },
-                            ),
-                        modifier = Modifier.align(Alignment.Center),
-                        style = NoirType.groupTitle,
-                    )
-                }
-            is LessonListUiState.Loaded ->
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(state.items, key = { it.id }) { item ->
-                        LessonItemCard(
-                            item = item,
-                            onClick = { component.onLessonClick(item) },
-                            onHardCheckChanged = { component.onHardCheckToggled(item.id) },
+    // A refused purchase leaves the row locked and says nothing about why; this is where it says it.
+    LaunchedEffect(component) {
+        component.messages.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().noirScreenWash(NoirWashQuizzes, midpoint = NOIR_WASH_MIDPOINT_LATE),
+        ) {
+            BreadcrumbBar(
+                titles = breadcrumbTitles(component.breadcrumbs),
+                onSegmentClick = onSegmentClick,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+            when (val state = uiState) {
+                is LessonListUiState.Loading ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = LocalNoirAccent.current,
                         )
                     }
-                }
+                is LessonListUiState.Empty ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            text =
+                                stringResource(
+                                    when (state.level) {
+                                        HierarchyLevel.LESSONS -> R.string.quizzes_empty_lessons
+                                        HierarchyLevel.SECTIONS -> R.string.quizzes_empty_sections
+                                        HierarchyLevel.THEMES -> R.string.quizzes_empty_themes
+                                    },
+                                ),
+                            modifier = Modifier.align(Alignment.Center),
+                            style = NoirType.groupTitle,
+                        )
+                    }
+                is LessonListUiState.Loaded ->
+                    LazyColumn(
+                        state = lazyListState,
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(state.items, key = { it.id }) { item ->
+                            LessonItemCard(
+                                item = item,
+                                onClick = { component.onLessonClick(item) },
+                                onHardCheckChanged = { component.onHardCheckToggled(item.id) },
+                            )
+                        }
+                    }
+            }
         }
+        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 
@@ -113,6 +128,8 @@ private fun LessonListScreenLoadingPreview() {
                             BreadcrumbRoot.Dynamic("Секция 1"),
                             BreadcrumbRoot.Dynamic("Тема 1"),
                         )
+
+                    override val messages: Flow<String> = emptyFlow()
 
                     override fun onLessonClick(lesson: LessonItemUi) = Unit
 
@@ -166,6 +183,8 @@ private fun LessonListScreenLoadedPreview() {
                             BreadcrumbRoot.Dynamic("Секция 1"),
                             BreadcrumbRoot.Dynamic("Тема 1"),
                         )
+
+                    override val messages: Flow<String> = emptyFlow()
 
                     override fun onLessonClick(lesson: LessonItemUi) = Unit
 

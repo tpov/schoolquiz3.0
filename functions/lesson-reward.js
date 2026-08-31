@@ -8,8 +8,9 @@
  * short one, and no reward for showing up.
  *
  * **Worth** is the lesson's allocated time, the same quantity the timer is built from: characters
- * times the difficulty coefficient. It is the one measure of size the app already trusts, and it
- * cannot be inflated by splitting a lesson into more questions.
+ * times the difficulty coefficient, over the questions a player would actually be asked. It is the
+ * one measure of size the app already trusts, and it is capped at the pool the runner draws, so a
+ * longer question list stops adding worth once it exceeds what anyone will see.
  *
  * **How well** runs through marginal tariff bands, the way tax brackets do. Points near the top of
  * the range are worth several times what points near the bottom are, so the difference between 90
@@ -153,21 +154,65 @@ function questionAllocatedSeconds(content, isHard) {
   return Math.max(MIN_QUESTION_SECONDS, Math.round(questionCharsCount(content) * k));
 }
 
+/** The runner never puts more than this many questions to a player in one attempt. */
+const POOL_SIZE = 20;
+
+/**
+ * The canonical id behind a translated variant — `q1__ru` and `q1__en` are one question.
+ *
+ * Mirrors dedupeTranslatedVariants in StartLessonAttemptUseCase.kt. A lesson translated into three
+ * languages holds three documents per question and the runner shows one of them; counting all
+ * three would treble what the lesson is worth and treble what it costs to skip.
+ */
+function canonicalQuestionId(id) {
+  const value = String(id || "");
+  const separator = value.lastIndexOf("__");
+  if (separator <= 0 || separator >= value.length - 3) return value;
+  const suffix = value.slice(separator + 2);
+  const isLanguage = suffix.length >= 2 && suffix.length <= 8 &&
+    /^[A-Za-z-]+$/.test(suffix);
+  return isLanguage ? value.slice(0, separator) : value;
+}
+
 /**
  * Allocated seconds for a whole lesson at one difficulty.
  *
- * Only questions of that difficulty count: an easy run never shows a hard question, so a lesson
- * heavy on hard questions is not worth more on easy for having them.
+ * Counts what a player would actually be asked, not what the collection holds: questions of the
+ * other difficulty are skipped, archived ones are gone, translated variants collapse to one, and
+ * the total is capped at the pool the runner draws. Anything looser pays for questions nobody
+ * sees — a lesson translated three ways would be worth three times a monolingual one.
+ *
+ * Beyond the cap the average carries the value, because which twenty are drawn is random and the
+ * worth of the attempt must not be.
+ *
+ * @param questions rows of {id, content}; content is the parsed payload
  */
-function lessonAllocatedSeconds(contents, isHard) {
-  if (!Array.isArray(contents)) return 0;
+function lessonAllocatedSeconds(questions, isHard) {
+  if (!Array.isArray(questions)) return 0;
   const wanted = isHard ? "HARD" : "EASY";
-  return contents
-    .filter((content) => String((content && content.difficulty) || "EASY").toUpperCase() === wanted)
-    .reduce((total, content) => total + questionAllocatedSeconds(content, isHard), 0);
+  const seenCanonical = new Set();
+  const seconds = [];
+  for (const question of questions) {
+    if (!question) continue;
+    if (question.archived === true) continue;
+    const content = question.content || question;
+    if (String((content && content.difficulty) || "EASY").toUpperCase() !== wanted) continue;
+    const canonical = canonicalQuestionId(question.id || (content && content.id));
+    if (seenCanonical.has(canonical)) continue;
+    seenCanonical.add(canonical);
+    seconds.push(questionAllocatedSeconds(content, isHard));
+  }
+  if (seconds.length === 0) return 0;
+  if (seconds.length <= POOL_SIZE) {
+    return seconds.reduce((total, value) => total + value, 0);
+  }
+  const average = seconds.reduce((total, value) => total + value, 0) / seconds.length;
+  return Math.round(average * POOL_SIZE);
 }
 
 module.exports = {
+  POOL_SIZE,
+  canonicalQuestionId,
   TIMER_K_EASY,
   TIMER_K_HARD,
   questionCharsCount,

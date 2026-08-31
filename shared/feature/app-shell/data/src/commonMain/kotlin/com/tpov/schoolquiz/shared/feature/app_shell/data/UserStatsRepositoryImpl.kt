@@ -44,7 +44,13 @@ class UserStatsRepositoryImpl(
         val uid = currentUidFlow().first() ?: return Result.failure(IllegalStateException("Not authenticated"))
         return try {
             val raw = remoteDataSource.fetchRaw()
-            userStatsDao.upsert(raw.toEntity(uid))
+            // The fetch was in flight while the player may have bought a lesson, and that purchase
+            // already wrote the server's own answer into this row. Replacing the row wholesale
+            // would roll it back — the charge stands on the server and the lesson shuts again on
+            // the device. Unlocks are monotone, so keeping both sides is always correct.
+            val held = userStatsDao.findByUid(uid)?.lessonUnlocks.orEmpty()
+            val fresh = raw.toEntity(uid)
+            userStatsDao.upsert(fresh.copy(lessonUnlocks = held + fresh.lessonUnlocks))
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e

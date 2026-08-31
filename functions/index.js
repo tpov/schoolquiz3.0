@@ -290,7 +290,7 @@ async function readAllocatedSeconds(lessonIds) {
   const entries = await Promise.all(
     distinct.map(async (lessonId) => {
       const snapshot = await db.collection("questions").where("lessonId", "==", lessonId).get();
-      const contents = snapshot.docs.map((doc) => parseQuestionPayload(doc.data()));
+      const contents = snapshot.docs.map((doc) => questionRowFor(doc));
       return [lessonId, {
         easy: lessonAllocatedSeconds(contents, false),
         hard: lessonAllocatedSeconds(contents, true),
@@ -1233,6 +1233,20 @@ exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
  * A question whose payload will not parse is worth nothing rather than breaking the purchase: an
  * unreadable question is one the runner would have filtered out anyway.
  */
+/**
+ * One question as the allocated-time sum needs it: its document id, whether it is archived, and the
+ * parsed payload. The id carries the `__lang` suffix that marks a translated variant, and the
+ * payload does not — so the row, not the content, is what can be deduplicated.
+ */
+function questionRowFor(doc) {
+  const data = doc.data() || {};
+  return {
+    id: doc.id,
+    archived: data.archived === true,
+    content: parseQuestionPayload(data),
+  };
+}
+
 function parseQuestionPayload(data) {
   const fallback = {text: stringValue(data && data.text), difficulty: stringValue(data && data.difficulty)};
   try {
@@ -1253,7 +1267,7 @@ exports.unlockLesson = onCall(FUNCTION_OPTIONS, async (request) => {
   // Priced from the lesson's own allocated time, read from its questions rather than taken from
   // the client — a caller that could name its own price could name zero.
   const questionDocs = await db.collection("questions").where("lessonId", "==", lessonId).get();
-  const contents = questionDocs.docs.map((doc) => parseQuestionPayload(doc.data()));
+  const contents = questionDocs.docs.map((doc) => questionRowFor(doc));
   const price = unlockPrice(kind, {
     easyAllocatedSeconds: lessonAllocatedSeconds(contents, false),
     hardAllocatedSeconds: lessonAllocatedSeconds(contents, true),

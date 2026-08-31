@@ -13,7 +13,7 @@ already modelled and merely switched off:
 | `AD_REWARD_BOX` | 5 `ADS` | `isAvailable = false` | **This is "5 ads per box".** Enable, do not redesign |
 | `DONATE_GOOGLE_PLAY` | 0 `EXTERNAL` | `isAvailable = false` | The donation product. Needs SKUs and enabling |
 | `NICKNAME_MARKET` | 0 `FREE` | available | The door to the market. Free by design — the names inside cost gold |
-| `GOLD_HEART` | 10 `GOLD` | available | Plasma charge. A gold sink already in place |
+| `GOLD_HEART` | 10 `GOLD` | available | Plasma charge. A gold sink already in place. **Shipped price — `spec-charges` CAP-9 replaces it with a 1 / 2 / 3 slot ladder** |
 | `STANDARD_HEART_SLOT` | ladder in `NOLICS` | available | Not part of this spec; governed by `spec-charges` |
 | `QUIZ_SLOT` | 1000 `NOLICS` | `isAvailable = false` | Not part of this spec |
 | `REFERRAL_PROGRAM` | 0 `FREE` | available | Not a purchase |

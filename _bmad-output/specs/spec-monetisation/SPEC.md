@@ -112,26 +112,30 @@ balance is a fraud surface the server has to settle.
     ordered event sequence, and the conversion rate from `shop_opened` to `purchase_completed` is
     computable without further instrumentation.
 
-- **CAP-10 — The leaderboard pays out once a season, and a season is three months.**
-  - **intent:** The top 100 of a season receive a graded reward, with first place also taking a
-    trophy. Three months rather than one, so the prize is worth a push and there is time to spend
-    what it pays.
-  - **success:** A settlement runs once per season, pays each rank band exactly the amount in
-    `gold-flows.md`, is idempotent under retry, and credits nothing to ranks below 100.
+- **CAP-10 — The leaderboard pays boxes once a season, and a season is three months.**
+  - **intent:** The top 100 of a season receive a graded reward in **boxes**, with first place also
+    taking a trophy. Three months rather than one, so the prize is worth a push and there is time to
+    spend what it pays.
+  - **success:** A settlement runs once per season, pays each rank band exactly the box count in
+    `gold-flows.md`, is idempotent under retry, and credits nothing below rank 100. Every rank from
+    1 to 100 falls in exactly one band — no rank is paid twice and none is skipped.
 
-- **CAP-11 — Ad placement inside the app is auctioned for gold.**
+- **CAP-11 — Ad placement inside the app is auctioned for gold, on a rolling monthly cycle.**
   - **intent:** A player buys the offers screen's placement by bidding gold in an open auction. The
-    winner's image and link occupy the screen for the period. Bidding spends gold, which makes the
-    auction a gold sink as well as a placement mechanism.
-  - **success:** Bids are visible to all bidders while the auction runs, the top bid at close takes
-    the slot for the stated period, losing bids are refunded in full, and a winning bid's gold
-    leaves circulation. Detail and the surrounding roadmap in `promotion-and-offers.md`.
+    auction for next month runs **while this month's winning ad is on screen**, so the slot is never
+    empty and bidding never pauses. Bidding spends gold, which makes the auction a gold sink as well
+    as a placement mechanism.
+  - **success:** At every moment there is exactly one live placement and exactly one open auction
+    for the following month. Bids are visible to all bidders while the auction runs; at the turn of
+    the month the top bid takes the slot, its gold leaves circulation, and every losing bid is
+    refunded in full. Detail and roadmap in `promotion-and-offers.md`.
 
-- **CAP-12 — The referral programme pays the referrer on their referrals' box openings.**
-  - **intent:** A player who brought others in is credited each season in proportion to how many
-    boxes those players opened.
-  - **success:** A season settlement credits each referrer once, in proportion to referred openings
-    recorded that season, and a referral chain cannot pay a player for their own openings.
+- **CAP-12 — The referral programme pays boxes: fifty for six, then one percent forever.**
+  - **intent:** Inviting six qualifying players pays 50 boxes once. Beyond that, a referrer receives
+    1% of every box their referrals open, settled at season close.
+  - **success:** The one-time award fires exactly once per referrer and only when six referrals have
+    each passed the qualifying threshold. The 1% settles per season against boxes actually opened,
+    credits each referrer once, and a referral chain cannot pay a player for their own openings.
 
 ## Constraints
 
@@ -158,6 +162,9 @@ balance is a fraud surface the server has to settle.
   a user for installing is not. This bounds what the offers screen may carry.
 - **Every gold-moving operation is auditable**, naming the actor, the amount, and the authorising
   operation.
+- **Season payouts are denominated in boxes, not gold.** A season's full leaderboard settlement
+  injects about 44 gold across 100 players. Restating the same table in gold would inject 5 000 and
+  break the paid economy in one settlement.
 
 ## Non-goals
 
@@ -199,13 +206,15 @@ number rather than a guess.
 
 ## Open Questions
 
-- The leaderboard rank bands overlap at their boundaries as dictated: 50–100 and 30–50 both contain
-  50; 30–50 and 10–30 both contain 30. Which side owns each boundary?
-- Does the leaderboard pay gold or boxes? The owner leans to boxes as the more interesting reward
-  but has not decided, and the choice changes the payout table's units.
-- What does the sponsor qualification grant at each level? Premium feeds its points, but the perks
-  are undefined.
-- What does the referral programme pay per box opened by a referred player, and is it capped?
-- Which premium benefit ships first — the box multiplier, the golden chat nickname, or faster charge
-  regeneration?
-- Is the offers auction period a week or a month?
+- What threshold must each of the six referrals pass to unlock the one-time 50 boxes — a count of
+  opened boxes, or an experience level? Without one, six throwaway accounts are worth 50 boxes.
+- Is the referral 1% capped per season, and does it count boxes opened by a referral's own
+  referrals or only by direct invitees?
+- What does the sponsor qualification grant? Premium feeds its points; the owner's answer is
+  "nothing yet, possibly feature access later", so it ships inert.
+- Do gold packs need a fourth, larger tier? Three tiers is an assumption, not a decision.
+- **Plasma has stopped being a recurring gold sink.** Under `spec-charges` CAP-9 it is bought as
+  slots on a 1 / 2 / 3 ladder — six gold for all three, once — and they refill themselves every
+  24 h thereafter. Of the four sinks in `gold-flows.md`, only three now drain gold on an ongoing
+  basis. Is that acceptable, or should plasma slots decay, expire, or stay consumable after all?
+  This is this spec's call; `spec-charges` follows whichever way it goes.

@@ -8,13 +8,22 @@ around it, which is not.
 A screen on the home tab, provisionally **Offers**. It carries one advertisement at a time, and
 that placement is sold to players in an open gold auction.
 
+**The cycle is rolling and monthly.** While this month's winning ad is on screen, the auction for
+*next* month is already open. The slot is therefore never empty and bidding never pauses — at the
+turn of the month the new winner replaces the old one and the next auction opens behind it.
+
+```
+month N     [ ad from auction N-1 on screen ]  +  [ auction for month N+1 open ]
+month N+1   [ ad from auction N   on screen ]  +  [ auction for month N+2 open ]
+```
+
 **How a player buys it**
 
-1. Opens the offers screen and chooses to bid.
+1. Opens the offers screen and chooses to bid on the coming month.
 2. Supplies the ad itself — an image and a link.
 3. Names a bid in gold.
-4. Watches an open table of bids while the auction runs.
-5. At close the top bid takes the placement for the period.
+4. Watches an open table of bids while that month's auction runs.
+5. At the turn of the month the top bid takes the placement; every losing bid is refunded.
 
 **How a player sees it.** Tapping the screen shows the current winner's image and link, plus the
 entry point back into the auction.
@@ -34,7 +43,7 @@ item, because bidders compete against each other rather than against a fixed pri
   a screen inside an education app aimed at schoolchildren is a content-moderation incident waiting
   to happen, and Google Play's promotion policy prohibits deceptive or harmful promotion regardless
   of who supplied it.
-- Period undecided: a week or a month. Open question in `SPEC.md`.
+- The period is one month, and the auction for the next month always runs during the current one.
 
 ## Roadmap — recorded, explicitly not built here
 

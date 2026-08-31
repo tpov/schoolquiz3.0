@@ -6,6 +6,7 @@ import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
 import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -16,6 +17,12 @@ class FakeEconomyRepository(
 
     private val state = MutableStateFlow(initial)
     val unlockCalls = mutableListOf<Pair<String, LessonUnlockKind>>()
+
+    /** When set, every unlock fails with this — the "not enough nolics" path. */
+    var unlockFailure: Throwable? = null
+
+    /** Held open so a test can have two purchases in flight at once. */
+    var unlockGate: CompletableDeferred<Unit>? = null
 
     fun emit(balance: EconomyResourceBalance) {
         state.value = balance
@@ -33,6 +40,8 @@ class FakeEconomyRepository(
         kind: LessonUnlockKind,
     ): Result<EconomyResourceBalance> {
         unlockCalls += lessonId to kind
+        unlockGate?.await()
+        unlockFailure?.let { return Result.failure(it) }
         val updated = state.value.copy(
             lessonUnlocks = state.value.lessonUnlocks + kind.keyFor(lessonId),
         )
