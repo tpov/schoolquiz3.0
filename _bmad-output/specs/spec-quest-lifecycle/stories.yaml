@@ -1,0 +1,178 @@
+- id: "1"
+  title: Close the client's write access to the quests collection
+  description: >-
+    CAP-6. Remove visibleOn, archived and catalogId from the quests update allowlist
+    and set create to false, so placement becomes server-owned in fact and not only by intent.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    firestore.rules:97-116. The app never writes /quests — FirebaseQuestRemoteDataSource
+    only reads and calls one callable, and authored content goes to private/{uid}/catalogs/...
+    via FirebaseQuestPrivateRemoteDataSource.kt:42-47. So both the create rule and those three
+    update keys can go without losing a feature. Add the deny cases to
+    scripts/rules-emulator-test.js, which already has actors and quest fixtures.
+
+- id: "2"
+  title: Grant a qualification to a named person, with a reason
+  description: >-
+    CAP-7, first half. A new admin-gated callable sets another user's qualification level and
+    records a written reason, because today no role can be created from inside the app at all.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Copy the structure of decideVerification (functions/index.js:618-666): admin-gated, refuses
+    to act on the caller, writes users/{uid} and profiles/{uid} in one transaction in the shape
+    FirebaseUserStatsDataSource.kt:88 expects. Gate on adminLevel only — a developer must not be
+    able to mint developers, so do NOT reuse requireVerifier, which also accepts developerLevel.
+    Cover every role the review pipeline needs: tester, admin, translator, developer. Legacy's
+    grant dialog is the shape worth copying for the written reason and the recipient's notice
+    (legacy/network/.../ProfileAdapter.kt:104-169); its flaw to avoid was that the write was
+    client-side. Ship this BEFORE story 3 — zeroing the farmed levels without a grant path
+    would leave nobody able to review anything.
+
+- id: "3"
+  title: Cut the automatic path from ratings to privilege
+  description: >-
+    CAP-7 second half and CAP-8. Ratings feed their own author-reputation field, the privilege
+    gates stop reading it, and the levels farmed so far are zeroed.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Change QUEST_RATING_QUALIFICATION_USER_FIELD and _PROFILE_FIELD (functions/index.js:88-89)
+    to an author-reputation name; both the write at :2040-2053 and the read-back at :2057-2065
+    are driven by those constants, so the code edit is small. Then remove developerLevel from
+    isVerifier() and isReviewer() in firestore.rules:186-204 — without that, every curator also
+    reads every user's real name, birthday, city and telegram. Decide separately whether
+    canSubmit (functions/index.js:2427-2429) keeps its blanket developer override.
+    The repair script must do three things, and the third is the one that gets forgotten:
+    zero developer/developerLevel on every users/ and profiles/ document, set the first admin
+    by hand, and reset qualificationAppliedScore to 0 on every quest_rating_aggregates document
+    so the score re-accumulates into the new field. Count the affected accounts before running
+    it — the assumption that every level above 100 was farmed needs confirming, not asserting.
+
+- id: "4"
+  title: Make review a judgement — a pass threshold and a real reject
+  description: >-
+    CAP-2 and CAP-3. A quest publishes only above a pass mark, and a reviewer can refuse it
+    with a reason that returns it to the author as an editable draft.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Today lessonPassed (functions/index.js:2569-2583) asks only whether a score EXISTS —
+    hasTestingResult returns true for any non-null testingScore (:3468-3474) — so a 1-out-of-3
+    publishes. REVIEW_PASS_LEVEL=100 already exists at :81 but is applied to translation only
+    (:2580). lessonReviewStatus (:2565-2567) can return only READY_FOR_PUBLICATION or
+    UNDER_REVIEW, so the rejected state is genuinely new. Remember the nightly job:
+    reconcileChangedReviewLessons (:1767-1801) reaches publishSubmissionIfReady through the same
+    gate, so the threshold must live in lessonPassed and not at the call site. Legacy has no
+    prior art here — nothing to copy, design it fresh. The author-facing half needs the reason
+    to survive back into the draft the author edits.
+
+- id: "5"
+  title: Refuse self-review, except for a developer
+  description: >-
+    CAP-4. An author gets no review task on their own quest and is refused server-side,
+    while a developer may still approve their own.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    canSubmit (functions/index.js:2427-2455) and availableTasks (:2406-2423) never compare the
+    submitting profile's uid to task.ownerUid, though ownerUid is already carried at :2390.
+    The owner's rule is explicit and is NOT a blanket refusal: refuse when uid == ownerUid
+    UNLESS the caller's developerLevel is above the threshold. Put the guard in canSubmit so the
+    server enforces it, and filter availableTasks so the task never appears in the queue either.
+    decideVerification's self-refusal at :621-624 is the in-repo precedent for the shape.
+
+- id: "6"
+  title: Take content down, put a course back, and record who moved what
+  description: >-
+    CAP-9, CAP-10 and CAP-11. A retire callable, archive accepted as a move target, and an
+    audit record on every placement change including the author-triggered republish reset.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Retire: a callable writing visibleOn = [] plus a sync_change; the client half already works
+    (QuestRepositoryImpl.kt:126-130) and scripts/seed-bulk/retire-quest.js shows the write shape
+    but is hardcoded to CATALOG_ID = 'courses' at line 36 — derive the catalog from the quest.
+    Reversibility: add "archive" to PUBLIC_QUEST_SHELVES (functions/index.js:117), one word,
+    and make the shelf menu type-aware so a course cannot be sent somewhere it does not belong.
+    Audit: inside the existing transaction in setPublicQuestShelf (:1344-1389) capture visibleOn
+    before overwriting and store previousVisibleOn, shelfSetByUid, shelfSetAtMs, shelfReason,
+    plus a record under admin/shelf_moves/. Write the same record when a republish resets the
+    shelf (:2280-2290) with actor = author — that silent demotion is the one nobody can see today.
+    Also refuse a curator moving their own quest, mirroring :621-624.
+
+- id: "7"
+  title: Give user text an owner, and make it removable
+  description: >-
+    CAP-13 and CAP-14. A comment records who wrote it and can be taken down — the two things
+    that must exist before anything can be reported, moderated or blocked.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    lessonComments today stores lessonId, authorNickname, authorAvatarUrl, text and createdAt —
+    and no author uid (firestore.rules:142-157), so there is nobody to ban. It is also
+    'allow update, delete: if false' with no server function touching the collection, so an
+    abusive comment cannot be removed by anyone at all. Add the author uid on create, pinned to
+    request.auth.uid so it cannot be forged, and add a server-side removal path. Decide what
+    happens to comments already posted, which have no uid — the spec's default is that they stay
+    readable and reportable but not blockable. Touches LessonComment.kt,
+    LessonCommentRepository.kt and FirebaseLessonCommentRepository.kt:34-53.
+
+- id: "8"
+  title: Report a thing, and let a moderator rule on it
+  description: >-
+    CAP-12 and CAP-15. Anyone files a report; a moderator upholds or rejects it; the reporter
+    gains reputation when upheld and loses it when rejected.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    No prior art anywhere: a sweep for complaint, report, abuse, appeal, block and their Russian
+    equivalents returns nothing in the current tree and nothing in legacy, whose Reports menu id
+    collides with Contacts and opens the phone book. Design the report object so it names a
+    target by type — comment, quest, user, and later a chat message — since the chat is stubbed
+    but coming. This story gates the Play submission, so it must not wait on the chat.
+    The reporter's payout is the same reputation number the review pipeline already uses; do not
+    invent a second one without deciding that question first.
+
+- id: "9"
+  title: Grade the moderators, and gate who may ban whom
+  description: >-
+    CAP-16 and CAP-17. A moderator's verdicts are scored against the senior consensus, and a
+    moderator can only be banned by someone 100 levels above them or by a developer.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    Reuse scoreAggregate (functions/index.js:2593-2610) rather than writing a second consensus:
+    it already takes the reviewers within ACTIVE_LEVEL_WINDOW = 100 of the top level as the
+    senior band, rounds their mean to the verdict, and pays everyone below +3 for matching it,
+    0 for missing by one and -3 for missing by two. That is exactly the owner's rule. The ban
+    gate is the same 100-unit idea as TRANSLATION_REVIEW_LEVEL_GAP: refuse unless the actor's
+    moderatorLevel is at least 100 above the target's, or the actor is a developer. This is the
+    story that turns moderatorLevel from an inert field into a real capability — it is read by
+    no gate today and requireProfile does not even load it (functions/index.js:2841-2853).
+
+- id: "10"
+  title: Fix the chat's shape without building the chat
+  description: >-
+    The chat stays a stub, but its message contract is written down now so moderation attaches
+    to it unchanged when it lands.
+  spec_checkpoint: false
+  invoke_dev_with: >-
+    The owner's instruction is to assume a chat like the legacy one. That shape is
+    tpovId, time, user, msg, importance, icon, rating, reaction (ChatEntity.kt:8-19,
+    ChatRemote.kt:5-13). Two lessons from legacy worth carrying: the per-message rating slot
+    existed and nothing ever wrote it, and importance was the only field ever read — it coloured
+    the row at importance == 7. Replace tpovId with a real author uid, for the same reason as
+    story 7. Deliverable is the contract and the report-target type, not a screen: no chat UI,
+    no message delivery, no chat sync ships here.
+
+- id: "11"
+  title: Run the whole circle on six devices, and try to break it
+  description: >-
+    The success signal. One quest travels author to arena to home across real devices, and the
+    four-step abuse chain is attempted at every step and fails.
+  spec_checkpoint: false
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Six accounts: author, player, tester, admin, developer, second player for a real tournament
+    group. No human login is needed — the app signs in anonymously (AppApplication.kt:102) and
+    scripts/devices/uid.sh reads each device's uid; roles are then granted through story 2.
+    Seed configs/arena_review and the catalogs, including catalogs/{id}.questType, which nothing
+    writes today. The fifteen-scenario matrix and the list of scenarios that cannot run because
+    the code path is absent are in brownfield.md section 6. The negative probes belong on the
+    emulator, not the live project: farm ratings and confirm no gate moves, score a lesson at
+    the pass floor and confirm nothing publishes, attempt a self-review, and attempt a direct
+    SDK write to quests.

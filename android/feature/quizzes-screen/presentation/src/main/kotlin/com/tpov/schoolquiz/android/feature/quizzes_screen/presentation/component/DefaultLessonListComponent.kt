@@ -179,16 +179,17 @@ class DefaultLessonListComponent(
     ): LessonListUiState {
         if (lessons.isEmpty()) return LessonListUiState.Empty(HierarchyLevel.LESSONS)
         val ordered = lessons.sortedBy { it.order }
+        val purchased =
+            ordered
+                .map { it.id }
+                .filterTo(mutableSetOf()) { LessonUnlockKind.LESSON.keyFor(it.value) in unlocks }
         val access =
             if (gatesSequentially) {
                 resolveLessonAccess(
                     orderedLessonIds = ordered.map { it.id },
                     // hardUnlocked is the all-easy-correct predicate, which is what "passed" means.
                     passed = stats.filterValues { it.hardUnlocked }.keys,
-                    purchased =
-                        ordered
-                            .map { it.id }
-                            .filterTo(mutableSetOf()) { LessonUnlockKind.LESSON.keyFor(it.value) in unlocks },
+                    purchased = purchased,
                 )
             } else {
                 emptyMap()
@@ -203,7 +204,12 @@ class DefaultLessonListComponent(
                     averageRating = lesson.averageRating,
                     ratingCount = lesson.ratingCount,
                     bestStarsRawTenths = lessonStats?.bestStarsRawTenths ?: 0,
-                    hardUnlocked = lessonStats?.hardUnlocked ?: false,
+                    // Buying a lesson buys the whole lesson, both difficulties — it is priced as
+                    // both, so it opens both. Earning it still works the usual way.
+                    hardUnlocked =
+                        lessonStats?.hardUnlocked == true ||
+                            lesson.id in purchased ||
+                            LessonUnlockKind.HARD_MODE.keyFor(lesson.id.value) in unlocks,
                     isHardChecked = lesson.id.value in checkedSet,
                     access = access[lesson.id] ?: LessonAccess.OPEN,
                 )

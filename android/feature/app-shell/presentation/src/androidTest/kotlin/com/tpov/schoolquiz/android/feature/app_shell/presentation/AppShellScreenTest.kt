@@ -367,10 +367,11 @@ override fun applyProfileFrequency(frequency: SyncFrequency) = Unit
                     override fun onDraftClick(draft: DraftQuestDisplayItem) = Unit
                 }
             },
-            homeQuestsFactory = { _, _ ->
+            homeQuestsFactory = { _, _, _ ->
                 object : HomeQuestsComponent {
                     override val state: StateFlow<HomeQuestsUiState> = MutableStateFlow(HomeQuestsUiState())
                     override fun onCatalogClick(id: CatalogId, name: String) = Unit
+                    override fun onContinueClick() = Unit
                 }
             },
             quizzesFactory = { _ ->

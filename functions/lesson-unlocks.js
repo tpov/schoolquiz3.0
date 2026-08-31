@@ -30,15 +30,15 @@ const UNLOCK_HARD_MODE = "hardMode";
  * progress, though — nolics are a motivational currency rather than a traded one, and charging
  * more for a later lesson would only punish a player who came for one particular theme.
  *
- * Each kind is priced on what it actually grants: opening the lesson buys easy play, so it costs
- * the easy half; hard mode is its own purchase and costs the hard half.
+ * Each kind is priced on what it grants: buying the lesson buys both difficulties and costs both;
+ * buying hard mode alone, for a lesson already open, costs the hard half.
  */
 function unlockPrice(kind, {easyAllocatedSeconds, hardAllocatedSeconds}) {
   if (kind === UNLOCK_LESSON) {
-    // Priced on the easy half alone, because that is all it grants. Opening a lesson lets a player
-    // play it; hard mode is still earned by answering every easy question correctly, exactly as it
-    // is for a player who never paid. Charging for both and delivering one was the bug this fixes.
-    return lessonUnlockPrice({easyAllocatedSeconds, hardAllocatedSeconds: 0});
+    // Buying a lesson buys the whole lesson, both difficulties, so it costs both. What makes that
+    // fair rather than a shortcut is the payout: a bought lesson still has to be played to earn
+    // anything, and playing it is what the price is measured against.
+    return lessonUnlockPrice({easyAllocatedSeconds, hardAllocatedSeconds});
   }
   if (kind === UNLOCK_HARD_MODE) {
     return lessonUnlockPrice({easyAllocatedSeconds: 0, hardAllocatedSeconds});

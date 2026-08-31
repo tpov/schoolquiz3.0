@@ -15,19 +15,15 @@ const {lessonUnlockPrice} = require("./lesson-reward");
 const SMALL = {easyAllocatedSeconds: 720, hardAllocatedSeconds: 480};
 
 function testEachKindIsPricedOnWhatItGrants() {
-  // Opening the lesson grants easy play and nothing else, so it costs the easy half. Charging for
-  // hard here would take nolics for a gate the player still has to earn.
-  assert.strictEqual(
-    unlockPrice(UNLOCK_LESSON, SMALL),
-    lessonUnlockPrice({easyAllocatedSeconds: SMALL.easyAllocatedSeconds, hardAllocatedSeconds: 0}),
-  );
+  // Buying the lesson buys both difficulties, so it costs both — and the client must open both,
+  // or the price would again be for something not delivered.
+  assert.strictEqual(unlockPrice(UNLOCK_LESSON, SMALL), lessonUnlockPrice(SMALL));
+  // Hard mode alone, for a lesson already open, is the hard half and therefore cheaper.
   assert.strictEqual(
     unlockPrice(UNLOCK_HARD_MODE, SMALL),
     lessonUnlockPrice({easyAllocatedSeconds: 0, hardAllocatedSeconds: SMALL.hardAllocatedSeconds}),
   );
-  // Neither price includes the other's half.
-  assert.ok(unlockPrice(UNLOCK_LESSON, SMALL) < lessonUnlockPrice(SMALL));
-  assert.ok(unlockPrice(UNLOCK_HARD_MODE, SMALL) < lessonUnlockPrice(SMALL));
+  assert.ok(unlockPrice(UNLOCK_HARD_MODE, SMALL) < unlockPrice(UNLOCK_LESSON, SMALL));
   // A bigger lesson costs more to skip.
   const big = {easyAllocatedSeconds: 2160, hardAllocatedSeconds: 1440};
   assert.strictEqual(unlockPrice(UNLOCK_LESSON, big), unlockPrice(UNLOCK_LESSON, SMALL) * 3);

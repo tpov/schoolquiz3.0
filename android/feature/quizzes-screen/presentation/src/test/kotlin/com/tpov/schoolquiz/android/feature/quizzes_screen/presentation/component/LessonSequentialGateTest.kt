@@ -161,6 +161,25 @@ class LessonSequentialGateTest {
     }
 
     @Test
+    fun `a bought lesson opens both difficulties`() = runTest(dispatcher) {
+        // It is priced as both, so it has to grant both — otherwise two thirds of the price buys
+        // a gate the player still has to earn.
+        val component = buildComponent(QuestType.COURSE)
+        fakeEconomyRepo.emit(
+            EconomyResourceBalance(lessonUnlocks = setOf(LessonUnlockKind.LESSON.keyFor("l2"))),
+        )
+        fakeLessonRepo.emit(listOf(lesson("l1", 0), lesson("l2", 1)))
+        fakeAttemptRepo.emit(emptyList())
+        advanceUntilIdle()
+
+        val bought = items(component).first { it.id == "l2" }
+        assertEquals(LessonAccess.PURCHASED, bought.access)
+        assertTrue(bought.hardUnlocked, "a bought lesson opens hard mode as well as easy")
+        // A lesson nobody bought or played keeps hard mode shut.
+        assertTrue(!items(component).first { it.id == "l1" }.hardUnlocked)
+    }
+
+    @Test
     fun `tapping a locked lesson asks to buy it`() = runTest(dispatcher) {
         val component = buildComponent(QuestType.COURSE)
         fakeLessonRepo.emit(listOf(lesson("l1", 0), lesson("l2", 1)))

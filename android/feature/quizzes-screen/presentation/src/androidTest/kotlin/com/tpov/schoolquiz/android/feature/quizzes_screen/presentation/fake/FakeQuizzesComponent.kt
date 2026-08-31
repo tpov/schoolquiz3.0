@@ -86,4 +86,10 @@ class FakeQuizzesComponent : QuizzesComponent {
         active = Child.Created(configuration = QuizzesConfig.Idle, instance = QuizzesChild.Idle),
         backStack = emptyList(),
     )
+
+    var openLessonRunnerCalled: String? = null
+
+    override fun openLessonRunner(lessonId: String) {
+        openLessonRunnerCalled = lessonId
+    }
 }
