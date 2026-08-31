@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.SpacedRepetition
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Score
+import com.tpov.schoolquiz.shared.core.scoring.Score
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

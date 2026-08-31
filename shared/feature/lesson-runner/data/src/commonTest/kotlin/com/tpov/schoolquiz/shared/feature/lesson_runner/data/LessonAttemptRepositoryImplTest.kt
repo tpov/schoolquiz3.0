@@ -6,8 +6,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.data.fake.FakeLessonAtte
 import com.tpov.schoolquiz.shared.feature.lesson_runner.data.repository.LessonAttemptRepositoryImpl
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ukrainian translations for quest feature strings. -->
+<resources>
+    <!-- Home quests screen -->
+    <string name="quest_empty_catalogs_title">Немає каталогів</string>
+    <string name="quest_empty_catalogs_hint">Нічого не збережено на пристрої. Завантажте з меню.</string>
+    <string name="quest_sync">Синхронізувати →</string>
+    <string name="quest_cd_add_quest">Додати квест</string>
+
+    <!-- Gift box overlay -->
+        <string name="quest_continue">Продовжити</string>
+    <string name="quest_continue_progress">%1$d / %2$d</string>
+<string name="quest_cd_open_box">Відкрити коробку</string>
+    <string name="quest_gift_box_title">Коробка</string>
+    <string name="quest_close">Закрити</string>
+    <string name="quest_opening_in_progress">Відкриваємо…</string>
+    <string name="quest_boxes_left">Залишилося коробок: %1$d</string>
+    <string name="quest_profile_sync_note">Профіль оновиться після наступної синхронізації</string>
+    <string name="quest_request_sent">Запит до сервера вже надіслано</string>
+    <string name="quest_claim_reward">Забрати</string>
+    <string name="quest_subtitle_shake">Трусимо коробку й чекаємо на нагороду</string>
+    <string name="quest_subtitle_reward_credited">Нагороду нараховано до профілю</string>
+    <string name="quest_subtitle_failed">Не вдалося відкрити</string>
+    <string name="quest_reward_nolics">%1$d ноликів</string>
+    <string name="quest_reward_gold">%1$d золота</string>
+    <string name="quest_reward_premium_days">%1$d дн. Premium</string>
+    <string name="quest_reward_logo">Логотип: %1$s</string>
+    <string name="quest_reward_trophies">%1$d трофеїв</string>
+    <string name="quest_error_no_boxes">Немає доступних коробок</string>
+    <string name="quest_error_box_generic">Не вдалося відкрити коробку</string>
+
+    <!-- My quests screen -->
+    <string name="quest_empty_quests_title">Немає квестів</string>
+    <string name="quest_empty_quests_hint">Натисніть +, щоб створити перший квест</string>
+    <string name="quest_cd_create_quest">Створити квест</string>
+    <string name="quest_draft_label">Чернетка</string>
+    <string name="quest_questions_count">Питань: %1$d</string>
+</resources>

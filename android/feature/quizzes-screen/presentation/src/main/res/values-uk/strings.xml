@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ukrainian translations for quizzes screen strings. -->
+<resources>
+    <!-- Empty states -->
+    <string name="quizzes_empty_sections">Немає секцій</string>
+    <string name="quizzes_empty_themes">Немає тем</string>
+    <string name="quizzes_empty_lessons">Немає уроків</string>
+    <string name="quizzes_empty_quests">Немає квестів</string>
+    <string name="quizzes_empty_catalogs">Немає каталогів</string>
+    <string name="quizzes_no_catalog">Без каталогу</string>
+
+    <!-- Breadcrumb roots -->
+    <string name="quizzes_breadcrumb_catalogs">Каталоги</string>
+    <string name="quizzes_breadcrumb_archive">Архів</string>
+    <string name="quizzes_breadcrumb_courses">Курси</string>
+    <string name="quizzes_breadcrumb_arena">Арена</string>
+    <string name="quizzes_breadcrumb_home_quests">Домашні квести</string>
+    <string name="quizzes_breadcrumb_qualifier_tournament">Відбірковий турнір</string>
+    <string name="quizzes_breadcrumb_world_championship">Чемпіонат світу</string>
+
+    <!-- Lesson item -->
+    <string name="quizzes_chip_easy">Легкий</string>
+    <string name="quizzes_chip_hard">Складний</string>
+    <string name="quizzes_rating_none">немає оцінок</string>
+
+    <!-- Quest list menu -->
+    <string name="quizzes_menu_share">Поділитися</string>
+    <string name="quizzes_shelf_show_home">Показати в домашніх</string>
+    <string name="quizzes_shelf_show_arena">Показати на арені</string>
+    <string name="quizzes_shelf_show_qualification">Показати у відбірковому</string>
+    <string name="quizzes_shelf_show_world">Показати в чемпіонаті світу</string>
+    <string name="quizzes_cd_random_quest">Випадковий квест</string>
+    <string name="quizzes_share_text">Квест «%1$s» — %2$s</string>
+</resources>

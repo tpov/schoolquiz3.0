@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("schoolquiz.android.compose.application")
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 fun String.toBuildConfigString(): String = "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
@@ -96,6 +97,8 @@ dependencies {
     implementation(project(":shared:feature:lesson-runner:data"))
     implementation(project(":android:feature:lesson-runner:presentation"))
     implementation(project(":platform:android-services"))
+    implementation(project(":platform:billing"))
+    implementation(project(":shared:core:analytics"))
     implementation(libs.androidx.work.runtime.ktx)
     implementation(project(":shared:core:sync"))
 

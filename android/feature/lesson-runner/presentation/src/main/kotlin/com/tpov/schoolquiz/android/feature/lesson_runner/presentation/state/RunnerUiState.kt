@@ -2,8 +2,8 @@ package com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state
 
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 
 sealed interface RunnerUiState {

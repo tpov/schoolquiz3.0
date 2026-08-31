@@ -2,9 +2,9 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.evaluateAnswer
+import com.tpov.schoolquiz.shared.core.scoring.evaluateAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.generateTimeoutAnswer
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswer
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import kotlin.test.Test
 import kotlin.test.assertEquals

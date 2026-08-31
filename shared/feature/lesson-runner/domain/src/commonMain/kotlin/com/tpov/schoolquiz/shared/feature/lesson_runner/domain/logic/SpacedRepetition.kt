@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic
 
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RepetitionState
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Score
+import com.tpov.schoolquiz.shared.core.scoring.Score
 
 /**
  * Spaced repetition, SM-2.

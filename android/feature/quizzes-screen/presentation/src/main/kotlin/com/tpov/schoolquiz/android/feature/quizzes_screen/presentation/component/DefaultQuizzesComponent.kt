@@ -24,6 +24,7 @@ import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.LessonAttemptRepository
@@ -54,6 +55,7 @@ class DefaultQuizzesComponent(
     private val lessonRepository: LessonRepository,
     private val lessonAttemptRepository: LessonAttemptRepository,
     private val authRepository: AuthRepository,
+    private val economyRepository: EconomyRepository,
     private val questionRepository: QuestionRepository,
     private val catalogRepository: CatalogRepository,
     private val setPublicQuestShelf: SetPublicQuestShelfUseCase,
@@ -340,6 +342,7 @@ class DefaultQuizzesComponent(
                         lessonRepository,
                         lessonAttemptRepository,
                         authRepository,
+                        economyRepository,
                         navigation,
                         lessonContentSync,
                         mainContext,

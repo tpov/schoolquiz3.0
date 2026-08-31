@@ -22,4 +22,6 @@ data class UserStatsEntity(
     val translatorLevel: Int,
     val adminLevel: Int,
     val developerLevel: Int,
+    /** Lessons opened with nolics, as "kind:lessonId". Rides the profile sync like the balance. */
+    val lessonUnlocks: Set<String> = emptySet(),
 )

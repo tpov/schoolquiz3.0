@@ -10,7 +10,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonRe
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeQuestionContentParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase

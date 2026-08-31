@@ -71,9 +71,9 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.R
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.ResultAdvice
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.LessonComment
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
 
 private const val PERFECT_SCORE = 100
 private const val HARD_REWARD_MULTIPLIER = 2

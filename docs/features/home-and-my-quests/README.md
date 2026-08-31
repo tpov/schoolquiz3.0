@@ -1,6 +1,17 @@
 # Feature: Home Quests & My Quests + Cascading Catalog Sync
 
-## Status: implemented
+## Status: implemented; часть про sync — **superseded 2026-04-30**
+
+> **Каскадная синхронизация из этих документов заменена.** `CascadingSyncOrchestrator` и `SyncLevel`
+> были построены здесь (`5140ae3b`, 2026-04-25) и удалены пять дней спустя в `1cb9f366`
+> («Finalize sync list architecture») в пользу плоского журнала `sync_changes` и
+> `CatalogSyncListOrchestrator`. Всё, что ниже говорит про `contentsVersion`, обход по уровням и
+> early-exit, описывает механизм, которого в коде больше нет.
+>
+> Действующий контракт — `docs/architecture/0004-sync-contract.md` (редакция 2026-08-31).
+> Разбор того, как расхождение прожило четыре месяца — `_bmad-output/specs/spec-sync/brownfield.md`.
+>
+> Экранная часть фичи («Домашние квесты», «Мои квесты») этой заменой не затронута.
 
 Экраны "Домашние квесты" (polish) + "Мои квесты" (new) + версионированная каскадная синхронизация `Catalog → Quest → Section → Theme → Lesson → Question` (6 уровней иерархии).
 

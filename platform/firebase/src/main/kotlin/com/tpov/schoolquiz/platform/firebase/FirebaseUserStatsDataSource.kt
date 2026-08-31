@@ -86,5 +86,10 @@ private fun DocumentSnapshot.toRawUserStats(): RawUserStats? {
         translatorLevel = (intField("translater") ?: 0).coerceAtLeast(0),
         adminLevel = (intField("admin") ?: 0).coerceAtLeast(0),
         developerLevel = (intField("developer") ?: 0).coerceAtLeast(0),
+        lessonUnlocks =
+            (get("lessonUnlocks") as? List<*>)
+                ?.mapNotNull { it as? String }
+                ?.toSet()
+                .orEmpty(),
     )
 }

@@ -12,4 +12,7 @@ interface LessonListComponent {
     fun onLessonClick(lesson: LessonItemUi)
 
     fun onHardCheckToggled(lessonId: String)
+
+    /** Asked for when a shut lesson is tapped. Opening it costs nolics and goes through the server. */
+    fun onUnlockClick(lesson: LessonItemUi)
 }

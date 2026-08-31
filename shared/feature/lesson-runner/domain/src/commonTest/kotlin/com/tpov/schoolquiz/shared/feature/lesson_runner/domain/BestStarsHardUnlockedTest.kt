@@ -3,11 +3,12 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeBestStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeHardUnlocked
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Stars
+import com.tpov.schoolquiz.shared.core.scoring.Stars
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
 
 /**
  * Spec scenarios 30-35a: bestStars and hardUnlocked logic.

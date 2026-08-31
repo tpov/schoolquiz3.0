@@ -35,6 +35,7 @@ class DefaultThemeListComponent(
     private val sectionId = SectionId(config.sectionId)
     override val breadcrumbs: List<BreadcrumbRoot> = config.breadcrumbs
     private val forcedLessonMode = config.forcedLessonMode
+    private val questType = config.questType
 
     private val _uiState = MutableValue<HierarchyListUiState>(HierarchyListUiState.Loading)
     override val uiState: Value<HierarchyListUiState> = _uiState
@@ -61,6 +62,7 @@ class DefaultThemeListComponent(
                 themeId = theme.id,
                 breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(theme.title),
                 forcedLessonMode = forcedLessonMode,
+                questType = questType,
             ),
         )
     }

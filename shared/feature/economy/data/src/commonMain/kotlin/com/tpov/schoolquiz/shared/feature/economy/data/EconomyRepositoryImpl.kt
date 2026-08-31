@@ -1,8 +1,10 @@
 package com.tpov.schoolquiz.shared.feature.economy.data
 
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.EconomyRemoteDataSource
+import com.tpov.schoolquiz.shared.feature.economy.data.remote.LessonUnlockRequest
 import com.tpov.schoolquiz.shared.feature.economy.data.remote.ShopPurchaseRequest
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
 import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
@@ -53,6 +55,23 @@ class EconomyRepositoryImpl(
                 balance = balance,
                 message = itemId.successMessage(),
             )
+        }
+    }
+
+    override suspend fun unlockLesson(
+        lessonId: String,
+        kind: LessonUnlockKind,
+    ): Result<EconomyResourceBalance> {
+        val uid = currentUidFlow().first()
+        if (uid.isNullOrBlank()) {
+            return Result.failure(IllegalStateException("Требуется авторизация"))
+        }
+        return runCatchingCancellable {
+            val balance = remote.unlockLesson(LessonUnlockRequest(lessonId, kind.wireName))
+            // Write the returned balance straight back: it already carries the charge and the
+            // new unlock, so the lesson list reacts without waiting for the next profile sync.
+            local.upsert(uid, balance)
+            balance
         }
     }
 

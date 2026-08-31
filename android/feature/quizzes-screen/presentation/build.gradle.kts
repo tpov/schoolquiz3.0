@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":shared:feature:lesson-runner:domain"))
     implementation(project(":shared:feature:question:domain"))
     implementation(project(":shared:feature:app-shell:domain"))
+    implementation(project(":shared:feature:economy:domain"))
     implementation(project(":shared:core:catalog:domain"))
     implementation(project(":shared:core:question-schema"))
     implementation(project(":shared:core:sync"))
@@ -33,6 +34,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(project(":shared:feature:lesson-runner:domain"))
     testImplementation(project(":shared:feature:app-shell:domain"))
+    testImplementation(project(":shared:feature:economy:domain"))
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test)

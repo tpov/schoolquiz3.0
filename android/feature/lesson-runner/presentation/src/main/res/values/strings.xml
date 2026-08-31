@@ -1,88 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Lesson-runner strings. Default locale: Russian (the product's primary language);
-    English lives in values-en/strings.xml.
--->
+<!-- English translations for the lesson-runner strings. -->
 <resources>
     <!-- Actions -->
-    <string name="runner_action_continue">Продолжить</string>
-    <string name="runner_action_exit">Выйти</string>
-    <string name="runner_action_cancel">Отмена</string>
-    <string name="runner_action_back">Назад</string>
-    <string name="runner_action_answer">Ответить</string>
-    <string name="runner_action_done">Готово</string>
-    <string name="runner_action_got_it">Понятно</string>
+    <string name="runner_action_continue">Continue</string>
+    <string name="runner_action_exit">Exit</string>
+    <string name="runner_action_cancel">Cancel</string>
+    <string name="runner_action_back">Back</string>
+    <string name="runner_action_answer">Answer</string>
+    <string name="runner_action_done">Done</string>
+    <string name="runner_action_got_it">Got it</string>
 
     <!-- Hint: plays the correct answer for the user, costs one charge (plan §4.4) -->
-    <string name="runner_hint_action">Подсказка · −1</string>
-    <string name="runner_hint_cd">Показать верный ответ за один заряд</string>
+    <string name="runner_hint_action">Hint · −1</string>
+    <string name="runner_hint_cd">Reveal the correct answer for one charge</string>
 
     <!-- Verdict on the question screen: waits for a tap instead of a hidden timer -->
-    <string name="runner_verdict_correct">Верно</string>
-    <string name="runner_verdict_wrong">Неверно</string>
-    <string name="runner_verdict_partial">Частично · %1$d</string>
-    <string name="runner_verdict_continue">Нажмите, чтобы продолжить</string>
+    <string name="runner_verdict_correct">Correct</string>
+    <string name="runner_verdict_wrong">Wrong</string>
+    <string name="runner_verdict_partial">Partly right · %1$d</string>
+    <string name="runner_verdict_continue">Tap to continue</string>
 
     <!-- Pause / exit dialogs -->
-    <string name="runner_resume_title">Продолжить прохождение?</string>
-    <string name="runner_exit_confirm_title">Уверены? Прогресс попытки потеряется</string>
+    <string name="runner_resume_title">Resume this lesson?</string>
+    <string name="runner_exit_confirm_title">Are you sure? Attempt progress will be lost</string>
 
     <!-- Header -->
-    <string name="runner_cd_abort">Прервать</string>
-    <string name="runner_cd_exit_lesson">Выйти из урока</string>
-    <string name="runner_cd_drag">Перетащить</string>
-    <string name="runner_cd_move_up">Переместить вверх</string>
-    <string name="runner_cd_move_down">Переместить вниз</string>
+    <string name="runner_cd_abort">Abort</string>
+    <string name="runner_cd_exit_lesson">Exit lesson</string>
+    <string name="runner_cd_drag">Drag</string>
+    <string name="runner_cd_move_up">Move up</string>
+    <string name="runner_cd_move_down">Move down</string>
 
     <!-- Info dialog -->
-    <string name="runner_cd_info">Инфо</string>
-    <string name="runner_info_title">Инфо</string>
+    <string name="runner_cd_info">Info</string>
+    <string name="runner_info_title">Info</string>
 
     <!-- Rating -->
-    <string name="runner_rating_title">Оцените урок</string>
-    <string name="runner_rating_failed">Не удалось сохранить оценку</string>
+    <string name="runner_rating_title">Rate this lesson</string>
+    <string name="runner_rating_failed">Failed to save the rating</string>
 
     <!-- Result -->
-    <string name="runner_result_kicker_easy">Урок пройден · easy</string>
-    <string name="runner_result_kicker_hard">Урок пройден · hard</string>
-    <string name="runner_result_save_warning">Результат не сохранён — уйдёт при следующей синхронизации</string>
-    <string name="runner_result_best">Ваш лучший %1$d%%</string>
-    <string name="runner_result_again">Ещё раз</string>
-    <string name="runner_result_next">Дальше →</string>
-    <string name="runner_top3_title">Лучшие участники</string>
-    <string name="runner_figure_attempt">Попытка</string>
-    <string name="runner_figure_lives">Заряды</string>
+    <string name="runner_result_kicker_easy">Lesson complete · easy</string>
+    <string name="runner_result_kicker_hard">Lesson complete · hard</string>
+    <string name="runner_result_save_warning">Result not saved — it will be lost on the next sync</string>
+    <string name="runner_result_best">Your best %1$d%%</string>
+    <string name="runner_result_again">Try again</string>
+    <string name="runner_result_next">Next →</string>
+    <string name="runner_top3_title">Top participants</string>
+    <string name="runner_figure_attempt">Attempt</string>
+    <string name="runner_figure_lives">Charges</string>
     <string name="runner_figure_xp">XP</string>
-    <string name="runner_figure_nolics">Нолики</string>
-    <string name="runner_advice_kicker">ЧТОБЫ НАБРАТЬ БОЛЬШЕ</string>
-    <string name="runner_advice_suggested_lesson">Основу даёт урок «%1$s»</string>
+    <string name="runner_figure_nolics">Nolics</string>
+    <string name="runner_advice_kicker">TO SCORE MORE</string>
+    <string name="runner_advice_suggested_lesson">“%1$s” lays the groundwork</string>
 
     <!-- Discussion -->
-    <string name="runner_discussion_header">Обсуждение урока</string>
-    <string name="runner_discussion_placeholder">Написать комментарий…</string>
-    <string name="runner_discussion_send">Отправить</string>
+    <string name="runner_discussion_header">Lesson discussion</string>
+    <string name="runner_discussion_placeholder">Write a comment…</string>
+    <string name="runner_discussion_send">Send</string>
 
     <!-- Errors -->
-    <string name="runner_error_auth_required">Требуется авторизация</string>
-    <string name="runner_error_lesson_not_found">Урок не найден</string>
-    <string name="runner_error_empty_pool">Нет доступных вопросов</string>
-    <string name="runner_error_no_valid_questions">Вопросы недействительны</string>
-    <string name="runner_error_save_result">Не удалось сохранить результат</string>
-    <string name="runner_error_save_rating">Не удалось сохранить оценку</string>
+    <string name="runner_error_auth_required">Sign-in required</string>
+    <string name="runner_error_lesson_not_found">Lesson not found</string>
+    <string name="runner_error_empty_pool">No questions available</string>
+    <string name="runner_error_no_valid_questions">Questions are invalid</string>
+    <string name="runner_error_save_result">Failed to save the result</string>
+    <string name="runner_error_save_rating">Failed to save the rating</string>
 
     <!-- Plurals -->
     <plurals name="runner_rating_star_cd">
-        <item quantity="one">%1$d звезда</item>
-        <item quantity="few">%1$d звезды</item>
-        <item quantity="many">%1$d звёзд</item>
-        <item quantity="other">%1$d звёзд</item>
+        <item quantity="one">%1$d star</item>
+        <item quantity="other">%1$d stars</item>
     </plurals>
     <plurals name="runner_advice_weak_answers">
-        <item quantity="one">%1$d ответ набрал меньше половины балла</item>
-        <item quantity="few">%1$d ответа набрали меньше половины балла</item>
-        <item quantity="many">%1$d ответов набрали меньше половины балла</item>
-        <item quantity="other">%1$d ответов набрали меньше половины балла</item>
+        <item quantity="one">%1$d answer scored below half marks</item>
+        <item quantity="other">%1$d answers scored below half marks</item>
     </plurals>
-    <string name="runner_discussion_title">Обсуждение</string>
-    <string name="runner_discussion_open">Открыть →</string>
+    <string name="runner_discussion_title">Discussion</string>
+    <string name="runner_discussion_open">Open →</string>
 </resources>

@@ -5,7 +5,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeClock
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.AbortAttemptUseCase
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase

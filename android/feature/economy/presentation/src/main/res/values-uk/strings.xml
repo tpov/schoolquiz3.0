@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ukrainian translation of the shop / NFT market strings. -->
+<resources>
+    <!-- Store: item titles, resolved in the UI from ShopItemId -->
+    <string name="shop_item_standard_heart">Заряд</string>
+    <string name="shop_item_gold_heart">Золотий заряд</string>
+    <string name="shop_item_quiz_slot">Слот квізу</string>
+    <string name="shop_item_ad_reward_box">Бокс за перегляд 5 реклам</string>
+    <string name="shop_item_donate_google_play">Підтримати проєкт</string>
+    <string name="shop_item_referral_program">Реферали</string>
+    <string name="shop_item_nickname_market">NFT</string>
+
+    <!-- Store: row actions -->
+    <string name="shop_action_buy">Купити →</string>
+    <string name="shop_action_watch_ad">Дивитися →</string>
+    <string name="shop_action_donate">Донат ↗</string>
+    <string name="shop_action_open">Відкрити →</string>
+
+    <!-- Store: prices -->
+    <string name="shop_price_free">Безкоштовно</string>
+    <string name="shop_price_google_play">Google Play</string>
+    <plurals name="shop_ads_count">
+        <item quantity="one">%d реклама</item>
+        <item quantity="few">%d реклами</item>
+        <item quantity="many">%d реклам</item>
+        <item quantity="other">%d реклами</item>
+    </plurals>
+
+    <!-- Store: state lines under titles -->
+    <string name="shop_state_you_have">У вас %1$d</string>
+    <string name="shop_state_next_suffix">" · наст. %1$s"</string>
+    <string name="shop_state_maxed_suffix">" · Вже максимум"</string>
+    <string name="shop_state_gold_hearts">У вас %1$d · лише складний режим</string>
+    <string name="shop_lock_quiz_slot">Чекає на модель лімітів вікторин</string>
+    <string name="shop_lock_ad_box">Чекає на рекламного провайдера</string>
+    <string name="shop_lock_donate">Чекає на billing-модуль</string>
+
+    <!-- Store: beta shelf -->
+    <string name="shop_section_in_beta">У беті</string>
+    <string name="shop_chip_beta">Beta</string>
+    <string name="shop_beta_tournaments">Турніри</string>
+    <string name="shop_beta_minigames">Міні-ігри</string>
+    <string name="shop_beta_quest_builder">Конструктор квестів</string>
+    <string name="shop_cd_locked">Недоступно</string>
+
+    <!-- Headers -->
+    <string name="shop_title_store">Магазин</string>
+    <string name="shop_title_nft">NFT</string>
+    <string name="shop_cd_back">Назад</string>
+    <string name="shop_cd_open_menu">Відкрити меню</string>
+
+    <!-- Shop messages -->
+    <string name="shop_msg_action_failed">Не вдалося виконати дію</string>
+    <string name="shop_msg_unavailable">Магазин поки недоступний</string>
+
+    <!-- NFT market: tabs and counters -->
+    <string name="nft_tab_names">Імена</string>
+    <string name="nft_tab_logos">Логотипи</string>
+    <string name="nft_on_sale_count">%1$d у продажу</string>
+    <string name="nft_owned_of_total">%1$d з %2$d</string>
+
+    <!-- NFT market: search -->
+    <string name="nft_search_hint">Знайти ім\'я</string>
+    <string name="nft_cd_clear">Очистити</string>
+
+    <!-- NFT market: states -->
+    <string name="nft_loading">Завантаження…</string>
+    <string name="nft_checking">Перевіряємо…</string>
+    <string name="nft_market_empty">Ніхто нічого не продає</string>
+    <string name="nft_no_results">Нічого не знайдено</string>
+
+    <!-- NFT market: owned names panel -->
+    <string name="nft_your_names">ВАШІ ІМЕНА</string>
+    <string name="nft_none_yet">Поки жодного</string>
+    <string name="nft_worn">надіто</string>
+    <string name="nft_for_sale_price">продається за %1$d</string>
+    <string name="nft_action_remove">Зняти</string>
+    <string name="nft_action_wear">Надіти</string>
+    <string name="nft_action_sell">Продати</string>
+    <string name="nft_action_cancel">Скасувати</string>
+    <string name="nft_action_list">Виставити</string>
+
+    <!-- NFT market: availability verdicts -->
+    <string name="nft_available">вільно</string>
+    <string name="nft_available_first_free">вільно · перше ім\'я безкоштовно</string>
+    <string name="nft_action_claim">Зайняти</string>
+    <string name="nft_taken_by">у %1$s</string>
+
+    <!-- NFT market: listings -->
+    <string name="nft_sells">продає %1$s</string>
+    <string name="nft_your_lot">ваш лот</string>
+    <string name="nft_action_confirm">Підтвердити</string>
+
+    <!-- NFT market: logos shelf -->
+    <string name="nft_owned">Володієте</string>
+    <string name="nft_your_logos">ВАШІ ЛОГОТИПИ</string>
+    <string name="nft_logo_worn_hint">надіто — продати не можна</string>
+    <string name="nft_logos_note">Логотип замінює рамку аватара всюди, де трапляється ім\'я — таблиці, результати, меню. Ті, що випали з коробок, нічого не коштують.</string>
+
+    <!-- NFT market: sorting -->
+    <string name="nft_sort_name">А–Я</string>
+    <string name="nft_sort_price">Ціна</string>
+    <string name="nft_sort_date">Дата</string>
+
+    <!-- NFT market: rejections -->
+    <string name="nft_reject_too_short">Занадто коротке</string>
+    <string name="nft_reject_too_long">Занадто довге</string>
+    <string name="nft_reject_bad_characters">Є неприпустимі символи</string>
+    <string name="nft_reject_blocked_symbol">Є заборонений символ</string>
+    <string name="nft_reject_blocked_word">Таке ім\'я заборонено</string>
+    <string name="nft_reject_taken">Вже зайнято</string>
+    <string name="nft_reject_yours">Це ваше ім\'я</string>
+
+    <!-- NFT market: messages -->
+    <string name="nft_msg_claimed_paid">Ім\'я куплено за %1$d</string>
+    <string name="nft_msg_claimed_free">Ім\'я закріплено за вами</string>
+    <string name="nft_msg_worn">Активне ім\'я — %1$s</string>
+    <string name="nft_msg_listed">Виставлено за %1$d</string>
+    <string name="nft_msg_listing_cancelled">Знято з продажу</string>
+    <string name="nft_msg_bought">Ім\'я куплено, комісія %1$d</string>
+    <string name="nft_msg_logo_bought">Логотип ваш · −%1$d</string>
+    <string name="nft_msg_logo_worn">Активний логотип — %1$s</string>
+    <string name="nft_msg_logo_listed">Логотип виставлено за %1$d</string>
+    <string name="nft_msg_logo_bought_listed">Логотип куплено, комісія %1$d</string>
+
+    <!-- Referral program (legacy screen, copy kept verbatim) -->
+    <string name="shop_referral_title">Реферали</string>
+    <string name="shop_referral_link_label">Посилання-запрошення:</string>
+    <string name="shop_referral_id_format">tpovId: %1$s</string>
+    <string name="shop_referral_guest">гість</string>
+    <string name="shop_referral_reward_received">Нагороду отримано</string>
+    <string name="shop_referral_reward_invite">Запросіть 6 гравців і отримайте</string>
+    <string name="shop_referral_season_header">At the end of season you will receive boxes:</string>
+    <string name="shop_referral_season_note">You receive 1% of all opened boxes from all your invited friends.</string>
+    <string name="shop_referral_users_title">Your Referrals</string>
+    <string name="shop_referral_stat_open_boxes">Open boxes:</string>
+    <string name="shop_referral_stat_bonus">Your Bonus:</string>
+    <string name="shop_referral_activated">ACTIVATED</string>
+    <string name="shop_referral_boxes_left">%1$d boxes to activate</string>
+    <string name="shop_referral_empty_slot">Empty Slot</string>
+    <string name="shop_toast_link_copied">Referral link copied!</string>
+    <string name="shop_share_message">Join me using my referral link: %1$s</string>
+    <string name="shop_cd_copy">Copy</string>
+    <string name="shop_cd_share">Share</string>
+</resources>

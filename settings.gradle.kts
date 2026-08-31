@@ -23,6 +23,7 @@ rootProject.name = "schoolquiz"
 include(":apps:android-next")
 
 // shared-core
+include(":shared:core:analytics")
 include(":shared:core:catalog:domain")
 include(":shared:core:catalog:data")
 include(":shared:core:foundation")
@@ -30,6 +31,7 @@ include(":shared:core:logger")
 include(":shared:core:model")
 include(":shared:core:leaderboard")
 include(":shared:core:question-schema")
+include(":shared:core:scoring")
 include(":shared:core:persistence")
 include(":shared:core:network")
 include(":shared:core:preferences")

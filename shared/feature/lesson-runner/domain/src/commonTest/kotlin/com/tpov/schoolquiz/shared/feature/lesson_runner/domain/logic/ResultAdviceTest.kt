@@ -1,6 +1,6 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic
 
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

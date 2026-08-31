@@ -11,8 +11,13 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.Qu
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.HierarchyLevel
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonListUiState
+import com.tpov.schoolquiz.shared.core.catalog.domain.model.QuestType
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
+import com.tpov.schoolquiz.shared.feature.lesson.domain.logic.LessonAccess
+import com.tpov.schoolquiz.shared.feature.lesson.domain.logic.resolveLessonAccess
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonRepository
@@ -29,6 +34,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -40,6 +46,7 @@ class DefaultLessonListComponent(
     private val lessonRepository: LessonRepository,
     private val attemptRepository: LessonAttemptRepository,
     private val authRepository: AuthRepository,
+    private val economyRepository: EconomyRepository,
     private val navigation: StackNavigation<QuizzesConfig>,
     private val lessonContentSync: suspend (LessonId) -> Result<Unit> = { Result.success(Unit) },
     coroutineContext: CoroutineDispatcher = Dispatchers.Main.immediate,
@@ -50,6 +57,9 @@ class DefaultLessonListComponent(
     private val themeId = ThemeId(config.themeId)
     override val breadcrumbs: List<BreadcrumbRoot> = config.breadcrumbs
     private val forcedLessonMode = config.forcedLessonMode
+
+    // Only a course teaches in a fixed order. Everywhere else every lesson stays open.
+    private val gatesSequentially = config.questType == QuestType.COURSE
 
     private val _uiState = MutableValue<LessonListUiState>(LessonListUiState.Loading)
     override val uiState: Value<LessonListUiState> = _uiState
@@ -65,16 +75,19 @@ class DefaultLessonListComponent(
                     attemptRepository.observeAllStatsByUser(uid)
                 }
             }
+        val unlocksFlow = economyRepository.observeBalance().map { it.lessonUnlocks }
         scope.launch {
             lessonRepository.observeByTheme(themeId).flatMapLatest { lessons ->
                 combine(
                     statsFlow,
                     hardCheckedSet,
-                ) { stats, checkedSet ->
+                    unlocksFlow,
+                ) { stats, checkedSet, unlocks ->
                     mapToUi(
                         lessons = lessons,
                         stats = stats,
                         checkedSet = checkedSet,
+                        unlocks = unlocks,
                     )
                 }
             }
@@ -88,6 +101,11 @@ class DefaultLessonListComponent(
     }
 
     override fun onLessonClick(lesson: LessonItemUi) {
+        // A shut lesson does not open by being tapped; the tap is a request to buy it.
+        if (lesson.access == LessonAccess.LOCKED) {
+            onUnlockClick(lesson)
+            return
+        }
         val mode =
             forcedLessonMode ?: if (lesson.hardUnlocked && lesson.isHardChecked) {
                 Difficulty.HARD
@@ -108,6 +126,15 @@ class DefaultLessonListComponent(
         }
     }
 
+    override fun onUnlockClick(lesson: LessonItemUi) {
+        // Buying is a server call: nolics live in the profile, so a local deduction would be erased
+        // by the next sync, and the price is the server's to decide.
+        if (lesson.access != LessonAccess.LOCKED) return
+        scope.launch {
+            economyRepository.unlockLesson(lesson.id, LessonUnlockKind.LESSON)
+        }
+    }
+
     override fun onHardCheckToggled(lessonId: String) {
         val item = (_uiState.value as? LessonListUiState.Loaded)?.items?.find { it.id == lessonId }
         if (item?.hardUnlocked == true) {
@@ -121,10 +148,26 @@ class DefaultLessonListComponent(
         lessons: List<Lesson>,
         stats: Map<LessonId, LessonAttemptStats>,
         checkedSet: Set<String>,
+        unlocks: Set<String>,
     ): LessonListUiState {
         if (lessons.isEmpty()) return LessonListUiState.Empty(HierarchyLevel.LESSONS)
+        val ordered = lessons.sortedBy { it.order }
+        val access =
+            if (gatesSequentially) {
+                resolveLessonAccess(
+                    orderedLessonIds = ordered.map { it.id },
+                    // hardUnlocked is the all-easy-correct predicate, which is what "passed" means.
+                    passed = stats.filterValues { it.hardUnlocked }.keys,
+                    purchased =
+                        ordered
+                            .map { it.id }
+                            .filterTo(mutableSetOf()) { LessonUnlockKind.LESSON.keyFor(it.value) in unlocks },
+                )
+            } else {
+                emptyMap()
+            }
         val items =
-            lessons.sortedBy { it.order }.map { lesson ->
+            ordered.map { lesson ->
                 val lessonStats = stats[lesson.id]
                 LessonItemUi(
                     id = lesson.id.value,
@@ -135,6 +178,7 @@ class DefaultLessonListComponent(
                     bestStarsRawTenths = lessonStats?.bestStarsRawTenths ?: 0,
                     hardUnlocked = lessonStats?.hardUnlocked ?: false,
                     isHardChecked = lesson.id.value in checkedSet,
+                    access = access[lesson.id] ?: LessonAccess.OPEN,
                 )
             }
         return LessonListUiState.Loaded(items)

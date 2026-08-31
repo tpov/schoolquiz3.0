@@ -40,6 +40,12 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.Q
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.Catalog
 import com.tpov.schoolquiz.shared.core.catalog.domain.model.CatalogId
 import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 import com.tpov.schoolquiz.shared.core.catalog.domain.use_case.ObserveCatalogsUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.InitializeAppShellUseCase
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.use_case.NavigateUseCase
@@ -329,6 +335,25 @@ class QuizzesRootIntegrationTest {
                     override fun observeAll(): Flow<List<Catalog>> = flowOf(emptyList())
                     override suspend fun refreshFromRemote(): Result<Set<CatalogId>> = Result.success(emptySet())
                     override suspend fun getById(id: CatalogId): Catalog? = null
+                },
+                economyRepository = object : EconomyRepository {
+                    override fun observeBalance(): Flow<EconomyResourceBalance> =
+                        flowOf(EconomyResourceBalance())
+
+                    override suspend fun currentBalance(): EconomyResourceBalance =
+                        EconomyResourceBalance()
+
+                    override suspend fun purchase(itemId: ShopItemId): Result<ShopPurchaseResult> =
+                        Result.failure(UnsupportedOperationException("not expected"))
+
+                    override suspend fun unlockLesson(
+                        lessonId: String,
+                        kind: LessonUnlockKind,
+                    ): Result<EconomyResourceBalance> =
+                        Result.failure(UnsupportedOperationException("not expected"))
+
+                    override suspend fun referralProgram(): ReferralProgram =
+                        ReferralProgram("", emptyList())
                 },
                 setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),
                 lessonRunnerFactory = LessonRunnerComponentFactory { _, _, _, _ -> error("Not expected") },

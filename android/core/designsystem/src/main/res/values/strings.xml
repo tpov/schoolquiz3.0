@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Default locale: Russian for ds_* keys.
-  long_press_action predates localization and keeps its original English text.
--->
+<!-- English UI strings of the design system module. -->
 <resources>
     <string name="long_press_action">Long press action</string>
 
@@ -13,18 +10,18 @@
     <string name="ds_catalog_cd_star">Star</string>
     <string name="ds_catalog_cd_home">Home</string>
 
-    <string name="ds_showcase_settings_header">Настройки</string>
-    <string name="ds_showcase_switch_title">Переключатель, а не галочка</string>
-    <string name="ds_showcase_switch_subtitle">On/off — это switch</string>
-    <string name="ds_showcase_mono_title">Числа моноширинные</string>
-    <string name="ds_showcase_button_primary">Основное действие</string>
-    <string name="ds_showcase_button_secondary">Второстепенное</string>
-    <string name="ds_showcase_button_disabled">Недоступно</string>
-    <string name="ds_showcase_chip_default">Обычный</string>
-    <string name="ds_showcase_chip_accent">Акцент</string>
-    <string name="ds_showcase_chip_danger">Ошибка</string>
+    <string name="ds_showcase_settings_header">Settings</string>
+    <string name="ds_showcase_switch_title">A switch, not a checkbox</string>
+    <string name="ds_showcase_switch_subtitle">On/off means a switch</string>
+    <string name="ds_showcase_mono_title">Numbers are monospaced</string>
+    <string name="ds_showcase_button_primary">Primary action</string>
+    <string name="ds_showcase_button_secondary">Secondary</string>
+    <string name="ds_showcase_button_disabled">Disabled</string>
+    <string name="ds_showcase_chip_default">Default</string>
+    <string name="ds_showcase_chip_accent">Accent</string>
+    <string name="ds_showcase_chip_danger">Error</string>
 
-    <string name="ds_spinner_all_categories">Все категории</string>
-    <string name="ds_hierarchy_download">Скачать</string>
-    <string name="ds_hierarchy_downloaded">Скачано</string>
+    <string name="ds_spinner_all_categories">All categories</string>
+    <string name="ds_hierarchy_download">Download</string>
+    <string name="ds_hierarchy_downloaded">Downloaded</string>
 </resources>

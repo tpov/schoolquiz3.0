@@ -46,4 +46,5 @@ fun RawUserStats.toEntity(uid: String): UserStatsEntity =
         translatorLevel = translatorLevel,
         adminLevel = adminLevel,
         developerLevel = developerLevel,
+        lessonUnlocks = lessonUnlocks,
     )

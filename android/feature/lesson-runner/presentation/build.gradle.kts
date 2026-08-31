@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":shared:feature:theme:domain"))
     implementation(project(":shared:core:question-schema"))
     implementation(project(":shared:core:leaderboard"))
+    implementation(project(":shared:core:analytics"))
     implementation(project(":android:core:designsystem"))
 
     implementation(libs.kotlinx.datetime)

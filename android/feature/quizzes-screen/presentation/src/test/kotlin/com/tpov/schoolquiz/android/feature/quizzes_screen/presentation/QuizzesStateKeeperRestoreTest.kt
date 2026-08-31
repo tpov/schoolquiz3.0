@@ -13,6 +13,7 @@ import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.component
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeQuestionRepository
@@ -88,6 +89,7 @@ class QuizzesStateKeeperRestoreTest {
             lessonRepository = FakeLessonRepository(),
             lessonAttemptRepository = FakeLessonAttemptRepository(),
             authRepository = FakeAuthRepository(),
+            economyRepository = FakeEconomyRepository(),
             questionRepository = FakeQuestionRepository(),
             catalogRepository = StubCatalogRepository(),
             setPublicQuestShelf = SetPublicQuestShelfUseCase(questRepository),

@@ -7,8 +7,8 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Runn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.TemplatePart
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.QuestionContent
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.InitFailureReason
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswerDraft
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import kotlin.random.Random

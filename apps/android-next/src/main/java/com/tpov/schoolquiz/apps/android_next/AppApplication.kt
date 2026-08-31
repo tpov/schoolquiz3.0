@@ -22,7 +22,10 @@ import com.tpov.schoolquiz.android.feature.quest_authoring.presentation.di.quest
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.di.quizzesPresentationModule
 import com.tpov.schoolquiz.apps.android_next.di.authModule
 import com.tpov.schoolquiz.apps.android_next.di.syncModule
+import com.tpov.schoolquiz.platform.android_services.attribution.InstallReferrerReader
 import com.tpov.schoolquiz.platform.android_services.sync.SyncWorker
+import com.tpov.schoolquiz.platform.billing.di.billingModule
+import com.tpov.schoolquiz.platform.firebase.di.analyticsModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseCatalogModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseLessonCommentModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseLessonModule
@@ -32,6 +35,8 @@ import com.tpov.schoolquiz.platform.firebase.di.firebaseQuestionModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseSectionModule
 import com.tpov.schoolquiz.platform.firebase.di.firebaseThemeModule
 import com.tpov.schoolquiz.platform.firebase.initializeFirebaseSecurity
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.core.analytics.UserProperty
 import com.tpov.schoolquiz.shared.core.catalog.data.di.catalogDataModule
 import com.tpov.schoolquiz.shared.core.catalog.domain.di.catalogDomainModule
 import com.tpov.schoolquiz.shared.core.persistence.di.persistenceModule
@@ -66,6 +71,7 @@ import kotlinx.coroutines.flow.shareIn
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
+import java.util.Locale
 
 class AppApplication : Application(), Configuration.Provider {
     /**
@@ -84,10 +90,7 @@ class AppApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        // Force Russian for now — the design (noir-screens-1.html) is Russian, and the device
-        // locale (English) was making every screen read as the wrong language. English strings
-        // stay in values-en for when proper locale switching is wired up.
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ru"))
+        releaseForcedRussianLocaleOnce()
         initializeFirebaseSecurity(
             app = this,
             useDebugAppCheckProvider = BuildConfig.DEBUG,
@@ -122,6 +125,8 @@ class AppApplication : Application(), Configuration.Provider {
             modules(
                 persistenceModule,
                 firebaseModule,
+                analyticsModule,
+                billingModule,
                 authModule,
                 firebaseCatalogModule,
                 firebaseQuestModule,
@@ -163,6 +168,7 @@ class AppApplication : Application(), Configuration.Provider {
                 syncModule,
             )
         }
+        startMeasurement()
         val workManager = WorkManager.getInstance(this)
         workManager.enqueueUniquePeriodicWork(
             SyncWorker.WORK_NAME_PERIODIC,
@@ -195,5 +201,53 @@ class AppApplication : Application(), Configuration.Provider {
             )
             prefs.edit().putBoolean("bootstrap_done", true).apply()
         }
+    }
+
+    /**
+     * Turns the funnel on.
+     *
+     * Until this existed the app could not answer a single question about itself: how many people
+     * opened a lesson, how many finished one, how many reached the shop, where an install came
+     * from. Everything downstream — deciding whether a Telegram post is cheaper than an ad
+     * network, whether retention is the problem — needs these three lines to have run.
+     */
+    private fun startMeasurement() {
+        val analytics = GlobalContext.get().get<AnalyticsTracker>()
+        // The resolved UI language, not the device's — this is the segment that tells us whether
+        // the Ukrainian build is actually reaching Ukrainian users.
+        analytics.setUserProperty(
+            UserProperty.UI_LANGUAGE,
+            resources.configuration.locales.get(0)?.language ?: Locale.getDefault().language,
+        )
+        InstallReferrerReader(
+            context = this,
+            analytics = analytics,
+            appVersion = BuildConfig.VERSION_NAME,
+        ).readOnce()
+    }
+
+    /**
+     * Undoes the old hard-coded Russian locale, exactly once per install.
+     *
+     * The app used to call `setApplicationLocales(forLanguageTags("ru"))` on every launch, which
+     * pinned every screen to Russian regardless of the device. That call is gone, but the choice
+     * it made was **persisted** by AppCompat, so an existing install would keep opening in Russian
+     * forever and a Ukrainian user would never see the Ukrainian build.
+     *
+     * Clearing it to the empty list hands the decision back to the system, after which Android
+     * resolves values-uk, values-ru or the English default from the device language — and the
+     * per-app language picker (Android 13+, enabled by locales_config.xml) keeps working, because
+     * this runs once and then never touches the setting again.
+     */
+    private fun releaseForcedRussianLocaleOnce() {
+        val prefs = getSharedPreferences(LOCALE_PREFS, MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_FORCED_RU_RELEASED, false)) return
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+        prefs.edit().putBoolean(KEY_FORCED_RU_RELEASED, true).apply()
+    }
+
+    private companion object {
+        const val LOCALE_PREFS = "locale_state"
+        const val KEY_FORCED_RU_RELEASED = "forced_ru_released"
     }
 }

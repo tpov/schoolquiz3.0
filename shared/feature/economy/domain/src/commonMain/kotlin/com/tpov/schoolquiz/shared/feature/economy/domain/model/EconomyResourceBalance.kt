@@ -8,6 +8,14 @@ data class EconomyResourceBalance(
     val standardHearts: Int = MaxStandardHearts,
     val goldHearts: Int = 0,
     val gold: Long = 0L,
+    /**
+     * Lessons opened with nolics, keyed "kind:lessonId".
+     *
+     * Kept with the balance rather than on its own because it is written by the same purchase
+     * and arrives on the same profile document — a separate sync path for one set of strings
+     * would be a second thing to keep in step.
+     */
+    val lessonUnlocks: Set<String> = emptySet(),
 ) {
     companion object {
         const val MaxStandardHearts = 5

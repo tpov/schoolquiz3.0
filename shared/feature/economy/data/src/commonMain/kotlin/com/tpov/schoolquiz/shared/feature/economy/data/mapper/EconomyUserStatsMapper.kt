@@ -12,6 +12,7 @@ fun UserStatsEntity.toBalance(): EconomyResourceBalance =
         standardHearts = standardHearts.coerceIn(0, EconomyResourceBalance.MaxStandardHearts),
         goldHearts = goldHearts.coerceIn(0, EconomyResourceBalance.MaxGoldHearts),
         gold = gold.coerceAtLeast(0L),
+        lessonUnlocks = lessonUnlocks,
     )
 
 fun UserStatsEntity.mergeWithBalance(balance: EconomyResourceBalance): UserStatsEntity =
@@ -23,6 +24,12 @@ fun UserStatsEntity.mergeWithBalance(balance: EconomyResourceBalance): UserStats
         standardHearts = balance.standardHearts.coerceIn(0, EconomyResourceBalance.MaxStandardHearts),
         goldHearts = balance.goldHearts.coerceIn(0, EconomyResourceBalance.MaxGoldHearts),
         gold = balance.gold.coerceAtLeast(0L),
+        // An empty set is read as "not told", not as "owns nothing". A shop purchase answers with
+        // a balance, and any server older than the one that put the unlocks into that balance
+        // answers without them — taking that literally shuts lessons the player has paid for.
+        // Nothing is lost by keeping what we hold: unlocks are only ever added, and the profile
+        // sync replaces the set outright when it genuinely changes.
+        lessonUnlocks = balance.lessonUnlocks.ifEmpty { lessonUnlocks },
     )
 
 fun EconomyResourceBalance.toNewUserStatsEntity(uid: String): UserStatsEntity =
@@ -44,4 +51,5 @@ fun EconomyResourceBalance.toNewUserStatsEntity(uid: String): UserStatsEntity =
         translatorLevel = 0,
         adminLevel = 0,
         developerLevel = 0,
+        lessonUnlocks = lessonUnlocks,
     )

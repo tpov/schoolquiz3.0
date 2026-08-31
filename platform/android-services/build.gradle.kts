@@ -12,6 +12,10 @@ android {
 dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(project(":shared:core:sync"))
+    // Install referrer is the free half of attribution: no vendor, no key, no account.
+    implementation(project(":shared:core:analytics"))
+    implementation(libs.play.install.referrer)
+    implementation(libs.koin.core)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)

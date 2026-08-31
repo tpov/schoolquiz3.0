@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Quizzes screen strings. Default locale: Russian (the product's primary language);
-    English lives in values-en/strings.xml.
+    English translations for quizzes screen strings.
+    Default locale (Russian) lives in values/strings.xml.
 -->
 <resources>
     <!-- Empty states -->
-    <string name="quizzes_empty_sections">Нет секций</string>
-    <string name="quizzes_empty_themes">Нет тем</string>
-    <string name="quizzes_empty_lessons">Нет уроков</string>
-    <string name="quizzes_empty_quests">Нет квестов</string>
-    <string name="quizzes_empty_catalogs">Нет каталогов</string>
-    <string name="quizzes_no_catalog">Без каталога</string>
+    <string name="quizzes_empty_sections">No sections</string>
+    <string name="quizzes_empty_themes">No themes</string>
+    <string name="quizzes_empty_lessons">No lessons</string>
+    <string name="quizzes_empty_quests">No quests</string>
+    <string name="quizzes_empty_catalogs">No catalogs</string>
+    <string name="quizzes_no_catalog">No catalog</string>
 
     <!-- Breadcrumb roots -->
-    <string name="quizzes_breadcrumb_catalogs">Каталоги</string>
-    <string name="quizzes_breadcrumb_archive">Архив</string>
-    <string name="quizzes_breadcrumb_courses">Курсы</string>
-    <string name="quizzes_breadcrumb_arena">Арена</string>
-    <string name="quizzes_breadcrumb_home_quests">Домашние квесты</string>
-    <string name="quizzes_breadcrumb_qualifier_tournament">Отборочный турнир</string>
-    <string name="quizzes_breadcrumb_world_championship">Чемпионат мира</string>
+    <string name="quizzes_breadcrumb_catalogs">Catalogs</string>
+    <string name="quizzes_breadcrumb_archive">Archive</string>
+    <string name="quizzes_breadcrumb_courses">Courses</string>
+    <string name="quizzes_breadcrumb_arena">Arena</string>
+    <string name="quizzes_breadcrumb_home_quests">Home quests</string>
+    <string name="quizzes_breadcrumb_qualifier_tournament">Qualifying tournament</string>
+    <string name="quizzes_breadcrumb_world_championship">World championship</string>
 
     <!-- Lesson item -->
-    <string name="quizzes_chip_easy">Лёгкий</string>
-    <string name="quizzes_chip_hard">Сложный</string>
-    <string name="quizzes_rating_none">нет оценок</string>
+    <string name="quizzes_chip_easy">Easy</string>
+    <string name="quizzes_chip_hard">Hard</string>
+    <string name="quizzes_rating_none">no ratings</string>
 
     <!-- Quest list menu -->
-    <string name="quizzes_menu_share">Поделиться</string>
-    <string name="quizzes_shelf_show_home">Показать в домашних</string>
-    <string name="quizzes_shelf_show_arena">Показать на арене</string>
-    <string name="quizzes_shelf_show_qualification">Показать в отборочном</string>
-    <string name="quizzes_shelf_show_world">Показать в чемпионате мира</string>
-    <string name="quizzes_cd_random_quest">Случайный квест</string>
-    <string name="quizzes_share_text">Квест «%1$s» — %2$s</string>
+    <string name="quizzes_menu_share">Share</string>
+    <string name="quizzes_shelf_show_home">Show in home shelf</string>
+    <string name="quizzes_shelf_show_arena">Show in arena shelf</string>
+    <string name="quizzes_shelf_show_qualification">Show in qualification tournament</string>
+    <string name="quizzes_shelf_show_world">Show in world championship</string>
+    <string name="quizzes_cd_random_quest">Random quest</string>
+    <string name="quizzes_share_text">Quest “%1$s” — %2$s</string>
 </resources>

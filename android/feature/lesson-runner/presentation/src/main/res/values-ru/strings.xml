@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Russian translations. The unqualified values/ holds English as the global fallback. -->
+<resources>
+    <!-- Actions -->
+    <string name="runner_action_continue">Продолжить</string>
+    <string name="runner_action_exit">Выйти</string>
+    <string name="runner_action_cancel">Отмена</string>
+    <string name="runner_action_back">Назад</string>
+    <string name="runner_action_answer">Ответить</string>
+    <string name="runner_action_done">Готово</string>
+    <string name="runner_action_got_it">Понятно</string>
+
+    <!-- Hint: plays the correct answer for the user, costs one charge (plan §4.4) -->
+    <string name="runner_hint_action">Подсказка · −1</string>
+    <string name="runner_hint_cd">Показать верный ответ за один заряд</string>
+
+    <!-- Verdict on the question screen: waits for a tap instead of a hidden timer -->
+    <string name="runner_verdict_correct">Верно</string>
+    <string name="runner_verdict_wrong">Неверно</string>
+    <string name="runner_verdict_partial">Частично · %1$d</string>
+    <string name="runner_verdict_continue">Нажмите, чтобы продолжить</string>
+
+    <!-- Pause / exit dialogs -->
+    <string name="runner_resume_title">Продолжить прохождение?</string>
+    <string name="runner_exit_confirm_title">Уверены? Прогресс попытки потеряется</string>
+
+    <!-- Header -->
+    <string name="runner_cd_abort">Прервать</string>
+    <string name="runner_cd_exit_lesson">Выйти из урока</string>
+    <string name="runner_cd_drag">Перетащить</string>
+    <string name="runner_cd_move_up">Переместить вверх</string>
+    <string name="runner_cd_move_down">Переместить вниз</string>
+
+    <!-- Info dialog -->
+    <string name="runner_cd_info">Инфо</string>
+    <string name="runner_info_title">Инфо</string>
+
+    <!-- Rating -->
+    <string name="runner_rating_title">Оцените урок</string>
+    <string name="runner_rating_failed">Не удалось сохранить оценку</string>
+
+    <!-- Result -->
+    <string name="runner_result_kicker_easy">Урок пройден · easy</string>
+    <string name="runner_result_kicker_hard">Урок пройден · hard</string>
+    <string name="runner_result_save_warning">Результат не сохранён — уйдёт при следующей синхронизации</string>
+    <string name="runner_result_best">Ваш лучший %1$d%%</string>
+    <string name="runner_result_again">Ещё раз</string>
+    <string name="runner_result_next">Дальше →</string>
+    <string name="runner_top3_title">Лучшие участники</string>
+    <string name="runner_figure_attempt">Попытка</string>
+    <string name="runner_figure_lives">Заряды</string>
+    <string name="runner_figure_xp">XP</string>
+    <string name="runner_figure_nolics">Нолики</string>
+    <string name="runner_advice_kicker">ЧТОБЫ НАБРАТЬ БОЛЬШЕ</string>
+    <string name="runner_advice_suggested_lesson">Основу даёт урок «%1$s»</string>
+
+    <!-- Discussion -->
+    <string name="runner_discussion_header">Обсуждение урока</string>
+    <string name="runner_discussion_placeholder">Написать комментарий…</string>
+    <string name="runner_discussion_send">Отправить</string>
+
+    <!-- Errors -->
+    <string name="runner_error_auth_required">Требуется авторизация</string>
+    <string name="runner_error_lesson_not_found">Урок не найден</string>
+    <string name="runner_error_empty_pool">Нет доступных вопросов</string>
+    <string name="runner_error_no_valid_questions">Вопросы недействительны</string>
+    <string name="runner_error_save_result">Не удалось сохранить результат</string>
+    <string name="runner_error_save_rating">Не удалось сохранить оценку</string>
+
+    <!-- Plurals -->
+    <plurals name="runner_rating_star_cd">
+        <item quantity="one">%1$d звезда</item>
+        <item quantity="few">%1$d звезды</item>
+        <item quantity="many">%1$d звёзд</item>
+        <item quantity="other">%1$d звёзд</item>
+    </plurals>
+    <plurals name="runner_advice_weak_answers">
+        <item quantity="one">%1$d ответ набрал меньше половины балла</item>
+        <item quantity="few">%1$d ответа набрали меньше половины балла</item>
+        <item quantity="many">%1$d ответов набрали меньше половины балла</item>
+        <item quantity="other">%1$d ответов набрали меньше половины балла</item>
+    </plurals>
+    <string name="runner_discussion_title">Обсуждение</string>
+    <string name="runner_discussion_open">Открыть →</string>
+</resources>

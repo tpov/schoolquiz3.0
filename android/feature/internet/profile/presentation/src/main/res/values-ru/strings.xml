@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Russian translations. The unqualified values/ holds English as the global fallback. -->
+<resources>
+    <string name="profile_status_offline">Офлайн</string>
+    <string name="profile_status_anonymous">Анонимный</string>
+    <string name="profile_status_registered">Зарегистрирован</string>
+    <string name="profile_status_validated">Валидирован</string>
+
+    <string name="profile_role_sponsor">Спонсор</string>
+    <string name="profile_role_tester">Тестер</string>
+    <string name="profile_role_translator">Переводчик</string>
+    <string name="profile_role_moderator">Модератор</string>
+    <string name="profile_role_admin">Админ</string>
+    <string name="profile_role_developer">Разработчик</string>
+
+    <string name="profile_role_short_sponsor">Спонсор</string>
+    <string name="profile_role_short_tester">Тестер</string>
+    <string name="profile_role_short_translator">Перевод</string>
+    <string name="profile_role_short_moderator">Модер</string>
+    <string name="profile_role_short_admin">Админ</string>
+    <string name="profile_role_short_developer">Разраб</string>
+
+    <string name="profile_league_start">Старт</string>
+    <string name="profile_league_student">Ученик</string>
+    <string name="profile_league_connoisseur">Знаток</string>
+    <string name="profile_league_expert">Эксперт</string>
+    <string name="profile_league_master">Мастер</string>
+    <string name="profile_league_legend">Легенда</string>
+    <string name="profile_league_next_milestone">%1$d XP до «%2$s»</string>
+    <string name="profile_league_top">Высшая лига</string>
+
+    <string name="profile_action_cancel">Отмена</string>
+    <string name="profile_action_save">Сохранить</string>
+    <string name="profile_action_edit">Изменить</string>
+    <string name="profile_cd_refresh">Синхронизировать профиль</string>
+
+    <string name="profile_activity_none">НЕТ АКТИВНОСТИ</string>
+    <string name="profile_activity_label">Активность</string>
+    <string name="profile_cd_activity_14_days">Активность за 14 дней: %1$d уроков</string>
+
+    <string name="profile_qualification_title">Квалификации · Активность</string>
+    <string name="profile_qualification_average">СРЕДН. %1$d%%</string>
+    <string name="profile_qualification_of_six">ИЗ 6 КВАЛИФИКАЦИЙ</string>
+    <string name="profile_value_none">НЕТ</string>
+    <string name="profile_cd_radar">Радар квалификаций</string>
+    <string name="profile_legend_qualification">Квалификация</string>
+    <string name="profile_legend_activity">Активность</string>
+
+    <string name="profile_nicknames_title">Мои имена</string>
+    <string name="profile_nicknames_loading">Загрузка…</string>
+    <string name="profile_nicknames_unreachable">Не удалось загрузить — нет связи с сервером</string>
+    <string name="profile_nicknames_empty_hint">Пока только текущее имя. Купить ещё — в магазине, вкладка NFT</string>
+    <string name="profile_nickname_for_sale">ПРОДАЁТСЯ ЗА %1$d</string>
+    <string name="profile_nickname_wear">НАДЕТЬ</string>
+    <string name="profile_cd_verified_account">Подтверждённый аккаунт</string>
+    <string name="profile_cd_active_name">Активное имя</string>
+
+    <string name="profile_trophies_title">Трофеи</string>
+    <string name="profile_trophies_count">%1$d ИЗ %2$d</string>
+
+    <string name="profile_footer_boxes">Коробки</string>
+    <string name="profile_footer_logos">Логотипы</string>
+    <string name="profile_footer_languages">Языки</string>
+
+    <string name="profile_google_sign_in">ВОЙТИ ЧЕРЕЗ GOOGLE</string>
+    <string name="profile_google_hint">Прогресс гостя сохранится. Регистрация открывает подтверждение аккаунта и торговлю именами.</string>
+
+    <string name="profile_message_synced">Профиль синхронизирован</string>
+    <string name="profile_message_nickname_active">Активное имя — %1$s</string>
+    <string name="profile_message_nickname_updated">Ник обновлён</string>
+    <string name="profile_message_google_linked">Аккаунт привязан, прогресс сохранён</string>
+    <string name="profile_message_google_switched">Вход выполнен в существующий аккаунт — прогресс гостя остался на нём</string>
+    <string name="profile_message_sync_failed">Не удалось синхронизировать профиль</string>
+</resources>

@@ -20,7 +20,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.Runn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.ui.LessonRunnerScreen
 import com.tpov.schoolquiz.shared.core.leaderboard.TopParticipant
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

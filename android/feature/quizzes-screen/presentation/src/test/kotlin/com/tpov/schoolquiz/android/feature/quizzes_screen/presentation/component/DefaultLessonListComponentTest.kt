@@ -8,6 +8,7 @@ import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
@@ -44,6 +45,7 @@ class DefaultLessonListComponentTest {
     private val fakeRepo = FakeLessonRepository()
     private val fakeAttemptRepo = FakeLessonAttemptRepository()
     private val fakeAuthRepo = FakeAuthRepository(initialUid = "user-1")
+    private val fakeEconomyRepo = FakeEconomyRepository()
     private val fakeNavigation = FakeStackNavigation()
 
     @After
@@ -72,6 +74,7 @@ class DefaultLessonListComponentTest {
             lessonRepository = fakeRepo,
             attemptRepository = fakeAttemptRepo,
             authRepository = fakeAuthRepo,
+            economyRepository = fakeEconomyRepo,
             config = QuizzesConfig.LessonList(themeId = themeId, breadcrumbs = breadcrumbs),
             coroutineContext = dispatcher,
         )

@@ -25,6 +25,7 @@ val quizzesPresentationModule =
                 lessonRepository = get(),
                 lessonAttemptRepository = get(),
                 authRepository = get(),
+                economyRepository = get(),
                 questionRepository = get(),
                 catalogRepository = get(),
                 setPublicQuestShelf = get(),

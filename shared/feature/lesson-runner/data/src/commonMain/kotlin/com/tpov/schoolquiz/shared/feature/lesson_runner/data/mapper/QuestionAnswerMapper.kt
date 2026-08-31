@@ -6,7 +6,7 @@ import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AnsweredQuestion
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.RepetitionState
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswer
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import kotlinx.serialization.json.Json
 
 /** Shared instance: answers are written on every completed lesson. */

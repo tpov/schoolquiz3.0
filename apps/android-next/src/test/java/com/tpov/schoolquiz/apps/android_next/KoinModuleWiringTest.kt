@@ -56,6 +56,8 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.repository.Lesson
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.di.lessonRunnerPresentationModule
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
@@ -137,6 +139,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.EconomyResourceBalance
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.LessonUnlockKind
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ReferralProgram
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopItemId
+import com.tpov.schoolquiz.shared.feature.economy.domain.model.ShopPurchaseResult
+import com.tpov.schoolquiz.shared.feature.economy.domain.repository.EconomyRepository
 
 /**
  * Smoke tests: Koin module graph resolves without errors.
@@ -210,6 +218,25 @@ class KoinModuleWiringTest : KoinTest {
     }
 
     private val testRepositoryStubsModule = module {
+        single<EconomyRepository> {
+            object : EconomyRepository {
+                override fun observeBalance(): Flow<EconomyResourceBalance> =
+                    flowOf(EconomyResourceBalance())
+
+                override suspend fun currentBalance(): EconomyResourceBalance = EconomyResourceBalance()
+
+                override suspend fun purchase(itemId: ShopItemId): Result<ShopPurchaseResult> =
+                    Result.failure(UnsupportedOperationException("not expected"))
+
+                override suspend fun unlockLesson(
+                    lessonId: String,
+                    kind: LessonUnlockKind,
+                ): Result<EconomyResourceBalance> =
+                    Result.failure(UnsupportedOperationException("not expected"))
+
+                override suspend fun referralProgram(): ReferralProgram = ReferralProgram("", emptyList())
+            }
+        }
         single<QuestRepository> {
             object : QuestRepository {
                 override fun observeMyQuests(authorUid: String, catalogId: CatalogId?) =
@@ -645,6 +672,17 @@ class KoinModuleWiringTest : KoinTest {
     }
 
     /** The runner reads lives from the profile; tests that never touch it still need the binding. */
+    /**
+     * Analytics for the wiring tests.
+     *
+     * The real binding needs an Android Context for Firebase, which a JVM unit test does not
+     * have. Binding the no-op here keeps the production module honestly *requiring* a tracker —
+     * if the app ever stops providing one, this test still fails, which is its whole job.
+     */
+    private val testAnalyticsStub = module {
+        single<AnalyticsTracker> { NoOpAnalyticsTracker }
+    }
+
     private val testProfileRepositoryStub = module {
         single<ProfileRepository> {
             object : ProfileRepository {
@@ -752,6 +790,7 @@ class KoinModuleWiringTest : KoinTest {
                 lessonRunnerDataModule,
                 lessonRunnerDomainKoinAdapter,
                 lessonRunnerPresentationModule,
+                testAnalyticsStub,
                 questionSchemaModule,
             )
         }

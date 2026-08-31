@@ -5,6 +5,7 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunn
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.LessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.DefaultLessonRunnerRootComponent
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.component.LessonRunnerUseCases
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
@@ -39,6 +40,7 @@ val lessonRunnerPresentationModule =
                 commentRepository = get<LessonCommentRepository>(),
                 getResultAdvice = GetResultAdviceUseCase(lessonRepository = get()),
                 clock = get(),
+                analytics = get<AnalyticsTracker>(),
             ) as LessonRunnerRootComponent
         }
 

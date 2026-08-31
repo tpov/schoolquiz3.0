@@ -46,5 +46,5 @@
 
 - `getKoin()` anti-pattern — resolved in phase-05 via DefaultRootComponent preconstruction.
 - Firestore nested content visibility (sections/themes/lessons/questions) — Option C (any-auth read) per ADR amendment; strict parent lookup deferred post-MVP.
-- Cursor strategy — unified `Clock.System.now()` via CascadingSyncOrchestrator (see `03-decisions.md:804` Amendment).
-- Backfill script (`scripts/backfill-catalogs.js` — TBD) для добавления `lastModifiedAt/version/contentsVersion/archived` существующим Firestore документам.
+- ~~Cursor strategy — unified `Clock.System.now()` via CascadingSyncOrchestrator~~ — **устарело**. `CascadingSyncOrchestrator` удалён в `1cb9f366` (2026-04-30) вместе со всем каскадом. Действующая стратегия — `setCursor(max(changedAtMs))` после успешного применения, в `CatalogSyncListOrchestrator`. Контракт: `docs/architecture/0004-sync-contract.md` (редакция 2026-08-31).
+- Backfill: `scripts/backfill-catalogs.js` и `scripts/backfill-sync-changes.js` существуют. `contentsVersion` из бэкфилла уходит — поле отозвано вместе с каскадом.

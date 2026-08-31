@@ -32,7 +32,7 @@ import androidx.room.TypeConverters
     ],
     // Bumped whenever the schema changes. Destructive fallback only fires on a version change —
     // leaving the number alone makes Room compare identity hashes and crash instead.
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)

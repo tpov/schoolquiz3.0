@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ukrainian translations for quest-authoring. Default locale (Russian) lives in values/strings.xml.
+-->
+<resources>
+    <!-- Common actions -->
+    <string name="qa_action_save">Зберегти</string>
+    <string name="qa_action_create">Створити</string>
+    <string name="qa_status_saving">Зберігаю</string>
+    <string name="qa_status_submitting">Надсилаю</string>
+    <string name="qa_cd_back">Назад</string>
+
+    <!-- Quest create -->
+    <string name="qa_create_title">Створення квесту</string>
+    <string name="qa_active_draft_chip">Збережений квест: %1$s</string>
+    <string name="qa_easy_questions">Легкі питання</string>
+    <string name="qa_hard_questions">Складні питання</string>
+    <string name="qa_submit_to_arena">Надіслати на арену</string>
+
+    <!-- Structure dropdowns -->
+    <string name="qa_label_quest">Квест</string>
+    <string name="qa_create_quest">Створити квест</string>
+    <string name="qa_label_section">Розділ</string>
+    <string name="qa_create_section">Створити розділ</string>
+    <string name="qa_label_theme">Тема</string>
+    <string name="qa_create_theme">Створити тему</string>
+    <string name="qa_label_lesson">Урок</string>
+    <string name="qa_create_lesson">Створити урок</string>
+
+    <!-- Quest create messages -->
+    <string name="qa_error_auth_not_ready">Авторизація ще не готова</string>
+    <string name="qa_error_save_quest_first">Спочатку збережіть квест</string>
+    <string name="qa_error_no_lessons_in_node">У вибраному вузлі немає уроків для надсилання</string>
+    <string name="qa_error_select_catalog">Виберіть каталог</string>
+    <string name="qa_error_save_quest_failed">Не вдалося зберегти квест</string>
+    <string name="qa_error_unavailable">Створення квесту недоступне</string>
+    <string name="qa_error_check_fields">Перевірте поля питання</string>
+    <string name="qa_error_save_question_failed">Не вдалося зберегти питання</string>
+    <string name="qa_saved_question_created">Питання створено</string>
+    <string name="qa_saved_question_saved">Питання збережено</string>
+    <string name="qa_arena_queued">%1$s поставлено в чергу на %2$s</string>
+    <string name="qa_node_quest">Квест</string>
+    <string name="qa_node_section">Розділ</string>
+    <string name="qa_node_theme">Тема</string>
+    <string name="qa_node_lesson">Урок</string>
+    <string name="qa_dest_archive">архів</string>
+    <string name="qa_dest_arena">арену</string>
+    <string name="qa_error_arena_missing_questions">Для надсилання потрібні збережені легкі та складні питання в кожному уроці</string>
+    <string name="qa_error_arena_enqueue_failed">Не вдалося поставити квест у чергу арени</string>
+    <string name="qa_error_enter_quest_title">Введіть назву квесту</string>
+    <string name="qa_error_enter_section_title">Введіть назву розділу</string>
+    <string name="qa_error_enter_theme_title">Введіть назву теми</string>
+    <string name="qa_error_enter_lesson_title">Введіть назву уроку</string>
+
+    <!-- Question types -->
+    <string name="qa_type_single_choice">Одна відповідь</string>
+    <string name="qa_type_multiple_choice">Кілька відповідей</string>
+    <string name="qa_type_ordering">Порядок</string>
+    <string name="qa_type_fill_blank">Пропуск</string>
+    <string name="qa_type_survey">Опитування</string>
+
+    <!-- Editor validation -->
+    <string name="qa_validation_single_choice">Потрібні питання, два варіанти та правильна відповідь</string>
+    <string name="qa_validation_multiple_choice">Потрібні питання, два варіанти та щонайменше дві правильні відповіді</string>
+    <string name="qa_validation_ordering">Потрібні питання та щонайменше два елементи</string>
+    <string name="qa_validation_fill_blank">Потрібні 1-3 пропуски через **текст** або правильні відповіді в тексті</string>
+    <string name="qa_validation_survey">Потрібні питання та щонайменше два варіанти</string>
+
+    <!-- Question editor -->
+    <string name="qa_editor_question_number">Питання %1$d</string>
+    <string name="qa_editor_question_label">Питання</string>
+    <string name="qa_editor_fill_blank_text_label">Текст питання</string>
+    <string name="qa_editor_info_label">Пояснення</string>
+    <string name="qa_editor_add_option">Додати варіант</string>
+    <string name="qa_editor_option_number">Варіант %1$d</string>
+    <string name="qa_editor_item_label">Елемент</string>
+    <string name="qa_editor_add_item">Додати елемент</string>
+    <string name="qa_editor_correct_answers_title">Правильні заповнення</string>
+    <string name="qa_editor_correct_answer_number">Правильний %1$d</string>
+    <string name="qa_editor_do_not_translate">Не перекладати</string>
+    <string name="qa_editor_distractors_title">Неправильні заповнення</string>
+    <string name="qa_editor_distractor_number">Неправильний %1$d</string>
+    <string name="qa_editor_add_correct">Додати правильний</string>
+    <string name="qa_editor_add_distractor">Додати неправильний</string>
+    <string name="qa_editor_new_question_number">Новий %1$d</string>
+    <string name="qa_cd_back_to_structure">До структури</string>
+    <string name="qa_cd_add_photo">Додати фото</string>
+    <string name="qa_cd_edit">Редагувати</string>
+    <string name="qa_cd_preview">Прев\'ю</string>
+    <string name="qa_cd_previous_question">Попереднє питання</string>
+    <string name="qa_cd_next_question">Наступне питання</string>
+    <string name="qa_cd_add_question">Додати питання</string>
+
+    <!-- Review queue -->
+    <string name="qa_review_title">Перевірка</string>
+    <string name="qa_review_empty">Немає завдань</string>
+    <string name="qa_filter_all">Усі</string>
+    <string name="qa_filter_testing">Тестування</string>
+    <string name="qa_filter_logic">Валідація</string>
+    <string name="qa_filter_translation">Переклад</string>
+    <string name="qa_filter_translation_review">Перевірка перекладу</string>
+    <string name="qa_review_translation_label">Переклад</string>
+    <string name="qa_review_no_translation">Немає перекладу</string>
+    <string name="qa_review_accepted">Прийнято</string>
+    <string name="qa_review_submit">Надіслати</string>
+    <string name="qa_review_submitting">Надсилання</string>
+    <string name="qa_review_score_testing">Тест: %1$s</string>
+    <string name="qa_review_score_logic">Валідація: %1$s</string>
+    <string name="qa_review_score_translation">Переклад: %1$s%%</string>
+    <string name="qa_review_languages_from">з %1$s</string>
+    <string name="qa_review_languages_to">на %1$s</string>
+    <string name="qa_review_languages_review">перевірка %1$s</string>
+    <string name="qa_review_languages_none">мови не вказано</string>
+    <string name="qa_review_question_title">Питання %1$d</string>
+    <string name="qa_review_submitted">Перевірку надіслано</string>
+    <string name="qa_error_submit_review_failed">Не вдалося надіслати перевірку</string>
+    <string name="qa_error_load_assignments_failed">Не вдалося завантажити завдання</string>
+    <string name="qa_error_choose_score">Виберіть оцінку 1..3</string>
+    <string name="qa_error_choose_translation_language">Виберіть мову перекладу</string>
+    <string name="qa_error_fill_all_translations">Заповніть усі поля перекладу</string>
+    <string name="qa_error_choose_review_language">Виберіть мову перевірки</string>
+
+    <!-- Review segments -->
+    <string name="qa_segment_text">Текст</string>
+    <string name="qa_segment_option">Варіант %1$s</string>
+    <string name="qa_segment_item">Елемент %1$s</string>
+    <string name="qa_segment_candidate">Кандидат %1$s</string>
+    <string name="qa_segment_info">Пояснення</string>
+
+    <!-- Plurals -->
+    <plurals name="qa_review_assignments_count">
+        <item quantity="one">%1$d завдання</item>
+        <item quantity="few">%1$d завдання</item>
+        <item quantity="many">%1$d завдань</item>
+        <item quantity="other">%1$d завдання</item>
+    </plurals>
+    <plurals name="qa_review_questions_count">
+        <item quantity="one">%1$d питання</item>
+        <item quantity="few">%1$d питання</item>
+        <item quantity="many">%1$d питань</item>
+        <item quantity="other">%1$d питання</item>
+    </plurals>
+</resources>

@@ -1,0 +1,165 @@
+- id: "1"
+  title: Rename hearts to charges, wire included
+  description: >-
+    Rename standardHearts/goldHearts to standard and plasma charges across domain, data,
+    presentation and UI, keeping live balances intact and aliasing the stored ShopItemId
+    wireNames. Behaviour does not change; this lands the vocabulary every later story writes.
+  invoke_dev_with: >-
+    Read brownfield.md "Rename map" first — it lists every surface, including
+    NoirSettingsScreen, NoirShopStore, NoirIcons.Heart/GoldStack, RunnerUiState.lives and
+    RunnerStateHolder.livesRemainingHearts. ShopItemId.wireName is a STORED value: add a
+    server-side alias rather than breaking existing purchase records. No behaviour change in
+    this story — if a test's expectation changes, something is wrong.
+
+- id: "2"
+  title: Move the economy constants to a server-owned document
+  description: >-
+    Replace the values hardcoded in functions/index.js:93-96 and the UserProfile.kt companion
+    with one server-owned configs/* document, delivered to the device through a callable folded
+    into the ordinary sync. Covers CAP-4 and CAP-5.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    economy-constants.md is the knob catalogue and the delivery rule. configs/{configId} is
+    closed to clients (firestore.rules:42) so the values must travel through a callable, not a
+    document read; follow configs/nickname_policy and configs/arena_review for the server-side
+    read. On the device, register a Syncable in SyncModule.kt alongside ProfileBootstrapSync.
+    Two behaviour changes belong here and nowhere else: a malformed or missing document degrades
+    to the documented defaults rather than to zero ceilings, and lowering a ceiling must STOP
+    confiscating the excess (readEconomyBalance clamps with Math.min at functions/index.js:3823).
+
+- id: "3"
+  title: Plasma becomes a regenerating, purchasable resource
+  description: >-
+    Give plasma a 24h regeneration, a ceiling of 3 and a flat one-gold price, replacing the
+    non-regenerating ceiling-1 counter that costs ten gold. Covers the plasma half of CAP-1 and
+    CAP-9.
+  invoke_dev_with: >-
+    regenerateLifePoints in functions/life-points.js is reusable but derives its step from the
+    module-level LIFE_POINT_INTERVAL_MS — give it the interval as a parameter rather than
+    writing a second regenerator. Plasma needs its own stored timestamp beside its count.
+    Ceilings and prices come from story 2's document, never from a constant.
+
+- id: "4"
+  title: The server decides what kind of activity was played
+  description: >-
+    Introduce an activity-kind concept and have the server derive it from the content the attempt
+    names, instead of trusting the client-computed sourceShelf. Covers CAP-16 and unblocks
+    pricing.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    This is the security foundation of the price list — read brownfield.md "The activity kind is
+    client-supplied". sourceShelf is computed on the device (LessonResultOutboxWriter.kt:109-120)
+    and taken verbatim by the server (functions/index.js:3270). The kind is a PAIR in today's
+    terms — shelf plus SessionMode — and no enum exists for it. The server has questId on the
+    event and quests carry visibleOn, so it can re-derive. The client may still send its
+    declaration for diagnostics, but removing it must change nothing about what is charged.
+
+- id: "5"
+  title: The price list drives the toll
+  description: >-
+    Replace the single flat LESSON_ATTEMPT_LIFE_COST with a per-activity lookup from the
+    constants document, priced in points against the 100-point charge. Covers CAP-13.
+  invoke_dev_with: >-
+    Prices are in economy-constants.md "Activity price list" — lesson 33, arena 50, theme test
+    100, exam 300, tournament 500, against a 1000-point full tank. Only three of the five are
+    playable today; the theme-test and exam rows ship DORMANT. Per the owner, leave markers so
+    whoever builds those modes finds the waiting rows: a pointer from
+    _bmad-output/specs/spec-theme-exams/ to this price list, a return pointer here, and a marker
+    at the activity-kind resolution site from story 4. spendLifePoints takes a price rather than
+    the constant; verify regeneration still behaves with costs of 33/50/100/300/500.
+
+- id: "6"
+  title: Reserve the toll at the start, release it if the run never lands
+  description: >-
+    Take the price up front so a run that cannot be afforded is refused, and give it back when
+    the run is abandoned, crashes, or fails to sync. Covers CAP-15.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    settlement-protocol.md "The toll: taken at the start, returned if nothing lands" holds the
+    design. Two shapes: offline-capable activities reserve only on the client and the server
+    charges at submission, so nothing can leak server-side; server-held activities reserve on the
+    server and release lazily on the next read, following the regenerateLifePoints idiom — no
+    scheduled job. The owner's rule is the acceptance test: the server must never zero out what
+    was not spent in the end. The reservation deadline is a new knob and belongs in story 2's
+    document.
+
+- id: "7"
+  title: Settle charge claims at submission
+  description: >-
+    Carry hint and skip claims as a parallel mask beside codeAnswer, debit them inside the
+    existing submission transaction, and promote only the paid positions to a correct score.
+    Covers CAP-2 and CAP-3.
+  invoke_dev_with: >-
+    settlement-protocol.md "The shape of a claim" and "The debit, at submission" are the
+    contract. codeAnswer stays digits-only — isWellFormedCodeAnswer and the RunnerLogic mirror
+    both depend on it — so claims travel as a separate same-length string over the alphabet .SP.
+    The client writes '0' for a skipped question and the SERVER promotes it to '9' after taking
+    payment; a client that writes '9' itself is claiming an answer it never gave. scoreVerified
+    must compare against the post-promotion percent. A plasma spend must not deliver the answer
+    to the device on any channel, including as data the UI declines to draw.
+
+- id: "8"
+  title: Offline balances park at zero, and plasma waits for a connection
+  description: >-
+    Make the device show and allow serverBalance minus unsettled claims, so local regeneration
+    cannot refill what the server has not yet debited, and refuse plasma entirely while claims
+    are outstanding. Covers CAP-6 and CAP-8.
+  invoke_dev_with: >-
+    settlement-protocol.md "The offline invariant" explains why subtracting unsettled claims
+    first is what closes the replay window — spend three, wait offline for regeneration, spend
+    three more, sync. Standard charges may still be spent offline; plasma may not. The refusal
+    needs a stated reason in the UI, not a silently disabled control.
+
+- id: "9"
+  title: Detect overspend and record it with its reasoning
+  description: >-
+    Refuse claims above what the account could have held over the window the attempts cover, and
+    write a server-only audit record that reconstructs the finding. Covers CAP-7.
+  done_checkpoint: true
+  invoke_dev_with: >-
+    settlement-protocol.md "The overspend test" has the arithmetic and the record's contents.
+    Two things it must not do: treat a slow sync as fraud — a week offline is a long window and
+    the regeneration ceiling grows with it — and punish twice, since the surplus is already
+    unpaid. The record is for an operator to read; no moderation workflow in this story.
+
+- id: "10"
+  title: Boxes accrue offline and open only online
+  description: >-
+    Let the box streak advance while offline, make the server-side advance account for elapsed
+    days instead of ticking once per call, and keep opening a server-only operation. Covers
+    CAP-12.
+  invoke_dev_with: >-
+    Read brownfield.md "Boxes do not accrue offline". Today advanceGiftBoxState
+    (functions/index.js:3208) runs ONLY inside openGiftBox and adds at most one streak day per
+    call, so five days away then one open counts as one. This story fixes both directions.
+    Opening already grants gold, premium, logos and trophies (generateGiftBoxReward at 3087), so
+    it stays a server callable — do not move any part of the reward roll onto the device. The
+    accrual is checked against the server clock at sync like any other claim.
+
+- id: "11"
+  title: Tournaments become server-held sessions ranked by time
+  description: >-
+    Open a tournament run as a server-held session that owns its clock, and add elapsed time as a
+    tie-break when entrants finish on equal percent. Covers CAP-14 and CAP-10.
+  spec_checkpoint: true
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Check _bmad-output/specs/spec-theme-exams/ FIRST — it already designs server-held sessions
+    with a server clock and answers accepted but never marked. Reuse it if it transfers; report
+    plainly if it does not. Time is a tie-break only and never moves an entrant past a higher
+    percent, so it enters compareLeaderboardEntries below the percent terms — the
+    pairwise-percent-least-squares-v1 rating itself does not change. Verify the one-hour grouping
+    window in tournamentGroupForAttempt still holds once a session owns the run.
+
+- id: "12"
+  title: Sweep forgeable balances on a schedule
+  description: >-
+    Re-derive nolics, skill points and standard charges periodically from the history that should
+    have produced them, and report discrepancies. Covers CAP-11.
+  invoke_dev_with: >-
+    An onSchedule function in the style of reconcileQuestReviewDaily and
+    aggregateQuestRatingsDaily. Gold and plasma are OUT of scope here: they are guarded per
+    operation instead. First establish whether the recorded history is complete enough to
+    re-derive from at all — the reward path writes deltas, not an auditable ledger — and if it is
+    not, say so rather than inventing a comparison that cannot be trusted.

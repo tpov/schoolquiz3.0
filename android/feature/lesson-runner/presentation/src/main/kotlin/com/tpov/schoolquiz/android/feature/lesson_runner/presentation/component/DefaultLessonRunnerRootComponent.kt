@@ -12,7 +12,11 @@ import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toU
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.mapper.toUserAnswer
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState
 import com.tpov.schoolquiz.android.feature.lesson_runner.presentation.state.RunnerUiState.RatingSubmissionState
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsEvent
+import com.tpov.schoolquiz.shared.core.analytics.AnalyticsTracker
+import com.tpov.schoolquiz.shared.core.analytics.NoOpAnalyticsTracker
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
+import com.tpov.schoolquiz.shared.core.scoring.computeStars
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.UserProfile
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.repository.ProfileRepository
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
@@ -20,7 +24,6 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.repository.LessonReposit
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.autoAnswerOnTimeout
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeBestStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeHardUnlocked
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeStars
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computeTimer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.submitAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
@@ -65,6 +68,11 @@ class DefaultLessonRunnerRootComponent(
     private val commentRepository: LessonCommentRepository? = null,
     private val getResultAdvice: GetResultAdviceUseCase,
     private val clock: Clock,
+    /**
+     * Funnel instrumentation. Defaulted to a no-op so tests and any host that does not care about
+     * measurement construct this component unchanged.
+     */
+    private val analytics: AnalyticsTracker = NoOpAnalyticsTracker,
     mainContext: CoroutineContext = kotlinx.coroutines.Dispatchers.Main.immediate,
 ) : ComponentContext by componentContext, LessonRunnerRootComponent {
     private val stateHolder =
@@ -310,6 +318,14 @@ class DefaultLessonRunnerRootComponent(
                     if (stateHolder.livesRemainingHearts == null) {
                         stateHolder.livesRemainingHearts = readLivesFromProfile()
                     }
+                    // Fired on Ready rather than on the call, so a lesson that failed to open is
+                    // not counted as one that started — the drop-off between the two is the point.
+                    analytics.track(
+                        AnalyticsEvent.LessonStarted(
+                            lessonId = lessonId.value,
+                            difficulty = mode.name,
+                        ),
+                    )
                     result.toQuestionUiState(stateHolder.livesRemainingHearts)
                 }
                 is RunnerState.InitFailed -> RunnerUiState.InitFailed(result.reason.toUiReason())
@@ -332,6 +348,14 @@ class DefaultLessonRunnerRootComponent(
         stateHolder.domainState = result
         when (result) {
             is RunnerState.Completed -> {
+                analytics.track(
+                    AnalyticsEvent.LessonFinished(
+                        lessonId = lessonId.value,
+                        difficulty = mode.name,
+                        percent = result.attempt.percentScore.raw,
+                        stars = computeStars(result.attempt.percentScore, result.attempt.mode).rawTenths,
+                    ),
+                )
                 stateHolder.uiState.value =
                     buildResultUiState(result.attempt, result.ratingPrompt, saveWarning = false)
             }

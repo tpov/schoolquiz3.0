@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ukrainian translation of the design system module UI strings. -->
+<resources>
+    <string name="long_press_action">Long press action</string>
+
+    <string name="ds_catalog_title">Design Catalog</string>
+    <string name="ds_catalog_brandcard_content">BrandCard content</string>
+    <string name="ds_catalog_primary_action">Primary Action</string>
+    <string name="ds_catalog_secondary_action">Secondary Action</string>
+    <string name="ds_catalog_cd_star">Star</string>
+    <string name="ds_catalog_cd_home">Home</string>
+
+    <string name="ds_showcase_settings_header">Налаштування</string>
+    <string name="ds_showcase_switch_title">Перемикач, а не галочка</string>
+    <string name="ds_showcase_switch_subtitle">On/off — це switch</string>
+    <string name="ds_showcase_mono_title">Числа моноширинні</string>
+    <string name="ds_showcase_button_primary">Основна дія</string>
+    <string name="ds_showcase_button_secondary">Другорядна</string>
+    <string name="ds_showcase_button_disabled">Недоступно</string>
+    <string name="ds_showcase_chip_default">Звичайний</string>
+    <string name="ds_showcase_chip_accent">Акцент</string>
+    <string name="ds_showcase_chip_danger">Помилка</string>
+
+    <string name="ds_spinner_all_categories">Усі категорії</string>
+    <string name="ds_hierarchy_download">Завантажити</string>
+    <string name="ds_hierarchy_downloaded">Завантажено</string>
+</resources>

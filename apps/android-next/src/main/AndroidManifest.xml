@@ -9,6 +9,7 @@
         android:name=".AppApplication"
         android:label="@string/app_name"
         android:theme="@style/Theme.SchoolQuizNext"
+        android:localeConfig="@xml/locales_config"
         android:allowBackup="false">
         <activity
             android:name=".MainActivity"

@@ -117,6 +117,8 @@ private fun LessonListScreenLoadingPreview() {
                     override fun onLessonClick(lesson: LessonItemUi) = Unit
 
                     override fun onHardCheckToggled(lessonId: String) = Unit
+
+                    override fun onUnlockClick(lesson: LessonItemUi) = Unit
                 },
             onSegmentClick = {},
         )
@@ -168,6 +170,8 @@ private fun LessonListScreenLoadedPreview() {
                     override fun onLessonClick(lesson: LessonItemUi) = Unit
 
                     override fun onHardCheckToggled(lessonId: String) = Unit
+
+                    override fun onUnlockClick(lesson: LessonItemUi) = Unit
                 },
             onSegmentClick = {},
         )

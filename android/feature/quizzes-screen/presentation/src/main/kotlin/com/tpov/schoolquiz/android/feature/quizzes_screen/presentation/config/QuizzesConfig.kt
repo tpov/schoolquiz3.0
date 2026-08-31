@@ -35,6 +35,8 @@ sealed class QuizzesConfig {
         val questId: String,
         val breadcrumbs: List<BreadcrumbRoot>,
         val forcedLessonMode: Difficulty? = null,
+        /** Course catalogs gate lessons sequentially; defaulted so older saved state restores. */
+        val questType: QuestType = QuestType.REGULAR,
     ) : QuizzesConfig()
 
     @Serializable
@@ -42,6 +44,8 @@ sealed class QuizzesConfig {
         val sectionId: String,
         val breadcrumbs: List<BreadcrumbRoot>,
         val forcedLessonMode: Difficulty? = null,
+        /** Course catalogs gate lessons sequentially; defaulted so older saved state restores. */
+        val questType: QuestType = QuestType.REGULAR,
     ) : QuizzesConfig()
 
     @Serializable
@@ -49,6 +53,8 @@ sealed class QuizzesConfig {
         val themeId: String,
         val breadcrumbs: List<BreadcrumbRoot>,
         val forcedLessonMode: Difficulty? = null,
+        /** Course catalogs gate lessons sequentially; defaulted so older saved state restores. */
+        val questType: QuestType = QuestType.REGULAR,
     ) : QuizzesConfig()
 
     @Serializable

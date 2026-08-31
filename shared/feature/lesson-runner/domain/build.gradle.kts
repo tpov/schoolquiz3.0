@@ -17,6 +17,9 @@ kotlin {
             implementation(libs.koin.core)
             implementation(project(":shared:core:leaderboard"))
             implementation(project(":shared:core:question-schema"))
+            // api: Attempt, RunnerState and UserAnswer appear in this module's public signatures,
+            // so every consumer of lesson-runner needs these types too.
+            api(project(":shared:core:scoring"))
             implementation(project(":shared:feature:lesson:domain"))
             implementation(project(":shared:feature:question:domain"))
             implementation(project(":shared:feature:app-shell:domain"))

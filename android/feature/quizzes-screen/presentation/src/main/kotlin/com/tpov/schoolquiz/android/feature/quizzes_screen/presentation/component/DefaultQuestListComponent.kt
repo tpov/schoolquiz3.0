@@ -62,7 +62,8 @@ class DefaultQuestListComponent(
     override val mode: QuestListMode = config.mode
     override val selectionTargetShelf: String? = config.selectionTargetShelf
     private val forcedLessonMode = config.forcedLessonMode
-    private val isCoursesCatalog = config.questType == QuestType.COURSE
+    private val questType = config.questType
+    private val isCoursesCatalog = questType == QuestType.COURSE
     private val sourceShelf =
         when {
             mode == QuestListMode.Archive -> ARCHIVE_SHELF
@@ -114,6 +115,7 @@ class DefaultQuestListComponent(
                 questId = quest.id.value,
                 breadcrumbs = breadcrumbs + BreadcrumbRoot.Dynamic(quest.title),
                 forcedLessonMode = forcedLessonMode,
+                questType = questType,
             ),
         )
     }

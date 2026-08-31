@@ -17,4 +17,5 @@ data class RawUserStats(
     val translatorLevel: Int = 0,
     val adminLevel: Int = 0,
     val developerLevel: Int = 0,
+    val lessonUnlocks: Set<String> = emptySet(),
 )

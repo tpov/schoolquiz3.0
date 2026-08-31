@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ukrainian translations for the app-shell strings. -->
+<resources>
+    <!-- Tabs -->
+    <string name="tab_local">Локальна</string>
+    <string name="tab_internet">Інтернет</string>
+    <string name="tab_events">Події</string>
+    <string name="tab_shop">Магазин</string>
+
+    <!-- Drawer sections -->
+    <string name="section_my_quests">Мої квести</string>
+    <string name="section_home_quests">Домашні квести</string>
+    <string name="section_archive">Архів</string>
+    <string name="section_review_queue">Перевірка</string>
+    <string name="section_settings">Налаштування</string>
+    <string name="section_arena">Арена</string>
+    <string name="section_catalog">Каталог</string>
+    <string name="section_qualifications">Кваліфікації</string>
+    <string name="section_profile">Профіль</string>
+    <string name="section_social">Соціальне</string>
+    <string name="section_leaderboard">Таблиця лідерів</string>
+    <string name="section_qualifier_tournament">Відбірковий турнір</string>
+    <string name="section_world_championship">Чемпіонат світу</string>
+    <string name="section_active_events">Активні події</string>
+    <string name="section_minigames">Міні-ігри</string>
+
+    <!-- Screen titles -->
+    <string name="config_quest_create">Створення квесту</string>
+    <string name="config_design_catalog">Design Catalog</string>
+    <string name="config_leaderboard">Лідерборд</string>
+    <string name="config_participants">Учасники</string>
+    <string name="unavailable">Недоступно</string>
+
+    <!-- Drawer header -->
+    <string name="drawer_guest">Гість</string>
+    <string name="drawer_premium">Premium</string>
+    <string name="drawer_streak_days">Серія %1$d / %2$d днів</string>
+
+    <!-- Drawer footer -->
+    <string name="footer_sync_now">Синхронізація</string>
+    <string name="footer_about">Про застосунок</string>
+    <string name="about_version">Версія %1$s</string>
+    <string name="dialog_ok">OK</string>
+
+    <!-- Shell -->
+    <string name="cd_open_menu">Відкрити меню</string>
+    <string name="cd_sync_now">Синхронізувати</string>
+    <string name="snackbar_dev_mode_on">Режим розробника увімкнено</string>
+    <string name="snackbar_dev_mode_already">Уже в режимі розробника</string>
+    <string name="snackbar_sync_started">Синхронізацію запущено</string>
+    <string name="under_construction_subtitle">Незабаром тут буде…</string>
+
+    <!-- Tournaments -->
+    <string name="stage_easy_questions">Легкі питання</string>
+    <string name="stage_hard_questions">Складні питання</string>
+    <string name="rule_top32">Топ-32</string>
+    <string name="rule_final_table">Фінальна таблиця</string>
+    <string name="participant_status_active">бере участь</string>
+    <string name="participant_access_open">доступ відкрито</string>
+    <string name="participant_awaiting_selection">очікує на відбір</string>
+    <string name="tournament_start">Почати турнір</string>
+    <string name="tournament_lessons_list">Список уроків</string>
+    <string name="tournament_participants_list">Список учасників</string>
+    <string name="cd_add_lesson">Додати урок</string>
+    <string name="tournament_my_result">Мій результат</string>
+    <string name="tournament_no_attempt">немає спроби</string>
+    <string name="tournament_qualification_rule">Правило відбору</string>
+    <string name="tournament_updates_after_sync">оновлюється після серверної синхронізації</string>
+    <string name="tournament_error_update_table">Не вдалося оновити таблицю</string>
+    <string name="tournament_error_load">Не вдалося завантажити турнір</string>
+    <string name="tournament_empty_results">Поки немає результатів</string>
+    <string name="tournament_empty_results_hint">Після перших проходжень тут з\'явиться загальна таблиця.</string>
+    <string name="tournament_participants_title">Список учасників</string>
+    <string name="tournament_participants_count">Учасників</string>
+    <string name="tournament_server_list">серверний список</string>
+    <string name="tournament_error_update_participants">Не вдалося оновити учасників</string>
+    <string name="tournament_loading">Оновлюємо дані</string>
+    <string name="tournament_attempts_count">Спроб: %1$d</string>
+</resources>

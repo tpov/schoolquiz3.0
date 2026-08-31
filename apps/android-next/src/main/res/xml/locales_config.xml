@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The languages this app ships.
+
+    Declaring them turns on the per-app language picker in Android 13+ system settings, and tells
+    the framework which locales it may resolve at all. English is first because the unqualified
+    values/ directory holds it, which makes it the fallback for every locale not listed here.
+
+    Ukrainian is not optional. Article 27 part 7 of Law 2704-VIII requires a state-language
+    interface for mobile applications of businesses supplying goods and services in Ukraine.
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="uk" />
+    <locale android:name="ru" />
+</locale-config>

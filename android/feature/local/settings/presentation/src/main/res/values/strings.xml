@@ -1,47 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Default locale: Russian. UI strings of the local settings feature. -->
+<!-- English UI strings of the local settings feature. -->
 <resources>
-    <string name="settings_group_personal">Персональная информация</string>
-    <string name="settings_account">Аккаунт</string>
-    <string name="settings_status_offline">Офлайн</string>
-    <string name="settings_status_anonymous">Анонимный, без входа</string>
-    <string name="settings_status_registered">Зарегистрирован</string>
-    <string name="settings_status_validated">Подтверждён</string>
-    <string name="settings_note_google_soon">Вход через Google — скоро</string>
-    <string name="settings_nickname">Никнейм</string>
-    <string name="settings_real_name">Имя</string>
-    <string name="settings_birthday">День рождения</string>
-    <string name="settings_city">Город</string>
+    <string name="settings_group_personal">Personal information</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_status_offline">Offline</string>
+    <string name="settings_status_anonymous">Anonymous, not signed in</string>
+    <string name="settings_status_registered">Registered</string>
+    <string name="settings_status_validated">Verified</string>
+    <string name="settings_note_google_soon">Google sign-in coming soon</string>
+    <string name="settings_nickname">Nickname</string>
+    <string name="settings_real_name">Name</string>
+    <string name="settings_birthday">Birthday</string>
+    <string name="settings_city">City</string>
     <string name="settings_telegram">Telegram</string>
-    <string name="settings_languages">Языки</string>
+    <string name="settings_languages">Languages</string>
 
-    <string name="settings_group_game_stats">Игровая статистика</string>
-    <string name="settings_hearts">Заряды</string>
-    <string name="settings_gold_hearts">Золотые заряды</string>
-    <string name="settings_skill_points">Опыт</string>
-    <string name="settings_premium">Премиум</string>
-    <string name="settings_premium_active">Активен</string>
-    <string name="settings_premium_no">Нет</string>
+    <string name="settings_group_game_stats">Game statistics</string>
+    <string name="settings_hearts">Charges</string>
+    <string name="settings_gold_hearts">Golden charges</string>
+    <string name="settings_skill_points">Experience</string>
+    <string name="settings_premium">Premium</string>
+    <string name="settings_premium_active">Active</string>
+    <string name="settings_premium_no">No</string>
 
-    <string name="settings_group_sync">Синхронизация</string>
-    <string name="settings_sync_frequency">Частота синхронизации</string>
-    <string name="settings_sync_freq_manual">Вручную</string>
-    <string name="settings_sync_freq_on_launch">При запуске приложения</string>
-    <string name="settings_sync_frequency_profile">Синхронизация профиля</string>
-    <string name="settings_sync_freq_daily">Раз в день</string>
-    <string name="settings_sync_freq_3days">Раз в 3 дня</string>
-    <string name="settings_sync_freq_weekly">Раз в неделю</string>
-    <string name="settings_sync_now">Синхронизировать сейчас</string>
-    <string name="settings_sync_now_subtitle">Забрать каталоги и профиль с сервера</string>
+    <string name="settings_group_sync">Synchronization</string>
+    <string name="settings_sync_frequency">Sync frequency</string>
+    <string name="settings_sync_freq_manual">Manual</string>
+    <string name="settings_sync_freq_on_launch">Every app launch</string>
+    <string name="settings_sync_frequency_profile">Profile sync</string>
+    <string name="settings_sync_freq_daily">Once a day</string>
+    <string name="settings_sync_freq_3days">Every 3 days</string>
+    <string name="settings_sync_freq_weekly">Once a week</string>
+    <string name="settings_sync_now">Sync now</string>
+    <string name="settings_sync_now_subtitle">Fetch catalogs and profile from the server</string>
 
-    <string name="settings_group_notifications">Уведомления</string>
-    <string name="settings_reminders">Напоминания</string>
-    <string name="settings_reminders_off">Выключены</string>
-    <string name="settings_note_waiting_module">Ждёт модуль уведомлений</string>
-    <string name="settings_lesson_time">Время занятий</string>
-    <string name="settings_lesson_days">Дни занятий</string>
-    <string name="settings_not_selected">Не выбраны</string>
+    <string name="settings_group_notifications">Notifications</string>
+    <string name="settings_reminders">Reminders</string>
+    <string name="settings_reminders_off">Off</string>
+    <string name="settings_note_waiting_module">Waiting for the notifications module</string>
+    <string name="settings_lesson_time">Lesson time</string>
+    <string name="settings_lesson_days">Lesson days</string>
+    <string name="settings_not_selected">Not selected</string>
 
-    <string name="settings_value_unset">Не установлен</string>
-    <string name="settings_cd_locked">Пока недоступно</string>
+    <string name="settings_value_unset">Not set</string>
+    <string name="settings_cd_locked">Not available yet</string>
 </resources>

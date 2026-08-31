@@ -6,13 +6,14 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeClock
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonRatingRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.CompleteAttemptUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
 
 /**
  * Spec scenarios 48-51: Rating prompt visibility.

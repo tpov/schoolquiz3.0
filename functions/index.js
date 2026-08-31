@@ -36,6 +36,16 @@ const {
   isWellFormedCodeAnswer,
 } = require("./result-verification");
 const {
+  UNLOCK_LESSON,
+  UNLOCK_HARD_MODE,
+  unlockPrice,
+  spendNolics,
+  unlockDocId,
+  readUnlocks,
+  withUnlock,
+} = require("./lesson-unlocks");
+const {lessonAllocatedSeconds, attemptReward} = require("./lesson-reward");
+const {
   LESSON_ATTEMPT_LIFE_COST,
   maxLifePoints,
   regenerateLifePoints,
@@ -77,8 +87,6 @@ const PRIVATE_SCOPE = "private";
 const MAX_RESULT_EVENTS_PER_CALL = 50;
 const DIRTY_RATING_READ_BATCH = 400;
 const DAILY_DIRTY_RATING_LIMIT = 5000;
-const HARD_RESULT_REWARD_MULTIPLIER = 2;
-const NOLICS_PERCENT_STEP = 10;
 const QUEST_RATING_QUALIFICATION_USER_FIELD = "developer";
 const QUEST_RATING_QUALIFICATION_PROFILE_FIELD = "developerLevel";
 const QUEST_RATING_QUALIFICATION_POINTS_PER_STAR = 10;
@@ -266,6 +274,32 @@ exports.reconcileQuestReviewDaily = onSchedule(
   },
 );
 
+/** Key for one lesson at one difficulty, so easy and hard keep separate bests. */
+function lessonBestKey(lessonId, difficulty) {
+  return `${lessonId}:${stringValue(difficulty).toUpperCase() === "HARD" ? "HARD" : "EASY"}`;
+}
+
+/**
+ * Allocated seconds per lesson, both difficulties, for the distinct lessons named.
+ *
+ * Read from the lesson's own questions rather than taken from the client: a caller that could
+ * name its lesson's worth could name any reward it liked.
+ */
+async function readAllocatedSeconds(lessonIds) {
+  const distinct = [...new Set(lessonIds.filter(Boolean).map(String))];
+  const entries = await Promise.all(
+    distinct.map(async (lessonId) => {
+      const snapshot = await db.collection("questions").where("lessonId", "==", lessonId).get();
+      const contents = snapshot.docs.map((doc) => parseQuestionPayload(doc.data()));
+      return [lessonId, {
+        easy: lessonAllocatedSeconds(contents, false),
+        hard: lessonAllocatedSeconds(contents, true),
+      }];
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
 exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
   const uid = requireAuthUid(request);
   await requireProfile(uid);
@@ -286,6 +320,10 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
       .doc(safeDocId(event.attemptId));
     return {event, content, ref};
   });
+  // What each lesson in this batch is worth, read once before the transaction: Firestore wants
+  // every read before the first write, and a batch touches only a handful of distinct lessons.
+  const allocatedByLesson = await readAllocatedSeconds(events.map((item) => item.event.lessonId));
+
   let reward = {skillPoints: 0, nolics: 0};
   let remainingLifePoints = 0;
   const touchedTournamentIds = new Set();
@@ -302,6 +340,9 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
     // time here, so nothing has to run while the user is away. Accounts created before this
     // field existed start from a full tank rather than from zero.
     const userData = userSnapshot.exists ? userSnapshot.data() || {} : {};
+    // The player's best on each lesson, kept beside the balance so paying for improvement needs
+    // no aggregate of its own and no second read.
+    const lessonBest = {...(userData.lessonBest || {})};
     const lifeCeiling = maxLifePoints(
       Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(userData.standardHearts, MAX_STANDARD_HEARTS)),
     );
@@ -344,7 +385,22 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
       );
 
       if (lifeCharged) {
-        const itemReward = lessonResultReward(item.event);
+        // Paid on improvement: percent taken for the first time counts double, percent already
+        // earned counts a tenth. Replaying a lesson you know is not a way to earn.
+        const bestKey = lessonBestKey(item.event.lessonId, item.event.difficulty);
+        const previousBestPercent = numberValue(lessonBest[bestKey], 0);
+        const isHard = stringValue(item.event.difficulty).toUpperCase() === "HARD";
+        const percent = numberValue(item.event.percentScore, 0);
+        const itemReward = attemptReward({
+          previousBestPercent,
+          percent,
+          isHard,
+          allocatedSeconds: numberValue(
+            (allocatedByLesson[item.event.lessonId] || {})[isHard ? "hard" : "easy"],
+            0,
+          ),
+        });
+        if (percent > previousBestPercent) lessonBest[bestKey] = percent;
         delta.skillPoints += itemReward.skillPoints;
         delta.nolics += itemReward.nolics;
         const counts = attemptActivityCounts(item.event.codeAnswer);
@@ -364,7 +420,13 @@ exports.submitLessonResultEvents = onCall(FUNCTION_OPTIONS, async (request) => {
     }
     transaction.set(
       userRef,
-      {uid, lifePoints: life.points, lifePointsUpdatedAtMs: life.updatedAtMs, updatedAtMs: now},
+      {
+        uid,
+        lifePoints: life.points,
+        lifePointsUpdatedAtMs: life.updatedAtMs,
+        updatedAtMs: now,
+        lessonBest,
+      },
       {merge: true},
     );
     reward = delta;
@@ -1153,6 +1215,98 @@ exports.applyShopPurchase = onCall(FUNCTION_OPTIONS, async (request) => {
     );
     response = {itemId, balance};
   });
+  return response;
+});
+
+/**
+ * Buys a lesson open, or buys its hard mode.
+ *
+ * Server-side because the balance lives in users/{uid} and the client's copy is overwritten
+ * wholesale by the next profile sync — a local deduction would simply evaporate.
+ *
+ * Buying grants access and nothing else: no stars are written, so the lesson stays unpassed and
+ * the sequential chain stops where it was. Repeating a purchase is a no-op rather than a charge.
+ */
+/**
+ * The stored question payload as an object, with the fields the timer needs filled in.
+ *
+ * A question whose payload will not parse is worth nothing rather than breaking the purchase: an
+ * unreadable question is one the runner would have filtered out anyway.
+ */
+function parseQuestionPayload(data) {
+  const fallback = {text: stringValue(data && data.text), difficulty: stringValue(data && data.difficulty)};
+  try {
+    const parsed = JSON.parse(stringValue(data && data.payload) || "{}");
+    return {...fallback, ...parsed};
+  } catch (error) {
+    return fallback;
+  }
+}
+
+exports.unlockLesson = onCall(FUNCTION_OPTIONS, async (request) => {
+  const uid = requireAuthUid(request);
+  const lessonId = stringValue(request.data && request.data.lessonId);
+  const kind = stringValue(request.data && request.data.kind) || UNLOCK_LESSON;
+  if (!lessonId) {
+    throw new HttpsError("invalid-argument", "lessonId must not be blank");
+  }
+  // Priced from the lesson's own allocated time, read from its questions rather than taken from
+  // the client — a caller that could name its own price could name zero.
+  const questionDocs = await db.collection("questions").where("lessonId", "==", lessonId).get();
+  const contents = questionDocs.docs.map((doc) => parseQuestionPayload(doc.data()));
+  const price = unlockPrice(kind, {
+    easyAllocatedSeconds: lessonAllocatedSeconds(contents, false),
+    hardAllocatedSeconds: lessonAllocatedSeconds(contents, true),
+  });
+  if (price === null) {
+    throw new HttpsError("invalid-argument", `Unsupported unlock kind ${kind}`);
+  }
+
+  const userRef = db.collection("users").doc(uid);
+  const key = unlockDocId(kind, lessonId);
+  const now = Date.now();
+  let response = null;
+
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(userRef);
+    const data = snapshot.exists ? snapshot.data() || {} : {};
+    const balance = readEconomyBalance(data);
+    // Unlocks live as a field on the user document rather than a subcollection, so they ride the
+    // profile sync the client already runs and a bought lesson stays bought offline.
+    const owned = balance.lessonUnlocks;
+
+    // Already bought. Charging twice for the same door is the one thing a retry must not do.
+    if (owned.includes(key)) {
+      response = {lessonId, kind, charged: 0, balance};
+      return;
+    }
+
+    const spent = spendNolics(balance.nolics, price);
+    if (!spent.affordable) {
+      throw new HttpsError("failed-precondition", "Not enough nolics");
+    }
+
+    transaction.set(
+      userRef,
+      clean({
+        uid,
+        updatedAtMs: now,
+        // Both fields: FirebaseUserStatsDataSource reads pointsNolics and the economy data source
+        // reads nolics, so writing one leaves half the app showing a balance never charged.
+        pointsNolics: spent.nolics,
+        nolics: spent.nolics,
+        lessonUnlocks: admin.firestore.FieldValue.arrayUnion(key),
+      }),
+      {merge: true},
+    );
+    response = {
+      lessonId,
+      kind,
+      charged: price,
+      balance: {...balance, nolics: spent.nolics, lessonUnlocks: withUnlock(owned, key)},
+    };
+  });
+
   return response;
 });
 
@@ -2899,14 +3053,6 @@ function normalizeQuestRatingEvent(data, authUid) {
   };
 }
 
-function lessonResultReward(event) {
-  const percent = Math.max(0, Math.min(numberValue(event.percentScore, 0), 100));
-  const multiplier = stringValue(event.difficulty).toUpperCase() === "HARD" ? HARD_RESULT_REWARD_MULTIPLIER : 1;
-  return {
-    skillPoints: percent * multiplier,
-    nolics: Math.floor(percent / NOLICS_PERCENT_STEP) * multiplier,
-  };
-}
 
 /**
  * The six activity ratings, as the legacy profile kept them.
@@ -3684,6 +3830,9 @@ function readEconomyBalance(user) {
     standardHearts: Math.min(MAX_STANDARD_HEARTS, nonNegativeInteger(user.standardHearts, MAX_STANDARD_HEARTS)),
     goldHearts: Math.min(MAX_GOLD_HEARTS, nonNegativeInteger(user.goldHearts, 0)),
     gold: nonNegativeInteger(user.gold, 0),
+    // Part of the balance because the client applies what it is handed back wholesale. Leave the
+    // set out and every purchase answers "you own no lessons", which the client then believes.
+    lessonUnlocks: readUnlocks(user.lessonUnlocks),
   };
 }
 

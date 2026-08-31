@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case
 
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.buildCodeAnswerOnAbort
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.computePercentScore
+import com.tpov.schoolquiz.shared.core.scoring.computePercentScore
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.SaveError

@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,6 +32,7 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirType
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.R
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.uistate.LessonItemUi
+import com.tpov.schoolquiz.shared.feature.lesson.domain.logic.LessonAccess
 
 /**
  * One lesson: its number, its title, the mode it will be played in, and how it was rated.
@@ -66,13 +69,24 @@ fun LessonItemCard(
         if (item.orderLabel != null) {
             Text(item.orderLabel, style = NoirType.num.copy(color = NoirT3))
         }
+        val isLocked = item.access == LessonAccess.LOCKED
         Text(
             text = item.title,
-            style = NoirType.rowTitle,
+            style = if (isLocked) NoirType.rowTitle.copy(color = NoirT3) else NoirType.rowTitle,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+        if (isLocked) {
+            // The whole trailing half of a shut row: a price and a padlock, and nothing else.
+            // Stars would be zero and the mode chip meaningless, and both would only ask to be read.
+            NoirChip(
+                text = item.unlockPriceNolics?.toString().orEmpty(),
+                tone = NoirChipTone.Off,
+                icon = Icons.Filled.Lock,
+            )
+            return@Row
+        }
         if (item.hardUnlocked) {
             NoirChip(
                 text =

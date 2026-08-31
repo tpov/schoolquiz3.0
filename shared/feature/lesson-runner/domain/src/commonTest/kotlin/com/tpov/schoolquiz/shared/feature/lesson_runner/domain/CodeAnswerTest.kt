@@ -1,7 +1,7 @@
 package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.allShownAnswersAre9
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.allShownAnswersAre9
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

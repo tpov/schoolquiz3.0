@@ -2,10 +2,11 @@ package com.tpov.schoolquiz.shared.feature.lesson_runner.domain
 
 import com.tpov.schoolquiz.shared.core.question_schema.Difficulty
 import com.tpov.schoolquiz.shared.core.question_schema.OptionId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.evaluateAnswer
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import com.tpov.schoolquiz.shared.core.scoring.Score
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
+import com.tpov.schoolquiz.shared.core.scoring.evaluateAnswer
 
 /**
  * Spec scenarios 1-12: Score formula for all question types.

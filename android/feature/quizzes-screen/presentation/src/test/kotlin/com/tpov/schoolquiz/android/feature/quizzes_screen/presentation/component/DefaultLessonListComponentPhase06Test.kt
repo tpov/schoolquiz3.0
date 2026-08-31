@@ -8,6 +8,7 @@ import com.arkivanov.essenty.lifecycle.stop
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.BreadcrumbRoot
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.config.QuizzesConfig
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeAuthRepository
+import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeEconomyRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonAttemptRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeLessonRepository
 import com.tpov.schoolquiz.android.feature.quizzes_screen.presentation.fake.FakeStackNavigation
@@ -17,8 +18,8 @@ import com.tpov.schoolquiz.shared.feature.lesson.domain.model.Lesson
 import com.tpov.schoolquiz.shared.feature.lesson.domain.model.LessonId
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.Attempt
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.AttemptId
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.CodeAnswer
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.PercentScore
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
+import com.tpov.schoolquiz.shared.core.scoring.PercentScore
 import com.tpov.schoolquiz.shared.feature.theme.domain.model.ThemeId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -53,6 +54,7 @@ class DefaultLessonListComponentPhase06Test {
     private val fakeLessonRepo = FakeLessonRepository()
     private val fakeAttemptRepo = FakeLessonAttemptRepository()
     private val fakeAuthRepo = FakeAuthRepository(initialUid = "user1")
+    private val fakeEconomyRepo = FakeEconomyRepository()
     private val fakeNavigation = FakeStackNavigation()
 
     @After
@@ -79,6 +81,7 @@ class DefaultLessonListComponentPhase06Test {
             lessonRepository = fakeLessonRepo,
             attemptRepository = fakeAttemptRepo,
             authRepository = fakeAuthRepo,
+            economyRepository = fakeEconomyRepo,
             navigation = fakeNavigation,
             coroutineContext = dispatcher,
         )

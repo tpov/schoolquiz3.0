@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Russian translations. The unqualified values/ holds English as the global fallback. -->
+<resources>
+    <!-- Tabs -->
+    <string name="tab_local">Локальная</string>
+    <string name="tab_internet">Интернет</string>
+    <string name="tab_events">События</string>
+    <string name="tab_shop">Магазин</string>
+
+    <!-- Drawer sections -->
+    <string name="section_my_quests">Мои квесты</string>
+    <string name="section_home_quests">Домашние квесты</string>
+    <string name="section_archive">Архив</string>
+    <string name="section_review_queue">Проверка</string>
+    <string name="section_settings">Настройки</string>
+    <string name="section_arena">Арена</string>
+    <string name="section_catalog">Каталог</string>
+    <string name="section_qualifications">Квалификации</string>
+    <string name="section_profile">Профиль</string>
+    <string name="section_social">Социальное</string>
+    <string name="section_leaderboard">Таблица лидеров</string>
+    <string name="section_qualifier_tournament">Отборочный турнир</string>
+    <string name="section_world_championship">Чемпионат мира</string>
+    <string name="section_active_events">Активные события</string>
+    <string name="section_minigames">Мини-игры</string>
+
+    <!-- Screen titles -->
+    <string name="config_quest_create">Создание квеста</string>
+    <string name="config_design_catalog">Design Catalog</string>
+    <string name="config_leaderboard">Лидерборд</string>
+    <string name="config_participants">Участники</string>
+    <string name="unavailable">Недоступно</string>
+
+    <!-- Drawer header -->
+    <string name="drawer_guest">Гость</string>
+    <string name="drawer_premium">Premium</string>
+    <string name="drawer_streak_days">Серия %1$d / %2$d дней</string>
+
+    <!-- Drawer footer -->
+    <string name="footer_sync_now">Синхронизация</string>
+    <string name="footer_about">О приложении</string>
+    <string name="about_version">Версия %1$s</string>
+    <string name="dialog_ok">OK</string>
+
+    <!-- Shell -->
+    <string name="cd_open_menu">Открыть меню</string>
+    <string name="cd_sync_now">Синхронизировать</string>
+    <string name="snackbar_dev_mode_on">Режим разработчика включён</string>
+    <string name="snackbar_dev_mode_already">Уже в режиме разработчика</string>
+    <string name="snackbar_sync_started">Синхронизация запущена</string>
+    <string name="under_construction_subtitle">Скоро здесь будет…</string>
+
+    <!-- Tournaments -->
+    <string name="stage_easy_questions">Лёгкие вопросы</string>
+    <string name="stage_hard_questions">Сложные вопросы</string>
+    <string name="rule_top32">Топ-32</string>
+    <string name="rule_final_table">Финальная таблица</string>
+    <string name="participant_status_active">участвует</string>
+    <string name="participant_access_open">доступ открыт</string>
+    <string name="participant_awaiting_selection">ожидает отбора</string>
+    <string name="tournament_start">Начать турнир</string>
+    <string name="tournament_lessons_list">Список уроков</string>
+    <string name="tournament_participants_list">Список участников</string>
+    <string name="cd_add_lesson">Добавить урок</string>
+    <string name="tournament_my_result">Мой результат</string>
+    <string name="tournament_no_attempt">нет попытки</string>
+    <string name="tournament_qualification_rule">Правило отбора</string>
+    <string name="tournament_updates_after_sync">обновляется после серверной синхронизации</string>
+    <string name="tournament_error_update_table">Не удалось обновить таблицу</string>
+    <string name="tournament_error_load">Не удалось загрузить турнир</string>
+    <string name="tournament_empty_results">Пока нет результатов</string>
+    <string name="tournament_empty_results_hint">После первых прохождений здесь появится общая таблица.</string>
+    <string name="tournament_participants_title">Список участников</string>
+    <string name="tournament_participants_count">Участников</string>
+    <string name="tournament_server_list">серверный список</string>
+    <string name="tournament_error_update_participants">Не удалось обновить участников</string>
+    <string name="tournament_loading">Обновляем данные</string>
+    <string name="tournament_attempts_count">Попыток: %1$d</string>
+</resources>

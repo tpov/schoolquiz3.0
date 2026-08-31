@@ -8,7 +8,7 @@ import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeLessonRe
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeQuestionContentParser
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.fake.FakeQuestionRepository
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.logic.submitAnswer
-import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.model.UserAnswer
+import com.tpov.schoolquiz.shared.core.scoring.UserAnswer
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.state.RunnerState
 import com.tpov.schoolquiz.shared.feature.lesson_runner.domain.use_case.StartLessonAttemptUseCase
 import kotlinx.coroutines.test.runTest
@@ -16,6 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import com.tpov.schoolquiz.shared.core.scoring.CodeAnswer
 
 /**
  * Spec scenarios 13-16: CodeAnswer construction — length, non-zero positions, mode filtering.
