@@ -1,0 +1,63 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 09-01-2026 21:40
+last_updated: 09-01-2026 21:40
+project: schoolquiz3.0
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/specs/spec-charges/stories.yaml
+development_status:
+  # Одна «эпика» на спеку: истории в stories.yaml не сгруппированы, а порядок между ними
+  # задаётся зависимостями по смыслу, не нумерацией.
+  epic-charges: in-progress
+  1-переименование-сердец-в-заряды: backlog  # 46 файлов, включая persistence — ждёт чистого дерева
+  2-настройки-экономики-переезжают-в-серверный-документ: in-progress
+  3-плазма-становится-восстановимой-и-покупаемой: backlog
+  4-сервер-решает-какого-вида-была-попытка: backlog
+  5-прейскурант-определяет-плату: in-progress
+  6-резерв-платы-в-начале-возврат-если-попытка-не-доехала: backlog
+  7-расчёт-заявок-на-заряды-при-отправке: backlog
+  8-офлайн-баланс-стоит-на-нуле-плазма-ждёт-связи: backlog
+  9-обнаружение-перерасхода-и-запись-с-обоснованием: backlog
+  10-коробки-копятся-офлайн-открываются-только-онлайн: backlog
+  11-турниры-становятся-серверными-сессиями: backlog
+  12-периодическая-чистка-подделываемых-балансов: backlog
+  epic-charges-retrospective: optional
+
+# Что уже сделано по 2 и 5 (b7245eb4, f64df10b):
+#   - чистое доменное ядро: ChargeKind, ActivityKind, EconomyConstants, ChargeRules,
+#     восстановление и трата в очках (100 очков = заряд);
+#   - серверный модуль functions/economy-constants.js: чтение документа с вырождением
+#     по полям в начальные значения;
+#   - config/economy-constants.json — один источник начальных значений для обеих сторон,
+#     сверяется тестами с двух сторон.
+# Что осталось по 2: доставка таблицы на устройство (вызов, свёрнутый в синхронизацию),
+#   хранение версии, и снятие копий значений из functions/index.js и UserProfile.kt.
