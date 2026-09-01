@@ -20,8 +20,19 @@ interface LessonAttemptDao {
     @Upsert
     suspend fun upsertRepetitions(entities: List<QuestionRepetitionEntity>)
 
-    @Upsert
-    suspend fun upsertOutboxRow(entity: LessonResultAttemptOutboxEntity)
+    /**
+     * Ставит запись в общую очередь (AD-5).
+     *
+     * `IGNORE`, а не `REPLACE`: ключ идемпотентности один на одно действие, и повторная постановка
+     * того же намерения не должна создавать вторую операцию с тем же смыслом (AD-2). `REPLACE` к
+     * тому же снёс бы строку вместе с её накопленными попытками и выдал новый `id`.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun enqueueOutboxRow(entity: OutboxEntity): Long
+
+    /** Состояние записи под этим ключом — чтобы отличить «уже отложено» от «уже не уедет». */
+    @Query("SELECT state FROM outbox WHERE mutation_id = :mutationId")
+    suspend fun outboxRowState(mutationId: String): String?
 
     /**
      * Stores a finished attempt: the attempt itself, the answers behind it, the repetition
@@ -31,19 +42,46 @@ interface LessonAttemptDao {
      * a scored attempt with no answers would skew every statistic derived from them, and an
      * attempt saved but never queued would stay on the device forever while the UI reported a
      * save failure.
+     *
+     * Подавленная вставка не принимается на веру: −1 от `IGNORE` значит либо «то же намерение уже
+     * отложено», либо «ключ занят записью, которая уже не уедет» — см. [requireOutboxIntentQueued].
      */
     @Transaction
     suspend fun saveAttemptWithAnswers(
         attempt: LessonAttemptEntity,
         answers: List<QuestionAnswerEntity>,
         repetitions: List<QuestionRepetitionEntity>,
-        outboxRow: LessonResultAttemptOutboxEntity? = null,
+        outboxRow: OutboxEntity? = null,
     ) {
         upsert(attempt)
         if (answers.isNotEmpty()) upsertAnswers(answers)
         if (repetitions.isNotEmpty()) upsertRepetitions(repetitions)
-        outboxRow?.let { upsertOutboxRow(it) }
+        outboxRow?.let {
+            val insertResult = enqueueOutboxRow(it)
+            if (insertResult == OUTBOX_ROW_IGNORED) {
+                requireOutboxIntentQueued(insertResult, it.mutationId, outboxRowState(it.mutationId))
+            }
+        }
     }
+
+    /**
+     * Убирает прохождение вместе с его ответами — откат по карантину (AD-28).
+     *
+     * Расписание повторений (`question_repetitions`) не трогается: его прежние значения перезаписаны
+     * и восстановлению не подлежат, а само оно — локальная подсказка обучения, а не половина
+     * серверной операции. Стереть его значило бы потерять больше, чем откатить.
+     */
+    @Transaction
+    suspend fun rollbackAttempt(attemptId: String) {
+        deleteAnswersOfAttempt(attemptId)
+        deleteAttempt(attemptId)
+    }
+
+    @Query("DELETE FROM question_answers WHERE attempt_id = :attemptId")
+    suspend fun deleteAnswersOfAttempt(attemptId: String)
+
+    @Query("DELETE FROM lesson_attempts WHERE attempt_id = :attemptId")
+    suspend fun deleteAttempt(attemptId: String)
 
     @Query("SELECT * FROM lesson_attempts WHERE user_id = :userId AND lesson_id = :lessonId")
     fun observeByLesson(userId: String, lessonId: String): Flow<List<LessonAttemptEntity>>

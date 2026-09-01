@@ -29,11 +29,25 @@ class RoomOutboxStore(
         return dao.findByMutationId(record.mutationId)?.toRecord() ?: record
     }
 
+    /**
+     * Всё, что движок обязан рассмотреть в этом проходе, — а не только то, что уедет.
+     *
+     * Перезревшие идут первыми и вне зависимости от паузы: отправлять их нельзя (AD-1), но и
+     * оставлять невидимыми нельзя. Пока выборка резала их по возрасту, запись, пролежавшая офлайн
+     * дольше предельного срока, не попадала никуда: не отправлялась, в карантин не уходила, откат
+     * не звала. Решение по возрасту принимает `OutboxPolicy` на стороне движка — здесь только
+     * условие запроса, чтобы не тащить таблицу в память.
+     */
     override suspend fun dueRecords(
         ownerUid: String,
         nowMs: Long,
         limit: Int,
-    ): List<OutboxRecord> = dao.due(ownerUid, nowMs, limits.maxAgeMs, limit).map { it.toRecord() }
+    ): List<OutboxRecord> {
+        val expired = dao.expired(ownerUid, nowMs, limits.maxAgeMs, limit)
+        if (expired.size >= limit) return expired.map { it.toRecord() }
+        val due = dao.due(ownerUid, nowMs, limits.maxAgeMs, limit - expired.size)
+        return (expired + due).map { it.toRecord() }
+    }
 
     override suspend fun apply(
         id: Long,

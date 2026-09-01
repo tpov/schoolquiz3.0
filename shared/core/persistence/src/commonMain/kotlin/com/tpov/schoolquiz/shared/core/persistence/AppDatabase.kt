@@ -15,15 +15,12 @@ import androidx.room.TypeConverters
         QuestionEntity::class,
         LessonAttemptEntity::class,
         LessonRatingSubmittedLocalEntity::class,
-        LessonResultAttemptOutboxEntity::class,
-        QuestRatingOutboxEntity::class,
         SyncStateEntity::class,
         QuestDraftEntity::class,
         DraftSectionEntity::class,
         DraftThemeEntity::class,
         DraftLessonEntity::class,
         DraftQuestionEntity::class,
-        QuestArenaSubmissionEntity::class,
         ReviewAssignmentEntity::class,
         ReviewAssignmentQuestionEntity::class,
         UserProfileEntity::class,
@@ -33,7 +30,7 @@ import androidx.room.TypeConverters
     ],
     // Bumped whenever the schema changes. Destructive fallback only fires on a version change —
     // leaving the number alone makes Room compare identity hashes and crash instead.
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(StringSetConverter::class, TopParticipantListConverter::class)
@@ -47,10 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun questionDao(): QuestionDao
     abstract fun lessonAttemptDao(): LessonAttemptDao
     abstract fun lessonRatingLocalDao(): LessonRatingLocalDao
-    abstract fun lessonResultSyncOutboxDao(): LessonResultSyncOutboxDao
     abstract fun syncStateDao(): SyncStateDao
     abstract fun questAuthoringDao(): QuestAuthoringDao
-    abstract fun questArenaSubmissionDao(): QuestArenaSubmissionDao
     abstract fun reviewAssignmentDao(): ReviewAssignmentDao
     abstract fun userProfileDao(): UserProfileDao
     abstract fun questionAnswerDao(): QuestionAnswerDao

@@ -177,22 +177,17 @@ class QuestionAnswerPersistenceTest {
     fun attemptIsQueuedForUploadInTheSameTransaction() = runTest {
         // A saved attempt that never reached the queue would sit on the device forever while the
         // UI reported a failure, so the queue row is written with the attempt, not after it.
-        val outboxRow = LessonResultAttemptOutboxEntity(
-            attemptId = "a1",
-            userId = "user-1",
-            scope = "public",
-            ownerUid = null,
-            catalogId = "courses",
-            questId = "quest-1",
-            sectionId = "section-1",
-            themeId = "theme-1",
-            lessonId = "lesson-1",
-            lessonVersion = 3L,
-            sourceShelf = "archive",
-            difficulty = "EASY",
-            codeAnswer = "99",
-            percentScore = 100,
-            completedAtMs = 1_000L,
+        val outboxRow = OutboxEntity(
+            mutationId = "lesson_runner-SUBMIT_ATTEMPT-a1",
+            ownerUid = "user-1",
+            operation = "lesson_runner.SUBMIT_ATTEMPT",
+            payload = """{"attemptId":"a1","percentScore":100}""",
+            entityRef = "lesson_runner:attempt:a1",
+            expectedVersion = null,
+            state = "WAITING",
+            attemptCount = 0,
+            nextRetryAtMs = 0L,
+            lastError = null,
             createdAtMs = 1_000L,
         )
 
@@ -203,7 +198,7 @@ class QuestionAnswerPersistenceTest {
             outboxRow = outboxRow,
         )
 
-        val pending = db.lessonResultSyncOutboxDao().pendingAttempts(limit = 10)
-        assertEquals(listOf("a1"), pending.map { it.attemptId })
+        val pending = db.outboxDao().due(ownerUid = "user-1", nowMs = 2_000L, maxAgeMs = 60_000L, limit = 10)
+        assertEquals(listOf("lesson_runner-SUBMIT_ATTEMPT-a1"), pending.map { it.mutationId })
     }
 }

@@ -135,8 +135,21 @@ interface QuestAuthoringDao {
         updatedAtMs: Long,
     )
 
-    /** Drafts whose submission is still awaiting a verdict, newest first. */
-    @Query("SELECT * FROM quest_drafts WHERE status = 'REVIEW_SENT' ORDER BY updatedAtMs DESC LIMIT :limit")
+    /**
+     * Drafts whose submission is still awaiting a verdict, newest first.
+     *
+     * Оба состояния, а не только `REVIEW_SENT`: с переездом на общую очередь отправку делает
+     * движок, и отдельного «уехало» фиче он не сообщает — строка просто исчезает из очереди
+     * (AD-4). Черновик так и остаётся `REVIEW_QUEUED`, и по одному `REVIEW_SENT` автор не узнал
+     * бы о вердикте никогда.
+     */
+    @Query(
+        """
+        SELECT * FROM quest_drafts
+        WHERE status IN ('REVIEW_QUEUED', 'REVIEW_SENT')
+        ORDER BY updatedAtMs DESC LIMIT :limit
+        """,
+    )
     suspend fun findDraftsAwaitingReview(limit: Int): List<QuestDraftEntity>
 
     /**
@@ -179,6 +192,43 @@ interface QuestAuthoringDao {
         if (themes.isNotEmpty()) insertThemes(themes)
         if (lessons.isNotEmpty()) insertLessons(lessons)
         if (questions.isNotEmpty()) insertQuestions(questions)
+    }
+
+    /**
+     * Ставит заявку на арену в общую очередь (AD-5).
+     *
+     * `IGNORE`, а не `REPLACE`: ключ идемпотентности один на одно действие (AD-2).
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun enqueueOutboxRow(entity: OutboxEntity): Long
+
+    /** Состояние записи под этим ключом — чтобы отличить «уже отложено» от «уже не уедет». */
+    @Query("SELECT state FROM outbox WHERE mutation_id = :mutationId")
+    suspend fun outboxRowState(mutationId: String): String?
+
+    /**
+     * Подаёт черновик и запирает его на редактирование одной транзакцией (AD-23).
+     *
+     * Порознь возможны обе беды и обе молчаливые: черновик, показанный поданным и никогда не
+     * уехавший, и заявка в очереди без локального следа, которую нечем откатить при карантине.
+     *
+     * Подавленная вставка не принимается на веру: −1 от `IGNORE` значит либо «то же намерение уже
+     * отложено», либо «ключ занят записью, которая уже не уедет» — см. [requireOutboxIntentQueued].
+     * Здесь это дороже, чем в остальных двух случаях: черновик заперся бы на редактирование
+     * («подан»), а заявки, которая его откроет, не существовало бы, и автор остался бы с
+     * недоступным черновиком навсегда.
+     */
+    @Transaction
+    suspend fun queueArenaSubmission(
+        outboxRow: OutboxEntity,
+        draftId: String,
+        updatedAtMs: Long,
+    ) {
+        val insertResult = enqueueOutboxRow(outboxRow)
+        if (insertResult == OUTBOX_ROW_IGNORED) {
+            requireOutboxIntentQueued(insertResult, outboxRow.mutationId, outboxRowState(outboxRow.mutationId))
+        }
+        updateDraftStatus(draftId = draftId, status = "REVIEW_QUEUED", updatedAtMs = updatedAtMs)
     }
 
     @Transaction

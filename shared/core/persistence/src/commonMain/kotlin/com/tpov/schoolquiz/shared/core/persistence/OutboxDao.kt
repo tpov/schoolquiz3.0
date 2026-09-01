@@ -9,10 +9,13 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Доступ к очереди.
  *
- * Выборка живёт здесь, а не в ядре, ровно потому, что её условие — часть запроса: брать только
- * ожидающие, только дозревшие и только не пережившие предельный возраст (AD-22). Тащить в память
- * всю таблицу, чтобы отфильтровать её в Kotlin, значит поставить размер очереди в зависимость от
- * памяти телефона.
+ * Выборка живёт здесь, а не в ядре, ровно потому, что её условие — часть запроса (AD-22). Тащить в
+ * память всю таблицу, чтобы отфильтровать её в Kotlin, значит поставить размер очереди в
+ * зависимость от памяти телефона.
+ *
+ * Выборок две, и обе обязательны: [due] отдаёт то, что пора отправлять, [expired] — то, что
+ * отправлять уже нельзя, но и оставить нельзя. Пока была только первая, запись старше предельного
+ * возраста не попадала ни в один запрос и висела вечно.
  */
 @Dao
 interface OutboxDao {
@@ -32,6 +35,7 @@ interface OutboxDao {
     @Query("SELECT * FROM outbox WHERE mutation_id = :mutationId")
     suspend fun findByMutationId(mutationId: String): OutboxEntity?
 
+    /** То, что пора отправлять: дозревшее по паузе и не пережившее предельный возраст. */
     @Query(
         """
         SELECT * FROM outbox
@@ -44,6 +48,30 @@ interface OutboxDao {
         """,
     )
     suspend fun due(
+        ownerUid: String,
+        nowMs: Long,
+        maxAgeMs: Long,
+        limit: Int,
+    ): List<OutboxEntity>
+
+    /**
+     * То, что пережило предельный возраст.
+     *
+     * Отправлять такую запись нельзя (AD-1), но она обязана дойти до карантина и до отката, иначе
+     * останется зомби: не уедет, в карантин не попадёт, реакцию фичи не позовёт. Пауза до
+     * следующей попытки здесь не смотрится намеренно — ждать нечего, попытки не будет.
+     */
+    @Query(
+        """
+        SELECT * FROM outbox
+        WHERE owner_uid = :ownerUid
+          AND state IN ('WAITING', 'WAITING_PRECONDITION')
+          AND (:nowMs - created_at_ms) >= :maxAgeMs
+        ORDER BY created_at_ms ASC
+        LIMIT :limit
+        """,
+    )
+    suspend fun expired(
         ownerUid: String,
         nowMs: Long,
         maxAgeMs: Long,

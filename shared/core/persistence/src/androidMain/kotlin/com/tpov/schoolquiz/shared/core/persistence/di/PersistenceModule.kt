@@ -6,11 +6,10 @@ import com.tpov.schoolquiz.shared.core.persistence.CatalogDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonAttemptDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonDao
 import com.tpov.schoolquiz.shared.core.persistence.LessonRatingLocalDao
+import com.tpov.schoolquiz.shared.core.persistence.OutboxDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionAnswerDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionRepetitionDao
-import com.tpov.schoolquiz.shared.core.persistence.LessonResultSyncOutboxDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestionDao
-import com.tpov.schoolquiz.shared.core.persistence.QuestArenaSubmissionDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestAuthoringDao
 import com.tpov.schoolquiz.shared.core.persistence.QuestDao
 import com.tpov.schoolquiz.shared.core.persistence.ReviewAssignmentDao
@@ -25,6 +24,7 @@ import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration1to2
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration2to3
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration3to4
 import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration4to5
+import com.tpov.schoolquiz.shared.core.persistence.migrations.Migration5to6
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -37,7 +37,7 @@ val persistenceModule = module {
         )
             .addTypeConverter(StringSetConverter())
             .addTypeConverter(TopParticipantListConverter())
-            .addMigrations(Migration1to2, Migration2to3, Migration3to4, Migration4to5)
+            .addMigrations(Migration1to2, Migration2to3, Migration3to4, Migration4to5, Migration5to6)
             .build()
     }
     single<UserStatsDao> { get<AppDatabase>().userStatsDao() }
@@ -49,12 +49,11 @@ val persistenceModule = module {
     single<QuestionDao> { get<AppDatabase>().questionDao() }
     single<LessonAttemptDao> { get<AppDatabase>().lessonAttemptDao() }
     single<LessonRatingLocalDao> { get<AppDatabase>().lessonRatingLocalDao() }
-    single<LessonResultSyncOutboxDao> { get<AppDatabase>().lessonResultSyncOutboxDao() }
     single<SyncStateDao> { get<AppDatabase>().syncStateDao() }
     single<QuestAuthoringDao> { get<AppDatabase>().questAuthoringDao() }
-    single<QuestArenaSubmissionDao> { get<AppDatabase>().questArenaSubmissionDao() }
     single<ReviewAssignmentDao> { get<AppDatabase>().reviewAssignmentDao() }
     single<UserProfileDao> { get<AppDatabase>().userProfileDao() }
     single<QuestionAnswerDao> { get<AppDatabase>().questionAnswerDao() }
     single<QuestionRepetitionDao> { get<AppDatabase>().questionRepetitionDao() }
+    single<OutboxDao> { get<AppDatabase>().outboxDao() }
 }
