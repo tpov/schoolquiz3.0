@@ -52,4 +52,9 @@
     <string name="settings_sync_note_conflict">%1$d изменились на сервере, пока вас не было</string>
     <string name="settings_sync_note_quarantine">%1$d отклонены сервером и уже не отправятся</string>
     <string name="settings_sync_note_both">%1$d изменились на сервере, %2$d отклонены</string>
+    <string name="settings_resync">Перечитать всё заново</string>
+    <string name="settings_resync_subtitle">Если содержимое выглядит устаревшим или пропало</string>
+    <string name="settings_resync_confirm">Всё содержимое будет скачано с сервера заново. Действия, ожидающие отправки, это не затронет.</string>
+    <string name="settings_resync_confirm_action">Перечитать</string>
+    <string name="settings_resync_cancel">Отмена</string>
 </resources>

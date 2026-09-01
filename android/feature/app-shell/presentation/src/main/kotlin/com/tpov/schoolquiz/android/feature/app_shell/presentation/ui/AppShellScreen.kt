@@ -125,6 +125,7 @@ fun AppShellScreen(
     profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit = {},
     syncStatus: SyncStatus = SyncStatus(),
+    onForceResync: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by rootComponent.appShellState.collectAsStateWithLifecycle(
@@ -319,6 +320,7 @@ fun AppShellScreen(
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
                         syncStatus = syncStatus,
+                        onForceResync = onForceResync,
                     )
                     if (quizzesStack.active.instance !is QuizzesChild.Idle) {
                         val overlayModifier =
@@ -355,6 +357,7 @@ private fun AppShellContent(
     profileSyncFrequency: SyncFrequency,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit,
     syncStatus: SyncStatus,
+    onForceResync: () -> Unit,
 ) {
     Crossfade(
         targetState = state.activeTab,
@@ -380,6 +383,7 @@ private fun AppShellContent(
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
                         syncStatus = syncStatus,
+                        onForceResync = onForceResync,
                     )
                 }
             Tab.INTERNET ->
@@ -429,6 +433,7 @@ private fun LocalTabContent(
     profileSyncFrequency: SyncFrequency,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit,
     syncStatus: SyncStatus,
+    onForceResync: () -> Unit,
 ) {
     when (screen) {
         is LocalScreenComponent.Placeholder -> {
@@ -478,6 +483,7 @@ private fun LocalTabContent(
                         onProfileSyncFrequencySelected = onProfileSyncFrequencySelected,
                         onSyncNow = { rootComponent.onSyncNow() },
                         syncStatus = syncStatus,
+                        onForceResync = onForceResync,
                         modifier = Modifier.padding(paddingValues),
                     )
                 }

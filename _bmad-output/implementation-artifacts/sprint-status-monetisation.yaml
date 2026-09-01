@@ -37,8 +37,8 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   epic-0: backlog
   0-1-запросить-продление-в-play-console: backlog
-  0-2-поднять-play-billing-до-8-затем-до-9: backlog
-  0-3-поднять-targetsdk-и-compilesdk-до-36: backlog
+  0-2-поднять-play-billing-до-8-затем-до-9: done
+  0-3-поднять-targetsdk-и-compilesdk-до-36: backlog  # отложена в deferred-work.md — делать на чистом дереве
   epic-0-retrospective: optional
 
   epic-1: backlog

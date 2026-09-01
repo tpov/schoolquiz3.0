@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.arkivanov.decompose.defaultComponentContext
 import com.tpov.schoolquiz.android.core.designsystem.SchoolQuizTheme
 import com.tpov.schoolquiz.android.core.designsystem.components.SchoolQuizDesignStyle
@@ -16,12 +18,13 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTheme
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.DefaultRootComponent
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tpov.schoolquiz.shared.core.sync.ForceResync
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
+import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
-import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.core.parameter.parametersOf
 
@@ -80,6 +83,11 @@ class MainActivity : AppCompatActivity() {
                             }
                         },
                         syncStatus = syncStatus,
+                        onForceResync = {
+                            // Долгая операция: перечитывается всё содержимое. Живёт в области
+                            // самой Activity, чтобы уход с экрана её отменял.
+                            lifecycleScope.launch { get<ForceResync>().run() }
+                        },
                         profileSyncFrequency = profileSyncFrequency,
                         onProfileSyncFrequencySelected = { frequency ->
                             profileSyncFrequency = frequency

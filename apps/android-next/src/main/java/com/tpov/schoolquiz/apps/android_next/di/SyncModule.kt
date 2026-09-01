@@ -1,7 +1,14 @@
 package com.tpov.schoolquiz.apps.android_next.di
 
-import androidx.work.WorkManager
 import android.util.Log
+import androidx.work.WorkManager
+import androidx.work.WorkerFactory
+import com.tpov.schoolquiz.platform.android_services.network.AndroidNetworkMonitor
+import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
+import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
+import com.tpov.schoolquiz.platform.android_services.sync.WorkManagerSyncScheduler
+import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
+import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.outbox.AccountSwitchGuard
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect
@@ -12,22 +19,16 @@ import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import com.tpov.schoolquiz.shared.core.outbox.QuarantineListener
 import com.tpov.schoolquiz.shared.core.persistence.OutboxDao
 import com.tpov.schoolquiz.shared.core.persistence.RoomOutboxStore
-import com.tpov.schoolquiz.shared.core.sync.InMemorySyncStatusRepository
-import com.tpov.schoolquiz.shared.core.sync.OutboxSyncable
-import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
-import androidx.work.WorkerFactory
-import com.tpov.schoolquiz.platform.android_services.network.AndroidNetworkMonitor
-import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
-import com.tpov.schoolquiz.platform.android_services.sync.SyncWorkerFactory
-import com.tpov.schoolquiz.platform.android_services.sync.WorkManagerSyncScheduler
-import com.tpov.schoolquiz.shared.core.catalog.domain.repository.CatalogRepository
-import com.tpov.schoolquiz.shared.core.network.NetworkMonitor
 import com.tpov.schoolquiz.shared.core.persistence.RoomSyncStateRepository
 import com.tpov.schoolquiz.shared.core.persistence.SyncStateDao
 import com.tpov.schoolquiz.shared.core.sync.CatalogSyncListOrchestrator
+import com.tpov.schoolquiz.shared.core.sync.ForceResync
+import com.tpov.schoolquiz.shared.core.sync.InMemorySyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.LessonContentSyncOrchestrator
+import com.tpov.schoolquiz.shared.core.sync.OutboxSyncable
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStateRepository
+import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.core.sync.Syncable
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.AuthRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.repository.UserStatsRepository
@@ -74,13 +75,14 @@ val syncModule =
                         OutboxOperations.SUBMIT_ARENA to get<QuestArenaQuarantineRollback>(),
                     ),
                 // Операция без обработчика — молчаливое расхождение, которое AD-28 запрещает.
-                onUnhandled = QuarantineListener { record ->
-                    Log.w(
-                        "Outbox",
-                        "Запись ушла в карантин, а обработчика у операции ${record.operation} нет: " +
-                            "локальное состояние могло разойтись с сервером. Причина: ${record.lastError}",
-                    )
-                },
+                onUnhandled =
+                    QuarantineListener { record ->
+                        Log.w(
+                            "Outbox",
+                            "Запись ушла в карантин, а обработчика у операции ${record.operation} нет: " +
+                                "локальное состояние могло разойтись с сервером. Причина: ${record.lastError}",
+                        )
+                    },
             )
         }
         single<OutboxEngine> {
@@ -92,6 +94,9 @@ val syncModule =
             )
         }
         // Слить очередь до смены аккаунта: после переключения прежнего uid уже не узнать (AD-8).
+        // Последнее средство от разъехавшегося курсора: сегодня это лечится только переустановкой
+        // приложения (AD-30). Читающая сторона — контентный оркестратор, очередь не трогается.
+        single<ForceResync> { ForceResync(get<SyncStateRepository>(), get<CatalogSyncListOrchestrator>()) }
         single<AccountSwitchGuard> { AccountSwitchGuard(get<OutboxEngine>(), get<OutboxStore>()) }
         // Состояние синхронизации наружу (AD-14). Auth-scoped: счётчики принадлежат uid, и после
         // смены аккаунта чужие числа на экране остаться не должны.

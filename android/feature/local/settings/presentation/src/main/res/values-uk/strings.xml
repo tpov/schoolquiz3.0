@@ -52,4 +52,9 @@
     <string name="settings_sync_note_conflict">%1$d змінилися на сервері, поки вас не було</string>
     <string name="settings_sync_note_quarantine">%1$d відхилені сервером і вже не надішлються</string>
     <string name="settings_sync_note_both">%1$d змінилися на сервері, %2$d відхилені</string>
+    <string name="settings_resync">Перечитати все заново</string>
+    <string name="settings_resync_subtitle">Якщо вміст виглядає застарілим або зник</string>
+    <string name="settings_resync_confirm">Увесь вміст буде завантажено із сервера заново. Дій, що чекають на надсилання, це не торкнеться.</string>
+    <string name="settings_resync_confirm_action">Перечитати</string>
+    <string name="settings_resync_cancel">Скасувати</string>
 </resources>

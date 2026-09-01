@@ -52,4 +52,9 @@
     <string name="settings_sync_note_conflict">%1$d changed on the server while you were away</string>
     <string name="settings_sync_note_quarantine">%1$d were refused and will not be sent</string>
     <string name="settings_sync_note_both">%1$d changed on the server, %2$d were refused</string>
+    <string name="settings_resync">Re-read everything</string>
+    <string name="settings_resync_subtitle">If content looks out of date or is missing</string>
+    <string name="settings_resync_confirm">Everything will be downloaded from the server again. Actions waiting to be sent are not affected.</string>
+    <string name="settings_resync_confirm_action">Re-read</string>
+    <string name="settings_resync_cancel">Cancel</string>
 </resources>

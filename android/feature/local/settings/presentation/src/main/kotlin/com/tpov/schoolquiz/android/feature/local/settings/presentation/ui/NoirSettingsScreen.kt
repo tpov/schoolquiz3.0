@@ -18,6 +18,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tpov.schoolquiz.android.core.designsystem.noir.LocalNoirAccent
+import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGold
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroup
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirGroupHeader
@@ -37,7 +39,6 @@ import com.tpov.schoolquiz.android.core.designsystem.noir.NoirHair
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirIcons
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirRow
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirShapeMd
-import com.tpov.schoolquiz.android.core.designsystem.noir.NoirDanger
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT1
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirT3
 import com.tpov.schoolquiz.android.core.designsystem.noir.NoirTOff
@@ -71,6 +72,7 @@ fun NoirSettingsScreen(
     profileSyncFrequency: SyncFrequency = SyncFrequency.DAILY,
     onProfileSyncFrequencySelected: (SyncFrequency) -> Unit = {},
     syncStatus: SyncStatus = SyncStatus(),
+    onForceResync: () -> Unit = {},
 ) {
     Box(modifier.fillMaxSize().noirScreenGround()) {
         LazyColumn(
@@ -88,6 +90,7 @@ fun NoirSettingsScreen(
                     profileFrequency = profileSyncFrequency,
                     onProfileFrequencySelected = onProfileSyncFrequencySelected,
                     onSyncNow = onSyncNow,
+                    onForceResync = onForceResync,
                 )
             }
             item { NotificationsGroup() }
@@ -197,8 +200,10 @@ private fun SyncGroup(
     profileFrequency: SyncFrequency,
     onProfileFrequencySelected: (SyncFrequency) -> Unit,
     onSyncNow: () -> Unit,
+    onForceResync: () -> Unit,
 ) {
     val pickingContent = remember { mutableStateOf(false) }
+    val confirmingResync = remember { mutableStateOf(false) }
     val pickingProfile = remember { mutableStateOf(false) }
     if (pickingContent.value) {
         FrequencyPickerDialog(
@@ -220,6 +225,15 @@ private fun SyncGroup(
                 onProfileFrequencySelected(option)
             },
             onDismiss = { pickingProfile.value = false },
+        )
+    }
+    if (confirmingResync.value) {
+        ResyncConfirmDialog(
+            onConfirm = {
+                confirmingResync.value = false
+                onForceResync()
+            },
+            onDismiss = { confirmingResync.value = false },
         )
     }
     NoirGroup {
@@ -245,11 +259,42 @@ private fun SyncGroup(
         )
         // The empty catalog screen tells people to sync from the menu, so the action belongs here
         // where they come looking for it.
-        NoirRow(onClick = onSyncNow, showDivider = false) {
+        NoirRow(onClick = onSyncNow) {
             Text(stringResource(R.string.settings_sync_now), style = NoirType.rowTitle)
             Text(stringResource(R.string.settings_sync_now_subtitle), style = NoirType.rowSub)
         }
+        // Последнее средство: курсоры чтения обнуляются и журналы читаются с начала. Спрашиваем
+        // подтверждение, потому что это перекачка всего содержимого, а не обычная синхронизация.
+        NoirRow(onClick = { confirmingResync.value = true }, showDivider = false) {
+            Text(stringResource(R.string.settings_resync), style = NoirType.rowTitle)
+            Text(stringResource(R.string.settings_resync_subtitle), style = NoirType.rowSub)
+        }
     }
+}
+
+/**
+ * Подтверждение перечитывания.
+ *
+ * Спрашиваем не потому, что можно что-то потерять — ресинк лечит только сторону чтения и
+ * неотправленные действия не трогает (AD-30), — а потому, что это скачивание всего заново, и
+ * нажать его случайно на мобильном интернете обидно.
+ */
+@Composable
+private fun ResyncConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_resync)) },
+        text = { Text(stringResource(R.string.settings_resync_confirm)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.settings_resync_confirm_action)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_resync_cancel)) }
+        },
+    )
 }
 
 /** One decision, five answers: a whole cadence choice in a single dialog. */
