@@ -4,7 +4,7 @@
   "description": "",
   "main": "backfill-catalogs.js",
   "scripts": {
-    "test": "node sync-change-id.test.js"
+    "test": "node sync-change-id.test.js && node content-catalog-index.test.js"
   },
   "keywords": [],
   "author": "",
