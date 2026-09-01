@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.core.question_schema
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -29,27 +30,33 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
     ): Result<QuestionContent> {
         val newFormat = parse(payload)
         if (newFormat.isSuccess) return newFormat
-        return parseLegacy(payload, fallbackId, fallbackText, fallbackDifficulty)
+        // Only a payload whose "type" actually names a legacy format goes down the legacy branch.
+        //
+        // The legacy `type` key and the polymorphic discriminator are the same key, so every
+        // payload that failed above still has one — and answering "Unsupported legacy question
+        // type: SingleChoiceRedacted" for a redacted payload names the wrong contract entirely and
+        // buries the accurate diagnosis. The exception from the polymorphic decoder already names
+        // the unregistered discriminator, so when the payload is not legacy it is the one kept.
+        val legacy = legacySingleChoiceOrNull(payload) ?: return newFormat
+        return parseLegacySingleChoice(legacy, fallbackId, fallbackText, fallbackDifficulty)
     }
 
-    private fun parseLegacy(
-        payload: String,
-        fallbackId: String,
-        fallbackText: String,
-        fallbackDifficulty: Difficulty,
-    ): Result<QuestionContent> {
+    /**
+     * The payload as a [JsonObject] when — and only when — its `type` is the one legacy format this
+     * parser reads. Anything else, malformed input included, is not legacy and gets no fallback.
+     *
+     * Named for the single format on purpose: a second legacy shape cannot be added by widening a
+     * set here, it has to be dispatched, and the name says so.
+     */
+    private fun legacySingleChoiceOrNull(payload: String): JsonObject? {
         return try {
             val obj = json.decodeFromString<JsonObject>(payload)
-            val type = obj["type"]?.jsonPrimitive?.content
-                ?: return Result.failure(SerializationException("Legacy payload missing 'type'"))
-            when (type) {
-                "single-choice" -> parseLegacySingleChoice(obj, fallbackId, fallbackText, fallbackDifficulty)
-                else -> Result.failure(SerializationException("Unsupported legacy question type: $type"))
-            }
+            val type = obj["type"]?.jsonPrimitive?.contentOrNull
+            if (type == LEGACY_SINGLE_CHOICE) obj else null
         } catch (e: SerializationException) {
-            Result.failure(e)
+            null
         } catch (e: IllegalArgumentException) {
-            Result.failure(e)
+            null
         }
     }
 
@@ -97,5 +104,10 @@ class KotlinxSerializationQuestionContentParser : QuestionContentParser {
         } catch (e: IllegalArgumentException) {
             Result.failure(e)
         }
+    }
+
+    private companion object {
+        /** The only pre-ADR-0003 shape still in the corpus. Same key as the discriminator. */
+        const val LEGACY_SINGLE_CHOICE = "single-choice"
     }
 }

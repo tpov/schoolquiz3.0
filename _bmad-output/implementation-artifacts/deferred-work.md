@@ -99,3 +99,55 @@ Goals split out of a larger intent, kept so nothing is quietly dropped.
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-2-answer-key-store.md`
   summary: The redactor does not mirror `QuestionContent`'s size and uniqueness invariants — duplicate option ids, `MultipleChoice` with a single correct id (Kotlin requires two), `candidates.size == 5 || 10`, `blanks.size in 1..3`.
   evidence: Deliberately left out of the slice: mirroring them risks over-refusing real corpus data, and refusal currently means publishing unredacted. Revisit once the refusal outcome is visible to the caller and the write path can decline to publish instead.
+
+**Синк E9 сделан, но общий гейт им не проверить.** Каденции разведены: `enqueueManualProfileSync()`
+поднимает профильный воркер, а не полный контентный список, и выбор «при запуске» в профильном
+пикере теперь что-то делает. Проверено тестами модуля `platform/android-services`. Полный `ciCheck`
+в этот момент падал на чужой незавершённой работе — `QuestMapper.kt` без `contentsVersion` и тесты
+`quizzes-screen` без `retirePublicQuest`, — поэтому зелёным подтверждён только собственный модуль.
+
+- source_spec: none
+  summary: The hint spends a life before checking there is anything to reveal — on MultipleChoice it also submits an empty answer, scoring the question wrong. `LessonRunnerScreen.kt:437-438`, `:501-502`, `:578-579` all call `component.hintRequested()` (which decrements lives, `DefaultLessonRunnerRootComponent.kt:255-263`) before testing the answer-key field; only SingleChoice (`:403-405`) short-circuits correctly.
+  evidence: Pre-existing, found while mapping the blast radius for E2 step 4. `HintAnswer.kt:14-24` `buildHintDraft` is the null-safe version of exactly this logic but is called only from tests (`RevealDigitAndHintTest.kt:127-200`); production re-implements it inline at four sites and lost the null-safety at three. Routing all four through `buildHintDraft` and gating `hintEnabled` (`LessonRunnerScreen.kt:352`) on `buildHintDraft(qState) != null` fixes the class in one move, independent of redaction.
+
+- source_spec: none
+  summary: Two `when` statements accept a widened question type silently instead of failing to compile — `Scoring.kt:59` `else -> Score(1)` and `RunnerLogic.kt:257` `else -> randomAnswer`. Every other consumer of `QuestionContent` is an exhaustive `when` with no `else`, so the compiler catches it.
+  evidence: Relevant to the slice that widens the runner to a common supertype: a redacted question reaching `evaluateAnswer` would score 1/9 with no error, corrupting `percentScore`, stars and the HARD unlock. Deleting both `else` branches as part of that widening turns the whole blast radius into a compiler-checked list. Also worth knowing: `RunnerState.playOrder: List<RunnerQuestion.Valid>` (`RunnerState.kt:42`) is the containment boundary — keep redacted content out of it and the runner is untouched.
+
+- source_spec: none
+  summary: `RunnerQuestion.Invalid` (`RunnerQuestion.kt:23-28`) has zero references anywhere and is never constructed, though its KDoc claims such items are "filtered out at init".
+  evidence: Found while mapping E2 step 4. It is a pre-built slot in the sealed interface for a question that reaches the pool but cannot be played — exactly what a redacted question needs — so it is worth knowing it exists and is currently dead rather than reinventing it.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-4-redacted-question-type.md`
+  summary: The common supertype and the reader — a `QuestionDisplay` interface (`id`, `difficulty`, `text`, `imageUrl`, `info`, `displayTexts`) implemented by both `QuestionContent` and `RedactedQuestionContent`, plus `parseAny(payload, fallbacks): Result<QuestionDisplay>` on `QuestionContentParser`.
+  evidence: Split from spec-e2-4 on token budget. The redacted type is inert without it — nothing decodes it but its own test. Three facts the slice must respect: `displayTexts` has to be exactly the option/item/candidate texts and nothing else, so `computeCharsCount` (`RunnerLogic.kt:159-170`, image constant 100) keeps returning the same number; it must be declared as a body `val` with a getter, never a constructor parameter, or it joins the wire format and the `init` invariants; and `parseAny` must have a default body on the interface, since both `FakeQuestionContentParser`s override only `parse` and an abstract method breaks them.
+
+- source_spec: `_bmad-output/planning-artifacts/epics-sync.md` (Story 2.5, Story 2.6)
+  summary: Истории 2.5 «граница пересоздания» и 2.6 «чистая схема версии 1» отменены — база пошла настоящими миграциями до версии 5, а не одним пересозданием.
+  evidence: Спайн решением AD-16 разрешал одно пересоздание локальной схемы, потому что живых установок нет. Фактически параллельная работа завела очередь миграцией и довела AppDatabase до version=5 с экспортированными схемами 1..5.json. Это строже AD-16 и лучше: история миграций перестала быть фиктивной без потери данных. Выполнять 2.6 сейчас означало бы стереть базу и отменить чужие миграции. Что из 2.6 остаётся живым: снятие колонок contentsVersion с пяти Room-сущностей и сведение трёх очередей к одной — обе работы требуют собственной миграции и своей истории. AD-16 и NFR11 подлежат пересмотру.
+
+- source_spec: `_bmad-output/planning-artifacts/epics-sync.md` (Story 2.8, третий и четвёртый критерий)
+  summary: Откат локальной половины при карантине для трёх переехавших действий не реализован — переезжать пока нечему.
+  evidence: Ядро своё сделало: реакция на карантин обязательна (умолчание снято, отсутствие не компилируется), вызывается ровно один раз, не вызывается на ожидании предусловия и конфликте, таблиц фичи не трогает — покрыто QuarantineNotificationTest. Но прохождения, оценки и заявки на арену всё ещё лежат в трёх старых очередях: их перевод на общую таблицу был историей 2.6, а она отменена вместе с пересозданием схемы. Пока перевод не сделан своей миграцией, у критерия «для каждого из трёх operation наступает откат» нет предмета. Владелец решил, что реакция одна для всех трёх — откат; это записано в AD-28 и ждёт переезда.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-4-redacted-question-type.md`
+  summary: Neither `detekt` nor `ktlintCheck` covers `shared/core/question-schema` — `detekt` reports NO-SOURCE because it does not see the KMP source layout, and the module has no `ktlintCheck` task at all, since only the Android convention plugins wire ktlint.
+  evidence: Found during E2.4 review; an unused import in a new file survived the gate. Both legs of `ciCheck` are inert for every file in this module, and by the same reasoning for every other `schoolquiz.kmp.library` module — which is most of `shared/core`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-e2-4-redacted-question-type.md`
+  summary: The `onlyIf { file("functions/node_modules").isDirectory }` guard on `functionsTest` (`build.gradle.kts:44`) is now load-bearing for a two-language contract, not just for a test suite.
+  evidence: Sharpens an entry already recorded for E2.1. The Kotlin half of the redacted-wire harness is pinned to the fixture file, never to the emitter — only the JavaScript half re-runs `redact` and compares. So on a checkout without `npm install`, the emitter can change shape and `ciCheck` still reports green. A reviewer confirmed the whole functions suite needs nothing outside Node builtins: it ran green in a sandbox with `node_modules` deleted, so the guard protects nothing and the task can simply run unconditionally.
+
+**Синк E7 — сделана половина.** Журнал изменений читается страницами (AD-31): курсор стал парой
+«время, id документа», Firestore-запрос продолжается через `startAfter` по этой паре, оркестратор
+крутит страницы до конца с потолком на проход. Это закрывает и потерю двух записей, записанных в
+одну миллисекунду, — риск, который аудит отмечал как B-6.
+
+Не сделано:
+- **вторая половина пары не сохраняется.** `sync_state` хранит только `changedAtMs`; чтобы класть
+  рядом id документа, нужна колонка и миграция, а `shared/core/persistence` в этот момент
+  переписывала параллельная сессия (миграции 4→5, схемы, тесты миграций). До тех пор защита от
+  одной миллисекунды работает внутри страницы, но не через границу проходов;
+- **принудительный ресинк (AD-30)** — операция сброса курсоров чтения, не трогающая очередь записи;
+- **приведение сид-скриптов к продовой схеме id (AD-11)** — повторный прогон сида по-прежнему
+  растит коллекцию.

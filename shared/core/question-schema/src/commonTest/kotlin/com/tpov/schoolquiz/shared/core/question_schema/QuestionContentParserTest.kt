@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.core.question_schema
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -206,5 +207,50 @@ class QuestionContentParserTest {
 
         val content = assertIs<QuestionContent.SingleChoice>(result.getOrThrow())
         assertEquals(Difficulty.HARD, content.difficulty)
+    }
+
+    // ── Group D: a payload that is neither new-format nor legacy keeps its own diagnosis ───────
+
+    /**
+     * The enriched overload used to discard the accurate exception and fall through to the legacy
+     * branch, which then reported every unregistered discriminator as `Unsupported legacy question
+     * type: <name>` — naming a contract the payload has nothing to do with. The redacted shapes
+     * emitted by `functions/question-redaction.js` are the ones that made it matter; the wire-level
+     * proof lives in RedactedQuestionWireTest, and this is the parser-level one.
+     */
+    @Test
+    fun `given a redacted payload when parse with fallbacks then the failure names the discriminator`() {
+        val payload = """{"type":"SingleChoiceRedacted","id":"q1","difficulty":"EASY","text":"Q?","imageUrl":null,"options":[{"id":"a","text":"A"},{"id":"b","text":"B"}]}"""
+
+        val result = parser.parse(payload, "q1", "Q?", Difficulty.EASY)
+
+        assertTrue(result.isFailure, "A redacted payload must never become a QuestionContent")
+        val message = result.exceptionOrNull()?.message.orEmpty()
+        assertTrue(
+            message.contains("SingleChoiceRedacted"),
+            "Expected the message to name the unregistered discriminator, got: $message",
+        )
+        assertFalse(
+            message.contains("legacy", ignoreCase = true),
+            "A redacted payload is not a legacy payload; got: $message",
+        )
+    }
+
+    @Test
+    fun `given an unknown type when parse with fallbacks then the failure names it and not the legacy format`() {
+        val payload = """{"type":"VideoQuestion","foo":"bar"}"""
+
+        val result = parser.parse(payload, "q1", "Q?", Difficulty.EASY)
+
+        assertTrue(result.isFailure, "Expected failure for unknown question type")
+        val message = result.exceptionOrNull()?.message.orEmpty()
+        assertTrue(
+            message.contains("VideoQuestion"),
+            "Expected the message to name the unregistered discriminator, got: $message",
+        )
+        assertFalse(
+            message.contains("legacy", ignoreCase = true),
+            "An unregistered discriminator is not a legacy type; got: $message",
+        )
     }
 }
