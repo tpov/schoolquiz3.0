@@ -10,6 +10,7 @@ import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.tpov.schoolquiz.shared.core.outbox.AccountSwitchGuard
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.AccountChooserHost
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.GoogleLinkOutcome
 import com.tpov.schoolquiz.shared.feature.internet.profile.domain.model.PlatformAccountChooserHost
@@ -35,6 +36,7 @@ class FirebaseGoogleSignInRepository(
     private val auth: FirebaseAuth,
     private val credentialManager: CredentialManager,
     private val webClientId: String,
+    private val switchGuard: AccountSwitchGuard,
 ) : GoogleSignInRepository {
     override suspend fun linkGoogleAccount(host: AccountChooserHost): Result<GoogleLinkOutcome> {
         val activity = (host as? PlatformAccountChooserHost)?.platformHost as? Activity
@@ -74,9 +76,21 @@ class FirebaseGoogleSignInRepository(
         }
     }
 
+    /**
+     * Вход как другой игрок — с попыткой сначала доотправить очередь прежнего (AD-8).
+     *
+     * Слив идёт до `signInWithCredential`, а не после: после него прежнего `uid` уже не узнать, а
+     * запись очереди принадлежит тому, кто её создал, и под новым аккаунтом не отправится никогда.
+     * Не удалось слить — не повод запретить вход, но повод сказать словами.
+     */
     private suspend fun signInAs(credential: AuthCredential): GoogleLinkOutcome {
+        val readiness = switchGuard.flushBefore(auth.currentUser?.uid.orEmpty())
         auth.signInWithCredential(credential).await()
-        return GoogleLinkOutcome.SWITCHED
+        return if (readiness.needsWarning) {
+            GoogleLinkOutcome.SWITCHED_WITH_UNSENT
+        } else {
+            GoogleLinkOutcome.SWITCHED
+        }
     }
 
     private fun logCollision(error: FirebaseAuthUserCollisionException) {

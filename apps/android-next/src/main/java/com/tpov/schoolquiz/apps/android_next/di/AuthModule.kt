@@ -24,6 +24,7 @@ val authModule =
                 auth = FirebaseAuth.getInstance(),
                 credentialManager = get(),
                 webClientId = androidContext().googleWebClientId(),
+                switchGuard = get(),
             )
         }
     }

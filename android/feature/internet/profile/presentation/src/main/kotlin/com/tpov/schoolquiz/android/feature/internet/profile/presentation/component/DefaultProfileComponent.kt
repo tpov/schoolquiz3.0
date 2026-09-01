@@ -206,6 +206,8 @@ class DefaultProfileComponent(
                                     // Said plainly. The alternative is somebody discovering on
                                     // their own that everything they had is no longer here.
                                     GoogleLinkOutcome.SWITCHED -> ProfileMessage.GoogleSwitchedToExisting
+                                    GoogleLinkOutcome.SWITCHED_WITH_UNSENT ->
+                                        ProfileMessage.GoogleSwitchedWithUnsentWork
                                 }
                             },
                             onFailure = { error -> error.toFailureMessage() },

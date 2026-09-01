@@ -187,3 +187,13 @@ Goals split out of a larger intent, kept so nothing is quietly dropped.
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-5-answer-key-written.md`
   summary: The publish batch has no chunking and no question-count validation, and every published question already costs four writes in it — so Firestore's 500-write cap breaks publication somewhere near 125 questions today, silently and with an opaque error.
   evidence: `commitOperations` (`functions/index.js:2289`) exists and chunks at 450, but it commits progressively, which would destroy the atomicity that lets a payload and its key be written together. Keeping the key document per-lesson rather than per-question avoided making this worse, but the underlying ceiling is unguarded and unnoticed.
+
+**Синк E6 — смена аккаунта больше не теряет очередь.** `AccountSwitchGuard` сливает очередь до
+`signInWithCredential`, а не после: после него прежнего `uid` уже не узнать, а запись принадлежит
+тому, кто её создал, и под новым аккаунтом не отправится никогда. Не удалось слить — вход всё
+равно происходит, но исход отличается (`SWITCHED_WITH_UNSENT`), и игрок видит словами, что часть
+последних действий не сохранится. Строки добавлены на всех трёх языках.
+
+Не сделано из AD-8: сброс личных курсоров чтения и удаление локальных строк прежнего владельца
+после переключения. Требует решения, какие именно курсоры считать личными, — записано в открытых
+вопросах спайна как Deferred 5.

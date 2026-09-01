@@ -213,6 +213,8 @@ private fun ProfileMessage.resolvedText(): String =
         ProfileMessage.NicknameUpdated -> stringResource(R.string.profile_message_nickname_updated)
         ProfileMessage.GoogleLinked -> stringResource(R.string.profile_message_google_linked)
         ProfileMessage.GoogleSwitchedToExisting -> stringResource(R.string.profile_message_google_switched)
+        ProfileMessage.GoogleSwitchedWithUnsentWork ->
+            stringResource(R.string.profile_message_google_switched_with_unsent)
         is ProfileMessage.Failure -> detail ?: stringResource(R.string.profile_message_sync_failed)
     }
 

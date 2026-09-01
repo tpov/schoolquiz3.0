@@ -2,6 +2,7 @@ package com.tpov.schoolquiz.apps.android_next.di
 
 import androidx.work.WorkManager
 import android.util.Log
+import com.tpov.schoolquiz.shared.core.outbox.AccountSwitchGuard
 import com.tpov.schoolquiz.shared.core.outbox.MutationTransport
 import com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
@@ -82,6 +83,8 @@ val syncModule =
                 onQuarantined = get<QuarantineListener>(),
             )
         }
+        // Слить очередь до смены аккаунта: после переключения прежнего uid уже не узнать (AD-8).
+        single<AccountSwitchGuard> { AccountSwitchGuard(get<OutboxEngine>(), get<OutboxStore>()) }
         single<OutboxSyncable> {
             OutboxSyncable(
                 engine = get<OutboxEngine>(),

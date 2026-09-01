@@ -70,5 +70,6 @@
     <string name="profile_message_nickname_updated">Ник обновлён</string>
     <string name="profile_message_google_linked">Аккаунт привязан, прогресс сохранён</string>
     <string name="profile_message_google_switched">Вход выполнен в существующий аккаунт — прогресс гостя остался на нём</string>
+    <string name="profile_message_google_switched_with_unsent">Вход выполнен в существующий аккаунт — часть последних действий не успела уйти на сервер и уже не отправится</string>
     <string name="profile_message_sync_failed">Не удалось синхронизировать профиль</string>
 </resources>

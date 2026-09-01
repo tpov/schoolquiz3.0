@@ -29,4 +29,13 @@ class PlatformAccountChooserHost(val platformHost: Any) : AccountChooserHost
 enum class GoogleLinkOutcome {
     LINKED,
     SWITCHED,
+
+    /**
+     * Вошли как другой игрок, но очередь прежнего аккаунта слить не удалось.
+     *
+     * Отдельно от [SWITCHED] потому, что игроку надо сказать разное: там он просто сменил
+     * аккаунт, здесь — сменил, и последние его действия могут не сохраниться. Прежнего `uid`
+     * после переключения уже нет, поэтому уехать они больше не смогут (AD-8).
+     */
+    SWITCHED_WITH_UNSENT,
 }

@@ -70,5 +70,6 @@
     <string name="profile_message_nickname_updated">Nickname updated</string>
     <string name="profile_message_google_linked">Account linked, progress saved</string>
     <string name="profile_message_google_switched">Signed in to the existing account — guest progress stayed there</string>
+    <string name="profile_message_google_switched_with_unsent">Signed in to the existing account — some of your last actions had not reached the server and cannot be sent now</string>
     <string name="profile_message_sync_failed">Could not sync the profile</string>
 </resources>
