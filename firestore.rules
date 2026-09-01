@@ -15,6 +15,20 @@ service cloud.firestore {
       // submitLessonResultEvents, purchases by applyShopPurchase, boxes by openGiftBox. The client
       // only ever reads here (FirebaseUserStatsDataSource), so nothing legitimate is lost.
       allow write: if false;
+
+      // Токены устройств для push (AD-20).
+      //
+      // Единственное место под users/, куда клиент пишет: токен рождается на устройстве, узнать
+      // его больше неоткуда, а сервер обязан его прочитать, чтобы отправить уведомление. Владелец
+      // пишет и удаляет только свои — чужой токен иначе можно было бы подменить и увести чужие
+      // уведомления себе.
+      //
+      // Читает только сервер: у Admin SDK правил нет, а игроку список своих устройств пока
+      // нигде не показывается. Понадобится — открыть чтение владельцу отдельно.
+      match /devices/{token} {
+        allow read: if false;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     match /verification_requests/{userId} {
