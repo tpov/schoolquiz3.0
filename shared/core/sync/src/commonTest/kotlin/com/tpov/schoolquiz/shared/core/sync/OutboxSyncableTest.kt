@@ -7,6 +7,7 @@ import com.tpov.schoolquiz.shared.core.outbox.NoLocalEffect
 import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
 import com.tpov.schoolquiz.shared.core.outbox.OutboxEngine
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import com.tpov.schoolquiz.shared.core.outbox.OutboxState
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
@@ -39,6 +40,10 @@ class OutboxSyncableTest {
         }
 
         override fun observeCounts(ownerUid: String): Flow<OutboxCounts> = flowOf(OutboxCounts())
+
+        override fun observeEntity(ownerUid: String, entityRef: String): Flow<OutboxEntitySync?> = flowOf(null)
+
+        override suspend fun findByEntityRef(ownerUid: String, entityRef: String): OutboxRecord? = null
 
         override suspend fun quarantined(ownerUid: String): List<OutboxRecord> = emptyList()
 

@@ -3,6 +3,7 @@ package com.tpov.schoolquiz.shared.core.sync
 import com.tpov.schoolquiz.shared.core.network.SyncError
 import com.tpov.schoolquiz.shared.core.outbox.OutboxCounts
 import com.tpov.schoolquiz.shared.core.outbox.OutboxDecision
+import com.tpov.schoolquiz.shared.core.outbox.OutboxEntitySync
 import com.tpov.schoolquiz.shared.core.outbox.OutboxRecord
 import com.tpov.schoolquiz.shared.core.outbox.OutboxStore
 import kotlin.test.Test
@@ -39,6 +40,10 @@ class SyncStatusRepositoryTest {
         override suspend fun apply(id: Long, decision: OutboxDecision) = Unit
 
         override suspend fun remove(id: Long) = Unit
+
+        override fun observeEntity(ownerUid: String, entityRef: String): Flow<OutboxEntitySync?> = flowOf(null)
+
+        override suspend fun findByEntityRef(ownerUid: String, entityRef: String): OutboxRecord? = null
 
         override suspend fun quarantined(ownerUid: String): List<OutboxRecord> = emptyList()
 
