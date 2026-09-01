@@ -18,12 +18,12 @@ import com.tpov.schoolquiz.android.feature.app_shell.presentation.component.Defa
 import com.tpov.schoolquiz.android.feature.app_shell.presentation.ui.AppShellScreen
 import com.tpov.schoolquiz.platform.android_services.sync.SyncPreferences
 import com.tpov.schoolquiz.shared.core.sync.ForceResync
-import kotlinx.coroutines.CoroutineScope
 import com.tpov.schoolquiz.shared.core.sync.SyncFrequency
 import com.tpov.schoolquiz.shared.core.sync.SyncScheduler
 import com.tpov.schoolquiz.shared.core.sync.SyncStatus
 import com.tpov.schoolquiz.shared.core.sync.SyncStatusRepository
 import com.tpov.schoolquiz.shared.feature.app_shell.domain.model.DeepLink
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.core.parameter.parametersOf
