@@ -1,0 +1,2205 @@
+{
+  "_doc": "Shared scoring fixtures. Both scorers read this one file: Kotlin from\nScoringFixtureParityTest (off the jvmTest classpath) and JavaScript from\nfunctions/assessment-scoring.test.js (by relative path). A new case belongs here and\nnowhere else — neither suite needs a code edit to pick one up.\n\n'content' and 'answer' are decoded straight into QuestionContent and UserAnswer, so they\nmust satisfy those classes' init-block invariants and carry both discriminators under\n'type': PascalCase for content (SingleChoice, MultipleChoice, Ordering, FillBlank, Survey)\nand kebab-case for answers (single-choice, multiple-choice, ordering, fill-blank, survey).\n'imageUrl' has no default and must be written out, null included.\n\n'expected' is the score digit (evaluateAnswer, 1..9), the percent (computePercentScore,\n0..100) or the star tenths (computeStars, 0..30).\n\n'kotlinRejectsCodeAnswer' marks a raw string the CodeAnswer value class refuses to hold\n(CodeAnswer.kt:11 requires a non-empty string). The server has no such wrapper and still\nhas to answer, so JavaScript asserts 'expected' while Kotlin asserts the rejection.\n\nCases marked FLAGGED mirror Kotlin behaviour that looks like a bug. They are pinned here\ndeliberately: fix the Kotlin, and this file changes with it — on both sides at once.",
+  "evaluateAnswer": [
+    {
+      "name": "single-choice: the correct option scores 9",
+      "content": {
+        "type": "SingleChoice",
+        "id": "sc-1",
+        "difficulty": "EASY",
+        "text": "Which option is the right one?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          }
+        ],
+        "correctOptionId": "o2"
+      },
+      "answer": {
+        "type": "single-choice",
+        "selected": "o2"
+      },
+      "expected": 9
+    },
+    {
+      "name": "single-choice: a wrong option scores 1",
+      "content": {
+        "type": "SingleChoice",
+        "id": "sc-1",
+        "difficulty": "EASY",
+        "text": "Which option is the right one?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          }
+        ],
+        "correctOptionId": "o2"
+      },
+      "answer": {
+        "type": "single-choice",
+        "selected": "o1"
+      },
+      "expected": 1
+    },
+    {
+      "name": "single-choice: an unknown option id is nulled before comparing, so it scores 1",
+      "content": {
+        "type": "SingleChoice",
+        "id": "sc-1",
+        "difficulty": "EASY",
+        "text": "Which option is the right one?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          }
+        ],
+        "correctOptionId": "o2"
+      },
+      "answer": {
+        "type": "single-choice",
+        "selected": "opt-99"
+      },
+      "expected": 1
+    },
+    {
+      "name": "single-choice: a null selection (timeout, no input) scores 1",
+      "content": {
+        "type": "SingleChoice",
+        "id": "sc-1",
+        "difficulty": "EASY",
+        "text": "Which option is the right one?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          }
+        ],
+        "correctOptionId": "o2"
+      },
+      "answer": {
+        "type": "single-choice",
+        "selected": null
+      },
+      "expected": 1
+    },
+    {
+      "name": "type mismatch: SingleChoice content with an ordering answer falls through to 1",
+      "content": {
+        "type": "SingleChoice",
+        "id": "sc-1",
+        "difficulty": "EASY",
+        "text": "Which option is the right one?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          }
+        ],
+        "correctOptionId": "o2"
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "type mismatch: Ordering content with a single-choice answer falls through to 1",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "single-choice",
+        "selected": "i1"
+      },
+      "expected": 1
+    },
+    {
+      "name": "type mismatch: Survey content with a multiple-choice answer falls through to 1",
+      "content": {
+        "type": "Survey",
+        "id": "sv-1",
+        "difficulty": "EASY",
+        "text": "Which do you prefer?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "s1",
+            "text": "One"
+          },
+          {
+            "id": "s2",
+            "text": "Two"
+          },
+          {
+            "id": "s3",
+            "text": "Three"
+          }
+        ],
+        "allowMultiple": false
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "s1"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "type mismatch: FillBlank content with a survey answer falls through to 1",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-1",
+        "difficulty": "EASY",
+        "text": "___ and ___ and ___.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          },
+          {
+            "id": "b3",
+            "correctCandidateId": "c3"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "survey",
+        "selected": [
+          "c1"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "multiple-choice: two correct plus one wrong is scoreDigit(2, 4) = 5",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-1",
+        "difficulty": "EASY",
+        "text": "Pick every right option.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o4"
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "name": "multiple-choice: every correct option and nothing else is scoreDigit(3, 3) = 9",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-1",
+        "difficulty": "EASY",
+        "text": "Pick every right option.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "multiple-choice: an empty selection is scoreDigit(0, 3) = 1",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-1",
+        "difficulty": "EASY",
+        "text": "Pick every right option.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": []
+      },
+      "expected": 1
+    },
+    {
+      "name": "multiple-choice: only unknown ids selected is scoreDigit(0, 3) = 1",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-1",
+        "difficulty": "EASY",
+        "text": "Pick every right option.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "zz"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "multiple-choice: one correct, one wrong and one unknown id is scoreDigit(1, 4) = 3",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-1",
+        "difficulty": "EASY",
+        "text": "Pick every right option.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o4",
+          "zz"
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "name": "multiple-choice: an unknown id is filtered out before scoring, so two of two correct is scoreDigit(2, 2) = 9 — unfiltered it would be scoreDigit(2, 3) = 6",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-filter",
+        "difficulty": "EASY",
+        "text": "Two of these four options are correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "zz"
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "digit ladder: 0 of 8 correct scores 1",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": []
+      },
+      "expected": 1
+    },
+    {
+      "name": "digit ladder: 1 of 8 correct scores 2",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1"
+        ]
+      },
+      "expected": 2
+    },
+    {
+      "name": "digit ladder: 2 of 8 correct scores 3",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2"
+        ]
+      },
+      "expected": 3
+    },
+    {
+      "name": "digit ladder: 3 of 8 correct scores 4",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o3"
+        ]
+      },
+      "expected": 4
+    },
+    {
+      "name": "digit ladder: 4 of 8 correct scores 5",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o3",
+          "o4"
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "name": "digit ladder: 5 of 8 correct scores 6",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5"
+        ]
+      },
+      "expected": 6
+    },
+    {
+      "name": "digit ladder: 6 of 8 correct scores 7",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6"
+        ]
+      },
+      "expected": 7
+    },
+    {
+      "name": "digit ladder: 7 of 8 correct scores 8",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7"
+        ]
+      },
+      "expected": 8
+    },
+    {
+      "name": "digit ladder: 8 of 8 correct scores 9",
+      "content": {
+        "type": "MultipleChoice",
+        "id": "mc-ladder",
+        "difficulty": "HARD",
+        "text": "Every one of the eight options is correct.",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "o1",
+            "text": "A"
+          },
+          {
+            "id": "o2",
+            "text": "B"
+          },
+          {
+            "id": "o3",
+            "text": "C"
+          },
+          {
+            "id": "o4",
+            "text": "D"
+          },
+          {
+            "id": "o5",
+            "text": "E"
+          },
+          {
+            "id": "o6",
+            "text": "F"
+          },
+          {
+            "id": "o7",
+            "text": "G"
+          },
+          {
+            "id": "o8",
+            "text": "H"
+          }
+        ],
+        "correctOptionIds": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "answer": {
+        "type": "multiple-choice",
+        "selected": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5",
+          "o6",
+          "o7",
+          "o8"
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "ordering: the exact order is scoreDigit(4, 4) = 9",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i1",
+          "i2",
+          "i3",
+          "i4"
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "ordering: two of four in place is scoreDigit(2, 4) = 5",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i1",
+          "i2",
+          "i4",
+          "i3"
+        ]
+      },
+      "expected": 5
+    },
+    {
+      "name": "ordering: nothing in place is scoreDigit(0, 4) = 1",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i2",
+          "i1",
+          "i4",
+          "i3"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "ordering: a short order is not a permutation, so 1 with no positional scoring",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i1",
+          "i2",
+          "i3"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "ordering: a duplicated id is not a permutation, so 1 even though three are in place",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i1",
+          "i2",
+          "i3",
+          "i3"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "ordering: a foreign id is not a permutation, so 1",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i1",
+          "i2",
+          "i3",
+          "zz"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "ordering: an order that repeats an id to run long is not a permutation, so 1 — only the length term rejects this one, the id sets match",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-1",
+        "difficulty": "EASY",
+        "text": "Put the four items in order.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i2",
+            "text": "second"
+          },
+          {
+            "id": "i3",
+            "text": "third"
+          },
+          {
+            "id": "i4",
+            "text": "fourth"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i1",
+          "i2",
+          "i3",
+          "i4",
+          "i1"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "ordering: FLAGGED — Ordering.items has no uniqueness invariant, so two items sharing an id make a set of one and the answer passes the permutation check",
+      "content": {
+        "type": "Ordering",
+        "id": "ord-dup",
+        "difficulty": "EASY",
+        "text": "Two items carry the same id.",
+        "imageUrl": null,
+        "items": [
+          {
+            "id": "i1",
+            "text": "first"
+          },
+          {
+            "id": "i1",
+            "text": "also first"
+          }
+        ]
+      },
+      "answer": {
+        "type": "ordering",
+        "order": [
+          "i1",
+          "i1"
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "fill-blank: two of three blanks right is scoreDigit(2, 3) = 6",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-1",
+        "difficulty": "EASY",
+        "text": "___ and ___ and ___.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          },
+          {
+            "id": "b3",
+            "correctCandidateId": "c3"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {
+          "b1": "c1",
+          "b2": "c2",
+          "b3": "c4"
+        }
+      },
+      "expected": 6
+    },
+    {
+      "name": "fill-blank: all three right is scoreDigit(3, 3) = 9",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-1",
+        "difficulty": "EASY",
+        "text": "___ and ___ and ___.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          },
+          {
+            "id": "b3",
+            "correctCandidateId": "c3"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {
+          "b1": "c1",
+          "b2": "c2",
+          "b3": "c3"
+        }
+      },
+      "expected": 9
+    },
+    {
+      "name": "fill-blank: extra filled keys are ignored — the denominator is blanks.size",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-1",
+        "difficulty": "EASY",
+        "text": "___ and ___ and ___.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          },
+          {
+            "id": "b3",
+            "correctCandidateId": "c3"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {
+          "b1": "c1",
+          "b2": "c2",
+          "b3": "c4",
+          "b9": "c1",
+          "zz": "c3"
+        }
+      },
+      "expected": 6
+    },
+    {
+      "name": "fill-blank: a null value and a missing key both count as unanswered",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-1",
+        "difficulty": "EASY",
+        "text": "___ and ___ and ___.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          },
+          {
+            "id": "b3",
+            "correctCandidateId": "c3"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {
+          "b1": "c1",
+          "b2": null
+        }
+      },
+      "expected": 4
+    },
+    {
+      "name": "fill-blank: a candidate id outside the pool does not count",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-1",
+        "difficulty": "EASY",
+        "text": "___ and ___ and ___.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          },
+          {
+            "id": "b3",
+            "correctCandidateId": "c3"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {
+          "b1": "zz",
+          "b2": "c2",
+          "b3": "c3"
+        }
+      },
+      "expected": 6
+    },
+    {
+      "name": "fill-blank: an empty filled map is scoreDigit(0, 3) = 1",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-1",
+        "difficulty": "EASY",
+        "text": "___ and ___ and ___.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          },
+          {
+            "id": "b2",
+            "correctCandidateId": "c2"
+          },
+          {
+            "id": "b3",
+            "correctCandidateId": "c3"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {}
+      },
+      "expected": 1
+    },
+    {
+      "name": "fill-blank: one blank, right, is scoreDigit(1, 1) = 9",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-single",
+        "difficulty": "HARD",
+        "text": "Only one ___ here.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {
+          "b1": "c1"
+        }
+      },
+      "expected": 9
+    },
+    {
+      "name": "fill-blank: one blank, wrong, is scoreDigit(0, 1) = 1",
+      "content": {
+        "type": "FillBlank",
+        "id": "fb-single",
+        "difficulty": "HARD",
+        "text": "Only one ___ here.",
+        "imageUrl": null,
+        "blanks": [
+          {
+            "id": "b1",
+            "correctCandidateId": "c1"
+          }
+        ],
+        "candidates": [
+          {
+            "id": "c1",
+            "text": "alpha"
+          },
+          {
+            "id": "c2",
+            "text": "beta"
+          },
+          {
+            "id": "c3",
+            "text": "gamma"
+          },
+          {
+            "id": "c4",
+            "text": "delta"
+          },
+          {
+            "id": "c5",
+            "text": "epsilon"
+          }
+        ]
+      },
+      "answer": {
+        "type": "fill-blank",
+        "filled": {
+          "b1": "c2"
+        }
+      },
+      "expected": 1
+    },
+    {
+      "name": "survey: any valid option scores 9 — participation is full marks",
+      "content": {
+        "type": "Survey",
+        "id": "sv-1",
+        "difficulty": "EASY",
+        "text": "Which do you prefer?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "s1",
+            "text": "One"
+          },
+          {
+            "id": "s2",
+            "text": "Two"
+          },
+          {
+            "id": "s3",
+            "text": "Three"
+          }
+        ],
+        "allowMultiple": false
+      },
+      "answer": {
+        "type": "survey",
+        "selected": [
+          "s1"
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "survey: an empty response scores 1",
+      "content": {
+        "type": "Survey",
+        "id": "sv-1",
+        "difficulty": "EASY",
+        "text": "Which do you prefer?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "s1",
+            "text": "One"
+          },
+          {
+            "id": "s2",
+            "text": "Two"
+          },
+          {
+            "id": "s3",
+            "text": "Three"
+          }
+        ],
+        "allowMultiple": false
+      },
+      "answer": {
+        "type": "survey",
+        "selected": []
+      },
+      "expected": 1
+    },
+    {
+      "name": "survey: only unknown ids scores 1",
+      "content": {
+        "type": "Survey",
+        "id": "sv-1",
+        "difficulty": "EASY",
+        "text": "Which do you prefer?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "s1",
+            "text": "One"
+          },
+          {
+            "id": "s2",
+            "text": "Two"
+          },
+          {
+            "id": "s3",
+            "text": "Three"
+          }
+        ],
+        "allowMultiple": false
+      },
+      "answer": {
+        "type": "survey",
+        "selected": [
+          "zz"
+        ]
+      },
+      "expected": 1
+    },
+    {
+      "name": "survey: one valid id among unknown ones still scores 9",
+      "content": {
+        "type": "Survey",
+        "id": "sv-1",
+        "difficulty": "EASY",
+        "text": "Which do you prefer?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "s1",
+            "text": "One"
+          },
+          {
+            "id": "s2",
+            "text": "Two"
+          },
+          {
+            "id": "s3",
+            "text": "Three"
+          }
+        ],
+        "allowMultiple": false
+      },
+      "answer": {
+        "type": "survey",
+        "selected": [
+          "zz",
+          "s3"
+        ]
+      },
+      "expected": 9
+    },
+    {
+      "name": "survey: FLAGGED — allowMultiple is false, yet two selected options still score 9 because evaluateAnswer never reads the flag",
+      "content": {
+        "type": "Survey",
+        "id": "sv-1",
+        "difficulty": "EASY",
+        "text": "Which do you prefer?",
+        "imageUrl": null,
+        "options": [
+          {
+            "id": "s1",
+            "text": "One"
+          },
+          {
+            "id": "s2",
+            "text": "Two"
+          },
+          {
+            "id": "s3",
+            "text": "Three"
+          }
+        ],
+        "allowMultiple": false
+      },
+      "answer": {
+        "type": "survey",
+        "selected": [
+          "s1",
+          "s2"
+        ]
+      },
+      "expected": 9
+    }
+  ],
+  "computePercentScore": [
+    {
+      "name": "digit '1' alone is (1-1)*100/8 = 0",
+      "codeAnswer": "1",
+      "expected": 0
+    },
+    {
+      "name": "digit '2' alone is (2-1)*100/8 = 12, not 12.5",
+      "codeAnswer": "2",
+      "expected": 12
+    },
+    {
+      "name": "digit '3' alone is (3-1)*100/8 = 25",
+      "codeAnswer": "3",
+      "expected": 25
+    },
+    {
+      "name": "digit '4' alone is (4-1)*100/8 = 37, not 37.5",
+      "codeAnswer": "4",
+      "expected": 37
+    },
+    {
+      "name": "digit '5' alone is (5-1)*100/8 = 50",
+      "codeAnswer": "5",
+      "expected": 50
+    },
+    {
+      "name": "digit '6' alone is (6-1)*100/8 = 62, not 62.5",
+      "codeAnswer": "6",
+      "expected": 62
+    },
+    {
+      "name": "digit '7' alone is (7-1)*100/8 = 75",
+      "codeAnswer": "7",
+      "expected": 75
+    },
+    {
+      "name": "digit '8' alone is (8-1)*100/8 = 87, not 87.5",
+      "codeAnswer": "8",
+      "expected": 87
+    },
+    {
+      "name": "digit '9' alone is (9-1)*100/8 = 100",
+      "codeAnswer": "9",
+      "expected": 100
+    },
+    {
+      "name": "zeros are dropped before averaging: '0090' is the average of one '9'",
+      "codeAnswer": "0090",
+      "expected": 100
+    },
+    {
+      "name": "all zeros means nothing was shown, so 0",
+      "codeAnswer": "00000",
+      "expected": 0
+    },
+    {
+      "name": "a single zero means nothing was shown, so 0",
+      "codeAnswer": "0",
+      "expected": 0
+    },
+    {
+      "name": "an empty codeAnswer is 0 on the server; Kotlin cannot express it at all",
+      "codeAnswer": "",
+      "expected": 0,
+      "kotlinRejectsCodeAnswer": true
+    },
+    {
+      "name": "the average truncates too: (0 + 12) / 2 = 6",
+      "codeAnswer": "12",
+      "expected": 6
+    },
+    {
+      "name": "(0 + 100) / 2 = 50",
+      "codeAnswer": "19",
+      "expected": 50
+    },
+    {
+      "name": "(12 + 100) / 2 = 56",
+      "codeAnswer": "29",
+      "expected": 56
+    },
+    {
+      "name": "(25 + 37) / 2 = 31",
+      "codeAnswer": "34",
+      "expected": 31
+    },
+    {
+      "name": "(25 + 50) / 2 = 37, truncated from 37.5",
+      "codeAnswer": "35",
+      "expected": 37
+    },
+    {
+      "name": "(12 + 87 + 100) / 3 = 199 / 3 = 66, not 66.33",
+      "codeAnswer": "289",
+      "expected": 66
+    },
+    {
+      "name": "all nine digits once: 448 / 9 = 49, not 49.78",
+      "codeAnswer": "123456789",
+      "expected": 49
+    },
+    {
+      "name": "the same nine digits padded with zeros score identically",
+      "codeAnswer": "0102030405060708090",
+      "expected": 49
+    },
+    {
+      "name": "a perfect four-question run is 100",
+      "codeAnswer": "9999",
+      "expected": 100
+    },
+    {
+      "name": "a run of '5' is 50",
+      "codeAnswer": "5555",
+      "expected": 50
+    },
+    {
+      "name": "'9050' drops both zeros: (100 + 50) / 2 = 75",
+      "codeAnswer": "9050",
+      "expected": 75
+    },
+    {
+      "name": "a perfect twenty-question run is 100",
+      "codeAnswer": "99999999999999999999",
+      "expected": 100
+    },
+    {
+      "name": "twenty wrong answers is 0, and can never justify a claimed 100",
+      "codeAnswer": "11111111111111111111",
+      "expected": 0
+    }
+  ],
+  "computeStars": [
+    {
+      "name": "EASY at 0 percent is 0 tenths",
+      "percentScore": 0,
+      "mode": "EASY",
+      "expected": 0
+    },
+    {
+      "name": "EASY at 50 percent is 10 tenths",
+      "percentScore": 50,
+      "mode": "EASY",
+      "expected": 10
+    },
+    {
+      "name": "EASY at 100 percent is 20 tenths",
+      "percentScore": 100,
+      "mode": "EASY",
+      "expected": 20
+    },
+    {
+      "name": "HARD at 0 percent already starts at 20 tenths",
+      "percentScore": 0,
+      "mode": "HARD",
+      "expected": 20
+    },
+    {
+      "name": "HARD at 50 percent is 25 tenths",
+      "percentScore": 50,
+      "mode": "HARD",
+      "expected": 25
+    },
+    {
+      "name": "HARD at 100 percent is 30 tenths",
+      "percentScore": 100,
+      "mode": "HARD",
+      "expected": 30
+    },
+    {
+      "name": "EASY round-half-up boundary: 2 percent is (40 + 50) / 100 = 0",
+      "percentScore": 2,
+      "mode": "EASY",
+      "expected": 0
+    },
+    {
+      "name": "EASY round-half-up boundary: 3 percent is (60 + 50) / 100 = 1",
+      "percentScore": 3,
+      "mode": "EASY",
+      "expected": 1
+    },
+    {
+      "name": "EASY at 47 percent is (940 + 50) / 100 = 9",
+      "percentScore": 47,
+      "mode": "EASY",
+      "expected": 9
+    },
+    {
+      "name": "EASY at 49 percent is (980 + 50) / 100 = 10",
+      "percentScore": 49,
+      "mode": "EASY",
+      "expected": 10
+    },
+    {
+      "name": "EASY at 99 percent is (1980 + 50) / 100 = 20",
+      "percentScore": 99,
+      "mode": "EASY",
+      "expected": 20
+    },
+    {
+      "name": "EASY at 1 percent is (20 + 50) / 100 = 0",
+      "percentScore": 1,
+      "mode": "EASY",
+      "expected": 0
+    },
+    {
+      "name": "HARD round-half-up boundary: 4 percent is 20 + (40 + 50) / 100 = 20",
+      "percentScore": 4,
+      "mode": "HARD",
+      "expected": 20
+    },
+    {
+      "name": "HARD round-half-up boundary: 5 percent is 20 + (50 + 50) / 100 = 21",
+      "percentScore": 5,
+      "mode": "HARD",
+      "expected": 21
+    },
+    {
+      "name": "HARD at 94 percent is 20 + (940 + 50) / 100 = 29",
+      "percentScore": 94,
+      "mode": "HARD",
+      "expected": 29
+    },
+    {
+      "name": "HARD at 95 percent is 20 + (950 + 50) / 100 = 30",
+      "percentScore": 95,
+      "mode": "HARD",
+      "expected": 30
+    },
+    {
+      "name": "HARD at 99 percent is 20 + (990 + 50) / 100 = 30",
+      "percentScore": 99,
+      "mode": "HARD",
+      "expected": 30
+    }
+  ]
+}
