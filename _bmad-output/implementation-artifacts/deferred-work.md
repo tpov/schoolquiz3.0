@@ -321,6 +321,18 @@ AD-20 отмечал это прямо. Путь `users/{uid}/devices/{token}` �
 цену, посчитанную из вопросов урока (`0e8c2a53`); строка состояния и диалог ресинка покрыты
 (`c116216c`); заявка на арену больше не запирает черновик подавленной вставкой (`ae630afe`).
 
+
+**Защитный fallback у читателя журнала — вторая половина 7-6.** `toSyncNodeType` в
+`FirebaseCatalogSyncChangeRemoteDataSource` терпит и множественное, и единственное число, а запись,
+которую не удалось разобрать, молча пропускает. AD-11 разрешает снять эту терпимость только после
+того, как backfill приведёт уже записанное к одной форме — иначе читатель упадёт на первой старой
+записи. Истории 7-1…7-3 (одна форма документа, запись в каждый журнал, парный курсор) ещё
+in-progress, поэтому снятие ждёт их.
+
+Чего не хватает, чтобы вообще узнать момент: **сегодня никто не считает пропущенные записи**.
+`mapNotNull` отбрасывает их без следа, и «backfill закончен» ни из чего не следует. Счётчик
+непрочитанных записей журнала, выведенный наружу через `SyncStatus` (AD-14), и был бы тем сигналом.
+
 - source_spec: `_bmad-output/implementation-artifacts/spec-e2-6-question-display.md`
   summary: `RedactedQuestionContent` has no invariants by design, so a corrupted store could yield a question with an empty option list that renders as unanswerable with nothing reporting it.
   evidence: Deliberate — that type describes what arrived, not what is valid, and the emitter enforces a minimum of two rows so it cannot produce one. Only a payload written outside the emitter could. The slice that moves the runner onto the supertype needs a named failure for it rather than an empty screen.
